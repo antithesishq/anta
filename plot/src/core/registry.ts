@@ -7,7 +7,7 @@ import { rect_runtime } from "./series/rect"
 import { rule_runtime } from "./series/rule"
 import { scatter_runtime } from "./series/scatter"
 
-const SERIES_TYPES: Record<Series['kind'], SeriesType> = {
+const SERIES_TYPES = {
     scatter: scatter_runtime,
     bar: bar_runtime,
     rect: rect_runtime,
@@ -18,8 +18,6 @@ const SERIES_TYPES: Record<Series['kind'], SeriesType> = {
 }
 
 /** Look up core behavior for a registered series kind. */
-export function series_type<TooltipContent = unknown>(kind: Series['kind']): SeriesType<TooltipContent> {
-    // Runtime behavior does not inspect host tooltip content. The registry stores one implementation
-    // per kind and restores the caller's host-specific content type at this lookup boundary.
-    return SERIES_TYPES[kind] as unknown as SeriesType<TooltipContent>
+export function series_type<Row, TooltipContent = unknown>(series: Series<Row, TooltipContent>): SeriesType<Row, TooltipContent> {
+    return SERIES_TYPES[series.kind]
 }

@@ -16,9 +16,14 @@ import type { RectArgs } from "./series/rect/factory"
 import type { RuleArgs } from "./series/rule/factory"
 import type { CustomArgs } from "./series/custom/factory"
 
-export type SeriesArgs<Content = unknown> = Readonly<
-    ScatterArgs<Content> | LineArgs<Content> | BarArgs<Content> | AreaArgs<Content>
-    | RectArgs<Content> | RuleArgs<Content> | CustomArgs<Content>
+export type SeriesArgs<Row, Content = unknown> = Readonly<
+    | ScatterArgs<Row, Content>
+    | LineArgs<Row, Content>
+    | BarArgs<Row, Content>
+    | AreaArgs<Row, Content>
+    | RectArgs<Row, Content>
+    | RuleArgs<Row, Content>
+    | CustomArgs<Row, Content>
 >
 
 export type Domain = [number, number]
@@ -37,7 +42,7 @@ export type Margin = number | SideMargins
 
 type SeriesTypes = 'scatter' | 'rect' | 'bar' | 'line' | 'rule' | 'area' | 'custom'
 
-type BaseSeries<TooltipContent = unknown> = {
+type BaseSeries<Row, TooltipContent, InteractionData = TooltipData<Row>> = {
     kind: SeriesTypes
     x: Float64Array
     y: Float64Array
@@ -45,11 +50,11 @@ type BaseSeries<TooltipContent = unknown> = {
     colors?: (ThemeColor | null)[]
     highlight_color?: ThemeColor
     highlight_colors?: (ThemeColor | null)[]
-    tooltip?: TooltipArg<any, TooltipContent>
-    on_select?: SelectFn<any>
+    tooltip?: true | ((data: InteractionData) => TooltipContent)
+    on_select?: (data: InteractionData) => unknown
     hoverable?: boolean
     highlight?: boolean
-    rows?: Record<string, unknown>[]
+    rows?: Row[]
     labels?: string[]
     x_axis_kind?: AxisKind
     y_axis_kind?: AxisKind
@@ -61,10 +66,10 @@ type BaseSeries<TooltipContent = unknown> = {
 
 export type Stroke = { color: ThemeColor; width?: number }
 
-export type ScatterSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
+export type ScatterSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'scatter'
     /** Retained until composition, when the viewport is available. */
-    size_accessor?: Exclude<ScatterSizeArg, number>
+    size_accessor?: Exclude<ScatterSizeArg<Row>, number>
     /** Original row indices, retained when category filtering removes rows. */
     size_indices?: Uint32Array
     size?: number
@@ -73,7 +78,7 @@ export type ScatterSeries<TooltipContent = unknown> = BaseSeries<TooltipContent>
     stroke?: Stroke
 }
 
-export type RectSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
+export type RectSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'rect'
     span?: 'x' | 'y'
     x2?: Float64Array
@@ -88,7 +93,7 @@ export type RectSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & 
     stroke?: Stroke
 }
 
-export type BarSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
+export type BarSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'bar'
     border_radius?: number
     inset?: number
@@ -102,7 +107,7 @@ export type BarSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
 // where each bar (segment) starts and ends on the value axis, in pixels
 export type BarPixelSpan = { baseline: Float64Array; tip: Float64Array }
 
-export type LineSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
+export type LineSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'line'
     width?: number
     dash?: number[]
@@ -111,14 +116,14 @@ export type LineSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & 
     stroke?: Stroke
 }
 
-export type RuleSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
+export type RuleSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent, PointData<Row>> & {
     kind: 'rule'
     side: 'x' | 'y'
     width?: number
     dash?: number[]
 }
 
-export type AreaSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
+export type AreaSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'area'
     x2?: Float64Array
     y2?: Float64Array
@@ -135,22 +140,22 @@ export type AreaPixelRuns = {
     run_starts: Int32Array
 }
 
-export type CustomSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
+export type CustomSeries<Row, TooltipContent> = BaseSeries<Row, TooltipContent, PointData<Row>> & {
     kind: 'custom'
-    renderer: CustomRendererFn<TooltipContent>
-    hit_test?: CustomHitTestFn<TooltipContent>
-    highlight_renderer?: CustomHighlightRendererFn<TooltipContent>
+    renderer: CustomRendererFn<Row>
+    hit_test?: CustomHitTestFn<Row>
+    highlight_renderer?: CustomHighlightRendererFn<Row>
     axis_range?: { x?: Domain; y?: Domain }
 }
 
-export type Series<TooltipContent = unknown> =
-    | ScatterSeries<TooltipContent>
-    | RectSeries<TooltipContent>
-    | BarSeries<TooltipContent>
-    | LineSeries<TooltipContent>
-    | RuleSeries<TooltipContent>
-    | AreaSeries<TooltipContent>
-    | CustomSeries<TooltipContent>
+export type Series<Row, TooltipContent> =
+    | ScatterSeries<Row, TooltipContent>
+    | RectSeries<Row, TooltipContent>
+    | BarSeries<Row, TooltipContent>
+    | LineSeries<Row, TooltipContent>
+    | RuleSeries<Row, TooltipContent>
+    | AreaSeries<Row, TooltipContent>
+    | CustomSeries<Row, TooltipContent>
 
 // color fields after compose resolves each ThemeColor to a concrete string for the current theme
 type ResolvedColorFields = {
@@ -165,21 +170,21 @@ type ResolvedColorFields = {
 type ReplaceKeys<T, R> = Omit<T, keyof R> & R
 
 // each series with its color fields resolved to plain strings — compose's output, what the paints read
-export type ComposedScatter<TooltipContent = unknown> = ReplaceKeys<ScatterSeries<TooltipContent>, ResolvedColorFields>
-export type ComposedRect<TooltipContent = unknown> = ReplaceKeys<RectSeries<TooltipContent>, ResolvedColorFields>
-export type ComposedBar<TooltipContent = unknown> = ReplaceKeys<BarSeries<TooltipContent>, ResolvedColorFields & { value_span?: BarPixelSpan }>
-export type ComposedLine<TooltipContent = unknown> = ReplaceKeys<LineSeries<TooltipContent>, ResolvedColorFields>
-export type ComposedRule<TooltipContent = unknown> = ReplaceKeys<RuleSeries<TooltipContent>, ResolvedColorFields>
-export type ComposedArea<TooltipContent = unknown> = ReplaceKeys<AreaSeries<TooltipContent>, ResolvedColorFields & { pixel_runs?: AreaPixelRuns }>
-export type ComposedCustom<TooltipContent = unknown> = ReplaceKeys<CustomSeries<TooltipContent>, ResolvedColorFields>
-export type ComposedSeries<TooltipContent = unknown> =
-    | ComposedScatter<TooltipContent>
-    | ComposedRect<TooltipContent>
-    | ComposedBar<TooltipContent>
-    | ComposedLine<TooltipContent>
-    | ComposedRule<TooltipContent>
-    | ComposedArea<TooltipContent>
-    | ComposedCustom<TooltipContent>
+export type ComposedScatter<Row, TooltipContent = unknown> = ReplaceKeys<ScatterSeries<Row, TooltipContent>, ResolvedColorFields>
+export type ComposedRect<Row, TooltipContent = unknown> = ReplaceKeys<RectSeries<Row, TooltipContent>, ResolvedColorFields>
+export type ComposedBar<Row, TooltipContent = unknown> = ReplaceKeys<BarSeries<Row, TooltipContent>, ResolvedColorFields & { value_span?: BarPixelSpan }>
+export type ComposedLine<Row, TooltipContent = unknown> = ReplaceKeys<LineSeries<Row, TooltipContent>, ResolvedColorFields>
+export type ComposedRule<Row, TooltipContent = unknown> = ReplaceKeys<RuleSeries<Row, TooltipContent>, ResolvedColorFields>
+export type ComposedArea<Row, TooltipContent = unknown> = ReplaceKeys<AreaSeries<Row, TooltipContent>, ResolvedColorFields & { pixel_runs?: AreaPixelRuns }>
+export type ComposedCustom<Row, TooltipContent> = ReplaceKeys<CustomSeries<Row, TooltipContent>, ResolvedColorFields>
+export type ComposedSeries<Row, TooltipContent> =
+    | ComposedScatter<Row, TooltipContent>
+    | ComposedRect<Row, TooltipContent>
+    | ComposedBar<Row, TooltipContent>
+    | ComposedLine<Row, TooltipContent>
+    | ComposedRule<Row, TooltipContent>
+    | ComposedArea<Row, TooltipContent>
+    | ComposedCustom<Row, TooltipContent>
 
 export type AxisKind = 'numeric' | 'categorical'
 
@@ -336,9 +341,10 @@ export type RequestedViewportWindow = { x?: Domain | null; y?: Domain | null }
 
 export type ViewportRequest = { window: RequestedViewportWindow; key: string | number | undefined }
 
+// Plot collections intentionally accept different row types; factories check each series.
 export type PlotTemplate<TooltipContent = unknown> = {
     tooltip?: PlotTooltipFn<TooltipContent>
-    series: Series<TooltipContent>[]
+    series: Series<any, TooltipContent>[]
     x: AxisTemplate
     y: AxisTemplate
     title?: string
@@ -361,7 +367,7 @@ export type PlotTemplate<TooltipContent = unknown> = {
 export type PlotArgs<TooltipContent = unknown> = {
     /** Compose all hovered hits, topmost first. Omit to stack per-series tooltips. */
     tooltip?: PlotTooltipFn<TooltipContent>
-    series: Series<TooltipContent>[]
+    series: Series<any, TooltipContent>[]
     axis?: { x?: AxisArgs; y?: AxisArgs }
     title?: TitleArg
     font?: FontArg
@@ -405,7 +411,7 @@ export type ComposedPlot<TooltipContent = unknown> = {
     title_font?: FontConfig
     font: FontConfig
     inherited_font_family?: string
-    series: ComposedSeries<TooltipContent>[]
+    series: ComposedSeries<any, TooltipContent>[]
     border?: boolean
     grid?: GridSpec
     background?: string | false
@@ -453,7 +459,18 @@ export type CustomRenderContext = RenderContext & {
     color_at: ColorResolver
 }
 
-export type CustomRendererFn<TooltipContent = unknown> = (series: ComposedCustom<TooltipContent>, render_props: CustomRenderContext) => void
+/** The composed data a custom callback can read, independent of tooltip content. */
+export type CustomSeriesView<Row> = {
+    x: Float64Array
+    y: Float64Array
+    rows?: Row[]
+    color?: string
+    colors?: (string | null)[]
+    highlight_color?: string
+    highlight_colors?: (string | null)[]
+}
+
+export type CustomRendererFn<Row> = (series: CustomSeriesView<Row>, render_props: CustomRenderContext) => void
 
 export type CustomHighlightContext = CustomRenderContext & {
     /** Resolve the standard theme-adjusted highlight color for a point. */
@@ -461,8 +478,8 @@ export type CustomHighlightContext = CustomRenderContext & {
 }
 
 /** Draw synchronously on the prepared overlay. The plot owns clearing and canvas state. */
-export type CustomHighlightRendererFn<TooltipContent = unknown> = (
-    series: ComposedCustom<TooltipContent>,
+export type CustomHighlightRendererFn<Row> = (
+    series: CustomSeriesView<Row>,
     point_index: number,
     context: CustomHighlightContext,
 ) => void
@@ -480,7 +497,7 @@ export type PixelResolver = (i: number) => number | undefined
 
 export type ColorResolver = (i: number) => string
 
-export type CustomHitTestFn<TooltipContent = unknown> = (series: ComposedCustom<TooltipContent>, hit: HitContext) => number | null
+export type CustomHitTestFn<Row> = (series: CustomSeriesView<Row>, hit: HitContext) => number | null
 
 export type HighlightSpec =
     | { shape: 'mark'; mark: MarkShape; cx: number; cy: number; r: number; color: string; highlight_color?: string }
@@ -509,21 +526,21 @@ export type AxisContext = {
     args: Axis
 }
 
-export interface SeriesType<TooltipContent = unknown, S extends Series<TooltipContent> = Series<TooltipContent>> {
+export interface SeriesType<Row, TooltipContent = unknown, S extends Series<Row, TooltipContent> = Series<Row, TooltipContent>> {
     kind: S['kind']
     // build the series from validated user args (runs at user-call time)
     factory(args: any): S
     // draw the series to the canvas (runs at render time).
     // series is the composed (string-color) form for this kind; the concrete paint narrows it
-    paint(series: ComposedSeries<TooltipContent>, render: RenderContext): void
+    paint(series: ComposedSeries<Row, TooltipContent>, render: RenderContext): void
     // the point index under the cursor, or null. Each kind defines its own hit region
     // inner is the plot area the paint draws into, for kinds whose geometry spans it (rect's `span`)
-    tooltip_hit_test(series: ComposedSeries<TooltipContent>, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale, inner: Rect): number | null
+    tooltip_hit_test(series: ComposedSeries<Row, TooltipContent>, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale, inner: Rect): number | null
     // optional: hover-select halo geometry for a point. Consumed by the DOM overlay, not the canvas.
-    highlight_spec?(series: ComposedSeries<TooltipContent>, point_index: number, x_scale: Scale, y_scale: Scale, inner: Rect): HighlightSpec | HighlightSpec[] | null
+    highlight_spec?(series: ComposedSeries<Row, TooltipContent>, point_index: number, x_scale: Scale, y_scale: Scale, inner: Rect): HighlightSpec | HighlightSpec[] | null
     // optional: precompute pixel geometry that depends on the scales, once per compose, for the paint /
     // hit-test / highlight to share rather than each deriving it (bar places its stacked segments here)
-    compose_layout?(series: ComposedSeries<TooltipContent>, x_scale: Scale, y_scale: Scale): ComposedSeries<TooltipContent>
+    compose_layout?(series: ComposedSeries<Row, TooltipContent>, x_scale: Scale, y_scale: Scale): ComposedSeries<Row, TooltipContent>
     // optional: throw if this kind's axis requirements aren't met (e.g. bar needs one band axis)
     validate_axes?(x: AxisContext, y: AxisContext, series: S, index: number): void
     // optional: override the default domain padding for this kind (e.g. bar anchors at zero)
@@ -536,7 +553,7 @@ export interface SeriesType<TooltipContent = unknown, S extends Series<TooltipCo
 // the browser color scheme a plot resolves theme colors against (resolved UI-side at compose time)
 export type ColorTheme = 'light' | 'dark'
 
-export type ColorArg = ThemeColor | ((row: Record<string, unknown>, index: number) => ThemeColor)
+export type ColorArg<Row> = ThemeColor | ((row: Row, index: number) => ThemeColor)
 export type TitleArg = string | { text: string; font?: FontArg }
 
 export type StrokeArg = ThemeColor | Stroke
@@ -546,22 +563,24 @@ export type MarkShape = 'circle' | 'square' | 'diamond' | 'triangle'
 
 export type RectAlign = 'center' | 'start' | 'end'
 
-export type FieldArg = string | ((row: Record<string, unknown>, index: number) => number | string)
+export type FieldArg<Row> =
+    | (keyof Row & string)
+    | ((row: Row, index: number) => number | string)
 
 // the resolved x / y values, plus the original data row, under the cursor, handed to a caller's tooltip
 // callback. `label` names the hovered mark when its series has per-mark names — a stacked bar's segment field
-export type PointData = {
+export type PointData<Row> = {
     x: number | string
     y: number | string
-    row?: Record<string, unknown>
+    row?: Row
     label?: string
 }
 
-export type TooltipData<Row = Record<string, unknown>> = Omit<PointData, 'row'> & { row: Row }
+export type TooltipData<Row = Record<string, unknown>> = Omit<PointData<Row>, 'row'> & { row: Row }
 
 export type PlotTooltipHit<Content = unknown> = {
-    series: SeriesArgs<Content> | undefined
-    data: PointData
+    series: SeriesArgs<any, Content> | undefined
+    data: PointData<unknown>
 } | undefined
 
 /** One slot per declared series; missing hits are undefined. Nullish results suppress the tooltip. */

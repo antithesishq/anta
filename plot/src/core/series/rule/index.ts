@@ -1,5 +1,5 @@
 import { xy_extent } from "../../template/extent"
-import type { RuleSeries, SeriesType } from "../../types"
+import type { SeriesType } from "../../types"
 import { new_rule } from "./factory"
 import { rule_highlight_spec } from "./highlight"
 import { rule_hit_test } from "./hit"
@@ -18,4 +18,4 @@ export const rule_runtime = {
     highlight_spec: rule_highlight_spec,
     // The rule's unconstrained column is all NaN, producing the inverted extent that aggregation ignores.
     domain_extent: xy_extent,
-} satisfies SeriesType<unknown, RuleSeries>
+} satisfies SeriesType<unknown>

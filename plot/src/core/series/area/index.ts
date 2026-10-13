@@ -1,4 +1,4 @@
-import type { AreaSeries, SeriesType } from "../../types"
+import type { SeriesType } from "../../types"
 import { area_domain_extent, new_area, validate_area_axes } from "./factory"
 import { area_hit_test } from "./hit"
 import { compose_area_layout } from "./layout"
@@ -23,4 +23,4 @@ export const area_runtime = {
     compose_layout: compose_area_layout,
     validate_axes: validate_area_axes,
     domain_extent: area_domain_extent,
-} satisfies SeriesType<unknown, AreaSeries>
+} satisfies SeriesType<unknown>

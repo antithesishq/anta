@@ -1,5 +1,5 @@
 import { xy_extent } from "../../template/extent"
-import type { ScatterSeries, SeriesType } from "../../types"
+import type { SeriesType } from "../../types"
 import { new_scatter } from "./factory"
 import { scatter_highlight_spec } from "./highlight"
 import { scatter_hit_test } from "./hit"
@@ -17,4 +17,4 @@ export const scatter_runtime = {
     tooltip_hit_test: scatter_hit_test,
     highlight_spec: scatter_highlight_spec,
     domain_extent: xy_extent,
-} satisfies SeriesType<unknown, ScatterSeries>
+} satisfies SeriesType<unknown>

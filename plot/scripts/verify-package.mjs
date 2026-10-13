@@ -207,7 +207,13 @@ try {
         import { PlotController } from '@antadesign/plot'
         // @ts-expect-error Canvas lifecycle helpers are internal.
         import { update_hover_canvas } from '@antadesign/plot'
-        const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const args: PlotArgs<string> = {series:[scatter({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const mixed: PlotArgs<string> = { series: [
+            scatter({ data: [{ time: 1, temperature: 20 }], x: 'time', y: 'temperature', tooltip: ({ row }) => row.temperature.toFixed() }),
+            scatter({ data: [{ time: 1, pressure: 100 }], x: 'time', y: 'pressure', tooltip: ({ row }) => row.pressure.toFixed() }),
+        ] }
+        // @ts-expect-error The plot boundary must not weaken row inference inside a factory.
+        const wrongRow: PlotArgs<string> = { series: [scatter({ data: [{ time: 1, temperature: 20 }], x: 'time', y: 'temperature', tooltip: ({ row }) => row.pressure.toFixed() })] }
         const viewportSized = scatter({
             data: [{ x: 1, y: 2, weight: 3 }],
             size: (row, index, viewport) => Math.min(12, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
@@ -260,8 +266,8 @@ try {
             onError(failure) { const phase: string = failure.phase },
         }
         createElement(Plot<React.ReactNode>, reactProps)
-        const renderer: CustomRendererFn = (series, context) => { context.color_at(0) }
-        const highlight_renderer: CustomHighlightRendererFn = (series, index, context) => { context.color_at(index) }
+        const renderer: CustomRendererFn<{ x: number; y: number }> = (series, context) => { context.color_at(0) }
+        const highlight_renderer: CustomHighlightRendererFn<{ x: number; y: number }> = (series, index, context) => { context.color_at(index) }
         custom({data:[{x:1,y:2}], renderer, highlight_renderer, hit_test:() => 0})
         import { Plot as AntaPlot, type PlotProps as AntaPlotProps } from '@antadesign/plot'
         const antaProps: AntaPlotProps = { plotArgs: { series: [scatter({data: [{x:1,y:2}], tooltip: true})] } }
@@ -272,9 +278,9 @@ try {
         import '@antadesign/plot/elements/a-plot-surface'
         import { plotElementReady } from '@antadesign/plot/elements'
         import { plotSurfaceElementReady } from '@antadesign/plot/elements'
-        const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const args: PlotArgs<string> = {series:[scatter({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
         // @ts-expect-error Tooltip content must match the declared host content type.
-        const invalid: PlotArgs<string> = {series:[scatter<number>({data:[],tooltip:()=> 1})]}
+        const invalid: PlotArgs<string> = {series:[scatter({data:[],tooltip:()=> 1})]}
     `
     await writeFile(resolve(sandbox, 'consumer.ts'), consumer)
     for (const resolution of [ts.ModuleResolutionKind.Bundler, ts.ModuleResolutionKind.NodeNext]) {

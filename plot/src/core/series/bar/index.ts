@@ -1,4 +1,4 @@
-import type { BarSeries, SeriesType } from "../../types"
+import type { SeriesType } from "../../types"
 import { bar_domain_extent, bar_padding_mode, new_bar, validate_bar_axes } from "./factory"
 import { bar_highlight_spec } from "./highlight"
 import { bar_hit_test } from "./hit"
@@ -31,4 +31,4 @@ export const bar_runtime = {
     validate_axes: validate_bar_axes,
     padding_mode: bar_padding_mode,
     domain_extent: bar_domain_extent,
-} satisfies SeriesType<unknown, BarSeries>
+} satisfies SeriesType<unknown>

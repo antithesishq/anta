@@ -1,5 +1,5 @@
 import { xy_extent } from "../../template/extent"
-import type { LineSeries, SeriesType } from "../../types"
+import type { SeriesType } from "../../types"
 import { new_line } from "./factory"
 import { line_highlight_spec } from "./highlight"
 import { line_hit_test } from "./hit"
@@ -17,4 +17,4 @@ export const line_runtime = {
     tooltip_hit_test: line_hit_test,
     highlight_spec: line_highlight_spec,
     domain_extent: xy_extent,
-} satisfies SeriesType<unknown, LineSeries>
+} satisfies SeriesType<unknown>

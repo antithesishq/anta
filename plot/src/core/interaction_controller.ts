@@ -1,12 +1,12 @@
 import { clamp } from 'es-toolkit/math'
-import { cursor_position, find_hits, resolve_point_data, same_hits, selectable_hit, type NearestPoint, type PointerOffset } from "./interactions/hit"
+import { cursor_position, find_hits, has_point_row, resolve_point_data, same_hits, selectable_hit, type NearestPoint, type PointerOffset } from "./interactions/hit"
 import { compatible_viewport, viewport_change, viewport_moved, type ViewportAxes } from "./interactions/viewport"
 import { resolve_tooltips, type ResolvedTooltip } from "./interactions/tooltip"
 import { resolve_highlights } from "./interactions/highlight"
 import { zoom_viewport_by_factor, rectangle_zoom_viewport, type RectangleZoomSnapshot, axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_has_room, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import { zoom_transition, zoom_transition_duration } from './interactions/zoom_pan'
-import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
+import type { ComposedPlot, HighlightSpec, PointData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
 import { target_axes, type InteractionTarget, type WheelInput } from './interactions/target'
 
 export type DragInput = PointerOffset & {
@@ -263,7 +263,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     }
 
     /** Ctrl is reserved for zoom gestures; ordinary clicks still select. */
-    handle_click(event: PointerOffset & { ctrlKey: boolean }, zoom_pan: ZoomPan): PointData | undefined {
+    handle_click(event: PointerOffset & { ctrlKey: boolean }, zoom_pan: ZoomPan): PointData<unknown> | undefined {
         if (this.#pan_enabled(zoom_pan) && event.ctrlKey) {
             return
         }
@@ -533,7 +533,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     }
 
     /** Select once and return the callback's point data for a host notification, independently of hover state. */
-    on_click(event: PointerOffset): PointData | undefined {
+    on_click(event: PointerOffset): PointData<unknown> | undefined {
         const plot = this.#get_composed_plot()
 
         if (plot === null) {
@@ -545,11 +545,15 @@ export class PlotInteractionController<TooltipContent = unknown> {
             return
         }
         const data = resolve_point_data(plot, hit)
-        const on_select = plot.series[hit.series_index]?.on_select
+        const series = plot.series[hit.series_index]
+        const on_select = series?.on_select
 
         if (data !== undefined && on_select !== undefined) {
-            // Column-backed series omit row; retain the callback boundary's existing payload shape.
-            on_select(data as TooltipData<any>)
+            if (has_point_row(data)) {
+                on_select(data)
+            } else if (series.kind === 'rule' || series.kind === 'custom') {
+                series.on_select?.(data)
+            }
         }
         return data
     }

@@ -1,18 +1,18 @@
-import { resolve_column } from "../../template/column"
-import { is_theme_color, resolve_color_arg } from "../../template/color"
+import { resolve_column, type ColumnArg } from "../../template/column"
+import { is_theme_color, read_row_color, resolve_color_arg } from "../../template/color"
 import { dedupe_bands, warn_dropped_bands } from "./duplicates"
-import type { ColorArg, FieldArg, ThemeColor } from "../../types"
+import type { ColorArg, ThemeColor } from "../../types"
 
-export type StackColorArg = ColorArg | ThemeColor[]
+export type StackColorArg<Row> = ColorArg<Row> | ThemeColor[]
 
 // side-agnostic: the caller assigns band / value to x / y depending on which side carried the array
-export type ExpandedStack = {
+export type ExpandedStack<Row> = {
     band: Float64Array // the band axis column: category indices, repeated once per segment
     value: Float64Array // the value axis column: each segment's own value
     stack_base: Float64Array // per-mark running offset on the value axis: where this segment starts
     is_tip: Uint8Array // 1 when the mark is the outermost non-zero segment of its band, per direction
     labels: string[] // per-mark source field name, for the tooltip
-    rows: Record<string, unknown>[] // the band's original row, repeated once per segment
+    rows: Row[] // the band's original row, repeated once per segment
     categories: string[]
 }
 
@@ -26,13 +26,13 @@ export type ExpandedStack = {
  * @param error_prefix - label prefixed to thrown errors
  * @returns the flattened per-mark columns plus the band categories
  */
-export function expand_stack(
-    data: Record<string, unknown>[],
-    band_arg: FieldArg,
+export function expand_stack<Row>(
+    data: Row[],
+    band_arg: ColumnArg<Row>,
     band_side: 'x' | 'y',
-    value_fields: string[],
+    value_fields: (keyof Row & string)[],
     error_prefix: string,
-): ExpandedStack {
+): ExpandedStack<Row> {
     const value_side = band_side === 'x' ? 'y' : 'x'
 
     if (value_fields.length === 0) {
@@ -64,7 +64,7 @@ export function expand_stack(
     const stack_base = new Float64Array(mark_count)
     const is_tip = new Uint8Array(mark_count)
     const labels: string[] = new Array(mark_count)
-    const rows: Record<string, unknown>[] = new Array(mark_count)
+    const rows: Row[] = new Array(mark_count)
 
     for (let stack = 0; stack < stack_count; stack++) {
         const row_index = kept_rows === null ? stack : kept_rows[stack]
@@ -121,10 +121,10 @@ export function expand_stack(
  * @param error_prefix - label prefixed to thrown errors
  * @returns the uniform color and / or the per-mark colors to attach to the series
  */
-export function resolve_stack_colors(
-    rows: Record<string, unknown>[],
+export function resolve_stack_colors<Row>(
+    rows: Row[],
     segment_count: number,
-    arg: StackColorArg | undefined,
+    arg: StackColorArg<Row> | undefined,
     value_side: 'x' | 'y',
     error_prefix: string,
 ): { color?: ThemeColor; colors?: (ThemeColor | null)[] } {
@@ -133,7 +133,7 @@ export function resolve_stack_colors(
         throw new Error(`${error_prefix}: color has ${arg.length} ${arg.length === 1 ? 'entry' : 'entries'} but ${value_side} names ${segment_count} stacked value fields. A color array needs one entry per segment, in the same order.`)
     }
 
-    const has_per_row = rows.some(row => is_theme_color(row.color))
+    const has_per_row = rows.some(row => read_row_color(row) !== undefined)
     const varies_per_mark = has_per_row || Array.isArray(arg) || typeof arg === 'function'
     const uniform = is_theme_color(arg) ? arg : undefined
     const result: { color?: ThemeColor; colors?: (ThemeColor | null)[] } = {}
@@ -146,7 +146,7 @@ export function resolve_stack_colors(
 
             // the mark's position within its band's block is the segment it came from
             const segment = mark % segment_count
-            const per_row = is_theme_color(row.color) ? row.color : undefined
+            const per_row = read_row_color(row)
 
             colors[mark] = per_row ?? segment_color(arg, row, segment) ?? null
         }
@@ -160,10 +160,10 @@ export function resolve_stack_colors(
 }
 
 /** Resolve explicit hover colors with the same segment indexing as normal stacked colors. */
-export function resolve_stack_highlight_colors(
-    rows: Record<string, unknown>[],
+export function resolve_stack_highlight_colors<Row>(
+    rows: Row[],
     segment_count: number,
-    arg: StackColorArg | undefined,
+    arg: StackColorArg<Row> | undefined,
 ): { highlight_color?: ThemeColor; highlight_colors?: (ThemeColor | null)[] } {
     if (arg === undefined) return {}
     if (Array.isArray(arg) && arg.length !== segment_count) {
@@ -175,9 +175,9 @@ export function resolve_stack_highlight_colors(
 
 // One segment's color from the series-level arg: positional for an array, otherwise the shared accessor /
 // uniform path with the segment index standing in for the row index.
-function segment_color(
-    arg: StackColorArg | undefined,
-    row: Record<string, unknown>,
+function segment_color<Row>(
+    arg: StackColorArg<Row> | undefined,
+    row: Row,
     segment: number,
 ): ThemeColor | undefined {
     if (Array.isArray(arg)) {
@@ -189,9 +189,9 @@ function segment_color(
 
 // One segment's value. An absent field stacks as 0 (sparse rows are the norm); anything else non-numeric
 // is a data error, so null / NaN / strings throw rather than silently vanishing.
-function read_segment_value(
-    row: Record<string, unknown>,
-    field: string,
+function read_segment_value<Row>(
+    row: Row,
+    field: keyof Row & string,
     row_index: number,
     error_prefix: string,
 ): number {

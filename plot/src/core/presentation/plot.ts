@@ -13,8 +13,8 @@ export function plot_wrapper_size(template: Partial<Dimensions>, canvas: Dimensi
 }
 
 /** Invert dark-mode output only when the plot's color configuration calls for it. */
-export function plot_color_filter<T>(
-    template: Pick<PlotTemplate<T>, 'series' | 'background' | 'theme_invert' | 'font' | 'title' | 'title_font' | 'x' | 'y'>,
+export function plot_color_filter<TooltipContent>(
+    template: Pick<PlotTemplate<TooltipContent>, 'series' | 'background' | 'theme_invert' | 'font' | 'title' | 'title_font' | 'x' | 'y'>,
     theme: ColorTheme,
 ): string | undefined {
     return theme === 'dark' && should_invert_color(template) ? DARK_THEME_FILTER : undefined

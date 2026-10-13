@@ -11,6 +11,6 @@ import { dot_radius } from "./paint"
  * @param y_scale - y scale
  * @returns the point index under the cursor, or null
  */
-export function scatter_hit_test(series: ComposedScatter, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale): number | null {
+export function scatter_hit_test<Row, TooltipContent>(series: ComposedScatter<Row, TooltipContent>, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale): number | null {
     return nearest_point_hit(series, cursor, x_scale, y_scale, i => dot_radius(series, i))
 }

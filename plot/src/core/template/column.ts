@@ -5,6 +5,11 @@
 
 import type { AxisKind, FieldArg } from "../types"
 
+type DefaultField = 'x' | 'y' | 'x2' | 'y2'
+
+// Internal columns also accept the library's defaults. Public inputs use FieldArg<Row>.
+export type ColumnArg<Row> = FieldArg<Row> | DefaultField
+
 export type ColumnMode = 'undecided' | 'numeric' | 'categorical'
 
 type SeriesColumnFields = {
@@ -47,8 +52,34 @@ export type ResolvedColumn = {
  * @param index - the row index
  * @returns the raw cell value
  */
-export function read_field(arg: FieldArg, row: Record<string, unknown>, index: number): unknown {
+export function read_field<Row>(arg: FieldArg<Row>, row: Row, index: number) {
     return typeof arg === 'function' ? arg(row, index) : row[arg]
+}
+
+// A default field is a runtime convention, not necessarily a declared key of Row.
+function read_default_field(row: unknown, field: DefaultField): unknown {
+    if (row === null || (typeof row !== 'object' && typeof row !== 'function')) {
+        return undefined
+    }
+    switch (field) {
+        case 'x': return 'x' in row ? row.x : undefined
+        case 'y': return 'y' in row ? row.y : undefined
+        case 'x2': return 'x2' in row ? row.x2 : undefined
+        case 'y2': return 'y2' in row ? row.y2 : undefined
+    }
+}
+
+export function has_default_field(row: unknown, field: DefaultField): boolean {
+    return row !== null && (typeof row === 'object' || typeof row === 'function') && field in row
+}
+
+function read_column_field<Row>(arg: ColumnArg<Row>, row: Row, index: number): unknown {
+    switch (arg) {
+        case 'x': case 'y': case 'x2': case 'y2':
+            return read_default_field(row, arg)
+        default:
+            return read_field(arg, row, index)
+    }
 }
 
 /**
@@ -60,9 +91,9 @@ export function read_field(arg: FieldArg, row: Record<string, unknown>, index: n
  * @param fallback_label - error-message label used when arg is an accessor (not a field name)
  * @returns the resolved values plus mode and categories
  */
-export function resolve_column(
-    data: Record<string, unknown>[],
-    arg: FieldArg,
+export function resolve_column<Row>(
+    data: Row[],
+    arg: ColumnArg<Row>,
     error_prefix: string,
     fallback_label: string,
 ): ResolvedColumn {
@@ -73,7 +104,8 @@ export function resolve_column(
     const label = typeof arg === 'string' ? arg : fallback_label
 
     for (let i = 0; i < length; i++) {
-        values[i] = resolver.resolve(read_field(arg, data[i], i), i, label)
+        const value = read_column_field(arg, data[i], i)
+        values[i] = resolver.resolve(value, i, label)
     }
     return { values, mode: resolver.mode(), categories: resolver.categories() }
 }
@@ -88,10 +120,10 @@ export function resolve_column(
  * @param y_defaulted - whether y fell back to the default field name
  * @returns the resolved x/y arrays plus per-column mode and categories
  */
-export function resolve_xy_columns(
-    data: Record<string, unknown>[],
-    x_arg: FieldArg,
-    y_arg: FieldArg,
+export function resolve_xy_columns<Row>(
+    data: Row[],
+    x_arg: ColumnArg<Row>,
+    y_arg: ColumnArg<Row>,
     error_prefix: string,
     x_defaulted: boolean,
     y_defaulted: boolean,
@@ -119,11 +151,11 @@ export function resolve_xy_columns(
  * @param x_arg - x field name or accessor
  * @param y_arg - y field name or accessor
  */
-export function attach_resolved_columns(
+export function attach_resolved_columns<Row>(
     series: SeriesColumnFields,
     resolved: ResolvedColumnMeta,
-    x_arg: FieldArg | undefined,
-    y_arg: FieldArg | undefined,
+    x_arg: ColumnArg<Row> | undefined,
+    y_arg: ColumnArg<Row> | undefined,
 ): void {
     if (resolved.x_mode !== 'undecided') {
         series.x_axis_kind = resolved.x_mode
@@ -158,9 +190,9 @@ export function attach_resolved_columns(
  * @param error_prefix - label prefixed to the error
  * @param slot - which axis slot, for the message
  */
-export function validate_field_present(
-    row: Record<string, unknown>,
-    arg: FieldArg,
+export function validate_field_present<Row>(
+    row: Row,
+    arg: ColumnArg<Row>,
     defaulted: boolean,
     error_prefix: string,
     slot: string,
@@ -169,11 +201,14 @@ export function validate_field_present(
         return
     }
 
-    if (arg in row) {
+    const is_object = row !== null && (typeof row === 'object' || typeof row === 'function')
+    if (is_object && arg in row) {
         return
     }
-    const available = Object.keys(row)
-        .filter(k => typeof row[k] === 'number' || typeof row[k] === 'string')
+    const entries: [string, unknown][] = is_object ? Object.entries(row) : []
+    const available = entries
+        .filter(([, value]) => typeof value === 'number' || typeof value === 'string')
+        .map(([key]) => key)
         .sort()
     const available_str = available.length > 0 ? available.map(f => `'${f}'`).join(', ') : '(none)'
     const reason = defaulted

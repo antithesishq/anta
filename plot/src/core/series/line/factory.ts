@@ -4,19 +4,19 @@ import { resolve_stroke, resolve_highlight_colors } from "../../template/color"
 import { validate_hoverable, validate_non_negative, validate_positive } from "../../template/validate"
 import type { ColorArg, FieldArg, LineSeries, MarkShape, SelectFn, StrokeArg, ThemeColor, TooltipArg } from "../../types"
 
-export type LineArgs<TooltipContent = unknown> = {
-    data: Record<string, unknown>[]
-    x?: FieldArg
-    y?: FieldArg
+export type LineArgs<Row, TooltipContent = unknown> = {
+    data: Row[]
+    x?: FieldArg<Row>
+    y?: FieldArg<Row>
     color?: ThemeColor
-    highlight_color?: ColorArg
+    highlight_color?: ColorArg<Row>
     width?: number
     dash?: number[]
     mark?: MarkShape
     mark_size?: number
     mark_stroke?: StrokeArg
-    tooltip?: TooltipArg<Record<string, unknown>, TooltipContent>
-    on_select?: SelectFn<Record<string, unknown>>
+    tooltip?: TooltipArg<Row, TooltipContent>
+    on_select?: SelectFn<Row>
     hoverable?: boolean
     highlight?: boolean
 }
@@ -26,11 +26,11 @@ export type LineArgs<TooltipContent = unknown> = {
  * @param args - line series arguments
  * @returns the resolved line series
  */
-export function new_line<TooltipContent = unknown>(args: LineArgs<TooltipContent>): LineSeries<TooltipContent> {
+export function new_line<Row, TooltipContent = unknown>(args: LineArgs<Row, TooltipContent>): LineSeries<Row, TooltipContent> {
     const x_arg = args.x ?? 'x'
     const y_arg = args.y ?? 'y'
     const resolved = resolve_xy_columns(args.data, x_arg, y_arg, 'plot.line', args.x === undefined, args.y === undefined)
-    const series: LineSeries<TooltipContent> = {
+    const series: LineSeries<Row, TooltipContent> = {
         kind: 'line',
         ...resolve_highlight_colors(args.data, args.highlight_color),
         x: resolved.x,

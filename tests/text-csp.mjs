@@ -241,6 +241,32 @@ for (const engine of engines) {
       assert.equal(await page.locator('a-text').evaluate(n => n.shadowRoot), null)
     })
   }
+  test(`${engine.name()}: Text controls leave collapsed and expanded content links clickable`, async t => {
+    const page = await pageFor(t, engine)
+    await register(page)
+    for (const direction of ['ltr', 'rtl']) {
+      await mount(page, raw(3).replace('<a-text ', `<a-text dir="${direction}" `).replace(longText,
+        `First line<br>Second line<br><a href="#collapsed-link">Visible link</a><br>${longText} <a href="#last-link">Guide</a>`))
+      const root = page.locator('#mount > a-text')
+      const control = root.locator(':scope > a-button')
+      await control.waitFor({ state: 'visible' })
+      assert.ok(await control.evaluate(n => n.getBoundingClientRect().width < n.parentElement.getBoundingClientRect().width / 4))
+      await root.locator('a[href="#collapsed-link"]').click()
+      await page.waitForURL(url => url.hash === '#collapsed-link')
+      assert.equal(await expanded(page), false)
+      await control.click()
+      assert.equal(await expanded(page), true)
+      await root.locator('a[href="#last-link"]').click()
+      await page.waitForURL(url => url.hash === '#last-link')
+      assert.equal(await expanded(page), true)
+      await root.locator('a[href="#collapsed-link"]').focus()
+      await page.keyboard.press('Enter')
+      await page.waitForURL(url => url.hash === '#collapsed-link')
+      assert.equal(await expanded(page), true)
+      await control.click()
+      assert.equal(await expanded(page), false)
+    }
+  })
   test(`${engine.name()}: Text handles a late Button upgrade and clears defaults when its control moves`, async t => {
     const page = await pageFor(t, engine)
     await page.evaluate(() => {

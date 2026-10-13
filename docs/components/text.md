@@ -71,15 +71,16 @@ press Enter or Space, to drop the clamp.
 Expanding is one-way by default, so the control is hidden once the text
 is revealed. Add `collapsible` for a two-way toggle: the chevron stays
 visible while expanded (rotated up) and flips its label between "Show
-more" and "Show less". `collapsible` takes effect only with `expandable`.
+more" and "Show less". The collapse control follows the revealed text in normal
+flow and wraps when needed, so it does not cover links in the final line. `collapsible` takes effect only with `expandable`.
 
 ```tsx
 {/* One-way: the chevron is hidden once expanded */}
-<Text truncate expandable>{longSentence}</Text>
-<Text truncate={3} expandable>{longSentence}</Text>
+<Text truncate expandable>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+<Text truncate={3} expandable>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
 
 {/* Two-way: the reader can collapse it back */}
-<Text truncate={3} expandable collapsible>{longSentence}</Text>
+<Text truncate={3} expandable collapsible>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
 ```
 
 ## Component props

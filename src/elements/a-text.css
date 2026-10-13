@@ -45,7 +45,7 @@
   }
   a-text[inline][truncate]:not([expandable]) { display: -webkit-inline-box; }
   a-text[truncate][expandable]:state(expanded) > a-text-content {
-    display: block;
+    display: contents;
     -webkit-line-clamp: unset;
     overflow: visible;
   }
@@ -77,8 +77,10 @@
     display: none;
     position: absolute;
     z-index: 1;
-    inset-inline: 0;
+    inset-inline-start: auto;
+    inset-inline-end: 0;
     bottom: 0;
+    width: 1.5em;
     height: 1.5em;
     opacity: 0;
     transition: opacity 150ms ease-out, color 150ms ease-out;
@@ -101,13 +103,21 @@
     transition: transform 150ms ease-out;
   }
   a-text[truncate][expandable] > a-button::after { content: none; }
-  a-text[truncate][expandable]:state(overflowing):not(:state(expanded)) > a-button,
-  a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { display: block; }
+  a-text[truncate][expandable]:state(overflowing):not(:state(expanded)) > a-button { display: block; }
+  /* Once revealed, the control occupies its own inline space after the text.
+     It wraps onto another line when needed, leaving content links clickable. */
+  a-text[truncate][expandable]:state(expanded)[collapsible] > a-button {
+    display: inline-block;
+    position: relative;
+    inset: auto;
+    height: 1em;
+    margin-inline-start: 0.25em;
+    vertical-align: baseline;
+  }
   a-text[truncate="1"][expandable]:not(:state(expanded)) > a-button {
     inset-inline-start: auto;
     top: 0;
     bottom: 0;
-    width: 3em;
     height: auto;
   }
   a-text[truncate][expandable]:is(:hover, :focus-within) > a-button,

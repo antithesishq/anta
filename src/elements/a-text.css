@@ -34,14 +34,10 @@
   a-text-content { display: contents; }
   a-text > a-text-content + a-button { display: none; }
 
-  /* Reserve the collapsed control gutter before registration so initialization
-     does not change the available line width. */
+  /* The absolute control occupies the block's bottom padding in both states.
+     Reserve it before registration to keep initialization stable. */
   a-text[truncate][expandable] {
     box-sizing: border-box;
-    padding-inline-end: 1.75em;
-  }
-  a-text[truncate][expandable]:state(expanded) { padding-inline-end: 0; }
-  a-text[truncate][expandable]:state(expanded)[collapsible] {
     padding-block-end: 1.75em;
   }
 
@@ -116,12 +112,6 @@
   a-text[truncate][expandable] > a-button::after { content: none; }
   a-text[truncate][expandable]:state(overflowing):not(:state(expanded)) > a-button,
   a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { display: block; }
-  a-text[truncate="1"][expandable]:not(:state(expanded)) > a-button {
-    inset-inline-start: auto;
-    top: 0;
-    bottom: 0;
-    height: auto;
-  }
   a-text[truncate][expandable]:is(:hover, :focus-within) > a-button,
   a-text[truncate][expandable]:state(expanded) > a-button { opacity: 1; }
   a-text[truncate][expandable]:state(expanded) > a-button::before { transform: rotate(225deg); }

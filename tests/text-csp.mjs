@@ -254,14 +254,10 @@ for (const engine of engines) {
       const assertControlClear = async () => assert.ok(await root.evaluate(n => {
         const content = n.querySelector(':scope > a-text-content').getBoundingClientRect()
         const button = n.querySelector(':scope > a-button').getBoundingClientRect()
-        if (n.matches(':state(expanded)')) {
-          const root = n.getBoundingClientRect()
-          return content.bottom <= button.top + 0.5 && Math.abs(content.width - root.width) <= 0.5
-        }
-        return getComputedStyle(n).direction === 'rtl'
-          ? button.right <= content.left + 0.5
-          : content.right <= button.left + 0.5
-      }), `${direction}: control must stay clear of text and allow full-width expanded content`)
+        const root = n.getBoundingClientRect()
+        return content.bottom <= button.top + 0.5 && button.bottom <= root.bottom + 0.5
+          && Math.abs(content.width - root.width) <= 0.5
+      }), `${direction}: control must occupy the padding inside the block without narrowing text`)
       await assertControlClear()
       await root.locator('a[href="#collapsed-link"]').click()
       await page.waitForURL(url => url.hash === '#collapsed-link')

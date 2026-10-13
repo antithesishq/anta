@@ -58,9 +58,9 @@ changes are not listed.
 
 ### Fixed
 
-- [Text expansion controls](/text/#truncation-and-expansion) leave content links
-  clickable. The absolute control occupies reserved bottom padding in both
-  states, keeping the text width unchanged on expansion.
+- [Text collapse controls](/text/#truncation-and-expansion) occupy reserved bottom
+  padding while expanded, leaving content links clickable. Folded text has no
+  added padding, and its width stays unchanged on expansion.
 
 - [Menu](/menu/) applies custom `round` values to its container in every theme.
 - [InputDate](/input-date/) labels and hints no longer toggle its calendar.

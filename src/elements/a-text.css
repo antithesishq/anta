@@ -34,9 +34,8 @@
   a-text-content { display: contents; }
   a-text > a-text-content + a-button { display: none; }
 
-  /* The absolute control occupies the block's bottom padding in both states.
-     Reserve it before registration to keep initialization stable. */
-  a-text[truncate][expandable] {
+  /* Reserve space for the absolute collapse control only while expanded. */
+  a-text[truncate][expandable]:state(expanded)[collapsible] {
     box-sizing: border-box;
     padding-block-end: 1.75em;
   }

@@ -72,8 +72,8 @@ Expanding is one-way by default, so the control is hidden once the text
 is revealed. Add `collapsible` for a two-way toggle: the chevron stays
 visible while expanded (rotated up) and flips its label between "Show
 more" and "Show less". The control is absolutely positioned over the Text block
-at its bottom corner. Bottom padding reserves its area in both states, including
-before JavaScript initializes. Text keeps the same full width when expanded.
+at its bottom corner. Bottom padding reserves its area only while expanded with
+`collapsible`. Folded text has no added padding. Text keeps the same full width when expanded.
 Custom CSS can remove the padding, allowing the control to overlap content.
 `collapsible` takes effect only with `expandable`.
 

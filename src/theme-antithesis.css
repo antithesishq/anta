@@ -1264,6 +1264,8 @@
      when a slotted button does, which matches the shadow ring condition. */
   a-input:not([readonly]):focus::part(field),
   a-input[readonly]:state(kb-focus)::part(field) {
+    --focus-ring-pulse-width: 3px;
+
     animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
 
     @media (prefers-reduced-motion: reduce) {
@@ -1278,6 +1280,26 @@
     &:not([priority="tertiary"]) {
       --input-rest-border: var(--stroke-1);
     }
+  }
+
+  /* Status fields take the brightest tone stroke; dark brand is muted to
+     sit with the other tones. The hint keeps the border's hue and chroma at
+     a lightness that holds 4.5:1 on the field's surroundings. */
+  a-input[status="brand"]:not(:disabled) {
+    --input-border: light-dark(
+      var(--stroke-1-brand-active),
+      oklch(from var(--stroke-1-brand-active) 0.6 calc(c * 0.75) h)
+    );
+  }
+  a-input[status="info"]:not(:disabled) { --input-border: var(--stroke-1-info-active); }
+  a-input[status="success"]:not(:disabled) { --input-border: var(--stroke-1-success-active); }
+  a-input[status="warning"]:not(:disabled) { --input-border: var(--stroke-1-warning-active); }
+  a-input[status="critical"]:not(:disabled) { --input-border: light-dark(#ff4a68, var(--stroke-1-critical-active)); }
+  a-input[status]:not([status="neutral"], :disabled) {
+    --input-hint: light-dark(
+      oklch(from var(--input-border) 0.53 c h),
+      oklch(from var(--input-border) 0.72 c h)
+    );
   }
 
   a-input:disabled {
@@ -1375,8 +1397,8 @@
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
   }
   30% {
-    outline-width: 4px;
-    outline-offset: calc(-4px * var(--focus-ring-inset, 0));
+    outline-width: var(--focus-ring-pulse-width, 4px);
+    outline-offset: calc(-1 * var(--focus-ring-pulse-width, 4px) * var(--focus-ring-inset, 0));
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
   }
 }

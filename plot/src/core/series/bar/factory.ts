@@ -89,6 +89,7 @@ function new_plain_bar<Row, TooltipContent>(args: BarArgs<Row, TooltipContent>, 
     const drawn = drop_shadowed_rows(args.data, resolved)
     const series: BarSeries<Row, TooltipContent> = {
         kind: 'bar',
+        rows: drawn.data,
         x: drawn.x,
         y: drawn.y,
         ...resolve_color(drawn.data, color),
@@ -96,7 +97,6 @@ function new_plain_bar<Row, TooltipContent>(args: BarArgs<Row, TooltipContent>, 
     }
 
     apply_bar_options(series, args)
-    series.rows = drawn.data // caller's original for the tooltip
     attach_resolved_columns(series, resolved, x_arg, y_arg)
     return series
 }
@@ -150,6 +150,7 @@ function new_stacked_bar<Row, TooltipContent>(args: BarArgs<Row, TooltipContent>
     const value_side = is_vertical ? 'y' : 'x'
     const series: BarSeries<Row, TooltipContent> = {
         kind: 'bar',
+        rows: expanded.rows,
         x: is_vertical ? expanded.band : expanded.value,
         y: is_vertical ? expanded.value : expanded.band,
         stack_base: expanded.stack_base,
@@ -160,7 +161,6 @@ function new_stacked_bar<Row, TooltipContent>(args: BarArgs<Row, TooltipContent>
     }
 
     apply_bar_options(series, args)
-    series.rows = expanded.rows
     series.x_axis_kind = is_vertical ? 'categorical' : 'numeric'
     series.y_axis_kind = is_vertical ? 'numeric' : 'categorical'
 

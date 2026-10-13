@@ -39,6 +39,7 @@ export function new_area<Row, TooltipContent = unknown>(args: AreaArgs<Row, Tool
     const stroke = resolve_stroke(args.stroke, 'plot.area')
     const series: AreaSeries<Row, TooltipContent> = {
         kind: 'area',
+        rows: args.data,
         ...resolve_highlight_colors(args.data, args.highlight_color),
         x: resolved.x,
         y: resolved.y,
@@ -86,7 +87,6 @@ export function new_area<Row, TooltipContent = unknown>(args: AreaArgs<Row, Tool
         series.highlight = args.highlight
     }
 
-    series.rows = args.data // caller's original for the tooltip
     attach_resolved_columns(series, resolved, x_arg, y_arg)
     retain_factory_args(series, args)
     return series

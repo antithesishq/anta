@@ -68,6 +68,7 @@ export type Stroke = { color: ThemeColor; width?: number }
 
 export type ScatterSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'scatter'
+    rows: Row[]
     /** Retained until composition, when the viewport is available. */
     size_accessor?: Exclude<ScatterSizeArg<Row>, number>
     /** Original row indices, retained when category filtering removes rows. */
@@ -80,6 +81,7 @@ export type ScatterSeries<Row, TooltipContent = unknown> = BaseSeries<Row, Toolt
 
 export type RectSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'rect'
+    rows: Row[]
     span?: 'x' | 'y'
     x2?: Float64Array
     y2?: Float64Array
@@ -95,6 +97,7 @@ export type RectSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipC
 
 export type BarSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'bar'
+    rows: Row[]
     border_radius?: number
     inset?: number
     min_size?: number
@@ -109,6 +112,7 @@ export type BarPixelSpan = { baseline: Float64Array; tip: Float64Array }
 
 export type LineSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'line'
+    rows: Row[]
     width?: number
     dash?: number[]
     mark?: MarkShape
@@ -125,6 +129,7 @@ export type RuleSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipC
 
 export type AreaSeries<Row, TooltipContent = unknown> = BaseSeries<Row, TooltipContent> & {
     kind: 'area'
+    rows: Row[]
     x2?: Float64Array
     y2?: Float64Array
     bound_pinned?: boolean

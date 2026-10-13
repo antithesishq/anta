@@ -62,6 +62,7 @@ export function new_rect<Row, TooltipContent = unknown>(args: RectArgs<Row, Tool
 
     const series: RectSeries<Row, TooltipContent> = {
         kind: 'rect',
+        rows: args.data,
         x: resolved.x1,
         y: resolved.y1,
         ...resolve_color(args.data, args.color),
@@ -130,7 +131,6 @@ export function new_rect<Row, TooltipContent = unknown>(args: RectArgs<Row, Tool
         series.highlight = args.highlight
     }
 
-    series.rows = args.data // caller's original for the tooltip
     attach_resolved_columns(series, resolved, x_fields.value, y_fields.value)
     retain_factory_args(series, args)
     return series

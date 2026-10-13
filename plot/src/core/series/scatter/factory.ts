@@ -33,6 +33,7 @@ export function new_scatter<Row, TooltipContent = unknown>(args: ScatterArgs<Row
     const resolved = resolve_xy_columns(args.data, x_arg, y_arg, 'plot.scatter', args.x === undefined, args.y === undefined)
     const series: ScatterSeries<Row, TooltipContent> = {
         kind: 'scatter',
+        rows: args.data,
         x: resolved.x,
         y: resolved.y,
         ...resolve_color(args.data, args.color),
@@ -66,7 +67,6 @@ export function new_scatter<Row, TooltipContent = unknown>(args: ScatterArgs<Row
         series.stroke = stroke
     }
 
-    series.rows = args.data // Keep the caller's original rows for tooltip and selection payloads.
     attach_resolved_columns(series, resolved, x_arg, y_arg)
     retain_factory_args(series, args)
     return series

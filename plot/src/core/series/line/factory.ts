@@ -32,6 +32,7 @@ export function new_line<Row, TooltipContent = unknown>(args: LineArgs<Row, Tool
     const resolved = resolve_xy_columns(args.data, x_arg, y_arg, 'plot.line', args.x === undefined, args.y === undefined)
     const series: LineSeries<Row, TooltipContent> = {
         kind: 'line',
+        rows: args.data,
         ...resolve_highlight_colors(args.data, args.highlight_color),
         x: resolved.x,
         y: resolved.y,
@@ -79,7 +80,6 @@ export function new_line<Row, TooltipContent = unknown>(args: LineArgs<Row, Tool
         series.highlight = args.highlight
     }
 
-    series.rows = args.data // Keep the caller's original rows for tooltip and selection payloads.
     attach_resolved_columns(series, resolved, x_arg, y_arg)
     retain_factory_args(series, args)
     return series

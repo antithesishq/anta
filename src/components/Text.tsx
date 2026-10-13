@@ -8,7 +8,7 @@ import { Tooltip } from "./Tooltip"
 export type ExpandMode =
   | { expandable?: never; collapsible?: never }
   | {
-      /** Show a fade hint when text overflows and reserve end padding for an
+      /** Show a fade hint when text overflows and reserve space for an
        *  expansion control. Select the control or press Enter or Space while it
        *  has focus to reveal the text. Only takes effect with `truncate`.
        *  Expansion is one-way by default: the control is hidden once expanded.

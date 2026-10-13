@@ -34,11 +34,15 @@
   a-text-content { display: contents; }
   a-text > a-text-content + a-button { display: none; }
 
-  /* Reserve the control gutter before registration so expansion never covers
-     content links or changes the available line width. */
+  /* Reserve the collapsed control gutter before registration so initialization
+     does not change the available line width. */
   a-text[truncate][expandable] {
     box-sizing: border-box;
     padding-inline-end: 1.75em;
+  }
+  a-text[truncate][expandable]:state(expanded) { padding-inline-end: 0; }
+  a-text[truncate][expandable]:state(expanded)[collapsible] {
+    padding-block-end: 1.75em;
   }
 
   /* Expansion needs a separate clamp region so the control remains outside

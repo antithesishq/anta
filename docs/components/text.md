@@ -71,10 +71,10 @@ press Enter or Space, to drop the clamp.
 Expanding is one-way by default, so the control is hidden once the text
 is revealed. Add `collapsible` for a two-way toggle: the chevron stays
 visible while expanded (rotated up) and flips its label between "Show
-more" and "Show less". Expandable Text reserves padding at the inline end for
-the control, keeping it clear of content links in both states. The padding applies
-before JavaScript initializes, so text may wrap sooner without shifting on
-registration. `collapsible` takes effect only with `expandable`.
+more" and "Show less". Collapsed Text reserves padding at the inline end for
+the expansion control, including before JavaScript initializes. Expanded Text
+uses the full width and reserves bottom padding for the collapse control, keeping
+it below content links. `collapsible` takes effect only with `expandable`.
 
 ```tsx
 {/* One-way: the chevron is hidden once expanded */}
@@ -90,7 +90,7 @@ registration. `collapsible` takes effect only with `expandable`.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `collapsible?` | boolean | — | Let the reader collapse back after expanding: the chevron becomes a "Show more" / "Show less" toggle that stays visible while expanded. Only takes effect together with `expandable`. |
-| `expandable?` | boolean | — | Show a fade hint when text overflows and reserve end padding for an expansion control. Select the control or press Enter or Space while it has focus to reveal the text. Only takes effect with `truncate`. Expansion is one-way by default: the control is hidden once expanded. Add `collapsible` for a two-way toggle. |
+| `expandable?` | boolean | — | Show a fade hint when text overflows and reserve space for an expansion control. Select the control or press Enter or Space while it has focus to reveal the text. Only takes effect with `truncate`. Expansion is one-way by default: the control is hidden once expanded. Add `collapsible` for a two-way toggle. |
 | `inline?` | boolean | — | Render as inline-block instead of the default block element. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual priority. Maps to text-1..text-4 (`primary` = text-1, the strongest). The default is `secondary` (text-2) — body text reads a step softer than the strongest foreground; pass `primary` for emphasis. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24. |

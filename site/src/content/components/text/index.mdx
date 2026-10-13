@@ -114,10 +114,10 @@ press Enter or Space, to drop the clamp.
 Expanding is one-way by default, so the control is hidden once the text
 is revealed. Add `collapsible` for a two-way toggle: the chevron stays
 visible while expanded (rotated up) and flips its label between "Show
-more" and "Show less". Expandable Text reserves padding at the inline end for
-the control, keeping it clear of content links in both states. The padding applies
-before JavaScript initializes, so text may wrap sooner without shifting on
-registration. `collapsible` takes effect only with `expandable`.
+more" and "Show less". Collapsed Text reserves padding at the inline end for
+the expansion control, including before JavaScript initializes. Expanded Text
+uses the full width and reserves bottom padding for the collapse control, keeping
+it below content links. `collapsible` takes effect only with `expandable`.
 
 ```tsx folded
 {/* One-way: the chevron is hidden once expanded */}

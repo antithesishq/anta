@@ -466,10 +466,8 @@ export interface AExpanderAttributes extends BaseAttributes {
   /** Disables the header: not clickable or focusable, hover affordance
    *  off, text dimmed. The open state freezes as-is. Presence-based. */
   disabled?: boolean | ''
-  /** Round corners sized to half the folded (header) height — a pill when folded,
-   *  the same radius when expanded (the element measures the header and publishes
-   *  `--_expander-round-radius`). A length value (`round="12px"`) is a fixed radius
-   *  that overrides the measurement. Presence-based for the boolean form. */
+  /** Use a `1rem` corner radius in both disclosure states. A length value
+   *  (`round="12px"`) overrides it. Presence-based for the boolean form. */
   round?: boolean | number | string
   /** Semantic tone, or any literal CSS color for a one-off custom tone.
    *  Named tones re-point the text + filled surface palette; a custom

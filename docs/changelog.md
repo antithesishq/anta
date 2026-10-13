@@ -28,6 +28,10 @@ changes are not listed.
 
 ### Changed
 
+- [Expander rounding](/expander/#round) uses a `1rem` radius when `round` is
+  `true`, independent of title level and header height. Explicit radius values
+  remain supported; native `details[data-anta][round]` uses the same default.
+
 - Antithesis [Sliders](/slider/#size-tones-and-radius) use the filled rail's color
   for the thumb when `thumbTone` is omitted. Pass `thumbTone="neutral"` to keep
   a neutral thumb.

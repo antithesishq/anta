@@ -555,8 +555,9 @@ or `--icon-size`.
 
 ## Content Security Policy
 
-Anta's tokens, component stylesheets, and optional themes work when your Content
-Security Policy (CSP) allows their stylesheet URLs through `style-src-elem` or
+Anta's tokens, component stylesheets, and optional themes work when your
+[Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)
+(CSP) allows their stylesheet URLs through `style-src-elem` or
 its `style-src` fallback. External CSS and named theme values do not require
 inline style attributes.
 

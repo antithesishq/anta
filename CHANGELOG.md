@@ -39,6 +39,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Card styling](/card/#styling) works with `style-src 'self'`. Supported slot
+  compositions remain visible while element registration is pending.
+
 - [Menu](/menu/) applies custom `round` values to its container in every theme.
 - [InputDate](/input-date/) labels and hints no longer toggle its calendar.
   [Menu](/menu/) field anchors ignore clicks outside their field part.

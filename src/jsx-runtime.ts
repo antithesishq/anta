@@ -204,6 +204,7 @@ export interface AntaIntrinsicElements {
   'a-dialog': ADialogAttributes
   'a-card': ACardAttributes
   'a-card-icon-chip': BaseAttributes
+  'a-card-footer': BaseAttributes
   'a-input-date-time-container': BaseAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes

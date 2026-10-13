@@ -4,8 +4,8 @@
 @layer anta.components {
   /* Host + token definitions for <a-card>. The visible box lives here (not in the
      shadow) so plain consumer CSS overrides it and it paints before the element
-     upgrades; the shadow <style> owns layout + region typography and only
-     REFERENCES these --card-* tokens with literal fallbacks. Named tones use
+     upgrades. External part rules own the shadow layout and reference these
+     tokens. Named tones use
      Anta's theme-aware role tokens, so named tones follow the inherited color
      scheme (same as <a-expander> / <a-tag>); custom tones use `light-dark()`. */
 
@@ -87,9 +87,8 @@
     /* Clip full-bleed media to the rounded corners. */
     overflow: clip;
     /* Smooth the surface + edge (and any drop-shadow — the edge IS a box-shadow)
-       across rest / hover / active, and fade the card in on :defined (see the
-       pre-upgrade rule below). Gated off under reduced motion. */
-    transition: background-color 150ms ease, box-shadow 150ms ease, opacity 180ms ease;
+       across rest / hover / active. Gated off under reduced motion. */
+    transition: background-color 150ms ease, box-shadow 150ms ease;
   }
 
   a-card[priority="secondary"] {
@@ -146,28 +145,182 @@
     a-card { transition: none; }
   }
 
-  /* Pre-upgrade: before the element JS registers there's no shadow, so the flat,
-     un-slotted light-DOM children would render mislaid + unstyled and flash on
-     :defined. Rather than re-create the shadow's layout here (it can't match
-     exactly → a jump), hold the whole card at `opacity: 0` — the children stay in
-     flow so it still reserves a size, and the padding gives that box its inset —
-     then let the host `opacity` transition fade it in on :defined, once the shadow
-     has laid the content out correctly. (A shadow entrance *animation* would freeze
-     at opacity 0 when the card is created inside a display:none subtree — e.g. a
-     collapsed disclosure or the playground iframe — so the fade lives on the host as
-     a state transition instead: robust, and in an already-registered context the
-     card is :defined from creation so it's simply visible.) */
+  /* Flat slot markup can reproduce the section layout for one body, one media,
+     one icon, one footer, and up to two header nodes. Other compositions retain
+     the existing hidden fallback until their grouping exists in shadow DOM. */
   a-card:not(:defined) {
+    --_card-pre-body-row: minmax(0, 1fr);
+
     padding: var(--card-padding);
     opacity: 0;
   }
+  a-card:not(:defined):has(> *):where(:not(:has(
+    > :not([slot]) ~ :not([slot]),
+    > [slot="header"] ~ [slot="header"] ~ [slot="header"],
+    > [slot="icon"] ~ [slot="icon"],
+    > [slot="media"] ~ [slot="media"],
+    > [slot="footer"] ~ [slot="footer"],
+    > [slot]:not([slot="media"], [slot="icon"], [slot="header"], [slot="footer"])
+  ))) {
+    display: grid;
+    padding: 0;
+    grid-template-columns: [media-left] auto [content] var(--card-padding) [icon] auto [title] minmax(0, 1fr) var(--card-padding) [media-right] auto;
+    grid-template-rows: [media-top] auto [heading] auto [subtitle] auto [body] var(--_card-pre-body-row) [footer] auto [media-bottom] auto;
+    align-content: start;
+    font-size: var(--card-content-fs);
+    line-height: var(--card-content-lh);
+    opacity: 1;
+  }
+  a-card:not(:defined):not(:has(> *)) { opacity: 0; }
+  a-card:not(:defined):not(:has(> :not([slot]))) {
+    --_card-pre-body-row: 0;
+  }
+  a-card:not(:defined) > [slot="media"] {
+    grid-column: 1 / -1;
+    grid-row: media-top;
+  }
+  a-card:not(:defined)[media-position="bottom"] > [slot="media"] { grid-row: media-bottom; }
+  a-card:not(:defined)[media-position="left"] > [slot="media"] {
+    grid-column: media-left;
+    grid-row: 1 / -1;
+  }
+  a-card:not(:defined)[media-position="right"] > [slot="media"] {
+    grid-column: media-right;
+    grid-row: 1 / -1;
+  }
+  a-card:not(:defined) > [slot="header"] {
+    grid-column: title;
+    grid-row: heading / body;
+    min-width: 0;
+    align-self: center;
+    padding-block-start: calc(var(--card-padding) - var(--card-header-nudge));
+    padding-block-end: calc(var(--card-padding) / 2);
+  }
+  a-card:not(:defined) > [slot="header"]:has(~ [slot="header"]) {
+    grid-row: heading;
+    align-self: end;
+    padding-block-end: 0;
+  }
+  a-card:not(:defined) > [slot="header"] ~ [slot="header"] {
+    grid-row: subtitle;
+    align-self: start;
+    padding-block-start: 0;
+  }
+  a-card:not(:defined) > [slot="icon"] {
+    grid-column: icon;
+    grid-row: heading / body;
+    align-self: center;
+    margin-inline-end: 1ch;
+    margin-block-start: calc(var(--card-padding) - var(--card-header-nudge));
+    margin-block-end: calc(var(--card-padding) / 2);
+    mix-blend-mode: var(--card-icon-blend, normal);
+  }
+  a-card:not(:defined) > :not([slot]),
+  a-card:not(:defined) > [slot="footer"] {
+    grid-column: content / media-right;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--card-padding);
+  }
+  a-card:not(:defined) > :not([slot]) { grid-row: body; }
+  a-card:not(:defined):is(:has(> [slot="header"]), :has(> [slot="icon"])) > :not([slot]) { padding-block-start: 0; }
+  a-card:not(:defined):has(> [slot="footer"]) > :not([slot]) { padding-block-end: 0; }
+  a-card:not(:defined) > [slot="footer"] { grid-row: footer; }
+  a-card:not(:defined) > a-card-footer[slot="footer"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  a-card:not(:defined)[selected] { box-shadow: 0 0 0 1px var(--card-border), inset 0 0 0 2px var(--card-selected-ring); }
+  a-card:not(:defined)[loading] { pointer-events: none; }
 
-  /* Section presence + gap rhythm. This lives HERE (the external, document-scope
-     sheet), not in the shadow <style>, because both rules key off the host's
-     light-DOM children and a shadow stylesheet's :host(:has(…)) does not match on
-     those — but a-card:has(…)::part(…) from the document does. The shadow gives each
-     section its intrinsic padding (--card-padding all round); these rules hide the
-     empty ones and collapse the body's shared edges. */
+  a-card::part(container) {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+    cursor: default;
+    border-radius: var(--card-radius, 8px);
+    -webkit-user-drag: none;
+  }
+  a-card[media-position="bottom"]::part(container) { flex-direction: column-reverse; }
+  a-card[media-position="left"]::part(container) { flex-direction: row; }
+  a-card[media-position="right"]::part(container) { flex-direction: row-reverse; }
+
+  a-card[href]::part(container) { user-select: none; }
+  a-card[href]:not([loading])::part(container) { cursor: pointer; }
+
+  a-card::part(container):focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px transparent, inset 0 0 0 2px var(--focus-ring);
+  }
+
+  a-card::part(media) { display: block; }
+  a-card[media-position="left"]::part(media),
+  a-card[media-position="right"]::part(media) { flex: none; }
+
+  a-card::part(content) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    font-size: var(--card-content-fs, 15px);
+    line-height: var(--card-content-lh, 20px);
+  }
+
+  a-card::part(header) {
+    display: flex;
+    align-items: center;
+    gap: 1ch;
+    padding: var(--card-padding, 12px);
+    padding-block-start: calc(var(--card-padding, 12px) - var(--card-header-nudge, 1px));
+    padding-block-end: calc(var(--card-padding, 12px) / 2);
+  }
+  a-card::part(icon) {
+    flex: none;
+    display: flex;
+    align-items: center;
+    mix-blend-mode: var(--card-icon-blend, normal);
+  }
+  a-card::part(title) {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  a-card::part(body) {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--card-padding, 12px);
+  }
+  a-card::part(footer) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: var(--card-padding, 12px);
+  }
+
+  a-card[selected]::part(container) { box-shadow: inset 0 0 0 2px var(--card-selected-ring, var(--focus-ring)); }
+  a-card[selected]::part(container):focus-visible { box-shadow: inset 0 0 0 1px transparent, inset 0 0 0 2px var(--focus-ring); }
+
+  a-card[loading]::part(container) { pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    a-card[loading]::part(content) { animation: card-pulse 1.4s ease-in-out infinite; }
+  }
+  @keyframes card-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+  /* Section presence is read from the host's light-DOM children. Keep these
+     overrides after the base part rules so empty slots have no layout box. */
 
   /* Hide a section with no content (:has needs an ELEMENT child — a string header /
      body becomes <a-title> / <a-text> via the wrapper; bare text isn't detected).
@@ -180,6 +333,8 @@
   a-card:not(:has(> :not([slot])))::part(body) {
     display: none;
   }
+
+  a-card:defined > a-card-footer[slot="footer"] { display: contents; }
 
   /* A string `Card` icon is wrapped in this circular chip by the JSX wrapper.
      A hand-authored icon slot is otherwise left untouched. */
@@ -332,6 +487,12 @@
       box-shadow: none;
     }
     a-card[href] { border-color: LinkText; }
+    a-card[selected]::part(container),
+    a-card::part(container):focus-visible {
+      outline: 2px solid Highlight;
+      outline-offset: -3px;
+      box-shadow: none;
+    }
     a-card > a-card-icon-chip[slot="icon"] {
       box-sizing: border-box;
       border: 1px dotted CanvasText;

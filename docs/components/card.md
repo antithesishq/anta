@@ -268,6 +268,15 @@ either way:
 </Card>
 ```
 
+Card's layout, focus ring, selected ring, and loading animation use external CSS
+and work with `style-src 'self'`. Custom tones and custom radii can produce inline
+styles in server-rendered JSX and need separate CSP handling.
+
+Before registration, CSS displays cards with one media, icon, body, and footer
+node, and up to two header nodes. Group multiple body children in one element to
+use this initial layout. Other flat compositions remain hidden until registration.
+The native link becomes available after the element registers.
+
 For everything else, `<a-card>` exposes shadow **parts** —
 `::part(container)` (the box / anchor), `::part(media)`, `::part(content)`,
 `::part(header)` (the icon + text zone), `::part(icon)`, `::part(title)` (the

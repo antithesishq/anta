@@ -220,9 +220,9 @@ export const Card = ({
         children
       )}
       {footer != null && (
-        <span slot="footer" style={{ display: "contents" }}>
+        <a-card-footer slot="footer">
           {footer}
-        </span>
+        </a-card-footer>
       )}
     </a-card>
   )

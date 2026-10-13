@@ -1317,6 +1317,65 @@
     }
   }
 
+  /* Time fields match the text fields above: square corners, a 1px stroke,
+     and the same pulsing 2px ring across the field edge. */
+  a-input-time:not([round])::part(field),
+  a-input-time:not([round]):not(:defined)::after {
+    border-radius: 0;
+  }
+
+  a-input-time:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
+    --input-time-border: var(--stroke-1);
+    --input-time-border-hover: var(--stroke-1-hover);
+  }
+
+  a-input-time:not([tone]:not([tone=""]))::part(field),
+  a-input-time:not([tone]:not([tone=""])):not(:defined)::after {
+    box-shadow: inset 0 0 0 1px var(--input-time-border);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    a-input-time:not([tone]:not([tone=""]), :disabled)::part(field):hover {
+      box-shadow: inset 0 0 0 1px var(--input-time-border-hover);
+    }
+  }
+  a-input-time:not([tone]:not([tone=""])):focus-within::part(field) {
+    box-shadow: inset 0 0 0 1px var(--input-time-border-hover);
+  }
+
+  a-input-time:focus-within::part(field) {
+    --focus-ring-pulse-width: 3px;
+
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -1px;
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  a-input-time[status="brand"]:not(:disabled) {
+    --input-time-border: light-dark(
+      var(--stroke-1-brand-active),
+      oklch(from var(--stroke-1-brand-active) 0.6 calc(c * 0.75) h)
+    );
+  }
+  a-input-time[status="info"]:not(:disabled) { --input-time-border: var(--stroke-1-info-active); }
+  a-input-time[status="success"]:not(:disabled) { --input-time-border: var(--stroke-1-success-active); }
+  a-input-time[status="warning"]:not(:disabled) { --input-time-border: var(--stroke-1-warning-active); }
+  a-input-time[status="critical"]:not(:disabled) { --input-time-border: light-dark(#ff4a68, var(--stroke-1-critical-active)); }
+  a-input-time[status]:not([status="neutral"], :disabled) {
+    --input-time-hint: light-dark(
+      oklch(from var(--input-time-border) 0.53 c h),
+      oklch(from var(--input-time-border) 0.72 c h)
+    );
+  }
+
+  a-input-time:disabled {
+    --input-time-border: var(--stroke-disabled);
+    --input-time-bg: var(--fill-disabled);
+  }
+
   :is(input[data-anta]:not([type="checkbox"], [type="radio"], [type="range"],
       [type="color"], [type="file"], [type="button"], [type="reset"],
       [type="submit"], [type="image"], [type="hidden"]),
@@ -1353,6 +1412,13 @@
   a-tag[tone="success"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-success), var(--text-3-success)); }
   a-tag[tone="warning"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-warning), var(--text-3-warning)); }
   a-tag[tone="critical"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-critical), var(--text-3-critical)); }
+
+  /* Dark neutral border-4 sits at the fill's lightness with less chroma, so the
+     fill's edge faded to grey. Lift the fill and brighten the edge. */
+  :where(a-progress, progress[data-anta]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --progress-indicator-bg: light-dark(var(--bg-5), #311228);
+    --progress-border-color: light-dark(var(--border-4), #3f1b35);
+  }
 
   a-card:not([round]) {
     --card-radius: 1px;
@@ -1416,6 +1482,20 @@
     --menu-item-color: var(--text-4);
     --menu-item-icon-color: var(--text-4);
     --menu-item-hint-color: var(--text-4);
+  }
+}
+
+/* Plain focusable HTML, such as links, takes the controls' 2px ring and pulse.
+   In the reset layer, every component focus rule still wins; `:root` outranks
+   the reset's bare `:focus-visible`. Native Anta fields keep their own ring. */
+@layer anta.reset {
+  :root :focus-visible:not([data-anta]) {
+    outline-width: 2px;
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 }
 

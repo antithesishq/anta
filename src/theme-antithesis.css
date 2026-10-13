@@ -535,6 +535,9 @@
   a-title[font="serif"] {
     font-family: var(--serif);
     font-weight: 300;
+    /* macOS subpixel smoothing thickens a light serif's thin strokes. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   :is(h1, h2, h3, h4, h5, h6),

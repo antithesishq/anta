@@ -9,19 +9,19 @@ export function thresholds(): PlotArgs<Node> {
 
   return {
     series: [
-      line<Node>({
+      line({
         data,
         color: { light: '#0891b2', dark: '#67e8f9' },
         width: 2,
       }),
-      rule<Node>({
+      rule({
         y: 60,
         color: { light: '#7c3aed', dark: '#c4b5fd' },
         width: 1,
         dash: [7, 4],
         tooltip: () => document.createTextNode('Target: 60 ms'),
       }),
-      rule<Node>({
+      rule({
         y: 90,
         color: { light: '#c2410c', dark: '#fdba74' },
         width: 4,
@@ -53,19 +53,19 @@ export function events(): PlotArgs<Node> {
 
   return {
     series: [
-      line<Node>({
+      line({
         data,
         color: { light: '#6366f1', dark: '#a5b4fc' },
         width: 2,
       }),
-      rule<Node>({
+      rule({
         data: events.filter(event => !event.recovery),
         x: 'hour',
         color: { light: '#c2410c', dark: '#fdba74' },
         width: 3,
         tooltip: ({ row }) => document.createTextNode(row?.name + ' at hour ' + row?.hour),
       }),
-      rule<Node>({
+      rule({
         data: events.filter(event => event.recovery),
         x: 'hour',
         color: { light: '#0d9488', dark: '#5eead4' },

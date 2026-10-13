@@ -97,31 +97,6 @@ shadow styling and CSP requirements; see [Content Security Policy](/install/#con
 <Text truncate={3}>{longSentence}</Text>
 ```
 
-### Use a tooltip with the web component
-
-`<a-text>` does not add a tooltip. Nest `<a-tooltip truncated-only>` and pass
-the full text as its content:
-
-<Preview>
-  <a-text truncate="1" style={{ maxWidth: '260px', cursor: 'help' }}>
-    A long status message that is clipped until you hover it.
-    <a-tooltip truncated-only>
-      A long status message that is clipped until you hover it.
-    </a-tooltip>
-  </a-text>
-</Preview>
-
-```html
-<a-text truncate="1" style="max-width: 260px; cursor: help">
-  A long status message that is clipped until you hover it.
-  <a-tooltip truncated-only>
-    A long status message that is clipped until you hover it.
-  </a-tooltip>
-</a-text>
-```
-
-`a-text.isTruncated` is a read-only layout measurement. Read it on the UI
-thread when you compose custom truncation behavior.
 
 </Col>
 <Col>
@@ -173,6 +148,32 @@ Use `<a-text>` directly for a block that carries the text priority and tone.
 </a-text>
 ```
 
+
+### Use a tooltip with the web component
+
+`<a-text>` does not add a tooltip. Nest `<a-tooltip truncated-only>` and pass
+the full text as its content:
+
+<Preview>
+  <a-text truncate="1" style={{ maxWidth: '260px', cursor: 'help' }}>
+    A long status message that is clipped until you hover it.
+    <a-tooltip truncated-only>
+      A long status message that is clipped until you hover it.
+    </a-tooltip>
+  </a-text>
+</Preview>
+
+```html
+<a-text truncate="1" style="max-width: 260px; cursor: help">
+  A long status message that is clipped until you hover it.
+  <a-tooltip truncated-only>
+    A long status message that is clipped until you hover it.
+  </a-tooltip>
+</a-text>
+```
+
+`a-text.isTruncated` is a read-only layout measurement. Read it on the UI
+thread when you compose custom truncation behavior.
 
 ### Expand raw HTML
 

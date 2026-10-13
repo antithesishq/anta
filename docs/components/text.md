@@ -60,23 +60,6 @@ shadow styling and CSP requirements; see [Content Security Policy](../install-co
 <Text truncate={3}>{longSentence}</Text>
 ```
 
-### Use a tooltip with the web component
-
-`<a-text>` does not add a tooltip. Nest `<a-tooltip truncated-only>` and pass
-the full text as its content:
-
-```html
-<a-text truncate="1" style="max-width: 260px; cursor: help">
-  A long status message that is clipped until you hover it.
-  <a-tooltip truncated-only>
-    A long status message that is clipped until you hover it.
-  </a-tooltip>
-</a-text>
-```
-
-`a-text.isTruncated` is a read-only layout measurement. Read it on the UI
-thread when you compose custom truncation behavior.
-
 Pair `expandable` with `truncate` to let the reader reveal the full text.
 The fade and chevron appear only when the clamped content overflows; text
 that fits gets neither. Single-line truncation fades on the right edge,
@@ -120,6 +103,23 @@ Use `<a-text>` directly for a block that carries the text priority and tone.
   Read the <a href="/colors/">color guidance</a>.
 </a-text>
 ```
+
+### Use a tooltip with the web component
+
+`<a-text>` does not add a tooltip. Nest `<a-tooltip truncated-only>` and pass
+the full text as its content:
+
+```html
+<a-text truncate="1" style="max-width: 260px; cursor: help">
+  A long status message that is clipped until you hover it.
+  <a-tooltip truncated-only>
+    A long status message that is clipped until you hover it.
+  </a-tooltip>
+</a-text>
+```
+
+`a-text.isTruncated` is a read-only layout measurement. Read it on the UI
+thread when you compose custom truncation behavior.
 
 ### Expand raw HTML
 

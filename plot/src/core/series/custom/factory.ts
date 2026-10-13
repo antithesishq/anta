@@ -3,7 +3,7 @@ import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { resolve_color, resolve_highlight_colors } from "../../template/color"
 import { validate_finite, validate_hoverable } from "../../template/validate"
-import type { ColorArg, CustomHighlightRendererFn, CustomHitTestFn, CustomRendererFn, CustomSeries, Domain, FieldArg, PointData } from "../../types"
+import type { ColorArg, CustomHighlightRendererFn, CustomHitTestFn, CustomRendererFn, CustomSeries, Domain, FieldArg, SelectFn, TooltipArg } from "../../types"
 
 export type CustomAxisRangeArg = { x?: number[]; y?: number[] }
 
@@ -18,8 +18,8 @@ export type CustomArgs<Row, TooltipContent> = {
     color?: ColorArg<Row>
     highlight_color?: ColorArg<Row>
     axis_range?: CustomAxisRangeArg
-    tooltip?: true | ((data: PointData<Row>) => TooltipContent)
-    on_select?: (data: PointData<Row>) => unknown
+    tooltip?: TooltipArg<Row, TooltipContent>
+    on_select?: SelectFn<Row>
     hoverable?: boolean
 }
 

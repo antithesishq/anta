@@ -145,7 +145,7 @@ export type AreaPixelRuns = {
     run_starts: Int32Array
 }
 
-export type CustomSeries<Row, TooltipContent> = BaseSeries<Row, TooltipContent, PointData<Row>> & {
+export type CustomSeries<Row, TooltipContent> = BaseSeries<Row, TooltipContent> & {
     kind: 'custom'
     renderer: CustomRendererFn<Row>
     hit_test?: CustomHitTestFn<Row>
@@ -608,16 +608,3 @@ export type ViewportChange = {
 }
 
 export type ViewportChangeFn = (change: ViewportChange) => void
-
-export type RowTypedArgs<SchemaArgs extends object, RowT extends object, TooltipContent = unknown> = Omit<SchemaArgs, 'data' | 'tooltip' | 'on_select'> & {
-    data: RowT[]
-    tooltip?: TooltipArg<RowT, TooltipContent>
-    on_select?: SelectFn<RowT>
-}
-
-/** The same as RowTypedArgs, for a kind whose `data` is optional (plot.rule) */
-export type OptionalRowTypedArgs<SchemaArgs extends object, RowT extends object, TooltipContent = unknown> = Omit<SchemaArgs, 'data' | 'tooltip' | 'on_select'> & {
-    data?: RowT[]
-    tooltip?: TooltipArg<RowT | undefined, TooltipContent>
-    on_select?: SelectFn<RowT | undefined>
-}

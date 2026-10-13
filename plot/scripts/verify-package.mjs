@@ -197,7 +197,7 @@ try {
 
     const core_consumer = resolve(sandbox, 'core-consumer.ts')
     await writeFile(core_consumer, `
-        import { Plot, PlotSurface, scatter, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError, type FontArg, type FontConfig, type FontCaps } from '@antadesign/plot'
+        import { Plot, PlotSurface, scatter, bar, custom, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError, type FontArg, type FontConfig, type FontCaps } from '@antadesign/plot'
         import type { ReactNode } from 'react'
         const props: PlotProps<ReactNode> = {plotArgs:{series:[]}}
         const surfaceProps: PlotSurfaceProps = {canvasOwner:'worker'}
@@ -214,6 +214,20 @@ try {
         ] }
         // @ts-expect-error The plot boundary must not weaken row inference inside a factory.
         const wrongRow: PlotArgs<string> = { series: [scatter({ data: [{ time: 1, temperature: 20 }], x: 'time', y: 'temperature', tooltip: ({ row }) => row.pressure.toFixed() })] }
+        type StackRow = { group: string; first: number } | { group: string; second: number }
+        const stackRows: StackRow[] = [{ group: 'A', first: 2 }, { group: 'B', second: 3 }]
+        bar({ data: stackRows, x: 'group', y: ['first', 'second'] })
+        bar({ data: stackRows, y: 'group', x: ['first', 'second'] })
+        // @ts-expect-error Stack fields must exist on at least one member of the row union.
+        bar({ data: stackRows, x: 'group', y: ['frist'] })
+        const customRows = custom({
+            data: [{ value: 2 }],
+            renderer: (series) => { series.rows?.[0].value.toFixed() },
+            hit_test: () => 0,
+            tooltip: ({ row }) => row.value.toFixed(),
+            on_select: ({ row }) => { row.value.toFixed() },
+        })
+        custom({ renderer: () => {} })
         const viewportSized = scatter({
             data: [{ x: 1, y: 2, weight: 3 }],
             size: (row, index, viewport) => Math.min(12, Number(row.weight) * viewport.zoom_factor.x ** 0.25),

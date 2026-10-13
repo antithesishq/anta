@@ -3,6 +3,9 @@ import { is_theme_color, read_row_color, resolve_color_arg } from "../../templat
 import { dedupe_bands, warn_dropped_bands } from "./duplicates"
 import type { ColorArg, ThemeColor } from "../../types"
 
+// Distribute over row unions: a segment may be absent from some rows and stack as zero.
+export type StackField<Row> = Row extends unknown ? keyof Row & string : never
+
 export type StackColorArg<Row> = ColorArg<Row> | ThemeColor[]
 
 // side-agnostic: the caller assigns band / value to x / y depending on which side carried the array
@@ -30,7 +33,7 @@ export function expand_stack<Row>(
     data: Row[],
     band_arg: ColumnArg<Row>,
     band_side: 'x' | 'y',
-    value_fields: (keyof Row & string)[],
+    value_fields: StackField<Row>[],
     error_prefix: string,
 ): ExpandedStack<Row> {
     const value_side = band_side === 'x' ? 'y' : 'x'
@@ -191,7 +194,7 @@ function segment_color<Row>(
 // is a data error, so null / NaN / strings throw rather than silently vanishing.
 function read_segment_value<Row>(
     row: Row,
-    field: keyof Row & string,
+    field: StackField<Row>,
     row_index: number,
     error_prefix: string,
 ): number {

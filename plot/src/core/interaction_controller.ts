@@ -551,7 +551,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         if (data !== undefined && on_select !== undefined) {
             if (has_point_row(data)) {
                 on_select(data)
-            } else if (series.kind === 'rule' || series.kind === 'custom') {
+            } else if (series.kind === 'rule') {
                 series.on_select?.(data)
             }
         }

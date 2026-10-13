@@ -5,9 +5,9 @@ import { array_extent, xy_extent } from "../../template/extent"
 import { resolve_color, resolve_highlight_colors } from "../../template/color"
 import { validate_hoverable, validate_hover_span, validate_non_negative } from "../../template/validate"
 import type { AxisContext, BarSeries, ColorArg, FieldArg, SelectFn, SideMode, ThemeColor, TooltipArg } from "../../types"
-import { expand_stack, resolve_stack_colors, resolve_stack_highlight_colors } from "./stack"
+import { expand_stack, resolve_stack_colors, resolve_stack_highlight_colors, type StackField } from "./stack"
 
-export type BarSideArg<Row> = FieldArg<Row> | (keyof Row & string)[]
+export type BarSideArg<Row> = FieldArg<Row> | StackField<Row>[]
 export type BarColorArg<Row> = ColorArg<Row> | ThemeColor[]
 
 export type BarArgs<Row, TooltipContent = unknown> = {
@@ -144,7 +144,7 @@ function drop_shadowed_rows<Row>(
  * @param value_fields - the per-segment value field names, in stacking order
  * @returns the resolved BarSeries
  */
-function new_stacked_bar<Row, TooltipContent>(args: BarArgs<Row, TooltipContent>, band_arg: ColumnArg<Row>, band_side: 'x' | 'y', value_fields: (keyof Row & string)[]): BarSeries<Row, TooltipContent> {
+function new_stacked_bar<Row, TooltipContent>(args: BarArgs<Row, TooltipContent>, band_arg: ColumnArg<Row>, band_side: 'x' | 'y', value_fields: StackField<Row>[]): BarSeries<Row, TooltipContent> {
     const expanded = expand_stack(args.data, band_arg, band_side, value_fields, 'plot.bar')
     const is_vertical = band_side === 'x'
     const value_side = is_vertical ? 'y' : 'x'

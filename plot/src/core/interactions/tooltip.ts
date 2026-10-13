@@ -48,7 +48,7 @@ export function resolve_tooltips<TooltipContent>(plot: ComposedPlot<TooltipConte
             }
         } else if (has_point_row(data)) {
             resolved.push({ kind: 'custom', content: tooltip(data) })
-        } else if (series.kind === 'rule' || series.kind === 'custom') {
+        } else if (series.kind === 'rule') {
             const callback = series.tooltip
             if (typeof callback === 'function') {
                 resolved.push({ kind: 'custom', content: callback(data) })

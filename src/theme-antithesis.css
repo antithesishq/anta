@@ -1328,21 +1328,31 @@
     border-radius: 3px;
   }
 
-  /* Dark primary tags take the solid control fill, matching primary buttons
-     and checked checkboxes. */
+  /* Primary tags take the solid control fill, matching primary buttons and
+     checked checkboxes. Light warning steps to the active fill to hold 4.5:1
+     under white text. */
   a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"], [tone="brand"],
       [tone="info"], [tone="success"], [tone="warning"]) {
-    --tag-text: light-dark(#fff, var(--label-on-fill));
+    --tag-text: var(--label-on-fill);
   }
-  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"]) { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1)); }
-  a-tag[priority="primary"][tone="brand"] { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-brand)); }
-  a-tag[priority="primary"][tone="info"] { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-info)); }
-  a-tag[priority="primary"][tone="success"] { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-success)); }
-  a-tag[priority="primary"][tone="warning"] { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-warning)); }
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"]) { --tag-bg: var(--fill-1); }
+  a-tag[priority="primary"][tone="brand"] { --tag-bg: var(--fill-1-brand); }
+  a-tag[priority="primary"][tone="info"] { --tag-bg: var(--fill-1-info); }
+  a-tag[priority="primary"][tone="success"] { --tag-bg: var(--fill-1-success); }
+  a-tag[priority="primary"][tone="warning"] { --tag-bg: light-dark(var(--fill-1-warning-active), var(--fill-1-warning)); }
   a-tag[priority="primary"][tone="critical"] {
-    --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-critical));
-    --tag-text: light-dark(#fff, var(--label-on-fill-critical));
+    --tag-bg: var(--fill-1-critical);
+    --tag-text: var(--label-on-fill-critical);
   }
+
+  /* Light secondary and tertiary text steps to text-2; the 80% text-3 tones
+     fell below 4.5:1 on the tinted fills. */
+  a-tag:is(:not([tone]), [tone=""], [tone="neutral"]):not([priority="primary"]) { --tag-text: light-dark(var(--text-2), var(--text-3)); }
+  a-tag[tone="brand"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-brand), var(--text-3-brand)); }
+  a-tag[tone="info"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-info), var(--text-3-info)); }
+  a-tag[tone="success"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-success), var(--text-3-success)); }
+  a-tag[tone="warning"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-warning), var(--text-3-warning)); }
+  a-tag[tone="critical"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-critical), var(--text-3-critical)); }
 
   a-card:not([round]) {
     --card-radius: 1px;

@@ -27,6 +27,10 @@ changes are not listed.
 
 ### Added
 
+- [Text's inert expansion mode](/text/#truncation-and-expansion):
+  `expandableInert` makes the folded, overflowing preview one expand target and
+  skips content interactions until expanded. Text that fits remains interactive.
+
 - [Input button fields](/input/#styling) expose `::part(input-label)` for their
   value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
 - [Select's `dimActions` prop](/select/) controls its trigger adornments. They
@@ -57,6 +61,15 @@ changes are not listed.
   your serif font.
 
 ### Fixed
+
+- [Text expansion controls](/text/#truncation-and-expansion) precede content links
+  in Tab order. Raw HTML authors place the control before `a-text-content` too.
+
+- [Folded expandable Text](/text/#truncation-and-expansion) stays in place when
+  a clipped link receives focus. Its content remains selectable.
+
+- [Text expansion controls](/text/#truncation-and-expansion) keep their accessible
+  name and expanded state when granular element entries load before the full bundle.
 
 - [Text expansion controls](/text/#truncation-and-expansion) span the full width
   for multiline text and the inline end for single-line text. The full-width

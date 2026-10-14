@@ -323,7 +323,7 @@ export function isPopupAriaReceiver(element: Element | null): element is PopupAr
 
 /** Internal Text-to-Button protocol. The receiver publishes accessibility
  * defaults through its own ElementInternals without changing authored DOM. */
-export const SYNC_TEXT_TOGGLE = Symbol('anta.sync-text-toggle')
+export const SYNC_TEXT_TOGGLE = Symbol.for('anta.sync-text-toggle')
 export interface TextToggleAria {
   source: Element
   expanded?: boolean

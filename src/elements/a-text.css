@@ -32,6 +32,7 @@
 
   a-text[truncate] { min-width: 0; }
   a-text-content { display: contents; }
+  a-text > a-button:has(+ a-text-content),
   a-text > a-text-content + a-button { display: none; }
 
   /* Reserve space for the absolute collapse control only while expanded. */
@@ -50,6 +51,8 @@
     overflow: hidden;
   }
   a-text[inline][truncate]:not([expandable]) { display: -webkit-inline-box; }
+  /* Focusing clipped links must not scroll the folded preview. */
+  a-text[truncate][expandable] > a-text-content { overflow: clip; }
   a-text[truncate][expandable]:state(expanded) > a-text-content {
     display: block;
     -webkit-line-clamp: unset;
@@ -117,6 +120,11 @@
     height: auto;
   }
   a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { height: 16px; }
+  a-text[truncate][expandable][expandable-inert]:state(overflowing):not(:state(expanded)) > a-button {
+    inset: 0;
+    width: auto;
+    height: auto;
+  }
   a-text[truncate][expandable]:is(:hover, :focus-within) > a-button,
   a-text[truncate][expandable]:state(expanded) > a-button { opacity: 1; }
   a-text[truncate][expandable]:state(expanded) > a-button::before { transform: rotate(225deg); }

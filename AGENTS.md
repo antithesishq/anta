@@ -132,6 +132,11 @@ Commit and push work on the current branch by default. Never commit or push task
 changes directly to `main`; when the current branch is `main`, create and switch
 to a descriptively named feature or fix branch before committing or pushing.
 
+Agents must not run `gh pr merge --admin` or use an equivalent API bypass of
+branch protection. If a merge requires an admin override, explain the blocking
+requirement and ask the user to perform the merge in GitHub's web UI or run the
+command with `--admin` themselves.
+
 ## Shared conventions
 
 - Pin registry dependencies and dev dependencies to exact stable versions. Keep

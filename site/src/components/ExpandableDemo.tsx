@@ -22,6 +22,10 @@ export default function ExpandableDemo() {
         <span class="demoLabel">truncate=&#123;3&#125; expandable collapsible</span>
         <div class="demoBox"><Text truncate={3} expandable collapsible>{longText} <a href="/text/#link-behavior">Link guidance</a>.</Text></div>
       </div>
+      <div class="demoRow">
+        <span class="demoLabel">expandableInert</span>
+        <div class="demoBox"><Text truncate={3} expandable collapsible expandableInert>{longText} <a href="/text/#link-behavior">Link guidance</a>.</Text></div>
+      </div>
     </div>
   )
 }

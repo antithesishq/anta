@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
-import { neutralToneAttr, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
+import { neutralToneAttr, toneStyle, roundStyle, roundAttr, hasChildren } from "../anta_helpers"
 import { Title } from "./Title"
 import { Text } from "./Text"
 import { Icon } from "./Icon"
@@ -65,10 +65,10 @@ export interface CardProps extends BaseProps {
    *  `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for
    *  the default `--card-radius`. */
   round?: boolean | number | string
-  /** Turn the whole card into a link. The card renders a focusable anchor and its
-   *  accessible name comes from `header` → body → this URL (override with
-   *  `aria-label`). A link card is display content — don't nest interactive
-   *  controls inside it. */
+  /** Turn the whole card into a native link. ARIA props and `tabIndex` apply to
+   *  that anchor. A text header or body supplies its default name; custom content
+   *  uses the native content name. Override with `aria-label` or `aria-labelledby`.
+   *  Linked cards must not contain interactive controls. */
   href?: string
   /** Anchor target (only with `href`). */
   target?: string
@@ -83,18 +83,10 @@ export interface CardProps extends BaseProps {
  * region plus a `header` / body / `footer` stack. Pass `href` to turn the whole
  * card into a link.
  *
- * Renders an `<a-card>` web component. A stateless projection — the element owns
- * layout, the link, and the accessible name, and stylizes only its own surface
- * (never its children's typography). The wrapper maps props to attributes,
- * projects content into the `media` / `icon` / `header` / body / `footer`
- * sections, and supplies typography for the two text zones by wrapping a string
- * `header` in `<Title>` and a string body in `<Text>`. A leading `icon` (a shape
- * string, or any node) is laid out beside the title / subtitle by the element.
- * There is no actions slot — lay out any header controls (buttons, tags) inside
- * the `header` yourself.
- *
- * Requires `@antadesign/anta/elements` to be imported (client-side only) to
- * register the underlying custom element.
+ * Renders CSS-only `a-card-*` structural tags in light DOM. The wrapper owns
+ * structure, link attributes, and ARIA. Raw HTML authors write the same markup.
+ * Card needs no element registration; load its external CSS through the bundle
+ * or the granular `@antadesign/anta/elements/a-card` entry.
  *
  * @example Basic usage
  * ```tsx
@@ -111,119 +103,90 @@ export interface CardProps extends BaseProps {
  * ```
  */
 export const Card = ({
-  header,
-  subtitle,
-  icon,
-  footer,
-  media,
-  mediaPosition,
-  tone,
-  priority,
-  size,
-  selected,
-  loading,
-  round,
-  href,
-  target,
-  rel,
-  ping,
-  className,
-  style,
-  children,
-  ...rest
+  header, subtitle, icon, footer, media, mediaPosition, tone, priority, size,
+  selected, loading, round, href, target, rel, ping, className, style, children,
+  tabIndex, ...rest
 }: CardProps) => {
-  // A non-named tone is a literal CSS color fed to the element's oklch
-  // derivation via the inline custom property.
   const toneAttr = neutralToneAttr(tone)
-  const computedStyle = roundStyle(
-    round,
-    "--card-round",
-    toneStyle(toneAttr, "--card-tone-source", style),
-  )
-
-  // The element stylizes only its own surface, never its children, so the wrapper
-  // supplies the header/body typography by wrapping a string in <Title> / <Text>
-  // and forwarding the card's `tone` to them so they tint to match. Title / Text
-  // both take a custom CSS-color tone (same oklch derivation as the card), so this
-  // works for named *and* custom tones — passed straight through as `toneAttr`.
-
-  // A string header becomes a <Title> whose level tracks the card size, so the
-  // heading type scale matches the padding scale: small → 5, medium → 4, large → 3.
+  const computedStyle = roundStyle(round, "--card-round", toneStyle(toneAttr, "--card-tone-source", style))
   const titleLevel = size === "small" ? 5 : size === "large" ? 3 : 4
-
+  const linked = href != null
+  const aria: Record<string, unknown> = {}
+  const host: Record<string, unknown> = {}
+  for (const [name, value] of Object.entries(rest)) {
+    if (name.startsWith("aria-")) aria[name] = value
+    else host[name] = value
+  }
+  const textValue = (node: React.ReactNode) =>
+    typeof node === "string" || typeof node === "number" ? String(node).replace(/\s+/g, " ").trim() || undefined : undefined
+  const textName = textValue(header) ?? textValue(children)
+  const present = (node: React.ReactNode) => typeof node !== "boolean" && hasChildren(node)
+  const busy = aria["aria-busy"] as React.AriaAttributes["aria-busy"]
+  const label = aria["aria-label"] as string | undefined
+  const content = (
+    <>
+      {present(media) && <a-card-media>{media}</a-card-media>}
+      <a-card-content>
+        {(present(header) || present(subtitle) || present(icon)) && (
+          <a-card-header>
+            {present(icon) && (
+              <a-card-icon>
+                {typeof icon === "string" ? (
+                  <a-card-icon-chip><Icon shape={icon as IconShape} /></a-card-icon-chip>
+                ) : icon}
+              </a-card-icon>
+            )}
+            {(present(header) || present(subtitle)) && (
+              <a-card-title>
+                {typeof header === "string" || typeof header === "number" ? (
+                  <Title level={titleLevel} tone={toneAttr} font="sans-serif">{header}</Title>
+                ) : header}
+                {present(subtitle) && (
+                  <Text size="small" priority="tertiary" tone={toneAttr}>{subtitle}</Text>
+                )}
+              </a-card-title>
+            )}
+          </a-card-header>
+        )}
+        {present(children) && (
+          <a-card-body>
+            {typeof children === "string" || typeof children === "number" ? (
+              <Text priority="secondary" tone={toneAttr} size={size}>{children}</Text>
+            ) : children}
+          </a-card-body>
+        )}
+        {present(footer) && <a-card-footer>{footer}</a-card-footer>}
+      </a-card-content>
+    </>
+  )
   return (
     <a-card
       tone={toneAttr}
-      // 'secondary' / 'medium' / 'top' are the implicit defaults — emit no attr.
       priority={priority && priority !== "primary" ? priority : undefined}
       size={size && size !== "medium" ? size : undefined}
-      media-position={
-        mediaPosition && mediaPosition !== "top" ? mediaPosition : undefined
-      }
-      // Boolean attrs: presence form (`''` on, omit off) — matched by presence in CSS.
+      media-position={mediaPosition && mediaPosition !== "top" ? mediaPosition : undefined}
       selected={selected ? "" : undefined}
       loading={loading ? "" : undefined}
       round={roundAttr(round)}
-      href={href}
-      // Anchor extras only mean anything alongside href.
-      target={href ? target : undefined}
-      rel={href ? rel : undefined}
-      ping={href ? ping : undefined}
       class={className}
       style={computedStyle}
-      {...rest}
+      tabIndex={linked ? undefined : tabIndex}
+      {...host}
+      {...(linked ? {} : aria)}
+      aria-busy={linked ? undefined : busy ?? (loading ? "true" : undefined)}
     >
-      {media != null && <div slot="media">{media}</div>}
-      {icon != null &&
-        // Leading visual for the header — carried in a slot div (like `media` /
-        // `header`); the element lays it out beside the title / subtitle (see the
-        // `icon` slot in a-card.ts).
-        (typeof icon === "string" ? (
-          // A shape string → the icon centered in a circular chip, sized per the
-          // card via --card-icon-size (32 / 40 / 44 for small / medium / large).
-          <a-card-icon-chip slot="icon">
-            <Icon shape={icon as IconShape} />
-          </a-card-icon-chip>
-        ) : (
-          // Any node → used as-is (no chip).
-          <div slot="icon">{icon}</div>
-        ))}
-      {header != null &&
-        (typeof header === "string" || typeof header === "number" ? (
-          // A string header becomes a real <Title> at the size-mapped level (see
-          // titleLevel). The header section's padding is the header→body gap; the
-          // element zeroes the slotted title's own margins so it doesn't double it.
-          // Pass a node (a `<Title level={n}>`, an `<h2>`) for a different level.
-          <Title slot="header" level={titleLevel} tone={toneAttr} font="sans-serif">
-            {header}
-          </Title>
-        ) : (
-          <div slot="header">{header}</div>
-        ))}
-      {subtitle != null && (
-        // A subtitle sits in the header section too, right under the title, as
-        // smaller text. Last header child, so its (absent) bottom margin leaves
-        // the header→body gap to the section padding, like the title above it.
-        <Text slot="header" size="small" priority="tertiary" tone={toneAttr}>
-          {subtitle}
-        </Text>
-      )}
-      {typeof children === "string" || typeof children === "number" ? (
-        // A string / number body becomes a <Text> at secondary priority (text-2,
-        // the body color) — stated explicitly rather than leaning on the default —
-        // following the card's tone and size. Anything else is a node the caller
-        // owns, passed through untouched.
-        <Text priority="secondary" tone={toneAttr} size={size}>
-          {children}
-        </Text>
-      ) : (
-        children
-      )}
-      {footer != null && (
-        <span slot="footer" style={{ display: "contents" }}>
-          {footer}
-        </span>
-      )}
+      {linked ? (
+        <a
+          href={loading ? undefined : href}
+          target={loading ? undefined : target}
+          rel={loading ? undefined : rel}
+          ping={loading ? undefined : ping}
+          tabIndex={tabIndex}
+          {...aria}
+          aria-label={label ?? (loading ? undefined : textName)}
+          aria-busy={busy ?? (loading ? "true" : undefined)}
+        >{content}</a>
+      ) : content}
     </a-card>
   )
 }

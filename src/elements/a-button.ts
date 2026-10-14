@@ -1,4 +1,4 @@
-import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from "../anta_helpers";
+import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations, SYNC_TEXT_TOGGLE, type TextToggleAria } from "../anta_helpers";
 import { installKeyActivation } from "./key-activation";
 import "./a-button.css";
 
@@ -100,6 +100,7 @@ export class AButtonElement extends HTMLElementBase {
   private popupAriaSource?: Element;
   #fieldObserver?: MutationObserver;
   #field?: Element;
+  #textToggleSource?: Element;
 
   constructor() {
     super();
@@ -112,6 +113,9 @@ export class AButtonElement extends HTMLElementBase {
     // Install on the button's OWN document so activation works in whatever
     // frame the element actually lives in (parent page or playground iframe).
     installDocumentHandlers(this.doc);
+    // Text can connect before this child upgrades or reconnects.
+    if (this.parentElement?.localName === "a-text")
+      this.dispatchEvent(new Event("anta-text-control-ready", { bubbles: true }));
     if (this.parentElement?.localName === "a-select-field") {
       this.#field = this.parentElement;
       this.#fieldObserver = new MutationObserver(() => this.#syncField());
@@ -122,6 +126,7 @@ export class AButtonElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    if (this.#textToggleSource) this[SYNC_TEXT_TOGGLE]({ source: this.#textToggleSource, clear: true });
     if (!this.#field) return;
     this.#fieldObserver?.disconnect();
     this.#field?.removeEventListener("click", this.#onFieldClick);
@@ -150,6 +155,20 @@ export class AButtonElement extends HTMLElementBase {
     if (this.hasAttribute("disabled") || this.hasAttribute("loading")) return;
     if (event.composedPath().some(node => node instanceof Element && node.localName === "a-select-label")) this.focus();
   };
+
+  [SYNC_TEXT_TOGGLE](state: TextToggleAria) {
+    if (!this.internals) return;
+    if (state.clear) {
+      if (this.#textToggleSource !== state.source) return;
+      this.#textToggleSource = undefined;
+      this.internals.ariaExpanded = null;
+      this.internals.ariaLabel = null;
+      return;
+    }
+    this.#textToggleSource = state.source;
+    this.internals.ariaExpanded = state.expanded ? "true" : "false";
+    this.internals.ariaLabel = state.expanded ? "Show less" : "Show more";
+  }
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
     if (!this.internals || !("ariaControlsElements" in this.internals)) return;

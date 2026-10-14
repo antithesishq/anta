@@ -1,0 +1,16 @@
+body {
+  margin: 20px;
+  font: 16px/24px sans-serif;
+}
+a-card {
+  width: 320px;
+}
+a-card.tall { height: 260px; }
+a-card.narrow { width: 180px; }
+a-card a-card-footer button { font: inherit; font-variation-settings: inherit; }
+a-card-media > div { width: 80px; height: 70px; background: blue; }
+a-card-icon > div { width: 40px; height: 40px; background: red; }
+h2,
+p { margin: 0; }
+a-card.override > a-card-content > a-card-header { padding-bottom: 8px; border-bottom: 1px solid red; }
+a-card.override > a-card-content > a-card-body { overflow: auto; }

@@ -8,11 +8,11 @@ import { Tooltip } from "./Tooltip"
 export type ExpandMode =
   | { expandable?: never; collapsible?: never }
   | {
-      /** Show a fade hint and chevron over the truncated text and let the user
-       *  expand it by clicking the chevron region or pressing Enter while the
-       *  chevron has keyboard focus. Only takes effect together with `truncate`.
-       *  On its own, expanding is **one-way** — the control is removed once
-       *  expanded; add `collapsible` for a two-way toggle. */
+      /** Show a fade hint when text overflows and reserve space for an
+       *  expansion control. Select the control or press Enter or Space while it
+       *  has focus to reveal the text. Only takes effect with `truncate`.
+       *  Expansion is one-way by default: the control is hidden once expanded.
+       *  Add `collapsible` for a two-way toggle. */
       expandable: boolean
       /** Let the reader collapse back after expanding: the chevron becomes a
        *  "Show more" / "Show less" toggle that stays visible while expanded.
@@ -50,14 +50,16 @@ export type TextProps = BaseProps & {
 /**
  * Block-level text container with priority and tone support.
  *
- * Renders an `<a-text>` web component that scopes its descendants'
+ * Renders an `<a-text>` light-DOM element that scopes its descendants'
  * color hierarchy. Links nested inside follow the design system's
  * priority-aware link styling. Pass `inline` for an inline-block
  * variant, `truncate` for ellipsis truncation, and `expandable`
  * (combined with `truncate`) to let the user reveal the full text.
  *
- * Requires `@antadesign/anta/elements` to be imported (client-side only)
- * to register the underlying custom element.
+ * Text and truncation render with external CSS before registration. The browser
+ * element measures overflow and owns expansion off-DOM. Expandable Text uses
+ * `a-text-content` and an `a-button` control; granular usage also loads
+ * `@antadesign/anta/elements/a-button`. Automatic tooltips need Tooltip's entry.
  *
  * @example Basic usage
  * ```tsx
@@ -77,7 +79,7 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
   const computedStyle = toneStyle(
     toneAttr,
     "--text-tone-source",
-    lineCount != null ? { ...style, ['--line-clamp' as string]: lineCount } : style,
+    lineCount != null && lineCount > 1 ? { ...style, ['--line-clamp' as string]: lineCount } : style,
   )
   // expandable/collapsible only mean anything once the text is actually clamped.
   const canExpand = expandable && lineCount != null
@@ -94,7 +96,12 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
       style={computedStyle as React.CSSProperties}
       {...rest}
     >
-      {children}
+      {canExpand ? (
+        <>
+          <a-text-content>{children}</a-text-content>
+          <a-button role="button" tabIndex={0} priority="quaternary" paddingless="" />
+        </>
+      ) : children}
       {lineCount != null && !canExpand && (
         <Tooltip truncatedOnly data-anta-text-tooltip="" />
       )}

@@ -3,11 +3,13 @@
 
 @layer anta.components {
   a-text {
+    --line-clamp: 1;
     --text-color: var(--text-2);
     --text-link-color: var(--link-color);
     --text-link-hover: var(--link-color-hover);
 
     display: block;
+    position: relative;
     /* Pin the family so a consumer's font-family on an ancestor can't reach in
        and restyle body copy. */
     font-family: var(--sans-serif);
@@ -16,7 +18,7 @@
     line-height: 20px;
     /* Even out widows/orphans on multi-line body copy — matches the raw `<p>`
        reset (headings use `balance`). Only affects the non-truncated case;
-       `truncate` clamps in shadow DOM. */
+       `truncate` clamps directly in light DOM. */
     text-wrap: pretty;
   }
 
@@ -28,8 +30,104 @@
     display: inline-block;
   }
 
-  a-text[truncate] {
+  a-text[truncate] { min-width: 0; }
+  a-text-content { display: contents; }
+  a-text > a-text-content + a-button { display: none; }
+
+  /* Reserve space for the absolute collapse control only while expanded. */
+  a-text[truncate][expandable]:state(expanded)[collapsible] {
+    box-sizing: border-box;
+    padding-block-end: 16px;
+  }
+
+  /* Expansion needs a separate clamp region so the control remains outside
+     clipped content. Ordinary Text has no structural wrapper. */
+  a-text[truncate]:not([expandable]),
+  a-text[truncate][expandable] > a-text-content {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--line-clamp, 1);
+    overflow: hidden;
+  }
+  a-text[inline][truncate]:not([expandable]) { display: -webkit-inline-box; }
+  a-text[truncate][expandable]:state(expanded) > a-text-content {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+  a-text[truncate][expandable]:state(overflowing):not(:state(expanded)) > a-text-content {
+    mask-image: linear-gradient(to bottom, black calc(100% - 2em), transparent 97%);
+  }
+  a-text[truncate="1"][expandable]:state(overflowing):not(:state(expanded)) > a-text-content {
+    mask-image: linear-gradient(to right, black calc(100% - 7ch), transparent 97%);
+  }
+
+  a-text[truncate="1"][expandable]:state(overflowing):not(:state(expanded)):dir(rtl) > a-text-content {
+    mask-image: linear-gradient(to left, black calc(100% - 7ch), transparent 97%);
+  }
+
+  a-text[truncate][expandable] > a-button {
+    appearance: none;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
     min-width: 0;
+    min-height: 0;
+    color: var(--text-3);
+    cursor: pointer;
+    font: inherit;
+    font-variation-settings: inherit;
+    display: none;
+    position: absolute;
+    z-index: 1;
+    inset-inline: 0;
+    bottom: 0;
+    width: auto;
+    height: 1.5em;
+    opacity: 0;
+    transition: opacity 150ms ease-out, color 150ms ease-out;
+  }
+  a-text[truncate][expandable] > a-button:is(:hover, :active) {
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-1);
+  }
+  a-text[truncate][expandable] > a-button::before {
+    content: '';
+    position: absolute;
+    inset-inline-end: 3px;
+    bottom: 3px;
+    width: 6px;
+    height: 6px;
+    border: solid currentColor;
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+    transition: transform 150ms ease-out;
+  }
+  a-text[truncate][expandable] > a-button::after { content: none; }
+  a-text[truncate][expandable]:state(overflowing):not(:state(expanded)) > a-button,
+  a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { display: block; }
+  a-text[truncate="1"][expandable]:not(:state(expanded)) > a-button {
+    inset-inline-start: auto;
+    top: 0;
+    width: 3em;
+    height: auto;
+  }
+  a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { height: 16px; }
+  a-text[truncate][expandable]:is(:hover, :focus-within) > a-button,
+  a-text[truncate][expandable]:state(expanded) > a-button { opacity: 1; }
+  a-text[truncate][expandable]:state(expanded) > a-button::before { transform: rotate(225deg); }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-text[truncate][expandable] > a-button,
+    a-text[truncate][expandable] > a-button::before { transition: none; }
+  }
+  @media (forced-colors: active) {
+    a-text[truncate][expandable] > a-text-content { mask-image: none; }
+    a-text[truncate][expandable] > a-button { color: ButtonText; opacity: 1; }
   }
 
   a-text[priority="primary"]    { --text-color: var(--text-1); }

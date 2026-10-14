@@ -7,6 +7,14 @@ changes are not listed.
 
 ### Breaking
 
+- [Expandable raw Text](/text/#expand-raw-html) requires an `a-text-content`
+  region and an `a-button` control. JSX props remain unchanged; granular
+  expandable usage also imports the Button element entry.
+
+- [Card markup](/card/#migrate-from-shadow-parts) uses light-DOM `a-card-*`
+  regions. JSX props remain available; raw slot markup and `::part()` overrides
+  need migration. `ACardElement` and `register_a_card` are removed.
+
 - [Browser support](/install-config/#browser-support) now requires Chrome/Edge
   135+ and Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints
   use live ARIA element references without a copied-text fallback.
@@ -28,6 +36,17 @@ changes are not listed.
 
 ### Changed
 
+- [Text](/text/) renders and truncates in light DOM with external CSS.
+  Expansion works in JSX and raw HTML without rewriting authored markup or
+  attributes. One-way expansion hides its control instead of removing it.
+
+- [Card](/card/) renders its final layout and native link directly in HTML. Its
+  styling uses external CSS and no shadow stylesheet.
+
+- [Expander rounding](/expander/#round) uses a `1rem` radius when `round` is
+  `true`, independent of title level and header height. Explicit radius values
+  remain supported; native `details[data-anta][round]` uses the same default.
+
 - Antithesis [Sliders](/slider/#size-tones-and-radius) use the filled rail's color
   for the thumb when `thumbTone` is omitted. Pass `thumbTone="neutral"` to keep
   a neutral thumb.
@@ -38,6 +57,11 @@ changes are not listed.
   your serif font.
 
 ### Fixed
+
+- [Text expansion controls](/text/#truncation-and-expansion) span the full width
+  for multiline text and the inline end for single-line text. The full-width
+  collapse control occupies 16px of reserved bottom padding, leaving revealed
+  links clickable. Folded text has no added padding or width change on expansion.
 
 - [Menu](/menu/) applies custom `round` values to its container in every theme.
 - [InputDate](/input-date/) labels and hints no longer toggle its calendar.

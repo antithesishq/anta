@@ -14,13 +14,12 @@ rest of Anta.
 ## Anatomy
 
 A card is three stacked sections — `header`, body (`children`), `footer` — plus an
-optional full-bleed `media` region. Each is optional and an empty one reserves no
-space. Spacing comes from one `--card-padding`: the outer inset and the body→footer
+optional full-bleed `media` region. Each is optional; omit unused regions. Spacing comes from one `--card-padding`: the outer inset and the body→footer
 gap are a full `--card-padding`, and the header sits a half-step closer to its body
 (`--card-padding / 2`). A string `header` becomes a `<Title>` and a string body a
 `<Text>`; pass your own node (`<Title>`, `<Text>`, a layout) to take over. An
 optional `subtitle` renders under the title as smaller text (`<Text size="small">`). There's
-no dedicated actions slot: lay out header controls (a button, a tag) inside the
+no dedicated actions region: lay out header controls (a button, a tag) inside the
 `header` itself.
 
 ```tsx
@@ -116,7 +115,7 @@ the card fully round, clamped to its box.
 
 ## Header controls
 
-There is no dedicated actions slot. To place a control in the top-right of the
+There is no dedicated actions region. To place a control in the top-right of the
 header, pass a layout node as `header`. For example, use a flex row containing
 the title and a "more" button. That layout determines where both items appear.
 
@@ -168,8 +167,8 @@ and clips to the corners. `mediaPosition` places it on the `top` (the default),
 
 Give a card an `href` and the whole thing becomes a link — a single focusable
 anchor, keyboard-activatable, with the `hover` lift and inset focus ring. The
-accessible name comes from the header (falling back to the body, then the URL), so
-a screen reader announces one concise link instead of the whole card's text. A
+default accessible name uses a text header or body. Custom nodes use their native
+content name; pass `aria-label` or `aria-labelledby` to choose a shorter name. A
 link card is display content: keep interactive controls (buttons, nested links)
 out of it — its text is non-selectable and the whole surface navigates.
 
@@ -213,7 +212,7 @@ it also blocks navigation until the load resolves.
 | `children?` | ReactNode | — | The card body. A string is wrapped in a `<Text>` at secondary priority, following the card's `tone` and `size`; pass your own nodes to take over. |
 | `footer?` | ReactNode | — | Footer content, usually action buttons. Rendered as a **left-aligned** row (wraps under pressure) — the opposite of `Dialog`'s right-aligned footer. |
 | `header?` | ReactNode | — | Header content, in the top zone. A string is wrapped in a `<Title>` — a real heading in the document outline, tinted to match `tone`, at a level that tracks `size` (small → 5, medium → 4, large → 3). Pass your own node (`<Title level={2}>`, an `<h2>`) for a different level or styling. Omit for no header. |
-| `href?` | string | — | Turn the whole card into a link. The card renders a focusable anchor and its accessible name comes from `header` → body → this URL (override with `aria-label`). A link card is display content — don't nest interactive controls inside it. |
+| `href?` | string | — | Turn the whole card into a native link. ARIA props and `tabIndex` apply to that anchor. A text header or body supplies its default name; custom content uses the native content name. Override with `aria-label` or `aria-labelledby`. Linked cards must not contain interactive controls. |
 | `icon?` | (string & {}) \| string \| number \| bigint \| boolean \| ReactElement \| Iterable \| ReactPortal \| Promise \| null | — | Leading visual for the header, laid out to the left of the `header` / `subtitle` as one aligned row (so it doesn't sit inline in the title, where it mis-aligns). A **string** is an icon shape, rendered as an `<Icon>` inside a circular chip (sized per the card via `--card-icon-size`); pass an `<img>`, initials (`<Text>`), or any node to use it as-is. Omit for none. |
 | `loading?` | boolean | — | Loading state — dims the card with a skeleton pulse, sets `aria-busy`, and (in link mode) blocks navigation. |
 | `media?` | ReactNode | — | Media (image, illustration) rendered full-bleed to the card edge, clipped to its corners. Position it with `mediaPosition`. |
@@ -228,21 +227,50 @@ it also blocks navigation until the load resolves.
 | `target?` | string | — | Anchor target (only with `href`). |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones re-point the surface + text; a custom color keeps its hue while lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
 
-## Web Component
+## HTML
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
-Slots hold media, header, and footer content. Unslotted content is the card body.
+Use the same structural tags in raw HTML. Card has no element class or registration
+step. Omit unused regions. For a linked card, put its media and content inside
+a native anchor directly under `a-card`. Raw authors own that anchor's URL, ARIA,
+and loading updates.
 
 ```html
 <a-card>
-  <a-title slot="header" level="5" role="heading" aria-level="5">Release notes</a-title>
-  <a-text>Everything without a slot attribute becomes the body.</a-text>
-  <a-button slot="footer" role="button" tabindex="0" size="small">
-    <a-button-label>Read more</a-button-label>
-  </a-button>
+  <a-card-content>
+    <a-card-header>
+      <a-card-title>
+        <a-title level="5" role="heading" aria-level="5">Release notes</a-title>
+      </a-card-title>
+    </a-card-header>
+    <a-card-body>
+      <a-text>Put body content inside a-card-body.</a-text>
+    </a-card-body>
+    <a-card-footer>
+      <a-button role="button" tabindex="0" size="small">
+        <a-button-label>Read more</a-button-label>
+      </a-button>
+    </a-card-footer>
+  </a-card-content>
 </a-card>
 ```
+
+## Migrate from shadow parts
+
+The JSX props remain available. Card now emits structural tags instead of flat
+slot markup. Raw HTML authors must add those regions explicitly. Replace
+`::part(body)` with a selector for `a-card-body`, and make the same replacement
+for the other regions. Direct child paths keep an outer Card's overrides from
+reaching a nested Card.
+
+Navigation attributes belong on a native `<a>` directly under `a-card`.
+Changing `href` or `loading` on a raw `a-card` no longer updates a link. The JSX
+wrapper renders those updates from props. `aria-*` props and `tabIndex` apply to
+the anchor in link mode and to `a-card` otherwise. A text header or body supplies
+the default link label; custom content uses its native accessible name unless you
+provide `aria-label` or `aria-labelledby`.
+
+`ACardElement` and `register_a_card` are removed. The granular element entry loads
+CSS only; bundle usage still pairs JavaScript and CSS for other Anta components.
 
 ## Styling
 
@@ -268,12 +296,14 @@ either way:
 </Card>
 ```
 
-For everything else, `<a-card>` exposes shadow **parts** —
-`::part(container)` (the box / anchor), `::part(media)`, `::part(content)`,
-`::part(header)` (the icon + text zone), `::part(icon)`, `::part(title)` (the
-title / subtitle text column), `::part(body)`, `::part(footer)` — which you style
-directly. Each section carries its own `--card-padding`, so a divider on
-`::part(header)` reads as a true section rule.
+Card's layout, focus ring, selected ring, and loading animation use external CSS
+and work with `style-src 'self'`. Custom tones and custom radii can produce inline
+styles in server-rendered JSX and need separate CSP handling.
+
+Card renders its complete light-DOM structure immediately. Its regions are
+`a-card-media`, `a-card-content`, `a-card-header`, `a-card-icon`,
+`a-card-title`, `a-card-body`, and `a-card-footer`. Use child selectors to style
+these tags. Card needs no shadow parts or pre-upgrade layout.
 
 Each example keeps its CSS in a `<style>` **inside** its own preview, targeting a
 demo class on that preview's card — so the rule you read is literally in the
@@ -282,18 +312,18 @@ your own selector.
 
 **Scroll a capped body.** The card never scrolls, and the body doesn't by default.
 When you cap the card's height and want the body to scroll instead of the card
-growing, that's one line on `::part(body)`:
+growing, that's one line on `a-card-body`:
 
 ```css
 /* cap the card's height, then let the body scroll */
 a-card.scrollable { height: 160px; }
-a-card.scrollable::part(body) { overflow: auto; }
+a-card.scrollable > a-card-content > a-card-body { overflow: auto; }
 ```
 
-**Separate the header** with a divider by styling `::part(header)`:
+**Separate the header** with a divider by styling `a-card-header`:
 
 ```css
-a-card.divided::part(header) {
+a-card.divided > a-card-content > a-card-header {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border-5);
 }

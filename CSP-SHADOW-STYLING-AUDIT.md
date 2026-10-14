@@ -2,8 +2,74 @@
 
 Recorded October 5, 2026 against commit `f4255b8` on
 `fix/granular-element-css`, with the package version set to `0.3.34`.
-This is a research snapshot and migration proposal. The proposed migration has
-not been implemented.
+The current checklist tracks subsequent work. The sections after it retain the
+October 5 research snapshot and migration proposal, including historical
+constraints that may have changed.
+
+## Current refactor checklist
+
+Updated October 13, 2026 on `codex/csp-shadow-styling`.
+
+Move default styling into external CSS and use declarative light DOM where it
+simplifies initial rendering. Decide the DOM structure and ownership separately
+for each component before implementation. JSX owns the markup and attributes it
+renders, including ARIA; raw HTML authors supply the equivalent markup. An
+element must not rewrite application-owned light DOM or host attributes.
+
+Completed work on this branch:
+
+- [x] [Avatar](src/elements/a-avatar.ts): external part styling; retains shadow DOM.
+- [x] [Text](src/elements/a-text.ts): light-DOM content and Button control;
+  automatic measurement and expansion, external CSS, and off-DOM state/ARIA.
+- [x] [Card](src/components/Card.tsx): CSS-only light DOM, declarative regions,
+  and a native anchor for link mode. No element class or injected stylesheet.
+
+The following is the proposed order. Each item includes research, implementation,
+and verification before moving to the next component.
+
+1. [ ] [Progress](src/elements/a-progress.ts): indicator, content layout, and
+   loading animation.
+2. [ ] [Banner](src/elements/a-banner.ts): content and action layout, empty
+   regions, and dismissal behavior.
+3. [ ] [Expander](src/elements/a-expander.ts): header, content, indicators, and
+   collapse animation. Boolean `round` now uses a CSS radius; the measured-radius
+   issue described in the historical audit is resolved. Static shadow styles
+   remain.
+4. [ ] [Panel](src/elements/a-panel.ts): content, placeholder, maximized state,
+   and backdrop.
+5. [ ] [Tooltip](src/elements/a-tooltip.ts): popover structure, positioning,
+   proximity opacity, and transitions. Shared by several composed components.
+6. [ ] [Input](src/elements/a-input.ts): input, textarea, and button modes;
+   native controls, adornments, focus, labels, and hints.
+7. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
+   adornments, and native-field semantics.
+8. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
+   scrolling, keyboard navigation, and focus ownership. Verify with Input.
+9. [ ] [Dialog](src/elements/a-dialog.ts): modal structure, optional regions,
+    backdrop, focus management, and close behavior.
+10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
+    markers, affixes, dragging, and focus states.
+11. [ ] [Toast](src/elements/a-toast.ts): content, entry/exit animations, and
+    countdown pause, restart, and dismissal.
+12. [ ] [Toaster](src/elements/a-toaster.ts): placement regions and pointer
+    handling. Verify together with Toast.
+13. [ ] [Copy feedback](src/elements/a-copy.ts): feedback popover, placement,
+    measuring/showing states, and animation.
+
+After their underlying elements are migrated, verify these compositions:
+
+- [ ] ButtonCopy and MenuItemCopy: Copy feedback and Menu.
+- [ ] Breadcrumbs: collapsed Menu and Copy feedback.
+- [ ] Steps: Tooltip hints.
+- [ ] InputDate and InputAutocomplete: Input and Menu.
+- [ ] Select and SelectFaceted: Input, Menu, and optional Tooltip.
+
+For each migration, verify appearance before JavaScript initializes,
+SSR/hydration, keyboard and pointer interaction, accessible names, nested
+composition, and consumer CSS overrides. Check full and granular imports under
+an actual CSP response header. Custom values serialized into `style` attributes
+remain a separate constraint; completing the stylesheet checklist does not make
+every dynamic JSX prop compatible with `style-src-attr 'none'`.
 
 ## Scope and conclusion
 

@@ -121,6 +121,9 @@ the full-width collapse target occupies 16px of reserved bottom padding.
 Folded text has no added padding. Text keeps the same full width when expanded.
 The folded preview remains selectable and clips overflow without scrolling.
 Links retain their native focus and click behavior.
+The expand control comes before the content in DOM order, making it the first
+Tab stop in overflowing Text. Activate it to reveal the content before tabbing
+to its links. This order does not remove those links from Tab navigation.
 Custom CSS can remove the padding, allowing the control to overlap content.
 `collapsible` takes effect only with `expandable`.
 
@@ -185,8 +188,8 @@ thread when you compose custom truncation behavior.
 
 ### Expand raw HTML
 
-Expandable raw Text needs an `a-text-content` region and a direct `a-button`
-control. Both elements work without JSX or application-written toggle handlers.
+Expandable raw Text needs a direct `a-button` control before its `a-text-content`
+region to place the control first in Tab order. Both elements work without JSX or application-written toggle handlers.
 Import their entries alongside your shared tokens and styles:
 
 ```ts
@@ -196,8 +199,8 @@ import '@antadesign/anta/elements/a-button'
 
 ```html
 <a-text truncate="1" expandable collapsible>
-  <a-text-content>A long description that needs more than one line.</a-text-content>
   <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+  <a-text-content>A long description that needs more than one line.</a-text-content>
 </a-text>
 ```
 
@@ -218,8 +221,8 @@ handling under `style-src-attr 'none'` (see [Content Security Policy](/install/#
 
 ```html
 <a-text class="summary" truncate="3" expandable collapsible>
-  <a-text-content>A longer description to show across three lines.</a-text-content>
   <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+  <a-text-content>A longer description to show across three lines.</a-text-content>
 </a-text>
 ```
 

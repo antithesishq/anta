@@ -283,8 +283,8 @@ export interface ATextAttributes extends BaseAttributes {
    *  available via `--line-clamp`. Multi-line JSX values set it inline;
    *  raw authors set it in an allowed stylesheet. */
   truncate?: boolean | string | number
-  /** Enables expansion with `truncate`. Supply an `a-text-content` region and
-   *  a direct `a-button` control with `role="button"` and `tabindex="0"`. The
+  /** Enables expansion with `truncate`. Supply a direct `a-button` control with
+   *  `role="button"` and `tabindex="0"` before the `a-text-content` region. The
    *  elements own expansion and accessibility defaults off-DOM. Without
    *  `collapsible`, expansion is one-way and the control becomes hidden. */
   expandable?: boolean | ''

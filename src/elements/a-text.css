@@ -32,6 +32,7 @@
 
   a-text[truncate] { min-width: 0; }
   a-text-content { display: contents; }
+  a-text > a-button:has(+ a-text-content),
   a-text > a-text-content + a-button { display: none; }
 
   /* Reserve space for the absolute collapse control only while expanded. */

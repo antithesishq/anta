@@ -53,6 +53,10 @@ before(async () => {
         ${react ? 'let root' : ''}
         window.renderText = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(node(props))" : "render(node(props), document.querySelector('#mount'))"} }
         window.hydrateText = props => { ${react ? "root = hydrateRoot(document.querySelector('#mount'), node(props))" : "hydrate(node(props), document.querySelector('#mount'))"} }
+        window.renderLinkedText = () => window.renderText({
+          truncate: 3, expandable: true, collapsible: true,
+          children: [React.createElement('a', { href: '#content-link', key: 'link' }, 'Content link'), ${JSON.stringify(longText)}],
+        })
       `, resolveDir: process.cwd() }, bundle: true, write: false, outfile: `${framework}.js`,
       format: 'esm', target: 'es2022', jsx: 'automatic', jsxImportSource: '@antadesign/anta',
       define: { 'process.env.NODE_ENV': '"production"' }, nodePaths: [resolve('node_modules'), resolve('site/node_modules')],
@@ -104,13 +108,45 @@ async function pageFor(t, engine, mode = 'granular', ssr = false, javaScriptEnab
   return page
 }
 const register = (page, mode = 'granular') => page.evaluate(mode => import(`/${mode}.js`), mode)
-const raw = (lines = 1, collapsible = true) => `<a-text truncate="${lines}" expandable ${collapsible ? 'collapsible' : ''}><a-text-content>${longText}</a-text-content><a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button></a-text>`
+const raw = (lines = 1, collapsible = true) => `<a-text truncate="${lines}" expandable ${collapsible ? 'collapsible' : ''}><a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button><a-text-content>${longText}</a-text-content></a-text>`
 const mount = (page, html) => page.locator('#mount').evaluate((n, html) => n.innerHTML = html, html)
 const geometry = page => page.locator('#mount').evaluate(n => [...n.querySelectorAll('a-text, a-text-content'), document.querySelector('#following')].map(n => { const r=n.getBoundingClientRect(); return [r.x,r.y,r.width,r.height] }))
 const expanded = page => page.locator('#mount > a-text').evaluate(n => n.matches(':state(expanded)'))
 const buttonState = page => page.locator('#mount > a-text > a-button').evaluate(n => ({ label: window.elementInternals.get(n).ariaLabel, expanded: window.elementInternals.get(n).ariaExpanded }))
 
 for (const engine of engines) {
+  test(`${engine.name()}: Text expansion control precedes content links in Tab order`, async t => {
+    for (const framework of ['raw', 'React', 'Preact']) {
+      const page = await pageFor(t, engine)
+      await register(page)
+      await page.evaluate(() => {
+        const before = document.createElement('a')
+        before.href = '#before'
+        before.id = 'before-text'
+        before.textContent = 'Before Text'
+        document.querySelector('#mount').before(before)
+      })
+      if (framework === 'raw') {
+        await mount(page, raw(3).replace(longText, `<a href="#content-link">Content link</a> ${longText}`))
+      } else {
+        await page.evaluate(framework => import(`/${framework}.js`), framework)
+        await page.evaluate(() => window.renderLinkedText())
+      }
+      const control = page.locator('#mount > a-text > a-button')
+      await control.waitFor({ state: 'visible' })
+      await page.locator('#before-text').focus()
+      const tab = engine === webkit ? 'Alt+Tab' : 'Tab'
+      await page.keyboard.press(tab)
+      assert.equal(await control.evaluate(n => n === document.activeElement), true, framework)
+      await page.keyboard.press(engine === webkit ? 'Alt+Shift+Tab' : 'Shift+Tab')
+      assert.equal(await page.locator('#before-text').evaluate(n => n === document.activeElement), true, framework)
+      await page.keyboard.press(tab)
+      await page.keyboard.press('Enter')
+      assert.equal(await expanded(page), true)
+      await page.keyboard.press(tab)
+      assert.equal(await page.locator('a[href="#content-link"]').evaluate(n => n === document.activeElement), true, framework)
+    }
+  })
   test(`${engine.name()}: folded expandable Text cannot scroll to clipped links`, async t => {
     const page = await pageFor(t, engine)
     await register(page)

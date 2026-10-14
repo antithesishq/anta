@@ -58,6 +58,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Text expansion controls](/text/#truncation-and-expansion) precede content links
+  in Tab order. Raw HTML authors place the control before `a-text-content` too.
+
 - [Folded expandable Text](/text/#truncation-and-expansion) stays in place when
   a clipped link receives focus. Its content remains selectable.
 

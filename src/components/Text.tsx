@@ -58,7 +58,8 @@ export type TextProps = BaseProps & {
  *
  * Text and truncation render with external CSS before registration. The browser
  * element measures overflow and owns expansion off-DOM. Expandable Text uses
- * `a-text-content` and an `a-button` control; granular usage also loads
+ * an `a-button` control before `a-text-content`, so the control precedes content
+ * links in Tab order. Granular usage also loads
  * `@antadesign/anta/elements/a-button`. Automatic tooltips need Tooltip's entry.
  *
  * @example Basic usage
@@ -98,8 +99,8 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
     >
       {canExpand ? (
         <>
-          <a-text-content>{children}</a-text-content>
           <a-button role="button" tabIndex={0} priority="quaternary" paddingless="" />
+          <a-text-content>{children}</a-text-content>
         </>
       ) : children}
       {lineCount != null && !canExpand && (

@@ -175,15 +175,18 @@ export interface BaseAttributes extends DOMEventHandlers {
 }
 
 /**
- * Attributes for the `<a-progress>` custom element.
+ * Attributes for the CSS-only `<a-progress>` container.
  *
- * These are the low-level web component attributes. For the JSX wrapper with
- * typed props and computed labels, use `Progress` from `@antadesign/anta`.
+ * CSS paints the indicator. Raw authors supply matching ARIA and optional labels.
+ * For typed props and computed labels, use the `Progress` JSX wrapper.
  */
 export interface AProgressAttributes extends BaseAttributes {
-  /** Current progress value. Omit this attribute for indeterminate progress. */
+  /** Current progress value. CSS uses `--progress-value` when supplied, then
+   *  this attribute where numeric `attr()` is supported. Omit for loading. */
   value?: number | string | false
-  /** Maximum value. Defaults to 100. */
+  /** Upper bound. CSS uses `--progress-max` when supplied, then this attribute
+   *  where numeric `attr()` is supported.
+   *  @defaultValue 100 */
   max?: number | string
   /** Color variant, or any literal CSS color for a custom tone (derived in
    *  oklch). Named tones track light/dark automatically. */

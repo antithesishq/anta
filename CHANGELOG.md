@@ -7,6 +7,10 @@ changes are not listed.
 
 ### Breaking
 
+- [Progress styling](/progress/#styling) uses light-DOM selectors instead of
+  `::part()`. `AProgressElement` and `register_a_progress` are removed; raw HTML
+  supplies its own ARIA.
+
 - Expandable [Text](/text/#expand-raw-html): when importing elements individually,
   also import `@antadesign/anta/elements/a-button`. The full bundle and elements
   barrel already include it. JSX creates the expansion control automatically;
@@ -40,6 +44,10 @@ changes are not listed.
   `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
+
+- [Progress](/progress/) renders its fill and loading animation with external
+  CSS and works without JavaScript. Native `<progress data-anta>` remains a
+  standalone control.
 
 - [Text](/text/) renders and truncates in light DOM with external CSS.
   Expansion works in JSX and raw HTML without rewriting authored markup or

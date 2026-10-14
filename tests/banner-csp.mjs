@@ -89,8 +89,11 @@ before(async () => {
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   origin = `http://127.0.0.1:${server.address().port}`
+  const chromiumOptions = process.env.ANTA_BANNER_CHROMIUM_EXECUTABLE
+    ? { executablePath: process.env.ANTA_BANNER_CHROMIUM_EXECUTABLE }
+    : { channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined }
   for (const engine of engines) browsers.set(engine, await engine.launch({ headless: true,
-    ...(engine === chromium ? { channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined } : {}),
+    ...(engine === chromium ? chromiumOptions : {}),
   }))
 })
 after(async () => {

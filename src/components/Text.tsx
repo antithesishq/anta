@@ -7,7 +7,7 @@ import { Tooltip } from "./Tooltip"
  *  `collapsible` only with `expandable` — so the type forbids `collapsible`
  *  unless `expandable` is set (a dynamic `expandable={cond}` is still allowed). */
 export type ExpandMode =
-  | { expandable?: never; collapsible?: never; expandableInert?: never }
+  | { expandable?: never; expandableInert?: never; collapsible?: never }
   | {
       /** Show a fade hint when text overflows and reserve space for an
        *  expansion control. Select the control or press Enter or Space while it
@@ -15,15 +15,15 @@ export type ExpandMode =
        *  Expansion is one-way by default: the control is hidden once expanded.
        *  Add `collapsible` for a two-way toggle. */
       expandable: boolean
-      /** Let the reader collapse back after expanding: the chevron becomes a
-       *  "Show more" / "Show less" toggle that stays visible while expanded.
-       *  Only takes effect together with `expandable`. */
-      collapsible?: boolean
       /** Make overflowing, folded content inert and let the expand control cover
        *  the full preview. Content cannot receive focus, clicks, or selection and
        *  is excluded from the accessibility tree until expanded. Text that fits
        *  remains interactive. JSX owns the content's `inert` attribute. */
       expandableInert?: boolean
+      /** Let the reader collapse back after expanding: the chevron becomes a
+       *  "Show more" / "Show less" toggle that stays visible while expanded.
+       *  Only takes effect together with `expandable`. */
+      collapsible?: boolean
     }
 
 export type TextProps = BaseProps & {

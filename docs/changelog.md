@@ -7,6 +7,14 @@ changes are not listed.
 
 ### Breaking
 
+- [Expander raw markup](/expander/#web-component) uses named regions instead of
+  slot attributes. Put `level` on `a-expander-summary`; JSX props and shadow
+  part overrides remain supported.
+
+- [Banner markup and styling](/banner/#web-component) use light-DOM regions and
+  region selectors instead of shadow slots and `::part()`. JSX props remain
+  available; raw authors group actions in `a-banner-actions`.
+
 - [Progress styling](/progress/#styling) uses light-DOM selectors instead of
   `::part()`. `AProgressElement` and `register_a_progress` are removed; raw HTML
   supplies its own ARIA.
@@ -45,6 +53,13 @@ changes are not listed.
 
 ### Changed
 
+- [Expander](/expander/) uses external default styling while retaining its native
+  button, collapse animation, and cancelable state requests. Reconnection keeps
+  applied state.
+
+- [Banner](/banner/) renders its layout with external CSS before registration.
+  Dismissal retains its existing transitions and leaves children mounted.
+
 - [Progress](/progress/) renders its fill and loading animation with external
   CSS and works without JavaScript. Native `<progress data-anta>` remains a
   standalone control.
@@ -62,6 +77,11 @@ changes are not listed.
 
 
 ### Fixed
+
+- [Banner visibility](/banner/#controlled-vs-uncontrolled) can be restored after
+  an initially dismissed notice. Nested Banner alignment and close styling stay
+  independent, close requests remain scoped after moving between documents, and
+  empty action regions take no layout space.
 
 - [Text expansion controls](/text/#truncation-and-expansion) precede content links
   in Tab order. Raw HTML authors place the control before `a-text-content` too.

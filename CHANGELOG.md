@@ -7,6 +7,10 @@ changes are not listed.
 
 ### Breaking
 
+- [Expander raw markup](/expander/#web-component) uses named regions instead of
+  slot attributes. Put `level` on `a-expander-summary`; JSX props and shadow
+  part overrides remain supported.
+
 - [Banner markup and styling](/banner/#web-component) use light-DOM regions and
   region selectors instead of shadow slots and `::part()`. JSX props remain
   available; raw authors group actions in `a-banner-actions`.
@@ -48,6 +52,10 @@ changes are not listed.
   `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
+
+- [Expander](/expander/) uses external default styling while retaining its native
+  button, collapse animation, and cancelable state requests. Reconnection keeps
+  applied state.
 
 - [Banner](/banner/) renders its layout with external CSS before registration.
   Dismissal retains its existing transitions and leaves children mounted.

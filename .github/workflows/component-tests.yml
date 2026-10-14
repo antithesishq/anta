@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, progress, text]
+        options: [all, banner, calendar, card, expander, progress, text]
 permissions:
   contents: read
 jobs:
@@ -29,3 +29,11 @@ jobs:
         env:
           COMPONENT: ${{ inputs.component }}
         run: pnpm test:components --tier slow --component "$COMPONENT"
+      - name: Save Expander visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: expander-visual
+          path: tests/.test-output/expander
+          include-hidden-files: true
+          if-no-files-found: ignore

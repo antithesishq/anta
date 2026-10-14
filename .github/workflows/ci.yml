@@ -51,6 +51,7 @@ jobs:
             echo 'card=true' >> "$GITHUB_OUTPUT"
             echo 'text=true' >> "$GITHUB_OUTPUT"
             echo 'progress=true' >> "$GITHUB_OUTPUT"
+            echo 'expander=true' >> "$GITHUB_OUTPUT"
             echo 'banner=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -123,6 +124,19 @@ jobs:
           else
             echo 'banner=false' >> "$GITHUB_OUTPUT"
           fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-expander.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
+            src/components/{Expander,Button,Icon}.tsx \
+            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/expander-*' tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'expander=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'expander=false' >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -163,6 +177,11 @@ jobs:
       - name: Test Banner CSP, dismissal, and initial layout
         if: steps.component-tests.outputs.banner == 'true'
         run: pnpm test:components --component banner
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Test Expander CSP, disclosure behavior, and initial layout
+        if: steps.component-tests.outputs.expander == 'true'
+        run: pnpm test:components --component expander
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Typecheck stickers

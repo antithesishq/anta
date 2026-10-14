@@ -58,6 +58,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Text expansion controls](/text/#truncation-and-expansion) keep their accessible
+  name and expanded state when granular element entries load before the full bundle.
+
 - [Text expansion controls](/text/#truncation-and-expansion) span the full width
   for multiline text and the inline end for single-line text. The full-width
   collapse control occupies 16px of reserved bottom padding, leaving revealed

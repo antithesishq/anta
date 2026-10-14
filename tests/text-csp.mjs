@@ -20,10 +20,10 @@ let server, origin, renderServer
 
 before(async () => {
   const assets = new Map()
-  for (const mode of ['granular', 'bundle', 'tooltip']) {
+  for (const mode of ['granular', 'bundle', 'tooltip', 'text', 'button']) {
     const imports = mode === 'bundle'
       ? `import '${source}/bundle'; ${process.env.ANTA_TEXT_PACKAGE_ROOT ? `import '${source}/bundle.css';` : ''}`
-      : `import '${source}/tokens.css'; import '${source}/reset.css'; import '${source}/elements/a-text'; import '${source}/elements/a-button'; ${mode === 'tooltip' ? `import '${source}/elements/a-tooltip';` : ''}`
+      : `import '${source}/tokens.css'; import '${source}/reset.css'; ${mode !== 'button' ? `import '${source}/elements/a-text';` : ''} ${mode !== 'text' ? `import '${source}/elements/a-button';` : ''} ${mode === 'tooltip' ? `import '${source}/elements/a-tooltip';` : ''}`
     const result = await build({
       stdin: { contents: imports, resolveDir: process.cwd() }, bundle: true, write: false,
       outfile: `${mode}.js`, format: 'esm', target: 'es2022',
@@ -111,6 +111,29 @@ const expanded = page => page.locator('#mount > a-text').evaluate(n => n.matches
 const buttonState = page => page.locator('#mount > a-text > a-button').evaluate(n => ({ label: window.elementInternals.get(n).ariaLabel, expanded: window.elementInternals.get(n).ariaExpanded }))
 
 for (const engine of engines) {
+  test(`${engine.name()}: Text toggle accessibility survives mixed bundle and granular imports`, async t => {
+    for (const entry of ['text', 'button']) {
+      for (const order of [[entry, 'bundle'], ['bundle', entry]]) {
+        const page = await pageFor(t, engine)
+        await mount(page, raw())
+        const html = await page.locator('a-text').evaluate(n => n.outerHTML)
+        for (const mode of order) await register(page, mode)
+        await page.locator('a-button').waitFor({ state: 'visible' })
+        assert.deepEqual(await buttonState(page), { label: 'Show more', expanded: 'false' }, order.join(' → '))
+        if (engine === chromium) {
+          const session = await page.context().newCDPSession(page)
+          const tree = await session.send('Accessibility.getFullAXTree')
+          assert.ok(tree.nodes.some(n => n.role?.value === 'button' && n.name?.value === 'Show more'
+            && n.properties?.some(p => p.name === 'expanded' && p.value.value === false)), order.join(' → '))
+          await session.detach()
+        }
+        await page.locator('a-button').click()
+        assert.equal(await expanded(page), true)
+        assert.deepEqual(await buttonState(page), { label: 'Show less', expanded: 'true' }, order.join(' → '))
+        assert.equal(await page.locator('a-text').evaluate(n => n.outerHTML), html)
+      }
+    }
+  })
   test(`${engine.name()}: Text SSR clamps in light DOM with JavaScript disabled`, async t => {
     const page = await pageFor(t, engine, 'granular', true, false)
     assert.equal(await page.locator('a-text-content').evaluate(n => getComputedStyle(n).webkitLineClamp), '1')

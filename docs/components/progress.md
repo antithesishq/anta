@@ -208,13 +208,3 @@ Use `tone`, `size`, and `round` for the component's appearance. For further
 customization, style `a-progress` for the track and `a-progress::before` for the
 fill or loading stripes. Target the label tags or your own children for text
 styling. `.fancy` belongs to this example.
-
-### Migrate from shadow parts
-
-Replace `a-progress::part(indicator)` with `a-progress::before`. Replacing its
-background also replaces the default fade at the fill's edge. Replace
-`::part(content)` with selectors for the label tags or your custom content.
-
-`AProgressElement` and `register_a_progress` are removed. Load styles through
-`@antadesign/anta/elements/a-progress` or the full bundle. Raw HTML needs no
-indicator child; keep its values, visible text, and ARIA in sync.

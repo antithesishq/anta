@@ -146,8 +146,16 @@ ARIA values on the host, and keep them in sync with `value`, `max`, and visible
 text. Omit `value` for loading stripes.
 
 The JSX wrapper supplies the markup, numeric CSS variables, and ARIA from props.
-Raw attribute rendering uses numeric CSS `attr()`; see
-[Browser support](/install-config/#browser-support).
+Raw `value` and `max` rendering requires numeric CSS `attr()`, which is not
+available in every browser that meets Anta's minimum requirements. Numeric
+`--progress-value` and `--progress-max` variables override the corresponding
+attributes. JSX supplies and updates them automatically across supported browsers.
+
+Server-rendered JSX values use inline style attributes. A CSP with
+`style-src-attr 'none'` blocks these variables; attribute rendering then requires
+numeric CSS `attr()` support. Native `<progress data-anta>` uses browser-owned
+values without inline CSS variables across supported browsers. See
+[Content Security Policy](/install-config/#content-security-policy).
 
 ### Native HTML progress
 

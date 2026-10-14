@@ -52,7 +52,7 @@ import { Progress, Title, Tag } from '@antadesign/anta'
 ```
 
 Each element entry imports its own CSS for your bundler to include and registers
-its browser class when needed. Progress, Title, and Tag load only CSS; they have no custom
+its browser class when needed. Some entries load only CSS and have no custom
 element class to register. Element entries do not import global tokens or the reset.
 
 JSX wrappers produce `<a-*>` tags and attributes. They do not register browser
@@ -552,20 +552,11 @@ browsers can fail hard, including `:state()` being unrecognized or
 `showPopover()` throwing. Gate Anta on your own support matrix when you support
 older browsers.
 
-Two features progressively enhance with fallbacks: `checkVisibility()` falls
-back to `getClientRects()`, and typed CSS `attr()` supports raw
-`<a-icon size>` in Chrome 133+ and Safari 18.2+. Elsewhere use `<Icon size>`
-or `--icon-size`.
-
-Raw Progress can read `value` and `max` through numeric CSS `attr()`.
-[MDN's compatibility data](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/attr#browser_compatibility)
-lists this syntax in Chrome/Edge 133+, Firefox 155+, and Safari Technology
-Preview; it is not part of Anta's minimum browser requirements. Numeric
-`--progress-value` and `--progress-max` variables override the corresponding
-attributes. JSX supplies and updates these variables automatically from props
-across supported browsers. Attribute-only raw `a-progress` requires numeric
-`attr()` support. Native `<progress data-anta>` uses browser-owned values across
-the supported browsers.
+`checkVisibility()` falls back to `getClientRects()`. Some raw attributes use
+[typed CSS `attr()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/attr#browser_compatibility),
+whose support extends beyond Anta's minimum browser requirements. JSX wrappers
+supply CSS variables for these values. Each component's Web Component reference
+describes its raw attribute requirements.
 
 ## Content Security Policy
 
@@ -575,15 +566,13 @@ Anta's tokens, component stylesheets, and optional themes work when your
 its `style-src` fallback. External CSS and named theme values do not require
 inline style attributes.
 
-Some JSX props produce inline CSS custom properties, including custom `tone`
-colors, explicit `round` lengths, numeric sizing, and determinate Progress
-`value` and `max`. The `style` prop also
-produces inline styles. Server rendering serializes these values into HTML
+Some JSX props produce inline CSS custom properties for custom colors, lengths,
+and dynamic values. The `style` prop also produces inline styles.
+Server rendering serializes these values into HTML
 `style` attributes, which `style-src-attr 'none'` blocks. Put these
-customizations in classes and an allowed stylesheet when inline attributes are
-forbidden. Progress can read raw `value` and `max` attributes where numeric
-CSS `attr()` is supported. Native `<progress data-anta>` reads its values
-without inline CSS variables across supported browsers. Client-side assignments to individual CSS properties can behave
+visual customizations in classes and an allowed stylesheet when inline attributes
+are forbidden. Check each component's reference for dynamic-value requirements.
+Client-side assignments to individual CSS properties can behave
 differently; do not rely on hydration to repair blocked server-rendered styles.
 See [CSP rules for style attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
 
@@ -594,7 +583,6 @@ Server-rendered `<style>` blocks also need CSP permission. They follow
 policy. A nonce on a `<style>` element does not authorize HTML `style`
 attributes. See [CSP rules for stylesheet elements](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-elem).
 
-Anta does not yet support strict CSP across every component. Card's own styling
-is entirely external; components such as Input and Menu still inject
-shadow `<style>` elements. Loading a theme does not unblock those styles, and
+Anta does not yet support strict CSP across every component. Some components
+still inject shadow `<style>` elements. Loading a theme does not unblock those styles, and
 nested components retain their own CSP requirements.

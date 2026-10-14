@@ -81,6 +81,7 @@ const READONLY_ALLOWLIST = {
   ATextElement: ['isTruncated'],
   ABoxElement: ['measurement', 'context', 'isTruncated'],
   ARadioGroupElement: ['value'],
+  ACalendarElement: ['value'],
   ATabsElement: ['value'],
   ACheckboxElement: ['checked', 'indeterminate'],
   ASwitchElement: ['checked'],

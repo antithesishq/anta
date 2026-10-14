@@ -64,10 +64,9 @@ that thickness. Resize it with a position-scoped `::part(dialog)` rule (see
 
 ## Rounding corners
 
-The centered modal is rounded by default (10px) and drawers are square. `round`
-overrides that. A **side keyword** rounds only that edge's two corners, which
-pairs with a drawer's exposed edge: a bottom sheet takes `round="top"`, a right
-drawer `round="left"`.
+The theme sets the centered modal's default corners. Drawers are square unless
+you pass `round`. A **side keyword** rounds only that edge's two corners: a bottom
+sheet takes `round="top"`, a right drawer `round="left"`.
 
 ```tsx
 <Dialog round={0}>…</Dialog>                        {/* unrounded centered modal */}
@@ -79,10 +78,9 @@ drawer `round="left"`.
 
 A `number` or CSS string sets the amount on all corners; the string may be a full
 `border-radius` shorthand, so `round="12px 12px 0 0"` rounds just the top by 12px
-(a side keyword with a custom amount). Bare `round` rounds all corners at the
-default 10px, handy to round an otherwise-square drawer. Authoring the raw
-`<a-dialog>`, a single length works through the typed `attr()` (`round="20px"`);
-shorthands go through the wrapper's `round` prop.
+(a side keyword with a custom amount). Bare `round` rounds all corners, including
+on a drawer. For raw `<a-dialog>`, use a single length (`round="20px"`). Use the
+wrapper's `round` prop for shorthands.
 
 ## Close button
 

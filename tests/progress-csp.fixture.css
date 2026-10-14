@@ -1,0 +1,18 @@
+body { margin: 0; }
+#mount { width: 400px; }
+a-progress.override::before { background: #123456; }
+a-progress.override > a-progress-label { letter-spacing: 1px; }
+a-progress.pixel, progress.pixel { background: #fff; }
+a-progress.pixel::before { background: #c00; }
+progress.pixel::-webkit-progress-bar { background: #fff; }
+progress.pixel::-webkit-progress-value { background: #c00; }
+progress.pixel::-moz-progress-bar { background: #c00; }
+a-progress.variable-override { --progress-value: 10; --progress-max: 40; }
+/* Exercise the variable-only branch used by browsers without numeric attr(). */
+a-progress.without-attr {
+  --progress-value-resolved: var(--progress-value, 0);
+  --progress-max-resolved: var(--progress-max, 100);
+}
+a-progress.value-only { --progress-value: 20; }
+a-progress.max-only { --progress-max: 200; }
+a-progress.zero-variable { --progress-value: 0; }

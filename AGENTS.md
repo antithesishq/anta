@@ -54,8 +54,19 @@ CI runs build, custom linting, anta and sticker type checks, root regression tes
 the stickers build, site CSS linting, and a production site build. `pnpm test`
 includes Capture, Slider, and disclosure-navigation browser tests and Markdown
 conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
+CI sets `ANTA_TEST_WEBKIT=0` to exclude WebKit engines and their setup from
+browser suites. Local test commands include WebKit by default.
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
+
+Keep new component-specific browser matrices separate from `pnpm test`. Give them
+a dedicated command and register them in `tests/component-suites.mjs`. Use
+`tests/component-tier.mjs` to mark core regressions as fast and keep expanded
+matrices in the slow tier. Gate fast PR checks on relevant component, shared
+runtime, dependency, test, and workflow changes. Manual CI runs include the slow
+tier; the Component matrix workflow also runs the full browser coverage.
+See [Component test tiers](tests/README.md#component-test-tiers) for commands and
+classification. Calendar and InputDate share the Calendar suite.
 
 The Button property harness runs separately from `pnpm test`. Start or reuse a
 site preview as described in [site/AGENTS.md](site/AGENTS.md#local-servers), then
@@ -124,6 +135,11 @@ that the packaged docs lead new consumers to the working full bundle default.
 Commit and push work on the current branch by default. Never commit or push task
 changes directly to `main`; when the current branch is `main`, create and switch
 to a descriptively named feature or fix branch before committing or pushing.
+
+Agents must not run `gh pr merge --admin` or use an equivalent API bypass of
+branch protection. If a merge requires an admin override, explain the blocking
+requirement and ask the user to perform the merge in GitHub's web UI or run the
+command with `--admin` themselves.
 
 ## Shared conventions
 

@@ -2,8 +2,141 @@
 
 Recorded October 5, 2026 against commit `f4255b8` on
 `fix/granular-element-css`, with the package version set to `0.3.34`.
-This is a research snapshot and migration proposal. The proposed migration has
-not been implemented.
+The current checklist tracks subsequent work. The sections after it retain the
+October 5 research snapshot and migration proposal, including historical
+constraints that may have changed.
+
+## Current refactor checklist
+
+Updated October 14, 2026 on `codex/banner-light-dom`.
+
+Move default styling into external CSS and use declarative light DOM where it
+simplifies initial rendering. Decide the DOM structure and ownership separately
+for each component before implementation. JSX owns the markup and attributes it
+renders, including ARIA; raw HTML authors supply the equivalent markup. An
+element must not rewrite application-owned light DOM or host attributes.
+
+Completed work:
+
+- [x] [Avatar](src/elements/a-avatar.ts): external part styling; retains shadow DOM.
+- [x] [Text](src/elements/a-text.ts): light-DOM content and Button control;
+  automatic measurement and expansion, external CSS, and off-DOM state/ARIA.
+- [x] [Card](src/components/Card.tsx): CSS-only light DOM, declarative regions,
+  and a native anchor for link mode. No element class or injected stylesheet.
+- [x] [Progress](src/components/Progress.tsx): CSS-only light DOM with a
+  `::before` indicator. Numeric CSS variables override `value` and `max`
+  attribute fallbacks; JSX owns variables, markup, and ARIA. Raw authors keep
+  values and ARIA in sync. Native `<progress data-anta>` shares the stylesheet
+  and entry while retaining browser-owned rendering and semantics. No shadow
+  root, registration, indicator child, or fallback slot.
+
+Panel stays outside this refactor and retains its current implementation.
+
+The following is the proposed order. Each item includes research, implementation,
+and verification before moving to the next component.
+
+1. [x] [Banner](src/elements/a-banner.ts): light-DOM regions and external CSS
+   implemented. Visibility remains in ElementInternals; JSX omits absent actions
+   and CSS hides empty regions. No content observers or DOM rewriting.
+   Dismissal transitions retained. Source, installed-package, minimum Chrome,
+   original-layout, and production checks passed; coverage limits are below.
+2. [ ] [Expander](src/elements/a-expander.ts): header, content, indicators, and
+   collapse animation. Boolean `round` now uses a CSS radius; the measured-radius
+   issue described in the historical audit is resolved. Static shadow styles
+   remain.
+3. [ ] [Tooltip](src/elements/a-tooltip.ts): popover structure, positioning,
+   proximity opacity, and transitions. Shared by several composed components.
+4. [ ] [Input](src/elements/a-input.ts): input, textarea, and button modes;
+   native controls, adornments, focus, labels, and hints.
+5. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
+   adornments, and native-field semantics.
+6. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
+   scrolling, keyboard navigation, and focus ownership. Verify with Input.
+7. [ ] [Dialog](src/elements/a-dialog.ts): modal structure, optional regions,
+   backdrop, focus management, and close behavior.
+8. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
+   markers, affixes, dragging, and focus states.
+9. [ ] [Toast](src/elements/a-toast.ts): content, entry/exit animations, and
+   countdown pause, restart, and dismissal.
+10. [ ] [Toaster](src/elements/a-toaster.ts): placement regions and pointer
+    handling. Verify together with Toast.
+11. [ ] [Copy feedback](src/elements/a-copy.ts): feedback popover, placement,
+    measuring/showing states, and animation.
+
+After their underlying elements are migrated, verify these compositions:
+
+- [ ] ButtonCopy and MenuItemCopy: Copy feedback and Menu.
+- [ ] Breadcrumbs: collapsed Menu and Copy feedback.
+- [ ] Steps: Tooltip hints.
+- [ ] InputDate and InputAutocomplete: Input and Menu.
+- [ ] Select and SelectFaceted: Input, Menu, and optional Tooltip.
+
+For each migration, verify appearance before JavaScript initializes,
+SSR/hydration, keyboard and pointer interaction, accessible names, nested
+composition, and consumer CSS overrides. Check full and granular imports under
+an actual CSP response header. Custom values serialized into `style` attributes
+remain a separate constraint; completing the stylesheet checklist does not make
+every dynamic JSX prop compatible with `style-src-attr 'none'`.
+
+### Banner verification
+
+Verified October 14, 2026:
+
+- `pnpm test:banner`: 55 source checks passed in Chrome `155.0.8059.40`,
+  Firefox `155.0`, and Playwright WebKit `26.6`. The same 55 checks passed against
+  an extracted npm tarball made with `npm pack --ignore-scripts`.
+- The packed suite passed 19 checks in Chrome for Testing `135.0.7049.114`,
+  the supported minimum major version. Set `ANTA_BANNER_CHROMIUM_EXECUTABLE`
+  to a browser executable and `ANTA_TEST_WEBKIT=0` to repeat that check.
+  `ANTA_BANNER_PACKAGE_ROOT` selects the extracted package directory.
+- CSP was supplied as an HTTP response header with same-origin scripts and
+  styles, `style-src-attr 'none'`, and data images allowed for Icon masks. No CSP
+  violations occurred. Coverage includes initial rendering, SSR/hydration,
+  keyboard and pointer dismissal, cancellation, controlled rejection/restoration,
+  nesting, empty regions, reduced motion, overrides, and both mixed import orders.
+- Compared the original Banner at `84ae9fff` after registration with the new
+  layout: start, center, RTL, round, wrapped, no actions, and no close control.
+  Host and content geometry matched exactly in all three engines, across 21
+  comparisons. Screenshots retained the original appearance; dismissal timings
+  and the transition declarations were preserved.
+- The production site built successfully and passed all 10 production checks.
+  The Banner page's controlled and raw demonstrations also passed interaction
+  checks in Chrome and WebKit, including rejecting dismissal and showing it again.
+- Root regressions passed all 325 checks selected by the existing CI command.
+  The unfiltered run passed 325 of 326; the debounce-clock case failed with
+  `Cannot fast-forward to the past`, matching CI's existing exclusion.
+  Anta lint/type checking, sticker type checking, and site CSS lint passed.
+- PR review found that the close-request path used the current document's
+  `Element` constructor, which rejected a Banner adopted from another document.
+  A realm-independent node/tag check fixes that regression. The expanded suite
+  passed 61 source checks and 61 packed-artifact checks in all three engines,
+  including six same-origin iframe cases covering dismissal, nested isolation,
+  unchanged markup, and CSP. The earlier minimum Chrome run covered 19 checks
+  before these adoption cases were added.
+- The SSR and package follow-up passed all 73 source checks and all 73
+  installed-package checks in the same three engines. `pnpm test:banner:package`
+  installs an npm tarball in an isolated consumer and resolves public package
+  exports, including granular entries, the full bundle, and their stylesheets.
+  Builds use the installed package without Anta source aliases or workspace links.
+  React and Preact each generate their own server HTML. Hydration preserves the
+  server-rendered nodes and reports no React recovery errors. Initially controlled
+  closed banners hydrate, reopen, reject dismissal, and accept it in both import
+  modes. The installed consumer uses React/React DOM `19.3.0`, Preact `10.29.8`,
+  and `preact-render-to-string` `6.7.0`. PR CI selects core source checks through
+  the shared fast tier. Full source and installed-package matrices remain in the
+  slow tier for manual runs.
+- The shared tier split passed 44 core checks across Banner, Calendar/InputDate,
+  Card, Progress, and Text in about 16 seconds locally. Full coverage passed all
+  218 source checks and 73 installed Banner checks. Tier selection regressions,
+  Anta lint, and workflow YAML parsing also passed.
+
+Exact Firefox `136` and Safari/iOS Safari `17.4` were not executed. Their
+required custom-state APIs are covered by the
+[MDN compatibility data](https://github.com/mdn/browser-compat-data/blob/main/api/CustomStateSet.json)
+and [Safari 17.4 release notes](https://webkit.org/blog/15063/webkit-features-in-safari-17-4/).
+The existing display and intrinsic-size transitions remain progressive
+enhancements; this refactor adds no animation fallback or newer baseline API.
+Current Playwright WebKit is engine evidence, not a shipping Safari 17.4 run.
 
 ## Scope and conclusion
 

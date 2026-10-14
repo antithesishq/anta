@@ -5,9 +5,11 @@ import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 import { readPageCatalog } from '../site/lib/content/catalog.mjs'
+import { inputByLabel } from './helpers/input-locator.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium, webkit } = requireSite('playwright')
+const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, webkit]
 const dist = new URL('../site/dist/', import.meta.url)
 
 test('collection reads keep island and script styles on the pages that use them', async () => {
@@ -45,11 +47,11 @@ async function productionPage(t, engine = chromium) {
   return { page, errors }
 }
 
-for (const engine of [chromium, webkit]) {
+for (const engine of engines) {
   test(`${engine.name()}: facet text chips keep a bounded width, truncate long values, and preserve focus when empty`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/select-faceted/')
-    const chip = page.locator('a-input.sf-chip').first()
+    const chip = page.locator('a-input.sf-chip').filter({ has: page.getByRole('textbox') }).first()
     const input = chip.locator('input')
     await input.waitFor()
     assert.equal(await input.inputValue(), 'crash')
@@ -92,9 +94,7 @@ for (const engine of [chromium, webkit]) {
       'import { Input } from "@antadesign/anta"\n' +
       'function Demo() { return <Input label="Preserved edit" /> }',
     )
-    const previewInput = page.frameLocator('iframe').first().getByRole('textbox', {
-      name: 'Preserved edit', exact: true,
-    })
+    const previewInput = inputByLabel(page.frameLocator('iframe').first(), 'Preserved edit')
     await previewInput.waitFor()
     await summary.click()
     await page.waitForFunction(() => !document.querySelector('[data-anta-playground]')?.closest('details')?.open)
@@ -157,9 +157,9 @@ test('native MDX preserves table alignment and the compiled playground after nav
   await page.frameLocator('iframe').first().getByRole('button', {
     name: 'Updated production preview', exact: true,
   }).waitFor()
-  const theme = page.locator('.theming-select')
+  const theme = page.locator('.theming-switcher')
   for (const palette of ['antithesis', 'none', 'antithesis']) {
-    await theme.locator('a-button').click()
+    await theme.getByRole('button').click()
     await theme.getByRole('menuitemradio', {
       name: palette === 'none' ? 'None' : 'Antithesis', exact: true,
     }).click()

@@ -48,8 +48,8 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
    * @defaultValue 'neutral' */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Color of the thumb stroke. Pass a named tone or a literal CSS color for a
-   * one-off custom tone. Omit it to keep the thumb neutral.
-   * @defaultValue 'neutral' */
+   * one-off custom tone. An explicit `neutral` keeps the thumb neutral in every theme.
+   * @defaultValue 'neutral' (the Antithesis theme follows `tone`) */
   thumbTone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=24px, medium=28px, large=32px tall.
    * @defaultValue 'medium' */
@@ -222,7 +222,7 @@ export const Slider = <T extends SliderValue = number>({
       name={name}
       disabled={disabled ? '' : undefined}
       tone={neutralToneAttr(tone)}
-      thumb-tone={neutralToneAttr(thumbTone)}
+      thumb-tone={thumbTone || undefined}
       size={size && size !== 'medium' ? size : undefined}
       track-size={trackSizeValue}
       thumb-size={thumbSizeValue}

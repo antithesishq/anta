@@ -18,7 +18,7 @@ export interface BaseProps {
   /** HTML `title` attribute — native browser tooltip on hover. */
   title?: string
   /** Assigns the element to a named `<slot>` of a parent web component (e.g.
-   *  `slot="header"` inside a `<Card>`, `slot="footer"` inside a `<Dialog>`). */
+   *  `slot="header"` inside a `<Dialog>`, `slot="footer"` inside a `<Dialog>`). */
   slot?: string
   /** Tab order. Set to `-1` to skip the element when tabbing. */
   tabIndex?: number
@@ -175,15 +175,18 @@ export interface BaseAttributes extends DOMEventHandlers {
 }
 
 /**
- * Attributes for the `<a-progress>` custom element.
+ * Attributes for the CSS-only `<a-progress>` container.
  *
- * These are the low-level web component attributes. For the JSX wrapper with
- * typed props and computed labels, use `Progress` from `@antadesign/anta`.
+ * CSS paints the indicator. Raw authors supply matching ARIA and optional labels.
+ * For typed props and computed labels, use the `Progress` JSX wrapper.
  */
 export interface AProgressAttributes extends BaseAttributes {
-  /** Current progress value. Omit this attribute for indeterminate progress. */
+  /** Current progress value. CSS uses `--progress-value` when supplied, then
+   *  this attribute where numeric `attr()` is supported. Omit for loading. */
   value?: number | string | false
-  /** Maximum value. Defaults to 100. */
+  /** Upper bound. CSS uses `--progress-max` when supplied, then this attribute
+   *  where numeric `attr()` is supported.
+   *  @defaultValue 100 */
   max?: number | string
   /** Color variant, or any literal CSS color for a custom tone (derived in
    *  oklch). Named tones track light/dark automatically. */
@@ -261,12 +264,20 @@ export interface ALoaderAttributes extends BaseAttributes {
   'aria-valuemax'?: number | string
 }
 
-/**
- * Attributes for the `<a-text>` custom element.
- *
- * Low-level web component attributes; for the JSX wrapper use `Text`
- * from `@antadesign/anta`.
- */
+/** Measured Text presentation, reported without changing authored DOM. */
+export interface TextPresentation {
+  /** Whether the reader has expanded the content. */
+  expanded: boolean
+  /** Whether the folded preview overflows. Retained while expanded. */
+  overflowing: boolean
+}
+
+/** Attributes on Text's authored content region. */
+export interface ATextContentAttributes extends BaseAttributes {
+  inert?: boolean
+}
+
+/** Attributes for `<a-text>`. For JSX, use `Text` from `@antadesign/anta`. */
 export interface ATextAttributes extends BaseAttributes {
   /** Visual priority. Maps to text-1..text-4. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
@@ -280,18 +291,23 @@ export interface ATextAttributes extends BaseAttributes {
   inline?: boolean | ''
   /** Truncate to N lines with a trailing ellipsis. The attribute value
    *  carries the line count (e.g. `"1"`, `"3"`); the count is also
-   *  available via the `--line-clamp` CSS custom property set inline. */
+   *  available via `--line-clamp`. Multi-line JSX values set it inline;
+   *  raw authors set it in an allowed stylesheet. */
   truncate?: boolean | string | number
-  /** Marks the host as expandable when paired with `truncate`. Adds
-   *  the fade-out mask and the expand/collapse chevron button; the element
-   *  owns the click/keyboard expansion logic. Without `collapsible`,
-   *  expanding is one-way (the control is removed once expanded). */
+  /** Enables expansion with `truncate`. Supply a direct `a-button` control with
+   *  `role="button"` and `tabindex="0"` before the `a-text-content` region. The
+   *  elements own expansion and accessibility defaults off-DOM. Without
+   *  `collapsible`, expansion is one-way and the control becomes hidden. */
   expandable?: boolean | ''
   /** Paired with `expandable`: the chevron becomes a two-way "Show more" /
    *  "Show less" toggle that stays visible while expanded. Omit for one-way. */
   collapsible?: boolean | ''
-  /** ARIA disclosure state, mirrors the JSX wrapper's `expanded` flag. */
-  'aria-expanded'?: boolean | 'true' | 'false'
+  /** Cover the folded, overflowing preview with the expand control. Raw authors
+   *  manage `inert` on `a-text-content` using `textpresentationchange`. */
+  'expandable-inert'?: boolean | ''
+  /** Non-bubbling notification after measurement or expansion, including a
+   *  current snapshot when a listener attaches after upgrade. */
+  ontextpresentationchange?: (event: CustomEvent<TextPresentation> | { nativeEvent: CustomEvent<TextPresentation> }) => void
 }
 
 /** Panel presentation state. Normal panels remain visible in their parent layout. */
@@ -396,6 +412,8 @@ export interface ATitleAttributes extends BaseAttributes {
    *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
    *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Typeface. Omit it to let the theme choose by level. */
+  font?: 'serif' | 'sans-serif' | 'monospace'
   /** Truncate to N lines with a trailing ellipsis. The attribute value carries
    *  the line count; set the same count on `--line-clamp` when using the styled
    *  tag directly. */
@@ -464,10 +482,8 @@ export interface AExpanderAttributes extends BaseAttributes {
   /** Disables the header: not clickable or focusable, hover affordance
    *  off, text dimmed. The open state freezes as-is. Presence-based. */
   disabled?: boolean | ''
-  /** Round corners sized to half the folded (header) height — a pill when folded,
-   *  the same radius when expanded (the element measures the header and publishes
-   *  `--_expander-round-radius`). A length value (`round="12px"`) is a fixed radius
-   *  that overrides the measurement. Presence-based for the boolean form. */
+  /** Use a `1rem` corner radius in both disclosure states. A length value
+   *  (`round="12px"`) overrides it. Presence-based for the boolean form. */
   round?: boolean | number | string
   /** Semantic tone, or any literal CSS color for a one-off custom tone.
    *  Named tones re-point the text + filled surface palette; a custom
@@ -890,8 +906,8 @@ export interface AInputTimeAttributes extends BaseAttributes {
  * wrapper. It does **not** build or mutate its own contents: whoever renders into
  * it (the `Calendar` JSX wrapper, or a vanilla consumer using the exported
  * `buildMonth` engine) fills it with day cells and *re-renders on its events* —
- * the `<a-radio-group>` model. Controlled by the presence of `value` (a pick only
- * *requests* a change); uncontrolled with `defaultvalue` (a pick self-applies).
+ * the `<a-radio-group>` model. Controlled by the presence of `state` (a pick only
+ * requests a change); uncontrolled with `default-state` (a pick self-applies).
  * For the typed, batteries-included wrapper use `Calendar` from `@antadesign/anta`.
  *
  * `:state(filled)` is the styling hook for "has a selection".
@@ -899,8 +915,12 @@ export interface AInputTimeAttributes extends BaseAttributes {
 export interface ACalendarAttributes extends BaseAttributes {
   /** Controlled selected date — ISO `YYYY-MM-DD`. Present → controlled (a pick
    *  only requests a change). Mirrored to the owning form via `ElementInternals`. */
-  value?: string
+  state?: string
   /** Uncontrolled initial date / reset baseline — ISO `YYYY-MM-DD`. */
+  'default-state'?: string
+  /** Legacy controlled attribute for raw HTML. Use `state` in JSX. */
+  value?: string
+  /** Legacy uncontrolled initial date / reset baseline for raw HTML. */
   defaultvalue?: string
   /** Form field name — the selected ISO date submits under this key. */
   name?: string
@@ -910,15 +930,15 @@ export interface ACalendarAttributes extends BaseAttributes {
    *  day cell whose `data-date` matches `<iso>` (set by the renderer after a
    *  month-changing keyboard move). */
   'data-focus'?: string
-  /** Cancelable, bubbling `statechange` fired BEFORE a pick applies. `detail` is
+  /** Cancelable `statechange` fired BEFORE a pick applies. `detail` is
    *  `{ next, prev, reason }` — ISO strings (or `null`); `reason` ∈
    *  `'user' | 'reset' | 'restore'`. `preventDefault()` vetoes a `'user'` pick in
    *  uncontrolled mode. */
   onstatechange?: (
     e: CustomEvent<{ next: string | null; prev: string | null; reason: 'user' | 'reset' | 'restore' }>,
   ) => void
-  /** Native `change`, fired AFTER a selection applies (uncontrolled) and on
-   *  reset/restore. */
+  /** Native `change`, fired AFTER a selection applies, including controlled
+   *  attribute updates and accepted reset/restore. */
   onchange?: (e: Event) => void
   /** Keyboard navigation request — the element handles arrow / Home / End /
    *  PageUp / PageDown, focuses the target cell when it's rendered, and emits this
@@ -953,9 +973,10 @@ export interface AMenuAttributes extends BaseAttributes {
    *  default; this opts out, making the submenu click-only. Presence-based
    *  (`''` on, omit off). */
   nohover?: boolean | ''
-  /** Round: container softens to a 20px radius and its items go fully round. A
-   *  length value (`round="12px"`) tunes the container radius only (items stay
-   *  pills). Presence-based for the boolean form. */
+  /** Round the container to a 20px radius, or use a length such as `round="12px"`
+   *  for a custom radius. Items use the container radius minus the menu's inset,
+   *  clamped to zero. Submenus inherit the radius unless they set their own
+   *  `round` value. Presence-based for the boolean form. */
   round?: boolean | number | string
   /** Gap in pixels between the trigger and the menu. Defaults to 4. */
   offset?: number | string
@@ -1361,16 +1382,9 @@ export interface ATabpanelAttributes extends BaseAttributes {
   role?: 'tabpanel'
 }
 
-/**
- * Attributes for the `<a-card>` custom element — a surface container that lays out
- * an optional `media` region plus a `header` / body / `footer` stack, and becomes a
- * link when given `href`. Slots (light-DOM children): `media`, `icon`, `header`,
- * `footer`, and the default slot for the body. The element exposes
- * `::part(container | media | content | icon | header | body | footer)`. In link
- * mode it names the shadow anchor from `aria-label` → header text → body text →
- * `href`. Low-level attributes; for the typed JSX wrapper use `Card` from
- * `@antadesign/anta`.
- */
+/** Surface attributes for the CSS-only `<a-card>` tag. Its `a-card-*` children
+ * define the layout. Put navigation attributes and link ARIA on a native `<a>`
+ * directly under `a-card`, wrapping its media and content. The JSX `Card` wrapper emits this structure. */
 export interface ACardAttributes extends BaseAttributes {
   /** Semantic tone, or any literal CSS color for a one-off custom tone. Named tones
    *  re-point the surface + text; a custom color keeps its hue with lightness/chroma
@@ -1381,41 +1395,23 @@ export interface ACardAttributes extends BaseAttributes {
   priority?: 'primary' | 'secondary' | 'tertiary'
   /** Size variant — scales the padding. `medium` is the default. */
   size?: 'small' | 'medium' | 'large'
-  /** Which edge the full-bleed `media` slot sits on. `top` is the default. */
+  /** Which edge the full-bleed `a-card-media` region sits on. `top` is the default. */
   'media-position'?: 'top' | 'bottom' | 'left' | 'right'
   /** Selected / chosen state — an inset ring in the tone color. Presence-based
    *  (`''` on, omit off). */
   selected?: boolean | ''
-  /** Loading state — skeleton pulse, `aria-busy`, and (in link mode) navigation is
-   *  blocked (the anchor drops its `href`). Presence-based (`''` on, omit off). */
+  /** Visual loading state. Raw authors also set `aria-busy` on the semantic node
+   *  and remove the native anchor's `href` to block keyboard navigation. */
   loading?: boolean | ''
   /** Fully-round corners (`border-radius: 999px`), or a custom radius via a length
    *  value (`round="16px"`). Presence-based for the boolean form. */
   round?: boolean | number | string
-  /** Turn the whole card into a link — the shadow container becomes a focusable
-   *  anchor with this URL. */
-  href?: string
-  /** Anchor target (only with `href`). */
-  target?: string
-  /** Anchor rel (only with `href`). */
-  rel?: string
-  /** Space-separated URLs pinged on navigation (only with `href`). */
-  ping?: string
-  /** Explicit accessible name for the link — overrides the header → body → href
-   *  chain the element derives in link mode. */
-  'aria-label'?: string
 }
 
-/**
- * Attributes for the `<a-banner>` custom element — a full-width, dismissible
- * message strip (borderless by default; opt into a rule via `border-bottom-width` /
- * `border-width`, the Progress pattern). Slots (light-DOM children): `message`
- * (leading), the default slot (middle content), `actions` (trailing), and `close`
- * (the ✕ button). The element exposes `::part(message | content | actions | close)`,
- * and `:state(open)` / `:state(closed)` as visibility hooks (the external
- * sheet collapses the host on `:state(closed)`). Low-level attributes; for the
- * typed JSX wrapper use `Banner` from `@antadesign/anta`.
- */
+/** Light-DOM Banner attributes. Authors supply `a-banner-message`, optional
+ * boxless `a-banner-content`, one `a-banner-actions` region, and `a-banner-close`
+ * containing an accessible Button. `statechange` requests dismissal;
+ * ElementInternals holds uncontrolled visibility without rewriting authored DOM. */
 export interface ABannerAttributes extends BaseAttributes {
   /** Controlled visibility (`'open'` / `'closed'`). Present → controlled: the
    *  attribute is the source of truth, the ✕ dismiss only dispatches the cancelable

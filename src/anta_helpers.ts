@@ -321,6 +321,21 @@ export function isPopupAriaReceiver(element: Element | null): element is PopupAr
   return element != null && typeof (element as Partial<PopupAriaReceiver>)[SYNC_POPUP_ARIA] === 'function'
 }
 
+/** Internal Text-to-Button protocol. The receiver publishes accessibility
+ * defaults through its own ElementInternals without changing authored DOM. */
+export const SYNC_TEXT_TOGGLE = Symbol.for('anta.sync-text-toggle')
+export interface TextToggleAria {
+  source: Element
+  expanded?: boolean
+  clear?: boolean
+}
+export interface TextToggleReceiver extends Element {
+  [SYNC_TEXT_TOGGLE](state: TextToggleAria): void
+}
+export function isTextToggleReceiver(element: Element | null): element is TextToggleReceiver {
+  return element != null && typeof (element as Partial<TextToggleReceiver>)[SYNC_TEXT_TOGGLE] === 'function'
+}
+
 /**
  * `HTMLElement` in browsers, a noop class in Node/Worker environments.
  * Use this as the base for custom element classes so importing the

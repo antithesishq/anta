@@ -19,6 +19,18 @@ before(async () => {
         import './src/elements/a-icon'
         import './src/tokens.css'
         configure(h)
+        window.renderRoundExamples = () => {
+          const root = document.createElement('div')
+          document.body.append(root)
+          render(<>
+          {[1, 2, 3, 4, 5, 6].map(level => (
+            <Expander key={level} title="Rounded" id={\`rounded-\${level}\`} level={level} round>Body</Expander>
+          ))}
+          <Expander title="Fixed" id="fixed-round" round={12}>Body</Expander>
+          <Expander title="Relative" id="relative-round" round="1.5rem">Body</Expander>
+          <Expander title="Square" id="zero-round" round={0}>Body</Expander>
+          </>, root)
+        }
         render(<>
           <Expander title="Default" id="default">Body</Expander>
           <Expander title="Flush" id="outdent" priority="tertiary" outdent>Body</Expander>
@@ -258,4 +270,46 @@ test('forced colors keep the indicator visible and dim it with the summary', asy
   const disabled = await colorOf()
   assert.equal(disabled.adjustment, 'none')
   assert.notEqual(disabled.color, enabled.color)
+})
+
+
+test('boolean round uses one rem at every title level and stays fixed as headers and state change', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => window.renderRoundExamples())
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.addStyleTag({ content: ':root { font-size: 20px; } a-expander { font-size: 30px; }' })
+  const radii = () => page.evaluate(() => [...document.querySelectorAll('a-expander[id^="rounded-"]')].map(host => ({
+    radius: getComputedStyle(host).borderRadius,
+    styles: host.shadowRoot.querySelectorAll('style').length,
+  })))
+  assert.deepEqual(await radii(), Array(6).fill({ radius: '20px', styles: 1 }))
+  await page.evaluate(() => {
+    for (const host of document.querySelectorAll('a-expander[id^="rounded-"]')) {
+      host.querySelector('[slot="title"]').textContent = 'A long header that wraps across several lines and changes its folded height'
+      host.setAttribute('state', 'open')
+    }
+  })
+  assert.deepEqual(await radii(), Array(6).fill({ radius: '20px', styles: 1 }))
+  await page.addStyleTag({ content: ':root { font-size: 24px; }' })
+  assert.deepEqual(await radii(), Array(6).fill({ radius: '24px', styles: 1 }))
+  for (const [id, expected] of [['fixed-round', '12px'], ['relative-round', '36px'], ['zero-round', '0px'], ['default', '4px']]) {
+    assert.equal(await page.locator(`#${id}`).evaluate(host => getComputedStyle(host).borderRadius), expected)
+  }
+  await page.locator('#rounded-5').evaluate(host => host.removeAttribute('round'))
+  assert.equal(await page.locator('#rounded-5').evaluate(host => getComputedStyle(host).borderRadius), '4px')
+  await page.locator('#rounded-5').evaluate(host => host.setAttribute('round', ''))
+  assert.equal(await page.locator('#rounded-5').evaluate(host => getComputedStyle(host).borderRadius), '24px')
+})
+
+test('raw Expander and native details share the root-relative round radius before and after opening', async t => {
+  const page = await browser.newPage()
+  t.after(() => page.close())
+  await page.setContent(`
+    <a-expander round level="1"><a-expander-summary slot="title">Custom element</a-expander-summary></a-expander>
+    <details data-anta round level="1"><summary>Native disclosure</summary><div>Body</div></details>
+  `)
+  await page.addStyleTag({ content: `${css}\n:root { font-size: 20px; }` })
+  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('[round]')].map(host => getComputedStyle(host).borderRadius)), ['20px', '20px'])
+  await page.locator('details').evaluate(host => { host.open = true; host.setAttribute('level', '6') })
+  assert.equal(await page.locator('details').evaluate(host => getComputedStyle(host).borderRadius), '20px')
 })

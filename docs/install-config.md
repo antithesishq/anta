@@ -52,7 +52,7 @@ import { Progress, Title, Tag } from '@antadesign/anta'
 ```
 
 Each element entry imports its own CSS for your bundler to include and registers
-its browser class when needed. Title and Tag load only CSS; they have no custom
+its browser class when needed. Some entries load only CSS and have no custom
 element class to register. Element entries do not import global tokens or the reset.
 
 JSX wrappers produce `<a-*>` tags and attributes. They do not register browser
@@ -420,7 +420,9 @@ bundler that processes module scripts and CSS imports:
   import '@antadesign/anta/elements/a-progress'
 </script>
 
-<a-progress value="42" max="100" tone="info"></a-progress>
+<a-progress value="42" max="100" tone="info" role="progressbar"
+  aria-label="Upload" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">
+</a-progress>
 ```
 
 An import map resolves module names but does not process the plain CSS imports
@@ -436,7 +438,9 @@ and root color scheme, including scrollbar colors. The reset, included in
 ```html
 <html class="dark">
   <body>
-    <a-progress value="50"></a-progress>
+    <a-progress value="50" role="progressbar" aria-label="Upload"
+      aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+    </a-progress>
   </body>
 </html>
 ```
@@ -530,21 +534,55 @@ the range your font declares to avoid combining `slnt` with a synthetic oblique.
 
 ## Browser support
 
-Anta targets evergreen browsers and ships **no baseline polyfills**. Its floor is [custom-element states](https://developer.mozilla.org/en-US/docs/Web/API/CustomStateSet), used throughout the components for their internal CSS state, alongside the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API):
+Anta requires [ARIA element references](https://developer.mozilla.org/en-US/docs/Web/API/Element/ariaLabelledByElements),
+[custom-element states](https://developer.mozilla.org/en-US/docs/Web/API/CustomStateSet),
+and the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API).
+It ships no baseline polyfills or copied-text fallback for ARIA references.
 
 | Browser | Minimum version |
 | --- | --- |
-| Chrome / Edge | 125 (May 2024) |
-| Safari | 17.4 (Mar 2024) |
-| Firefox | 126 (May 2024) |
+| Chrome / Edge, including Android Chrome and WebView | 135 |
+| Safari / iOS Safari | 17.4 |
+| Firefox, including Android Firefox | 136 |
 
-This is [Baseline 2024](https://web.dev/baseline). Anta also relies on relative
+ARIA element references are [Baseline 2025](https://developer.mozilla.org/en-US/docs/Web/API/Element/ariaLabelledByElements#browser_compatibility).
+Anta also relies on relative
 OKLCH, `:has()`, `dvh`, cascade layers, and constructable shadow DOM. Older
 browsers can fail hard, including `:state()` being unrecognized or
 `showPopover()` throwing. Gate Anta on your own support matrix when you support
 older browsers.
 
-Two features progressively enhance with fallbacks: `checkVisibility()` falls
-back to `getClientRects()`, and typed CSS `attr()` supports raw
-`<a-icon size>` in Chrome 133+ and Safari 18.2+. Elsewhere use `<Icon size>`
-or `--icon-size`.
+`checkVisibility()` falls back to `getClientRects()`. Some raw attributes use
+[typed CSS `attr()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/attr#browser_compatibility),
+whose support extends beyond Anta's minimum browser requirements. JSX wrappers
+supply CSS variables for these values. Each component's Web Component reference
+describes its raw attribute requirements.
+
+## Content Security Policy
+
+Anta's tokens, component stylesheets, and optional themes work when your
+[Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)
+(CSP) allows their stylesheet URLs through `style-src-elem` or
+its `style-src` fallback. External CSS and named theme values do not require
+inline style attributes.
+
+Some JSX props produce inline CSS custom properties for custom colors, lengths,
+and dynamic values. The `style` prop also produces inline styles.
+Server rendering serializes these values into HTML
+`style` attributes, which `style-src-attr 'none'` blocks. Put these
+visual customizations in classes and an allowed stylesheet when inline attributes
+are forbidden. Check each component's reference for dynamic-value requirements.
+Client-side assignments to individual CSS properties can behave
+differently; do not rely on hydration to repair blocked server-rendered styles.
+See [CSP rules for style attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
+
+Server-rendered `<style>` blocks also need CSP permission. They follow
+`style-src-elem`, falling back to `style-src` and then `default-src`.
+`'self'` allows same-origin stylesheet files, but does not authorize inline
+`<style>` blocks. Use a matching nonce or hash for those blocks under a strict
+policy. A nonce on a `<style>` element does not authorize HTML `style`
+attributes. See [CSP rules for stylesheet elements](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-elem).
+
+Anta does not yet support strict CSP across every component. Some components
+still inject shadow `<style>` elements. Loading a theme does not unblock those styles, and
+nested components retain their own CSP requirements.

@@ -1,63 +1,102 @@
-import type { BaseProps } from "../general_types"
-import { lineClamp, neutralToneAttr, toneStyle } from "../anta_helpers"
+import type { ATextAttributes, BaseProps, TextPresentation } from "../general_types"
+import { lineClamp, nativeStateChange, neutralToneAttr, toneStyle } from "../anta_helpers"
+import { useLayoutEffect, useMemo, useState } from '../jsx-runtime'
 import { Tooltip } from "./Tooltip"
 
-/** Truncation / expansion axis. `expandable` only takes effect with `truncate`;
- *  `collapsible` only with `expandable` — so the type forbids `collapsible`
- *  unless `expandable` is set (a dynamic `expandable={cond}` is still allowed). */
+/** Expansion requires `truncate`. `expandableInert` and `collapsible` require
+ *  `expandable`; dynamic boolean values are allowed. */
 export type ExpandMode =
-  | { expandable?: never; collapsible?: never }
+  | { expandable?: never; expandableInert?: never; collapsible?: never }
   | {
-      /** Show a fade hint and chevron over the truncated text and let the user
-       *  expand it by clicking the chevron region or pressing Enter while the
-       *  chevron has keyboard focus. Only takes effect together with `truncate`.
-       *  On its own, expanding is **one-way** — the control is removed once
-       *  expanded; add `collapsible` for a two-way toggle. */
+      /** Show a fade and expansion control when truncated text overflows.
+       *  Select the control or focus it and press Enter or Space to reveal all
+       *  content. Expansion is one-way: the control hides once expanded.
+       *  Add `collapsible` to allow refolding. Requires `truncate`; disables the
+       *  automatic tooltip. The control comes first in Tab order. By default,
+       *  folded text stays selectable and its links remain focusable and clickable.
+       *  Single-line text fades at the inline end with an inline-end target;
+       *  multiline text fades over its last line with a full-width target.
+       *  Folded content clips without scrolling or extra padding, and expansion
+       *  preserves its width. */
       expandable: boolean
-      /** Let the reader collapse back after expanding: the chevron becomes a
-       *  "Show more" / "Show less" toggle that stays visible while expanded.
-       *  Only takes effect together with `expandable`. */
+      /** Make the entire folded, overflowing preview an expand target.
+       *  JSX applies `inert` to its content, blocking focus, clicks, and text
+       *  selection and removing it from the accessibility tree until expanded.
+       *  Fitting text stays interactive, as does server-rendered content before
+       *  browser measurement. Requires `expandable`. */
+      expandableInert?: boolean
+      /** Allow refolding after expansion. The control stays visible, rotates
+       *  its chevron, and switches between "Show more" and "Show less".
+       *  Requires `expandable`. The expanded collapse target spans the full
+       *  width over 16px of bottom padding; removing that padding with custom
+       *  CSS allows it to overlap content. */
       collapsible?: boolean
     }
 
 export type TextProps = BaseProps & {
-  /** Visual priority. Maps to text-1..text-4 (`primary` = text-1, the
-   *  strongest). The default is `secondary` (text-2) — body text reads a
-   *  step softer than the strongest foreground; pass `primary` for emphasis.
+  /** Text emphasis, from `primary` (`--text-1`, strongest) to `quaternary`
+   *  (`--text-4`). `secondary` uses `--text-2`; `tertiary` uses `--text-3`.
+   *  Neutral primary/secondary links use `--link-color` and `--link-color-hover`.
+   *  Tertiary/quaternary links inherit the text color, with `--text-2` and
+   *  `--text-3` respectively on hover.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
-  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
-   *  named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
-   *  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
-   *  kept while lightness/chroma are pinned per priority in oklch.
+  /** Color tint. `neutral` uses `--text-{N}`; named tones use
+   *  `--text-{N}-{tone}`. A CSS color such as `rebeccapurple` keeps its hue,
+   *  with lightness and chroma set per priority in oklch. With named tones,
+   *  links inherit the text color and hover uses the next-stronger tone level;
+   *  at `primary`, hover changes only the underline.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24.
+  /** Font size / line height in pixels: `small` = 13/16, `medium` = 15/20,
+   *  `large` = 17/24.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
   /** Render as inline-block instead of the default block element. */
   inline?: boolean
-  /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
-   *  single line; any integer ≥ 2 clamps to that many lines; `0` or a
-   *  negative value means no truncation. A clipped, non-expandable JSX
-   *  `Text` shows its text content in a tooltip by default. Nest a
-   *  `<Tooltip>` to provide your own tooltip instead. Uses the
-   *  `-webkit-line-clamp` technique, supported in all major browsers
-   *  (Firefox 68+, Chrome, Safari, Edge). */
+  /** Clamp with a trailing ellipsis: `true` or `1` selects one line, integers
+   *  ≥ 2 select that many lines, and `0` or negative values disable truncation.
+   *  Clipped, non-expandable Text shows its content in an automatic tooltip.
+   *  Nest `<Tooltip>` to replace it or an empty tooltip to suppress it.
+   *  Uses CSS `-webkit-line-clamp` in `display: -webkit-box`, with `min-width: 0`
+   *  for flex and grid layouts. */
   truncate?: boolean | number
 } & ExpandMode
 
+function ExpandableText({ attributes, children, expandableInert }: { attributes: ATextAttributes; children: React.ReactNode; expandableInert?: boolean }) {
+  const [presentation, setPresentation] = useState<TextPresentation>({ expanded: false, overflowing: false })
+  const [listening, setListening] = useState(false)
+  // React hydration does not attach custom event props until they change.
+  // This state-only commit installs the listener without reading the app DOM.
+  useLayoutEffect(() => setListening(true), [])
+  const onPresentation = useMemo(() => (input: Parameters<NonNullable<ATextAttributes['ontextpresentationchange']>>[0]) => {
+    const { detail, isOwn } = nativeStateChange(input)
+    if (!isOwn || !detail) return
+    setPresentation(previous => previous.expanded === detail.expanded && previous.overflowing === detail.overflowing ? previous : detail)
+  }, [])
+  return (
+    <a-text {...attributes} expandable-inert={expandableInert ? '' : undefined} ontextpresentationchange={listening ? onPresentation : undefined}>
+      <a-button role="button" tabIndex={0} priority="quaternary" paddingless="" />
+      {/* Native inert is a boolean property; React 19 assigns it directly. */}
+      <a-text-content inert={Boolean(expandableInert && presentation.overflowing && !presentation.expanded)}>{children}</a-text-content>
+    </a-text>
+  )
+}
+
 /**
- * Block-level text container with priority and tone support.
+ * Light-DOM text with priority, tone, truncation, and optional expansion.
  *
- * Renders an `<a-text>` web component that scopes its descendants'
- * color hierarchy. Links nested inside follow the design system's
- * priority-aware link styling. Pass `inline` for an inline-block
- * variant, `truncate` for ellipsis truncation, and `expandable`
- * (combined with `truncate`) to let the user reveal the full text.
+ * Renders `<a-text>` with priority-aware colors for content and links.
+ * `inline` selects inline-block layout; `truncate` clamps text with an ellipsis.
+ * Pair `expandable` with `truncate` to let the reader reveal all content.
+ * Link underlines use 0.5px at 75% alpha, 1px at full alpha on hover,
+ * and restore the resting underline while active.
  *
- * Requires `@antadesign/anta/elements` to be imported (client-side only)
- * to register the underlying custom element.
+ * External CSS renders text and truncation before element registration.
+ * The browser element measures overflow and owns expansion off-DOM.
+ * Expandable Text places `a-button` before `a-text-content` in Tab order.
+ * Granular expansion also requires `@antadesign/anta/elements/a-button`;
+ * automatic tooltips require `@antadesign/anta/elements/a-tooltip`.
  *
  * @example Basic usage
  * ```tsx
@@ -66,10 +105,10 @@ export type TextProps = BaseProps & {
  *
  * @example Expandable truncated text
  * ```tsx
- * <Text truncate={3} expandable>…long paragraph…</Text>
+ * <Text truncate={3} expandable>A long description that the reader can expand.</Text>
  * ```
  */
-export const Text = ({ priority, tone, size, inline, truncate, expandable, collapsible, className, style, children, ...rest }: TextProps) => {
+export const Text = ({ priority, tone, size, inline, truncate, expandable, collapsible, expandableInert, className, style, children, ...rest }: TextProps) => {
   const lineCount = lineClamp(truncate)
   const toneAttr = neutralToneAttr(tone)
   // A custom (non-named) tone writes --text-tone-source inline for the element's
@@ -77,23 +116,20 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
   const computedStyle = toneStyle(
     toneAttr,
     "--text-tone-source",
-    lineCount != null ? { ...style, ['--line-clamp' as string]: lineCount } : style,
+    lineCount != null && lineCount > 1 ? { ...style, ['--line-clamp' as string]: lineCount } : style,
   )
   // expandable/collapsible only mean anything once the text is actually clamped.
   const canExpand = expandable && lineCount != null
+  const attributes: ATextAttributes = {
+    priority, tone: toneAttr, size, inline: inline ? '' : undefined,
+    truncate: lineCount != null ? String(lineCount) : undefined,
+    expandable: canExpand ? '' : undefined,
+    collapsible: canExpand && collapsible ? '' : undefined,
+    class: className, style: computedStyle as React.CSSProperties, ...rest,
+  }
+  if (canExpand) return <ExpandableText attributes={attributes} expandableInert={expandableInert}>{children}</ExpandableText>
   return (
-    <a-text
-      priority={priority}
-      tone={toneAttr}
-      size={size}
-      inline={inline ? '' : undefined}
-      truncate={lineCount != null ? String(lineCount) : undefined}
-      expandable={canExpand ? '' : undefined}
-      collapsible={canExpand && collapsible ? '' : undefined}
-      class={className}
-      style={computedStyle as React.CSSProperties}
-      {...rest}
-    >
+    <a-text {...attributes}>
       {children}
       {lineCount != null && !canExpand && (
         <Tooltip truncatedOnly data-anta-text-tooltip="" />

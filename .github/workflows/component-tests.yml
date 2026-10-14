@@ -1,0 +1,31 @@
+name: Component matrix
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Component suite
+        type: choice
+        default: all
+        options: [all, banner, calendar, card, progress, text]
+permissions:
+  contents: read
+jobs:
+  components:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      # Workspace prepare scripts build the packages during installation.
+      - name: Install dependencies and build workspace
+        run: pnpm install --frozen-lockfile
+      - name: Install browser engines
+        run: pnpm --filter anta-site exec playwright install --with-deps chromium firefox webkit
+      - name: Run full component coverage
+        env:
+          COMPONENT: ${{ inputs.component }}
+        run: pnpm test:components --tier slow --component "$COMPONENT"

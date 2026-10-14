@@ -53,8 +53,8 @@ const ENTER_TOUCH_DELAY = 500
  * then fall back to the anchor itself. Append future ellipsizing parts here.
  */
 const TRUNCATING_PARTS = 'a-tab-label, a-button-label, a-step-hint'
-/** True when an element answers the truncation question itself — `a-text` clamps
- * inside its shadow root, `a-box` measures its own overflow — rather than
+/** True when an element answers the truncation question itself — `a-text` measures
+ * its light-DOM clamp, `a-box` measures its own overflow — rather than
  * leaving it to a scrollWidth read on the host. */
 function reportsTruncation(el: Element): el is HTMLElement & { isTruncated: boolean } {
   return typeof (el as HTMLElement & { isTruncated?: unknown }).isTruncated === 'boolean'

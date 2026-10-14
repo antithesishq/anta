@@ -1804,10 +1804,16 @@ export class AMenuElement extends HTMLElementBase {
       return
     } else {
       const onClick = (e: MouseEvent) => {
+        if (anchor.matches(':disabled, [disabled], [loading]')) return
+        const path = e.composedPath()
+        const anchorPath = path.slice(0, path.indexOf(anchor))
         // A button in the input's clear slot is its own action. Its click
         // bubbles through the field anchor after clearing; opening the popup
         // here makes the next field click close it instead of opening it.
-        if (anchor.matches('a-input') && e.composedPath().some((node) => node instanceof Element && node.getAttribute('slot') === 'clear')) return
+        if (anchor.matches('a-input') && anchorPath.some((node) => node instanceof Element && node.getAttribute('slot') === 'clear')) return
+        // Field anchors also contain labels, hints, and extra content outside the field.
+        const field = anchor.shadowRoot?.querySelector('[part~="field"]')
+        if (field && !anchorPath.includes(field)) return
         // detail === 0 ⇒ a keyboard-synthesized click (a button / <a-button>
         // turning Enter/Space into one) ⇒ open + focus the first item. Fields with
         // no such click go through onKey below.
@@ -1828,7 +1834,7 @@ export class AMenuElement extends HTMLElementBase {
       const onKey = (e: KeyboardEvent) => {
         if (isModifiedNavigationKey(e)) return
         if (this._shown) return // open-only; while open the surface owns the keys
-        if (anchor.hasAttribute('disabled') || anchor.hasAttribute('loading')) return
+        if (anchor.matches(':disabled, [disabled], [loading]')) return
         const arrow = e.key === 'ArrowDown' || e.key === 'ArrowUp'
         if (!arrow && anchor.matches(SELF_ACTIVATING)) return
         // Either arrow opens (the menu can flip above the trigger, and native

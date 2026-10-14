@@ -5,8 +5,90 @@ changes are not listed.
 
 ## Unreleased
 
+### Breaking
+
+- [Progress styling](/progress/#styling) uses light-DOM selectors instead of
+  `::part()`. `AProgressElement` and `register_a_progress` are removed; raw HTML
+  supplies its own ARIA.
+
+- Expandable [Text](/text/#expand-raw-html): when importing elements individually,
+  also import `@antadesign/anta/elements/a-button`. The full bundle and elements
+  barrel already include it. JSX creates the expansion control automatically;
+  raw HTML users must update their markup using the linked example.
+
+- [Card markup](/card/#migrate-from-shadow-parts) uses light-DOM `a-card-*`
+  regions. JSX props remain available; raw slot markup and `::part()` overrides
+  need migration. `ACardElement` and `register_a_card` are removed.
+
+- [Browser support](/install-config/#browser-support) now requires Chrome/Edge
+  135+ and Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints
+  use live ARIA element references without a copied-text fallback.
+- [Select's default field](/select/#migrate-field-styles) now uses `a-input[button]`.
+  Select's `className` and `style` apply to the `<a-input>` element. For custom field CSS, pass
+  `className="my-select"` and replace `a-select-field > a-button` with
+  `.my-select::part(field)`. Target the selected text with `.my-select::part(input-label)`
+  instead of `a-button-label`. Existing raw `a-select-field`
+  compositions retain their CSS, JSX types, and label and hint behavior.
+
+### Added
+
+- [Text's inert expansion mode](/text/#truncation-and-expansion):
+  `expandableInert` makes the folded, overflowing preview one expand target and
+  skips content interactions until expanded. Text that fits remains interactive.
+
+- [Input button fields](/input/#styling) expose `::part(input-label)` for their
+  value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
+- [Select's `dimActions` prop](/select/) controls its trigger adornments. They
+  dim at rest and brighten on hover or focus; pass `false` to keep them fully visible.
+- [Title typeface](/title/#typeface): `font` sets a title in `serif`,
+  `sans-serif`, or `monospace` and overrides the theme's level default.
+
+### Changed
+
+- [Progress](/progress/) renders its fill and loading animation with external
+  CSS and works without JavaScript. Native `<progress data-anta>` remains a
+  standalone control.
+
+- [Text](/text/) renders and truncates in light DOM with external CSS.
+  Expansion works in JSX and raw HTML without rewriting authored markup or
+  attributes. One-way expansion hides its control instead of removing it.
+
+- [Card](/card/) renders its final layout and native link directly in HTML. Its
+  styling uses external CSS and no shadow stylesheet.
+
+- [Expander rounding](/expander/#round) uses a `1rem` radius when `round` is
+  `true`, independent of title level and header height. Explicit radius values
+  remain supported; native `details[data-anta][round]` uses the same default.
+
+
 ### Fixed
 
+- [Text expansion controls](/text/#truncation-and-expansion) precede content links
+  in Tab order. Raw HTML authors place the control before `a-text-content` too.
+
+- [Folded expandable Text](/text/#truncation-and-expansion) stays in place when
+  a clipped link receives focus. Its content remains selectable.
+
+- [Text expansion controls](/text/#truncation-and-expansion) keep their accessible
+  name and expanded state when granular element entries load before the full bundle.
+
+- [Text expansion controls](/text/#truncation-and-expansion) span the full width
+  for multiline text and the inline end for single-line text. The full-width
+  collapse control occupies 16px of reserved bottom padding, leaving revealed
+  links clickable. Folded text has no added padding or width change on expansion.
+
+- [Menu](/menu/) applies custom `round` values to its container in every theme.
+- [InputDate](/input-date/) labels and hints no longer toggle its calendar.
+  [Menu](/menu/) field anchors ignore clicks outside their field part.
+- [Input](/input/) button fields and [Select](/select/) describe the selected value
+  only when a separate label supplies the accessible name. Empty fields keep
+  placeholders out of the value description.
+- [Calendar](/input-date/#calendar) keeps controlled selection and form values
+  in sync in React and Preact, including selecting a previous date again.
+  Its element accepts selection through `state` and exposes `value` as read-only.
+- [Input](/input/) uses JS multiline autosizing in WebKit to avoid native sizing
+  crashes in collapsed disclosures. Fallback measurements preserve page and
+  textarea scroll positions.
 - [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
   without native field autosizing. Switching between AM and PM keeps its width.
 

@@ -1,27 +1,27 @@
-// The demo source lives in a sibling `.ts` file rather than inline
-// here because Astro's MDX pipeline trims leading whitespace from
-// JSX-attribute template literals, which scrambles the indentation
-// Monaco needs for folding ranges. A regular module import preserves
-// the template literal's bytes verbatim.
+// Keep the playground source in a module so MDX preserves its indentation.
 
 # Progress
 
-`Progress` shows task completion. Pass `value` for known progress. Omit it, or
-pass `false`, while work is underway without a known duration.
+Use Progress for uploads, downloads, and other tasks that take time. Show a
+percentage when you know the total, or a loading animation while completion is
+unknown. Add a label and hint to explain what is happening.
 
-## Value, label and hint
+## Value, label, and hint
 
 ```tsx
 <Progress value={60} />
-<Progress value={42} label="Uploading files…" hint="3 of 7" />
+<Progress value={3} max={7} label="Uploading files…" hint="3 of 7" />
 
-// Omit value, or pass false, while the duration is unknown.
+// Omit value while the total is unknown.
 <Progress label="Preparing upload…" hint="~ 3 minutes left" />
 ```
 
-`value` sets known completion relative to `max`, which defaults to `100`.
-`label` follows the percentage. `hint` is right-aligned. With no `value`, the
-label identifies indeterminate work and the loading animation takes the track.
+Pass `value` to show completion. For a percentage, use the default `max` of
+`100`. For a count, pass the total as `max`; the example shows 3 of 7 files.
+
+Use `label` to name the task and `hint` for details such as completed items or an
+estimated time. While the total is unknown, omit `value` or pass `false` to show
+loading stripes without a percentage.
 
 ## Size
 
@@ -31,8 +31,8 @@ label identifies indeterminate work and the loading animation takes the track.
 <Progress size="large" tone="info" value={60} label="Large" hint="~ 3 minutes left" />
 ```
 
-`size` scales the track and the default label row together. `medium` is the
-default.
+Use `small` for compact task lists and `large` for more prominent feedback.
+The track, percentage, label, and hint scale together.
 
 ## Tone
 
@@ -45,8 +45,9 @@ default.
 <Progress value={60} tone="#e0457b" label="Custom" />
 ```
 
-`tone` colors the track, indicator, and label row. Use `neutral` for the
-default, a named semantic tone, or any CSS color.
+Use `brand` for the primary task or a semantic tone to match its status. Keep
+the task's meaning in its label or hint so readers can understand it without
+color. Pass a CSS color for a custom tone.
 
 ## Border
 
@@ -78,9 +79,9 @@ default, a named semantic tone, or any CSS color.
 />
 ```
 
-The track starts borderless. Set a border width to reveal its tone-aware border
-color. A bottom edge works for an indicator at the top of an app. A top edge
-works for one at the bottom.
+Add a border to separate progress from the surrounding content. A bottom
+border suits a bar along the top of an app; a top border suits one along the
+bottom. The border color follows the tone.
 
 ## Round
 
@@ -89,25 +90,38 @@ works for one at the bottom.
 <Progress value={60} round={4} label="4px radius" />
 ```
 
-`round` makes the track fully round. Pass a number or CSS length for a custom
-radius.
+Use `round` for a pill-shaped track. Pass a number in pixels or a CSS length
+to match the corners of nearby content.
+
+## Custom content
+
+Use `children` when task details need more than a plain label and hint. Pass
+`label` and `hint` to keep an accessible description of the task.
+
+```tsx
+<Progress value={3} max={5} label="Sending report.csv" hint="3 of 5">
+  <Text>Sending <strong>report.csv</strong> · 3 of 5</Text>
+</Progress>
+```
 
 ## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `hint?` | string | — | Right-aligned hint text (e.g. "3 of 7"). Like `label`, it's not rendered when custom `children` are provided but still feeds the accessible name. |
-| `label?` | string | — | Text label displayed after the percentage, or on its own for indeterminate progress. When you provide custom `children` (which replace the default label row), `label` is no longer rendered — but it still supplies the progressbar's accessible name. |
-| `max?` | number | 100 | Upper bound of the range. |
-| `round?` | boolean \| number \| string | — | Fully-round track (`border-radius: 999px`); the fill is clipped to it. Pass a `number` (px) or a CSS length string for a custom radius. |
+| `hint?` | string | — | Details shown at the end of the row, such as "3 of 7" or a time estimate. Included in the accessible name even when custom `children` replace the row. |
+| `label?` | string | — | Task name shown after the percentage, or on its own during loading. Custom `children` replace the label row; this prop still supplies the progressbar's accessible name. |
+| `max?` | number | 100 | Total amount to complete. Use a positive number to show a count, such as 3 of 7 files. When `value` is supplied, a non-positive or non-finite total shows an empty fill. |
+| `round?` | boolean \| number \| string | — | Pill-shaped track. Pass a number in pixels or a CSS length for a custom corner radius. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. Scales the track and the default label row together. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color variant, or any literal CSS color for a one-off custom tone (the surface / indicator / text are derived from it in oklch). Named tones track light/dark automatically. |
-| `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, to show indeterminate progress. Negative values are clamped to 0. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color for the track, fill, and label row. Pass a named tone or a CSS color. Named tones follow the current theme. |
+| `value?` | number \| false | — | Completed amount relative to `max`. Omit this prop or pass `false` to show a loading animation without a percentage. Values are clamped to the range; non-finite values show zero completion. |
+
+<a id="raw-html"></a>
 
 ## Web Component
 
 ```html
-<a-progress style="width: 100%" value="42" max="100" tone="info" role="progressbar"
+<a-progress value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
@@ -123,12 +137,25 @@ radius.
 </a-progress>
 ```
 
-Use this when you are not using the React or Preact wrapper and a native HTML
-control does not fit: construct the equivalent Anta web component from the
-elements below.
+Use `<a-progress>` directly when you need its label layout in plain HTML.
+`a-progress-number`, `a-progress-text`, and `a-progress-hint` form the default
+row; you can also supply your own content.
 
-Add the progressbar semantics and label structure when using the element
-directly.
+Load `@antadesign/anta/elements/a-progress` or the full bundle. Add `role` and
+ARIA values on the host, and keep them in sync with `value`, `max`, and visible
+text. Omit `value` for loading stripes.
+
+The JSX wrapper supplies the markup, numeric CSS variables, and ARIA from props.
+Raw `value` and `max` rendering requires numeric CSS `attr()`, which is not
+available in every browser that meets Anta's minimum requirements. Numeric
+`--progress-value` and `--progress-max` variables override the corresponding
+attributes. JSX supplies and updates them automatically across supported browsers.
+
+Server-rendered JSX values use inline style attributes. A CSP with
+`style-src-attr 'none'` blocks these variables; attribute rendering then requires
+numeric CSS `attr()` support. Native `<progress data-anta>` uses browser-owned
+values without inline CSS variables across supported browsers. See
+[Content Security Policy](/install-config/#content-security-policy).
 
 ### Native HTML progress
 
@@ -146,33 +173,38 @@ directly.
 <progress data-anta round="50px" aria-label="Preparing upload" style="width: 100%"></progress>
 ```
 
-For a plain HTML progress indicator, add `data-anta` to `<progress>`. It keeps
-the browser's native semantics, including indeterminate progress when `value`
-is absent, while using Anta's track, fill, tone, and size treatments. Native
-progress does not render Anta's label or hint structure; give it an accessible
-name instead.
+Use `<progress data-anta>` for a native progress bar with Anta's appearance.
+The browser handles completion and accessibility from `value` and `max`. Omit
+`value` for unknown completion, and give the control an accessible name.
+
+Native progress supports tone, size, and rounding. It has no built-in label row.
+The same Progress entry and full bundle style both forms.
 
 ## Styling
 
 ```css
-/* a fancy bar: rounded track (all sides), a multi-stop gradient fill with a glow,
-   and a crisp hard right edge (the default soft right-edge fade is cleared). */
+/* Rounded track and gradient fill with a glow. */
 a-progress.fancy {
   border-radius: 999px;
   background: light-dark(var(--bg-5), #26232c);
 }
-a-progress.fancy::part(indicator) {
-  background: linear-gradient(90deg, #6a5acd, #d44ea3 55%, #ff8a5b);
-  box-shadow: 0 0 12px rgba(212, 78, 163, 0.55);   /* glow */
+a-progress.fancy::before {
+  background: linear-gradient(
+    90deg,
+    light-dark(#6a5acd, #8b7cf0),
+    light-dark(#d44ea3, #ec64bc) 55%,
+    light-dark(#ff8a5b, #ffa477)
+  );
+  box-shadow: 0 0 12px color-mix(in oklch, #d44ea3 55%, transparent);
 }
-a-progress.fancy::part(indicator)::after { background: none; }   /* hard right edge */
 
-/* the percentage / label / hint are light-DOM children — recolor for the bar */
+/* Keep the label readable against the custom fill. */
 a-progress.fancy a-progress-number,
 a-progress.fancy a-progress-text { color: #fff; }
 a-progress.fancy a-progress-hint { color: var(--text-2); }
 ```
 
-For one-offs, the **track** is the host (style `a-progress` directly) and the
-**indicator** (fill bar) is a shadow **part** — `::part(indicator)`. The `.fancy`
-class is just for the demo.
+Use `tone`, `size`, and `round` for the component's appearance. For further
+customization, style `a-progress` for the track and `a-progress::before` for the
+fill or loading stripes. Target the label tags or your own children for text
+styling. `.fancy` belongs to this example.

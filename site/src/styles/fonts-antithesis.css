@@ -25,6 +25,13 @@
 }
 @font-face {
   font-family: Stringer;
+  src: url("https://assets.anta.design/fonts/Stringer-Light-Web.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: Stringer;
   src: url("https://assets.anta.design/fonts/Stringer-Regular-Web.woff2") format("woff2");
   font-style: normal;
   font-weight: 400;

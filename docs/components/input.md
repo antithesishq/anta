@@ -207,13 +207,9 @@ Firefox. So Anta keeps the native field.
 ```
 
 `multiline` renders a `<textarea>` under the same API. With **no `rows`** it
-**autogrows** with its content via CSS `field-sizing: content` — capped by
+**autogrows** with its content, capped by
 `maxRows` if you set one (omit for unbounded growth), then it scrolls. Pass a
 fixed **`rows`** count for a constant-height box instead.
-
-Autogrow uses CSS `field-sizing` where supported (Chromium, Safari ≥ 26.2) and a
-built-in JS resize everywhere else (Firefox, older Safari), so it grows in every
-browser.
 
 ## Controlled and uncontrolled
 
@@ -475,7 +471,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 | `maxRows?` | number | — | Cap the autogrow height (in rows) of a `multiline` field with no `rows`. Omit for unbounded growth. |
 | `min?` | number \| string | — | Min / max / step — for `type="number"`. |
 | `minLength?` | number | — | Min input length. |
-| `multiline?` | boolean | — | Render a `<textarea>` instead of an `<input>`. Without `rows` it grows with its content from one line (capped by `maxRows` if set). Autogrow uses CSS `field-sizing` where supported (Chrome/Edge, Safari ≥ 26.2) and falls back to a built-in JS resize elsewhere (Firefox, older Safari), so it grows in every browser. |
+| `multiline?` | boolean | — | Render a `<textarea>` instead of an `<input>`. Without `rows` it grows with its content from one line (capped by `maxRows` if set). Autogrow uses CSS `field-sizing` in supported engines except WebKit. WebKit and browsers without native support use a built-in JS resize on value updates. |
 | `name?` | string | — | Form field name — submitted with the form via ElementInternals. |
 | `onBlur?` | (e) => void | — | Fires when the field loses focus. |
 | `onChange?` | (e) => void | — | Fires on **commit** (blur / Enter) — the platform `change` semantics, **not** React's per-keystroke `onChange`. This is a web component, so `onChange` keeps the native meaning; reach for `onInput` (every keystroke) or `onValueChange` (both) for live updates. Read `e.target.value`. |
@@ -561,11 +557,15 @@ ring is the global [`--focus-ring`](../colors.md#focus-ring).
 ```
 
 For everything else, `<a-input>` is shadow-DOM — style its **parts** with plain
-CSS: `::part(field | input | label | leading | trailing | clear | hint)`, plus the
+CSS: `::part(field | input | input-label | label | leading | trailing | clear | hint)`, plus the
 `:state(filled)` / `:state(invalid)` state hooks and `:focus-within::part(field)`
 for the focused state. The clear button is a real `<a-button>` in the `clear` slot,
 so style it directly. `light-dark()` works too (Anta sets `color-scheme` from its
 theme toggle).
+
+In button fields, `::part(input)` targets the native button, and
+`::part(input-label)` targets its value or placeholder text. `::part(label)`
+targets the separate visible field label.
 
 ```css
 a-input::part(field) { border-radius: 999px; }

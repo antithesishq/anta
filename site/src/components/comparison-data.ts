@@ -86,8 +86,8 @@ export const SYSTEMS: System[] = [
     bundleSize: '~100 KiB',
     bundleVersion: '@antadesign/anta 0.3.16',
     bundleIncludes: 'Wrappers, elements, CSS, tokens, and reset. Excludes React, the branded theme, and stickers.',
-    browsers: "Chrome / Edge 125 (2024), Safari 17.4 (2024), and Firefox 126 (2024), or later. Requires custom elements, ElementInternals, Popover, and modern CSS.",
-    browserSupport: '2024',
+    browsers: "Chrome / Edge 135 (2025), Safari 17.4 (2024), and Firefox 136 (2025), or later. Requires custom elements, ElementInternals, ARIA element references, custom states, Popover, and modern CSS.",
+    browserSupport: '2025',
     sources: [
       { label: 'Installation and browser support', href: '/install/#browser-support' },
       { label: 'Theming', href: '/theming/' },

@@ -55,11 +55,9 @@ export interface ExpanderProps extends Omit<BaseProps, "title"> {
    *  expander keeps it open. `actions` stay live; disable them
    *  separately if needed. */
   disabled?: boolean;
-  /** Round corners sized to half the folded (header) height: a pill when folded,
-   *  and — when expanded — the same corner radius rather than a bigger stadium.
-   *  The element measures the header, so it tracks custom header content. Pass a
-   *  `number` (px) or CSS length string for a *fixed* radius that overrides the
-   *  measurement (and skips it) in both states. */
+  /** Use a `1rem` corner radius in both folded and expanded states, independent
+   *  of title level or header height. Pass a number (px) or CSS length string
+   *  for a custom radius. */
   round?: boolean | number | string;
   /** Controlled open state. When provided, the consumer owns open/close. Selecting
    *  the summary requests a change through `onStateChange`; omit `open` for

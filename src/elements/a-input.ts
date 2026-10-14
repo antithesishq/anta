@@ -24,13 +24,13 @@ import './a-input.css'
  *     <span slot="hint">We never share it.</span>
  *   </a-input>
  *
- * Shadow structure — every node carries a `part` so consumers can reach it
- * without piercing the boundary blindly:
+ * Public shadow styling parts:
  *
  *   <slot class="label" part="label" name="label">         ← display:none until a label is slotted
  *   <div class="field" part="field">                        ← the bordered box; :focus-within ring
  *     <slot name="leading" part="leading">
  *     <input|textarea|button part="input">                  ← created in JS per field mode
+ *       <span part="input-label">                           ← button-mode value or placeholder
  *     <slot name="trailing" part="trailing">
  *   <slot class="hint" part="hint" name="hint">           ← message; the JSX wrapper may slot a status <Icon> here too when [status]
  *
@@ -111,14 +111,13 @@ const CLEAR_TRIGGER = 'clearrequest'
 const CLEAR_CLICK_EVENT = 'clearclick'
 const CLEAR_INPUT_EVENT = 'clearinput'
 
-// `field-sizing: content` drives textarea autogrow declaratively where it's
-// supported (Chrome/Edge, Safari ≥ 26.2). Detected once at module load. Where
-// it's absent (Firefox, older Safari) the element falls back to a JS autogrow on
-// every value change (see `syncAutoHeight`), so a multiline field still grows
-// from one line instead of staying a single row. The CSS `max-height` cap
-// applies in both paths, so `maxrows` is honored regardless.
-const SUPPORTS_FIELD_SIZING =
-  typeof CSS !== 'undefined' && !!CSS.supports?.('field-sizing', 'content')
+// Use JS autosizing in WebKit to avoid crashes inside closed <details>, even
+// when CSS.supports returns true. Desktop Chrome also includes AppleWebKit in
+// its user agent; Chrome and Firefox on iOS use WebKit.
+const USER_AGENT = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+const IS_WEBKIT = /AppleWebKit\//.test(USER_AGENT) && !/Chrom(?:e|ium)\//.test(USER_AGENT)
+const USE_NATIVE_FIELD_SIZING =
+  !IS_WEBKIT && typeof CSS !== 'undefined' && !!CSS.supports?.('field-sizing', 'content')
 
 // Shadow styles, injected verbatim into every <a-input> shadow root, so this
 // string is kept COMMENT-FREE (it ships + re-injects per instance — see the
@@ -253,7 +252,7 @@ const SHADOW_STYLE = `
     padding-block: var(--_pad-block);
     overflow-y: auto;
   }
-  button { text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
+  button { align-self: stretch; text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
   button.placeholder { color: var(--input-placeholder); }
   :host([maxrows]:not([rows])) textarea {
     max-height: calc(var(--_lh) * var(--_maxrows) + var(--_pad-block) * 2);
@@ -339,6 +338,7 @@ export class AInputElement extends HTMLElementBase {
   private hintSlot: HTMLSlotElement
   private leadingSlot: HTMLSlotElement
   private control?: Control
+  #buttonText?: HTMLSpanElement
   // The intended value, captured even before the control exists (a framework
   // may set the `value` property before the element connects), so the initial
   // value isn't lost when the control is built.
@@ -361,6 +361,8 @@ export class AInputElement extends HTMLElementBase {
   private popupAriaSource?: Element
   private popupControls: Element | null = null
   private popupActiveDescendant: Element | null = null
+  #labelObserver?: MutationObserver
+  #labelHasText = false
 
   constructor() {
     super()
@@ -388,8 +390,7 @@ export class AInputElement extends HTMLElementBase {
     // Clicking the (light-DOM) label focuses the (shadow) control — the native
     // <label for> association can't cross the boundary, so we wire it here.
     this.labelSlot.addEventListener('click', () => this.control?.focus())
-    // Mirror the label's text into the control's aria-label unless an explicit
-    // delegated name already exists.
+    // Link the native control to the consumer's label elements.
     this.labelSlot.addEventListener('slotchange', this.onLabelSlotChange)
 
     this.field = document.createElement('div')
@@ -430,10 +431,7 @@ export class AInputElement extends HTMLElementBase {
     this.hintSlot.className = 'hint'
     this.hintSlot.setAttribute('part', 'hint')
     this.hintSlot.name = 'hint'
-    // Mirror the hint/error text into the control's aria-description (unless the
-    // host already carries one) — IDREFs can't cross the shadow boundary, so the
-    // string-valued aria-description is how the message reaches the focused
-    // control. Same approach as the label → aria-label mirror above.
+    // Element references let the browser derive descriptions from live hint text.
     this.hintSlot.addEventListener('slotchange', this.onHintSlotChange)
     // Default (unnamed) slot for projecting extra children. It sits *between*
     // the field and the hint, so a plain child renders directly under the field
@@ -467,6 +465,12 @@ export class AInputElement extends HTMLElementBase {
     }
     if (!this.control) this.buildControl()
     this.ready = true
+    this.applyLabelAria()
+    this.applyDescriptionAria()
+  }
+
+  disconnectedCallback() {
+    this.#labelObserver?.disconnect()
   }
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
@@ -571,7 +575,10 @@ export class AInputElement extends HTMLElementBase {
     const control = this.control
     if (!control) return
     applyShadowAria(this, control, name, this.delegatedAria.get(name) ?? null)
-    if (name === 'aria-label' || name === 'aria-labelledby') this.applyLabelAria()
+    if (name === 'aria-label' || name === 'aria-labelledby') {
+      this.applyLabelAria()
+      this.applyDescriptionAria()
+    }
     if (name === 'aria-description' || name === 'aria-describedby') this.applyDescriptionAria()
     if (name === 'aria-invalid' && !this.delegatedAria.has(name)) this.syncStatus()
     if (name === 'aria-controls' || name === 'aria-activedescendant') this.applyPopupAria()
@@ -585,6 +592,7 @@ export class AInputElement extends HTMLElementBase {
       const control = this.control
       if (!control) return
       for (const [name, value] of this.delegatedAria) applyShadowAria(this, control, name, value)
+      this.applyDescriptionAria()
     })
   }
 
@@ -603,7 +611,13 @@ export class AInputElement extends HTMLElementBase {
     const multiline = this.hasAttribute('multiline') || this.hasAttribute('rows')
     const button = !multiline && this.hasAttribute('button')
     const next = document.createElement(button ? 'button' : multiline ? 'textarea' : 'input') as Control
-    if (next instanceof HTMLButtonElement) next.type = 'button'
+    this.#buttonText = undefined
+    if (next instanceof HTMLButtonElement) {
+      next.type = 'button'
+      this.#buttonText = document.createElement('span')
+      this.#buttonText.setAttribute('part', 'input-label')
+      next.append(this.#buttonText)
+    }
     next.setAttribute('part', 'input')
     if (this.control) this.control.replaceWith(next)
     else this.leadingSlot.after(next)
@@ -644,8 +658,8 @@ export class AInputElement extends HTMLElementBase {
     this.syncAutoHeight() // size to the initial value (JS-fallback browsers)
   }
 
-  /** Autogrow (no `rows`) via `field-sizing: content` — or the JS fallback where
-   *  that's unsupported — capped by `maxrows`; a fixed `rows` count switches it
+  /** Autogrow (no `rows`) via `field-sizing: content` or the JS fallback,
+   *  capped by `maxrows`; a fixed `rows` count switches it
    *  off for a constant-height box. */
   private configureTextarea(ta: HTMLTextAreaElement) {
     const rows = this.getAttribute('rows')
@@ -657,29 +671,35 @@ export class AInputElement extends HTMLElementBase {
       ta.style.removeProperty('height') // drop any height the JS fallback set
     } else {
       ta.rows = 1
-      // Native autogrow where supported; the JS fallback (syncAutoHeight) grows
+      // Native autogrow outside WebKit; the JS fallback (syncAutoHeight) grows
       // it on every value change everywhere else. The cap lives in CSS
       // (max-height off --_lh + --_pad-block) and applies in both paths; JS only
       // feeds it the row count, which CSS can't read from the attribute.
-      if (SUPPORTS_FIELD_SIZING) ta.style.setProperty('field-sizing', 'content')
-      else ta.style.removeProperty('field-sizing')
+      ta.style.setProperty('field-sizing', USE_NATIVE_FIELD_SIZING ? 'content' : 'fixed')
       if (maxrows != null) ta.style.setProperty('--_maxrows', String(parseInt(maxrows, 10) || 1))
       else ta.style.removeProperty('--_maxrows')
       this.syncAutoHeight()
     }
   }
 
-  /** Autogrow fallback for browsers without `field-sizing: content` (Firefox,
-   *  Safari < 26.2). Grows the shadow textarea to fit its content; the CSS
+  /** Autogrow fallback for WebKit and browsers without `field-sizing: content`.
+   *  Grows the shadow textarea to fit its content; the CSS
    *  `max-height` cap (when `maxrows` is set) still clamps it and scrolls past.
-   *  A no-op where `field-sizing` is supported, or when the field isn't
+   *  A no-op on the native sizing path, or when the field isn't
    *  autogrowing (fixed `rows`, or not a textarea) — those size via CSS. */
   private syncAutoHeight = () => {
-    if (SUPPORTS_FIELD_SIZING) return
+    if (USE_NATIVE_FIELD_SIZING) return
     const ta = this.control
     if (!(ta instanceof HTMLTextAreaElement) || this.getAttribute('rows') != null) return
-    ta.style.height = 'auto'
+    const minHeight = this.field.style.minHeight
+    const scrollTop = ta.scrollTop
+    // Hold the field while measuring. A definite textarea height prevents flex
+    // stretching it back to the old height when its content shrinks.
+    this.field.style.minHeight = getComputedStyle(this.field).height
+    ta.style.height = '0px'
     ta.style.height = `${ta.scrollHeight}px`
+    this.field.style.minHeight = minHeight
+    ta.scrollTop = scrollTop
   }
 
   private forward(name: string, value: string | null) {
@@ -704,8 +724,9 @@ export class AInputElement extends HTMLElementBase {
     const button = this.control
     if (!(button instanceof HTMLButtonElement)) return
     const value = button.value
-    button.textContent = value || this.getAttribute('placeholder') || ''
+    if (this.#buttonText) this.#buttonText.textContent = value || this.getAttribute('placeholder') || ''
     button.classList.toggle('placeholder', !value)
+    this.applyDescriptionAria()
   }
 
   private syncFormValue(value: string) {
@@ -756,15 +777,31 @@ export class AInputElement extends HTMLElementBase {
 
   private onLabelSlotChange = () => {
     this.applyLabelAria()
+    this.applyDescriptionAria()
   }
 
   private applyLabelAria() {
     const c = this.control
     if (!c) return
-    if (this.delegatedAria.has('aria-label') || this.delegatedAria.has('aria-labelledby')) return
-    const text = this.labelSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    if (text) c.setAttribute('aria-label', text)
-    else c.removeAttribute('aria-label')
+    this.#labelObserver?.disconnect()
+    if (this.delegatedAria.has('aria-labelledby')) return
+    if (this.delegatedAria.has('aria-label')) {
+      c.ariaLabelledByElements = []
+      return
+    }
+    const labels = this.labelSlot.assignedElements()
+    c.ariaLabelledByElements = labels
+    this.#labelHasText = labels.some(label => !!label.textContent?.trim())
+    if (!(c instanceof HTMLButtonElement) || !this.isConnected || !labels.length) return
+    // An empty label lets the button's content become its name. Only this
+    // transition changes whether its value belongs in the description.
+    this.#labelObserver ??= new this.view.MutationObserver(() => {
+      const hasText = this.labelSlot.assignedElements().some(label => !!label.textContent?.trim())
+      if (hasText === this.#labelHasText) return
+      this.#labelHasText = hasText
+      this.applyDescriptionAria()
+    })
+    for (const label of labels) this.#labelObserver.observe(label, { childList: true, characterData: true, subtree: true })
   }
 
   private onHintSlotChange = () => {
@@ -774,23 +811,25 @@ export class AInputElement extends HTMLElementBase {
   private applyDescriptionAria() {
     const c = this.control
     if (!c) return
-    if (this.delegatedAria.has('aria-description') || this.delegatedAria.has('aria-describedby')) return
-    const text = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    if (text) c.setAttribute('aria-description', text)
-    else c.removeAttribute('aria-description')
+    if (this.delegatedAria.has('aria-describedby')) return
+    if (this.delegatedAria.has('aria-description')) {
+      c.ariaDescribedByElements = []
+      return
+    }
+    const named = c.getAttribute('aria-label')?.trim() ||
+      (this.delegatedAria.has('aria-labelledby') ? c.ariaLabelledByElements?.length :
+        !this.delegatedAria.has('aria-label') && this.#labelHasText)
+    const value = c instanceof HTMLButtonElement && named && c.value.trim() ? this.#buttonText : null
+    c.ariaDescribedByElements = [...(value ? [value] : []), ...this.hintSlot.assignedElements()]
   }
 
   private applyPopupAria() {
     const control = this.control
     if (!control) return
-    try {
-      if (!this.delegatedAria.has('aria-controls') && 'ariaControlsElements' in control)
-        control.ariaControlsElements = this.popupControls ? [this.popupControls] : null
-      if (!this.delegatedAria.has('aria-activedescendant') && 'ariaActiveDescendantElement' in control)
-        control.ariaActiveDescendantElement = this.popupActiveDescendant
-    } catch {
-      // Direct ARIA element reflection is unavailable in older engines.
-    }
+    if (!this.delegatedAria.has('aria-controls'))
+      control.ariaControlsElements = this.popupControls ? [this.popupControls] : null
+    if (!this.delegatedAria.has('aria-activedescendant'))
+      control.ariaActiveDescendantElement = this.popupActiveDescendant
   }
 
   private updateFilled() {
@@ -801,6 +840,10 @@ export class AInputElement extends HTMLElementBase {
   private updateValidity() {
     const c = this.control
     if (!this.internals || !c) return
+    if (c instanceof HTMLButtonElement) {
+      this.internals.setValidity({})
+      return
+    }
     // Reflect the inner control's native constraints — valueMissing (from
     // `required`), typeMismatch (e.g. `type="email"`), patternMismatch,
     // tooShort/tooLong, … — onto the host so the surrounding <form> sees them.
@@ -867,6 +910,7 @@ export class AInputElement extends HTMLElementBase {
 
   // --- Form-associated callbacks ---
   formResetCallback() {
+    if (this.control instanceof HTMLButtonElement) return
     this.value = this.getAttribute('defaultvalue') ?? ''
     // The setter updates form value / validity / filled but fires no events, so a
     // controlled consumer would never learn the field reset and would re-render

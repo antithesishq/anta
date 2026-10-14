@@ -79,23 +79,10 @@
   }
   a-expander:not(:defined):has(> [slot="indicator"]) { --_expander-skeleton-indicator-display: none; }
 
-  /* `round` → the corners take HALF the folded (header) height, so folded reads
-     as a perfect pill and — crucially — an *expanded* box keeps that exact corner
-     radius instead of re-clamping to half its taller height (which would look
-     over-round). The element measures the header via a ResizeObserver and
-     publishes the value as `--_expander-round-radius` through a shadow `:host`
-     rule (see a-expander.ts) — robust to custom header content. The `999px`
-     fallback is a plain pill for the first paint before measurement lands, and
-     for engines without ResizeObserver. Applies to every priority so a consumer
-     who adds a background to a tertiary expander still gets round corners. */
+  /* Boolean round uses a root-font-relative radius in both disclosure states.
+     Explicit JSX values use --expander-round; raw lengths use typed attr(). */
   a-expander[round] {
-    /* A custom value (`round="12px"`, or the wrapper's `round={12}` → inline
-       `--expander-round`) is a FIXED radius that overrides the measured pill;
-       with no value `--expander-round` is invalid/unset, so it falls through to
-       the measured `--_expander-round-radius`, then to the 999px first-paint
-       fallback. `attr()` has no fallback here on purpose — an empty `round` must
-       fall through to the measurement, not resolve to a length. */
-    border-radius: var(--expander-round, var(--_expander-round-radius, 999px));
+    border-radius: var(--expander-round, 1rem);
     @supports (border-radius: attr(probe type(<length>), 1px)) {
       --expander-round: attr(round type(<length>));
     }
@@ -241,7 +228,7 @@
   a-expander[level="1"] a-expander-summary { font-size: 28px; line-height: 32px; }
   a-expander[level="2"] a-expander-summary { font-size: 24px; line-height: 28px; }
   a-expander[level="3"] a-expander-summary { font-size: 20px; line-height: 24px; }
-  a-expander[level="4"] a-expander-summary { font-size: 17px; line-height: 20px; }
+  a-expander[level="4"] a-expander-summary { font-size: 17px; line-height: 22px; }
   a-expander[level="6"] a-expander-summary { font-size: 13px; line-height: 16px; }
   a-expander-details {
     display: block;
@@ -393,7 +380,7 @@
     --native-expander-border-secondary: var(--border-5);
     --native-expander-bg-primary: var(--bg-4);
     --native-expander-border-primary: var(--border-4);
-    --native-expander-round-size: 16px;
+    --native-expander-round-size: 1rem;
     --native-expander-round: 4px;
     /* Native details keep the established transparent presentation unless a
        filled priority is requested. */
@@ -429,17 +416,14 @@
   details[data-anta][level="1"] {
     --native-expander-summary-font-size: 28px;
     --native-expander-summary-line-height: 32px;
-    --native-expander-round-size: 22px;
   }
   details[data-anta][level="2"] {
     --native-expander-summary-font-size: 24px;
     --native-expander-summary-line-height: 28px;
-    --native-expander-round-size: 20px;
   }
   details[data-anta][level="3"] {
     --native-expander-summary-font-size: 20px;
     --native-expander-summary-line-height: 24px;
-    --native-expander-round-size: 18px;
   }
   details[data-anta][level="4"] {
     --native-expander-summary-font-size: 17px;
@@ -448,10 +432,8 @@
   details[data-anta][level="6"] {
     --native-expander-summary-font-size: 13px;
     --native-expander-summary-line-height: 16px;
-    --native-expander-round-size: 14px;
   }
-  /* The folded radius follows the header height: line-height + 12px padding,
-     divided by two. A literal `round` value continues to override the default. */
+  /* Match Expander's boolean round radius. Literal lengths override it. */
   details[data-anta][round] {
     --native-expander-round: var(--native-expander-round-size);
   }

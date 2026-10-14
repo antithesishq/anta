@@ -220,10 +220,10 @@
   --border-5-info: #071b2c;
 }
 
-/* Interactive layer: colors shared by buttons, checkbox, radio and input.
+/* Interactive layer: colors shared by controls and menu rows.
    A name reads family-step-tone-state, e.g. --fill-2-brand-hover.
    - fill: 1 is solid (primary button, checked control), 2 strong translucent
-     (secondary button), 3 light translucent (tertiary button hover).
+     (secondary button), 3 light translucent (tertiary button hover, menu rows).
    - stroke: 1 outlines fields and selection controls, 2 is a light outline.
    - label: text and icons; 1 sits on fill-2, 2 has no fill, on-fill sits on
      fill-1.
@@ -286,6 +286,7 @@
   --fill-3-critical: color-mix(in oklch, #de455e 5%, transparent);
   --fill-3-critical-hover: color-mix(in oklch, #de455e 10%, transparent);
   --fill-3-critical-active: color-mix(in oklch, #de455e 15%, transparent);
+
 
   --fill-1-disabled: color-mix(in oklch, #79716d 50%, transparent);
 
@@ -421,6 +422,7 @@
   --fill-3-critical-hover: color-mix(in oklch, #de455e 15%, transparent);
   --fill-3-critical-active: color-mix(in oklch, #de455e 20%, transparent);
 
+
   --fill-1-disabled: color-mix(in oklch, #a398a0 50%, transparent);
 
   --fill-disabled: color-mix(in oklch, #a398a0 10%, transparent);
@@ -526,14 +528,29 @@
     letter-spacing: 0.08ch;
   }
 
-  :is(h1, h2, h3, a-title[level="1"], a-title[level="2"], a-title[level="3"]) {
+  /* Serif names the page and its parts: levels 1–3 by default. A `font`
+     attribute on a title overrides the level default. */
+  :is(h1, h2, h3),
+  a-title:is([level="1"], [level="2"], [level="3"]):not([font]),
+  a-title[font="serif"] {
     font-family: var(--serif);
+    font-weight: 300;
+    /* macOS subpixel smoothing thickens a light serif's thin strokes. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  :is(h1, h2, h3, h4, h5, h6),
+  a-title {
+    letter-spacing: -0.1px;
   }
 
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"], [type="checkbox"], [type="radio"]),
       a-tab, a-menu-item, a[data-anta-menu-item],
       details[data-anta] > summary):focus-visible,
+  a-expander::part(summary):focus-visible,
+  a-card > a:focus-visible,
   :is(a-checkbox, a-radio, a-switch):focus-visible::before,
   a-radio-group:focus-visible a-radio:state(selected)::before {
     outline: 2px solid var(--focus-ring);
@@ -548,6 +565,19 @@
   /* The tab strip clips an outward ring. */
   a-tab {
     --focus-ring-inset: 1;
+  }
+
+  /* The card clips its own box, so its ring sits inside and replaces the
+     component's inset shadow ring. */
+  a-card > a {
+    --focus-ring-inset: 1;
+  }
+  a-card > a:focus-visible {
+    box-shadow: none;
+  }
+
+  a-expander:not([round])::part(summary) {
+    border-radius: 1px;
   }
 
   :is(a-button, a[role="button"][data-anta], button[data-anta],
@@ -734,20 +764,20 @@
   a-checkbox {
     --checkbox-label-color: var(--text-1);
     --checkbox-hint-color: var(--text-4);
-    --checkbox-mask-size: 12px;
-    --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
-    --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    --checkbox-mask-size: 14px;
+    --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
 
     &[size="small"] {
-      --checkbox-mask-size: 10px;
-      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.84' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
-      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.84' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+      --checkbox-mask-size: 12px;
+      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
     }
     &[size="large"] {
       --checkbox-gap: 10px;
-      --checkbox-mask-size: 14px;
-      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.74' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
-      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.74' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+      --checkbox-mask-size: 16px;
+      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
     }
     &:not([round])::before {
       border-radius: 1px;
@@ -876,33 +906,42 @@
   input[data-anta][type="checkbox"]:not([round]) {
     --checkbox-round: 1px;
   }
+  input[data-anta][type="checkbox"] {
+    --checkbox-mask-size: 14px;
+  }
+  input[data-anta][type="checkbox"][size="small"] {
+    --checkbox-mask-size: 12px;
+  }
+  input[data-anta][type="checkbox"][size="large"] {
+    --checkbox-mask-size: 16px;
+  }
   input[data-anta][type="checkbox"]:disabled {
     border-color: var(--checkbox-border-disabled);
     background-color: var(--checkbox-bg-disabled);
   }
   input[data-anta][type="checkbox"]:checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
   }
   input[data-anta][type="checkbox"]:indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
   .dark input[data-anta][type="checkbox"]:not([tone="critical"]):checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
   }
   .dark input[data-anta][type="checkbox"]:not([tone="critical"]):indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
   input[data-anta][type="checkbox"]:disabled:checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
   }
   input[data-anta][type="checkbox"]:disabled:indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
   .dark input[data-anta][type="checkbox"]:disabled:checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
   }
   .dark input[data-anta][type="checkbox"]:disabled:indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
 
   :is(a-radio, input[data-anta][type="radio"]) {
@@ -1006,12 +1045,206 @@
     background: radial-gradient(circle, var(--radio-dot-disabled) 0 var(--radio-dot-core), var(--radio-bg-disabled) var(--radio-dot-edge));
   }
 
+  /* Switches share the interactive layer: stroke-1 outlines the unchecked
+     track and fills its thumb, fill-1 fills the checked track. Disabled
+     switches drop their tone. */
+  a-switch {
+    --switch-thumb: var(--label-on-fill);
+    --switch-thumb-shadow: 0 1px 2px color-mix(in oklch, #000000 25%, transparent);
+    --switch-track-disabled: var(--fill-disabled);
+    --switch-track-disabled-border: var(--stroke-disabled);
+    --switch-track-on-disabled: var(--fill-disabled);
+    --switch-track-on-disabled-border: var(--stroke-disabled);
+    --switch-thumb-off-disabled: var(--label-on-fill-disabled);
+    --switch-thumb-on-disabled: var(--label-on-fill-disabled);
+    --switch-thumb-shadow-disabled: none;
+  }
+
+  a-switch:is(:not([tone]), [tone=""], [tone="neutral"], [tone-scope="selected"]) {
+    --switch-track-off-stroke-neutral: var(--stroke-1);
+    --switch-track-off-stroke-hover: var(--stroke-1-hover);
+    --switch-track-off-stroke-active: var(--stroke-1-active);
+  }
+
+  a-switch:is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --switch-track-on: var(--fill-1);
+    --switch-track-on-hover: var(--fill-1-hover);
+    --switch-track-on-active: var(--fill-1-active);
+  }
+
+  a-switch[tone="brand"] {
+    --switch-track-on: var(--fill-1-brand);
+    --switch-track-on-hover: var(--fill-1-brand-hover);
+    --switch-track-on-active: var(--fill-1-brand-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-brand);
+      --switch-track-off-stroke-hover: var(--stroke-1-brand-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-brand-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="info"] {
+    --switch-track-on: var(--fill-1-info);
+    --switch-track-on-hover: var(--fill-1-info-hover);
+    --switch-track-on-active: var(--fill-1-info-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-info);
+      --switch-track-off-stroke-hover: var(--stroke-1-info-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-info-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="success"] {
+    --switch-track-on: var(--fill-1-success);
+    --switch-track-on-hover: var(--fill-1-success-hover);
+    --switch-track-on-active: var(--fill-1-success-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-success);
+      --switch-track-off-stroke-hover: var(--stroke-1-success-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-success-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="warning"] {
+    --switch-track-on: var(--fill-1-warning);
+    --switch-track-on-hover: var(--fill-1-warning-hover);
+    --switch-track-on-active: var(--fill-1-warning-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-warning);
+      --switch-track-off-stroke-hover: var(--stroke-1-warning-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-warning-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="critical"] {
+    --switch-thumb: var(--label-on-fill-critical);
+    --switch-track-on: var(--fill-1-critical);
+    --switch-track-on-hover: var(--fill-1-critical-hover);
+    --switch-track-on-active: var(--fill-1-critical-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-critical);
+      --switch-track-off-stroke-hover: var(--stroke-1-critical-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-critical-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  /* Lift custom dark fills under the black thumb. */
+  a-switch[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --switch-track-on: light-dark(oklch(from var(--switch-tone-source) 0.5 c h), oklch(from var(--switch-tone-source) 0.8 0.1 h));
+    --switch-track-on-hover: light-dark(oklch(from var(--switch-tone-source) 0.45 c h), oklch(from var(--switch-tone-source) 0.84 0.095 h));
+    --switch-track-on-active: light-dark(oklch(from var(--switch-tone-source) 0.4 c h), oklch(from var(--switch-tone-source) 0.87 0.075 h));
+  }
+
   a-radio:state(selected):focus-visible::before,
   a-radio-group:focus-visible a-radio:state(selected)::before,
   input[data-anta][type="radio"]:checked:focus-visible,
   a-switch:state(checked):focus-visible::before {
     border-width: 0;
     box-shadow: inset 0 0 0 1px var(--focus-halo);
+  }
+
+  :is(a-slider, input[data-anta][type="range"]):not([thumb-fill]) {
+    --anta-slider-thumb-border-width: 2px;
+  }
+
+  /* Slider focus rings match the other controls: 2px with the pulse. Only the
+     width and animation are set here; the component still decides when the
+     ring's outline style is visible. */
+  a-slider:focus-visible::part(control),
+  a-slider::part(thumb):focus-visible,
+  input[data-anta][type="range"]:focus-visible {
+    outline-width: 2px;
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+  a-slider::part(control),
+  input[data-anta][type="range"] {
+    border-radius: 1px;
+  }
+
+  /* Slider rails and thumb strokes share the checked-control fills in dark
+     mode. Light mode keeps the base role-token colors. */
+  :is(a-slider, input[data-anta][type="range"]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2) 50%, var(--border-1)), var(--fill-1));
+    --slider-fill-hover: light-dark(var(--border-1), var(--fill-1-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="brand"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand)), var(--fill-1-brand));
+    --slider-fill-hover: light-dark(var(--border-1-brand), var(--fill-1-brand-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="info"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info)), var(--fill-1-info));
+    --slider-fill-hover: light-dark(var(--border-1-info), var(--fill-1-info-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="success"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success)), var(--fill-1-success));
+    --slider-fill-hover: light-dark(var(--border-1-success), var(--fill-1-success-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="warning"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning)), var(--fill-1-warning));
+    --slider-fill-hover: light-dark(var(--border-1-warning), var(--fill-1-warning-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="critical"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical)), var(--fill-1-critical));
+    --slider-fill-hover: light-dark(var(--border-1-critical), var(--fill-1-critical-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--slider-tone-source) 65%, var(--border-2)), oklch(from var(--slider-tone-source) 0.8 0.1 h));
+    --slider-fill-hover: light-dark(color-mix(in oklch, var(--slider-tone-source) 80%, var(--border-1)), oklch(from var(--slider-tone-source) 0.84 0.095 h));
+  }
+  /* Without its own tone, the thumb matches the filled rail. */
+  :is(a-slider, input[data-anta][type="range"]):is(:not([thumb-tone]), [thumb-tone=""]) {
+    --slider-thumb-interactive-rest: var(--slider-interactive-rest);
+    --slider-thumb-border-active: var(--slider-fill-hover);
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="neutral"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2) 50%, var(--border-1)), var(--fill-1));
+    --slider-thumb-border-active: light-dark(var(--border-1), var(--fill-1-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="brand"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand)), var(--fill-1-brand));
+    --slider-thumb-border-active: light-dark(var(--border-1-brand), var(--fill-1-brand-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="info"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info)), var(--fill-1-info));
+    --slider-thumb-border-active: light-dark(var(--border-1-info), var(--fill-1-info-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="success"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success)), var(--fill-1-success));
+    --slider-thumb-border-active: light-dark(var(--border-1-success), var(--fill-1-success-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="warning"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning)), var(--fill-1-warning));
+    --slider-thumb-border-active: light-dark(var(--border-1-warning), var(--fill-1-warning-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="critical"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical)), var(--fill-1-critical));
+    --slider-thumb-border-active: light-dark(var(--border-1-critical), var(--fill-1-critical-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone]:not([thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"], [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--slider-thumb-tone-source) 65%, var(--border-2)), oklch(from var(--slider-thumb-tone-source) 0.8 0.1 h));
+    --slider-thumb-border-active: light-dark(color-mix(in oklch, var(--slider-thumb-tone-source) 80%, var(--border-1)), oklch(from var(--slider-thumb-tone-source) 0.84 0.095 h));
+  }
+  input[data-anta][type="range"] {
+    --slider-tone-source: var(--anta-native-range-tone-source, transparent);
+    --slider-thumb-tone-source: var(--anta-native-range-thumb-tone-source, transparent);
+    --anta-native-range-interactive-rest: var(--slider-interactive-rest);
+    --anta-native-range-fill-hover: var(--slider-fill-hover);
+    --anta-native-range-thumb-interactive-rest: var(--slider-thumb-interactive-rest);
+    --anta-native-range-thumb-border-active: var(--slider-thumb-border-active);
   }
 
   a-input:not([round])::part(field),
@@ -1021,10 +1254,26 @@
 
   /* Fields share the interactive stroke: stroke-1 at rest, stroke-1-hover on
      hover and focus. Status and custom-tone fields keep their own border. The
-     focus ring is 2px inside the field edge. */
+     2px focus ring straddles the field edge, 1px inside and 1px outside, so
+     focus grows the field outline by 1px without changing its layout size. */
   a-input {
     --_input-focus-width: 2px;
-    --_input-focus-offset: -2px;
+    --_input-focus-offset: -1px;
+  }
+
+  /* The field ring pulses in like the other focus rings. The rule targets the
+     field part from the document, so it resolves the document's keyframes.
+     The host matches `:focus` only when its shadow control holds focus, not
+     when a slotted button does, which matches the shadow ring condition. */
+  a-input:not([readonly]):focus::part(field),
+  a-input[readonly]:state(kb-focus)::part(field) {
+    --focus-ring-pulse-width: 3px;
+
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 
   a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
@@ -1034,6 +1283,26 @@
     &:not([priority="tertiary"]) {
       --input-rest-border: var(--stroke-1);
     }
+  }
+
+  /* Status fields take the brightest tone stroke; dark brand is muted to
+     sit with the other tones. The hint keeps the border's hue and chroma at
+     a lightness that holds 4.5:1 on the field's surroundings. */
+  a-input[status="brand"]:not(:disabled) {
+    --input-border: light-dark(
+      var(--stroke-1-brand-active),
+      oklch(from var(--stroke-1-brand-active) 0.6 calc(c * 0.75) h)
+    );
+  }
+  a-input[status="info"]:not(:disabled) { --input-border: var(--stroke-1-info-active); }
+  a-input[status="success"]:not(:disabled) { --input-border: var(--stroke-1-success-active); }
+  a-input[status="warning"]:not(:disabled) { --input-border: var(--stroke-1-warning-active); }
+  a-input[status="critical"]:not(:disabled) { --input-border: light-dark(#ff4a68, var(--stroke-1-critical-active)); }
+  a-input[status]:not([status="neutral"], :disabled) {
+    --input-hint: light-dark(
+      oklch(from var(--input-border) 0.53 c h),
+      oklch(from var(--input-border) 0.72 c h)
+    );
   }
 
   a-input:disabled {
@@ -1048,6 +1317,65 @@
     }
   }
 
+  /* Time fields match the text fields above: square corners, a 1px stroke,
+     and the same pulsing 2px ring across the field edge. */
+  a-input-time:not([round])::part(field),
+  a-input-time:not([round]):not(:defined)::after {
+    border-radius: 0;
+  }
+
+  a-input-time:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
+    --input-time-border: var(--stroke-1);
+    --input-time-border-hover: var(--stroke-1-hover);
+  }
+
+  a-input-time:not([tone]:not([tone=""]))::part(field),
+  a-input-time:not([tone]:not([tone=""])):not(:defined)::after {
+    box-shadow: inset 0 0 0 1px var(--input-time-border);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    a-input-time:not([tone]:not([tone=""]), :disabled)::part(field):hover {
+      box-shadow: inset 0 0 0 1px var(--input-time-border-hover);
+    }
+  }
+  a-input-time:not([tone]:not([tone=""])):focus-within::part(field) {
+    box-shadow: inset 0 0 0 1px var(--input-time-border-hover);
+  }
+
+  a-input-time:focus-within::part(field) {
+    --focus-ring-pulse-width: 3px;
+
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -1px;
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  a-input-time[status="brand"]:not(:disabled) {
+    --input-time-border: light-dark(
+      var(--stroke-1-brand-active),
+      oklch(from var(--stroke-1-brand-active) 0.6 calc(c * 0.75) h)
+    );
+  }
+  a-input-time[status="info"]:not(:disabled) { --input-time-border: var(--stroke-1-info-active); }
+  a-input-time[status="success"]:not(:disabled) { --input-time-border: var(--stroke-1-success-active); }
+  a-input-time[status="warning"]:not(:disabled) { --input-time-border: var(--stroke-1-warning-active); }
+  a-input-time[status="critical"]:not(:disabled) { --input-time-border: light-dark(#ff4a68, var(--stroke-1-critical-active)); }
+  a-input-time[status]:not([status="neutral"], :disabled) {
+    --input-time-hint: light-dark(
+      oklch(from var(--input-time-border) 0.53 c h),
+      oklch(from var(--input-time-border) 0.72 c h)
+    );
+  }
+
+  a-input-time:disabled {
+    --input-time-border: var(--stroke-disabled);
+    --input-time-bg: var(--fill-disabled);
+  }
+
   :is(input[data-anta]:not([type="checkbox"], [type="radio"], [type="range"],
       [type="color"], [type="file"], [type="button"], [type="reset"],
       [type="submit"], [type="image"], [type="hidden"]),
@@ -1056,7 +1384,118 @@
   }
 
   a-tag {
+    border-radius: 3px;
+  }
+
+  /* Primary tags take the solid control fill, matching primary buttons and
+     checked checkboxes. Light warning steps to the active fill to hold 4.5:1
+     under white text. */
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"], [tone="brand"],
+      [tone="info"], [tone="success"], [tone="warning"]) {
+    --tag-text: var(--label-on-fill);
+  }
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"]) { --tag-bg: var(--fill-1); }
+  a-tag[priority="primary"][tone="brand"] { --tag-bg: var(--fill-1-brand); }
+  a-tag[priority="primary"][tone="info"] { --tag-bg: var(--fill-1-info); }
+  a-tag[priority="primary"][tone="success"] { --tag-bg: var(--fill-1-success); }
+  a-tag[priority="primary"][tone="warning"] { --tag-bg: light-dark(var(--fill-1-warning-active), var(--fill-1-warning)); }
+  a-tag[priority="primary"][tone="critical"] {
+    --tag-bg: var(--fill-1-critical);
+    --tag-text: var(--label-on-fill-critical);
+  }
+
+  /* Light secondary and tertiary text steps to text-2; the 80% text-3 tones
+     fell below 4.5:1 on the tinted fills. */
+  a-tag:is(:not([tone]), [tone=""], [tone="neutral"]):not([priority="primary"]) { --tag-text: light-dark(var(--text-2), var(--text-3)); }
+  a-tag[tone="brand"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-brand), var(--text-3-brand)); }
+  a-tag[tone="info"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-info), var(--text-3-info)); }
+  a-tag[tone="success"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-success), var(--text-3-success)); }
+  a-tag[tone="warning"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-warning), var(--text-3-warning)); }
+  a-tag[tone="critical"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-critical), var(--text-3-critical)); }
+
+  /* Dark neutral border-4 sits at the fill's lightness with less chroma, so the
+     fill's edge faded to grey. Lift the fill and brighten the edge. */
+  :where(a-progress, progress[data-anta]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --progress-indicator-bg: light-dark(var(--bg-5), #311228);
+    --progress-border-color: light-dark(var(--border-4), #3f1b35);
+  }
+
+  a-card:not([round]) {
+    --card-radius: 1px;
+  }
+
+  a-expander:not([round]) {
     border-radius: 1px;
+  }
+
+  details[data-anta]:not([round]) {
+    --native-expander-round: 1px;
+  }
+
+  a-dialog:not([round]) {
+    --dialog-radius: 1px;
+  }
+
+  /* A submenu inside a `round` menu keeps the inherited round radius. */
+  a-menu:not([round], a-menu[round] a-menu) {
+    --menu-radius: 2px;
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --menu-item-color: var(--text-1);
+    --menu-item-hover-bg: var(--fill-3-hover);
+    --menu-item-selected-bg: var(--fill-3-active);
+    --menu-item-active-bg: var(--fill-3-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="brand"] {
+    --menu-item-hover-bg: var(--fill-3-brand-hover);
+    --menu-item-selected-bg: var(--fill-3-brand-active);
+    --menu-item-active-bg: var(--fill-3-brand-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="info"] {
+    --menu-item-hover-bg: var(--fill-3-info-hover);
+    --menu-item-selected-bg: var(--fill-3-info-active);
+    --menu-item-active-bg: var(--fill-3-info-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="success"] {
+    --menu-item-hover-bg: var(--fill-3-success-hover);
+    --menu-item-selected-bg: var(--fill-3-success-active);
+    --menu-item-active-bg: var(--fill-3-success-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="warning"] {
+    --menu-item-hover-bg: var(--fill-3-warning-hover);
+    --menu-item-selected-bg: var(--fill-3-warning-active);
+    --menu-item-active-bg: var(--fill-3-warning-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="critical"] {
+    --menu-item-hover-bg: var(--fill-3-critical-hover);
+    --menu-item-selected-bg: var(--fill-3-critical-active);
+    --menu-item-active-bg: var(--fill-3-critical-active);
+  }
+
+  :is(a-menu-item[disabled], a[data-anta-menu-item][aria-disabled="true"]) {
+    --menu-item-color: var(--text-4);
+    --menu-item-icon-color: var(--text-4);
+    --menu-item-hint-color: var(--text-4);
+  }
+}
+
+/* Plain focusable HTML, such as links, takes the controls' 2px ring and pulse.
+   In the reset layer, every component focus rule still wins; `:root` outranks
+   the reset's bare `:focus-visible`. Native Anta fields keep their own ring. */
+@layer anta.reset {
+  :root :focus-visible:not([data-anta]) {
+    outline-width: 2px;
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 }
 
@@ -1067,8 +1506,8 @@
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
   }
   30% {
-    outline-width: 4px;
-    outline-offset: calc(-4px * var(--focus-ring-inset, 0));
+    outline-width: var(--focus-ring-pulse-width, 4px);
+    outline-offset: calc(-1 * var(--focus-ring-pulse-width, 4px) * var(--focus-ring-inset, 0));
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
   }
 }

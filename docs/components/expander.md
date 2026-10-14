@@ -26,11 +26,10 @@ its chevron, for an inline disclosure.
 
 ## Round
 
-`round` sizes the corners to **half the folded header height** — so a folded
-expander reads as a pill, and an open one keeps that *same* corner radius instead
-of a bigger stadium. The header is measured (a `ResizeObserver`), so the pill
-tracks the header at any `level` or with custom header content. Open the example
-to see the corners hold their radius as the body appears.
+`round` uses a `1rem` corner radius in both folded and expanded states. The
+radius follows the root font size and stays independent of the title `level`,
+wrapped text, or custom header content. Pass a number in pixels, such as
+`round={20}`, or a CSS length, such as `round="1.5rem"`, for a custom radius.
 
 ```tsx
 <Expander round title="Details" priority="primary">…</Expander>
@@ -356,7 +355,7 @@ function Accordion() {
 | `open?` | boolean | — | Controlled open state. When provided, the consumer owns open/close. Selecting the summary requests a change through `onStateChange`; omit `open` for uncontrolled use. |
 | `outdent?` | boolean | — | Align the title and body with surrounding content on a tertiary expander. With the default start indicator, the mark hangs in the gutter; an end indicator stays inside its edge. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'secondary' | Surface emphasis. `secondary` (the default) is a subtle fill; `primary` is a more pronounced card; `tertiary` is transparent (the bare disclosure). |
-| `round?` | boolean \| number \| string | — | Round corners sized to half the folded (header) height: a pill when folded, and — when expanded — the same corner radius rather than a bigger stadium. The element measures the header, so it tracks custom header content. Pass a `number` (px) or CSS length string for a *fixed* radius that overrides the measurement (and skips it) in both states. |
+| `round?` | boolean \| number \| string | — | Use a `1rem` corner radius in both folded and expanded states, independent of title level or header height. Pass a number (px) or CSS length string for a custom radius. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones re-point the text and (on filled priorities) the surface to the matching palette; a custom color keeps its hue while lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
 
 ## Web Component

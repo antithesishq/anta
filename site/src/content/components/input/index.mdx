@@ -354,13 +354,9 @@ Firefox. So Anta keeps the native field.
 <Col>
 
 `multiline` renders a `<textarea>` under the same API. With **no `rows`** it
-**autogrows** with its content via CSS `field-sizing: content` — capped by
+**autogrows** with its content, capped by
 `maxRows` if you set one (omit for unbounded growth), then it scrolls. Pass a
 fixed **`rows`** count for a constant-height box instead.
-
-Autogrow uses CSS `field-sizing` where supported (Chromium, Safari ≥ 26.2) and a
-built-in JS resize everywhere else (Firefox, older Safari), so it grows in every
-browser.
 
 </Col>
 </Columns>
@@ -813,11 +809,15 @@ ring is the global [`--focus-ring`](/colors/#focus-ring).
 ```
 
 For everything else, `<a-input>` is shadow-DOM — style its **parts** with plain
-CSS: `::part(field | input | label | leading | trailing | clear | hint)`, plus the
+CSS: `::part(field | input | input-label | label | leading | trailing | clear | hint)`, plus the
 `:state(filled)` / `:state(invalid)` state hooks and `:focus-within::part(field)`
 for the focused state. The clear button is a real `<a-button>` in the `clear` slot,
 so style it directly. `light-dark()` works too (Anta sets `color-scheme` from its
 theme toggle).
+
+In button fields, `::part(input)` targets the native button, and
+`::part(input-label)` targets its value or placeholder text. `::part(label)`
+targets the separate visible field label.
 
 ```css
 a-input::part(field) { border-radius: 999px; }

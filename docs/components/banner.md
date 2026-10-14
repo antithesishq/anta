@@ -1,93 +1,26 @@
 # Banner
 
-A full-width notice for an announcement, status change, or promotion. `Banner`
-renders an `<a-banner>` with `message`, optional `children`, `actions`, and a dismiss
-control. Content starts at the inline edge; pass `align="center"` to center it
-([Align](#align)). `closable` defaults to `true`.
-
-`Banner` is borderless. Set `border-bottom-width` for a rule or `border-width` for
-an outline ([Styling](#styling)).
-
-## Tone
-
-Pick a semantic `tone` to tint the surface and text together — and the ✕ adopts the
-same tone (it also sets the border color, used if you opt into a border). The set
-matches `Expander` / `Tag`: `neutral` (the default) plus `brand`, `info`, `success`,
-`warning`, and `critical`. Color comes from the theme tokens, so every tone tracks
-light and dark mode automatically.
-
-```tsx
-<Banner tone="neutral" message="Neutral — a plain notice." />   {/* neutral is the default */}
-<Banner tone="brand" message="Brand — a product announcement." />
-<Banner tone="info" message="Info — a new release is available." />
-<Banner tone="success" message="Success — your changes were saved." />
-<Banner tone="warning" message="Warning — your trial ends in 3 days." />
-<Banner tone="critical" message="Critical — the last deploy failed." />
-```
-
-`tone` also accepts **any literal CSS color** for a one-off tint — the hue is kept
-while lightness and chroma are pinned to the named-tone curve (and re-tuned for
-dark mode), the same mechanism as `Expander` / `Tag`:
-
-```tsx
-<Banner tone="#ff1493" message="…" />
-<Banner tone="rebeccapurple" message="…" />
-```
-
-## Round
-
-`round` rounds the corners for a **standalone** banner that floats inside a
-container, rather than the edge-to-edge strip. It stays borderless (add
-`border-width` for an outline). Bare `round` clamps to a stadium (half the height);
-pass a `number` (px) or a CSS length string for a custom radius.
-
-```tsx
-<Banner round tone="info" message="A rounded, standalone banner." />
-<Banner round={12} tone="success" message="A custom 12px radius." />
-```
-
-## Align
-
-`align` places the content row. `start` (the default) aligns it to the inline edge
-and reserves space for the dismiss control. `center` centers it in the bar. Wrapped
-message text follows the selected alignment.
-
-```tsx
-<Banner tone="info" message="Start-aligned content." /> {/* start is the default */}
-<Banner align="center" tone="info" message="Centered content." />
-```
-
-The layout follows `direction: rtl`.
+Use Banner for announcements, status changes, and notices that need an action.
+Its full-width surface keeps the message visible without opening a dialog.
+Add supporting content and actions, or let the reader dismiss the notice.
 
 ## Message and content
 
-`message` is the leading content: a string at the banner type scale or any node.
-`children` sit between the message and actions, for example a chip, link, or
-secondary line.
+Pass `message` for the notice and `children` for supporting information such as a
+link, a timestamp, or a tag. Text messages use Banner's type scale. Pass your own
+markup when the message needs a different presentation.
 
 ```tsx
 <Banner tone="info" message="Deployment complete.">
-  <Text size="small" priority="tertiary">· 2 minutes ago</Text>
+  <Text size="small" priority="tertiary">2 minutes ago</Text>
 </Banner>
 ```
 
 ## Actions
 
-Pass `actions` to render trailing controls — buttons, links — as a compact row
-after the message and children. Keep them small; the banner is a single line.
-Give each action the banner's `tone` so the controls read as part of the strip.
-
-```tsx
-<Banner
-  tone="brand"
-  message="Upgrade to Pro for unlimited runs."
-  actions={<Button size="small" priority="secondary" tone="brand" label="Upgrade" />}
-/>
-```
-
-Stack several actions by priority in one banner: a `primary` call to action, a
-`secondary` alternative, and a low-emphasis `tertiary` choice, all sharing the
-banner's tone.
+Use `actions` for controls related to the notice. Multiple actions form a compact
+row after the message and supporting content. Give controls the notice's tone to
+keep their emphasis consistent.
 
 ```tsx
 <Banner
@@ -96,105 +29,73 @@ banner's tone.
   actions={
     <>
       <Button size="small" priority="primary" tone="info" label="Update now" />
-      <Button size="small" priority="secondary" tone="info" label="Release notes" />
-      <Button size="small" priority="tertiary" tone="info" label="Later" />
+      <Button size="small" priority="tertiary" tone="info" label="Release notes" href="/changelog/" />
     </>
   }
 />
 ```
 
+## Tone
+
+Use `tone` to identify the kind of notice. The surface, text, and dismiss control
+share the tone and follow the surrounding light or dark theme.
+
+```tsx
+<Banner message="A scheduled maintenance window is coming up." />
+<Banner tone="brand" message="Introducing the new workspace." />
+<Banner tone="info" message="A new release is available." />
+<Banner tone="success" message="Your changes were saved." />
+<Banner tone="warning" message="Your trial ends in 3 days." />
+<Banner tone="critical" message="The last deployment failed." />
+```
+
+## Round
+
+Add `round` when the notice sits inside a container. Pass a number or a CSS length
+for a custom radius. Banner is borderless by default; add a border with CSS when
+the notice needs a visible edge.
+
+```tsx
+<Banner round tone="info" message="A standalone notice." />
+<Banner round={12} tone="success" message="A notice with a 12px radius." />
+```
+
+## Align
+
+Content starts at the inline edge. Pass `align="center"` to center it. Long
+messages wrap, and message text follows the selected alignment. The layout also
+follows `direction: rtl`.
+
+```tsx
+<Banner tone="info" message="Scheduled maintenance starts tonight. Save your work before the workspace becomes temporarily unavailable." />
+<Banner align="center" tone="info" message="Scheduled maintenance starts tonight. Save your work before the workspace becomes temporarily unavailable." />
+```
+
 ## Dismiss
 
-A banner is **closable** by default: a full-height ✕ on the right edge dismisses it.
-It rests dimmed and brightens when you hover or focus it (the `Input` `dim-actions`
-affordance). On dismiss the bar collapses its height and fades out, clipped to the
-box (instant under `prefers-reduced-motion`).
-
-Leave it *uncontrolled* and the banner hides itself when the ✕ is clicked (try it):
+Select **Dismiss** or focus it and press Enter or Space to hide the notice.
+Banner fades and collapses using the browser's supported transitions. Reduced
+motion makes dismissal immediate.
 
 ```tsx
-{/* uncontrolled — the ✕ self-dismisses */}
-<Banner tone="success" message="Dismiss me — I'll disappear." />
+<Banner tone="success" message="Your changes were saved. You can dismiss this notice." />
+<Banner tone="warning" message="A notice without a built-in dismiss control." closable={false} />
 ```
 
-Set `closable={false}` to drop the built-in ✕ — for a permanent banner, or when you
-drive dismissal from your own control.
-
-```tsx
-<Banner tone="warning" message="A permanent notice — no dismiss button." closable={false} />
-```
-
-## Dismiss from an action
-
-Give any control inside the banner **`data-banner-dismiss`** and it dismisses the
-banner on click, through the same state contract as the ✕ — for an action that
-closes the banner as it runs (an "Undo", a "Got it"). Try it:
-
-```tsx
-<Banner
-  tone="success"
-  message="Draft saved."
-  actions={<Button size="small" priority="secondary" tone="success" label="Undo" onClick={undo} data-banner-dismiss />}
-/>
-```
-
-It's matched by presence on the nearest banner, so it works on any activated
-control — `Button`, a plain `<a>`, or a `MenuItem` inside a dropdown — and from the
-keyboard, since Enter/Space activation is a real click. Put it on the **terminal**
-control, not a dropdown *trigger* (which would dismiss the banner as the menu opens):
-
-```tsx
-<Banner
-  message="Export ready."
-  actions={
-    <Menu trigger={<Button size="small" label="Download" iconTrailing="chevron-down" />}>
-      <MenuItem label="As CSV" onClick={csv} data-banner-dismiss />
-      <MenuItem label="As JSON" onClick={json} data-banner-dismiss />
-    </Menu>
-  }
-/>
-```
-
-In controlled mode the click *requests* a dismiss like the ✕ does — drive the
-result through `dismissed` (below).
+Give an action `data-banner-dismiss` to request dismissal when it runs. Put the
+attribute on the final action, such as **Got it**, rather than on a menu trigger.
+Try **Remind me later** in the Playground.
 
 ## Controlled vs uncontrolled
 
-Dismissal follows Anta's shared **state contract**. For uncontrolled use, pass
-`defaultDismissed`; clicking ✕ then dismisses the banner. For controlled use,
-pass `dismissed` and `onDismiss`. The banner follows `dismissed` and reports a
-dismissal request when ✕ is clicked. Update `dismissed` to accept the request,
-or leave it unchanged to reject it. The wrapper uses booleans, while the element
-uses a `state` string (`closed` means dismissed):
+Use `dismissed` when your application needs to accept or reject a dismissal, save
+it, or show the notice again. Update it in `onDismiss` to accept the request.
+Leave it unchanged to reject. The demonstration counts requests so you can see
+rejection without hiding the notice.
 
-| | `<Banner>` (JSX) | `<a-banner>` (element) |
-|---|---|---|
-| **Uncontrolled** | `defaultDismissed` | `default-state="open" \| "closed"` |
-| **Controlled** | `dismissed` + `onDismiss` | `state="open" \| "closed"` + `statechange` |
-| **Change signal** | `onDismiss()`, fired on a dismiss request | `statechange`, a cancelable `CustomEvent<{ next, prev }>` of `'open'` / `'closed'` |
-
-Controlling it is how you persist a dismissal (write it to storage) or re-show the
-banner later. The element never self-applies in controlled mode: set `dismissed` to
-`true` to accept the request, or do nothing to reject.
-
-```tsx
-// controlled — persist the dismissal across reloads
-const [hidden, setHidden] = useState(() => localStorage.getItem('release-banner') === 'hidden')
-<Banner
-  tone="info"
-  message="A new release is available."
-  dismissed={hidden}
-  onDismiss={() => {
-    setHidden(true)
-    localStorage.setItem('release-banner', 'hidden')
-  }}
-/>
-```
-
-At the element level `statechange` is **cancelable** and fires *before* the banner
-applies anything, so a vanilla `<a-banner>` listener can `preventDefault()` a
-dismiss. The `<Banner>` wrapper's `onDismiss` is notification-only — drive rejection
-through `dismissed` instead.
+Without `dismissed`, Banner owns its visibility. `defaultDismissed` chooses its
+initial visibility. Dismissal hides the rendered notice and retains its children
+in the DOM.
 
 ## Component props
 
@@ -202,63 +103,92 @@ through `dismissed` instead.
 |------|------|---------|-------------|
 | `actions?` | ReactNode | — | Trailing controls (buttons, links) rendered as a compact row after the message and `children`. |
 | `align?` | 'start' \| 'center' | 'start' | Positions the content row. `'start'` aligns it to the inline edge; `'center'` centers it. Wrapped message text follows the selected alignment. |
-| `children?` | ReactNode | — | Free content placed BETWEEN the message and the actions. |
-| `closable?` | boolean | true | Whether the trailing ✕ dismiss button is present. `false` removes it — drive dismissal yourself (a controlled `dismissed`, or your own control) instead. It removes the built-in ✕ without making the banner un-dismissible. |
+| `children?` | ReactNode | — | Supporting content between the message and actions. |
+| `closable?` | boolean | true | Show the built-in Dismiss control. Set false when the notice is permanent or another action requests dismissal through `data-banner-dismiss`. |
 | `defaultDismissed?` | boolean | — | Initial dismissed state for the uncontrolled case (read once on mount). |
-| `dismissed?` | boolean | — | Controlled dismissed state. When provided, the consumer owns visibility: the banner follows this prop only, and clicking ✕ *requests* dismissal (reject by not updating). **Requires `onDismiss`** — controlled mode never self-hides, so without a handler to set `dismissed` the ✕ can't close the banner. Leave undefined for uncontrolled. |
+| `dismissed?` | boolean | — | Controlled visibility. Set true in `onDismiss` to accept a request, or keep false to reject it. Set false to show the notice again. Dismissal hides the host and retains its children; it does not unmount them. |
 | `message?` | ReactNode | — | Leading message: a string at the banner type scale or any node. |
-| `onDismiss?` | () => void | — | Fired when the user dismisses the banner (clicks ✕). Uncontrolled, the banner hides itself and this notifies. Controlled, use it to accept the request — set `dismissed` to `true` (or ignore to reject); pair it with `dismissed`, or the banner can't be closed. |
-| `role?` | string | 'status' | ARIA role for the strip host. `'status'` (a polite live region, so the notice reaches assistive tech) by default; pass `'alert'` for an urgent notice that should interrupt, or a landmark role. |
+| `onDismiss?` | () => void | — | Dismissal request from the close control or a `data-banner-dismiss` action. Controlled Banner stays visible until `dismissed` changes. Uncontrolled Banner applies an uncanceled request itself. |
+| `role?` | string | 'status' | Host role. Use 'status' for polite announcements or 'alert' for urgent ones. |
 | `round?` | boolean \| number \| string | — | Rounded corners for a standalone, floating banner (`border-radius: 999px`, which clamps to a stadium) instead of the edge-to-edge strip. Still borderless by default. Pass a `number` (px) or a CSS length string for a custom radius. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones re-point the surface, text, and border color (used if you opt into a border); a custom color keeps its hue while lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone or a CSS color. Colors the surface, text, border, and dismiss control. Custom colors use an inline CSS variable; under a CSP that blocks style attributes, provide that variable through external CSS instead. |
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
-Slots hold the message, actions, and close control. A close button dispatches
-`dismissrequest` through `data-custom-event`.
+Supply the light-DOM regions and the attributes your application needs. Use
+`a-banner-message` for Banner's text scale and boxless `a-banner-content` for
+custom message markup or supporting content. Put actions in one
+`a-banner-actions` region and the close Button in `a-banner-close`.
 
 ```html
 <a-banner role="status" tone="info">
-  <a-banner-message slot="message">A new version is ready to install.</a-banner-message>
-  <a-button slot="actions" role="button" tabindex="0" size="small" priority="primary" tone="info">
-    <a-button-label>Update now</a-button-label>
-  </a-button>
-  <a-button slot="close" role="button" tabindex="0" priority="quaternary" tone="info"
-    aria-label="Dismiss" data-custom-event="dismissrequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
+  <a-banner-message>A new release is available.</a-banner-message>
+  <a-banner-actions>
+    <a-button role="button" tabindex="0" size="small" tone="info" data-banner-dismiss>
+      <a-button-label>Got it</a-button-label>
+    </a-button>
+  </a-banner-actions>
+  <a-banner-close>
+    <a-button role="button" tabindex="0" priority="quaternary" tone="info"
+      aria-label="Dismiss" data-custom-event="dismissrequest">
+      <a-icon shape="x" aria-hidden="true"></a-icon>
+    </a-button>
+  </a-banner-close>
 </a-banner>
 ```
 
+External CSS renders Banner before registration. Browser dismissal needs
+`@antadesign/anta/elements/a-banner` and `@antadesign/anta/elements/a-button`;
+load `@antadesign/anta/elements/a-icon` for the close icon. The full bundle
+includes these entries.
+
+`state="open"` or `state="closed"` controls visibility. Without `state`,
+`default-state` seeds visibility once; an omitted default shows the notice.
+`statechange` is a cancelable request with serializable `{ next, prev }` detail.
+Call `preventDefault()` to reject an uncontrolled request. In controlled mode,
+update `state` to accept it or leave it unchanged to reject. Set `state="open"`
+to restore visibility. Nested Banners handle their own dismissal.
+
+Omit unused regions. CSS hides an empty actions region. Whitespace counts as
+content, so omit a whitespace-only region or author `hidden`. JSX omits absent
+actions and whitespace-only string actions. Banner never changes your markup.
+
+Named tones and boolean `round` need no inline styles. Custom colors and lengths
+use JSX-owned CSS variables. For raw HTML, supply `--banner-tone-source` or
+`--banner-round` through your stylesheet on browsers without typed CSS `attr()`.
+A CSP that blocks style attributes also requires these values in external CSS.
+
+Banner now uses explicit regions instead of shadow slots. Group raw actions in
+`a-banner-actions` and replace `::part()` overrides with direct region selectors.
+
 ## Styling
 
-Reach for the props first: **`tone`** sets the color (any CSS color for a custom
-tone — it derives the surface, text, and border color in oklch), **`round`** the
-corners. The one knob worth keeping is **`--banner-tone-source`** — the color a
-custom `tone` derives from, so set it to drive the palette from your own variable.
-Everything else is plain CSS on the host: `min-height` for a taller bar, a
-`border-*-width` for a rule or outline (below).
+Use `tone` for color and `round` for corners. `--banner-tone-source` connects a
+custom tone to an application color. Customize the surface and regions with
+plain CSS. Unlayered rules override Anta's defaults without `!important`.
 
-```tsx
-<Banner tone="#e0457b" message="Custom" />
+The classes in these examples identify the demonstrations. Substitute your own
+selectors in your application.
+
+Connect a custom tone to your application color through external CSS.
+
+```css
+.notice-color { --banner-tone-source: #e0457b; }
 ```
 
-**Add a border.** The banner is borderless by default, but its border style and
-color are preset at `0` width (the `Progress` reset), so you opt in by setting only
-the **width** — `border-bottom-width` for a rule under the strip, `border-width` for
-a full outline. The color is already tone-aware (`--banner-border`), so a toned
-banner's border matches its tone with no extra work.
+Add a rule or an outline by setting its width. Banner supplies the tone-aware
+border color.
 
-```tsx
-<Banner tone="info" message="A rule under the strip." style={{ borderBottomWidth: 1 }} />
-<Banner round tone="success" message="A full outline on a round banner." style={{ borderWidth: 1 }} />
+```css
+.notice-rule { border-bottom-width: 1px; }
+.notice-outline { border-width: 1px; }
 ```
 
-The host `a-banner` **is** the bar — its surface, text, border, and layout
-are all plain CSS on the host (`@layer anta`, so an un-layered rule of yours wins
-without `!important`). For the individual regions, `<a-banner>` exposes
-`::part(message)` / `::part(content)` / `::part(actions)` / `::part(close)`.
+Change height, message type, or action spacing through the host and its direct
+regions. Direct-child selectors keep nested Banners independent.
 
-```tsx
-<Banner tone="info" message="A taller bar." style={{ minHeight: 56 }} />
+```css
+.notice-custom { min-height: 56px; }
+.notice-custom > a-banner-message { font-size: 16px; }
+.notice-custom > a-banner-actions { gap: 8px; }
 ```

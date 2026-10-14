@@ -40,15 +40,15 @@ let _useSyncExternalStore: UseSyncExternalStore = React.useSyncExternalStore as 
  * before rendering any anta components when using Preact without compat aliasing,
  * or a custom JSX runtime. Pass `hooks` when your runtime's hooks don't resolve via
  * the `react` specifier (the stateful wrappers — `RadioGroup`, `Calendar`,
- * `InputDate` — need `useState` / `useId` / `useMemo`); omit it and they default
+ * `InputDate`, `Banner`, and expandable `Text` — need the configured hooks); omit it and they default
  * to whatever `react` resolves to.
  *
  * @example Preact without compat
  * ```ts
  * import { configure } from '@antadesign/anta'
  * import { h, Fragment } from 'preact'
- * import { useState, useId, useMemo } from 'preact/hooks'
- * configure(h, Fragment, { useState, useId, useMemo })
+ * import { useState, useId, useMemo, useLayoutEffect } from 'preact/hooks'
+ * configure(h, Fragment, { useState, useId, useMemo, useLayoutEffect })
  * ```
  */
 export function configure(
@@ -118,7 +118,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
+import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ATextContentAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -141,6 +141,7 @@ export interface AntaIntrinsicElements {
   'a-progress-text': BaseAttributes
   'a-progress-hint': BaseAttributes
   'a-text': ATextAttributes
+  'a-text-content': ATextContentAttributes
   'a-box': ABoxAttributes
   'a-capture': ACaptureAttributes
   'a-panel': APanelAttributes
@@ -204,9 +205,19 @@ export interface AntaIntrinsicElements {
   'a-dialog': ADialogAttributes
   'a-card': ACardAttributes
   'a-card-icon-chip': BaseAttributes
+  'a-card-footer': BaseAttributes
+  'a-card-media': BaseAttributes
+  'a-card-content': BaseAttributes
+  'a-card-header': BaseAttributes
+  'a-card-icon': BaseAttributes
+  'a-card-title': BaseAttributes
+  'a-card-body': BaseAttributes
   'a-input-date-time-container': BaseAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes
+  'a-banner-content': BaseAttributes
+  'a-banner-actions': BaseAttributes
+  'a-banner-close': BaseAttributes
   'a-toaster': AToasterAttributes
   'a-toast': AToastAttributes
 }

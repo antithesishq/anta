@@ -51,33 +51,60 @@ rest of Anta.
 ## Anatomy
 
 A card is three stacked sections — `header`, body (`children`), `footer` — plus an
-optional full-bleed `media` region. Each is optional and an empty one reserves no
-space. Spacing comes from one `--card-padding`: the outer inset and the body→footer
+optional full-bleed `media` region. Each is optional; omit unused regions. Spacing comes from one `--card-padding`: the outer inset and the body→footer
 gap are a full `--card-padding`, and the header sits a half-step closer to its body
 (`--card-padding / 2`). A string `header` becomes a `<Title>` and a string body a
 `<Text>`; pass your own node (`<Title>`, `<Text>`, a layout) to take over. An
 optional `subtitle` renders under the title as smaller text (`<Text size="small">`). There's
-no dedicated actions slot: lay out header controls (a button, a tag) inside the
+no dedicated actions region: lay out header controls (a button, a tag) inside the
 `header` itself.
 
 <Preview background="var(--bg-2)" gap="16px" align="stretch">
   <a-card style={{ width: '340px' }}>
-    <div slot="media" style={{ height: '112px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(135deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
-    <div slot="icon" style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--card-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
-    <Title slot="header" level={4}>Card title</Title>
-    <Text slot="header" size="small" priority="tertiary">A short supporting subtitle</Text>
-    <Text>The body sits under the header. Every section is optional.</Text>
-    <Button slot="footer" priority="secondary" label="Launch" />
-    <Button slot="footer" priority="tertiary" label="Edit" />
+    <a-card-media>
+      <div style={{ height: '112px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(135deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
+    </a-card-media>
+    <a-card-content>
+      <a-card-header>
+        <a-card-icon>
+          <div style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--card-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
+        </a-card-icon>
+        <a-card-title>
+          <Title level={4}>Card title</Title>
+          <Text size="small" priority="tertiary">A short supporting subtitle</Text>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <Text>The body sits under the header. Every section is optional.</Text>
+      </a-card-body>
+      <a-card-footer>
+        <Button priority="secondary" label="Launch" />
+        <Button priority="tertiary" label="Edit" />
+      </a-card-footer>
+    </a-card-content>
   </a-card>
   <a-card media-position="left" style={{ width: '400px' }}>
-    <div slot="media" style={{ width: '104px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(160deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
-    <div slot="icon" style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--card-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
-    <Title slot="header" level={4}>Card title</Title>
-    <Text slot="header" size="small" priority="tertiary">A short supporting subtitle</Text>
-    <Text>The same four zones, with the media bleeding to the left edge instead of the top.</Text>
-    <Button slot="footer" priority="secondary" label="Launch" />
-    <Button slot="footer" priority="tertiary" label="Edit" />
+    <a-card-media>
+      <div style={{ width: '104px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(160deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
+    </a-card-media>
+    <a-card-content>
+      <a-card-header>
+        <a-card-icon>
+          <div style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--card-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
+        </a-card-icon>
+        <a-card-title>
+          <Title level={4}>Card title</Title>
+          <Text size="small" priority="tertiary">A short supporting subtitle</Text>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <Text>The same four zones, with the media bleeding to the left edge instead of the top.</Text>
+      </a-card-body>
+      <a-card-footer>
+        <Button priority="secondary" label="Launch" />
+        <Button priority="tertiary" label="Edit" />
+      </a-card-footer>
+    </a-card-content>
   </a-card>
 </Preview>
 
@@ -141,24 +168,64 @@ with an icon and a message (add a `footer` for an action):
 
 <Preview background="var(--bg-2)" direction="column" gap="8px">
   <a-card tone="info" priority="primary">
-    <Icon slot="icon" shape="info" />
-    <Title slot="header" level={4} tone="info">Heads up</Title>
-    <a-text tone="info">Deploys are paused while the migration runs. They resume automatically when it finishes.</a-text>
+    <a-card-content>
+      <a-card-header>
+        <a-card-icon>
+          <Icon shape="info" />
+        </a-card-icon>
+        <a-card-title>
+          <Title level={4} tone="info">Heads up</Title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <a-text tone="info">Deploys are paused while the migration runs. They resume automatically when it finishes.</a-text>
+      </a-card-body>
+    </a-card-content>
   </a-card>
   <a-card tone="success" priority="primary">
-    <Icon slot="icon" shape="circle-check" />
-    <Title slot="header" level={4} tone="success">All checks passed</Title>
-    <a-text tone="success">Your build is green across every configuration.</a-text>
+    <a-card-content>
+      <a-card-header>
+        <a-card-icon>
+          <Icon shape="circle-check" />
+        </a-card-icon>
+        <a-card-title>
+          <Title level={4} tone="success">All checks passed</Title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <a-text tone="success">Your build is green across every configuration.</a-text>
+      </a-card-body>
+    </a-card-content>
   </a-card>
   <a-card tone="warning" priority="primary">
-    <Icon slot="icon" shape="warning-triangle" />
-    <Title slot="header" level={4} tone="warning">Approaching quota</Title>
-    <a-text tone="warning">You've used 90% of this month's compute.</a-text>
+    <a-card-content>
+      <a-card-header>
+        <a-card-icon>
+          <Icon shape="warning-triangle" />
+        </a-card-icon>
+        <a-card-title>
+          <Title level={4} tone="warning">Approaching quota</Title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <a-text tone="warning">You've used 90% of this month's compute.</a-text>
+      </a-card-body>
+    </a-card-content>
   </a-card>
   <a-card tone="critical" priority="primary">
-    <Icon slot="icon" shape="warning-diamond" />
-    <Title slot="header" level={4} tone="critical">Deployment failed</Title>
-    <a-text tone="critical">The production rollout was halted after a failing health check.</a-text>
+    <a-card-content>
+      <a-card-header>
+        <a-card-icon>
+          <Icon shape="warning-diamond" />
+        </a-card-icon>
+        <a-card-title>
+          <Title level={4} tone="critical">Deployment failed</Title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <a-text tone="critical">The production rollout was halted after a failing health check.</a-text>
+      </a-card-body>
+    </a-card-content>
   </a-card>
 </Preview>
 
@@ -209,9 +276,9 @@ match:
 
 ## Round
 
-`round` softens the corners. A `number` (px) or CSS length sets a custom radius —
-the usual choice for a card (`round="0"` squares them); bare `round` goes fully
-round (`999px`, clamped to the box). Omit it for the default (`--card-radius`, 8px).
+Omit `round` to use the theme's corner radius. Pass a `number` (px) or CSS length
+to set a fixed radius; `round={0}` makes the corners square. Bare `round` makes
+the card fully round, clamped to its box.
 
 <Preview background="var(--bg-2)" direction="column" gap="8px">
   <Card round={16} header="Custom radius"><Text>A 16px corner radius via <code>round={'{16}'}</code>.</Text></Card>
@@ -225,17 +292,25 @@ round (`999px`, clamped to the box). Omit it for the default (`--card-radius`, 8
 
 ## Header controls
 
-There is no dedicated actions slot. To place a control in the top-right of the
+There is no dedicated actions region. To place a control in the top-right of the
 header, pass a layout node as `header`. For example, use a flex row containing
 the title and a "more" button. That layout determines where both items appear.
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '340px' }}>
-    <div slot="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+    <a-card-content>
+      <a-card-header>
+        <a-card-title>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
       <Title level={4}>Production database</Title>
       <Button size="small" priority="tertiary" icon="more" aria-label="More" />
     </div>
-    <Text>Region us-east-1 · 4 vCPU · 16 GB</Text>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <Text>Region us-east-1 · 4 vCPU · 16 GB</Text>
+      </a-card-body>
+    </a-card-content>
   </a-card>
 </Preview>
 
@@ -264,10 +339,20 @@ than a decision surface. Pass several buttons as a fragment.
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '340px' }}>
-    <Title slot="header" level={4}>Invite teammates</Title>
-    <Text>They'll get access to this project and its test runs.</Text>
-    <Button slot="footer" priority="primary" size="small" label="Send invites" />
-    <Button slot="footer" size="small" label="Copy link" />
+    <a-card-content>
+      <a-card-header>
+        <a-card-title>
+          <Title level={4}>Invite teammates</Title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <Text>They'll get access to this project and its test runs.</Text>
+      </a-card-body>
+      <a-card-footer>
+        <Button priority="primary" size="small" label="Send invites" />
+        <Button size="small" label="Copy link" />
+      </a-card-footer>
+    </a-card-content>
   </a-card>
 </Preview>
 
@@ -293,9 +378,19 @@ and clips to the corners. `mediaPosition` places it on the `top` (the default),
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '260px' }}>
-    <div slot="media" style={{ height: '96px', background: 'linear-gradient(115deg, var(--bg-4-brand), var(--bg-5-info))' }} />
-    <Title slot="header" level={4}>Top media</Title>
-    <Text>Full-bleed above the content.</Text>
+    <a-card-media>
+      <div style={{ height: '96px', background: 'linear-gradient(115deg, var(--bg-4-brand), var(--bg-5-info))' }} />
+    </a-card-media>
+    <a-card-content>
+      <a-card-header>
+        <a-card-title>
+          <Title level={4}>Top media</Title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <Text>Full-bleed above the content.</Text>
+      </a-card-body>
+    </a-card-content>
   </a-card>
 </Preview>
 
@@ -306,9 +401,19 @@ and clips to the corners. `mediaPosition` places it on the `top` (the default),
 
 <Preview background="var(--bg-2)">
   <a-card media-position="left" style={{ width: '300px' }}>
-    <div slot="media" style={{ width: '80px', background: 'linear-gradient(160deg, var(--bg-4-success), var(--bg-5-warning))' }} />
-    <Title slot="header" level={4}>Left media</Title>
-    <Text>Beside the content.</Text>
+    <a-card-media>
+      <div style={{ width: '80px', background: 'linear-gradient(160deg, var(--bg-4-success), var(--bg-5-warning))' }} />
+    </a-card-media>
+    <a-card-content>
+      <a-card-header>
+        <a-card-title>
+          <Title level={4}>Left media</Title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <Text>Beside the content.</Text>
+      </a-card-body>
+    </a-card-content>
   </a-card>
 </Preview>
 
@@ -325,15 +430,25 @@ and clips to the corners. `mediaPosition` places it on the `top` (the default),
 
 Give a card an `href` and the whole thing becomes a link — a single focusable
 anchor, keyboard-activatable, with the `hover` lift and inset focus ring. The
-accessible name comes from the header (falling back to the body, then the URL), so
-a screen reader announces one concise link instead of the whole card's text. A
+default accessible name uses a text header or body. Custom nodes use their native
+content name; pass `aria-label` or `aria-labelledby` to choose a shorter name. A
 link card is display content: keep interactive controls (buttons, nested links)
 out of it — its text is non-selectable and the whole surface navigates.
 
 <Preview background="var(--bg-2)" direction="column" gap="8px">
-  <a-card href="/install/">
-    <Title slot="header" level={4}><Icon shape="book-open" /> CI integration guide</Title>
-    <a-text>Connect your CI pipeline in a few minutes.</a-text>
+  <a-card>
+    <a href="/install/">
+      <a-card-content>
+        <a-card-header>
+          <a-card-title>
+            <Title level={4}><Icon shape="book-open" /> CI integration guide</Title>
+          </a-card-title>
+        </a-card-header>
+        <a-card-body>
+          <a-text>Connect your CI pipeline in a few minutes.</a-text>
+        </a-card-body>
+      </a-card-content>
+    </a>
   </a-card>
   <Card href="/install/" priority="primary" tone="brand" header="Set up your project">
     <Text tone="brand">Install Anta, register the elements, and start composing your interface.</Text>
@@ -394,31 +509,70 @@ it also blocks navigation until the load resolves.
 
 </Disclosure>
 
-<Disclosure title="Web Component">
+<Disclosure title="HTML">
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
-Slots hold media, header, and footer content. Unslotted content is the card body.
+Use the same structural tags in raw HTML. Card has no element class or registration
+step. Omit unused regions. For a linked card, put its media and content inside
+a native anchor directly under `a-card`. Raw authors own that anchor's URL, ARIA,
+and loading updates.
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '300px' }}>
-    <a-title slot="header" level="5" role="heading" aria-level="5">Release notes</a-title>
-    <a-text>Everything without a slot attribute becomes the body.</a-text>
-    <a-button slot="footer" role="button" tabindex="0" size="small"><a-button-label>Read more</a-button-label></a-button>
+    <a-card-content>
+      <a-card-header>
+        <a-card-title>
+          <a-title level="5" role="heading" aria-level="5">Release notes</a-title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <a-text>Put body content inside a-card-body.</a-text>
+      </a-card-body>
+      <a-card-footer>
+        <a-button role="button" tabindex="0" size="small"><a-button-label>Read more</a-button-label></a-button>
+      </a-card-footer>
+    </a-card-content>
   </a-card>
 </Preview>
 
 ```html
 <a-card>
-  <a-title slot="header" level="5" role="heading" aria-level="5">Release notes</a-title>
-  <a-text>Everything without a slot attribute becomes the body.</a-text>
-  <a-button slot="footer" role="button" tabindex="0" size="small">
-    <a-button-label>Read more</a-button-label>
-  </a-button>
+  <a-card-content>
+    <a-card-header>
+      <a-card-title>
+        <a-title level="5" role="heading" aria-level="5">Release notes</a-title>
+      </a-card-title>
+    </a-card-header>
+    <a-card-body>
+      <a-text>Put body content inside a-card-body.</a-text>
+    </a-card-body>
+    <a-card-footer>
+      <a-button role="button" tabindex="0" size="small">
+        <a-button-label>Read more</a-button-label>
+      </a-button>
+    </a-card-footer>
+  </a-card-content>
 </a-card>
 ```
 
 </Disclosure>
+
+## Migrate from shadow parts
+
+The JSX props remain available. Card now emits structural tags instead of flat
+slot markup. Raw HTML authors must add those regions explicitly. Replace
+`::part(body)` with a selector for `a-card-body`, and make the same replacement
+for the other regions. Direct child paths keep an outer Card's overrides from
+reaching a nested Card.
+
+Navigation attributes belong on a native `<a>` directly under `a-card`.
+Changing `href` or `loading` on a raw `a-card` no longer updates a link. The JSX
+wrapper renders those updates from props. `aria-*` props and `tabIndex` apply to
+the anchor in link mode and to `a-card` otherwise. A text header or body supplies
+the default link label; custom content uses its native accessible name unless you
+provide `aria-label` or `aria-labelledby`.
+
+`ACardElement` and `register_a_card` are removed. The granular element entry loads
+CSS only; bundle usage still pairs JavaScript and CSS for other Anta components.
 
 <Disclosure title="Styling">
 
@@ -440,8 +594,16 @@ either way:
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '360px' }}>
-    <Title slot="header" level={2}>Heading semantics</Title>
-    <a-text>The header is a level-2 <code>{'<Title>'}</code>, in the page outline.</a-text>
+    <a-card-content>
+      <a-card-header>
+        <a-card-title>
+          <Title level={2}>Heading semantics</Title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <a-text>The header is a level-2 <code>{'<Title>'}</code>, in the page outline.</a-text>
+      </a-card-body>
+    </a-card-content>
   </a-card>
 </Preview>
 
@@ -451,12 +613,14 @@ either way:
 </Card>
 ```
 
-For everything else, `<a-card>` exposes shadow **parts** —
-`::part(container)` (the box / anchor), `::part(media)`, `::part(content)`,
-`::part(header)` (the icon + text zone), `::part(icon)`, `::part(title)` (the
-title / subtitle text column), `::part(body)`, `::part(footer)` — which you style
-directly. Each section carries its own `--card-padding`, so a divider on
-`::part(header)` reads as a true section rule.
+Card's layout, focus ring, selected ring, and loading animation use external CSS
+and work with `style-src 'self'`. Custom tones and custom radii can produce inline
+styles in server-rendered JSX and need separate CSP handling.
+
+Card renders its complete light-DOM structure immediately. Its regions are
+`a-card-media`, `a-card-content`, `a-card-header`, `a-card-icon`,
+`a-card-title`, `a-card-body`, and `a-card-footer`. Use child selectors to style
+these tags. Card needs no shadow parts or pre-upgrade layout.
 
 Each example keeps its CSS in a `<style>` **inside** its own preview, targeting a
 demo class on that preview's card — so the rule you read is literally in the
@@ -465,41 +629,57 @@ your own selector.
 
 **Scroll a capped body.** The card never scrolls, and the body doesn't by default.
 When you cap the card's height and want the body to scroll instead of the card
-growing, that's one line on `::part(body)`:
+growing, that's one line on `a-card-body`:
 
 <Preview background="var(--bg-2)">
   <a-card class="scrollable" style={{ width: '320px', height: '160px' }}>
-    <a-title slot="header" level="5">Release notes</a-title>
-    <a-text>Line one. Line two. Line three. Line four. Line five. Line six. Line seven. Line eight. Line nine. Line ten. Line eleven. Line twelve.</a-text>
+    <a-card-content>
+      <a-card-header>
+        <a-card-title>
+          <a-title level="5">Release notes</a-title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <a-text>Line one. Line two. Line three. Line four. Line five. Line six. Line seven. Line eight. Line nine. Line ten. Line eleven. Line twelve.</a-text>
+      </a-card-body>
+    </a-card-content>
     <style is:inline>{`
-      a-card.scrollable::part(body) { overflow: auto; }
-    `}</style>
+        a-card.scrollable > a-card-content > a-card-body { overflow: auto; }
+      `}</style>
   </a-card>
 </Preview>
 
 ```css folded
 /* cap the card's height, then let the body scroll */
 a-card.scrollable { height: 160px; }
-a-card.scrollable::part(body) { overflow: auto; }
+a-card.scrollable > a-card-content > a-card-body { overflow: auto; }
 ```
 
-**Separate the header** with a divider by styling `::part(header)`:
+**Separate the header** with a divider by styling `a-card-header`:
 
 <Preview background="var(--bg-2)">
   <a-card class="divided" style={{ width: '320px' }}>
-    <a-title slot="header" level="5">With a divider</a-title>
-    <a-text>A hairline under the header, drawn on the part.</a-text>
+    <a-card-content>
+      <a-card-header>
+        <a-card-title>
+          <a-title level="5">With a divider</a-title>
+        </a-card-title>
+      </a-card-header>
+      <a-card-body>
+        <a-text>A hairline under the header, drawn on the part.</a-text>
+      </a-card-body>
+    </a-card-content>
     <style is:inline>{`
-      a-card.divided::part(header) {
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border-5);
-      }
-    `}</style>
+        a-card.divided > a-card-content > a-card-header {
+          padding-bottom: 8px;
+          border-bottom: 1px solid var(--border-5);
+        }
+      `}</style>
   </a-card>
 </Preview>
 
 ```css folded
-a-card.divided::part(header) {
+a-card.divided > a-card-content > a-card-header {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border-5);
 }

@@ -1,0 +1,6 @@
+body { margin: 20px; }
+#mount { width: 420px; }
+a-banner.override { min-height: 56px; border-bottom-width: 1px; }
+a-banner.override > a-banner-message { font-size: 18px; }
+a-banner.override > a-banner-actions { gap: 8px; }
+a-banner.custom { --banner-tone-source: #c42b71; --banner-round: 12px; }

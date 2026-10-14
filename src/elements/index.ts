@@ -16,7 +16,7 @@
  * `customElements` (SSR), but there's no reason to load it server-side.
  */
 export { AAvatarElement, register_a_avatar } from './a-avatar'
-export { AProgressElement, register_a_progress } from './a-progress'
+import './a-progress.css'
 export { ALoaderElement, register_a_loader } from './a-loader'
 export { ATextElement, register_a_text } from './a-text'
 export { ABoxElement, register_a_box } from './a-box'
@@ -43,7 +43,7 @@ export { ATabElement, register_a_tab } from './a-tab'
 export { ATabsElement, register_a_tabs } from './a-tabs'
 export { ATabPanelElement, register_a_tabpanel } from './a-tabpanel'
 export { ADialogElement, register_a_dialog } from './a-dialog'
-export { ACardElement, register_a_card } from './a-card'
+import './a-card.css'
 export { ABannerElement, register_a_banner } from './a-banner'
 export { AToasterElement, register_a_toaster } from './a-toaster'
 export { AToastElement, register_a_toast } from './a-toast'

@@ -76,6 +76,8 @@ at its bottom corner. The multiline expansion target spans the full width; the
 single-line target occupies the inline end. While expanded with `collapsible`,
 the full-width collapse target occupies 16px of reserved bottom padding.
 Folded text has no added padding. Text keeps the same full width when expanded.
+The folded preview remains selectable and clips overflow without scrolling.
+Links retain their native focus and click behavior.
 Custom CSS can remove the padding, allowing the control to overlap content.
 `collapsible` takes effect only with `expandable`.
 

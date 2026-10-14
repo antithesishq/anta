@@ -50,6 +50,8 @@
     overflow: hidden;
   }
   a-text[inline][truncate]:not([expandable]) { display: -webkit-inline-box; }
+  /* Focusing clipped links must not scroll the folded preview. */
+  a-text[truncate][expandable] > a-text-content { overflow: clip; }
   a-text[truncate][expandable]:state(expanded) > a-text-content {
     display: block;
     -webkit-line-clamp: unset;

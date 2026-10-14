@@ -58,6 +58,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Folded expandable Text](/text/#truncation-and-expansion) stays in place when
+  a clipped link receives focus. Its content remains selectable.
+
 - [Text expansion controls](/text/#truncation-and-expansion) keep their accessible
   name and expanded state when granular element entries load before the full bundle.
 

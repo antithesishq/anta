@@ -111,6 +111,20 @@ const expanded = page => page.locator('#mount > a-text').evaluate(n => n.matches
 const buttonState = page => page.locator('#mount > a-text > a-button').evaluate(n => ({ label: window.elementInternals.get(n).ariaLabel, expanded: window.elementInternals.get(n).ariaExpanded }))
 
 for (const engine of engines) {
+  test(`${engine.name()}: folded expandable Text cannot scroll to clipped links`, async t => {
+    const page = await pageFor(t, engine)
+    await register(page)
+    await mount(page, raw(3).replace(longText, `${longText} <a href="#hidden-link">Hidden link</a>`))
+    const content = page.locator('a-text-content')
+    await page.locator('a-button').waitFor({ state: 'visible' })
+    await content.locator('a').focus()
+    assert.equal(await content.evaluate(n => n.scrollTop), 0)
+    await content.evaluate(n => { n.scrollTop = 100 })
+    assert.equal(await content.evaluate(n => n.scrollTop), 0)
+    await page.locator('a-button').click()
+    await content.locator('a').click()
+    await page.waitForURL(url => url.hash === '#hidden-link')
+  })
   test(`${engine.name()}: Text toggle accessibility survives mixed bundle and granular imports`, async t => {
     for (const entry of ['text', 'button']) {
       for (const order of [[entry, 'bundle'], ['bundle', entry]]) {

@@ -246,6 +246,52 @@ for (const engine of engines) {
       await page.locator('a-banner a-banner').getByRole('button', {name: 'Got it', exact: true}).click()
       assert.equal(await isClosed(page), false)
     })
+    test(`${engine.name()}: ${mode} adopted Banner handles close requests in a same-origin iframe`, async t => {
+      const page = await pageFor(t, engine, mode)
+      await mount(page)
+      await register(page, mode)
+      const result = await page.evaluate(async mode => {
+        const inner = document.querySelector('#mount > a-banner')
+        const html = inner.outerHTML
+        const outer = document.createElement('a-banner')
+        const content = document.createElement('a-banner-content')
+        outer.append(content)
+        content.append(inner)
+        document.querySelector('#mount').append(outer)
+        let innerRequests = 0, outerRequests = 0
+        inner.addEventListener('statechange', () => innerRequests++)
+        outer.addEventListener('statechange', () => outerRequests++)
+
+        const iframe = document.createElement('iframe')
+        iframe.src = `/?mode=${mode}`
+        const loaded = new Promise(resolve => iframe.addEventListener('load', resolve, {once: true}))
+        document.body.append(iframe)
+        await loaded
+        iframe.contentDocument.querySelector('#mount').append(outer)
+        const frameView = iframe.contentWindow
+        inner.querySelector('a-banner-close > a-button').dispatchEvent(new frameView.CustomEvent('dismissrequest', {
+          bubbles: true, composed: true,
+        }))
+        return {
+          ownerChanged: inner.ownerDocument === iframe.contentDocument,
+          parentRealm: inner instanceof Element,
+          ownerRealm: inner instanceof frameView.Element,
+          innerRequests, outerRequests,
+          innerClosed: inner.matches(':state(closed)'),
+          innerHidden: frameView.getComputedStyle(inner).display === 'none',
+          outerOpen: outer.matches(':state(open)'),
+          outerVisible: frameView.getComputedStyle(outer).display !== 'none',
+          unchanged: inner.outerHTML === html,
+          cspViolations: frameView.cspViolations,
+        }
+      }, mode)
+      assert.deepEqual(result, {
+        ownerChanged: true, parentRealm: true, ownerRealm: false,
+        innerRequests: 1, outerRequests: 0,
+        innerClosed: true, innerHidden: true, outerOpen: true, outerVisible: true,
+        unchanged: true, cspViolations: [],
+      })
+    })
   }
   test(`${engine.name()}: CSS hides empty actions after additions, removals, and replacement`, async t => {
     const page = await pageFor(t, engine)

@@ -18,7 +18,9 @@ export class ABannerElement extends HTMLElementBase {
     // Button emits this Banner-specific event so a close control inside Dialog
     // does not request dismissal of the Dialog as well.
     this.addEventListener('dismissrequest', (event) => {
-      const banner = event.composedPath().find(node => node instanceof this.view.Element && node.localName === 'a-banner')
+      // Adopted nodes retain their original realm's prototype.
+      const banner = event.composedPath().find(node =>
+        (node as Node).nodeType === 1 && (node as Element).localName === 'a-banner')
       if (banner !== this) return
       event.stopPropagation()
       this.#requestDismiss()

@@ -106,6 +106,13 @@ Verified October 14, 2026:
   The unfiltered run passed 325 of 326; the debounce-clock case failed with
   `Cannot fast-forward to the past`, matching CI's existing exclusion.
   Anta lint/type checking, sticker type checking, and site CSS lint passed.
+- PR review found that the close-request path used the current document's
+  `Element` constructor, which rejected a Banner adopted from another document.
+  A realm-independent node/tag check fixes that regression. The expanded suite
+  passed 61 source checks and 61 packed-artifact checks in all three engines,
+  including six same-origin iframe cases covering dismissal, nested isolation,
+  unchanged markup, and CSP. The earlier minimum Chrome run covered 19 checks
+  before these adoption cases were added.
 
 Exact Firefox `136` and Safari/iOS Safari `17.4` were not executed. Their
 required custom-state APIs are covered by the

@@ -72,7 +72,8 @@ changes are not listed.
 
 - [Banner visibility](/banner/#controlled-vs-uncontrolled) can be restored after
   an initially dismissed notice. Nested Banner alignment and close styling stay
-  independent, and empty action regions take no layout space.
+  independent, close requests remain scoped after moving between documents, and
+  empty action regions take no layout space.
 
 - [Text expansion controls](/text/#truncation-and-expansion) precede content links
   in Tab order. Raw HTML authors place the control before `a-text-content` too.

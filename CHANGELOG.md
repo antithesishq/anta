@@ -9,7 +9,8 @@ changes are not listed.
 
 - [Progress markup and styling](/progress/#migrate-from-shadow-parts) use light-DOM
   indicator regions. Raw markup and `::part()` overrides need migration.
-  `AProgressElement` and `register_a_progress` are removed.
+  `AProgressElement` and `register_a_progress` are removed. Server-rendered
+  values now include inline CSS variables; see [CSP configuration](/install-config/#content-security-policy).
 
 - [Expandable raw Text](/text/#expand-raw-html) requires an `a-text-content`
   region and an `a-button` control. JSX props remain unchanged; granular

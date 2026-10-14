@@ -3,6 +3,11 @@
 
 @layer anta.components {
   a-progress {
+    /* Reset inputs on each host so nested bars do not inherit a parent's value. */
+    --progress-value: initial;
+    --progress-max: initial;
+    --progress-value-resolved: var(--progress-value, 0);
+    --progress-max-resolved: var(--progress-max, 100);
     --progress-bg: var(--bg-4);
     --progress-border-color: var(--border-4);
     --progress-indicator-bg: var(--bg-5);
@@ -40,31 +45,42 @@
     border-radius: 0;
   }
 
-  a-progress-indicator {
+  @supports (width: calc(attr(value type(<number>), 0) * 1%)) {
+    a-progress {
+      --progress-value-resolved: var(--progress-value, attr(value type(<number>), 0));
+    }
+    a-progress[max] {
+      --progress-max-resolved: var(--progress-max, attr(max type(<number>), 0));
+    }
+  }
+
+  a-progress > a-progress-indicator {
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    /* 0/max makes a zero maximum yield an empty fill instead of infinity. */
+    width: clamp(0%, calc(
+      max(0, var(--progress-value-resolved)) / var(--progress-max-resolved) * 100%
+      + 0% / var(--progress-max-resolved)
+    ), 100%);
+    overflow: hidden;
     z-index: -1;
     pointer-events: none;
-  }
-  a-progress-indicator > svg {
-    display: block;
-    height: 100%;
     background: linear-gradient(
       90deg,
       var(--progress-indicator-bg) calc(100% - 90px),
       var(--progress-border-color) 100%
     );
-    border-right: var(--progress-indicator-edge-border, none);
-    box-sizing: border-box;
     transition: width 0.2s ease;
   }
-  a-progress-indicator > svg[width="0%"] { border-right: 0; }
-  a-progress:not([value]) > a-progress-indicator > svg { display: none; }
-  a-progress:not([value]) > a-progress-indicator::before {
+  a-progress > a-progress-indicator::after {
     content: '';
     position: absolute;
-    top: 0;
-    bottom: 0;
+    inset: 0;
+    border-right: var(--progress-indicator-edge-border, none);
+  }
+  a-progress:not([value]) > a-progress-indicator {
     left: calc(0px - var(--progress-loading-x-period));
     width: calc(100% + var(--progress-loading-x-period));
     background: repeating-linear-gradient(
@@ -76,9 +92,11 @@
     );
     filter: blur(var(--progress-loading-blur));
     opacity: var(--progress-loading-opacity);
+    transition: none;
   }
+  a-progress:not([value]) > a-progress-indicator::after { display: none; }
   @media (prefers-reduced-motion: no-preference) {
-    a-progress:not([value]) > a-progress-indicator::before {
+    a-progress:not([value]) > a-progress-indicator {
       will-change: transform;
       animation: progress-loading-slide var(--progress-loading-duration) linear infinite;
       animation-delay: -9999s;

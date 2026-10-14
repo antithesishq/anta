@@ -177,15 +177,15 @@ export interface BaseAttributes extends DOMEventHandlers {
 /**
  * Attributes for the CSS-only `<a-progress>` container.
  *
- * Raw authors supply an `a-progress-indicator` region and its SVG width.
+ * Raw authors supply an `a-progress-indicator` region and matching ARIA.
  * For typed props and computed labels, use the `Progress` JSX wrapper.
  */
 export interface AProgressAttributes extends BaseAttributes {
-  /** Current progress value. Presence selects determinate styling; raw authors
-   *  also set the indicator's SVG width and authored ARIA. Omit for loading. */
+  /** Current progress value. CSS uses `--progress-value` when supplied, then
+   *  this attribute where numeric `attr()` is supported. Omit for loading. */
   value?: number | string | false
-  /** Upper bound for authored values. Raw authors calculate the SVG percentage
-   *  width from value / max and set matching ARIA values.
+  /** Upper bound. CSS uses `--progress-max` when supplied, then this attribute
+   *  where numeric `attr()` is supported.
    *  @defaultValue 100 */
   max?: number | string
   /** Color variant, or any literal CSS color for a custom tone (derived in

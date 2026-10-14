@@ -24,8 +24,9 @@ Completed work:
 - [x] [Card](src/components/Card.tsx): CSS-only light DOM, declarative regions,
   and a native anchor for link mode. No element class or injected stylesheet.
 - [x] [Progress](src/components/Progress.tsx): CSS-only light DOM with a permanent
-  `a-progress-indicator` region and decorative SVG width. JSX owns markup and
-  ARIA; raw authors keep them in sync. Native `<progress data-anta>` has separate
+  empty `a-progress-indicator` region. Numeric CSS variables override `value`
+  and `max` attribute fallbacks; JSX owns variables, markup, and ARIA. Raw authors
+  keep values and ARIA in sync. Native `<progress data-anta>` has separate
   styles. No shadow root, registration, or fallback slot.
 
 Panel stays outside this refactor and retains its current implementation.

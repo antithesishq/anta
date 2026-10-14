@@ -102,16 +102,14 @@ radius.
 | `round?` | boolean \| number \| string | — | Fully-round track (`border-radius: 999px`); the fill is clipped to it. Pass a `number` (px) or a CSS length string for a custom radius. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. Scales the track and the default label row together. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color variant, or any literal CSS color for a one-off custom tone (the surface / indicator / text are derived from it in oklch). Named tones track light/dark automatically. |
-| `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, to show indeterminate progress. Negative values are clamped to 0. |
+| `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, to show indeterminate progress. Negative values are clamped to 0. JSX supplies numeric CSS variables alongside attributes so the fill works without numeric CSS `attr()` support. |
 
 ## Raw HTML
 
 ```html
-<a-progress style="width: 100%" value="42" max="100" tone="info" role="progressbar"
+<a-progress class="upload-progress" value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
-  <a-progress-indicator aria-hidden="true">
-    <svg width="42%" height="100%"></svg>
-  </a-progress-indicator>
+  <a-progress-indicator aria-hidden="true"></a-progress-indicator>
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
     <a-progress-text>Upload</a-progress-text>
@@ -127,15 +125,24 @@ radius.
 </a-progress>
 ```
 
+```css
+/* In your application stylesheet. */
+a-progress.upload-progress { --progress-value: 42; --progress-max: 100; }
+```
+
 Use `a-progress` for a track with labels, hints, or custom content. Load its
 external CSS through `@antadesign/anta/elements/a-progress` or the full bundle.
 It works without JavaScript or custom element registration.
 
-`a-progress-indicator` holds the visual indication. For known completion, give
-its SVG a percentage `width` calculated from `value / max`. The SVG is decorative;
-`role` and ARIA values belong on `a-progress`. When updating raw HTML, update the
-SVG width, visible text, and ARIA together. Changing `value` alone does not
-recalculate them. Omit `value` for the loading animation.
+`a-progress-indicator` holds the visual indication. CSS calculates its width
+from the host's `value` and `max`. Numeric `--progress-value` and `--progress-max`
+variables take precedence over the corresponding attributes. JSX supplies these
+variables; raw HTML can set them in an application stylesheet. See
+[Browser support](/install-config/#browser-support) for the attribute fallback.
+
+`role` and ARIA values belong on `a-progress`. When updating raw HTML, update
+`value`, any supplied value variables, the visible text, and ARIA together.
+Omit `value` for the loading animation.
 
 ### Native HTML progress
 
@@ -169,7 +176,7 @@ a-progress.fancy {
   border-radius: 999px;
   background: light-dark(var(--bg-5), #26232c);
 }
-a-progress.fancy > a-progress-indicator > svg {
+a-progress.fancy > a-progress-indicator {
   background: linear-gradient(90deg, #6a5acd, #d44ea3 55%, #ff8a5b);
   box-shadow: 0 0 12px color-mix(in oklch, #d44ea3 55%, transparent);   /* glow */
 }
@@ -180,21 +187,19 @@ a-progress.fancy a-progress-text { color: #fff; }
 a-progress.fancy a-progress-hint { color: var(--text-2); }
 ```
 
-Style the track with `a-progress`. Target `a-progress-indicator > svg` for the
-fill, and `a-progress-indicator::before` for the loading stripes. Target the
-label tags or your custom children for text styling. `.fancy` is an
+Style the track with `a-progress`. Target `a-progress-indicator` for the fill
+and loading stripes. Target the label tags or your custom children for text styling. `.fancy` is an
 application-defined class for this example.
 
 ## Migrate from shadow parts
 
 Progress now uses light DOM and external CSS. The JSX wrapper renders its
 indicator and labels. For raw HTML, add the indicator markup shown in the
-Raw HTML reference and keep its SVG width and ARIA values in sync.
+Raw HTML reference and keep its values, visible text, and ARIA in sync.
 
 Replace `a-progress::part(indicator)` with
-`a-progress > a-progress-indicator > svg` for determinate fill styles. Loading
-styles target `a-progress > a-progress-indicator::before`. The fill's background
-includes its right-edge fade; replacing the background replaces that fade too.
+`a-progress > a-progress-indicator` for fill and loading styles. The fill's
+background includes its right-edge fade; replacing the background replaces that fade too.
 Replace `::part(content)` styles with selectors for the label tags or your custom
 children.
 

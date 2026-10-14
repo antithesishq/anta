@@ -3,7 +3,9 @@ import { hasChildren, neutralToneAttr, toneStyle, roundStyle, roundAttr } from "
 
 export interface ProgressProps extends BaseProps {
   /** Current progress value. Omit this prop, or pass `false`, to show
-   * indeterminate progress. Negative values are clamped to 0. */
+   * indeterminate progress. Negative values are clamped to 0. JSX supplies
+   * numeric CSS variables alongside attributes so the fill works without
+   * numeric CSS `attr()` support. */
   value?: number | false
   /** Upper bound of the range.
    *  @defaultValue 100 */
@@ -76,6 +78,11 @@ export const Progress = ({ value, max = 100, tone, size, round, label, hint, cla
   // progress omits the ARIA value attributes, matching native `<progress>`.
   const ariaLabel = [label, !indeterminate && `${percent}%`, hint].filter(Boolean).join(" · ")
     || (indeterminate ? "Loading" : undefined)
+  const progressStyle = indeterminate ? style : {
+    '--progress-value': numericValue,
+    '--progress-max': validMax ? max : 0,
+    ...style,
+  }
   return (
     <a-progress
       value={indeterminate ? false : numericValue}
@@ -89,13 +96,10 @@ export const Progress = ({ value, max = 100, tone, size, round, label, hint, cla
       aria-valuemax={indeterminate ? undefined : validMax ? max : 100}
       aria-label={ariaLabel}
       class={className}
-      style={roundStyle(round, '--progress-round', toneStyle(tone, '--progress-tone-source', style))}
+      style={roundStyle(round, '--progress-round', toneStyle(tone, '--progress-tone-source', progressStyle))}
       {...rest}
     >
-      {/* SVG width accepts percentages without an inline style. */}
-      <a-progress-indicator aria-hidden="true">
-        <svg width={`${fillPercent}%`} height="100%" />
-      </a-progress-indicator>
+      <a-progress-indicator aria-hidden="true" />
       {hasChildren(children) ? children : (
         <a-progress-label>
           {!indeterminate && <a-progress-number>{`${percent}%`}</a-progress-number>}

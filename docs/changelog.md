@@ -40,9 +40,8 @@ changes are not listed.
 
 ### Changed
 
-- JSX [Progress](/progress/) shows its fill before JavaScript initializes and uses
-  external CSS for its fill and loading animation. Existing styling through
-  `::part(indicator)` remains supported.
+- [Progress](/progress/) uses external CSS for its fill and loading animation.
+  Existing styling through `::part(indicator)` remains supported.
 
 - [Text](/text/) renders and truncates in light DOM with external CSS.
   Expansion works in JSX and raw HTML without rewriting authored markup or

@@ -24,7 +24,8 @@ Completed work:
 - [x] [Card](src/components/Card.tsx): CSS-only light DOM, declarative regions,
   and a native anchor for link mode. No element class or injected stylesheet.
 - [x] [Progress](src/elements/a-progress.ts): external indicator/content part
-  styling and loading animation; declarative native fallback for initial rendering.
+  styling and loading animation. The fill appears after registration; no initial
+  fill fallback is provided.
 
 Panel stays outside this refactor and retains its current implementation.
 

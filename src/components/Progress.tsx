@@ -93,9 +93,6 @@ export const Progress = ({ value, max = 100, tone, size, round, label, hint, cla
       style={roundStyle(round, '--progress-round', toneStyle(tone, '--progress-tone-source', style))}
       {...rest}
     >
-      <a-progress-indicator aria-hidden="true">
-        <progress value={indeterminate ? undefined : clampedValue} max={validMax ? max : 100} />
-      </a-progress-indicator>
       {hasChildren(children) ? children : (
         <a-progress-label>
           {!indeterminate && <a-progress-number>{`${percent}%`}</a-progress-number>}

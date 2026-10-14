@@ -9,7 +9,6 @@ import { build } from 'esbuild'
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const requirePlot = createRequire(new URL('../plot/package.json', import.meta.url))
 const { chromium, firefox, webkit } = requireSite('playwright')
-const { PNG } = requireSite('pngjs')
 const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, firefox, webkit]
 const source = process.env.ANTA_PROGRESS_PACKAGE_ROOT ? resolve(process.env.ANTA_PROGRESS_PACKAGE_ROOT, 'dist') : resolve('src')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; object-src 'none'"
@@ -40,7 +39,7 @@ before(async () => {
   const compiled = new Module(resolve('tests/progress-server.cjs'))
   compiled._compile(result.outputFiles[0].text, compiled.id)
   renderServer = compiled.exports.render
-  assert.doesNotMatch(renderServer(initialProps), /style=|slot=/)
+  assert.doesNotMatch(renderServer(initialProps), /style=|slot=|<a-progress-indicator|<progress[ >]/)
   for (const framework of ['React', 'Preact']) {
     const react = framework === 'React'
     const result = await build({
@@ -69,7 +68,7 @@ before(async () => {
     const mode = url.searchParams.get('mode') || 'granular'
     res.setHeader('Content-Security-Policy', policy)
     res.setHeader('Content-Type', `${req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html'}; charset=utf-8`)
-    const props = { ...initialProps, ...(url.searchParams.has('pixel') ? { className: 'pixel' } : {}), ...(url.searchParams.has('loading') ? { value: false } : {}) }
+    const props = { ...initialProps, ...(url.searchParams.has('loading') ? { value: false } : {}) }
     res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${renderServer(props)}</main><div id="following">Following content</div>`)
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -112,27 +111,12 @@ const indicator = page => page.locator('#mount > a-progress').evaluate(host => {
   }
 })
 for (const engine of engines) {
-  test(`${engine.name()}: SSR paints a correctly sized native fallback without JavaScript`, async t => {
-    const page = await pageFor(t, engine, 'granular', '&pixel=1', false)
+  test(`${engine.name()}: SSR renders labels and semantics without a duplicate indicator`, async t => {
+    const page = await pageFor(t, engine, 'granular', '', false)
     assert.equal(await page.locator('a-progress').getAttribute('aria-valuenow'), '42')
-    assert.equal(await page.locator('progress').evaluate(n => n.position), 0.42)
-    const png = PNG.sync.read(await page.locator('a-progress').screenshot())
-    const pixel = x => [...png.data.subarray((2 * png.width + x) * 4, (2 * png.width + x) * 4 + 3)]
-    assert.deepEqual(pixel(30), [204, 0, 0])
-    assert.deepEqual(pixel(200), [255, 255, 255])
-  })
-  test(`${engine.name()}: initial loading stripes render without JavaScript and respect reduced motion`, async t => {
-    const page = await pageFor(t, engine, 'granular', '&loading=1', false)
-    const fallback = page.locator('progress')
-    assert.equal(await fallback.evaluate(n => n.position), -1)
-    const initialIndicator = page.locator('a-progress-indicator')
-    assert.match(await initialIndicator.evaluate(n => getComputedStyle(n, '::before').backgroundImage), /repeating-linear-gradient/)
-    assert.equal(await initialIndicator.evaluate(n => getComputedStyle(n, '::before').animationName), 'none')
-    const png = PNG.sync.read(await page.locator('a-progress').screenshot())
-    const colors = new Set(Array.from({length: png.width}, (_, x) => [...png.data.subarray((2 * png.width + x) * 4, (2 * png.width + x) * 4 + 3)].join(',')))
-    assert.ok(colors.size > 2, 'the loading stripes must paint across the initial track')
-    await page.emulateMedia({ reducedMotion: 'no-preference' })
-    assert.equal(await initialIndicator.evaluate(n => getComputedStyle(n, '::before').animationName), 'progress-loading-slide')
+    assert.equal((await page.locator('a-progress-label').innerText()).replace(/\s+/g, ' '), '42% Upload 3 of 7')
+    assert.equal(await page.locator('progress, a-progress-indicator').count(), 0)
+    assert.equal(await page.locator('a-progress').evaluate(n => n.shadowRoot), null)
   })
   test(`${engine.name()}: sizes, tones, rounding, and custom content retain their initial layout`, async t => {
     const page = await pageFor(t, engine)
@@ -178,7 +162,7 @@ for (const engine of engines) {
       assert.equal(await page.locator('a-progress').evaluate(n => n.outerHTML), html)
       assert.deepEqual(await page.evaluate(() => window.ownerMutations), [])
       assert.equal(await page.locator('a-progress').evaluate(n => n.shadowRoot.querySelectorAll('style').length), 0)
-      assert.equal(await page.locator('progress').evaluate(n => n.getBoundingClientRect().width), 0)
+      assert.equal(await page.locator('progress, a-progress-indicator').count(), 0)
       assert.ok(Math.abs((await indicator(page)).fraction - 0.42) < 0.001)
       assert.match(await page.locator('body').ariaSnapshot(), /progressbar "Upload · 42% · 3 of 7"/)
       assert.equal((await page.locator('body').ariaSnapshot()).match(/progressbar/g).length, 1)
@@ -238,12 +222,13 @@ for (const engine of engines) {
           await page.evaluate(props => window.renderProgress({...props,label:'Updated'}),props)
           await page.waitForFunction(() => document.querySelector('a-progress').getAttribute('aria-label')?.startsWith('Updated'))
           await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
-          const state=await page.locator('a-progress').evaluate(n => ({value:n.getAttribute('value'),now:n.getAttribute('aria-valuenow'),max:n.getAttribute('aria-valuemax'),label:n.getAttribute('aria-label'),fallback:n.querySelector('progress').position}))
+          const state=await page.locator('a-progress').evaluate(n => ({value:n.getAttribute('value'),now:n.getAttribute('aria-valuenow'),max:n.getAttribute('aria-valuemax'),label:n.getAttribute('aria-label')}))
           if (props.value === false) {
-            assert.equal(state.value,null); assert.equal(state.now,null); assert.equal(state.max,null); assert.equal(state.fallback,-1)
+            assert.equal(state.value,null); assert.equal(state.now,null); assert.equal(state.max,null)
           } else {
             assert.doesNotMatch(`${state.now} ${state.max} ${state.label}`,/NaN|Infinity/)
-            assert.equal(state.fallback, Number(state.now)/Number(state.max))
+            await page.waitForTimeout(220)
+            assert.ok(Math.abs((await indicator(page)).fraction - Number(state.now)/Number(state.max)) < 0.001)
           }
         }
         await page.evaluate(() => window.renderLinked())

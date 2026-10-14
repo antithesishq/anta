@@ -26,8 +26,8 @@ to show. Readers can hover over shortened text to read the full content in a too
 <Text truncate={3}>{longSentence}</Text>
 ```
 
-Add `expandable` to let readers reveal long text when they need it. **Show more**
-appears only when the text does not fit. Add `collapsible` to let them fold it again.
+Add `expandable` to let readers reveal long text when they need it. The **Show more**
+icon button appears only when the text does not fit. Add `collapsible` to let them fold it again.
 
 ```tsx
 {/* One-way: the chevron is hidden once expanded */}

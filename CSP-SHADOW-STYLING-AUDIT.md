@@ -38,7 +38,7 @@ and verification before moving to the next component.
 1. [x] [Banner](src/elements/a-banner.ts): light-DOM regions and external CSS
    implemented. Visibility remains in ElementInternals; JSX omits absent actions
    and CSS hides empty regions. No content observers or DOM rewriting.
-   Dismissal transitions retained. Source, packed-import, minimum Chrome,
+   Dismissal transitions retained. Source, installed-package, minimum Chrome,
    original-layout, and production checks passed; coverage limits are below.
 2. [ ] [Expander](src/elements/a-expander.ts): header, content, indicators, and
    collapse animation. Boolean `round` now uses a CSS radius; the measured-radius
@@ -113,6 +113,16 @@ Verified October 14, 2026:
   including six same-origin iframe cases covering dismissal, nested isolation,
   unchanged markup, and CSP. The earlier minimum Chrome run covered 19 checks
   before these adoption cases were added.
+- The SSR and package follow-up passed all 73 source checks and all 73
+  installed-package checks in the same three engines. `pnpm test:banner:package`
+  installs an npm tarball in an isolated consumer and resolves public package
+  exports, including granular entries, the full bundle, and their stylesheets.
+  Builds use the installed package without Anta source aliases or workspace links.
+  React and Preact each generate their own server HTML. Hydration preserves the
+  server-rendered nodes and reports no React recovery errors. Initially controlled
+  closed banners hydrate, reopen, reject dismissal, and accept it in both import
+  modes. The installed consumer uses React/React DOM `19.3.0`, Preact `10.29.8`,
+  and `preact-render-to-string` `6.7.0`. Both commands are gated in CI.
 
 Exact Firefox `136` and Safari/iOS Safari `17.4` were not executed. Their
 required custom-state APIs are covered by the

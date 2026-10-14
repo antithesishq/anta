@@ -69,6 +69,7 @@
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "test": "node --test tests/*.test.mjs",
     "test:banner": "node --test tests/banner-csp.mjs",
+    "test:banner:package": "node tests/banner-package.mjs",
     "test:card": "node --test tests/card-csp.mjs",
     "test:progress": "node --test tests/progress-csp.mjs",
     "test:calendar": "node --test tests/calendar-controlled.mjs",

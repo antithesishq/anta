@@ -8,11 +8,17 @@ import { build } from 'esbuild'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const requirePlot = createRequire(new URL('../plot/package.json', import.meta.url))
+const requireRenderer = createRequire(requireSite.resolve('@astrojs/preact'))
+const consumerRoot = process.env.ANTA_BANNER_CONSUMER_ROOT ? resolve(process.env.ANTA_BANNER_CONSUMER_ROOT) : undefined
+const resolveDir = consumerRoot ?? process.cwd()
+const nodePaths = consumerRoot ? [resolve(consumerRoot, 'node_modules')] : [resolve('node_modules'), resolve('site/node_modules')]
 const { chromium, firefox, webkit } = requireSite('playwright')
 // These engines do not substitute for minimum shipping-browser validation.
 // Keep display and intrinsic-size transitions as the existing progressive enhancement.
 const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, firefox, webkit]
 const source = process.env.ANTA_BANNER_PACKAGE_ROOT ? resolve(process.env.ANTA_BANNER_PACKAGE_ROOT, 'dist') : resolve('src')
+const jsxAlias = consumerRoot ? {} : { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime') }
+const preactCompat = consumerRoot ? 'preact/compat' : requireSite.resolve('preact/compat')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
 const browsers = new Map()
 const initialProps = { message: 'Release ready.', tone: 'info', 'data-owner': 'app' }
@@ -20,41 +26,68 @@ const factory = `const node = props => React.createElement(Banner, {
   actions: React.createElement(Button, {size: 'small', tone: 'info', label: 'Got it', 'data-banner-dismiss': ''}),
   ...props,
 }, 'children' in props ? props.children : React.createElement('a', {href: '#details'}, 'Details'))`
-let server, origin, renderServer
+const componentImports = consumerRoot
+  ? `import {Banner, Button} from '@antadesign/anta'`
+  : `import {Banner} from '${source}/components/Banner'; import {Button} from '${source}/components/Button'`
+const serverRenderers = new Map()
+let server, origin
+
+function checkInstalledInputs(result) {
+  if (!consumerRoot) return
+  const inputs = Object.keys(result.metafile.inputs).map(path => resolve(resolveDir, path))
+  const installed = resolve(consumerRoot, 'node_modules/@antadesign/anta/dist')
+  assert.ok(inputs.some(path => path.startsWith(installed + '/')), 'Build resolves the installed package')
+  assert.ok(!inputs.some(path => path.startsWith(resolve('src') + '/')), 'No Anta source aliases or workspace links')
+}
 
 before(async () => {
   const assets = new Map()
   for (const mode of ['granular', 'bundle']) {
-    const contents = mode === 'bundle'
-      ? `import '${source}/bundle'; ${process.env.ANTA_BANNER_PACKAGE_ROOT ? `import '${source}/bundle.css';` : ''}`
-      : `import '${source}/tokens.css'; import '${source}/reset.css'; import '${source}/elements/a-banner'; import '${source}/elements/a-button'; import '${source}/elements/a-icon';`
-    const result = await build({ stdin: { contents, resolveDir: process.cwd() }, bundle: true, write: false,
+    const contents = consumerRoot
+      ? mode === 'bundle'
+        ? `import '@antadesign/anta/bundle'; import '@antadesign/anta/bundle.css';`
+        : `import '@antadesign/anta/tokens.css'; import '@antadesign/anta/reset.css'; import '@antadesign/anta/elements/a-banner'; import '@antadesign/anta/elements/a-button'; import '@antadesign/anta/elements/a-icon';`
+      : mode === 'bundle'
+        ? `import '${source}/bundle'; ${process.env.ANTA_BANNER_PACKAGE_ROOT ? `import '${source}/bundle.css';` : ''}`
+        : `import '${source}/tokens.css'; import '${source}/reset.css'; import '${source}/elements/a-banner'; import '${source}/elements/a-button'; import '${source}/elements/a-icon';`
+    const result = await build({ absWorkingDir: resolveDir, stdin: { contents, resolveDir }, bundle: true, write: false, metafile: true,
       outfile: `${mode}.js`, format: 'esm', target: 'es2022',
-      alias: { react: requireSite.resolve('preact/compat') }, nodePaths: [resolve('node_modules')],
+      alias: { react: preactCompat }, nodePaths,
     })
+    checkInstalledInputs(result)
     for (const file of result.outputFiles) assets.set(`/${mode}.${file.path.endsWith('.css') ? 'css' : 'js'}`, file.text)
     assert.ok(assets.has(`/${mode}.css`))
   }
-  const result = await build({
-    stdin: { contents: `import React from 'react'; import {Banner} from '${source}/components/Banner'; import {Button} from '${source}/components/Button'; import {renderToString} from 'react-dom/server'; ${factory}; export const render = props => renderToString(node(props));`, resolveDir: process.cwd() },
-    bundle: true, write: false, platform: 'node', format: 'cjs', target: 'es2022',
-    jsx: 'automatic', jsxImportSource: '@antadesign/anta', nodePaths: [resolve('node_modules')],
-    alias: { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime'), 'react-dom/server': requirePlot.resolve('react-dom/server'), react: resolve('node_modules/react') },
-  })
-  const compiled = new Module(resolve('tests/banner-server.cjs'))
-  compiled._compile(result.outputFiles[0].text, compiled.id)
-  renderServer = compiled.exports.render
   for (const framework of ['React', 'Preact']) {
     const react = framework === 'React'
     const result = await build({
+      absWorkingDir: resolveDir,
+      stdin: { contents: `import React from 'react'; ${componentImports}; ${react ? "import {renderToString} from 'react-dom/server'" : "import renderToString from 'preact-render-to-string'"}; ${factory}; export const render = props => renderToString(node(props));`, resolveDir },
+      bundle: true, write: false, metafile: true, platform: 'node', format: 'cjs', target: 'es2022',
+      jsx: 'automatic', jsxImportSource: '@antadesign/anta', nodePaths,
+      alias: { ...jsxAlias, ...(react
+        ? consumerRoot ? {} : { 'react-dom/server': requirePlot.resolve('react-dom/server'), react: resolve('node_modules/react') }
+        : { react: preactCompat,
+            ...(consumerRoot ? {} : { 'preact-render-to-string': requireRenderer.resolve('preact-render-to-string') }) }),
+      },
+    })
+    checkInstalledInputs(result)
+    const compiled = new Module(resolve(`tests/banner-${framework}-server.cjs`))
+    compiled._compile(result.outputFiles[0].text, compiled.id)
+    serverRenderers.set(framework, compiled.exports.render)
+  }
+  for (const framework of ['React', 'Preact']) {
+    const react = framework === 'React'
+    const result = await build({
+      absWorkingDir: resolveDir,
       stdin: { contents: `
         import React from 'react'
-        import {Banner} from '${source}/components/Banner'
-        import {Button} from '${source}/components/Button'
+        ${componentImports}
         ${react ? "import {createRoot, hydrateRoot} from 'react-dom/client'" : "import {render, hydrate} from 'preact'"}
         ${factory}
         ${react ? 'let root' : ''}
         window.requests = 0
+        window.recoverableErrors = []
         const app = props => node({...props, onDismiss: () => {
           window.requests++
           if (window.acceptDismissal) window.renderBanner({...window.bannerProps, dismissed: true})
@@ -65,16 +98,17 @@ before(async () => {
         }
         window.hydrateBanner = props => {
           window.bannerProps = props
-          ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props))" : "hydrate(app(props), document.querySelector('#mount'))"}
+          ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError: error => window.recoverableErrors.push(error.message)})" : "hydrate(app(props), document.querySelector('#mount'))"}
         }
         window.renderNodeMessage = () => window.renderBanner({message: React.createElement('strong', null, 'Custom message'), actions: false, children: false})
-      `, resolveDir: process.cwd() }, bundle: true, write: false, outfile: `${framework}.js`, format: 'esm', target: 'es2022',
+      `, resolveDir }, bundle: true, write: false, metafile: true, outfile: `${framework}.js`, format: 'esm', target: 'es2022',
       jsx: 'automatic', jsxImportSource: '@antadesign/anta', define: { 'process.env.NODE_ENV': '"production"' },
-      nodePaths: [resolve('node_modules'), resolve('site/node_modules')],
-      alias: { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime'),
-        ...(react ? { 'react-dom/client': requirePlot.resolve('react-dom/client'), react: resolve('node_modules/react') } : { react: requireSite.resolve('preact/compat') }),
+      nodePaths,
+      alias: { ...jsxAlias,
+        ...(react ? consumerRoot ? {} : { 'react-dom/client': requirePlot.resolve('react-dom/client'), react: resolve('node_modules/react') } : { react: preactCompat }),
       },
     })
+    checkInstalledInputs(result)
     assets.set(`/${framework}.js`, result.outputFiles.find(file => file.path.endsWith('.js')).text)
   }
   assets.set('/fixture.css', await readFile(new URL('./banner-csp.fixture.css', import.meta.url), 'utf8'))
@@ -84,8 +118,9 @@ before(async () => {
     const mode = url.searchParams.get('mode') || 'granular'
     res.setHeader('Content-Security-Policy', policy)
     res.setHeader('Content-Type', `${req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html'}; charset=utf-8`)
-    const props = { ...initialProps, ...(url.searchParams.has('closed') ? { defaultDismissed: true } : {}) }
-    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? renderServer(props) : ''}</main><div id="following">Following content</div>`)
+    const props = { ...initialProps, ...(url.searchParams.has('controlled') ? { dismissed: url.searchParams.has('closed') } : url.searchParams.has('closed') ? { defaultDismissed: true } : {}) }
+    const render = serverRenderers.get(url.searchParams.get('ssr-framework') || 'React')
+    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? render(props) : ''}</main><div id="following">Following content</div>`)
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   origin = `http://127.0.0.1:${server.address().port}`
@@ -137,8 +172,16 @@ async function geometry(page) {
 const isClosed = (page, selector = '#mount > a-banner') => page.locator(selector).evaluate(n => getComputedStyle(n).display === 'none')
 async function hydrate(page, framework, props = initialProps) {
   await page.evaluate(framework => import(`/${framework}.js`), framework)
-  await page.evaluate(props => window.hydrateBanner(props), props)
+  await page.evaluate(props => {
+    window.serverNodes = [...document.querySelector('#mount').querySelectorAll('*')]
+    window.hydrateBanner(props)
+  }, props)
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  assert.deepEqual(await page.evaluate(() => window.recoverableErrors), [])
+  assert.equal(await page.evaluate(() => {
+    const current = [...document.querySelector('#mount').querySelectorAll('*')]
+    return window.serverNodes.length === current.length && current.every((node, index) => node === window.serverNodes[index])
+  }), true, 'Hydration retains the server-rendered nodes')
 }
 async function trackOwnership(page) {
   await page.locator('#mount > a-banner').evaluate(n => {
@@ -149,14 +192,16 @@ async function trackOwnership(page) {
 }
 
 test('Banner SSR owns regions and emits no structural inline styles', () => {
-  const html = renderServer(initialProps)
-  assert.match(html, /<a-banner-actions>/)
-  assert.match(html, /<a-banner-content>/)
-  assert.match(html, /<a-banner-close>/)
-  assert.doesNotMatch(html, /style=|slot=|data-anta-banner-actions-wrapper/)
-  assert.match(renderServer({message: 0}), /<a-banner-message>0<\/a-banner-message>/)
-  for (const value of [null, false, true, [], '', '   ']) {
-    assert.doesNotMatch(renderServer({message: value, actions: value, children: false, closable: false}), /<a-banner-(message|actions|close)/)
+  for (const render of serverRenderers.values()) {
+    const html = render(initialProps)
+    assert.match(html, /<a-banner-actions>/)
+    assert.match(html, /<a-banner-content>/)
+    assert.match(html, /<a-banner-close>/)
+    assert.doesNotMatch(html, /style=|slot=|data-anta-banner-actions-wrapper/)
+    assert.match(render({message: 0}), /<a-banner-message>0<\/a-banner-message>/)
+    for (const value of [null, false, true, [], '', '   ']) {
+      assert.doesNotMatch(render({message: value, actions: value, children: false, closable: false}), /<a-banner-(message|actions|close)/)
+    }
   }
 })
 
@@ -314,7 +359,7 @@ for (const engine of engines) {
   })
   for (const framework of ['React', 'Preact']) {
     test(`${engine.name()}: ${framework} hydration handles controlled rejection and restoration`, async t => {
-      const page = await pageFor(t, engine, 'granular', '&ssr=1')
+      const page = await pageFor(t, engine, 'granular', `&ssr=1&ssr-framework=${framework}`)
       await register(page)
       const html = await page.locator('a-banner').evaluate(n => n.outerHTML)
       await hydrate(page, framework)
@@ -338,8 +383,27 @@ for (const engine of engines) {
       assert.equal(await page.locator('a-banner-actions').count(), 0)
       assert.equal(await page.locator('strong').evaluate(n => getComputedStyle(n).fontSize), '15px')
     })
+    for (const mode of ['granular', 'bundle']) {
+      test(`${engine.name()}: ${framework} ${mode} initially controlled-closed SSR hydrates and restores`, async t => {
+        const props = { ...initialProps, dismissed: true }
+        const page = await pageFor(t, engine, mode, `&ssr=1&controlled=1&closed=1&ssr-framework=${framework}`)
+        assert.equal(await isClosed(page), true)
+        await register(page, mode)
+        await hydrate(page, framework, props)
+        assert.equal(await isClosed(page), true)
+        await page.evaluate(() => window.renderBanner({...window.bannerProps, dismissed: false}))
+        await page.waitForFunction(() => document.querySelector('a-banner').getAttribute('state') === 'open')
+        await page.getByRole('button', {name: 'Dismiss', exact: true}).press('Enter')
+        assert.equal(await page.evaluate(() => window.requests), 1)
+        assert.equal(await isClosed(page), false)
+        await page.evaluate(() => window.acceptDismissal = true)
+        await page.getByRole('button', {name: 'Got it', exact: true}).click()
+        await page.waitForFunction(() => document.querySelector('a-banner').getAttribute('state') === 'closed')
+        assert.equal(await isClosed(page), true)
+      })
+    }
     test(`${engine.name()}: ${framework} hydrated uncontrolled dismissal installs its notification listener`, async t => {
-      const page = await pageFor(t, engine, 'granular', '&ssr=1')
+      const page = await pageFor(t, engine, 'granular', `&ssr=1&ssr-framework=${framework}`)
       await register(page)
       await hydrate(page, framework)
       await page.getByRole('button', {name: 'Dismiss', exact: true}).click()

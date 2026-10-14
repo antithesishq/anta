@@ -114,7 +114,8 @@ jobs:
             src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts \
             src/elements/{index,key-activation}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
-            'tests/banner-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
+            'tests/banner-csp*' tests/banner-package.mjs tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/ci.yml \
             package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
           if [ -n "$changed" ]; then
             echo 'banner=true' >> "$GITHUB_OUTPUT"
@@ -161,6 +162,11 @@ jobs:
       - name: Test Banner CSP, dismissal, and initial layout
         if: steps.component-tests.outputs.banner == 'true'
         run: pnpm test:banner
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Test installed Banner package exports and SSR
+        if: steps.component-tests.outputs.banner == 'true'
+        run: pnpm test:banner:package
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Typecheck stickers

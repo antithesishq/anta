@@ -3,53 +3,48 @@ import { lineClamp, nativeStateChange, neutralToneAttr, toneStyle } from "../ant
 import { useLayoutEffect, useMemo, useState } from '../jsx-runtime'
 import { Tooltip } from "./Tooltip"
 
-/** Truncation / expansion axis. `expandable` only takes effect with `truncate`;
- *  `collapsible` only with `expandable` — so the type forbids `collapsible`
- *  unless `expandable` is set (a dynamic `expandable={cond}` is still allowed). */
+/** Expansion requires `truncate`. `expandableInert` and `collapsible` require
+ *  `expandable`; dynamic boolean values are allowed. */
 export type ExpandMode =
   | { expandable?: never; expandableInert?: never; collapsible?: never }
   | {
-      /** Show a fade hint when text overflows and reserve space for an
-       *  expansion control. Select the control or press Enter or Space while it
-       *  has focus to reveal the text. Only takes effect with `truncate`.
-       *  Expansion is one-way by default: the control is hidden once expanded.
-       *  Add `collapsible` for a two-way toggle. */
+      /** Show a fade and expansion control when truncated text overflows.
+       *  Select the control or focus it and press Enter or Space to reveal all
+       *  content. Expansion is one-way: the control hides once expanded.
+       *  Add `collapsible` to allow refolding. Requires `truncate`. */
       expandable: boolean
-      /** Make overflowing, folded content inert and let the expand control cover
-       *  the full preview. Content cannot receive focus, clicks, or selection and
-       *  is excluded from the accessibility tree until expanded. Text that fits
-       *  remains interactive. JSX owns the content's `inert` attribute. */
+      /** Make the entire folded, overflowing preview an expand target.
+       *  JSX applies `inert` to its content, blocking focus, clicks, and text
+       *  selection and removing it from the accessibility tree until expanded.
+       *  Fitting text stays interactive, as does server-rendered content before
+       *  browser measurement. Requires `expandable`. */
       expandableInert?: boolean
-      /** Let the reader collapse back after expanding: the chevron becomes a
-       *  "Show more" / "Show less" toggle that stays visible while expanded.
-       *  Only takes effect together with `expandable`. */
+      /** Allow refolding after expansion. The control stays visible, rotates
+       *  its chevron, and switches between "Show more" and "Show less".
+       *  Requires `expandable`. */
       collapsible?: boolean
     }
 
 export type TextProps = BaseProps & {
-  /** Visual priority. Maps to text-1..text-4 (`primary` = text-1, the
-   *  strongest). The default is `secondary` (text-2) — body text reads a
-   *  step softer than the strongest foreground; pass `primary` for emphasis.
+  /** Text emphasis, from `primary` (`--text-1`, strongest) to `quaternary`
+   *  (`--text-4`). `secondary` uses `--text-2`.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
-  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
-   *  named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
-   *  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
-   *  kept while lightness/chroma are pinned per priority in oklch.
+  /** Color tint. `neutral` uses `--text-{N}`; named tones use
+   *  `--text-{N}-{tone}`. A CSS color such as `rebeccapurple` keeps its hue,
+   *  with lightness and chroma set per priority in oklch.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24.
+  /** Font size / line height in pixels: `small` = 13/16, `medium` = 15/20,
+   *  `large` = 17/24.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
   /** Render as inline-block instead of the default block element. */
   inline?: boolean
-  /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
-   *  single line; any integer ≥ 2 clamps to that many lines; `0` or a
-   *  negative value means no truncation. A clipped, non-expandable JSX
-   *  `Text` shows its text content in a tooltip by default. Nest a
-   *  `<Tooltip>` to provide your own tooltip instead. Uses the
-   *  `-webkit-line-clamp` technique, supported in all major browsers
-   *  (Firefox 68+, Chrome, Safari, Edge). */
+  /** Clamp with a trailing ellipsis: `true` or `1` selects one line, integers
+   *  ≥ 2 select that many lines, and `0` or negative values disable truncation.
+   *  Clipped, non-expandable Text shows its content in an automatic tooltip.
+   *  Nest `<Tooltip>` to replace it or an empty tooltip to suppress it. */
   truncate?: boolean | number
 } & ExpandMode
 
@@ -74,19 +69,17 @@ function ExpandableText({ attributes, children, expandableInert }: { attributes:
 }
 
 /**
- * Block-level text container with priority and tone support.
+ * Light-DOM text with priority, tone, truncation, and optional expansion.
  *
- * Renders an `<a-text>` light-DOM element that scopes its descendants'
- * color hierarchy. Links nested inside follow the design system's
- * priority-aware link styling. Pass `inline` for an inline-block
- * variant, `truncate` for ellipsis truncation, and `expandable`
- * (combined with `truncate`) to let the user reveal the full text.
+ * Renders `<a-text>` with priority-aware colors for content and links.
+ * `inline` selects inline-block layout; `truncate` clamps text with an ellipsis.
+ * Pair `expandable` with `truncate` to let the reader reveal all content.
  *
- * Text and truncation render with external CSS before registration. The browser
- * element measures overflow and owns expansion off-DOM. Expandable Text uses
- * an `a-button` control before `a-text-content`, so the control precedes content
- * links in Tab order. Granular usage also loads
- * `@antadesign/anta/elements/a-button`. Automatic tooltips need Tooltip's entry.
+ * External CSS renders text and truncation before element registration.
+ * The browser element measures overflow and owns expansion off-DOM.
+ * Expandable Text places `a-button` before `a-text-content` in Tab order.
+ * Granular expansion also requires `@antadesign/anta/elements/a-button`;
+ * automatic tooltips require `@antadesign/anta/elements/a-tooltip`.
  *
  * @example Basic usage
  * ```tsx
@@ -95,7 +88,7 @@ function ExpandableText({ attributes, children, expandableInert }: { attributes:
  *
  * @example Expandable truncated text
  * ```tsx
- * <Text truncate={3} expandable>…long paragraph…</Text>
+ * <Text truncate={3} expandable>A long description that the reader can expand.</Text>
  * ```
  */
 export const Text = ({ priority, tone, size, inline, truncate, expandable, collapsible, expandableInert, className, style, children, ...rest }: TextProps) => {

@@ -116,7 +116,9 @@ Use `children` when task details need more than a plain label and hint. Pass
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color for the track, fill, and label row. Pass a named tone or a CSS color. Named tones follow the current theme. |
 | `value?` | number \| false | — | Completed amount relative to `max`. Omit this prop or pass `false` to show a loading animation without a percentage. Values are clamped to the range; non-finite values show zero completion. |
 
-## Raw HTML
+<a id="raw-html"></a>
+
+## Web Component
 
 ```html
 <a-progress value="42" max="100" tone="info" role="progressbar"

@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 13, 2026 on `codex/progress-light-dom`.
+Updated October 14, 2026 on `codex/banner-light-dom`.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -35,8 +35,11 @@ Panel stays outside this refactor and retains its current implementation.
 The following is the proposed order. Each item includes research, implementation,
 and verification before moving to the next component.
 
-1. [ ] [Banner](src/elements/a-banner.ts): content and action layout, empty
-   regions, and dismissal behavior.
+1. [ ] [Banner](src/elements/a-banner.ts): light-DOM regions and external CSS
+   implemented. Visibility remains in ElementInternals; JSX omits absent actions
+   and CSS hides empty regions. No content observers or DOM rewriting.
+   Dismissal transitions retained. Browser,
+   packed-import, and production verification pending diff review.
 2. [ ] [Expander](src/elements/a-expander.ts): header, content, indicators, and
    collapse animation. Boolean `round` now uses a CSS radius; the measured-radius
    issue described in the historical audit is resolved. Static shadow styles

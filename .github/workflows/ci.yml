@@ -50,6 +50,7 @@ jobs:
             echo 'card=true' >> "$GITHUB_OUTPUT"
             echo 'text=true' >> "$GITHUB_OUTPUT"
             echo 'progress=true' >> "$GITHUB_OUTPUT"
+            echo 'banner=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
@@ -107,6 +108,19 @@ jobs:
           else
             echo 'progress=false' >> "$GITHUB_OUTPUT"
           fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-banner.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
+            src/components/{Banner,Button,Icon}.tsx \
+            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts \
+            src/elements/{index,key-activation}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/banner-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
+            package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'banner=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'banner=false' >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -142,6 +156,11 @@ jobs:
       - name: Test Progress CSP and initial layout
         if: steps.component-tests.outputs.progress == 'true'
         run: pnpm test:progress
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Test Banner CSP, dismissal, and initial layout
+        if: steps.component-tests.outputs.banner == 'true'
+        run: pnpm test:banner
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Typecheck stickers

@@ -40,7 +40,7 @@ let _useSyncExternalStore: UseSyncExternalStore = React.useSyncExternalStore as 
  * before rendering any anta components when using Preact without compat aliasing,
  * or a custom JSX runtime. Pass `hooks` when your runtime's hooks don't resolve via
  * the `react` specifier (the stateful wrappers — `RadioGroup`, `Calendar`,
- * `InputDate`, and expandable `Text` — need the configured hooks); omit it and they default
+ * `InputDate`, `Banner`, and expandable `Text` — need the configured hooks); omit it and they default
  * to whatever `react` resolves to.
  *
  * @example Preact without compat
@@ -215,6 +215,9 @@ export interface AntaIntrinsicElements {
   'a-input-date-time-container': BaseAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes
+  'a-banner-content': BaseAttributes
+  'a-banner-actions': BaseAttributes
+  'a-banner-close': BaseAttributes
   'a-toaster': AToasterAttributes
   'a-toast': AToastAttributes
 }

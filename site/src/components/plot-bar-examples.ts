@@ -12,7 +12,7 @@ export function rounded(): PlotArgs<Node> {
   ]
 
   return {
-    series: [bar<Node>({
+    series: [bar({
       data,
       x: 'day',
       y: 'requests',
@@ -45,7 +45,7 @@ export function horizontal(): PlotArgs<Node> {
   ]
 
   return {
-    series: [bar<Node>({
+    series: [bar({
       data,
       x: 'requests',
       y: 'service',
@@ -76,7 +76,7 @@ export function stacked(): PlotArgs<Node> {
   ]
 
   return {
-    series: [bar<Node>({
+    series: [bar({
       data,
       x: 'day',
       y: ['network', 'compute', 'storage'],
@@ -111,7 +111,7 @@ export function diverging(): PlotArgs<Node> {
   ]
 
   return {
-    series: [bar<Node>({
+    series: [bar({
       data,
       x: 'month',
       y: 'change',
@@ -141,7 +141,7 @@ export function stackedHorizontal(): PlotArgs<Node> {
     { service: 'Export', network: 12, compute: 36, storage: 18 },
   ]
   return {
-    series: [bar<Node>({ data, x: ['network', 'compute', 'storage'], y: 'service',
+    series: [bar({ data, x: ['network', 'compute', 'storage'], y: 'service',
       color: [
         { light: '#0d9488', dark: '#5eead4' },
         { light: '#6366f1', dark: '#a5b4fc' },
@@ -170,7 +170,7 @@ export function stackedDiverging(): PlotArgs<Node> {
     { month: 'May', new: 32, expansion: 10, churn: -12, contraction: -8 },
   ]
   return {
-    series: [bar<Node>({ data, x: 'month', y: ['new', 'expansion', 'churn', 'contraction'],
+    series: [bar({ data, x: 'month', y: ['new', 'expansion', 'churn', 'contraction'],
       color: [
         { light: '#0d9488', dark: '#2dd4bf' },
         { light: '#5eead4', dark: '#99f6e4' },
@@ -201,7 +201,7 @@ export function stackedTooltip(): PlotArgs<Node> {
   ]
 
   return {
-    series: [bar<Node>({
+    series: [bar({
       data,
       x: 'day',
       y: ['network', 'compute', 'storage'],
@@ -215,7 +215,8 @@ export function stackedTooltip(): PlotArgs<Node> {
       hover_span_y: false,
       tooltip: ({ label, row }) => {
         const content = document.createElement('div')
-        for (const field of ['network', 'compute', 'storage']) {
+        const fields: (keyof typeof row)[] = ['network', 'compute', 'storage']
+        for (const field of fields) {
           const entry = document.createElement('div')
           const value = document.createElement(field === label ? 'strong' : 'span')
           value.textContent = field + ': ' + row[field] + ' ms'
@@ -242,7 +243,7 @@ export function categoryOrder(): PlotArgs<Node> {
     { severity: 'Critical', count: 12 }, { severity: 'Medium', count: 35 },
   ]
   return {
-    series: [bar<Node>({ data, x: 'severity', y: 'count', inset: 10, border_radius: 3,
+    series: [bar({ data, x: 'severity', y: 'count', inset: 10, border_radius: 3,
       color: { light: '#64748b', dark: '#94a3b8' },
       tooltip: ({ x, y }) => document.createTextNode(x + ': ' + y + ' issues'),
     })],

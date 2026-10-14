@@ -15,7 +15,7 @@ type BandAxis = { band_scale: BandScale; bands: Float64Array }
  * @param inner - the plot area, which a spanned axis covers edge to edge
  * @returns the point index under the cursor, or null
  */
-export function rect_hit_test(series: ComposedRect, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale, inner: Rect): number | null {
+export function rect_hit_test<Row, TooltipContent>(series: ComposedRect<Row, TooltipContent>, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale, inner: Rect): number | null {
     // a drawn span already covers the plot area edge to edge, so that axis has nothing left to widen
     const widen_x = series.hover_span_x === true && series.span !== 'x'
     const widen_y = series.hover_span_y === true && series.span !== 'y'

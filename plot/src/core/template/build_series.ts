@@ -11,11 +11,11 @@ import { carry_factory_args } from "../series/factory_args"
  * @param y_translations - per-series y translation tables, or undefined
  * @returns the rebuilt series
  */
-export function build_resolved_series(
-    input: Series[],
+export function build_resolved_series<Row, TooltipContent>(
+    input: Series<Row, TooltipContent>[],
     x_translations: (Int32Array | null)[] | undefined,
     y_translations: (Int32Array | null)[] | undefined,
-): Series[] {
+): Series<Row, TooltipContent>[] {
     if (x_translations === undefined && y_translations === undefined) {
         return input
     }
@@ -33,11 +33,11 @@ export function build_resolved_series(
  * @param y_translation - y translation table, or null for no remap
  * @returns the rebuilt series
  */
-function rebuild_series(
-    series_item: Series,
+function rebuild_series<Row, TooltipContent>(
+    series_item: Series<Row, TooltipContent>,
     x_translation: Int32Array | null,
     y_translation: Int32Array | null,
-): Series {
+): Series<Row, TooltipContent> {
     // null translation plus categorical means local matched prefix, still need to strip
     const has_categories = series_item.x_axis_kind === 'categorical' || series_item.y_axis_kind === 'categorical'
 
@@ -49,7 +49,7 @@ function rebuild_series(
 }
 
 // walk rows, drop -1 hits, copy survivors. Arrays trimmed only when rows dropped.
-type RemappedBuffers = {
+type RemappedBuffers<Row> = {
     x: Float64Array
     y: Float64Array
     x2?: Float64Array
@@ -58,7 +58,7 @@ type RemappedBuffers = {
     highlight_colors?: (ThemeColor | null)[]
     sizes?: (number | null)[]
     size_indices?: Uint32Array
-    rows?: Record<string, unknown>[]
+    rows?: Row[]
     labels?: string[]
 }
 
@@ -69,11 +69,11 @@ type RemappedBuffers = {
  * @param y_translation - y translation table, or null
  * @returns the remapped x/y (and any x2/y2, colors, sizes, rows, labels) buffers
  */
-function remap_rows(
-    series_item: Series,
+function remap_rows<Row, TooltipContent>(
+    series_item: Series<Row, TooltipContent>,
     x_translation: Int32Array | null,
     y_translation: Int32Array | null,
-): RemappedBuffers {
+): RemappedBuffers<Row> {
     const length = series_item.x.length
     const buffer_x = new Float64Array(length)
     const buffer_y = new Float64Array(length)
@@ -94,7 +94,7 @@ function remap_rows(
     const buffer_y2 = input_y2 !== undefined ? new Float64Array(length) : undefined
 
     const input_rows = series_item.rows
-    const buffer_rows = input_rows !== undefined ? new Array<Record<string, unknown>>(length) : undefined
+    const buffer_rows = input_rows !== undefined ? new Array<Row>(length) : undefined
     const input_labels = series_item.labels
     const buffer_labels = input_labels !== undefined ? new Array<string>(length) : undefined
 
@@ -145,7 +145,7 @@ function remap_rows(
     }
     // trim only when rows were dropped, otherwise pass the full buffer through
     const full = write_index === length
-    const result: RemappedBuffers = {
+    const result: RemappedBuffers<Row> = {
         x: full ? buffer_x : buffer_x.slice(0, write_index),
         y: full ? buffer_y : buffer_y.slice(0, write_index),
     }
@@ -189,8 +189,8 @@ function remap_rows(
  * @param remapped - the remapped buffers
  * @returns the output series
  */
-function assemble_output_series(series_item: Series, remapped: RemappedBuffers): Series {
-    const output: Series = { ...series_item, x: remapped.x, y: remapped.y }
+function assemble_output_series<Row, TooltipContent>(series_item: Series<Row, TooltipContent>, remapped: RemappedBuffers<Row>): Series<Row, TooltipContent> {
+    const output: Series<Row, TooltipContent> = { ...series_item, x: remapped.x, y: remapped.y }
     delete output.x_axis_kind
     delete output.y_axis_kind
     delete output.x_categories

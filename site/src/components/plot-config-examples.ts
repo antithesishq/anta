@@ -7,7 +7,7 @@ const examplePoints = [
 
 export function presentation(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: examplePoints, size: 3,
+    series: [scatter({ data: examplePoints, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     title: { text: 'Plot title', font: { size: 16, color: { light: '#374151', dark: '#e5e7eb' } } },
     height: 260,
@@ -23,7 +23,7 @@ export function presentation(): PlotArgs<Node> {
 
 export function spacing(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: examplePoints, size: 3,
+    series: [scatter({ data: examplePoints, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     height: 260,
     margin: { top: 40, right: 40, bottom: 68, left: 88 },
@@ -39,7 +39,7 @@ export function spacing(): PlotArgs<Node> {
 export function logarithmic(): PlotArgs<Node> {
   const data = examplePoints.map(({ x, y }) => ({ x, y: 10 ** (y / 20 - 1) }))
   return {
-    series: [scatter<Node>({ data, size: 3,
+    series: [scatter({ data, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     height: 260,
     margin: { top: 12, right: 14, bottom: 44, left: 80 },
@@ -60,7 +60,7 @@ export function timeAxis(): PlotArgs<Node> {
   const start = Date.UTC(2026, 0, 12)
   const data = examplePoints.map(({ x, y }) => ({ x: start + x / 100 * 86400000, y }))
   return {
-    series: [scatter<Node>({ data, size: 3,
+    series: [scatter({ data, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     height: 260,
     margin: { top: 12, right: 16, bottom: 44, left: 76 },

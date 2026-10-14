@@ -7,19 +7,19 @@ import type { ColorArg, CustomHighlightRendererFn, CustomHitTestFn, CustomRender
 
 export type CustomAxisRangeArg = { x?: number[]; y?: number[] }
 
-export type CustomArgs<TooltipContent = unknown> = {
-    data?: Record<string, unknown>[]
-    x?: FieldArg
-    y?: FieldArg
-    renderer: CustomRendererFn<TooltipContent>
-    highlight_renderer?: CustomHighlightRendererFn<TooltipContent>
+export type CustomArgs<Row, TooltipContent> = {
+    data?: Row[]
+    x?: FieldArg<Row>
+    y?: FieldArg<Row>
+    renderer: CustomRendererFn<Row>
+    highlight_renderer?: CustomHighlightRendererFn<Row>
     highlight?: boolean
-    hit_test?: CustomHitTestFn<TooltipContent>
-    color?: ColorArg
-    highlight_color?: ColorArg
+    hit_test?: CustomHitTestFn<Row>
+    color?: ColorArg<Row>
+    highlight_color?: ColorArg<Row>
     axis_range?: CustomAxisRangeArg
-    tooltip?: TooltipArg<Record<string, unknown> | undefined, TooltipContent>
-    on_select?: SelectFn<Record<string, unknown> | undefined>
+    tooltip?: TooltipArg<Row, TooltipContent>
+    on_select?: SelectFn<Row>
     hoverable?: boolean
 }
 
@@ -29,10 +29,12 @@ export type CustomArgs<TooltipContent = unknown> = {
  * @param args - custom series args (renderer, plus optional data, x, y, color, axis_range)
  * @returns the resolved CustomSeries
  */
-export function new_custom<TooltipContent = unknown>(args: CustomArgs<TooltipContent>): CustomSeries<TooltipContent> {
+export function new_custom<Row, TooltipContent>(
+    args: CustomArgs<Row, TooltipContent>,
+): CustomSeries<Row, TooltipContent> {
     const resolved_x = resolve_custom_column(args.data, args.x, 'x')
     const resolved_y = resolve_custom_column(args.data, args.y, 'y')
-    const series: CustomSeries<TooltipContent> = {
+    const series: CustomSeries<Row, TooltipContent> = {
         kind: 'custom',
         x: resolved_x.values,
         y: resolved_y.values,
@@ -63,9 +65,9 @@ export function new_custom<TooltipContent = unknown>(args: CustomArgs<TooltipCon
  * @param side - the axis, for error messages
  * @returns the resolved column plus its mode and categories
  */
-function resolve_custom_column(
-    data: Record<string, unknown>[] | undefined,
-    field: FieldArg | undefined,
+function resolve_custom_column<Row>(
+    data: Row[] | undefined,
+    field: FieldArg<Row> | undefined,
     side: 'x' | 'y',
 ): ResolvedColumn {
     if (field === undefined) {
@@ -88,7 +90,10 @@ function resolve_custom_column(
  * @param series - the series under construction
  * @param args - the custom series args
  */
-function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
+function apply_custom_options<Row, TooltipContent>(
+    series: CustomSeries<Row, TooltipContent>,
+    args: CustomArgs<Row, TooltipContent>,
+): void {
     retain_factory_args(series, args)
     apply_custom_color(series, args)
     Object.assign(series, resolve_highlight_colors(args.data, args.highlight_color))
@@ -110,7 +115,10 @@ function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipConten
  * @param series - the series under construction
  * @param args - the custom series args
  */
-function apply_custom_hover<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
+function apply_custom_hover<Row, TooltipContent>(
+    series: CustomSeries<Row, TooltipContent>,
+    args: CustomArgs<Row, TooltipContent>,
+): void {
     const hoverable = validate_hoverable(args, 'plot.custom')
     const wants_hover = args.tooltip !== undefined || args.on_select !== undefined || args.highlight_renderer !== undefined
 
@@ -154,7 +162,10 @@ function apply_custom_hover<TooltipContent>(series: CustomSeries<TooltipContent>
  * @param series - the series under construction
  * @param args - the custom series args
  */
-function apply_custom_color<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
+function apply_custom_color<Row, TooltipContent>(
+    series: CustomSeries<Row, TooltipContent>,
+    args: CustomArgs<Row, TooltipContent>,
+): void {
     const data = args.data
 
     if (data !== undefined) {
@@ -224,7 +235,9 @@ function validate_axis_range_side(side_range: number[], side: 'x' | 'y'): Domain
  * @param series - the custom series
  * @returns the [min, max] per axis
  */
-export function custom_domain_extent(series: CustomSeries): { x: [number, number]; y: [number, number] } {
+export function custom_domain_extent(
+    series: { x: Float64Array; y: Float64Array; axis_range?: { x?: Domain; y?: Domain } },
+): { x: [number, number]; y: [number, number] } {
     return {
         x: series.axis_range?.x ?? array_extent(series.x),
         y: series.axis_range?.y ?? array_extent(series.y),

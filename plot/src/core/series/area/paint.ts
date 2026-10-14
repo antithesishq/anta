@@ -9,7 +9,7 @@ const DEFAULT_STROKE_WIDTH = 1
  * @param series - the area series
  * @param render - the shared render context (canvas, inner rect, scales, fallback color)
  */
-export function draw_area(series: ComposedArea, render: RenderContext): void {
+export function draw_area<Row, TooltipContent>(series: ComposedArea<Row, TooltipContent>, render: RenderContext): void {
     const { ctx, x_scale, y_scale, color } = render
     const runs = series_pixel_runs(series, x_scale, y_scale)
     const runs_drawn = run_count(runs)

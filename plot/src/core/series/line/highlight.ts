@@ -11,7 +11,7 @@ import { vertex_radius } from "./paint"
  * @param y_scale - y scale
  * @returns the halo spec, or null where the line draws no marks or the vertex has no pixel position
  */
-export function line_highlight_spec(series: ComposedLine, point_index: number, x_scale: Scale, y_scale: Scale): HighlightSpec | null {
+export function line_highlight_spec<Row, TooltipContent>(series: ComposedLine<Row, TooltipContent>, point_index: number, x_scale: Scale, y_scale: Scale): HighlightSpec | null {
     const mark = series.mark
 
     if (mark === undefined) {

@@ -19,7 +19,7 @@ export function ellipses(): PlotArgs<Node> {
 
   return {
     series: [
-      scatter<Node>({
+      scatter({
         data: points,
         size: 3,
         color: row => Number(row.group) === 0
@@ -27,7 +27,7 @@ export function ellipses(): PlotArgs<Node> {
           : { light: '#7c3aed', dark: '#c4b5fd' },
         tooltip: ({ x, y }) => document.createTextNode(Number(x).toFixed(1) + ', ' + Number(y).toFixed(1)),
       }),
-      custom<Node>({
+      custom({
         data: groups,
         x: 'x', y: 'y',
         color: (_, i) => i === 0
@@ -94,7 +94,7 @@ export function chords(): PlotArgs<Node> {
   })
 
   return {
-    series: [custom<Node>({
+    series: [custom({
       data: groups,
       color: (_, i) => [
         { light: '#0d9488', dark: '#5eead4' },
@@ -244,7 +244,7 @@ export function ridgelines(): PlotArgs<Node> {
   const peak = Math.max(...data.flatMap(row => row.density.map(point => point.density)))
 
   return {
-    series: [custom<Node>({
+    series: [custom({
       data,
       y: 'group',
       color: (_, i) => ({ light: 'hsl(' + (175 + i * 15) + ', 55%, 55%)', dark: 'hsl(' + (175 + i * 15) + ', 50%, 45%)' }),
@@ -313,7 +313,7 @@ export function violins(): PlotArgs<Node> {
   const peak = Math.max(...data.flatMap(row => row.density.map(point => point.density)))
 
   return {
-    series: [custom<Node>({
+    series: [custom({
       data,
       x: 'group',
       color: (_, i) => [
@@ -383,7 +383,8 @@ export function violins(): PlotArgs<Node> {
 }
 
 export function highlights(): PlotArgs<Node> {
-  const renderer: CustomRendererFn<Node> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
+  type Point = { x: number; y: number }
+  const renderer: CustomRendererFn<Point> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
     for (let i = 0; i < series.x.length; i++) {
       const x = resolve_x(i), y = resolve_y(i)
       if (x === undefined || y === undefined) continue
@@ -393,14 +394,14 @@ export function highlights(): PlotArgs<Node> {
       ctx.fill()
     }
   }
-  const hit_test: CustomHitTestFn<Node> = (series, { cursor, resolve_x, resolve_y }) => {
+  const hit_test: CustomHitTestFn<Point> = (series, { cursor, resolve_x, resolve_y }) => {
     for (let i = series.x.length - 1; i >= 0; i--) {
       const x = resolve_x(i), y = resolve_y(i)
       if (x !== undefined && y !== undefined && Math.hypot(cursor.x - x, cursor.y - y) <= 16) return i
     }
     return null
   }
-  const highlight_renderer: CustomHighlightRendererFn<Node> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
+  const highlight_renderer: CustomHighlightRendererFn<Point> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
     const x = resolve_x(i), y = resolve_y(i)
     if (x === undefined || y === undefined) return
     ctx.strokeStyle = highlight_color_at(i)
@@ -415,15 +416,15 @@ export function highlights(): PlotArgs<Node> {
     margin: { top: 12, right: 12, bottom: 28, left: 32 },
     grid: false, zoom_pan: false,
     series: [
-      custom<Node>({
+      custom({
         data: [{ x: 20, y: 35 }, { x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
         color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
       }),
-      custom<Node>({
+      custom({
         data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
       }),
-      custom<Node>({
+      custom({
         data: [{ x: 80, y: 35 }, { x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
         color: '#94a3b8', highlight: false, tooltip: true,
       }),

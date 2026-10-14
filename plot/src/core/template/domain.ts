@@ -23,8 +23,8 @@ export function needs_auto(axis: Axis): boolean {
  * @param y_padding_mode - padding mode for y
  * @returns the padded x and y domains
  */
-export function compute_domains(
-    series: Series[],
+export function compute_domains<Row, TooltipContent>(
+    series: Series<Row, TooltipContent>[],
     x_padding_mode: SideMode,
     y_padding_mode: SideMode,
 ): { x: Domain; y: Domain } {
@@ -32,7 +32,7 @@ export function compute_domains(
     let y_min = Infinity, y_max = -Infinity
 
     for (const series_item of series) {
-        const { x, y } = series_type(series_item.kind).domain_extent(series_item)
+        const { x, y } = series_type(series_item).domain_extent(series_item)
 
         if (x[0] < x_min) {
             x_min = x[0]

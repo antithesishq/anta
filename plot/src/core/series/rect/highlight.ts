@@ -12,7 +12,7 @@ import { make_rect_resolver } from "./paint"
  * @param inner - the plot area, which a spanned axis covers edge to edge
  * @returns the rect spec, or null if the rect has no pixel span (unknown category / non-finite)
  */
-export function rect_highlight_spec(series: ComposedRect, point_index: number, x_scale: Scale, y_scale: Scale, inner: Rect): HighlightSpec | null {
+export function rect_highlight_spec<Row, TooltipContent>(series: ComposedRect<Row, TooltipContent>, point_index: number, x_scale: Scale, y_scale: Scale, inner: Rect): HighlightSpec | null {
     const rect = make_rect_resolver(series, x_scale, y_scale, inner)(point_index)
 
     if (rect === null) {

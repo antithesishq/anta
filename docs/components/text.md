@@ -1,37 +1,21 @@
 # Text
 
-A block-level container for text and links. `priority` sets emphasis from
-`primary` to `quaternary`; the default is `secondary`. `tone` adds a named tint
-or custom CSS color, and `inline` selects inline-block layout. Nested links
-follow the text's priority and tone.
+Use Text for body copy, descriptions, and supporting information. Set `priority`
+to emphasize important content or soften secondary details, and use `tone` to
+add color. Text also styles any links inside it.
 
 ## Link behavior
 
-Neutral text uses these link colors:
-
-| Priority      | Link color (default)              | Link color (hover)            |
-|---------------|-----------------------------------|-------------------------------|
-| `primary`     | `--link-color` (brand blue)       | `--link-color-hover`          |
-| `secondary`   | `--link-color`                    | `--link-color-hover`          |
-| `tertiary`    | `currentColor` (= `--text-3`)     | `--text-2`                    |
-| `quaternary`  | `currentColor` (= `--text-4`)     | `--text-3`                    |
-
-Link underlines use 0.5px at 75% alpha, increasing to 1px at full alpha on hover.
-`:active` restores the resting underline.
-
-With named tones, links use `currentColor` and the next-stronger level of the same
-tone on hover. At `primary`, hover changes only the underline.
+Links follow the surrounding text's emphasis and color. In supporting text,
+they stay muted; hover makes them easier to identify. The examples show how
+links look at each priority and tone.
 
 ## Demo
 
 ## Truncation and expansion
 
-`truncate` clamps to one line with `true` or `1`, or to multiple lines with an
-integer ≥ 2. `0` and negative values disable truncation. Text uses CSS
-`-webkit-line-clamp` in `display: -webkit-box`, with `min-width: 0` for flex and grid layouts.
-
-Clipped, non-expandable JSX Text shows its content in an automatic tooltip.
-Nest `<Tooltip>` to replace it or an empty tooltip to suppress it.
+Use `truncate` to keep long text compact. Pass a number to choose how many lines
+to show. Readers can hover over shortened text to read the full content in a tooltip.
 
 ```tsx
 {/* Single line */}
@@ -42,10 +26,8 @@ Nest `<Tooltip>` to replace it or an empty tooltip to suppress it.
 <Text truncate={3}>{longSentence}</Text>
 ```
 
-Pair `expandable` with `truncate` to show **Show more** when text overflows.
-Select it or focus it and press Enter or Space to expand. The control then hides;
-add `collapsible` to keep a **Show less** control. Folded content stays selectable,
-and its links remain interactive.
+Add `expandable` to let readers reveal long text when they need it. **Show more**
+appears only when the text does not fit. Add `collapsible` to let them fold it again.
 
 ```tsx
 {/* One-way: the chevron is hidden once expanded */}
@@ -59,24 +41,22 @@ and its links remain interactive.
 <Text truncate={3} expandable collapsible expandableInert>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
 ```
 
-`expandableInert` makes the whole folded, overflowing preview an expand target.
-JSX applies [`inert`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/inert)
-to `a-text-content`, blocking focus, clicks, and selection and removing it from
-the accessibility tree until expanded. Collapse keeps its 16px area. Fitting
-text and server-rendered content before browser measurement remain interactive.
+Use `expandableInert` when readers should expand the text before following its
+links. Selecting anywhere in the folded preview expands it; its links become
+available after expansion.
 
 ## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `collapsible?` | boolean | — | Allow refolding after expansion. The control stays visible, rotates its chevron, and switches between "Show more" and "Show less". Requires `expandable`. |
-| `expandable?` | boolean | — | Show a fade and expansion control, first in Tab order, when truncated text overflows. Select the control or focus it and press Enter or Space to reveal all content. Expansion is one-way: the control hides once expanded. Add `collapsible` to allow refolding. Requires `truncate`; disables the automatic tooltip. |
+| `collapsible?` | boolean | — | Allow refolding after expansion. The control stays visible, rotates its chevron, and switches between "Show more" and "Show less". Requires `expandable`. The expanded collapse target spans the full width over 16px of bottom padding; removing that padding with custom CSS allows it to overlap content. |
+| `expandable?` | boolean | — | Show a fade and expansion control when truncated text overflows. Select the control or focus it and press Enter or Space to reveal all content. Expansion is one-way: the control hides once expanded. Add `collapsible` to allow refolding. Requires `truncate`; disables the automatic tooltip. The control comes first in Tab order. By default, folded text stays selectable and its links remain focusable and clickable. Single-line text fades at the inline end with an inline-end target; multiline text fades over its last line with a full-width target. Folded content clips without scrolling or extra padding, and expansion preserves its width. |
 | `expandableInert?` | boolean | — | Make the entire folded, overflowing preview an expand target. JSX applies `inert` to its content, blocking focus, clicks, and text selection and removing it from the accessibility tree until expanded. Fitting text stays interactive, as does server-rendered content before browser measurement. Requires `expandable`. |
 | `inline?` | boolean | — | Render as inline-block instead of the default block element. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Text emphasis, from `primary` (`--text-1`, strongest) to `quaternary` (`--text-4`). `secondary` uses `--text-2`. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Text emphasis, from `primary` (`--text-1`, strongest) to `quaternary` (`--text-4`). `secondary` uses `--text-2`; `tertiary` uses `--text-3`. Neutral primary/secondary links use `--link-color` and `--link-color-hover`. Tertiary/quaternary links inherit the text color, with `--text-2` and `--text-3` respectively on hover. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Font size / line height in pixels: `small` = 13/16, `medium` = 15/20, `large` = 17/24. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` uses `--text-{N}`; named tones use `--text-{N}-{tone}`. A CSS color such as `rebeccapurple` keeps its hue, with lightness and chroma set per priority in oklch. |
-| `truncate?` | boolean \| number | — | Clamp with a trailing ellipsis: `true` or `1` selects one line, integers ≥ 2 select that many lines, and `0` or negative values disable truncation. Clipped, non-expandable Text shows its content in an automatic tooltip. Nest `<Tooltip>` to replace it or an empty tooltip to suppress it. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` uses `--text-{N}`; named tones use `--text-{N}-{tone}`. A CSS color such as `rebeccapurple` keeps its hue, with lightness and chroma set per priority in oklch. With named tones, links inherit the text color and hover uses the next-stronger tone level; at `primary`, hover changes only the underline. |
+| `truncate?` | boolean \| number | — | Clamp with a trailing ellipsis: `true` or `1` selects one line, integers ≥ 2 select that many lines, and `0` or negative values disable truncation. Clipped, non-expandable Text shows its content in an automatic tooltip. Nest `<Tooltip>` to replace it or an empty tooltip to suppress it. Uses CSS `-webkit-line-clamp` in `display: -webkit-box`, with `min-width: 0` for flex and grid layouts. |
 
 ## Web Component
 
@@ -123,15 +103,12 @@ import '@antadesign/anta/elements/a-button'
 </a-text>
 ```
 
-Text owns overflow and expansion; Button supplies its accessible label and
-expanded state. Both use `ElementInternals` and leave authored attributes and
-children untouched. Explicit button ARIA overrides the defaults; synchronize any
-authored `aria-expanded` yourself. One-way expansion hides the control without
-removing it.
+Expansion and accessible button labels work automatically. Your attributes and
+children stay unchanged. Explicit button ARIA overrides the defaults;
+synchronize any authored `aria-expanded` yourself.
 
-Migrate flat expandable raw markup to these two children. Plain Text needs no
-content wrapper, and JSX supplies expansion markup. Both modes use light DOM
-and external CSS, with no injected stylesheet.
+Migrate flat expandable raw markup to these two children. JSX supplies them for
+you; plain Text needs no content wrapper.
 
 For multiline raw Text, set `--line-clamp` in your stylesheet. JSX sets the line
 count through the `truncate` prop:
@@ -174,10 +151,9 @@ expanded. The element leaves `inert` to you.
 
 ## Styling
 
-Use `priority`, `tone`, and `size` for emphasis, color, and type scale. Neutral
-and named tones use shared text and link tokens (see [Colors](../colors.md)). Changing
-them on `:root` or `.dark` updates Text throughout that scope. Custom colors use
-`--text-tone-source` for oklch derivation.
+Use `priority`, `tone`, and `size` for emphasis, color, and type scale. Shared
+[Colors](../colors.md) keep Text consistent with your theme. For a custom color,
+pass `tone` or set `--text-tone-source`.
 
 ```tsx
 <Text priority="secondary" tone="brand">Tinted secondary text</Text>
@@ -197,13 +173,6 @@ a-text.fancy {
 }
 a-text.fancy a { text-decoration-thickness: 2px; text-underline-offset: 3px; }
 ```
-
-The single-line fade and expand target occupy the inline end; multiline text
-fades over its last line and has a full-width target. `expandableInert` extends
-the target over the whole preview. While expanded with `collapsible`, the
-full-width control overlays 16px of reserved bottom padding. Custom CSS can
-remove that padding, allowing the control to overlap content. Folded content
-clips without scrolling or extra padding, and expansion preserves its width.
 
 ## Example
 

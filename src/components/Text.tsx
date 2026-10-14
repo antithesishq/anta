@@ -8,11 +8,16 @@ import { Tooltip } from "./Tooltip"
 export type ExpandMode =
   | { expandable?: never; expandableInert?: never; collapsible?: never }
   | {
-      /** Show a fade and expansion control, first in Tab order, when truncated text overflows.
+      /** Show a fade and expansion control when truncated text overflows.
        *  Select the control or focus it and press Enter or Space to reveal all
        *  content. Expansion is one-way: the control hides once expanded.
        *  Add `collapsible` to allow refolding. Requires `truncate`; disables the
-       *  automatic tooltip. */
+       *  automatic tooltip. The control comes first in Tab order. By default,
+       *  folded text stays selectable and its links remain focusable and clickable.
+       *  Single-line text fades at the inline end with an inline-end target;
+       *  multiline text fades over its last line with a full-width target.
+       *  Folded content clips without scrolling or extra padding, and expansion
+       *  preserves its width. */
       expandable: boolean
       /** Make the entire folded, overflowing preview an expand target.
        *  JSX applies `inert` to its content, blocking focus, clicks, and text
@@ -22,18 +27,25 @@ export type ExpandMode =
       expandableInert?: boolean
       /** Allow refolding after expansion. The control stays visible, rotates
        *  its chevron, and switches between "Show more" and "Show less".
-       *  Requires `expandable`. */
+       *  Requires `expandable`. The expanded collapse target spans the full
+       *  width over 16px of bottom padding; removing that padding with custom
+       *  CSS allows it to overlap content. */
       collapsible?: boolean
     }
 
 export type TextProps = BaseProps & {
   /** Text emphasis, from `primary` (`--text-1`, strongest) to `quaternary`
-   *  (`--text-4`). `secondary` uses `--text-2`.
+   *  (`--text-4`). `secondary` uses `--text-2`; `tertiary` uses `--text-3`.
+   *  Neutral primary/secondary links use `--link-color` and `--link-color-hover`.
+   *  Tertiary/quaternary links inherit the text color, with `--text-2` and
+   *  `--text-3` respectively on hover.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Color tint. `neutral` uses `--text-{N}`; named tones use
    *  `--text-{N}-{tone}`. A CSS color such as `rebeccapurple` keeps its hue,
-   *  with lightness and chroma set per priority in oklch.
+   *  with lightness and chroma set per priority in oklch. With named tones,
+   *  links inherit the text color and hover uses the next-stronger tone level;
+   *  at `primary`, hover changes only the underline.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Font size / line height in pixels: `small` = 13/16, `medium` = 15/20,
@@ -45,7 +57,9 @@ export type TextProps = BaseProps & {
   /** Clamp with a trailing ellipsis: `true` or `1` selects one line, integers
    *  ≥ 2 select that many lines, and `0` or negative values disable truncation.
    *  Clipped, non-expandable Text shows its content in an automatic tooltip.
-   *  Nest `<Tooltip>` to replace it or an empty tooltip to suppress it. */
+   *  Nest `<Tooltip>` to replace it or an empty tooltip to suppress it.
+   *  Uses CSS `-webkit-line-clamp` in `display: -webkit-box`, with `min-width: 0`
+   *  for flex and grid layouts. */
   truncate?: boolean | number
 } & ExpandMode
 
@@ -75,6 +89,8 @@ function ExpandableText({ attributes, children, expandableInert }: { attributes:
  * Renders `<a-text>` with priority-aware colors for content and links.
  * `inline` selects inline-block layout; `truncate` clamps text with an ellipsis.
  * Pair `expandable` with `truncate` to let the reader reveal all content.
+ * Link underlines use 0.5px at 75% alpha, 1px at full alpha on hover,
+ * and restore the resting underline while active.
  *
  * External CSS renders text and truncation before element registration.
  * The browser element measures overflow and owns expansion off-DOM.

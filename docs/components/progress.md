@@ -107,7 +107,7 @@ radius.
 ## Raw HTML
 
 ```html
-<a-progress class="upload-progress" value="42" max="100" tone="info" role="progressbar"
+<a-progress value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
@@ -123,24 +123,17 @@ radius.
 </a-progress>
 ```
 
-```css
-/* In your application stylesheet. */
-a-progress.upload-progress { --progress-value: 42; --progress-max: 100; }
-```
-
 Use `a-progress` for a track with labels, hints, or custom content. Load its
 external CSS through `@antadesign/anta/elements/a-progress` or the full bundle.
 It works without JavaScript or custom element registration.
 
 CSS paints the fill and loading stripes through `a-progress::before` and
-calculates the fill width from the host's `value` and `max`. Numeric
-`--progress-value` and `--progress-max` variables take precedence over the corresponding attributes. JSX supplies these
-variables; raw HTML can set them in an application stylesheet. See
-[Browser support](/install-config/#browser-support) for the attribute fallback.
+calculates the fill width from `value` and `max`. The JSX wrapper keeps its
+attributes, CSS variables, visible labels, and ARIA in sync from props.
 
-`role` and ARIA values belong on `a-progress`. When updating raw HTML, update
-`value`, any supplied value variables, the visible text, and ARIA together.
-Omit `value` for the loading animation.
+When updating raw HTML, keep `value`, `max`, visible text, and ARIA in sync.
+Omit `value` for the loading animation. See
+[Browser support](/install-config/#browser-support) for attribute-only rendering.
 
 ### Native HTML progress
 

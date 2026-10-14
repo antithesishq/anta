@@ -52,15 +52,7 @@ import '@antadesign/anta/elements/a-progress'  // CSS-only Progress entry
 Raw web components work without JSX:
 
 ```html
-<a-progress class="upload-progress" value="42" max="100" tone="info" role="progressbar"
+<a-progress value="42" max="100" tone="info" role="progressbar"
   aria-label="Upload" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">
 </a-progress>
 ```
-
-In your application stylesheet:
-
-```css
-a-progress.upload-progress { --progress-value: 42; --progress-max: 100; }
-```
-
-These variables override the attributes and work without numeric CSS `attr()`.

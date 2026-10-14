@@ -562,9 +562,10 @@ Raw Progress can read `value` and `max` through numeric CSS `attr()`.
 lists this syntax in Chrome/Edge 133+, Firefox 155+, and Safari Technology
 Preview; it is not part of Anta's minimum browser requirements. Numeric
 `--progress-value` and `--progress-max` variables override the corresponding
-attributes. JSX supplies these variables across supported browsers. For raw
-HTML in browsers without numeric `attr()`, supply them in an application
-stylesheet.
+attributes. JSX supplies and updates these variables automatically from props
+across supported browsers. Attribute-only raw `a-progress` requires numeric
+`attr()` support. Native `<progress data-anta>` uses browser-owned values across
+the supported browsers.
 
 ## Content Security Policy
 
@@ -581,8 +582,8 @@ produces inline styles. Server rendering serializes these values into HTML
 `style` attributes, which `style-src-attr 'none'` blocks. Put these
 customizations in classes and an allowed stylesheet when inline attributes are
 forbidden. Progress can read raw `value` and `max` attributes where numeric
-CSS `attr()` is supported; older browsers need its CSS variables in an allowed
-stylesheet. Client-side assignments to individual CSS properties can behave
+CSS `attr()` is supported. Native `<progress data-anta>` reads its values
+without inline CSS variables across supported browsers. Client-side assignments to individual CSS properties can behave
 differently; do not rely on hydration to repair blocked server-rendered styles.
 See [CSP rules for style attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
 

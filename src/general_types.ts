@@ -1408,16 +1408,10 @@ export interface ACardAttributes extends BaseAttributes {
   round?: boolean | number | string
 }
 
-/**
- * Attributes for the `<a-banner>` custom element — a full-width, dismissible
- * message strip (borderless by default; opt into a rule via `border-bottom-width` /
- * `border-width`, the Progress pattern). Slots (light-DOM children): `message`
- * (leading), the default slot (middle content), `actions` (trailing), and `close`
- * (the ✕ button). The element exposes `::part(message | content | actions | close)`,
- * and `:state(open)` / `:state(closed)` as visibility hooks (the external
- * sheet collapses the host on `:state(closed)`). Low-level attributes; for the
- * typed JSX wrapper use `Banner` from `@antadesign/anta`.
- */
+/** Light-DOM Banner attributes. Authors supply `a-banner-message`, optional
+ * boxless `a-banner-content`, one `a-banner-actions` region, and `a-banner-close`
+ * containing an accessible Button. `statechange` requests dismissal;
+ * ElementInternals holds uncontrolled visibility without rewriting authored DOM. */
 export interface ABannerAttributes extends BaseAttributes {
   /** Controlled visibility (`'open'` / `'closed'`). Present → controlled: the
    *  attribute is the source of truth, the ✕ dismiss only dispatches the cancelable

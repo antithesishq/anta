@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 13, 2026 on `codex/progress-light-dom`.
+Updated October 14, 2026 on `codex/banner-light-dom`.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -35,8 +35,11 @@ Panel stays outside this refactor and retains its current implementation.
 The following is the proposed order. Each item includes research, implementation,
 and verification before moving to the next component.
 
-1. [ ] [Banner](src/elements/a-banner.ts): content and action layout, empty
-   regions, and dismissal behavior.
+1. [x] [Banner](src/elements/a-banner.ts): light-DOM regions and external CSS
+   implemented. Visibility remains in ElementInternals; JSX omits absent actions
+   and CSS hides empty regions. No content observers or DOM rewriting.
+   Dismissal transitions retained. Source, installed-package, minimum Chrome,
+   original-layout, and production checks passed; coverage limits are below.
 2. [ ] [Expander](src/elements/a-expander.ts): header, content, indicators, and
    collapse animation. Boolean `round` now uses a CSS radius; the measured-radius
    issue described in the historical audit is resolved. Static shadow styles
@@ -74,6 +77,66 @@ composition, and consumer CSS overrides. Check full and granular imports under
 an actual CSP response header. Custom values serialized into `style` attributes
 remain a separate constraint; completing the stylesheet checklist does not make
 every dynamic JSX prop compatible with `style-src-attr 'none'`.
+
+### Banner verification
+
+Verified October 14, 2026:
+
+- `pnpm test:banner`: 55 source checks passed in Chrome `155.0.8059.40`,
+  Firefox `155.0`, and Playwright WebKit `26.6`. The same 55 checks passed against
+  an extracted npm tarball made with `npm pack --ignore-scripts`.
+- The packed suite passed 19 checks in Chrome for Testing `135.0.7049.114`,
+  the supported minimum major version. Set `ANTA_BANNER_CHROMIUM_EXECUTABLE`
+  to a browser executable and `ANTA_TEST_WEBKIT=0` to repeat that check.
+  `ANTA_BANNER_PACKAGE_ROOT` selects the extracted package directory.
+- CSP was supplied as an HTTP response header with same-origin scripts and
+  styles, `style-src-attr 'none'`, and data images allowed for Icon masks. No CSP
+  violations occurred. Coverage includes initial rendering, SSR/hydration,
+  keyboard and pointer dismissal, cancellation, controlled rejection/restoration,
+  nesting, empty regions, reduced motion, overrides, and both mixed import orders.
+- Compared the original Banner at `84ae9fff` after registration with the new
+  layout: start, center, RTL, round, wrapped, no actions, and no close control.
+  Host and content geometry matched exactly in all three engines, across 21
+  comparisons. Screenshots retained the original appearance; dismissal timings
+  and the transition declarations were preserved.
+- The production site built successfully and passed all 10 production checks.
+  The Banner page's controlled and raw demonstrations also passed interaction
+  checks in Chrome and WebKit, including rejecting dismissal and showing it again.
+- Root regressions passed all 325 checks selected by the existing CI command.
+  The unfiltered run passed 325 of 326; the debounce-clock case failed with
+  `Cannot fast-forward to the past`, matching CI's existing exclusion.
+  Anta lint/type checking, sticker type checking, and site CSS lint passed.
+- PR review found that the close-request path used the current document's
+  `Element` constructor, which rejected a Banner adopted from another document.
+  A realm-independent node/tag check fixes that regression. The expanded suite
+  passed 61 source checks and 61 packed-artifact checks in all three engines,
+  including six same-origin iframe cases covering dismissal, nested isolation,
+  unchanged markup, and CSP. The earlier minimum Chrome run covered 19 checks
+  before these adoption cases were added.
+- The SSR and package follow-up passed all 73 source checks and all 73
+  installed-package checks in the same three engines. `pnpm test:banner:package`
+  installs an npm tarball in an isolated consumer and resolves public package
+  exports, including granular entries, the full bundle, and their stylesheets.
+  Builds use the installed package without Anta source aliases or workspace links.
+  React and Preact each generate their own server HTML. Hydration preserves the
+  server-rendered nodes and reports no React recovery errors. Initially controlled
+  closed banners hydrate, reopen, reject dismissal, and accept it in both import
+  modes. The installed consumer uses React/React DOM `19.3.0`, Preact `10.29.8`,
+  and `preact-render-to-string` `6.7.0`. PR CI selects core source checks through
+  the shared fast tier. Full source and installed-package matrices remain in the
+  slow tier for manual runs.
+- The shared tier split passed 44 core checks across Banner, Calendar/InputDate,
+  Card, Progress, and Text in about 16 seconds locally. Full coverage passed all
+  218 source checks and 73 installed Banner checks. Tier selection regressions,
+  Anta lint, and workflow YAML parsing also passed.
+
+Exact Firefox `136` and Safari/iOS Safari `17.4` were not executed. Their
+required custom-state APIs are covered by the
+[MDN compatibility data](https://github.com/mdn/browser-compat-data/blob/main/api/CustomStateSet.json)
+and [Safari 17.4 release notes](https://webkit.org/blog/15063/webkit-features-in-safari-17-4/).
+The existing display and intrinsic-size transitions remain progressive
+enhancements; this refactor adds no animation fallback or newer baseline API.
+Current Playwright WebKit is engine evidence, not a shipping Safari 17.4 run.
 
 ## Scope and conclusion
 

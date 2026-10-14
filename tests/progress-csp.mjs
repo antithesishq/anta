@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { after, before, test } from 'node:test'
+import { after, before } from 'node:test'
+import { componentTest as test, componentEngines } from './component-tier.mjs'
 import { createServer } from 'node:http'
 import { createRequire, Module } from 'node:module'
 import { readFile } from 'node:fs/promises'
@@ -10,7 +11,7 @@ const requireSite = createRequire(new URL('../site/package.json', import.meta.ur
 const requirePlot = createRequire(new URL('../plot/package.json', import.meta.url))
 const { chromium, firefox, webkit } = requireSite('playwright')
 const { PNG } = requireSite('pngjs')
-const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, firefox, webkit]
+const engines = componentEngines([chromium, firefox, webkit])
 const source = process.env.ANTA_PROGRESS_PACKAGE_ROOT ? resolve(process.env.ANTA_PROGRESS_PACKAGE_ROOT, 'dist') : resolve('src')
 const strictPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; object-src 'none'"
 const jsxPolicy = strictPolicy.replace("style-src-attr 'none'", "style-src-attr 'unsafe-inline'")
@@ -131,7 +132,7 @@ async function assertPaintedFill(page, selector) {
   assert.deepEqual(pixel(200), [255, 255, 255])
 }
 for (const engine of engines) {
-  test(`${engine.name()}: SSR paints one declarative indicator with JavaScript disabled`, async t => {
+  test.fast(`${engine.name()}: SSR paints one declarative indicator with JavaScript disabled`, async t => {
     const page = await pageFor(t, engine, 'granular', '', false)
     assert.equal(await page.locator('a-progress').getAttribute('aria-valuenow'), '42')
     assert.equal((await page.locator('a-progress-label').innerText()).replace(/\s+/g, ' '), '42% Upload 3 of 7')
@@ -140,7 +141,7 @@ for (const engine of engines) {
     assert.equal(await page.locator('a-progress').evaluate(n => n.shadowRoot), null)
     await assertPaintedFill(page, 'a-progress')
   })
-  test(`${engine.name()}: raw attributes paint under strict CSP without JavaScript`, async t => {
+  test.fast(`${engine.name()}: raw attributes paint under strict CSP without JavaScript`, async t => {
     const page = await pageFor(t, engine, 'granular', '&raw=1', false)
     await assertPaintedFill(page, 'a-progress')
   })
@@ -172,7 +173,7 @@ for (const engine of engines) {
     })
     await waitForFraction(page, 0.25)
   })
-  test(`${engine.name()}: strict CSP blocks serialized JSX variables while CSS reads the attributes`, async t => {
+  test.fast(`${engine.name()}: strict CSP blocks serialized JSX variables while CSS reads the attributes`, async t => {
     const page = await pageFor(t, engine, 'granular', '&strict=1', true, ['style-src-attr'])
     assert.equal(await page.locator('a-progress').evaluate(n => n.style.getPropertyValue('--progress-value')), '')
     assert.ok(Math.abs((await indicator(page)).fraction - 0.42) < 0.001)
@@ -184,7 +185,7 @@ for (const engine of engines) {
     await page.emulateMedia({reducedMotion: 'no-preference'})
     assert.equal((await indicator(page)).animations, 1)
   })
-  test(`${engine.name()}: native progress paints independently through the shared entry without JavaScript`, async t => {
+  test.fast(`${engine.name()}: native progress paints independently through the shared entry without JavaScript`, async t => {
     const page = await pageFor(t, engine, 'native', '', false)
     assert.equal(await page.locator('a-progress, a-progress-indicator').count(), 0)
     assert.equal(await page.locator('progress').evaluate(n => n.position), 0.42)
@@ -262,7 +263,7 @@ for (const engine of engines) {
     assert.notEqual(before[1].tone,before[2].tone)
   })
   for (const mode of ['granular', 'bundle']) {
-    test(`${engine.name()}: ${mode} imports keep geometry, ARIA, and authored DOM unchanged under CSP`, async t => {
+    test.fast(`${engine.name()}: ${mode} imports keep geometry, ARIA, and authored DOM unchanged under CSP`, async t => {
       const page = await pageFor(t, engine, mode, '&raw=1')
       const before = await geometry(page)
       const html = await page.locator('a-progress').evaluate(n => n.outerHTML)
@@ -301,7 +302,7 @@ for (const engine of engines) {
         await waitForFraction(page, fraction)
       }
     })
-    test(`${engine.name()}: ${mode} loading animates externally, respects reduced motion, and keeps nested values independent`, async t => {
+    test(`${engine.name()}: ${mode} loading animates externally, respects reduced motion, and keeps nested values independent`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
       const page = await pageFor(t, engine, mode, '&loading=1')
       await loadEntry(page, mode)
       assert.match((await indicator(page)).image, /repeating-linear-gradient/)
@@ -336,7 +337,7 @@ for (const engine of engines) {
     }
   })
   for (const framework of ['React','Preact']) {
-    test(`${engine.name()}: ${framework} hydration and updates preserve ownership and accessibility`, async t => {
+    test.fast(`${engine.name()}: ${framework} hydration and updates preserve ownership and accessibility`, async t => {
       for (const loadFirst of [false,true]) {
         const page = await pageFor(t, engine)
         const before = await geometry(page)

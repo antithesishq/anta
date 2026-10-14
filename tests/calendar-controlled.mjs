@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { after, before, test } from 'node:test'
+import { after, before } from 'node:test'
+import { componentTest as test, componentEngines } from './component-tier.mjs'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { build } from 'esbuild'
@@ -7,7 +8,7 @@ import { build } from 'esbuild'
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const requirePlot = createRequire(new URL('../plot/package.json', import.meta.url))
 const { chromium, webkit } = requireSite('playwright')
-const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, webkit]
+const engines = componentEngines([chromium, webkit])
 const browsers = new Map()
 const fixtures = new Map()
 let elements
@@ -119,7 +120,7 @@ async function expectDate(page, date) {
 for (const engine of engines) {
   for (const framework of ['React', 'Preact']) {
     for (const delayed of [false, true]) {
-      test(`${engine.name()}: ${framework} controlled Calendar round-trips ${delayed ? 'before' : 'after'} registration`, async t => {
+      test(`${engine.name()}: ${framework} controlled Calendar round-trips ${delayed ? 'before' : 'after'} registration`, {tier: delayed ? 'slow' : 'fast'}, async t => {
         const page = await pageFor(t, engine, framework, { value: '2026-10-08', accept: true }, delayed)
         await expectDate(page, '2026-10-08')
         assert.deepEqual(await page.evaluate(() => window.log), { requests: [], changes: [] })
@@ -135,7 +136,7 @@ for (const engine of engines) {
       })
     }
 
-    test(`${engine.name()}: ${framework} controlled Calendar rejects repeated picks without changing its form value`, async t => {
+    test.fast(`${engine.name()}: ${framework} controlled Calendar rejects repeated picks without changing its form value`, async t => {
       const page = await pageFor(t, engine, framework, { value: '2026-10-08', accept: false })
       await page.evaluate(() => {
         window.mutations = []
@@ -163,7 +164,7 @@ for (const engine of engines) {
       assert.deepEqual(await page.evaluate(() => window.log.changes), ['2026-10-07', '2026-10-08'])
     })
 
-    test(`${engine.name()}: ${framework} uncontrolled Calendar supports veto, reset, and restore`, async t => {
+    test.fast(`${engine.name()}: ${framework} uncontrolled Calendar supports veto, reset, and restore`, async t => {
       const page = await pageFor(t, engine, framework, { defaultValue: '2026-10-08' })
       await expectDate(page, '2026-10-08')
       await page.evaluate(() => window.veto = true)
@@ -179,7 +180,7 @@ for (const engine of engines) {
       assert.deepEqual(await page.evaluate(() => window.log.changes), ['2026-10-07', '2026-10-08', '2026-10-06'])
     })
 
-    test(`${engine.name()}: ${framework} controlled InputDate can select a previous date again`, async t => {
+    test.fast(`${engine.name()}: ${framework} controlled InputDate can select a previous date again`, async t => {
       const page = await pageFor(t, engine, framework, { inputDate: true, value: '2026-10-08' })
       await expectDate(page, '2026-10-08')
       for (const date of ['2026-10-07', '2026-10-08']) {

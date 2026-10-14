@@ -553,6 +553,8 @@
   a-card > a:focus-visible,
   :is(a-checkbox, a-radio, a-switch):focus-visible::before,
   a-radio-group:focus-visible a-radio:state(selected)::before {
+    --focus-ring-offset: 0px;
+
     outline: 2px solid var(--focus-ring);
     outline-offset: calc(-2px * var(--focus-ring-inset, 0));
     animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
@@ -1163,6 +1165,8 @@
   a-slider:focus-visible::part(control),
   a-slider::part(thumb):focus-visible,
   input[data-anta][type="range"]:focus-visible {
+    --focus-ring-offset: 0px;
+
     outline-width: 2px;
     animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
 
@@ -1268,6 +1272,7 @@
   a-input:not([readonly]):focus::part(field),
   a-input[readonly]:state(kb-focus)::part(field) {
     --focus-ring-pulse-width: 3px;
+    --focus-ring-offset: 0px;
 
     animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
 
@@ -1344,6 +1349,7 @@
 
   a-input-time:focus-within::part(field) {
     --focus-ring-pulse-width: 3px;
+    --focus-ring-offset: 0px;
 
     outline: 2px solid var(--focus-ring);
     outline-offset: -1px;
@@ -1487,10 +1493,14 @@
 
 /* Plain focusable HTML, such as links, takes the controls' 2px ring and pulse.
    In the reset layer, every component focus rule still wins; `:root` outranks
-   the reset's bare `:focus-visible`. Native Anta fields keep their own ring. */
+   the reset's bare `:focus-visible`. Native Anta fields keep their own ring.
+   The pulse holds the 2px resting offset instead of animating it. */
 @layer anta.reset {
   :root :focus-visible:not([data-anta]) {
+    --focus-ring-offset: 2px;
+
     outline-width: 2px;
+    outline-offset: var(--focus-ring-offset);
     animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
 
     @media (prefers-reduced-motion: reduce) {
@@ -1499,15 +1509,18 @@
   }
 }
 
+/* `--focus-ring-offset` is the ring's resting offset. Chromium floors outline
+   offsets to whole pixels, so animating from 0 toward a positive rest would
+   stall 1px short and jump out when the pulse ends. */
 @keyframes focus-ring-pulse {
   from {
     outline-width: 0;
-    outline-offset: 0;
+    outline-offset: var(--focus-ring-offset, 0px);
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
   }
   30% {
     outline-width: var(--focus-ring-pulse-width, 4px);
-    outline-offset: calc(-1 * var(--focus-ring-pulse-width, 4px) * var(--focus-ring-inset, 0));
+    outline-offset: calc(var(--focus-ring-offset, 0px) - var(--focus-ring-pulse-width, 4px) * var(--focus-ring-inset, 0));
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
   }
 }

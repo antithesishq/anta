@@ -242,6 +242,7 @@
     display: block;
     grid-column: 1;
     grid-row: 1;
+    align-self: center;
     padding: var(--_expander-header-padding-block) var(--_expander-header-padding-end) var(--_expander-header-padding-block) var(--expander-gutter);
   }
   a-expander:not(:defined) > :is(a-expander-summary, a-expander-title)::before {
@@ -310,7 +311,8 @@
   a-expander:is(:state(open), :not(:defined)[state="open"], :not(:defined):not([state])[default-state="open"]) > a-expander-indicator[data-when="closed"] { display: none; }
   a-expander:not(:defined):is([state="open"], :not([state])[default-state="open"]) > :is(a-expander-summary, a-expander-title)::before { transform: translateY(-50%) rotate(90deg); opacity: 1; }
   a-expander:not(:defined)[indicator-placement="end"]:is([state="open"], :not([state])[default-state="open"])::before { transform: rotate(270deg); opacity: 1; }
-  a-expander:not(:defined)[indicator="plus"]::before { transform: none; }
+  a-expander:not(:defined)[indicator="plus"]:is([state="open"], :not([state])[default-state="open"]) > :is(a-expander-summary, a-expander-title)::before { transform: translateY(-50%); }
+  a-expander:not(:defined)[indicator="plus"][indicator-placement="end"]:is([state="open"], :not([state])[default-state="open"])::before { transform: none; }
   a-expander:not(:defined)[indicator="plus"]:is([state="open"], :not([state])[default-state="open"]) {
     --_expander-indicator-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 7h12v2H2z'/%3E%3C/svg%3E");
   }

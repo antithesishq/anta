@@ -111,7 +111,7 @@ before(async () => {
     checkInstalledInputs(result)
     assets.set(`/${framework}.js`, result.outputFiles.find(file => file.path.endsWith('.js')).text)
   }
-  assets.set('/fixture.css', 'body {margin: 40px;} #mount {width: 360px;} a-expander-summary {box-sizing: border-box;} .wrapped > a-expander-summary {white-space: normal;} .fixed-round {--expander-round: 12px;} .custom-tone {--expander-tone-source: rebeccapurple;}')
+  assets.set('/fixture.css', 'body {margin: 40px;} #mount {width: 360px;} a-expander-summary {box-sizing: border-box;} .wrapped > a-expander-summary {white-space: normal;} .tall-actions > a-expander-actions > button {height: 60px; width: 90px;} .fixed-round {--expander-round: 12px;} .custom-tone {--expander-tone-source: rebeccapurple;}')
   assets.set('/boot.js', `window.cspViolations=[]; document.addEventListener('securitypolicyviolation', e=>window.cspViolations.push(e.effectiveDirective));`)
   server = createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost')
@@ -217,6 +217,52 @@ test.fast('Expander SSR owns named regions and summary level without structural 
 
 for (const engine of engines) {
   for (const mode of ['granular', 'bundle']) {
+    test.fast(`${engine.name()} ${mode}: tall actions preserve short, wrapped and rich title geometry through upgrade`, async t => {
+      for (const placement of ['start', 'end']) {
+        for (const title of [
+          '<a-expander-summary>Short title</a-expander-summary>',
+          '<a-expander-summary>A wrapped heading with enough text to use two lines.</a-expander-summary>',
+          '<a-expander-title><strong>Rich title</strong></a-expander-title>',
+        ]) {
+          const page = await pageFor(t, engine, mode)
+          await mount(page, `${title}<a-expander-actions><button>Download</button></a-expander-actions><a-expander-details>Details</a-expander-details>`,
+            {class: 'tall-actions wrapped', 'indicator-placement': placement})
+          const before = await geometry(page)
+          await register(page, mode)
+          assert.deepEqual(await geometry(page), before, `${placement}: ${title}`)
+        }
+      }
+    })
+    test.fast(`${engine.name()} ${mode}: initially open plus indicators show a horizontal minus at both placements`, async t => {
+      for (const placement of ['start', 'end']) {
+        for (const stateAttribute of ['state', 'default-state']) {
+          const page = await pageFor(t, engine, mode)
+          await mount(page, markup, {indicator: 'plus', 'indicator-placement': placement, [stateAttribute]: 'open'})
+          const initial = await page.locator('a-expander').evaluate((host) => {
+            const node = host.getAttribute('indicator-placement') === 'end' ? host : host.querySelector('a-expander-summary')
+            const style = getComputedStyle(node, '::before')
+            const matrix = new DOMMatrixReadOnly(style.transform === 'none' ? undefined : style.transform)
+            return {rotation: [matrix.a, matrix.b, matrix.c, matrix.d], mask: style.maskImage}
+          })
+          assert.deepEqual(initial.rotation, [1, 0, 0, 1], `${placement}, ${stateAttribute}: horizontal minus before upgrade`)
+          assert.match(initial.mask, /M2(?:%20| )7h12v2H2z/i)
+          const before = await geometry(page)
+          await register(page, mode)
+          assert.deepEqual(await geometry(page), before)
+          const upgraded = await page.locator('a-expander').evaluate(host => {
+            const indicator = host.shadowRoot.querySelector('[part="indicator"]')
+            const transform = getComputedStyle(indicator).transform
+            const matrix = new DOMMatrixReadOnly(transform === 'none' ? undefined : transform)
+            const glyph = host.shadowRoot.querySelector('[part="glyph"]')
+            const horizontal = getComputedStyle(glyph, '::before')
+            return {rotation: [matrix.a, matrix.b, matrix.c, matrix.d], width: parseFloat(horizontal.width), height: parseFloat(horizontal.height), vertical: getComputedStyle(glyph, '::after').transform}
+          })
+          assert.deepEqual(upgraded.rotation, initial.rotation)
+          assert.ok(upgraded.width > upgraded.height)
+          assert.equal(upgraded.vertical, 'matrix(1, 0, 0, 0, 0, 0)')
+        }
+      }
+    })
     test.fast(`${engine.name()} ${mode}: initial geometry, pointer and keyboard activation, actions, CSP and ownership`, async t => {
       const page = await pageFor(t, engine, mode)
       await mount(page)

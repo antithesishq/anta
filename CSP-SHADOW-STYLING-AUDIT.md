@@ -145,14 +145,14 @@ Current Playwright WebKit is engine evidence, not a shipping Safari 17.4 run.
 
 Verified October 14, 2026:
 
-- `pnpm test:expander` passed all 61 source checks in Chrome `155.0.8059.40`,
+- `pnpm test:expander` passed all 73 source checks in Chrome `155.0.8059.40`,
   Firefox `155.0`, and Playwright WebKit `26.6`.
-- `pnpm test:expander:package` passed the same 61 checks through an npm tarball
+- `pnpm test:expander:package` passed the same 73 checks through an npm tarball
   installed in an isolated consumer. Builds resolve public granular and full
   bundle exports without Anta source aliases or workspace links. React/React DOM
   `19.3.0`, Preact `10.29.8`, and `preact-render-to-string` `6.7.0` each generate
   their own SSR output; hydration retains nodes without React recovery errors.
-- The installed suite passed all 21 checks in Chrome for Testing
+- The installed suite passed all 25 checks in Chrome for Testing
   `135.0.7049.114`. Set `ANTA_EXPANDER_CHROMIUM_EXECUTABLE` to select an exact
   executable and `ANTA_TEST_WEBKIT=0` for the Chromium-only run.
 - Behavior and layout checks use actual CSP response headers with same-origin
@@ -174,6 +174,13 @@ Verified October 14, 2026:
   workflow uploads them. WebKit's Playwright screenshot helper injects an
   animation-sync stylesheet; WebKit captures use a separate context that permits
   that tool action. Original behavior/layout pages retain strict CSP enforcement.
+- Review regressions cover short, wrapped, and rich titles beside 60px actions,
+  plus initially open plus indicators at both placements with `state` and
+  `default-state`. They reproduce the original failures and pass through granular
+  and full bundle imports under CSP. All 12 Expander fast-tier checks passed.
+  The CI gate also selects Expander for an isolated `key-activation.ts` change.
+  Production Chrome and WebKit checks confirmed the historic `#indicator` and
+  `#round` documentation fragments still resolve to their sections.
 - The original 200ms grid transition, 150ms indicator motion, and delayed overflow
   transition remain. Applied state continues to read the owned button's ARIA,
   keeping custom-state query behavior out of the interaction algorithm. The new

@@ -127,7 +127,7 @@ jobs:
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-expander.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
             src/components/{Expander,Button,Icon}.tsx \
-            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
+            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts src/elements/{index,key-activation}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/expander-*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \

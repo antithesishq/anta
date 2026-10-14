@@ -7,9 +7,10 @@ changes are not listed.
 
 ### Breaking
 
-- [Expandable raw Text](/text/#expand-raw-html) requires an `a-text-content`
-  region and an `a-button` control. JSX props remain unchanged; granular
-  expandable usage also imports the Button element entry.
+- Expandable [Text](/text/#expand-raw-html): when importing elements individually,
+  also import `@antadesign/anta/elements/a-button`. The full bundle and elements
+  barrel already include it. JSX creates the expansion control automatically;
+  raw HTML users must update their markup using the linked example.
 
 - [Card markup](/card/#migrate-from-shadow-parts) uses light-DOM `a-card-*`
   regions. JSX props remain available; raw slot markup and `::part()` overrides
@@ -19,7 +20,7 @@ changes are not listed.
   135+ and Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints
   use live ARIA element references without a copied-text fallback.
 - [Select's default field](/select/#migrate-field-styles) now uses `a-input[button]`.
-  `className` and `style` apply to that host. For custom field CSS, pass
+  Select's `className` and `style` apply to the `<a-input>` element. For custom field CSS, pass
   `className="my-select"` and replace `a-select-field > a-button` with
   `.my-select::part(field)`. Target the selected text with `.my-select::part(input-label)`
   instead of `a-button-label`. Existing raw `a-select-field`
@@ -51,14 +52,6 @@ changes are not listed.
   `true`, independent of title level and header height. Explicit radius values
   remain supported; native `details[data-anta][round]` uses the same default.
 
-- Antithesis [Sliders](/slider/#size-tones-and-radius) use the filled rail's color
-  for the thumb when `thumbTone` is omitted. Pass `thumbTone="neutral"` to keep
-  a neutral thumb.
-- Antithesis [menus](/menu/) use 2px container corners and row-specific hover and
-  selected fills. Neutral labels use `text-1`; disabled labels, icons, and hints
-  use `text-4`. Explicit `round` values retain rounded menus.
-- In the Antithesis theme, serif headings use weight 300. Load a light cut of
-  your serif font.
 
 ### Fixed
 
@@ -82,8 +75,6 @@ changes are not listed.
 - [Input](/input/) button fields and [Select](/select/) describe the selected value
   only when a separate label supplies the accessible name. Empty fields keep
   placeholders out of the value description.
-- Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
-  and transparent tertiary fill when tone is omitted or set to `neutral`.
 - [Calendar](/input-date/#calendar) keeps controlled selection and form values
   in sync in React and Preact, including selecting a previous date again.
   Its element accepts selection through `state` and exposes `value` as read-only.

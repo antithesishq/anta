@@ -69,7 +69,7 @@ export function resolve_highlights<TooltipContent>(plot: ComposedPlot<TooltipCon
         if (series.highlight === false) {
             continue
         }
-        const spec = series_type<TooltipContent>(series.kind).highlight_spec?.(series, hit.point_index, plot.x_scale, plot.y_scale, plot.inner)
+        const spec = series_type(series).highlight_spec?.(series, hit.point_index, plot.x_scale, plot.y_scale, plot.inner)
 
         if (spec === undefined || spec === null) {
             continue

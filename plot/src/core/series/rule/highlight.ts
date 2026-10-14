@@ -14,7 +14,7 @@ import { crisp_rule_pos, DEFAULT_RULE_WIDTH, rule_values } from "./paint"
  * @param inner - the plot area, which the rule spans on the axis it doesn't constrain
  * @returns the halo spec, or null if the rule has no pixel position (unknown band / non-finite)
  */
-export function rule_highlight_spec(series: ComposedRule, point_index: number, x_scale: Scale, y_scale: Scale, inner: Rect): HighlightSpec | null {
+export function rule_highlight_spec<Row, TooltipContent>(series: ComposedRule<Row, TooltipContent>, point_index: number, x_scale: Scale, y_scale: Scale, inner: Rect): HighlightSpec | null {
     const is_vertical = series.side === 'x'
     const pos = pixel_resolver(is_vertical ? x_scale : y_scale, rule_values(series))(point_index)
 

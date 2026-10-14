@@ -19,7 +19,7 @@ export type BarAxes = {
  * @param y_scale - y scale
  * @returns the band / value scales and columns
  */
-export function bar_axes(series: ComposedBar, x_scale: Scale, y_scale: Scale): BarAxes {
+export function bar_axes<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, x_scale: Scale, y_scale: Scale): BarAxes {
     if ('bandwidth' in x_scale) {
         return {
             is_vertical: true,
@@ -48,7 +48,7 @@ export function bar_axes(series: ComposedBar, x_scale: Scale, y_scale: Scale): B
  * @param y_scale - y scale
  * @returns the series with its value_span filled in
  */
-export function compose_bar_layout<TooltipContent>(series: ComposedBar<TooltipContent>, x_scale: Scale, y_scale: Scale): ComposedSeries<TooltipContent> {
+export function compose_bar_layout<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, x_scale: Scale, y_scale: Scale): ComposedSeries<Row, TooltipContent> {
     return { ...series, value_span: bar_value_span(series, bar_axes(series, x_scale, y_scale)) }
 }
 
@@ -59,7 +59,7 @@ export function compose_bar_layout<TooltipContent>(series: ComposedBar<TooltipCo
  * @param axes - the series' resolved band / value axes
  * @returns the series' value span
  */
-export function series_value_span(series: ComposedBar, axes: BarAxes): BarPixelSpan {
+export function series_value_span<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, axes: BarAxes): BarPixelSpan {
     return series.value_span ?? bar_value_span(series, axes)
 }
 
@@ -72,7 +72,7 @@ export function series_value_span(series: ComposedBar, axes: BarAxes): BarPixelS
  * @param axes - the series' resolved band / value axes
  * @returns the baseline and tip pixel of every mark, index-parallel with the series columns
  */
-function bar_value_span(series: ComposedBar, axes: BarAxes): BarPixelSpan {
+function bar_value_span<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, axes: BarAxes): BarPixelSpan {
     const { value_scale: linear_scale, values, bands } = axes
     const baseline = new Float64Array(values.length)
     const tip = new Float64Array(values.length)
@@ -126,7 +126,7 @@ function stacked_offset(is_stacked: boolean, value: number, positive_total: numb
 }
 
 // The pixel a stack grows from: the value axis' zero, or the low end of the domain on a log axis, which has no zero.
-function value_origin(series: ComposedBar, linear_scale: NumericalScale): number {
+function value_origin<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, linear_scale: NumericalScale): number {
     const is_log = 'base' in linear_scale
 
     if (is_log && series.stack_base === undefined) {
@@ -137,8 +137,8 @@ function value_origin(series: ComposedBar, linear_scale: NumericalScale): number
 
 // What a mark would span with no minimum applied. A stacked segment is measured at its own place in the stack,
 // so a non-linear scale sizes it where it actually sits; a plain bar is measured from the axis baseline.
-function raw_span(
-    series: ComposedBar,
+function raw_span<Row, TooltipContent>(
+    series: ComposedBar<Row, TooltipContent>,
     i: number,
     linear_scale: NumericalScale,
     value: number,

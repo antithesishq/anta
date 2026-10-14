@@ -2,31 +2,31 @@ import { create_plot_surface_element } from './plot_surface'
 export type { APlotSurfaceElement, PlotSurfacePresentation, PlotSurfaceCanvases, PlotSurfaceEventMap } from './plot_surface'
 import type { ResolvedTooltip } from '../core/interactions/tooltip'
 import { create_plot_element } from './plot_element'
-import type { PlotArgs } from '../core/types'
-import { new_scatter } from '../core/series/scatter/factory'
-import { new_bar } from '../core/series/bar/factory'
-import { new_rect } from '../core/series/rect/factory'
-import { new_line } from '../core/series/line/factory'
-import { new_rule } from '../core/series/rule/factory'
-import { new_area } from '../core/series/area/factory'
-import { new_custom } from '../core/series/custom/factory'
+import type { PlotArgs, ScatterSeries, BarSeries, RectSeries, LineSeries, RuleSeries, AreaSeries, CustomSeries } from '../core/types'
+import { new_scatter, type ScatterArgs as CoreScatterArgs } from '../core/series/scatter/factory'
+import { new_bar, type BarArgs as CoreBarArgs } from '../core/series/bar/factory'
+import { new_rect, type RectArgs as CoreRectArgs } from '../core/series/rect/factory'
+import { new_line, type LineArgs as CoreLineArgs } from '../core/series/line/factory'
+import { new_rule, type RuleArgs as CoreRuleArgs } from '../core/series/rule/factory'
+import { new_area, type AreaArgs as CoreAreaArgs } from '../core/series/area/factory'
+import { new_custom, type CustomArgs as CoreCustomArgs } from '../core/series/custom/factory'
 
 // Reuse the core factories directly, with DOM Node tooltips at the browser boundary.
-export const scatter = new_scatter<Node>
-export const bar = new_bar<Node>
-export const rect = new_rect<Node>
-export const line = new_line<Node>
-export const rule = new_rule<Node>
-export const area = new_area<Node>
-export const custom = new_custom<Node>
+export const scatter: <Row>(args: ScatterArgs<Row>) => ScatterSeries<Row, Node> = new_scatter
+export const bar: <Row>(args: BarArgs<Row>) => BarSeries<Row, Node> = new_bar
+export const rect: <Row>(args: RectArgs<Row>) => RectSeries<Row, Node> = new_rect
+export const line: <Row>(args: LineArgs<Row>) => LineSeries<Row, Node> = new_line
+export const rule: <Row>(args: RuleArgs<Row>) => RuleSeries<Row, Node> = new_rule
+export const area: <Row>(args: AreaArgs<Row>) => AreaSeries<Row, Node> = new_area
+export const custom: <Row>(args: CustomArgs<Row>) => CustomSeries<Row, Node> = new_custom
 
-export type ScatterArgs = Parameters<typeof scatter>[0]
-export type BarArgs = Parameters<typeof bar>[0]
-export type RectArgs = Parameters<typeof rect>[0]
-export type LineArgs = Parameters<typeof line>[0]
-export type RuleArgs = Parameters<typeof rule>[0]
-export type AreaArgs = Parameters<typeof area>[0]
-export type CustomArgs = Parameters<typeof custom>[0]
+export type ScatterArgs<Row> = CoreScatterArgs<Row, Node>
+export type BarArgs<Row> = CoreBarArgs<Row, Node>
+export type RectArgs<Row> = CoreRectArgs<Row, Node>
+export type LineArgs<Row> = CoreLineArgs<Row, Node>
+export type RuleArgs<Row> = CoreRuleArgs<Row, Node>
+export type AreaArgs<Row> = CoreAreaArgs<Row, Node>
+export type CustomArgs<Row> = CoreCustomArgs<Row, Node>
 
 /** Renderer owns the target's children and receives an empty list when hover clears. */
 export type PlotTooltipRenderer<Content = Node> =

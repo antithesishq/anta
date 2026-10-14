@@ -1,5 +1,5 @@
 import { series_type } from "../registry"
-import type { ComposedPlot, PointData } from "../types"
+import type { ComposedPlot, PointData, TooltipData } from "../types"
 
 // A hit on a specific point of a composed series.
 export type NearestPoint = {
@@ -41,7 +41,7 @@ export function find_hits<TooltipContent>(plot: ComposedPlot<TooltipContent>, cu
         if (series.hoverable === false) {
             continue
         }
-        const point_index = series_type<TooltipContent>(series.kind).tooltip_hit_test(series, cursor, plot.x_scale, plot.y_scale, plot.inner)
+        const point_index = series_type(series).tooltip_hit_test(series, cursor, plot.x_scale, plot.y_scale, plot.inner)
 
         if (point_index !== null) {
             hits.push({ series_index, point_index })
@@ -61,7 +61,7 @@ export function selectable_hit<TooltipContent>(plot: ComposedPlot<TooltipContent
 }
 
 /** Resolve the host callback payload for a hit point. */
-export function resolve_point_data<TooltipContent>(plot: ComposedPlot<TooltipContent>, point: NearestPoint): PointData | undefined {
+export function resolve_point_data<TooltipContent>(plot: ComposedPlot<TooltipContent>, point: NearestPoint): PointData<unknown> | undefined {
     const series = plot.series[point.series_index]
 
     // A plot can change while a host is still rendering hover state from its previous composition.
@@ -70,14 +70,12 @@ export function resolve_point_data<TooltipContent>(plot: ComposedPlot<TooltipCon
         return undefined
     }
     const point_index = point.point_index
-    const data: PointData = {
+    const data: PointData<unknown> = {
         x: point_value(series.x, plot.x_categories, point_index),
         y: point_value(series.y, plot.y_categories, point_index),
     }
-    const row = series.rows?.[point_index]
-
-    if (row !== undefined) {
-        data.row = row
+    if (series.rows !== undefined) {
+        data.row = series.rows[point_index]
     }
     const label = series.labels?.[point_index]
 
@@ -85,6 +83,11 @@ export function resolve_point_data<TooltipContent>(plot: ComposedPlot<TooltipCon
         data.label = label
     }
     return data
+}
+
+/** Check whether point data includes a row property, even when its value is undefined. */
+export function has_point_row<Row>(data: PointData<Row>): data is TooltipData<Row> {
+    return 'row' in data
 }
 
 function point_value(values: Float64Array, categories: string[] | undefined, index: number): number | string {

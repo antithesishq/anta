@@ -9,13 +9,13 @@ await build({
         export { create_anta_host } from './src/integrations/anta_host'
         export { PlotHost } from './src/integrations/plot_host'
         export { capture_pointer_input, capture_wheel_input } from './src/integrations/anta_gestures'
-        export { scatter } from './src/entries/index'
+        export { scatter, rule } from './src/entries/index'
         export { zoom_transition, zoom_transition_duration, pan_frame, pan_has_room, zoomable_views, zoom_viewport } from './src/core/interactions/zoom_pan'
     `, resolveDir: fileURLToPath(new URL('..', import.meta.url)) },
     bundle: true, platform: 'node', format: 'esm', external: ['react'],
     outfile: fileURLToPath(new URL('../.build/interaction-target-test.mjs', import.meta.url)),
 })
-const { PlotController, create_anta_host, PlotHost, capture_pointer_input, capture_wheel_input, scatter,
+const { PlotController, create_anta_host, PlotHost, capture_pointer_input, capture_wheel_input, scatter, rule,
     zoom_transition, zoom_transition_duration, pan_frame, pan_has_room, zoomable_views, zoom_viewport } =
     await import('../.build/interaction-target-test.mjs')
 const noop = () => {}
@@ -36,6 +36,81 @@ function render(controller, width = 600, height = 400) {
     controller.draw(context())
 }
 const target = (controller, offsetX, offsetY) => controller.interaction_target({ offsetX, offsetY })
+
+test('a rowless rule fires tooltip and selection callbacks with row omitted', () => {
+    const tooltipPayloads = []
+    const selectionPayloads = []
+    const controller = new PlotController({
+        series: [rule({
+            x: 3,
+            tooltip: data => { tooltipPayloads.push(data); return 'rule tooltip' },
+            on_select: data => selectionPayloads.push(data),
+        })],
+        axis: { x: { min: 0, max: 10 }, y: { min: 0, max: 10 } },
+    }, failure => { throw failure.error })
+    render(controller)
+
+    assert.deepEqual(controller.interactions.resolve_tooltips([{ series_index: 0, point_index: 0 }]), [
+        { kind: 'custom', content: 'rule tooltip' },
+    ])
+    const plot = controller.composed_plot
+    const selected = controller.interactions.on_click({
+        offsetX: plot.x_scale(3) - plot.layout.margin_left,
+        offsetY: plot.y_scale(5) - plot.layout.margin_top,
+    })
+
+    assert.deepEqual(tooltipPayloads, [{ x: 3, y: NaN }])
+    assert.deepEqual(selectionPayloads, [{ x: 3, y: NaN }])
+    assert.equal(selected, selectionPayloads[0])
+})
+
+test('scatter tooltip and selection receive the original data row', () => {
+    const row = { x: 3, y: 4, name: 'point' }
+    const tooltipRows = []
+    const selectionRows = []
+    const controller = new PlotController({
+        series: [scatter({
+            data: [row],
+            tooltip: data => { tooltipRows.push(data.row); return data.row.name },
+            on_select: data => selectionRows.push(data.row),
+        })],
+        axis: { x: { min: 0, max: 10 }, y: { min: 0, max: 10 } },
+    }, failure => { throw failure.error })
+    render(controller)
+
+    assert.deepEqual(controller.interactions.resolve_tooltips([{ series_index: 0, point_index: 0 }]), [
+        { kind: 'custom', content: 'point' },
+    ])
+    const plot = controller.composed_plot
+    controller.interactions.on_click({
+        offsetX: plot.x_scale(3) - plot.layout.margin_left,
+        offsetY: plot.y_scale(4) - plot.layout.margin_top,
+    })
+
+    assert.equal(tooltipRows.length, 1)
+    assert.equal(selectionRows.length, 1)
+    assert.equal(tooltipRows[0], row)
+    assert.equal(selectionRows[0], row)
+})
+
+test('a rowless handcrafted scatter does not report a selection whose callback was skipped', () => {
+    let calls = 0
+    const controller = new PlotController({
+        series: [{
+            kind: 'scatter', x: Float64Array.of(3), y: Float64Array.of(4),
+            on_select: () => { calls++ },
+        }],
+        axis: { x: { min: 0, max: 10 }, y: { min: 0, max: 10 } },
+    }, failure => { throw failure.error })
+    render(controller)
+    const plot = controller.composed_plot
+    const selected = controller.interactions.on_click({
+        offsetX: plot.x_scale(3) - plot.layout.margin_left,
+        offsetY: plot.y_scale(4) - plot.layout.margin_top,
+    })
+    assert.equal(calls, 0)
+    assert.equal(selected, undefined)
+})
 
 test('drawn tick bounds define margin-only strips, including hidden axes and resize', () => {
     const controller = new PlotController(args, failure => { throw failure.error })

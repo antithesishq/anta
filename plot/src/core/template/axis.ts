@@ -25,7 +25,7 @@ type AxisTemplateResolution = {
  * @param axis - the caller's axis declaration
  * @returns the resolved x and y axis templates and translations
  */
-export function build_resolved_axes(series: Series[], axis: PlotArgs['axis']): { x_resolved: AxisTemplateResolution; y_resolved: AxisTemplateResolution } {
+export function build_resolved_axes<Row, TooltipContent>(series: Series<Row, TooltipContent>[], axis: PlotArgs<TooltipContent>['axis']): { x_resolved: AxisTemplateResolution; y_resolved: AxisTemplateResolution } {
     const { x_axis, y_axis } = validate_and_build_axes_context(series, axis)
     const auto_domains = compute_auto_domains(series, x_axis, y_axis)
 
@@ -43,7 +43,7 @@ export function build_resolved_axes(series: Series[], axis: PlotArgs['axis']): {
  * @param y_axis - resolved y axis context
  * @returns per-side auto domain
  */
-function compute_auto_domains(series: Series[], x_axis: AxisContext, y_axis: AxisContext): { x: Domain; y: Domain } {
+function compute_auto_domains<Row, TooltipContent>(series: Series<Row, TooltipContent>[], x_axis: AxisContext, y_axis: AxisContext): { x: Domain; y: Domain } {
     const x_needs_auto = !x_axis.is_category && needs_auto(x_axis.args)
     const y_needs_auto = !y_axis.is_category && needs_auto(y_axis.args)
 
@@ -60,13 +60,13 @@ function compute_auto_domains(series: Series[], x_axis: AxisContext, y_axis: Axi
  * @param axis - the caller's axis declaration
  * @returns the resolved x and y axes (kind, rendered, label, scale, padding mode)
  */
-function validate_and_build_axes_context(series: Series[], axis: PlotArgs['axis']): { x_axis: AxisContext; y_axis: AxisContext } {
+function validate_and_build_axes_context<Row, TooltipContent>(series: Series<Row, TooltipContent>[], axis: PlotArgs<TooltipContent>['axis']): { x_axis: AxisContext; y_axis: AxisContext } {
     const x_axis = build_axis_side(series, axis?.x ?? {}, 'x')
     const y_axis = build_axis_side(series, axis?.y ?? {}, 'y')
 
     // cross-axis: these hooks compare both sides (e.g. bar needs exactly one band axis)
     for (let i = 0; i < series.length; i++) {
-        series_type(series[i].kind).validate_axes?.(x_axis, y_axis, series[i], i)
+        series_type(series[i]).validate_axes?.(x_axis, y_axis, series[i], i)
     }
 
     apply_padding_modes(series, x_axis, y_axis)
@@ -115,7 +115,7 @@ function normalize_axis_label(label: AxisArgs['label'], side: 'x' | 'y'): { labe
  * @param side - axis side
  * @returns the resolved axis context (padding seeded to 'default', overridden later)
  */
-function build_axis_side(series: Series[], input: AxisArgs, side: 'x' | 'y'): AxisContext {
+function build_axis_side<Row, TooltipContent>(series: Series<Row, TooltipContent>[], input: AxisArgs, side: 'x' | 'y'): AxisContext {
     const args = normalize_axis(input, side)
     validate_label_position(args, side)
 
@@ -211,9 +211,9 @@ function resolve_scale(axis_args: Axis, is_category: boolean): AxisScale {
  * @param x_axis_ctx - the resolved x axis
  * @param y_axis_ctx - the resolved y axis
  */
-function apply_padding_modes(series: Series[], x_axis_ctx: AxisContext, y_axis_ctx: AxisContext): void {
+function apply_padding_modes<Row, TooltipContent>(series: Series<Row, TooltipContent>[], x_axis_ctx: AxisContext, y_axis_ctx: AxisContext): void {
     for (const series_item of series) {
-        const series_padding = series_type(series_item.kind).padding_mode?.(x_axis_ctx, y_axis_ctx)
+        const series_padding = series_type(series_item).padding_mode?.(x_axis_ctx, y_axis_ctx)
 
         if (series_padding?.x !== undefined) {
             x_axis_ctx.padding_mode = series_padding.x
@@ -239,7 +239,7 @@ function apply_padding_modes(series: Series[], x_axis_ctx: AxisContext, y_axis_c
  * @param side - axis side
  * @returns the shared field name, or undefined
  */
-function common_field(series: Series[], side: 'x' | 'y'): string | undefined {
+function common_field<Row, TooltipContent>(series: Series<Row, TooltipContent>[], side: 'x' | 'y'): string | undefined {
     let common: string | undefined
 
     for (let i = 0; i < series.length; i++) {
@@ -268,7 +268,7 @@ function common_field(series: Series[], side: 'x' | 'y'): string | undefined {
  * @param side - axis side
  * @returns true when the series has values on this side
  */
-function claims_axis(series_item: Series, side: 'x' | 'y'): boolean {
+function claims_axis<Row, TooltipContent>(series_item: Series<Row, TooltipContent>, side: 'x' | 'y'): boolean {
     if (series_item.x.length === 0) {
         return false
     }
@@ -296,7 +296,7 @@ function validate_category_scale_coherence(axis_args: Axis, side: 'x' | 'y'): vo
  * @param declared_category - whether the side was declared categorical
  * @returns whether the side is implicitly categorical
  */
-function reconcile_axis_kind(series: Series[], side: 'x' | 'y', scale_unset: boolean, declared_category: boolean): boolean {
+function reconcile_axis_kind<Row, TooltipContent>(series: Series<Row, TooltipContent>[], side: 'x' | 'y', scale_unset: boolean, declared_category: boolean): boolean {
     let implicit_category = false
 
     for (let i = 0; i < series.length; i++) {
@@ -326,9 +326,9 @@ function reconcile_axis_kind(series: Series[], side: 'x' | 'y', scale_unset: boo
  * @param auto - auto-computed domain for linear/log
  * @returns the resolved axis template and any translations
  */
-function resolve_axis_template(
+function resolve_axis_template<Row, TooltipContent>(
     axis: AxisContext,
-    series: Series[],
+    series: Series<Row, TooltipContent>[],
     side: 'x' | 'y',
     auto: Domain,
 ): AxisTemplateResolution {
@@ -521,9 +521,9 @@ function resolve_log_bound(value: number, pinned: boolean, side: 'x' | 'y', end:
  * @param padding - the pixel padding per end of the band range
  * @returns the resolved axis template and per-series translations
  */
-function resolve_categorical(
+function resolve_categorical<Row, TooltipContent>(
     axis_in: Axis,
-    series: Series[],
+    series: Series<Row, TooltipContent>[],
     side: 'x' | 'y',
     rendered: boolean,
     auto_label: string | undefined,
@@ -578,7 +578,7 @@ function seed_axis_categories(axis_in: Axis): { pinned: boolean; axis_categories
  * @param series - the series
  * @param side - axis side
  */
-function require_categorical_columns(series: Series[], side: 'x' | 'y'): void {
+function require_categorical_columns<Row, TooltipContent>(series: Series<Row, TooltipContent>[], side: 'x' | 'y'): void {
     for (let i = 0; i < series.length; i++) {
         const series_item = series[i]
 
@@ -600,8 +600,8 @@ function require_categorical_columns(series: Series[], side: 'x' | 'y'): void {
  * @param axis_categories - the canonical list to grow
  * @param category_index - the category-to-index map to grow
  */
-function append_series_categories(
-    series: Series[],
+function append_series_categories<Row, TooltipContent>(
+    series: Series<Row, TooltipContent>[],
     side: 'x' | 'y',
     axis_categories: string[],
     category_index: Map<string, number>,
@@ -633,8 +633,8 @@ function append_series_categories(
  * @param category_index - category-to-index map
  * @returns per-series translation tables
  */
-function build_translations(
-    series: Series[],
+function build_translations<Row, TooltipContent>(
+    series: Series<Row, TooltipContent>[],
     side: 'x' | 'y',
     axis_categories: string[],
     category_index: Map<string, number>,

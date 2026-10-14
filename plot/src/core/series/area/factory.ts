@@ -1,24 +1,24 @@
-import { resolve_xy_columns, attach_resolved_columns, resolve_column, validate_field_present } from "../../template/column"
+import { resolve_xy_columns, attach_resolved_columns, resolve_column, validate_field_present, has_default_field, type ColumnArg } from "../../template/column"
 import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { validate_finite, validate_non_negative, validate_hoverable } from "../../template/validate"
 import { resolve_stroke, resolve_highlight_colors } from "../../template/color"
 import type { ColorArg, AreaSeries, AxisContext, FieldArg, SelectFn, StrokeArg, ThemeColor, TooltipArg } from "../../types"
 
-export type AreaBoundArg = FieldArg | number
+export type AreaBoundArg<Row> = FieldArg<Row> | number
 
-export type AreaArgs<TooltipContent = unknown> = {
-    data: Record<string, unknown>[]
-    x?: FieldArg
-    x2?: AreaBoundArg
-    y?: FieldArg
-    y2?: AreaBoundArg
+export type AreaArgs<Row, TooltipContent = unknown> = {
+    data: Row[]
+    x?: FieldArg<Row>
+    x2?: AreaBoundArg<Row>
+    y?: FieldArg<Row>
+    y2?: AreaBoundArg<Row>
     color?: ThemeColor
-    highlight_color?: ColorArg
+    highlight_color?: ColorArg<Row>
     stroke?: StrokeArg
     dash?: number[]
-    tooltip?: TooltipArg<Record<string, unknown>, TooltipContent>
-    on_select?: SelectFn<Record<string, unknown>>
+    tooltip?: TooltipArg<Row, TooltipContent>
+    on_select?: SelectFn<Row>
     hoverable?: boolean
     highlight?: boolean
 }
@@ -31,14 +31,15 @@ type AreaBound = { side: 'x' | 'y'; values: Float64Array; pinned: boolean }
  * @param args - area series args (data, x, x2, y, y2, color, stroke, dash)
  * @returns the resolved AreaSeries
  */
-export function new_area<TooltipContent = unknown>(args: AreaArgs<TooltipContent>): AreaSeries<TooltipContent> {
+export function new_area<Row, TooltipContent = unknown>(args: AreaArgs<Row, TooltipContent>): AreaSeries<Row, TooltipContent> {
     const x_arg = args.x ?? 'x'
     const y_arg = args.y ?? 'y'
     const resolved = resolve_xy_columns(args.data, x_arg, y_arg, 'plot.area', args.x === undefined, args.y === undefined)
     const bound = resolve_bound(args)
     const stroke = resolve_stroke(args.stroke, 'plot.area')
-    const series: AreaSeries<TooltipContent> = {
+    const series: AreaSeries<Row, TooltipContent> = {
         kind: 'area',
+        rows: args.data,
         ...resolve_highlight_colors(args.data, args.highlight_color),
         x: resolved.x,
         y: resolved.y,
@@ -86,7 +87,6 @@ export function new_area<TooltipContent = unknown>(args: AreaArgs<TooltipContent
         series.highlight = args.highlight
     }
 
-    series.rows = args.data // caller's original for the tooltip
     attach_resolved_columns(series, resolved, x_arg, y_arg)
     retain_factory_args(series, args)
     return series
@@ -98,7 +98,7 @@ export function new_area<TooltipContent = unknown>(args: AreaArgs<TooltipContent
  * @param args - the area series args
  * @returns the resolved bound, or undefined when the band fills to the zero baseline
  */
-function resolve_bound(args: AreaArgs): AreaBound | undefined {
+function resolve_bound<Row, TooltipContent>(args: AreaArgs<Row, TooltipContent>): AreaBound | undefined {
     const field = bound_field(args)
 
     if (field === undefined) {
@@ -129,7 +129,7 @@ function resolve_bound(args: AreaArgs): AreaBound | undefined {
  * @returns the second boundary's axis, its field name / accessor / pinned constant, and whether that name
  * was adopted off the rows rather than passed, or undefined for a baseline fill
  */
-function bound_field(args: AreaArgs): { side: 'x' | 'y'; arg: AreaBoundArg; defaulted: boolean } | undefined {
+function bound_field<Row, TooltipContent>(args: AreaArgs<Row, TooltipContent>): { side: 'x' | 'y'; arg: ColumnArg<Row> | number; defaulted: boolean } | undefined {
     if (args.x2 !== undefined && args.y2 !== undefined) {
         throw new Error('plot.area: pass y2 (a horizontal band riding the x axis) or x2 (a vertical band riding the y axis), not both. Two bounds on each axis is a box per row, which is plot.rect.')
     }
@@ -142,11 +142,11 @@ function bound_field(args: AreaArgs): { side: 'x' | 'y'; arg: AreaBoundArg; defa
         return { side: 'y', arg: args.y2, defaulted: false }
     }
 
-    if (args.data.some(row => 'y2' in row)) {
+    if (args.data.some(row => has_default_field(row, 'y2'))) {
         return { side: 'y', arg: 'y2', defaulted: true }
     }
 
-    if (args.data.some(row => 'x2' in row)) {
+    if (args.data.some(row => has_default_field(row, 'x2'))) {
         return { side: 'x', arg: 'x2', defaulted: true }
     }
     return undefined
@@ -160,7 +160,7 @@ function bound_field(args: AreaArgs): { side: 'x' | 'y'; arg: AreaBoundArg; defa
  * @param series - the area series
  * @param index - the series' position in the plot, for messages
  */
-export function validate_area_axes(x: AxisContext, y: AxisContext, series: AreaSeries, index: number): void {
+export function validate_area_axes<Row, TooltipContent>(x: AxisContext, y: AxisContext, series: AreaSeries<Row, TooltipContent>, index: number): void {
     // an empty series exposes no column types and draws nothing
     if (series.x.length === 0) {
         return
@@ -197,7 +197,7 @@ export function validate_area_axes(x: AxisContext, y: AxisContext, series: AreaS
  * @param side - which axis that is, for the message
  * @param index - the series' position in the plot, for messages
  */
-function validate_pinned_bound(series: AreaSeries, bound: Float64Array, axis: AxisContext, side: 'x' | 'y', index: number): void {
+function validate_pinned_bound<Row, TooltipContent>(series: AreaSeries<Row, TooltipContent>, bound: Float64Array, axis: AxisContext, side: 'x' | 'y', index: number): void {
     if (series.bound_pinned !== true || axis.scale !== 'log') {
         return
     }
@@ -215,7 +215,7 @@ function validate_pinned_bound(series: AreaSeries, bound: Float64Array, axis: Ax
  * @param series - the area series
  * @returns the [min, max] per axis
  */
-export function area_domain_extent(series: AreaSeries): { x: [number, number]; y: [number, number] } {
+export function area_domain_extent<Row, TooltipContent>(series: AreaSeries<Row, TooltipContent>): { x: [number, number]; y: [number, number] } {
     if (series.x2 !== undefined) {
         return {
             x: merged_extent(series.x, series.x2),

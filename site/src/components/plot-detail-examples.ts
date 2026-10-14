@@ -2,7 +2,7 @@ import { scatter, type PlotArgs } from '@antadesign/plot'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -30,12 +30,12 @@ export function viewportSizes(): PlotArgs<Node> {
     grid: false,
     zoom_pan: { x: true, y: false },
     series: [
-      scatter<Node>({ data: rows(labels[0]), size: 4,
+      scatter({ data: rows(labels[0]), size: 4,
         color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),
-      scatter<Node>({ data: rows(labels[1]),
+      scatter({ data: rows(labels[1]),
         size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true }),
-      scatter<Node>({ data: rows(labels[2]),
+      scatter({ data: rows(labels[2]),
         size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.5),
         color: { light: '#c2410c', dark: '#fdba74' }, tooltip: true }),
     ],
@@ -95,7 +95,7 @@ export function margins(): PlotArgs<Node> {
 export function grid(): PlotArgs<Node> {
   const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
   return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
       size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
       y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
@@ -115,7 +115,7 @@ export function gridNone(): PlotArgs<Node> {
 }
 
 export function themeColors(): PlotArgs<Node> {
-  return { ...base(), series: [scatter<Node>({
+  return { ...base(), series: [scatter({
     data: [{ x: 20, y: 30 }, { x: 50, y: 65 }, { x: 80, y: 45 }],
     size: 18, color: { light: 'tomato', dark: 'lightskyblue' }, hoverable: false,
   })] }
@@ -123,7 +123,7 @@ export function themeColors(): PlotArgs<Node> {
 
 export function scales(): PlotArgs<Node> {
   return { ...base(),
-    series: [scatter<Node>({ data: [1, 10, 100, 1000, 10000].map((y, i) => ({ x: 10 + i * 20, y })),
+    series: [scatter({ data: [1, 10, 100, 1000, 10000].map((y, i) => ({ x: 10 + i * 20, y })),
       size: 4, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     axis: { x: { scale: 'linear', min: 0, max: 100, label: 'Linear' },
       y: { scale: 'log', min: 1, max: 10000, label: 'Logarithmic',
@@ -135,7 +135,7 @@ export function scales(): PlotArgs<Node> {
 export function timeCategory(): PlotArgs<Node> {
   const start = new Date(2026, 0, 12).getTime()
   return { ...base(),
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: start, y: 'Alpha' }, { x: start + 3600000, y: 'Beta' },
       { x: start + 7200000, y: 'Alpha' }, { x: start + 10800000, y: 'Gamma' },
       { x: start + 14400000, y: 'Beta' },
@@ -171,7 +171,7 @@ export function tickLabels(): PlotArgs<Node> {
 }
 
 export function seriesColors(): PlotArgs<Node> {
-  return { ...base(), series: [scatter<Node>({
+  return { ...base(), series: [scatter({
     data: [{ x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 }, { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 }],
     size: 8, color: row => Number(row.y) >= 60
       ? { light: '#c2410c', dark: '#fdba74' } : { light: '#64748b', dark: '#94a3b8' },
@@ -181,7 +181,7 @@ export function seriesColors(): PlotArgs<Node> {
 
 export function markShapes(): PlotArgs<Node> {
   const marks = ['circle', 'square', 'diamond', 'triangle'] as const
-  return { ...base(), series: marks.map((mark, i) => scatter<Node>({
+  return { ...base(), series: marks.map((mark, i) => scatter({
     data: [{ x: mark, y: 40 + i * 10 }], mark, size: 12,
     color: [
       { light: '#7c3aed', dark: '#c4b5fd' }, { light: '#db2777', dark: '#f9a8d4' },
@@ -193,7 +193,7 @@ export function markShapes(): PlotArgs<Node> {
 }
 
 export function strokes(): PlotArgs<Node> {
-  return { ...base(), series: [1, 3, 5].map((width, i) => scatter<Node>({
+  return { ...base(), series: [1, 3, 5].map((width, i) => scatter({
     data: [{ x: 25 + i * 25, y: 50 }], size: 18,
     color: { light: '#f0abfc', dark: '#c026d3' },
     stroke: { color: { light: '#7e22ce', dark: '#f5d0fe' }, width }, hoverable: false,

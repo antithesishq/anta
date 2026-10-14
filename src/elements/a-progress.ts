@@ -19,8 +19,8 @@ export class AProgressElement extends HTMLElementBase {
 
     const slot = document.createElement('slot')
     slot.setAttribute('part', 'content')
-    // An authored native progress in the unassigned fallback slot paints before
-    // upgrade. Keep it out of the shadow projection without changing its DOM.
+    // The authored indicator region paints before upgrade. Its named slot is
+    // unassigned, so projecting content leaves that region's DOM untouched.
     shadow.append(this.indicator, slot)
   }
 

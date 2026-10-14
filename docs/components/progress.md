@@ -109,7 +109,9 @@ radius.
 ```html
 <a-progress style="width: 100%" value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
-  <progress data-anta slot="fallback" aria-hidden="true" value="42" max="100"></progress>
+  <a-progress-indicator slot="indicator" aria-hidden="true">
+    <progress value="42" max="100"></progress>
+  </a-progress-indicator>
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
     <a-progress-text>Upload</a-progress-text>
@@ -118,7 +120,9 @@ radius.
 
 <!-- Omit value for indeterminate progress. -->
 <a-progress style="width: 100%" round="50px" role="progressbar" aria-label="Preparing upload">
-  <progress data-anta slot="fallback" aria-hidden="true"></progress>
+  <a-progress-indicator slot="indicator" aria-hidden="true">
+    <progress></progress>
+  </a-progress-indicator>
   <a-progress-label>
     <a-progress-text>Preparing upload</a-progress-text>
   </a-progress-label>
@@ -132,11 +136,11 @@ elements below.
 Add the progressbar semantics and label structure when using the element
 directly.
 
-The optional `<progress slot="fallback">` shows the fill before JavaScript
-initializes. Keep its `value` synchronized with `a-progress`, and set its `max`
-to the same limit (`100` when omitted on `a-progress`). Omit `value` on both for
-indeterminate work. `aria-hidden="true"` keeps the decorative fallback out of the
-accessibility tree. JSX supplies it automatically.
+The optional `a-progress-indicator` region shows the fill before JavaScript
+initializes. Keep its native `progress` value synchronized with `a-progress`,
+and set its `max` to the same limit (`100` when omitted on `a-progress`). Omit
+`value` on both for indeterminate work. `aria-hidden="true"` keeps the decorative
+indicator out of the accessibility tree. JSX supplies it automatically.
 
 ### Native HTML progress
 

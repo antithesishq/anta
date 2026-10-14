@@ -129,17 +129,20 @@ function Accordion() {
 
 Supply direct named regions. Use `a-expander-summary` for the built-in title
 scale, with `level` on that region. Use boxless `a-expander-title` for custom
-title markup. Put controls in `a-expander-actions`, custom artwork in
-`a-expander-indicator`, and body content in `a-expander-details`.
+title markup. Put controls in `a-expander-actions` and body content in
+`a-expander-details`. Place `a-expander-indicator` before the title or after the
+actions to choose its position. Set its `shape` to `chevron`, `triangle`, or
+`plus`, or omit `shape` and supply custom artwork as children.
 
 ```html
-<a-expander default-state="open" indicator-placement="end">
+<a-expander default-state="open">
   <a-expander-summary level="4">Build artifacts</a-expander-summary>
   <a-expander-actions>
     <a-button role="button" tabindex="0" size="small">
       <a-button-label>Download</a-button-label>
     </a-button>
   </a-expander-actions>
+  <a-expander-indicator shape="chevron" aria-hidden="true" inert></a-expander-indicator>
   <a-expander-details>The title and indicator toggle this section. Download is an independent action.</a-expander-details>
 </a-expander>
 ```
@@ -158,9 +161,13 @@ reject an uncontrolled request. For controlled use, update `state` to accept
 or leave it unchanged to reject. The element owns the native button's expanded
 and disabled states and the collapsed region's inertness.
 
+The same indicator element renders before and after registration. An omitted
+indicator renders no artwork. JSX creates the built-in chevron automatically;
+`indicatorPlacement` changes the region order.
+
 One custom `a-expander-indicator` rotates with state. Two regions with
 `data-when="closed"` and `data-when="open"` switch instead. Raw authors mark
-custom artwork `aria-hidden="true"` and `inert`. The owned indicator container
+all indicator artwork `aria-hidden="true"` and `inert`. The owned indicator container
 also excludes its projected artwork from interaction and accessibility.
 
 Omit unused regions. CSS hides empty actions regions. Whitespace counts as
@@ -169,7 +176,8 @@ unrecognized interactive title widget `data-expander-ignore` to prevent toggling
 A disabled title control behaves like title text; actions never toggle.
 
 Named regions replace public slot attributes, and raw `level` moves from
-`a-expander` to `a-expander-summary`. Existing shadow part overrides remain
+`a-expander` to `a-expander-summary`. Raw indicator shape and placement now
+belong to its region and DOM order. Existing shadow part overrides remain
 supported. JSX props stay the same.
 
 Named tones and boolean `round` need no inline styles. Custom tones and radii
@@ -194,7 +202,7 @@ The classes below identify demonstrations. Substitute your own selectors.
 Hide the indicator and reduce the title/body inset.
 
 ```css
-a-expander.hide-chevron::part(indicator) { display: none; }
+a-expander.hide-chevron > a-expander-indicator { display: none; }
 a-expander.hide-chevron { --expander-gutter: 12px; }
 ```
 
@@ -208,8 +216,8 @@ a-expander.header-tint::part(summary):enabled:hover { background: var(--bg-3); }
 Respond to applied state without managing CSS classes.
 
 ```css
-a-expander.state-indicator::part(indicator) { color: var(--text-4); }
-a-expander.state-indicator:state(open)::part(indicator) { color: var(--text-1); }
+a-expander.state-indicator > a-expander-indicator { color: var(--text-4); }
+a-expander.state-indicator:state(open) > a-expander-indicator { color: var(--text-1); }
 ```
 
 ## Example

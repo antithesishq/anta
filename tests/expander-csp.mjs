@@ -155,7 +155,14 @@ async function pageFor(t, engine, mode = 'granular', query = '', javaScriptEnabl
 }
 const register = (page, mode = 'granular') => page.evaluate(mode => import(`/${mode}.js`), mode)
 const action = '<a-button role="button" tabindex="0" size="small"><a-button-label>Download</a-button-label></a-button>'
-const markup = `<a-expander-summary>Release details.</a-expander-summary><a-expander-actions>${action}</a-expander-actions><a-expander-details><a href="#details">Details</a></a-expander-details>`
+const defaultArtwork = '<a-expander-indicator shape="chevron" aria-hidden="true" inert></a-expander-indicator>'
+const markup = `${defaultArtwork}<a-expander-summary>Release details.</a-expander-summary><a-expander-actions>${action}</a-expander-actions><a-expander-details><a href="#details">Details</a></a-expander-details>`
+function withIndicator(body = markup, placement = 'start', artwork = defaultArtwork) {
+  const content = body.replace(defaultArtwork, '')
+  return placement === 'end'
+    ? content.replace('<a-expander-details', artwork + '<a-expander-details')
+    : artwork + content
+}
 async function mount(page, content = markup, attrs = {}) {
   await page.evaluate(({content, attrs}) => {
     const expander = document.createElement('a-expander')
@@ -209,7 +216,10 @@ test.fast('Expander SSR owns named regions and summary level without structural 
     assert.match(html, /<a-expander-summary level="2"/)
     assert.match(html, /<a-expander-actions>/)
     assert.match(html, /<a-expander-details>/)
-    assert.doesNotMatch(html, /style=|slot=|<a-expander level=/)
+    assert.doesNotMatch(html, /style=|slot=|<a-expander level=|indicator-placement=/)
+    assert.match(html, /<a-expander-indicator shape="chevron"[^>]*><\/a-expander-indicator><a-expander-summary/)
+    const end = render({...initialProps, indicatorPlacement: 'end', indicator: 'plus'})
+    assert.match(end, /<\/a-expander-actions><a-expander-indicator shape="plus"/)
     for (const value of [null, false, true, [], '', '   ']) assert.doesNotMatch(render({...initialProps, actions: value}), /<a-expander-actions/)
     assert.match(render({...initialProps, indicator: {closed: 'C', open: 'O'}}), /a-expander-indicator data-when="closed"/)
   }
@@ -217,6 +227,36 @@ test.fast('Expander SSR owns named regions and summary level without structural 
 
 for (const engine of engines) {
   for (const mode of ['granular', 'bundle']) {
+    test.fast(`${engine.name()} ${mode}: indicator DOM order changes placement without changing applied state or authored markup`, async t => {
+      const page = await pageFor(t, engine, mode)
+      await mount(page)
+      await register(page, mode)
+      await button(page).click()
+      const move = async end => {
+        const authored = await page.locator('a-expander').evaluate((host, end) => {
+          const indicator = host.querySelector('a-expander-indicator')
+          host.insertBefore(indicator, host.querySelector(end ? 'a-expander-details' : 'a-expander-summary'))
+          return host.outerHTML
+        }, end)
+        await frames(page)
+        assert.equal(await isClosed(page), false)
+        assert.equal(await page.locator('a-expander').evaluate(n => n.outerHTML), authored)
+        const positions = await page.locator('a-expander').evaluate(host => {
+          const indicator = host.querySelector('a-expander-indicator').getBoundingClientRect()
+          const title = host.querySelector('a-expander-summary').getBoundingClientRect()
+          const actions = host.querySelector('a-expander-actions > *').getBoundingClientRect()
+          return {start: indicator.right <= title.left, end: indicator.left >= actions.right}
+        })
+        assert.equal(end ? positions.end : positions.start, true)
+        await page.locator('a-expander-actions a-button').click()
+        assert.equal(await isClosed(page), false)
+      }
+      await move(true)
+      await move(false)
+      await button(page).click()
+      assert.equal(await isClosed(page), true)
+      assert.deepEqual(await page.locator('a-expander').evaluate(n => Object.keys(n.dataset)), [])
+    })
     test.fast(`${engine.name()} ${mode}: tall actions preserve short, wrapped and rich title geometry through upgrade`, async t => {
       for (const placement of ['start', 'end']) {
         for (const title of [
@@ -225,8 +265,8 @@ for (const engine of engines) {
           '<a-expander-title><strong>Rich title</strong></a-expander-title>',
         ]) {
           const page = await pageFor(t, engine, mode)
-          await mount(page, `${title}<a-expander-actions><button>Download</button></a-expander-actions><a-expander-details>Details</a-expander-details>`,
-            {class: 'tall-actions wrapped', 'indicator-placement': placement})
+          await mount(page, withIndicator(`${title}<a-expander-actions><button>Download</button></a-expander-actions><a-expander-details>Details</a-expander-details>`, placement),
+            {class: 'tall-actions wrapped'})
           const before = await geometry(page)
           await register(page, mode)
           assert.deepEqual(await geometry(page), before, `${placement}: ${title}`)
@@ -237,29 +277,25 @@ for (const engine of engines) {
       for (const placement of ['start', 'end']) {
         for (const stateAttribute of ['state', 'default-state']) {
           const page = await pageFor(t, engine, mode)
-          await mount(page, markup, {indicator: 'plus', 'indicator-placement': placement, [stateAttribute]: 'open'})
-          const initial = await page.locator('a-expander').evaluate((host) => {
-            const node = host.getAttribute('indicator-placement') === 'end' ? host : host.querySelector('a-expander-summary')
-            const style = getComputedStyle(node, '::before')
-            const matrix = new DOMMatrixReadOnly(style.transform === 'none' ? undefined : style.transform)
-            return {rotation: [matrix.a, matrix.b, matrix.c, matrix.d], mask: style.maskImage}
+          await mount(page, withIndicator(markup, placement, defaultArtwork.replace('chevron', 'plus')), {[stateAttribute]: 'open'})
+          const artwork = () => page.locator('a-expander > a-expander-indicator').evaluate(node => {
+            const horizontal = getComputedStyle(node, '::before')
+            return {width: parseFloat(horizontal.width), height: parseFloat(horizontal.height), vertical: getComputedStyle(node, '::after').transform}
           })
-          assert.deepEqual(initial.rotation, [1, 0, 0, 1], `${placement}, ${stateAttribute}: horizontal minus before upgrade`)
-          assert.match(initial.mask, /M2(?:%20| )7h12v2H2z/i)
+          const initial = await artwork()
+          assert.ok(initial.width > initial.height)
+          assert.equal(initial.vertical, 'matrix(1, 0, 0, 0, 0, 0)')
+          const rotation = node => {
+            const value = getComputedStyle(node).transform
+            const matrix = new DOMMatrixReadOnly(value === 'none' ? undefined : value)
+            return [matrix.a, matrix.b, matrix.c, matrix.d]
+          }
+          assert.deepEqual(await page.locator('a-expander > a-expander-indicator').evaluate(rotation), [1, 0, 0, 1])
           const before = await geometry(page)
           await register(page, mode)
           assert.deepEqual(await geometry(page), before)
-          const upgraded = await page.locator('a-expander').evaluate(host => {
-            const indicator = host.shadowRoot.querySelector('[part="indicator"]')
-            const transform = getComputedStyle(indicator).transform
-            const matrix = new DOMMatrixReadOnly(transform === 'none' ? undefined : transform)
-            const glyph = host.shadowRoot.querySelector('[part="glyph"]')
-            const horizontal = getComputedStyle(glyph, '::before')
-            return {rotation: [matrix.a, matrix.b, matrix.c, matrix.d], width: parseFloat(horizontal.width), height: parseFloat(horizontal.height), vertical: getComputedStyle(glyph, '::after').transform}
-          })
-          assert.deepEqual(upgraded.rotation, initial.rotation)
-          assert.ok(upgraded.width > upgraded.height)
-          assert.equal(upgraded.vertical, 'matrix(1, 0, 0, 0, 0, 0)')
+          assert.deepEqual(await artwork(), initial)
+          assert.deepEqual(await page.locator('a-expander [part="indicator"]').evaluate(rotation), [1, 0, 0, 1])
         }
       }
     })
@@ -361,12 +397,12 @@ for (const engine of engines) {
   test(`${engine.name()}: pre-upgrade layout covers open, rich, end, outdent and disabled regions`, async t => {
     const cases = [
       {attrs: {'default-state':'open'}, body:markup},
-      {attrs: {'indicator-placement':'end','state':'open'}, body:markup},
+      {attrs: {'state':'open'}, body:withIndicator(markup, 'end')},
       {attrs: {'priority':'tertiary','outdent':'','default-state':'open'}, body:markup},
-      {attrs: {'priority':'tertiary','outdent':'','indicator-placement':'end','default-state':'open'}, body:markup},
+      {attrs: {'priority':'tertiary','outdent':'','default-state':'open'}, body:withIndicator(markup, 'end')},
       {attrs: {'state':'closed','default-state':'open','disabled':''}, body:markup},
-      {attrs: {'indicator-placement':'end'}, body:markup.replace('<a-expander-summary>Release details.</a-expander-summary>', '<a-expander-title><strong>Rich title</strong></a-expander-title>')},
-      {attrs: {'indicator-placement':'end','state':'open'}, body:markup+'<a-expander-indicator data-when="closed">C</a-expander-indicator><a-expander-indicator data-when="open">O</a-expander-indicator>'},
+      {attrs: {}, body:withIndicator(markup, 'end').replace('<a-expander-summary>Release details.</a-expander-summary>', '<a-expander-title><strong>Rich title</strong></a-expander-title>')},
+      {attrs: {'state':'open'}, body:withIndicator(markup, 'end', '<a-expander-indicator data-when="closed">C</a-expander-indicator><a-expander-indicator data-when="open">O</a-expander-indicator>')},
     ]
     for (const item of cases) {
       const page = await pageFor(t,engine)
@@ -415,12 +451,14 @@ for (const engine of engines) {
   test(`${engine.name()}: nested disclosures isolate requests, typography and projection`, async t => {
     const page = await pageFor(t, engine)
     await register(page)
-    await mount(page, '<a-expander-summary level="1">Outer</a-expander-summary><a-expander-details><a-expander id="inner"><a-expander-summary level="6">Inner</a-expander-summary><a-expander-actions>'+action+'</a-expander-actions><a-expander-details>Nested body</a-expander-details></a-expander></a-expander-details>', {'default-state':'open'})
+    await mount(page, defaultArtwork+'<a-expander-summary level="1">Outer</a-expander-summary><a-expander-details><a-expander id="inner"><a-expander-summary level="6">Inner</a-expander-summary><a-expander-actions>'+action+'</a-expander-actions><a-expander-indicator shape="plus" aria-hidden="true" inert></a-expander-indicator><a-expander-details>Nested body</a-expander-details></a-expander></a-expander-details>', {'default-state':'open'})
     await page.locator('#mount > a-expander').evaluate(n => {window.outerRequests=0; n.addEventListener('statechange',()=>window.outerRequests++)})
+    assert.equal(await page.locator('#inner > a-expander-indicator').evaluate(n=>getComputedStyle(n,'::after').transform), 'matrix(1, 0, 0, 1, 0, 0)')
     await button(page, '#inner').click()
     assert.equal(await isClosed(page, '#inner'), false)
     assert.equal(await isClosed(page), false)
     assert.equal(await page.evaluate(() => window.outerRequests), 0)
+    assert.equal(await page.locator('#inner > a-expander-indicator').evaluate(n=>getComputedStyle(n,'::after').transform), 'matrix(1, 0, 0, 0, 0, 0)')
     assert.equal(await page.locator('#inner > a-expander-summary').evaluate(n => getComputedStyle(n).fontSize), '13px')
   })
   test(`${engine.name()}: indicators, pairs, end placement and original geometry`, async t => {
@@ -432,7 +470,7 @@ for (const engine of engines) {
       return [b.height,title.x-b.x,i.x-b.x,i.width,i.height]
     })
     assert.deepEqual(metrics,[32,24,6,16,16])
-    await page.locator('a-expander').evaluate(n => {n.setAttribute('indicator-placement','end'); n.insertAdjacentHTML('beforeend','<a-expander-indicator data-when="closed">C</a-expander-indicator><a-expander-indicator data-when="open">O</a-expander-indicator>')})
+    await page.locator('a-expander').evaluate(n => {n.querySelector('a-expander-indicator').remove(); n.querySelector('a-expander-details').insertAdjacentHTML('beforebegin','<a-expander-indicator data-when="closed">C</a-expander-indicator><a-expander-indicator data-when="open">O</a-expander-indicator>')})
     await frames(page)
     assert.equal(await page.locator('[data-when="closed"]').isVisible(), true)
     assert.equal(await page.locator('[data-when="open"]').isVisible(), false)
@@ -443,9 +481,9 @@ for (const engine of engines) {
     assert.equal(await isClosed(page), false)
     assert.equal(await page.locator('[data-when="closed"]').isVisible(), false)
     assert.equal(await page.locator('[data-when="open"]').isVisible(), true)
-    await page.locator('a-expander').evaluate(n => {n.querySelectorAll('a-expander-indicator').forEach(n=>n.remove()); n.setAttribute('indicator','plus')})
+    await page.locator('a-expander').evaluate(n => {n.querySelectorAll('a-expander-indicator').forEach(n=>n.remove()); n.querySelector('a-expander-details').insertAdjacentHTML('beforebegin','<a-expander-indicator shape="plus" aria-hidden="true" inert></a-expander-indicator>')})
     await frames(page)
-    assert.equal(await page.locator('a-expander').evaluate(n=>getComputedStyle(n.shadowRoot.querySelector('[part="glyph"]'),'::after').transform),'matrix(1, 0, 0, 0, 0, 0)')
+    assert.equal(await page.locator('a-expander').evaluate(n=>getComputedStyle(n.querySelector('a-expander-indicator'),'::after').transform),'matrix(1, 0, 0, 0, 0, 0)')
     await page.locator('a-expander').evaluate(n=>{n.setAttribute('priority','tertiary'); n.setAttribute('outdent','')})
     const inset=await page.locator('a-expander').evaluate(n=>{const h=n.getBoundingClientRect(); const title=n.querySelector('a-expander-summary').getBoundingClientRect(); const body=n.querySelector('a-expander-details'); return [title.x-h.x,body.getBoundingClientRect().x+parseFloat(getComputedStyle(body).paddingInlineStart)-h.x]})
     assert.deepEqual(inset,[0,0])
@@ -457,6 +495,7 @@ for (const engine of engines) {
     await page.emulateMedia({reducedMotion:'no-preference'})
     const duration=()=>page.locator('a-expander').evaluate(n=>getComputedStyle(n.shadowRoot.querySelector('[part="region"]')).transitionDuration)
     assert.equal(await duration(),'0.2s')
+    assert.equal(await page.locator('a-expander [part="indicator"]').evaluate(n=>getComputedStyle(n).transitionDuration),'0.15s, 0.15s')
     await button(page).click()
     await page.waitForTimeout(250)
     assert.equal(await page.locator('a-expander').evaluate(n=>getComputedStyle(n.shadowRoot.querySelector('[part="content"]')).overflow),'visible')
@@ -466,6 +505,9 @@ for (const engine of engines) {
     assert.equal(await page.locator('a-expander').evaluate(n => n.shadowRoot.querySelector('[part="region"]').getBoundingClientRect().height), 0)
     await page.emulateMedia({reducedMotion:'reduce'})
     assert.equal(await duration(),'0s')
+    assert.equal(await page.locator('a-expander [part="indicator"]').evaluate(n=>getComputedStyle(n).transitionDuration),'0s')
+    await page.locator('a-expander > a-expander-indicator').evaluate(n=>n.setAttribute('shape','plus'))
+    assert.equal(await page.locator('a-expander > a-expander-indicator').evaluate(n=>getComputedStyle(n,'::after').transitionDuration),'0s')
   })
   for (const framework of ['React','Preact']) for (const mode of ['granular','bundle']) {
     test(`${engine.name()} ${framework} ${mode}: open SSR/hydration, veto, node titles and empty indicator primitives`, async t => {
@@ -474,6 +516,20 @@ for (const engine of engines) {
       assert.deepEqual(await geometry(page),before)
       await hydrate(page,framework,{...initialProps,defaultOpen:true})
       assert.equal(await isClosed(page),false)
+      for (const indicator of ['chevron', {closed: 'C', open: 'O'}]) {
+        await page.evaluate(indicator => window.renderExpander({...window.expanderProps, indicator}), indicator)
+        await frames(page)
+        await page.locator('a-expander').evaluate(host => {window.indicatorNodes = [...host.querySelectorAll(':scope > a-expander-indicator')]})
+        for (const placement of ['end', 'start']) {
+          await page.evaluate(indicatorPlacement => window.renderExpander({...window.expanderProps, indicatorPlacement}), placement)
+          await frames(page)
+          assert.equal(await page.locator('a-expander').evaluate(host => {
+            const nodes = [...host.querySelectorAll(':scope > a-expander-indicator')]
+            return nodes.length === window.indicatorNodes.length && nodes.every((node, i) => node === window.indicatorNodes[i])
+          }), true, 'Changing JSX placement moves existing indicator nodes')
+          assert.equal(await isClosed(page), false)
+        }
+      }
       await page.evaluate(()=>{window.veto=true}); await button(page).click()
       assert.equal(await isClosed(page),false)
       await page.evaluate(()=>{window.veto=false}); await button(page).click()
@@ -483,7 +539,7 @@ for (const engine of engines) {
       for (const indicator of ['typo',0,'',false]) {
         await page.evaluate(({props,indicator})=>window.renderExpander({...props,indicator}),{props:initialProps,indicator}); await frames(page)
         assert.equal(await page.locator('a-expander-indicator').textContent(),'')
-        assert.equal(await page.locator('a-expander').evaluate(n=>getComputedStyle(n.shadowRoot.querySelector('[part="glyph"]')).display),'none')
+        assert.equal(await page.locator('a-expander-indicator').evaluate(n=>getComputedStyle(n,'::before').content),'none')
       }
     })
   }
@@ -496,18 +552,23 @@ for (const engine of engines) {
       await page.evaluate(()=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/override.css';document.head.append(link)})
       await page.waitForFunction(()=>getComputedStyle(document.querySelector('a-expander').shadowRoot.querySelector('button')).minHeight==='48px')
       await page.waitForFunction(()=>getComputedStyle(document.querySelector('a-expander-summary')).color==='rgb(255, 0, 0)')
+      assert.equal(await page.locator('a-expander-indicator').evaluate(n=>getComputedStyle(n).color),'rgb(0, 0, 255)')
+      // The original public part still controls rotation of built-in artwork.
+      await page.route('**/rotation.css', route=>route.fulfill({contentType:'text/css',body:'a-expander::part(indicator) { transform: none; }'}))
+      await page.evaluate(()=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/rotation.css';document.head.append(link)})
+      await page.waitForFunction(()=>getComputedStyle(document.querySelector('a-expander').shadowRoot.querySelector('[part="indicator"]')).transform==='none')
     })
   }
   test(`${engine.name()}: slow visual matrix retains initial layout, variants, overrides and native details`, async () => {
     const folder = resolve('tests/.test-output/expander', consumerRoot ? 'installed' : 'source', browsers.get(engine).version(), engine.name())
     await mkdir(folder, {recursive:true})
     const variants = [
-      ['start',{}], ['end',{'indicator-placement':'end'}],
+      ['start',{}], ['end',{},withIndicator(markup,'end')],
       ...[1,2,3,4,5,6].map(level=>['level-'+level,{},markup.replace('<a-expander-summary>','<a-expander-summary level="'+level+'">')]),
       ['round',{round:''}], ['fixed-round',{round:'12px',class:'fixed-round'}],
-      ['outdent',{priority:'tertiary',outdent:''}], ['end-outdent',{priority:'tertiary',outdent:'','indicator-placement':'end'}],
-      ['plus',{indicator:'plus'}], ['triangle',{indicator:'triangle'}],
-      ['rtl',{dir:'rtl','indicator-placement':'end'}], ['dark',{class:'dark',tone:'brand',priority:'primary'}],
+      ['outdent',{priority:'tertiary',outdent:''}], ['end-outdent',{priority:'tertiary',outdent:''},withIndicator(markup,'end')],
+      ['plus',{},markup.replace('shape="chevron"','shape="plus"')], ['triangle',{},markup.replace('shape="chevron"','shape="triangle"')],
+      ['rtl',{dir:'rtl'},withIndicator(markup,'end')], ['dark',{class:'dark',tone:'brand',priority:'primary'}],
       ['custom-tone',{class:'custom-tone',tone:'rebeccapurple'}],
       ['rich',{},markup.replace('<a-expander-summary>Release details.</a-expander-summary>','<a-expander-title><strong>Rich title</strong></a-expander-title>')],
       ['wrapped',{class:'wrapped'},markup.replace('Release details.','A longer section title that wraps across multiple lines')],

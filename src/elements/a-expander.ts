@@ -43,8 +43,7 @@ export class AExpanderElement extends HTMLElementBase {
     indicator.setAttribute('aria-hidden', 'true')
     indicator.inert = true
     this.#indicator = node('slot', 'indicator-content')
-    // The default glyph is an owned sibling, not fallback slot content.
-    indicator.append(this.#indicator, node('span', 'glyph'))
+    indicator.append(this.#indicator)
     this.#summary.append(this.#title, indicator)
     this.#summary.addEventListener('click', this.#onSummaryClick)
     const header = node('div', 'header')

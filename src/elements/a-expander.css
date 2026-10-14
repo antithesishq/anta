@@ -4,7 +4,7 @@
 @layer anta.components {
   /* Parts retain the existing shadow button and collapse geometry. */
   a-expander::part(header) { display: flex; align-items: stretch; }
-  a-expander[indicator-placement="end"]::part(header) {
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(header) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto var(--_expander-indicator-track);
   }
@@ -16,7 +16,7 @@
     flex-shrink: 0;
     margin-inline: var(--_expander-actions-start) var(--_expander-actions-end);
   }
-  a-expander[indicator-placement="end"]::part(actions) { grid-column: 2; grid-row: 1; z-index: 1; }
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(actions) { grid-column: 2; grid-row: 1; z-index: 1; }
   a-expander::part(summary) {
     appearance: none;
     background: none;
@@ -38,14 +38,14 @@
     border-radius: 2px;
     outline: none;
   }
-  a-expander[indicator-placement="end"]::part(summary) {
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(summary) {
     grid-column: 1 / -1;
     grid-row: 1;
     display: grid;
     grid-template-columns: subgrid;
     padding: var(--_expander-header-padding-block) 0;
   }
-  a-expander[indicator-placement="end"]::part(title) { grid-column: 1; display: block; min-width: 0; margin-inline-start: var(--expander-gutter); }
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(title) { grid-column: 1; display: block; min-width: 0; margin-inline-start: var(--expander-gutter); }
   a-expander::part(summary):focus-visible { outline: 1px solid var(--focus-ring); outline-offset: 0; }
   a-expander::part(summary):enabled:hover { color: var(--expander-text-hover); --_expander-indicator-opacity: 1; }
   a-expander[priority="tertiary"]::part(summary):enabled:hover { --_summary-underline: underline; }
@@ -60,60 +60,19 @@
     height: var(--_expander-indicator-size);
     pointer-events: none;
     opacity: var(--_expander-indicator-opacity, 0.6);
-    transform: translateY(-50%);
+    transform: translateY(-50%) rotate(var(--_expander-indicator-angle));
     transition: transform 150ms ease, opacity 150ms ease;
   }
   a-expander::part(indicator-content) { display: grid; place-items: center; width: 100%; height: 100%; }
-  a-expander::part(glyph) {
-    display: block;
-    position: absolute;
-    inset: 0;
-    width: var(--_expander-indicator-size);
-    height: var(--_expander-indicator-size);
-    background-color: currentColor;
-    mask: var(--_expander-indicator-mask) center / contain no-repeat;
-  }
-  a-expander:has(> a-expander-indicator)::part(glyph) { display: none; }
-  a-expander[indicator="plus"]::part(glyph) { background: none; mask: none; }
-  a-expander[indicator="plus"]::part(glyph)::before,
-  a-expander[indicator="plus"]::part(glyph)::after {
-    content: '';
-    position: absolute;
-    background: currentColor;
-    border-radius: calc(var(--_expander-indicator-stroke) / 2);
-  }
-  a-expander[indicator="plus"]::part(glyph)::before {
-    width: calc(var(--_expander-indicator-size) - 2 * var(--_expander-indicator-stroke));
-    height: var(--_expander-indicator-stroke);
-    left: var(--_expander-indicator-stroke);
-    top: calc((var(--_expander-indicator-size) - var(--_expander-indicator-stroke)) / 2);
-  }
-  a-expander[indicator="plus"]::part(glyph)::after {
-    width: var(--_expander-indicator-stroke);
-    height: calc(var(--_expander-indicator-size) - 2 * var(--_expander-indicator-stroke));
-    left: calc((var(--_expander-indicator-size) - var(--_expander-indicator-stroke)) / 2);
-    top: var(--_expander-indicator-stroke);
-    transition: transform 150ms ease;
-  }
-  a-expander:state(open)::part(indicator) { transform: translateY(-50%) rotate(90deg); opacity: 1; }
-  a-expander[indicator="plus"]:state(open)::part(indicator),
-  a-expander:state(open):has(> a-expander-indicator[data-when])::part(indicator) { transform: translateY(-50%); }
-  a-expander[indicator="plus"]:state(open)::part(glyph)::after { transform: scaleY(0); }
-  a-expander[indicator-placement="end"]::part(indicator) {
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(indicator) {
     position: static;
     grid-column: 3;
     grid-row: 1;
     justify-self: end;
     align-self: center;
     margin-inline-end: var(--_expander-indicator-edge);
-    transform: rotate(90deg);
+    transform: rotate(var(--_expander-indicator-angle));
   }
-  a-expander[indicator-placement="end"]:state(open)::part(indicator) { transform: rotate(270deg); }
-  a-expander[indicator-placement="end"]:has(> a-expander-indicator)::part(indicator),
-  a-expander[indicator-placement="end"][indicator="plus"]::part(indicator) { transform: none; }
-  a-expander[indicator-placement="end"]:state(open):has(> a-expander-indicator)::part(indicator) { transform: rotate(180deg); }
-  a-expander[indicator-placement="end"]:state(open):has(> a-expander-indicator[data-when])::part(indicator),
-  a-expander[indicator-placement="end"][indicator="plus"]:state(open)::part(indicator) { transform: none; }
   a-expander::part(region) { display: grid; grid-template-rows: 0fr; grid-template-columns: minmax(0, 1fr); }
   a-expander:state(open)::part(region) { grid-template-rows: 1fr; }
   a-expander[priority="tertiary"][outdent]::part(header),
@@ -124,10 +83,6 @@
   a-expander:state(open)::part(content) { overflow: visible; transition: overflow 0s 200ms; transition-behavior: allow-discrete; }
   @media (prefers-reduced-motion: no-preference) {
     a-expander::part(region) { transition: grid-template-rows 200ms ease; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    a-expander::part(indicator),
-    a-expander[indicator="plus"]::part(glyph)::after { transition: none; }
   }
 
   /* The component and the native disclosure use the same chevron mask. Keeping
@@ -168,11 +123,10 @@
     --_expander-indicator-stroke: 2px;
     --_expander-indicator-track: calc(var(--_expander-indicator-edge) + var(--_expander-indicator-size) + var(--_expander-indicator-gap));
     --_expander-indicator-start: calc(var(--expander-gutter) - var(--_expander-indicator-size) - var(--_expander-indicator-gap));
-    --_expander-indicator-mask: var(--_expander-chevron);
-    --_expander-skeleton-indicator-start: var(--_expander-indicator-start);
-    --_expander-skeleton-indicator-end: auto;
-    --_expander-skeleton-indicator-top: 50%;
-    --_expander-skeleton-indicator-transform: translateY(-50%);
+    --_expander-open: 0;
+    --_expander-indicator-closed-angle: 0deg;
+    --_expander-indicator-open-angle: 90deg;
+    --_expander-indicator-angle: calc(var(--_expander-indicator-closed-angle) + (var(--_expander-indicator-open-angle) - var(--_expander-indicator-closed-angle)) * var(--_expander-open));
     --_expander-header-padding-block: 6px;
     --_expander-header-padding-end: 4px;
     --_expander-actions-gap: 2px;
@@ -193,21 +147,23 @@
     /* Smooth the closed-state hover/active surface change. */
     transition: background-color 100ms ease;
   }
-  a-expander[indicator-placement="end"] {
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) {
     --expander-gutter: 12px;
-    --_expander-skeleton-indicator-start: auto;
-    --_expander-skeleton-indicator-end: var(--_expander-indicator-edge);
-    --_expander-skeleton-indicator-top: 8px;
-    --_expander-skeleton-indicator-transform: rotate(90deg);
     --_expander-actions-end: var(--_expander-actions-gap);
+    --_expander-indicator-open-angle: 180deg;
   }
-  a-expander[indicator="triangle"] {
-    --_expander-indicator-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 2.5 12 8l-7 5.5z'/%3E%3C/svg%3E");
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator:is([shape="chevron"], [shape="triangle"])) {
+    --_expander-indicator-closed-angle: 90deg;
+    --_expander-indicator-open-angle: 270deg;
   }
-  a-expander[indicator="plus"] {
-    --_expander-indicator-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M7 2h2v12H7zM2 7h12v2H2z'/%3E%3C/svg%3E");
+  a-expander:has(> a-expander-indicator:is([shape="plus"], [data-when])) {
+    --_expander-indicator-closed-angle: 0deg;
+    --_expander-indicator-open-angle: 0deg;
   }
-  a-expander:has(> a-expander-indicator) { --_expander-skeleton-indicator-display: none; }
+  a-expander:is(:state(open), :not(:defined)[state="open"], :not(:defined):not([state])[default-state="open"]) {
+    --_expander-open: 1;
+    --_expander-indicator-opacity: 1;
+  }
 
   /* Boolean round uses a root-font-relative radius in both disclosure states.
      Explicit JSX values use --expander-round; raw lengths use typed attr(). */
@@ -223,7 +179,48 @@
   a-expander > a-expander-indicator {
     display: grid;
     place-items: center;
+    position: relative;
+    width: var(--_expander-indicator-size);
+    height: var(--_expander-indicator-size);
     pointer-events: none;
+  }
+  a-expander > a-expander-indicator[shape]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    mask: var(--_expander-chevron) center / contain no-repeat;
+  }
+  a-expander > a-expander-indicator[shape="triangle"]::before {
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 2.5 12 8l-7 5.5z'/%3E%3C/svg%3E");
+  }
+  a-expander > a-expander-indicator[shape="plus"]::before,
+  a-expander > a-expander-indicator[shape="plus"]::after {
+    content: "";
+    position: absolute;
+    inset: auto;
+    background: currentColor;
+    mask: none;
+    border-radius: calc(var(--_expander-indicator-stroke) / 2);
+  }
+  a-expander > a-expander-indicator[shape="plus"]::before {
+    width: calc(var(--_expander-indicator-size) - 2 * var(--_expander-indicator-stroke));
+    height: var(--_expander-indicator-stroke);
+    left: var(--_expander-indicator-stroke);
+    top: calc((var(--_expander-indicator-size) - var(--_expander-indicator-stroke)) / 2);
+  }
+  a-expander > a-expander-indicator[shape="plus"]::after {
+    width: var(--_expander-indicator-stroke);
+    height: calc(var(--_expander-indicator-size) - 2 * var(--_expander-indicator-stroke));
+    left: calc((var(--_expander-indicator-size) - var(--_expander-indicator-stroke)) / 2);
+    top: var(--_expander-indicator-stroke);
+    transform: scaleY(calc(1 - var(--_expander-open)));
+    transition: transform 150ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-expander::part(indicator),
+    a-expander > a-expander-indicator[shape="plus"]::after { transition: none; }
   }
 
   /* Initial layout uses the same title, action, and indicator tracks. Only
@@ -234,7 +231,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: stretch;
   }
-  a-expander:not(:defined)[indicator-placement="end"] {
+  a-expander:not(:defined):has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) {
     grid-template-columns: minmax(0, 1fr) auto var(--_expander-indicator-track);
   }
   a-expander:not(:defined) > :is(a-expander-summary, a-expander-title) {
@@ -245,40 +242,9 @@
     align-self: center;
     padding: var(--_expander-header-padding-block) var(--_expander-header-padding-end) var(--_expander-header-padding-block) var(--expander-gutter);
   }
-  a-expander:not(:defined) > :is(a-expander-summary, a-expander-title)::before {
-    content: "";
-    display: var(--_expander-skeleton-indicator-display, block);
-    position: absolute;
-    inset-inline-start: var(--_expander-skeleton-indicator-start);
-    inset-inline-end: var(--_expander-skeleton-indicator-end);
-    top: var(--_expander-skeleton-indicator-top);
-    width: var(--_expander-indicator-size);
-    height: var(--_expander-indicator-size);
-    transform: var(--_expander-skeleton-indicator-transform);
-    background-color: currentColor;
-    mask: var(--_expander-indicator-mask) center / contain no-repeat;
-    opacity: 0.6;
-    pointer-events: none;
-  }
-  a-expander:not(:defined)[indicator-placement="end"] > :is(a-expander-summary, a-expander-title) {
+  a-expander:not(:defined):has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) > :is(a-expander-summary, a-expander-title) {
     padding-inline: var(--expander-gutter) 0;
     text-align: left;
-  }
-  a-expander:not(:defined)[indicator-placement="end"] > :is(a-expander-summary, a-expander-title)::before { display: none; }
-  a-expander:not(:defined)[indicator-placement="end"]::before {
-    content: "";
-    grid-column: 3;
-    grid-row: 1;
-    align-self: center;
-    justify-self: end;
-    margin-inline-end: var(--_expander-indicator-edge);
-    display: var(--_expander-skeleton-indicator-display, block);
-    width: var(--_expander-indicator-size);
-    height: var(--_expander-indicator-size);
-    mask: var(--_expander-indicator-mask) center / contain no-repeat;
-    background-color: currentColor;
-    opacity: 0.6;
-    transform: rotate(90deg);
   }
   a-expander:not(:defined) > a-expander-actions {
     grid-column: 2;
@@ -297,8 +263,10 @@
     margin-inline-start: var(--_expander-indicator-start);
     width: var(--_expander-indicator-size);
     height: var(--_expander-indicator-size);
+    transform: rotate(var(--_expander-indicator-angle));
+    opacity: var(--_expander-indicator-opacity);
   }
-  a-expander:not(:defined)[indicator-placement="end"] > a-expander-indicator {
+  a-expander:not(:defined):has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) > a-expander-indicator {
     grid-column: 3;
     justify-self: end;
     margin-inline: 0 var(--_expander-indicator-edge);
@@ -309,15 +277,6 @@
   a-expander > a-expander-indicator[data-when="open"] { display: none; }
   a-expander:is(:state(open), :not(:defined)[state="open"], :not(:defined):not([state])[default-state="open"]) > a-expander-indicator[data-when="open"] { display: grid; }
   a-expander:is(:state(open), :not(:defined)[state="open"], :not(:defined):not([state])[default-state="open"]) > a-expander-indicator[data-when="closed"] { display: none; }
-  a-expander:not(:defined):is([state="open"], :not([state])[default-state="open"]) > :is(a-expander-summary, a-expander-title)::before { transform: translateY(-50%) rotate(90deg); opacity: 1; }
-  a-expander:not(:defined)[indicator-placement="end"]:is([state="open"], :not([state])[default-state="open"])::before { transform: rotate(270deg); opacity: 1; }
-  a-expander:not(:defined)[indicator="plus"]:is([state="open"], :not([state])[default-state="open"]) > :is(a-expander-summary, a-expander-title)::before { transform: translateY(-50%); }
-  a-expander:not(:defined)[indicator="plus"][indicator-placement="end"]:is([state="open"], :not([state])[default-state="open"])::before { transform: none; }
-  a-expander:not(:defined)[indicator="plus"]:is([state="open"], :not([state])[default-state="open"]) {
-    --_expander-indicator-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 7h12v2H2z'/%3E%3C/svg%3E");
-  }
-  a-expander:not(:defined):is([state="open"], :not([state])[default-state="open"]) > a-expander-indicator:not([data-when]) { transform: rotate(90deg); }
-  a-expander:not(:defined)[indicator-placement="end"]:is([state="open"], :not([state])[default-state="open"]) > a-expander-indicator:not([data-when]) { transform: rotate(180deg); }
 
   a-expander-summary {
     display: block;
@@ -362,7 +321,7 @@
        room inside the clip (see the outdent rule below). */
     overflow: auto;
   }
-  a-expander[indicator-placement="end"] > a-expander-details {
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) > a-expander-details {
     padding-inline-start: var(--expander-gutter);
   }
 
@@ -680,8 +639,7 @@
     line-height: 20px;
   }
 
-  /* The Expander chevron is a mask on the summary's pseudo-element. Give that
-     paint an explicit system foreground so forced colors cannot remap it away. */
+  /* Give decorative masks a system foreground in forced colors. */
   @media (forced-colors: active) {
     :is(a-expander, details[data-anta]) {
       border-color: CanvasText;
@@ -701,13 +659,16 @@
     a-expander[disabled]::part(indicator) {
       color: GrayText;
     }
-    a-expander:not(:defined) > :is(a-expander-summary, a-expander-title)::before,
+    a-expander > a-expander-indicator {
+      forced-color-adjust: none;
+      color: CanvasText;
+    }
     details[data-anta] > summary::before {
       forced-color-adjust: none;
       background-color: CanvasText;
     }
-    a-expander:not(:defined)[disabled] > :is(a-expander-summary, a-expander-title)::before {
-      background-color: GrayText;
+    a-expander[disabled] > a-expander-indicator {
+      color: GrayText;
     }
   }
 }

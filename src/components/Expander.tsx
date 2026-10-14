@@ -112,7 +112,7 @@ export const Expander = ({
   useLayoutEffect(() => setListening(true), []);
   const hasActions = hasChildren(actions) && typeof actions !== "boolean" &&
     (typeof actions !== "string" || Boolean(actions.trim()));
-  const presetIndicator: "chevron" | "triangle" | "plus" | undefined =
+  const presetIndicator: "chevron" | "triangle" | "plus" | undefined = indicator == null ? "chevron" :
     typeof indicator === "string" &&
     (indicator === "chevron" || indicator === "triangle" || indicator === "plus")
       ? indicator
@@ -124,6 +124,10 @@ export const Expander = ({
       : undefined;
   const useCustomIndicator = indicator != null && !presetIndicator && !pairedIndicator;
   const customIndicator = typeof indicator === "object" ? indicator as React.ReactNode : null;
+  const indicatorNodes = pairedIndicator ? [
+    <a-expander-indicator key="indicator-closed" data-when="closed" aria-hidden="true" inert>{pairedIndicator.closed}</a-expander-indicator>,
+    <a-expander-indicator key="indicator-open" data-when="open" aria-hidden="true" inert>{pairedIndicator.open}</a-expander-indicator>,
+  ] : [<a-expander-indicator key="indicator" shape={presetIndicator} aria-hidden="true" inert>{useCustomIndicator ? customIndicator : null}</a-expander-indicator>];
 
   // A non-named tone is a literal CSS color: feed it to the element's
   // oklch derivation via an inline custom property (the CSS attr() form
@@ -132,10 +136,11 @@ export const Expander = ({
 
   const titleNode =
     typeof title === "object" && title !== null ? (
-      <a-expander-title>{title}</a-expander-title>
+      <a-expander-title key="title">{title}</a-expander-title>
     ) : (
-      <a-expander-summary level={level != null ? (String(level) as `${typeof level}`) : undefined}>{title}</a-expander-summary>
+      <a-expander-summary key="title" level={level != null ? (String(level) as `${typeof level}`) : undefined}>{title}</a-expander-summary>
     );
+  const actionsNode = hasActions ? <a-expander-actions key="actions">{actions}</a-expander-actions> : null;
 
   return (
     <a-expander
@@ -146,8 +151,6 @@ export const Expander = ({
       outdent={outdent ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
-      indicator={presetIndicator}
-      indicator-placement={indicatorPlacement && indicatorPlacement !== "start" ? indicatorPlacement : undefined}
       // All-lowercase `onstatechange` is the one event-prop spelling both
       // renderers bind to our `statechange` event: React 19 keeps the case of
       // whatever follows `on` (so `onStateChange` would listen for "StateChange"),
@@ -171,13 +174,9 @@ export const Expander = ({
       style={computedStyle}
       {...rest}
     >
-      {titleNode}
-      {hasActions && <a-expander-actions>{actions}</a-expander-actions>}
-      {pairedIndicator && <>
-        <a-expander-indicator data-when="closed" aria-hidden="true" inert>{pairedIndicator.closed}</a-expander-indicator>
-        <a-expander-indicator data-when="open" aria-hidden="true" inert>{pairedIndicator.open}</a-expander-indicator>
-      </>}
-      {useCustomIndicator && <a-expander-indicator aria-hidden="true" inert>{customIndicator}</a-expander-indicator>}
+      {indicatorPlacement === "end"
+        ? [titleNode, actionsNode, ...indicatorNodes]
+        : [...indicatorNodes, titleNode, actionsNode]}
       <a-expander-details>{children}</a-expander-details>
     </a-expander>
   );

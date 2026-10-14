@@ -455,11 +455,6 @@ export interface ATagAttributes extends BaseAttributes {
  * its native shadow button and collapsed body; styles load externally.
  */
 export interface AExpanderAttributes extends BaseAttributes {
-  /** Built-in disclosure mark. Custom visuals use `a-expander-indicator`.
-   *  Defaults to `chevron`. */
-  indicator?: 'chevron' | 'triangle' | 'plus'
-  /** Logical side for the disclosure mark. Defaults to `start`. */
-  'indicator-placement'?: 'start' | 'end'
   /** Controlled open state (`'open'` / `'closed'`). Present → controlled: the
    *  attribute is the source of truth, clicks only dispatch the cancelable
    *  `statechange` event, and the consumer answers by updating it. Absent →
@@ -498,8 +493,10 @@ export interface AExpanderAttributes extends BaseAttributes {
   ) => void
 }
 
-/** Decorative custom Expander artwork. */
+/** Decorative Expander artwork. Place before the title or after the actions. */
 export interface AExpanderIndicatorAttributes extends BaseAttributes {
+  /** Built-in artwork. Omit for custom children or an empty indicator. */
+  shape?: 'chevron' | 'triangle' | 'plus'
   /** Keep custom artwork out of focus navigation. */
   inert?: boolean
   /** Select artwork for one disclosure state. */

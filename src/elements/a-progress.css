@@ -2,12 +2,7 @@
 @layer anta.reset, anta.components, anta.theme;
 
 @layer anta.components {
-  a-progress {
-    /* Reset inputs on each host so nested bars do not inherit a parent's value. */
-    --progress-value: initial;
-    --progress-max: initial;
-    --progress-value-resolved: var(--progress-value, 0);
-    --progress-max-resolved: var(--progress-max, 100);
+  :where(a-progress, progress[data-anta]) {
     --progress-bg: var(--bg-4);
     --progress-border-color: var(--border-4);
     --progress-indicator-bg: var(--bg-5);
@@ -27,22 +22,44 @@
     --progress-padding-block: 4px;
     --progress-padding-inline: 8px;
     --progress-min-height: 8px;
+    --progress-round: 0px;
+    --progress-fill-start: calc(100% - 90px);
+    --progress-fill: linear-gradient(
+      90deg,
+      var(--progress-indicator-bg) var(--progress-fill-start),
+      var(--progress-border-color) 100%
+    );
+    --progress-loading-fill: repeating-linear-gradient(
+      var(--progress-loading-angle),
+      transparent 0,
+      transparent var(--progress-loading-stripe-gap),
+      var(--progress-text-color) var(--progress-loading-stripe-gap),
+      var(--progress-text-color) calc(var(--progress-loading-stripe-gap) + var(--progress-loading-stripe))
+    );
     --progress-label-size: 13px;
     --progress-label-line-height: 16px;
   }
 
-  a-progress {
+  :where(a-progress, progress[data-anta]) {
     display: block;
     position: relative;
     overflow: hidden;
-    isolation: isolate;
     container-type: inline-size;
+    background: var(--progress-bg);
+    border-radius: var(--progress-round);
+  }
+
+  a-progress {
+    /* Reset inputs on each host so nested bars do not inherit a parent's value. */
+    --progress-value: initial;
+    --progress-max: initial;
+    --progress-value-resolved: var(--progress-value, 0);
+    --progress-max-resolved: var(--progress-max, 100);
+
+    isolation: isolate;
     padding: var(--progress-padding-block) var(--progress-padding-inline);
     min-height: var(--progress-min-height);
-    background: var(--progress-bg);
-
     border: 0px solid var(--progress-border-color);
-    border-radius: 0;
   }
 
   @supports (width: calc(attr(value type(<number>), 0) * 1%)) {
@@ -54,7 +71,8 @@
     }
   }
 
-  a-progress > a-progress-indicator {
+  a-progress::before {
+    content: '';
     position: absolute;
     top: 0;
     bottom: 0;
@@ -67,36 +85,26 @@
     overflow: hidden;
     z-index: -1;
     pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      var(--progress-indicator-bg) calc(100% - 90px),
-      var(--progress-border-color) 100%
-    );
+    background: var(--progress-fill);
     transition: width 0.2s ease;
   }
-  a-progress > a-progress-indicator::after {
+  a-progress:not([value])::before,
+  progress[data-anta]:not([value])::before {
     content: '';
     position: absolute;
-    inset: 0;
-    border-right: var(--progress-indicator-edge-border, none);
-  }
-  a-progress:not([value]) > a-progress-indicator {
+    top: 0;
+    bottom: 0;
     left: calc(0px - var(--progress-loading-x-period));
     width: calc(100% + var(--progress-loading-x-period));
-    background: repeating-linear-gradient(
-      var(--progress-loading-angle),
-      transparent 0,
-      transparent var(--progress-loading-stripe-gap),
-      var(--progress-text-color) var(--progress-loading-stripe-gap),
-      var(--progress-text-color) calc(var(--progress-loading-stripe-gap) + var(--progress-loading-stripe))
-    );
+    pointer-events: none;
+    background: var(--progress-loading-fill);
     filter: blur(var(--progress-loading-blur));
     opacity: var(--progress-loading-opacity);
     transition: none;
   }
-  a-progress:not([value]) > a-progress-indicator::after { display: none; }
   @media (prefers-reduced-motion: no-preference) {
-    a-progress:not([value]) > a-progress-indicator {
+    a-progress:not([value])::before,
+    progress[data-anta]:not([value])::before {
       will-change: transform;
       animation: progress-loading-slide var(--progress-loading-duration) linear infinite;
       animation-delay: -9999s;
@@ -106,14 +114,14 @@
     to { transform: translateX(var(--progress-loading-x-period)); }
   }
 
-  a-progress[size="small"] {
+  :where(a-progress, progress[data-anta])[size="small"] {
     --progress-padding-block: 2px;
     --progress-padding-inline: 6px;
     --progress-label-size: 12px;
     --progress-label-line-height: 14px;
   }
 
-  a-progress[size="large"] {
+  :where(a-progress, progress[data-anta])[size="large"] {
     --progress-padding-block: 6px;
     --progress-padding-inline: 10px;
     --progress-label-size: 15px;
@@ -121,48 +129,47 @@
   }
 
   /* Clip the indicator to the track radius. */
-  a-progress[round] {
+  :where(a-progress, progress[data-anta])[round] {
     --progress-round: 999px;
-    border-radius: var(--progress-round);
   }
 
   @supports (border-radius: attr(round type(<length>), 999px)) {
-    a-progress[round] {
+    :where(a-progress, progress[data-anta])[round] {
       --progress-round: attr(round type(<length>), 999px);
     }
   }
 
   /* Named tones — each re-aliases the surface/indicator/text to the matching
      theme-aware role-token tone (so dark mode is free). `neutral` is the base. */
-  a-progress[tone="brand"] {
+  :where(a-progress, progress[data-anta])[tone="brand"] {
     --progress-bg: var(--bg-4-brand);
     --progress-border-color: var(--border-4-brand);
     --progress-indicator-bg: var(--bg-5-brand);
     --progress-text-color: var(--text-2-brand);
     --progress-hint-color: var(--text-3-brand);
   }
-  a-progress[tone="info"] {
+  :where(a-progress, progress[data-anta])[tone="info"] {
     --progress-bg: var(--bg-4-info);
     --progress-border-color: var(--border-4-info);
     --progress-indicator-bg: var(--bg-5-info);
     --progress-text-color: var(--text-2-info);
     --progress-hint-color: var(--text-3-info);
   }
-  a-progress[tone="success"] {
+  :where(a-progress, progress[data-anta])[tone="success"] {
     --progress-bg: var(--bg-4-success);
     --progress-border-color: var(--border-4-success);
     --progress-indicator-bg: var(--bg-5-success);
     --progress-text-color: var(--text-2-success);
     --progress-hint-color: var(--text-3-success);
   }
-  a-progress[tone="warning"] {
+  :where(a-progress, progress[data-anta])[tone="warning"] {
     --progress-bg: var(--bg-4-warning);
     --progress-border-color: var(--border-4-warning);
     --progress-indicator-bg: var(--bg-5-warning);
     --progress-text-color: var(--text-2-warning);
     --progress-hint-color: var(--text-3-warning);
   }
-  a-progress[tone="critical"] {
+  :where(a-progress, progress[data-anta])[tone="critical"] {
     --progress-bg: var(--bg-4-critical);
     --progress-border-color: var(--border-4-critical);
     --progress-indicator-bg: var(--bg-5-critical);
@@ -173,7 +180,7 @@
   /* Custom tone — mirror the corresponding named color roles so the track,
      fill, and right edge retain their `bg-4` → `bg-5` → `border-4` order. */
   @supports (color: attr(tone type(<color>), transparent)) {
-    a-progress[tone]:not(
+    :where(a-progress, progress[data-anta])[tone]:not(
         [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
         [tone="success"], [tone="warning"], [tone="critical"]) {
       --progress-tone-source: attr(tone type(<color>), transparent);
@@ -187,6 +194,37 @@
         color-mix(in oklch, var(--progress-text-color) 80%, transparent)
       );
     }
+  }
+
+  progress[data-anta] {
+    --anta-native-progress-height: calc(
+      var(--progress-min-height) + var(--progress-padding-block) + var(--progress-padding-block)
+    );
+    --progress-fill-start: max(0%, calc(100% - 90px));
+
+    box-sizing: border-box;
+    inline-size: 100%;
+    block-size: var(--anta-native-progress-height);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    vertical-align: middle;
+  }
+  progress[data-anta]::-webkit-progress-bar {
+    border-radius: var(--progress-round);
+    background: var(--progress-bg);
+  }
+  progress[data-anta]::-webkit-progress-value {
+    border-radius: var(--progress-round);
+    background: var(--progress-fill);
+  }
+  progress[data-anta]::-moz-progress-bar {
+    border: 0;
+    border-radius: var(--progress-round);
+    background: var(--progress-fill);
   }
 
   a-progress-label {
@@ -219,15 +257,17 @@
   /* The track stays a Canvas surface with a dotted edge. Light forced-color
      palettes use the selected-item pair for the completed part. */
   @media (forced-colors: active) {
-    a-progress {
+    :where(a-progress, progress[data-anta]) {
       forced-color-adjust: none;
       --progress-bg: Canvas !important;
       --progress-border-color: CanvasText !important;
       --progress-indicator-bg: light-dark(SelectedItem, Highlight) !important;
-      --progress-indicator-edge-border: 1px solid light-dark(SelectedItemText, HighlightText) !important;
       --progress-text-color: CanvasText !important;
       --progress-hint-color: CanvasText !important;
       border: 1px dotted CanvasText !important;
+    }
+    a-progress[value]::before {
+      box-shadow: inset -1px 0 0 light-dark(SelectedItemText, HighlightText) !important;
     }
   }
 }

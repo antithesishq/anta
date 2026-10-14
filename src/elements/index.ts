@@ -17,7 +17,6 @@
  */
 export { AAvatarElement, register_a_avatar } from './a-avatar'
 import './a-progress.css'
-import './a-progress-native.css'
 export { ALoaderElement, register_a_loader } from './a-loader'
 export { ATextElement, register_a_text } from './a-text'
 export { ABoxElement, register_a_box } from './a-box'

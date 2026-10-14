@@ -34,7 +34,7 @@ export interface ProgressProps extends BaseProps {
 /**
  * Progress indicator for task completion and indeterminate work.
  *
- * Renders light-DOM indicator and label regions inside `<a-progress>`.
+ * Renders label regions inside `<a-progress>`; CSS paints the indicator.
  * Load the Progress stylesheet through its element entry or the full bundle.
  * No browser element registration is required.
  *
@@ -99,7 +99,6 @@ export const Progress = ({ value, max = 100, tone, size, round, label, hint, cla
       style={roundStyle(round, '--progress-round', toneStyle(tone, '--progress-tone-source', progressStyle))}
       {...rest}
     >
-      <a-progress-indicator aria-hidden="true" />
       {hasChildren(children) ? children : (
         <a-progress-label>
           {!indeterminate && <a-progress-number>{`${percent}%`}</a-progress-number>}

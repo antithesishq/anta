@@ -109,7 +109,6 @@ radius.
 ```html
 <a-progress class="upload-progress" value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
-  <a-progress-indicator aria-hidden="true"></a-progress-indicator>
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
     <a-progress-text>Upload</a-progress-text>
@@ -118,7 +117,6 @@ radius.
 
 <!-- Omit value for indeterminate progress. -->
 <a-progress style="width: 100%" round="50px" role="progressbar" aria-label="Preparing upload">
-  <a-progress-indicator aria-hidden="true"></a-progress-indicator>
   <a-progress-label>
     <a-progress-text>Preparing upload</a-progress-text>
   </a-progress-label>
@@ -134,9 +132,9 @@ Use `a-progress` for a track with labels, hints, or custom content. Load its
 external CSS through `@antadesign/anta/elements/a-progress` or the full bundle.
 It works without JavaScript or custom element registration.
 
-`a-progress-indicator` holds the visual indication. CSS calculates its width
-from the host's `value` and `max`. Numeric `--progress-value` and `--progress-max`
-variables take precedence over the corresponding attributes. JSX supplies these
+CSS paints the fill and loading stripes through `a-progress::before` and
+calculates the fill width from the host's `value` and `max`. Numeric
+`--progress-value` and `--progress-max` variables take precedence over the corresponding attributes. JSX supplies these
 variables; raw HTML can set them in an application stylesheet. See
 [Browser support](/install-config/#browser-support) for the attribute fallback.
 
@@ -164,9 +162,8 @@ For a plain HTML progress indicator, add `data-anta` to `<progress>`. It keeps
 the browser's native semantics, including indeterminate progress when `value`
 is absent, while using Anta's track, fill, tone, and size treatments. Native
 progress does not render Anta's label or hint structure; give it an accessible
-name instead. Load just its styles with
-`@antadesign/anta/elements/a-progress-native`, or use the Progress entry or full
-bundle, which include them. Native `<progress>` is a standalone control.
+name instead. The Progress entry and full bundle include styles for both
+forms. Native `<progress>` is a standalone control.
 
 ## Styling
 
@@ -176,7 +173,7 @@ a-progress.fancy {
   border-radius: 999px;
   background: light-dark(var(--bg-5), #26232c);
 }
-a-progress.fancy > a-progress-indicator {
+a-progress.fancy::before {
   background: linear-gradient(90deg, #6a5acd, #d44ea3 55%, #ff8a5b);
   box-shadow: 0 0 12px color-mix(in oklch, #d44ea3 55%, transparent);   /* glow */
 }
@@ -187,19 +184,19 @@ a-progress.fancy a-progress-text { color: #fff; }
 a-progress.fancy a-progress-hint { color: var(--text-2); }
 ```
 
-Style the track with `a-progress`. Target `a-progress-indicator` for the fill
-and loading stripes. Target the label tags or your custom children for text styling. `.fancy` is an
-application-defined class for this example.
+Style the track with `a-progress`. Target `a-progress::before` for the fill
+and loading stripes. Target the label tags or your custom children for text
+styling. `.fancy` is an application-defined class for this example.
 
 ## Migrate from shadow parts
 
 Progress now uses light DOM and external CSS. The JSX wrapper renders its
-indicator and labels. For raw HTML, add the indicator markup shown in the
-Raw HTML reference and keep its values, visible text, and ARIA in sync.
+labels; CSS paints the indicator. For raw HTML, keep values, visible text,
+and ARIA in sync. No indicator child is needed.
 
 Replace `a-progress::part(indicator)` with
-`a-progress > a-progress-indicator` for fill and loading styles. The fill's
-background includes its right-edge fade; replacing the background replaces that fade too.
+`a-progress::before` for fill and loading styles. The fill's background includes
+its right-edge fade; replacing the background replaces that fade too.
 Replace `::part(content)` styles with selectors for the label tags or your custom
 children.
 

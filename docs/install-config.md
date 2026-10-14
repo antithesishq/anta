@@ -418,23 +418,12 @@ bundler that processes module scripts and CSS imports:
   import '@antadesign/anta/tokens.css'
   import '@antadesign/anta/reset.css'
   import '@antadesign/anta/elements/a-progress'
-  import './progress-values.css'
 </script>
 
-<a-progress class="upload-progress" value="42" max="100" tone="info" role="progressbar"
+<a-progress value="42" max="100" tone="info" role="progressbar"
   aria-label="Upload" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">
-  <a-progress-indicator aria-hidden="true"></a-progress-indicator>
 </a-progress>
 ```
-
-Set the values in your `progress-values.css` stylesheet:
-
-```css
-a-progress.upload-progress { --progress-value: 42; --progress-max: 100; }
-```
-
-These variables override the corresponding attributes and work without numeric
-CSS `attr()`. JSX supplies them from the Progress props.
 
 An import map resolves module names but does not process the plain CSS imports
 in Anta's element entries. When serving native modules without a bundler, use
@@ -451,7 +440,6 @@ and root color scheme, including scrollbar colors. The reset, included in
   <body>
     <a-progress value="50" role="progressbar" aria-label="Upload"
       aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
-      <a-progress-indicator aria-hidden="true"></a-progress-indicator>
     </a-progress>
   </body>
 </html>

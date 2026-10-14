@@ -177,7 +177,7 @@ export interface BaseAttributes extends DOMEventHandlers {
 /**
  * Attributes for the CSS-only `<a-progress>` container.
  *
- * Raw authors supply an `a-progress-indicator` region and matching ARIA.
+ * CSS paints the indicator. Raw authors supply matching ARIA and optional labels.
  * For typed props and computed labels, use the `Progress` JSX wrapper.
  */
 export interface AProgressAttributes extends BaseAttributes {

@@ -54,7 +54,6 @@ Raw web components work without JSX:
 ```html
 <a-progress class="upload-progress" value="42" max="100" tone="info" role="progressbar"
   aria-label="Upload" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">
-  <a-progress-indicator aria-hidden="true"></a-progress-indicator>
 </a-progress>
 ```
 

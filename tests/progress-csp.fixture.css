@@ -1,9 +1,9 @@
 body { margin: 0; }
 #mount { width: 400px; }
-a-progress.override > a-progress-indicator { background: #123456; }
+a-progress.override::before { background: #123456; }
 a-progress.override > a-progress-label { letter-spacing: 1px; }
 a-progress.pixel, progress.pixel { background: #fff; }
-a-progress.pixel > a-progress-indicator { background: #c00; }
+a-progress.pixel::before { background: #c00; }
 progress.pixel::-webkit-progress-bar { background: #fff; }
 progress.pixel::-webkit-progress-value { background: #c00; }
 progress.pixel::-moz-progress-bar { background: #c00; }

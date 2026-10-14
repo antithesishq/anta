@@ -24,7 +24,7 @@ before(async () => {
   for (const mode of ['granular', 'bundle', 'native']) {
     const contents = mode === 'bundle'
       ? `import '${source}/bundle'; ${process.env.ANTA_PROGRESS_PACKAGE_ROOT ? `import '${source}/bundle.css';` : ''}`
-      : `import '${source}/tokens.css'; import '${source}/reset.css'; import '${source}/elements/${mode === 'native' ? 'a-progress-native' : 'a-progress'}';`
+      : `import '${source}/tokens.css'; import '${source}/reset.css'; import '${source}/elements/a-progress';`
     const result = await build({ stdin: { contents, resolveDir: process.cwd() }, bundle: true, write: false,
       outfile: `${mode}.js`, format: 'esm', target: 'es2022',
       alias: { react: requireSite.resolve('preact/compat') }, nodePaths: [resolve('node_modules')],
@@ -41,7 +41,7 @@ before(async () => {
   const compiled = new Module(resolve('tests/progress-server.cjs'))
   compiled._compile(result.outputFiles[0].text, compiled.id)
   renderServer = compiled.exports.render
-  assert.doesNotMatch(renderServer(initialProps), /slot=|<svg[ >]|<progress[ >]/)
+  assert.doesNotMatch(renderServer(initialProps), /slot=|<svg[ >]|<progress[ >]|<a-progress-indicator/)
   assert.match(renderServer(initialProps), /style="--progress-value:42;--progress-max:100"/)
   for (const framework of ['React', 'Preact']) {
     const react = framework === 'React'
@@ -107,11 +107,10 @@ async function geometry(page) {
   }).flat())
 }
 const indicator = page => page.locator('#mount > a-progress').evaluate(host => {
-  const fill = host.querySelector(':scope > a-progress-indicator')
-  const style = getComputedStyle(fill)
+  const style = getComputedStyle(host, '::before')
   return { width: parseFloat(style.width), background: style.backgroundColor,
-    image: style.backgroundImage, animations: fill.getAnimations().length,
-    fraction: fill.getBoundingClientRect().width / host.clientWidth,
+    image: style.backgroundImage, animations: host.getAnimations({subtree: true}).filter(a => a.effect?.pseudoElement === '::before').length,
+    fraction: parseFloat(style.width) / host.clientWidth,
   }
 })
 async function waitForFraction(page, fraction) {
@@ -137,8 +136,7 @@ for (const engine of engines) {
     assert.equal(await page.locator('a-progress').getAttribute('aria-valuenow'), '42')
     assert.equal((await page.locator('a-progress-label').innerText()).replace(/\s+/g, ' '), '42% Upload 3 of 7')
     assert.equal(await page.locator('progress').count(), 0)
-    assert.equal(await page.locator('a-progress-indicator').count(), 1)
-    assert.equal(await page.locator('a-progress-indicator > *').count(), 0)
+    assert.equal(await page.locator('a-progress-indicator').count(), 0)
     assert.equal(await page.locator('a-progress').evaluate(n => n.shadowRoot), null)
     await assertPaintedFill(page, 'a-progress')
   })
@@ -155,9 +153,9 @@ for (const engine of engines) {
     await page.locator('a-progress').evaluate(n => n.classList.add('without-attr'))
     assert.ok(Math.abs((await indicator(page)).fraction - 0.25) < 0.001)
     await page.locator('a-progress').evaluate(n => {
-      n.innerHTML += '<a-progress value="60" max="100"><a-progress-indicator></a-progress-indicator></a-progress>'
+      n.innerHTML += '<a-progress value="60" max="100"></a-progress>'
     })
-    assert.ok(Math.abs(await page.locator('a-progress a-progress').evaluate(n => n.querySelector('a-progress-indicator').getBoundingClientRect().width / n.clientWidth) - 0.6) < 0.001)
+    assert.ok(Math.abs(await page.locator('a-progress a-progress').evaluate(n => parseFloat(getComputedStyle(n, '::before').width) / n.clientWidth) - 0.6) < 0.001)
     await page.locator('#mount > a-progress').evaluate(n => n.classList.remove('variable-override','without-attr'))
     await waitForFraction(page, 0.75)
     for (const [className, fraction] of [['value-only',0.2], ['max-only',0.375], ['zero-variable',0]]) {
@@ -179,20 +177,59 @@ for (const engine of engines) {
     assert.equal(await page.locator('a-progress').evaluate(n => n.style.getPropertyValue('--progress-value')), '')
     assert.ok(Math.abs((await indicator(page)).fraction - 0.42) < 0.001)
   })
-  test(`${engine.name()}: raw loading needs only an empty indicator region and external CSS`, async t => {
+  test(`${engine.name()}: raw loading paints through CSS without an indicator child`, async t => {
     const page = await pageFor(t, engine, 'granular', '&loading=1&raw=1', false)
-    await page.locator('a-progress-indicator').evaluate(region => region.replaceChildren())
-    assert.match(await page.locator('a-progress-indicator').evaluate(n => getComputedStyle(n).backgroundImage), /repeating-linear-gradient/)
+    assert.match((await indicator(page)).image, /repeating-linear-gradient/)
     assert.equal(await page.locator('a-progress').getAttribute('aria-valuenow'), null)
     await page.emulateMedia({reducedMotion: 'no-preference'})
-    assert.equal(await page.locator('a-progress-indicator').evaluate(n => n.getAnimations().length), 1)
+    assert.equal((await indicator(page)).animations, 1)
   })
-  test(`${engine.name()}: native progress paints independently with only its stylesheet and no JavaScript`, async t => {
+  test(`${engine.name()}: native progress paints independently through the shared entry without JavaScript`, async t => {
     const page = await pageFor(t, engine, 'native', '', false)
     assert.equal(await page.locator('a-progress, a-progress-indicator').count(), 0)
     assert.equal(await page.locator('progress').evaluate(n => n.position), 0.42)
     assert.match(await page.locator('body').ariaSnapshot(), /progressbar "Native upload"/)
     await assertPaintedFill(page, 'progress')
+  })
+  test(`${engine.name()}: rich and native forms share tone, sizing, and rounding rules`, async t => {
+    const page = await pageFor(t, engine)
+    const pairs = await page.locator('a-progress').evaluate(host => {
+      const native = document.createElement('progress')
+      native.setAttribute('data-anta','')
+      native.value = 42
+      native.max = 100
+      host.after(native)
+      const pairs = []
+      for (const [size,height] of [['small',12],['medium',16],['large',20]]) {
+        for (const tone of ['neutral','brand','info','success','warning','critical']) {
+          for (const n of [host,native]) {
+            n.setAttribute('size',size); n.setAttribute('tone',tone); n.setAttribute('round','')
+          }
+          const styles = [host,native].map(n => {
+            const css=getComputedStyle(n)
+            return {background:css.backgroundColor,radius:css.borderRadius,padding:css.getPropertyValue('--progress-padding-block'),fill:css.getPropertyValue('--progress-indicator-bg')}
+          })
+          pairs.push({styles,nativeHeight:native.getBoundingClientRect().height,height,position:native.position})
+        }
+      }
+      return pairs
+    })
+    for (const {styles,nativeHeight,height,position} of pairs) {
+      assert.deepEqual(styles[0],styles[1])
+      assert.equal(styles[0].radius,'999px')
+      assert.equal(nativeHeight,height)
+      assert.equal(position,0.42)
+    }
+    if (engine === chromium) {
+      await page.emulateMedia({forcedColors:'active'})
+      await page.locator('a-progress').evaluate(n => { n.style.removeProperty('--progress-value'); n.style.removeProperty('--progress-max') })
+      for (const [value,fraction] of [[25,0.25],[0,0],[100,1]]) {
+        await page.locator('a-progress').evaluate((n,value) => n.setAttribute('value',value),value)
+        await waitForFraction(page,fraction)
+        assert.match(await page.locator('a-progress').evaluate(n => getComputedStyle(n,'::before').boxShadow), /inset/)
+      }
+      assert.equal(await page.locator('progress').evaluate(n => getComputedStyle(n).borderStyle),'dotted')
+    }
   })
   test(`${engine.name()}: sizes, tones, rounding, and custom content retain their initial layout`, async t => {
     const page = await pageFor(t, engine)
@@ -240,20 +277,20 @@ for (const engine of engines) {
       assert.equal(await page.locator('a-progress').evaluate(n => n.shadowRoot), null)
       assert.equal(await page.evaluate(() => customElements.get('a-progress')), undefined)
       assert.equal(await page.locator('progress').count(), 0)
-      assert.equal(await page.locator('a-progress-indicator').count(), 1)
+      assert.equal(await page.locator('a-progress-indicator').count(), 0)
       assert.ok(Math.abs((await indicator(page)).fraction - 0.42) < 0.001)
-      const midway = await page.locator('a-progress-indicator').evaluate(async fill => {
-        getComputedStyle(fill).width
-        fill.parentElement.setAttribute('value', '80')
-        getComputedStyle(fill).width
-        const transition = fill.getAnimations().find(a => a.transitionProperty === 'width')
+      const midway = await page.locator('a-progress').evaluate(host => {
+        getComputedStyle(host, '::before').width
+        host.setAttribute('value', '80')
+        getComputedStyle(host, '::before').width
+        const transition = host.getAnimations({subtree: true}).find(a => a.transitionProperty === 'width')
         if (!transition) return null
         transition.pause()
         transition.currentTime = 100
-        return fill.getBoundingClientRect().width / fill.parentElement.clientWidth
+        return parseFloat(getComputedStyle(host, '::before').width) / host.clientWidth
       })
       assert.ok(midway > 0.42 && midway < 0.8, `width transition: ${midway}`)
-      await page.locator('a-progress-indicator').evaluate(fill => { fill.getAnimations().forEach(a => a.finish()); fill.parentElement.setAttribute('value','42') })
+      await page.locator('a-progress').evaluate(host => { host.getAnimations({subtree: true}).forEach(a => a.finish()); host.setAttribute('value','42') })
       assert.match(await page.locator('body').ariaSnapshot(), /progressbar "Upload · 42% · 3 of 7"/)
       assert.equal((await page.locator('body').ariaSnapshot()).match(/progressbar/g).length, 1)
       for (const [value, max, fraction] of [[-10,100,0], [200,100,1], [25,50,0.5], ['oops',100,0], [42,0,0], [42,'Infinity',0]]) {
@@ -274,10 +311,10 @@ for (const engine of engines) {
       await page.emulateMedia({ reducedMotion: 'reduce' })
       assert.equal((await indicator(page)).animations, 0)
       await page.locator('a-progress').evaluate(host => {
-        host.innerHTML += '<a-progress value="75" max="100" role="progressbar" aria-label="Nested"><a-progress-indicator aria-hidden="true"></a-progress-indicator><a-progress-label>Nested label</a-progress-label></a-progress>'
+        host.innerHTML += '<a-progress value="75" max="100" role="progressbar" aria-label="Nested"><a-progress-label>Nested label</a-progress-label></a-progress>'
       })
-      assert.equal(await page.locator('a-progress a-progress').evaluate(n => n.querySelector(':scope > a-progress-indicator').getAnimations().length), 0)
-      assert.ok(Math.abs(await page.locator('a-progress a-progress').evaluate(n => n.querySelector('a-progress-indicator').getBoundingClientRect().width / n.clientWidth) - 0.75) < 0.001)
+      assert.equal(await page.locator('a-progress a-progress').evaluate(n => n.getAnimations({subtree: true}).length), 0)
+      assert.ok(Math.abs(await page.locator('a-progress a-progress').evaluate(n => parseFloat(getComputedStyle(n, '::before').width) / n.clientWidth) - 0.75) < 0.001)
       if (engine === chromium) {
         await page.emulateMedia({ forcedColors: 'active' })
         assert.equal(await page.locator('#mount > a-progress').evaluate(n => getComputedStyle(n).borderStyle), 'dotted')

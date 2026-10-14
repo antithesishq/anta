@@ -7,8 +7,9 @@ changes are not listed.
 
 ### Breaking
 
-- [Progress markup and styling](/progress/#migrate-from-shadow-parts) use light-DOM
-  indicator regions. Raw markup and `::part()` overrides need migration.
+- [Progress markup and styling](/progress/#migrate-from-shadow-parts) use an
+  `a-progress::before` indicator. Replace `::part()` overrides with the documented
+  selectors and author ARIA for raw HTML.
   `AProgressElement` and `register_a_progress` are removed. Server-rendered
   values now include inline CSS variables; see [CSP configuration](/install-config/#content-security-policy).
 

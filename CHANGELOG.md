@@ -27,6 +27,10 @@ changes are not listed.
 
 ### Added
 
+- [Text's inert expansion mode](/text/#truncation-and-expansion):
+  `expandableInert` makes the folded, overflowing preview one expand target and
+  skips content interactions until expanded. Text that fits remains interactive.
+
 - [Input button fields](/input/#styling) expose `::part(input-label)` for their
   value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
 - [Select's `dimActions` prop](/select/) controls its trigger adornments. They

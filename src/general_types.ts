@@ -261,12 +261,20 @@ export interface ALoaderAttributes extends BaseAttributes {
   'aria-valuemax'?: number | string
 }
 
-/**
- * Attributes for the `<a-text>` custom element.
- *
- * Low-level web component attributes; for the JSX wrapper use `Text`
- * from `@antadesign/anta`.
- */
+/** Measured Text presentation, reported without changing authored DOM. */
+export interface TextPresentation {
+  /** Whether the reader has expanded the content. */
+  expanded: boolean
+  /** Whether the folded preview overflows. Retained while expanded. */
+  overflowing: boolean
+}
+
+/** Attributes on Text's authored content region. */
+export interface ATextContentAttributes extends BaseAttributes {
+  inert?: boolean
+}
+
+/** Attributes for `<a-text>`. For JSX, use `Text` from `@antadesign/anta`. */
 export interface ATextAttributes extends BaseAttributes {
   /** Visual priority. Maps to text-1..text-4. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
@@ -291,6 +299,12 @@ export interface ATextAttributes extends BaseAttributes {
   /** Paired with `expandable`: the chevron becomes a two-way "Show more" /
    *  "Show less" toggle that stays visible while expanded. Omit for one-way. */
   collapsible?: boolean | ''
+  /** Cover the folded, overflowing preview with the expand control. Raw authors
+   *  manage `inert` on `a-text-content` using `textpresentationchange`. */
+  'expandable-inert'?: boolean | ''
+  /** Non-bubbling notification after measurement or expansion, including a
+   *  current snapshot when a listener attaches after upgrade. */
+  ontextpresentationchange?: (event: CustomEvent<TextPresentation> | { nativeEvent: CustomEvent<TextPresentation> }) => void
 }
 
 /** Panel presentation state. Normal panels remain visible in their parent layout. */

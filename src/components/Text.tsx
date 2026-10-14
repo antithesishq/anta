@@ -1,12 +1,13 @@
-import type { BaseProps } from "../general_types"
-import { lineClamp, neutralToneAttr, toneStyle } from "../anta_helpers"
+import type { ATextAttributes, BaseProps, TextPresentation } from "../general_types"
+import { lineClamp, nativeStateChange, neutralToneAttr, toneStyle } from "../anta_helpers"
+import { useLayoutEffect, useMemo, useState } from '../jsx-runtime'
 import { Tooltip } from "./Tooltip"
 
 /** Truncation / expansion axis. `expandable` only takes effect with `truncate`;
  *  `collapsible` only with `expandable` — so the type forbids `collapsible`
  *  unless `expandable` is set (a dynamic `expandable={cond}` is still allowed). */
 export type ExpandMode =
-  | { expandable?: never; collapsible?: never }
+  | { expandable?: never; collapsible?: never; expandableInert?: never }
   | {
       /** Show a fade hint when text overflows and reserve space for an
        *  expansion control. Select the control or press Enter or Space while it
@@ -18,6 +19,11 @@ export type ExpandMode =
        *  "Show more" / "Show less" toggle that stays visible while expanded.
        *  Only takes effect together with `expandable`. */
       collapsible?: boolean
+      /** Make overflowing, folded content inert and let the expand control cover
+       *  the full preview. Content cannot receive focus, clicks, or selection and
+       *  is excluded from the accessibility tree until expanded. Text that fits
+       *  remains interactive. JSX owns the content's `inert` attribute. */
+      expandableInert?: boolean
     }
 
 export type TextProps = BaseProps & {
@@ -47,6 +53,26 @@ export type TextProps = BaseProps & {
   truncate?: boolean | number
 } & ExpandMode
 
+function ExpandableText({ attributes, children, expandableInert }: { attributes: ATextAttributes; children: React.ReactNode; expandableInert?: boolean }) {
+  const [presentation, setPresentation] = useState<TextPresentation>({ expanded: false, overflowing: false })
+  const [listening, setListening] = useState(false)
+  // React hydration does not attach custom event props until they change.
+  // This state-only commit installs the listener without reading the app DOM.
+  useLayoutEffect(() => setListening(true), [])
+  const onPresentation = useMemo(() => (input: Parameters<NonNullable<ATextAttributes['ontextpresentationchange']>>[0]) => {
+    const { detail, isOwn } = nativeStateChange(input)
+    if (!isOwn || !detail) return
+    setPresentation(previous => previous.expanded === detail.expanded && previous.overflowing === detail.overflowing ? previous : detail)
+  }, [])
+  return (
+    <a-text {...attributes} expandable-inert={expandableInert ? '' : undefined} ontextpresentationchange={listening ? onPresentation : undefined}>
+      <a-button role="button" tabIndex={0} priority="quaternary" paddingless="" />
+      {/* Native inert is a boolean property; React 19 assigns it directly. */}
+      <a-text-content inert={Boolean(expandableInert && presentation.overflowing && !presentation.expanded)}>{children}</a-text-content>
+    </a-text>
+  )
+}
+
 /**
  * Block-level text container with priority and tone support.
  *
@@ -72,7 +98,7 @@ export type TextProps = BaseProps & {
  * <Text truncate={3} expandable>…long paragraph…</Text>
  * ```
  */
-export const Text = ({ priority, tone, size, inline, truncate, expandable, collapsible, className, style, children, ...rest }: TextProps) => {
+export const Text = ({ priority, tone, size, inline, truncate, expandable, collapsible, expandableInert, className, style, children, ...rest }: TextProps) => {
   const lineCount = lineClamp(truncate)
   const toneAttr = neutralToneAttr(tone)
   // A custom (non-named) tone writes --text-tone-source inline for the element's
@@ -84,25 +110,17 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
   )
   // expandable/collapsible only mean anything once the text is actually clamped.
   const canExpand = expandable && lineCount != null
+  const attributes: ATextAttributes = {
+    priority, tone: toneAttr, size, inline: inline ? '' : undefined,
+    truncate: lineCount != null ? String(lineCount) : undefined,
+    expandable: canExpand ? '' : undefined,
+    collapsible: canExpand && collapsible ? '' : undefined,
+    class: className, style: computedStyle as React.CSSProperties, ...rest,
+  }
+  if (canExpand) return <ExpandableText attributes={attributes} expandableInert={expandableInert}>{children}</ExpandableText>
   return (
-    <a-text
-      priority={priority}
-      tone={toneAttr}
-      size={size}
-      inline={inline ? '' : undefined}
-      truncate={lineCount != null ? String(lineCount) : undefined}
-      expandable={canExpand ? '' : undefined}
-      collapsible={canExpand && collapsible ? '' : undefined}
-      class={className}
-      style={computedStyle as React.CSSProperties}
-      {...rest}
-    >
-      {canExpand ? (
-        <>
-          <a-button role="button" tabIndex={0} priority="quaternary" paddingless="" />
-          <a-text-content>{children}</a-text-content>
-        </>
-      ) : children}
+    <a-text {...attributes}>
+      {children}
       {lineCount != null && !canExpand && (
         <Tooltip truncatedOnly data-anta-text-tooltip="" />
       )}

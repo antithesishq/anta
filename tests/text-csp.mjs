@@ -53,9 +53,9 @@ before(async () => {
         ${react ? 'let root' : ''}
         window.renderText = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(node(props))" : "render(node(props), document.querySelector('#mount'))"} }
         window.hydrateText = props => { ${react ? "root = hydrateRoot(document.querySelector('#mount'), node(props))" : "hydrate(node(props), document.querySelector('#mount'))"} }
-        window.renderLinkedText = () => window.renderText({
+        window.renderLinkedText = (props = {}) => window.renderText({
           truncate: 3, expandable: true, collapsible: true,
-          children: [React.createElement('a', { href: '#content-link', key: 'link' }, 'Content link'), ${JSON.stringify(longText)}],
+          children: [React.createElement('a', { href: '#content-link', key: 'link' }, 'Content link'), ${JSON.stringify(longText)}], ...props,
         })
       `, resolveDir: process.cwd() }, bundle: true, write: false, outfile: `${framework}.js`,
       format: 'esm', target: 'es2022', jsx: 'automatic', jsxImportSource: '@antadesign/anta',
@@ -81,7 +81,7 @@ before(async () => {
     // its current inline stylesheet without relaxing style attributes.
     res.setHeader('Content-Security-Policy', mode === 'tooltip' ? policy.replace("style-src 'self'", "style-src 'self' 'unsafe-inline'") : policy)
     res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html')
-    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? renderServer(initialProps) : ''}</main><div id="following">Following content</div>`)
+    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? renderServer({ ...initialProps, ...(url.searchParams.has('inert') ? { expandableInert: true } : {}) }) : ''}</main><div id="following">Following content</div>`)
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   origin = `http://127.0.0.1:${server.address().port}`
@@ -100,7 +100,7 @@ async function pageFor(t, engine, mode = 'granular', ssr = false, javaScriptEnab
   page.setDefaultTimeout(10000)
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
-  await page.goto(`${origin}/?mode=${mode}${ssr ? '&ssr=1' : ''}`)
+  await page.goto(`${origin}/?mode=${mode}${ssr ? '&ssr=1' : ''}${ssr === 'inert' ? '&inert=1' : ''}`)
   t.after(async () => {
     try { assert.deepEqual(errors, []); assert.deepEqual(await page.evaluate(() => window.cspViolations ?? []), []) }
     finally { await page.close() }
@@ -115,6 +115,93 @@ const expanded = page => page.locator('#mount > a-text').evaluate(n => n.matches
 const buttonState = page => page.locator('#mount > a-text > a-button').evaluate(n => ({ label: window.elementInternals.get(n).ariaLabel, expanded: window.elementInternals.get(n).ariaExpanded }))
 
 for (const engine of engines) {
+  test(`${engine.name()}: expandableInert covers the preview and restores content interaction`, async t => {
+    for (const framework of ['React', 'Preact']) {
+      const page = await pageFor(t, engine)
+      await register(page)
+      await page.evaluate(framework => import(`/${framework}.js`), framework)
+      await page.evaluate(() => window.renderLinkedText({ expandableInert: true }))
+      const root = page.locator('#mount > a-text')
+      const content = root.locator('a-text-content')
+      const control = root.locator('a-button')
+      await page.waitForFunction(() => document.querySelector('a-text-content')?.inert)
+      assert.equal(await content.locator('a').evaluate(n => { n.focus(); return n === document.activeElement }), false)
+      const tab = engine === webkit ? 'Alt+Tab' : 'Tab'
+      await control.focus()
+      await page.keyboard.press(tab)
+      assert.equal(await content.locator('a').evaluate(n => n === document.activeElement), false)
+      for (const truncate of [3, true]) {
+        await page.evaluate(truncate => window.renderLinkedText({ truncate, expandableInert: true }), truncate)
+        await page.waitForFunction(() => document.querySelector('a-text-content')?.inert)
+        assert.deepEqual(await control.boundingBox(), await root.boundingBox(), `${framework} truncate=${truncate}`)
+        await control.click({ position: { x: 5, y: 5 } })
+        await page.waitForFunction(() => !document.querySelector('a-text-content').inert)
+        assert.equal(await expanded(page), true)
+        assert.equal((await control.boundingBox()).height, 16)
+        await control.focus()
+        await page.keyboard.press(tab)
+        assert.equal(await content.locator('a').evaluate(n => n === document.activeElement), true)
+        await control.click()
+        await page.waitForFunction(() => document.querySelector('a-text-content').inert)
+      }
+      // Changing the prop does not replace the host or its expansion state.
+      await root.evaluate(n => window.originalText = n)
+      await page.evaluate(() => window.renderLinkedText({ expandableInert: false }))
+      await page.waitForFunction(() => !document.querySelector('a-text-content').inert)
+      assert.equal(await root.evaluate(n => n === window.originalText), true)
+      await page.evaluate(() => window.renderLinkedText({ expandableInert: true, children: 'Fits' }))
+      await control.waitFor({ state: 'hidden' })
+      assert.equal(await content.evaluate(n => n.inert), false)
+      await page.evaluate(() => window.renderLinkedText({ expandableInert: true }))
+      await page.waitForFunction(() => document.querySelector('a-text-content').inert)
+      await root.evaluate(n => n.classList.add('wide'))
+      await page.waitForFunction(() => !document.querySelector('a-text-content').inert)
+      await root.evaluate(n => n.classList.remove('wide'))
+      await page.waitForFunction(() => document.querySelector('a-text-content').inert)
+      await page.evaluate(() => window.renderLinkedText({ expandableInert: true, collapsible: false }))
+      await control.click()
+      await control.waitFor({ state: 'hidden' })
+      await page.waitForFunction(() => !document.querySelector('a-text-content').inert)
+    }
+  })
+  test(`${engine.name()}: expandableInert hydrates before or after Text upgrade`, async t => {
+    for (const framework of ['React', 'Preact']) {
+      for (const lateUpgrade of [true, false]) {
+        const page = await pageFor(t, engine, 'granular', 'inert')
+        assert.equal(await page.locator('a-text-content').evaluate(n => n.inert), false)
+        if (!lateUpgrade) {
+          await register(page)
+          await page.locator('a-button').waitFor({ state: 'visible' })
+          // Ensure the initial observer notifications have already been delivered.
+          await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+        }
+        await page.evaluate(framework => import(`/${framework}.js`), framework)
+        await page.evaluate(props => window.hydrateText(props), { ...initialProps, expandableInert: true })
+        if (lateUpgrade) await register(page)
+        await page.waitForFunction(() => document.querySelector('a-text-content').inert)
+        await page.locator('a-button').click({ position: { x: 5, y: 5 } })
+        await page.waitForFunction(() => !document.querySelector('a-text-content').inert)
+        assert.equal(await expanded(page), true)
+      }
+    }
+  })
+  test(`${engine.name()}: raw expandable-inert reports presentation without owning inert`, async t => {
+    const page = await pageFor(t, engine)
+    await mount(page, raw().replace(' expandable ', ' expandable expandable-inert '))
+    const html = await page.locator('a-text').evaluate(n => n.outerHTML)
+    await register(page)
+    await page.locator('a-button').waitFor({ state: 'visible' })
+    await page.locator('a-text').evaluate(n => {
+      window.presentations = []
+      n.addEventListener('textpresentationchange', e => window.presentations.push(e.detail))
+    })
+    await page.waitForFunction(() => window.presentations.length > 0)
+    assert.deepEqual(await page.evaluate(() => window.presentations.at(-1)), { expanded: false, overflowing: true })
+    assert.equal(await page.locator('a-text-content').evaluate(n => n.inert), false)
+    await page.locator('a-button').click()
+    await page.waitForFunction(() => window.presentations.at(-1).expanded)
+    assert.equal(await page.locator('a-text').evaluate(n => n.outerHTML), html)
+  })
   test(`${engine.name()}: Text expansion control precedes content links in Tab order`, async t => {
     for (const framework of ['raw', 'React', 'Preact']) {
       const page = await pageFor(t, engine)

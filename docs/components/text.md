@@ -91,7 +91,18 @@ Custom CSS can remove the padding, allowing the control to overlap content.
 
 {/* Two-way: the reader can collapse it back */}
 <Text truncate={3} expandable collapsible>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+
+{/* Make the folded preview a single expansion target */}
+<Text truncate={3} expandable collapsible expandableInert>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
 ```
+
+Pass `expandableInert` to make the entire overflowing, folded preview an expand
+target. JSX applies [`inert`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/inert)
+to `a-text-content`, skipping its links in Tab order and blocking clicks and text
+selection. The content is also absent from the accessibility tree until expanded.
+Expansion removes `inert`; the collapse control keeps its usual 16px area.
+Text that fits remains interactive. Before browser measurement, including server
+rendering, content remains interactive because overflow is not yet known.
 
 ## Component props
 
@@ -99,6 +110,7 @@ Custom CSS can remove the padding, allowing the control to overlap content.
 |------|------|---------|-------------|
 | `collapsible?` | boolean | — | Let the reader collapse back after expanding: the chevron becomes a "Show more" / "Show less" toggle that stays visible while expanded. Only takes effect together with `expandable`. |
 | `expandable?` | boolean | — | Show a fade hint when text overflows and reserve space for an expansion control. Select the control or press Enter or Space while it has focus to reveal the text. Only takes effect with `truncate`. Expansion is one-way by default: the control is hidden once expanded. Add `collapsible` for a two-way toggle. |
+| `expandableInert?` | boolean | — | Make overflowing, folded content inert and let the expand control cover the full preview. Content cannot receive focus, clicks, or selection and is excluded from the accessibility tree until expanded. Text that fits remains interactive. JSX owns the content's `inert` attribute. |
 | `inline?` | boolean | — | Render as inline-block instead of the default block element. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual priority. Maps to text-1..text-4 (`primary` = text-1, the strongest). The default is `secondary` (text-2) — body text reads a step softer than the strongest foreground; pass `primary` for emphasis. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24. |
@@ -175,6 +187,32 @@ handling under `style-src-attr 'none'` (see [Content Security Policy](../install
 ```css
 a-text.summary { --line-clamp: 3; }
 ```
+
+### Make folded content inert
+
+Raw authors own `inert` on `a-text-content`. Add `expandable-inert` to make the
+folded expand target cover the whole preview, then synchronize `inert` with the
+element's `textpresentationchange` notification:
+
+```html
+<a-text id="summary" truncate="1" expandable collapsible expandable-inert>
+  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+  <a-text-content>A long description with <a href="/text/">a link</a>.</a-text-content>
+</a-text>
+```
+
+```js
+const text = document.querySelector('#summary')
+const content = text.querySelector(':scope > a-text-content')
+text.addEventListener('textpresentationchange', ({ detail }) => {
+  content.inert = detail.overflowing && !detail.expanded
+})
+```
+
+The non-bubbling notification carries `{ expanded, overflowing }` after
+measurement or expansion. A listener attached after element registration also
+receives the current snapshot asynchronously. `overflowing` describes the folded
+preview and is retained while expanded. The element leaves your attributes alone.
 
 ## Styling
 

@@ -120,6 +120,11 @@
     height: auto;
   }
   a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { height: 16px; }
+  a-text[truncate][expandable][expandable-inert]:state(overflowing):not(:state(expanded)) > a-button {
+    inset: 0;
+    width: auto;
+    height: auto;
+  }
   a-text[truncate][expandable]:is(:hover, :focus-within) > a-button,
   a-text[truncate][expandable]:state(expanded) > a-button { opacity: 1; }
   a-text[truncate][expandable]:state(expanded) > a-button::before { transform: rotate(225deg); }

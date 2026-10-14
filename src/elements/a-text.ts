@@ -1,5 +1,6 @@
 import { HTMLElementBase, isTextToggleReceiver, SYNC_TEXT_TOGGLE, type TextToggleReceiver } from '../anta_helpers'
 import './a-text.css'
+import type { TextPresentation } from '../general_types'
 
 /** Light-DOM text with overflow measurement and expansion. The element keeps
  * state in ElementInternals; it never rewrites authored markup or attributes. */
@@ -12,10 +13,21 @@ export class ATextElement extends HTMLElementBase {
   #contentObserver?: MutationObserver
   #content?: HTMLElement
   #control?: TextToggleReceiver
+  #reportQueued = false
+  #reported?: TextPresentation
 
   constructor() {
     super()
     this.#internals = this.attachInternals()
+  }
+
+  override addEventListener<K extends keyof HTMLElementEventMap>(type: K, callback: (this: HTMLElement, event: HTMLElementEventMap[K]) => unknown, options?: boolean | AddEventListenerOptions): void
+  override addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions): void
+  override addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions): void {
+    if (callback) super.addEventListener(type, callback, options)
+    // Hydration can attach its listener after the initial measurement. Replay
+    // asynchronously so subscribing during render never invokes renderer state.
+    if (type === 'textpresentationchange' && callback) this.#reportPresentation(true)
   }
 
   connectedCallback() {
@@ -63,6 +75,7 @@ export class ATextElement extends HTMLElementBase {
       this.#content = undefined
       this.#internals.states.delete('overflowing')
       this.#clearControl()
+      this.#reportPresentation()
       return
     }
     this.#contentObserver ??= new MutationObserver(() => this.#sync())
@@ -83,6 +96,7 @@ export class ATextElement extends HTMLElementBase {
       this.#control = receiver
     }
     this.#syncControl()
+    this.#reportPresentation()
     this.#measureOverflow()
   }
 
@@ -115,6 +129,7 @@ export class ATextElement extends HTMLElementBase {
     if (next) this.#internals.states.add('expanded')
     else this.#internals.states.delete('expanded')
     this.#syncControl()
+    this.#reportPresentation()
   }
 
   #measureOverflow() {
@@ -122,6 +137,24 @@ export class ATextElement extends HTMLElementBase {
     if (this.#expanded) return
     if (this.isTruncated) this.#internals.states.add('overflowing')
     else this.#internals.states.delete('overflowing')
+    this.#reportPresentation()
+  }
+
+  #reportPresentation(replay = false) {
+    if (replay) this.#reported = undefined
+    if (this.#reportQueued) return
+    this.#reportQueued = true
+    this.view.queueMicrotask(() => {
+      this.#reportQueued = false
+      if (!this.isConnected) return
+      const detail: TextPresentation = {
+        expanded: this.#expanded,
+        overflowing: this.#internals.states.has('overflowing'),
+      }
+      if (this.#reported?.expanded === detail.expanded && this.#reported.overflowing === detail.overflowing) return
+      this.#reported = { ...detail }
+      this.dispatchEvent(new this.view.CustomEvent('textpresentationchange', { detail }))
+    })
   }
 }
 

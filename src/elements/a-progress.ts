@@ -1,18 +1,8 @@
 import { HTMLElementBase } from '../anta_helpers'
 import './a-progress.css'
 
-/**
- * `<a-progress>` — progress bar element.
- *
- * Styling notes (`a-progress.css` ships comment-free):
- * - `--progress-indicator-edge` is a right-edge fade from the indicator's
- *   own bg to the border color, both opaque; tone variants re-tint it
- *   automatically because both endpoint tokens are re-aliased per tone.
- * - `border: 0px solid var(--progress-border-color)` is a per-component
- *   reset (same spirit as Tailwind preflight): style and color are declared
- *   at a known state so a consumer opts into a themed border by changing
- *   only `border-width`.
- */
+/** Progress fill with external part styling. The element only updates its
+ * owned indicator; labels, attributes, and accessibility remain authored. */
 export class AProgressElement extends HTMLElementBase {
   static observedAttributes = ['value', 'max', 'tone']
   indicator: HTMLDivElement
@@ -21,75 +11,17 @@ export class AProgressElement extends HTMLElementBase {
     super()
     const shadow = this.attachShadow({ mode: 'open' })
 
-    const style = document.createElement('style')
-    style.textContent = `
-      :host {
-        display: block;
-        position: relative;
-        overflow: hidden;
-      }
-      .indicator {
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: var(--_percent, 0%);
-        background: var(--progress-indicator-bg);
-        border-radius: 0;
-        transition: width 0.2s ease;
-      }
-      .indicator::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 90px;
-        box-sizing: border-box;
-        background: var(--progress-indicator-edge);
-        border-right: var(--progress-indicator-edge-border, none);
-      }
-      :host(:not([value])) .indicator {
-        left: calc(0px - var(--progress-loading-x-period));
-        width: calc(100% + var(--progress-loading-x-period));
-        background: repeating-linear-gradient(
-          var(--progress-loading-angle),
-          transparent 0,
-          transparent var(--progress-loading-stripe-gap),
-          var(--progress-text-color) var(--progress-loading-stripe-gap),
-          var(--progress-text-color) calc(var(--progress-loading-stripe-gap) + var(--progress-loading-stripe))
-        );
-        filter: blur(var(--progress-loading-blur));
-        opacity: var(--progress-loading-opacity);
-        transition: none;
-      }
-      :host(:not([value])) .indicator::after { display: none; }
-      @media (prefers-reduced-motion: no-preference) {
-        :host(:not([value])) .indicator {
-          will-change: transform;
-          animation: progress-loading-slide var(--progress-loading-duration) linear infinite;
-          animation-delay: -9999s;
-        }
-      }
-      @keyframes progress-loading-slide {
-        to { transform: translateX(var(--progress-loading-x-period)); }
-      }
-      slot {
-        display: block;
-        position: relative;
-      }
-    `
-
     this.indicator = document.createElement('div')
     this.indicator.className = 'indicator'
-    // Exposed as a shadow part so consumers can style the fill bar from plain CSS
-    // — `a-progress::part(indicator)` — instead of the `--progress-indicator-*`
-    // custom properties. (The track is the host: style `a-progress` directly.)
     this.indicator.setAttribute('part', 'indicator')
 
-    const slot = document.createElement('slot')
+    this.indicator.setAttribute('aria-hidden', 'true')
 
-    shadow.append(style, this.indicator, slot)
+    const slot = document.createElement('slot')
+    slot.setAttribute('part', 'content')
+    // An authored native progress in the unassigned fallback slot paints before
+    // upgrade. Keep it out of the shadow projection without changing its DOM.
+    shadow.append(this.indicator, slot)
   }
 
   connectedCallback() {

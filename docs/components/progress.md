@@ -109,6 +109,7 @@ radius.
 ```html
 <a-progress style="width: 100%" value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
+  <progress data-anta slot="fallback" aria-hidden="true" value="42" max="100"></progress>
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
     <a-progress-text>Upload</a-progress-text>
@@ -117,6 +118,7 @@ radius.
 
 <!-- Omit value for indeterminate progress. -->
 <a-progress style="width: 100%" round="50px" role="progressbar" aria-label="Preparing upload">
+  <progress data-anta slot="fallback" aria-hidden="true"></progress>
   <a-progress-label>
     <a-progress-text>Preparing upload</a-progress-text>
   </a-progress-label>
@@ -129,6 +131,12 @@ elements below.
 
 Add the progressbar semantics and label structure when using the element
 directly.
+
+The optional `<progress slot="fallback">` shows the fill before JavaScript
+initializes. Keep its `value` synchronized with `a-progress`, and set its `max`
+to the same limit (`100` when omitted on `a-progress`). Omit `value` on both for
+indeterminate work. `aria-hidden="true"` keeps the decorative fallback out of the
+accessibility tree. JSX supplies it automatically.
 
 ### Native HTML progress
 
@@ -163,7 +171,7 @@ a-progress.fancy {
 }
 a-progress.fancy::part(indicator) {
   background: linear-gradient(90deg, #6a5acd, #d44ea3 55%, #ff8a5b);
-  box-shadow: 0 0 12px rgba(212, 78, 163, 0.55);   /* glow */
+  box-shadow: 0 0 12px color-mix(in oklch, #d44ea3 55%, transparent);   /* glow */
 }
 a-progress.fancy::part(indicator)::after { background: none; }   /* hard right edge */
 

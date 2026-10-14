@@ -1,0 +1,11 @@
+body { margin: 0; }
+#mount { width: 400px; }
+a-progress.pixel {
+  --progress-bg: #fff;
+  --progress-indicator-bg: #c00;
+  --progress-border-color: #c00;
+  --progress-indicator-edge: none;
+}
+a-progress.override::part(indicator) { background: #123456; }
+a-progress.override::part(indicator)::after { background: none; }
+a-progress.override::part(content) { letter-spacing: 1px; }

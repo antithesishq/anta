@@ -63,12 +63,13 @@ export interface ProgressProps extends BaseProps {
  */
 export const Progress = ({ value, max = 100, tone, size, round, label, hint, className, style, children, ...rest }: ProgressProps) => {
   const indeterminate = value == null || value === false
-  const numericValue = typeof value === 'number' ? value : 0
-  const percent = max > 0 ? Math.round(Math.min(100, Math.max(0, (numericValue / max) * 100))) : 0
+  const numericValue = typeof value === 'number' && Number.isFinite(value) ? value : 0
+  const validMax = Number.isFinite(max) && max > 0
+  const percent = validMax ? Math.round(Math.min(100, Math.max(0, (numericValue / max) * 100))) : 0
   // Clamp the announced value to [0, max] so screen readers never report an
   // out-of-range progress (e.g. "150 of 100") that contradicts the visually
   // clamped bar and the percentage shown in the label.
-  const clampedValue = max > 0 ? Math.min(max, Math.max(0, numericValue)) : 0
+  const clampedValue = validMax ? Math.min(max, Math.max(0, numericValue)) : 0
   // ARIA wiring is added here in the wrapper, not in the web component
   // (see AGENTS.md "ARIA goes in JSX wrappers"). The aria-label echoes
   // every visible piece — label text, percentage, and hint — so screen
@@ -86,15 +87,17 @@ export const Progress = ({ value, max = 100, tone, size, round, label, hint, cla
       role="progressbar"
       aria-valuenow={indeterminate ? undefined : clampedValue}
       aria-valuemin={indeterminate ? undefined : 0}
-      aria-valuemax={indeterminate ? undefined : max}
+      aria-valuemax={indeterminate ? undefined : validMax ? max : 100}
       aria-label={ariaLabel}
       class={className}
       style={roundStyle(round, '--progress-round', toneStyle(tone, '--progress-tone-source', style))}
       {...rest}
     >
+      <progress data-anta="" slot="fallback" aria-hidden="true"
+        value={indeterminate ? undefined : clampedValue} max={validMax ? max : 100} />
       {hasChildren(children) ? children : (
         <a-progress-label>
-          {!indeterminate && <a-progress-number>{percent}%</a-progress-number>}
+          {!indeterminate && <a-progress-number>{`${percent}%`}</a-progress-number>}
           {label != null && <a-progress-text>{label}</a-progress-text>}
           {hint != null && <a-progress-hint>{hint}</a-progress-hint>}
         </a-progress-label>

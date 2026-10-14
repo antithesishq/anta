@@ -2,7 +2,7 @@
 @layer anta.reset, anta.components, anta.theme;
 
 @layer anta.components {
-  :where(a-progress, progress[data-anta]) {
+  :where(a-progress, progress[data-anta]:not(a-progress > [slot="fallback"])) {
     --progress-bg: var(--bg-4);
     --progress-border-color: var(--border-4);
     --progress-indicator-bg: var(--bg-5);
@@ -33,6 +33,8 @@
 
   a-progress {
     display: block;
+    position: relative;
+    overflow: hidden;
     container-type: inline-size;
     padding: var(--progress-padding-block) var(--progress-padding-inline);
     min-height: var(--progress-min-height);
@@ -41,6 +43,67 @@
     border: 0px solid var(--progress-border-color);
     border-radius: 0;
   }
+
+  a-progress::part(indicator) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--_percent, 0%);
+    background: var(--progress-indicator-bg);
+    border-radius: 0;
+    transition: width 0.2s ease;
+  }
+  a-progress::part(indicator)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 90px;
+    box-sizing: border-box;
+    background: var(--progress-indicator-edge);
+    border-right: var(--progress-indicator-edge-border, none);
+  }
+  a-progress:not(:defined):not([value]):has(> progress[slot="fallback"])::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    bottom: 0;
+  }
+  a-progress:not([value])::part(indicator),
+  a-progress:not(:defined):not([value]):has(> progress[slot="fallback"])::before {
+    left: calc(0px - var(--progress-loading-x-period));
+    width: calc(100% + var(--progress-loading-x-period));
+    background: repeating-linear-gradient(
+      var(--progress-loading-angle),
+      transparent 0,
+      transparent var(--progress-loading-stripe-gap),
+      var(--progress-text-color) var(--progress-loading-stripe-gap),
+      var(--progress-text-color) calc(var(--progress-loading-stripe-gap) + var(--progress-loading-stripe))
+    );
+    filter: blur(var(--progress-loading-blur));
+    opacity: var(--progress-loading-opacity);
+    transition: none;
+  }
+  a-progress:not([value])::part(indicator)::after { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    a-progress:not([value])::part(indicator),
+    a-progress:not(:defined):not([value]):has(> progress[slot="fallback"])::before {
+      will-change: transform;
+      animation: progress-loading-slide var(--progress-loading-duration) linear infinite;
+      animation-delay: -9999s;
+    }
+  }
+  @keyframes progress-loading-slide {
+    to { transform: translateX(var(--progress-loading-x-period)); }
+  }
+  a-progress::part(content) {
+    display: block;
+    position: relative;
+  }
+  a-progress:not(:defined) { isolation: isolate; }
 
   :where(a-progress, progress[data-anta])[size="small"] {
     --progress-padding-block: 2px;
@@ -56,9 +119,7 @@
     --progress-label-line-height: 20px;
   }
 
-  /* `round` → fully-round track. `:host { overflow: hidden }` (shadow) clips the
-     fill indicator to the rounded shape, so only the host radius is needed. A
-     value (`round="6px"`, or the wrapper's `round={6}`) sets a custom radius. */
+  /* Clip the fill to the host radius, keeping its leading edge square. */
   a-progress[round] {
     --progress-round: 999px;
     border-radius: var(--progress-round);
@@ -237,10 +298,45 @@
     to { transform: translateX(var(--progress-loading-x-period)); }
   }
 
+  /* The native fallback inherits host tokens and stays outside normal flow.
+     Its named slot is deliberately unassigned after the shadow root exists. */
+  a-progress > progress[data-anta][slot="fallback"] {
+    --anta-native-progress-fill: linear-gradient(
+      90deg,
+      var(--progress-indicator-bg) calc(100% - 90px),
+      var(--progress-border-color) 100%
+    );
+
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    container-type: normal;
+    pointer-events: none;
+  }
+  a-progress > progress[data-anta][slot="fallback"]::-webkit-progress-value {
+    box-sizing: border-box;
+    border-right: var(--progress-indicator-edge-border, none);
+  }
+  a-progress > progress[data-anta][slot="fallback"]::-moz-progress-bar {
+    box-sizing: border-box;
+    border-right: var(--progress-indicator-edge-border, none);
+  }
+  /* Firefox does not paint native progress pseudo-elements. Initial loading
+     uses the host's pseudo-element instead of the decorative native fallback. */
+  a-progress > progress[data-anta][slot="fallback"]:indeterminate {
+    visibility: hidden;
+  }
+  a-progress > progress[data-anta][slot="fallback"]:indeterminate::before {
+    display: none;
+    animation: none;
+  }
+
   /* The track stays a Canvas surface with a dotted edge. Light forced-color
      palettes use the selected-item pair for the completed part. */
   @media (forced-colors: active) {
-    :where(a-progress, progress[data-anta]) {
+    :where(a-progress, progress[data-anta]:not(a-progress > [slot="fallback"])) {
       forced-color-adjust: none;
       --progress-bg: Canvas !important;
       --progress-border-color: CanvasText !important;

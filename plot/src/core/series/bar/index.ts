@@ -1,5 +1,5 @@
 import type { SeriesType } from "../../types"
-import { bar_domain_extent, bar_padding_mode, new_bar, validate_bar_axes } from "./factory"
+import { bar_domain_extent, bar_padding_mode, validate_bar_axes } from "./factory"
 import { bar_highlight_spec } from "./highlight"
 import { bar_hit_test } from "./hit"
 import { compose_bar_layout } from "./layout"
@@ -23,7 +23,6 @@ export { expand_stack, resolve_stack_colors, type ExpandedStack, type StackColor
 
 export const bar_runtime = {
     kind: 'bar',
-    factory: new_bar,
     paint: draw_bar,
     tooltip_hit_test: bar_hit_test,
     highlight_spec: bar_highlight_spec,

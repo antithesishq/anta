@@ -85,7 +85,7 @@ export function resolve_point_data<TooltipContent>(plot: ComposedPlot<TooltipCon
     return data
 }
 
-/** A present row property also covers valid rows whose value is undefined. */
+/** Check whether point data includes a row property, even when its value is undefined. */
 export function has_point_row<Row>(data: PointData<Row>): data is TooltipData<Row> {
     return 'row' in data
 }

@@ -93,6 +93,25 @@ test('scatter tooltip and selection receive the original data row', () => {
     assert.equal(selectionRows[0], row)
 })
 
+test('a rowless handcrafted scatter does not report a selection whose callback was skipped', () => {
+    let calls = 0
+    const controller = new PlotController({
+        series: [{
+            kind: 'scatter', x: Float64Array.of(3), y: Float64Array.of(4),
+            on_select: () => { calls++ },
+        }],
+        axis: { x: { min: 0, max: 10 }, y: { min: 0, max: 10 } },
+    }, failure => { throw failure.error })
+    render(controller)
+    const plot = controller.composed_plot
+    const selected = controller.interactions.on_click({
+        offsetX: plot.x_scale(3) - plot.layout.margin_left,
+        offsetY: plot.y_scale(4) - plot.layout.margin_top,
+    })
+    assert.equal(calls, 0)
+    assert.equal(selected, undefined)
+})
+
 test('drawn tick bounds define margin-only strips, including hidden axes and resize', () => {
     const controller = new PlotController(args, failure => { throw failure.error })
     render(controller)

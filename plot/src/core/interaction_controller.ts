@@ -548,12 +548,13 @@ export class PlotInteractionController<TooltipContent = unknown> {
         const series = plot.series[hit.series_index]
         const on_select = series?.on_select
 
-        if (data !== undefined && on_select !== undefined) {
-            if (has_point_row(data)) {
-                on_select(data)
-            } else if (series.kind === 'rule') {
-                series.on_select?.(data)
-            }
+        if (data === undefined || on_select === undefined) return
+        if (has_point_row(data)) {
+            on_select(data)
+        } else if (series.kind === 'rule') {
+            series.on_select?.(data)
+        } else {
+            return
         }
         return data
     }

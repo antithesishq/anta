@@ -1,6 +1,5 @@
 import { xy_extent } from "../../template/extent"
 import type { SeriesType } from "../../types"
-import { new_rule } from "./factory"
 import { rule_highlight_spec } from "./highlight"
 import { rule_hit_test } from "./hit"
 import { draw_rule } from "./paint"
@@ -12,7 +11,6 @@ export { crisp_rule_pos, DEFAULT_RULE_WIDTH, draw_rule, rule_values } from "./pa
 
 export const rule_runtime = {
     kind: 'rule',
-    factory: new_rule,
     paint: draw_rule,
     tooltip_hit_test: rule_hit_test,
     highlight_spec: rule_highlight_spec,

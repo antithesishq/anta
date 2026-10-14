@@ -531,10 +531,8 @@ export type AxisContext = {
     args: Axis
 }
 
-export interface SeriesType<Row, TooltipContent = unknown, S extends Series<Row, TooltipContent> = Series<Row, TooltipContent>> {
-    kind: S['kind']
-    // build the series from validated user args (runs at user-call time)
-    factory(args: any): S
+export interface SeriesType<Row, TooltipContent = unknown> {
+    kind: SeriesTypes
     // draw the series to the canvas (runs at render time).
     // series is the composed (string-color) form for this kind; the concrete paint narrows it
     paint(series: ComposedSeries<Row, TooltipContent>, render: RenderContext): void
@@ -547,12 +545,12 @@ export interface SeriesType<Row, TooltipContent = unknown, S extends Series<Row,
     // hit-test / highlight to share rather than each deriving it (bar places its stacked segments here)
     compose_layout?(series: ComposedSeries<Row, TooltipContent>, x_scale: Scale, y_scale: Scale): ComposedSeries<Row, TooltipContent>
     // optional: throw if this kind's axis requirements aren't met (e.g. bar needs one band axis)
-    validate_axes?(x: AxisContext, y: AxisContext, series: S, index: number): void
+    validate_axes?(x: AxisContext, y: AxisContext, series: Series<Row, TooltipContent>, index: number): void
     // optional: override the default domain padding for this kind (e.g. bar anchors at zero)
     padding_mode?(x: AxisContext, y: AxisContext): { x?: SideMode, y?: SideMode }
     // the [min, max] this series spans per axis, for domain computation. Most series use xy_extent (scan
     // x / y); rect widens x by x2. compute_domains merges these and pads, knowing nothing series-specific.
-    domain_extent(series: S): { x: [number, number]; y: [number, number] }
+    domain_extent(series: Series<Row, TooltipContent>): { x: [number, number]; y: [number, number] }
 }
 
 // the browser color scheme a plot resolves theme colors against (resolved UI-side at compose time)

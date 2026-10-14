@@ -56,9 +56,14 @@ export function read_field<Row>(arg: FieldArg<Row>, row: Row, index: number) {
     return typeof arg === 'function' ? arg(row, index) : row[arg]
 }
 
+/** Check whether a row supports property lookup, including inherited fields. */
+export function is_row_object(row: unknown): row is object {
+    return row !== null && (typeof row === 'object' || typeof row === 'function')
+}
+
 // A default field is a runtime convention, not necessarily a declared key of Row.
 function read_default_field(row: unknown, field: DefaultField): unknown {
-    if (row === null || (typeof row !== 'object' && typeof row !== 'function')) {
+    if (!is_row_object(row)) {
         return undefined
     }
     switch (field) {
@@ -70,7 +75,7 @@ function read_default_field(row: unknown, field: DefaultField): unknown {
 }
 
 export function has_default_field(row: unknown, field: DefaultField): boolean {
-    return row !== null && (typeof row === 'object' || typeof row === 'function') && field in row
+    return is_row_object(row) && field in row
 }
 
 function read_column_field<Row>(arg: ColumnArg<Row>, row: Row, index: number): unknown {
@@ -201,7 +206,7 @@ export function validate_field_present<Row>(
         return
     }
 
-    const is_object = row !== null && (typeof row === 'object' || typeof row === 'function')
+    const is_object = is_row_object(row)
     if (is_object && arg in row) {
         return
     }

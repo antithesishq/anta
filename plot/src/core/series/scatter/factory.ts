@@ -1,4 +1,4 @@
-import { attach_resolved_columns, resolve_xy_columns } from "../../template/column"
+import { attach_resolved_columns, resolve_xy_columns, is_row_object } from "../../template/column"
 import { retain_factory_args } from "../factory_args"
 import { resolve_color, resolve_stroke, resolve_highlight_colors } from "../../template/color"
 import { validate_hoverable, validate_non_negative } from "../../template/validate"
@@ -123,7 +123,7 @@ function resolve_size<Row>(
 
 // Keep numeric overrides, including invalid numbers, for the existing size validator.
 function read_row_size(row: unknown): number | undefined {
-    if (row === null || (typeof row !== 'object' && typeof row !== 'function') || !('size' in row)) {
+    if (!is_row_object(row) || !('size' in row)) {
         return undefined
     }
     const size = row.size

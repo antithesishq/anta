@@ -4,6 +4,7 @@
 // per-row `color` field on data overrides the series-level shape for that row.
 // renderer fallback chain: colors[i], color, DEFAULT_SERIES_COLOR.
 
+import { is_row_object } from "./column"
 import { validate_non_negative } from "./validate"
 import type { AxisTemplate, ColorArg, ColorTheme, FontConfig, Stroke, StrokeArg, ThemeColor } from "../types"
 
@@ -101,7 +102,7 @@ type WithResolvedColors<S> = S extends unknown ? Omit<S, keyof ResolvedColorFiel
 
 /** Read an optional row override without requiring a color property on the caller's row type. */
 export function read_row_color(row: unknown): ThemeColor | undefined {
-    if (row === null || (typeof row !== 'object' && typeof row !== 'function') || !('color' in row)) {
+    if (!is_row_object(row) || !('color' in row)) {
         return undefined
     }
     const color = row.color

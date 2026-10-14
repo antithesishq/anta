@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 await build({
     stdin: {
         contents: `
+            export { resolve_column } from './src/core/template/column'
             export { continuous_axis_layout } from './src/core/render/axes'
             export { new_scatter } from './src/core/series/scatter/factory'
             export { new_line } from './src/core/series/line/factory'
@@ -19,7 +20,32 @@ await build({
     bundle: true, platform: 'node', format: 'esm',
     outfile: fileURLToPath(new URL('../.build/axes-test.mjs', import.meta.url)),
 })
-const { continuous_axis_layout, new_scatter, new_line, new_bar, new_area, new_rect, scaleLinear, scaleTime, scaleUtc } = await import('../.build/axes-test.mjs')
+const { resolve_column, continuous_axis_layout, new_scatter, new_line, new_bar, new_area, new_rect, scaleLinear, scaleTime, scaleUtc } = await import('../.build/axes-test.mjs')
+
+test('column readers preserve inherited fields, callable rows, and accessor indices', () => {
+    for (const field of ['x', 'y', 'x2', 'y2', 'value']) {
+        let reads = 0
+        const prototype = { get [field]() { reads++; return 7 } }
+        const callable = Object.assign(() => {}, { [field]: 9 })
+        const data = [Object.create(prototype), callable]
+        const named = resolve_column(data, field, 'plot.test', field)
+        assert.deepEqual([...named.values], [7, 9])
+        assert.equal(reads, 1)
+        const indices = []
+        const accessed = resolve_column(data, (row, index) => {
+            indices.push(index)
+            return row[field]
+        }, 'plot.test', field)
+        assert.deepEqual(accessed, named)
+        assert.deepEqual(indices, [0, 1])
+        assert.equal(reads, 2)
+    }
+    for (const field of ['x', 'y', 'x2', 'y2']) {
+        for (const row of [null, undefined, 2, false, 'text', () => {}]) {
+            assert.throws(() => resolve_column([row], field, 'plot.test', field), /not a finite number or a string \(got undefined\)/)
+        }
+    }
+})
 
 test('scatter default x preserves values, categories, and field metadata', () => {
     for (const [data, values, categories] of [

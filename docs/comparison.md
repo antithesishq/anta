@@ -6,7 +6,7 @@
 
 | System | Version | Frameworks | Styling | License | Browser baseline | Browser policy |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Anta](https://anta.design) | @antadesign/anta 0.3.26 | Web components; React and Preact wrappers | Plain CSS + CSS-variable tokens | MIT | 2024 | Chrome / Edge 125 (2024), Safari 17.4 (2024), and Firefox 126 (2024), or later. Requires custom elements, ElementInternals, Popover, and modern CSS. |
+| [Anta](https://anta.design) | @antadesign/anta 0.3.26 | Web components; React and Preact wrappers | Plain CSS + CSS-variable tokens | MIT | 2025 | Chrome / Edge 135 (2025), Safari 17.4 (2024), and Firefox 136 (2025), or later. Requires custom elements, ElementInternals, ARIA element references, custom states, Popover, and modern CSS. |
 | [MUI (Material UI)](https://mui.com/material-ui/) | @mui/material 9.4.0 | React | CSS-in-JS (Emotion) | MIT core + paid MUI X | 2024 | Chrome 117 (2023), Edge 121 (2024), Firefox 121 (2024), and Safari 17.0 (2023), or later. |
 | [Mantine](https://mantine.dev) | @mantine/core 9.6.0 | React | CSS Modules + CSS variables | MIT | 2022 | Tested on Chromium 108 (2022), Firefox 101 (2022), and Safari 15.4 (2022), or later. |
 | [Astryx](https://astryx.atmeta.com) | @astryxdesign/core 0.5.3 | React | StyleX (precompiled atomic CSS) | MIT | 2024 / 2026 | Two documented tiers: functional support at Baseline 2024 and full fidelity at Baseline 2026. Older functional-tier browsers need a positioning fallback for anchored overlays. |
@@ -48,7 +48,7 @@ download costs.
 | Gzipped size | ~100 KiB |
 | Measured version | @antadesign/anta 0.3.16 |
 | Measurement scope | Wrappers, elements, CSS, tokens, and reset. Excludes React, the branded theme, and stickers. |
-| Browser support | Chrome / Edge 125 (2024), Safari 17.4 (2024), and Firefox 126 (2024), or later. Requires custom elements, ElementInternals, Popover, and modern CSS. |
+| Browser support | Chrome / Edge 135 (2025), Safari 17.4 (2024), and Firefox 136 (2025), or later. Requires custom elements, ElementInternals, ARIA element references, custom states, Popover, and modern CSS. |
 
 #### Strengths
 

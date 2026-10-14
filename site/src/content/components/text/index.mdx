@@ -82,24 +82,10 @@ Nest `<Tooltip>` to replace it or an empty tooltip to suppress it.
 </Col>
 <Col>
 
-Pair `expandable` with `truncate` to reveal all content through **Show more**.
-Its fade and chevron appear only when text overflows. Single-line text fades at
-the inline end; multiline text fades over the last line. Select the control or
-focus it and press Enter or Space to expand. The button reports its expanded
-state. Expandable Text has no automatic tooltip.
-
-Expansion is one-way: the control hides after revealing the text. Add
-`collapsible` to keep it visible, rotate the chevron, and switch its accessible
-label between **Show more** and **Show less**.
-
-The multiline expand target spans the full width; the single-line target
-occupies the inline end. While expanded, the full-width collapse target overlays
-16px of reserved bottom padding. Folded text has no extra padding, and expansion
-preserves its width. Removing the padding with custom CSS allows the control to
-overlap content.
-
-Folded content stays selectable and clips without scrolling. The expand control
-is the first Tab stop. Content links remain in Tab order and keep native click behavior.
+Pair `expandable` with `truncate` to show **Show more** when text overflows.
+Select it or focus it and press Enter or Space to expand. The control then hides;
+add `collapsible` to keep a **Show less** control. Folded content stays selectable,
+and its links remain interactive.
 
 <ExpandableDemo client:load />
 
@@ -279,5 +265,12 @@ a-text.fancy {
 }
 a-text.fancy a { text-decoration-thickness: 2px; text-underline-offset: 3px; }
 ```
+
+The single-line fade and expand target occupy the inline end; multiline text
+fades over its last line and has a full-width target. `expandableInert` extends
+the target over the whole preview. While expanded with `collapsible`, the
+full-width control overlays 16px of reserved bottom padding. Custom CSS can
+remove that padding, allowing the control to overlap content. Folded content
+clips without scrolling or extra padding, and expansion preserves its width.
 
 </Disclosure>

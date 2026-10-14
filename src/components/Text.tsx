@@ -8,10 +8,11 @@ import { Tooltip } from "./Tooltip"
 export type ExpandMode =
   | { expandable?: never; expandableInert?: never; collapsible?: never }
   | {
-      /** Show a fade and expansion control when truncated text overflows.
+      /** Show a fade and expansion control, first in Tab order, when truncated text overflows.
        *  Select the control or focus it and press Enter or Space to reveal all
        *  content. Expansion is one-way: the control hides once expanded.
-       *  Add `collapsible` to allow refolding. Requires `truncate`. */
+       *  Add `collapsible` to allow refolding. Requires `truncate`; disables the
+       *  automatic tooltip. */
       expandable: boolean
       /** Make the entire folded, overflowing preview an expand target.
        *  JSX applies `inert` to its content, blocking focus, clicks, and text

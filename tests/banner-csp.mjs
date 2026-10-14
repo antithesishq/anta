@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { after, before, test } from 'node:test'
+import { after, before } from 'node:test'
+import { componentTest as test, componentEngines } from './component-tier.mjs'
 import { createServer } from 'node:http'
 import { createRequire, Module } from 'node:module'
 import { readFile } from 'node:fs/promises'
@@ -15,7 +16,7 @@ const nodePaths = consumerRoot ? [resolve(consumerRoot, 'node_modules')] : [reso
 const { chromium, firefox, webkit } = requireSite('playwright')
 // These engines do not substitute for minimum shipping-browser validation.
 // Keep display and intrinsic-size transitions as the existing progressive enhancement.
-const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, firefox, webkit]
+const engines = componentEngines([chromium, firefox, webkit])
 const source = process.env.ANTA_BANNER_PACKAGE_ROOT ? resolve(process.env.ANTA_BANNER_PACKAGE_ROOT, 'dist') : resolve('src')
 const jsxAlias = consumerRoot ? {} : { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime') }
 const preactCompat = consumerRoot ? 'preact/compat' : requireSite.resolve('preact/compat')
@@ -191,7 +192,7 @@ async function trackOwnership(page) {
   })
 }
 
-test('Banner SSR owns regions and emits no structural inline styles', () => {
+test.fast('Banner SSR owns regions and emits no structural inline styles', () => {
   for (const render of serverRenderers.values()) {
     const html = render(initialProps)
     assert.match(html, /<a-banner-actions>/)
@@ -206,7 +207,7 @@ test('Banner SSR owns regions and emits no structural inline styles', () => {
 })
 
 for (const engine of engines) {
-  test(`${engine.name()}: SSR visible and initially dismissed Banner work without JavaScript`, async t => {
+  test.fast(`${engine.name()}: SSR visible and initially dismissed Banner work without JavaScript`, async t => {
     for (const closed of [false, true]) {
       const page = await pageFor(t, engine, 'granular', `&ssr=1${closed ? '&closed=1' : ''}`, false)
       assert.equal(await isClosed(page), closed)
@@ -219,7 +220,7 @@ for (const engine of engines) {
     }
   })
   for (const mode of ['granular', 'bundle']) {
-    test(`${engine.name()}: ${mode} Banner renders the same layout before and after registration`, async t => {
+    test(`${engine.name()}: ${mode} Banner renders the same layout before and after registration`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
       for (const attrs of [{}, {align: 'center'}, {dir: 'rtl', round: ''}, {class: 'override'}]) {
         const page = await pageFor(t, engine, mode)
         await mount(page, markup, attrs)
@@ -234,7 +235,7 @@ for (const engine of engines) {
         assert.deepEqual(await page.evaluate(() => window.ownerMutations), [])
       }
     })
-    test(`${engine.name()}: ${mode} uncontrolled dismissal is cancelable and retains authored DOM`, async t => {
+    test.fast(`${engine.name()}: ${mode} uncontrolled dismissal is cancelable and retains authored DOM`, async t => {
       const page = await pageFor(t, engine, mode)
       await mount(page)
       await register(page, mode)
@@ -255,7 +256,7 @@ for (const engine of engines) {
       await page.locator('a-banner').evaluate(n => { n.remove(); document.querySelector('#mount').append(n) })
       assert.equal(await isClosed(page), true)
     })
-    test(`${engine.name()}: ${mode} controlled rejection, restoration, and mode changes keep visibility consistent`, async t => {
+    test(`${engine.name()}: ${mode} controlled rejection, restoration, and mode changes keep visibility consistent`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
       const page = await pageFor(t, engine, mode)
       await mount(page, markup, {'default-state': 'closed', state: 'open'})
       await register(page, mode)
@@ -291,7 +292,7 @@ for (const engine of engines) {
       await page.locator('a-banner a-banner').getByRole('button', {name: 'Got it', exact: true}).click()
       assert.equal(await isClosed(page), false)
     })
-    test(`${engine.name()}: ${mode} adopted Banner handles close requests in a same-origin iframe`, async t => {
+    test(`${engine.name()}: ${mode} adopted Banner handles close requests in a same-origin iframe`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
       const page = await pageFor(t, engine, mode)
       await mount(page)
       await register(page, mode)
@@ -338,7 +339,7 @@ for (const engine of engines) {
       })
     })
   }
-  test(`${engine.name()}: CSS hides empty actions after additions, removals, and replacement`, async t => {
+  test.fast(`${engine.name()}: CSS hides empty actions after additions, removals, and replacement`, async t => {
     const page = await pageFor(t, engine)
     await mount(page, '<a-banner-message>Notice</a-banner-message><a-banner-actions></a-banner-actions>')
     assert.equal(await page.locator('a-banner-actions').evaluate(n => getComputedStyle(n).display), 'none')
@@ -358,7 +359,7 @@ for (const engine of engines) {
     assert.deepEqual(await page.evaluate(() => window.ownerMutations), [])
   })
   for (const framework of ['React', 'Preact']) {
-    test(`${engine.name()}: ${framework} hydration handles controlled rejection and restoration`, async t => {
+    test.fast(`${engine.name()}: ${framework} hydration handles controlled rejection and restoration`, async t => {
       const page = await pageFor(t, engine, 'granular', `&ssr=1&ssr-framework=${framework}`)
       await register(page)
       const html = await page.locator('a-banner').evaluate(n => n.outerHTML)
@@ -384,7 +385,7 @@ for (const engine of engines) {
       assert.equal(await page.locator('strong').evaluate(n => getComputedStyle(n).fontSize), '15px')
     })
     for (const mode of ['granular', 'bundle']) {
-      test(`${engine.name()}: ${framework} ${mode} initially controlled-closed SSR hydrates and restores`, async t => {
+      test(`${engine.name()}: ${framework} ${mode} initially controlled-closed SSR hydrates and restores`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
         const props = { ...initialProps, dismissed: true }
         const page = await pageFor(t, engine, mode, `&ssr=1&controlled=1&closed=1&ssr-framework=${framework}`)
         assert.equal(await isClosed(page), true)
@@ -402,7 +403,7 @@ for (const engine of engines) {
         assert.equal(await isClosed(page), true)
       })
     }
-    test(`${engine.name()}: ${framework} hydrated uncontrolled dismissal installs its notification listener`, async t => {
+    test.fast(`${engine.name()}: ${framework} hydrated uncontrolled dismissal installs its notification listener`, async t => {
       const page = await pageFor(t, engine, 'granular', `&ssr=1&ssr-framework=${framework}`)
       await register(page)
       await hydrate(page, framework)

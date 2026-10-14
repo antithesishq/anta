@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { after, before, test } from 'node:test'
+import { after, before } from 'node:test'
+import { componentTest as test, componentEngines } from './component-tier.mjs'
 import { createServer } from 'node:http'
 import { createRequire, Module } from 'node:module'
 import { readFile } from 'node:fs/promises'
@@ -9,7 +10,7 @@ import { build } from 'esbuild'
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const requirePlot = createRequire(new URL('../plot/package.json', import.meta.url))
 const { chromium, firefox, webkit } = requireSite('playwright')
-const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, firefox, webkit]
+const engines = componentEngines([chromium, firefox, webkit])
 const source = resolve(process.env.ANTA_TEXT_PACKAGE_ROOT ? `${process.env.ANTA_TEXT_PACKAGE_ROOT}/dist` : 'src')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; object-src 'none'"
 const longText = 'The quick brown fox jumps over the lazy dog repeatedly while the morning sun rises over a sleepy town that nobody has visited in years. Down by the river the old mill still turns, and the market stalls creak open one by one in the early light.'
@@ -185,7 +186,7 @@ for (const engine of engines) {
       }
     }
   })
-  test(`${engine.name()}: raw expandable-inert reports presentation without owning inert`, async t => {
+  test.fast(`${engine.name()}: raw expandable-inert reports presentation without owning inert`, async t => {
     const page = await pageFor(t, engine)
     await mount(page, raw().replace(' expandable ', ' expandable expandable-inert '))
     const html = await page.locator('a-text').evaluate(n => n.outerHTML)
@@ -202,7 +203,7 @@ for (const engine of engines) {
     await page.waitForFunction(() => window.presentations.at(-1).expanded)
     assert.equal(await page.locator('a-text').evaluate(n => n.outerHTML), html)
   })
-  test(`${engine.name()}: Text expansion control precedes content links in Tab order`, async t => {
+  test.fast(`${engine.name()}: Text expansion control precedes content links in Tab order`, async t => {
     for (const framework of ['raw', 'React', 'Preact']) {
       const page = await pageFor(t, engine)
       await register(page)
@@ -271,14 +272,14 @@ for (const engine of engines) {
       }
     }
   })
-  test(`${engine.name()}: Text SSR clamps in light DOM with JavaScript disabled`, async t => {
+  test.fast(`${engine.name()}: Text SSR clamps in light DOM with JavaScript disabled`, async t => {
     const page = await pageFor(t, engine, 'granular', true, false)
     assert.equal(await page.locator('a-text-content').evaluate(n => getComputedStyle(n).webkitLineClamp), '1')
     assert.equal(await page.locator('a-text-content').evaluate(n => n.clientHeight), 20)
     assert.equal(await page.locator('a-button').isVisible(), false)
   })
   for (const mode of ['granular', 'bundle']) {
-    test(`${engine.name()}: ${mode} raw Text expands automatically without DOM mutation under CSP`, async t => {
+    test.fast(`${engine.name()}: ${mode} raw Text expands automatically without DOM mutation under CSP`, async t => {
       const page = await pageFor(t, engine, mode)
       await mount(page, raw())
       const before = await geometry(page)
@@ -355,7 +356,7 @@ for (const engine of engines) {
     await control.waitFor({ state: 'hidden' })
     assert.deepEqual(await buttonState(page), { label: null, expanded: null })
   })
-  test(`${engine.name()}: plain Text has no wrapper; inline clamps and nested expansion stay independent`, async t => {
+  test.fast(`${engine.name()}: plain Text has no wrapper; inline clamps and nested expansion stay independent`, async t => {
     const page = await pageFor(t, engine)
     await register(page)
     await mount(page, `<a-text inline truncate="1">${longText}</a-text>`)
@@ -374,7 +375,7 @@ for (const engine of engines) {
     assert.equal(await expanded(page), false)
   })
   for (const framework of ['React', 'Preact']) {
-    test(`${engine.name()}: ${framework} Text hydrates and preserves automatic expansion across reconciliation`, async t => {
+    test.fast(`${engine.name()}: ${framework} Text hydrates and preserves automatic expansion across reconciliation`, async t => {
       const page = await pageFor(t, engine, 'granular', true)
       const before = await geometry(page)
       const html = await page.locator('a-text').evaluate(n => n.outerHTML)

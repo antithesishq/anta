@@ -122,7 +122,13 @@ Verified October 14, 2026:
   server-rendered nodes and reports no React recovery errors. Initially controlled
   closed banners hydrate, reopen, reject dismissal, and accept it in both import
   modes. The installed consumer uses React/React DOM `19.3.0`, Preact `10.29.8`,
-  and `preact-render-to-string` `6.7.0`. Both commands are gated in CI.
+  and `preact-render-to-string` `6.7.0`. PR CI selects core source checks through
+  the shared fast tier. Full source and installed-package matrices remain in the
+  slow tier for manual runs.
+- The shared tier split passed 44 core checks across Banner, Calendar/InputDate,
+  Card, Progress, and Text in about 16 seconds locally. Full coverage passed all
+  218 source checks and 73 installed Banner checks. Tier selection regressions,
+  Anta lint, and workflow YAML parsing also passed.
 
 Exact Firefox `136` and Safari/iOS Safari `17.4` were not executed. Their
 required custom-state APIs are covered by the

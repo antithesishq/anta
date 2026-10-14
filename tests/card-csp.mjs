@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { after, before, test } from 'node:test'
+import { after, before } from 'node:test'
+import { componentTest as test, componentEngines } from './component-tier.mjs'
 import { createServer } from 'node:http'
 import { createRequire, Module } from 'node:module'
 import { readFile } from 'node:fs/promises'
@@ -9,7 +10,7 @@ import { build } from 'esbuild'
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const requirePlot = createRequire(new URL('../plot/package.json', import.meta.url))
 const { chromium, firefox, webkit } = requireSite('playwright')
-const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, firefox, webkit]
+const engines = componentEngines([chromium, firefox, webkit])
 const source = process.env.ANTA_CARD_PACKAGE_ROOT ? resolve(process.env.ANTA_CARD_PACKAGE_ROOT, 'dist') : resolve('src')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; object-src 'none'"
 const browsers = new Map()
@@ -149,7 +150,7 @@ function sameGeometry(before, after) {
 }
 
 for (const engine of engines) {
-  test(`${engine.name()}: CSS-only Card SSR renders and navigates with JavaScript disabled`, async t => {
+  test.fast(`${engine.name()}: CSS-only Card SSR renders and navigates with JavaScript disabled`, async t => {
     const page = await pageFor(t, engine, 'granular', true, false)
     assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n).opacity), '1')
     assert.equal(await page.locator('a-card-body').count(), 1)
@@ -171,7 +172,7 @@ for (const engine of engines) {
     }
   })
   for (const mode of ['granular', 'bundle']) {
-    test(`${engine.name()}: ${mode} Card regions, overrides, loading, and nested state work under CSP`, async t => {
+    test.fast(`${engine.name()}: ${mode} Card regions, overrides, loading, and nested state work under CSP`, async t => {
       const page = await pageFor(t, engine, mode)
       await mount(page, markup, { selected: '', class: 'override tall' })
       await page.locator('a-card-body').evaluate(n => n.innerHTML += '<a-card><a-card-content><a-card-body>Nested text</a-card-body></a-card-content></a-card>')
@@ -198,7 +199,7 @@ for (const engine of engines) {
     })
   }
   for (const framework of ['React', 'Preact']) {
-    test(`${engine.name()}: ${framework} hydrates Card without layout or ownership changes`, async t => {
+    test.fast(`${engine.name()}: ${framework} hydrates Card without layout or ownership changes`, async t => {
       const page = await pageFor(t, engine, 'granular', true)
       const before = await geometry(page)
       const html = await page.locator('a-card').evaluate(n => n.outerHTML)

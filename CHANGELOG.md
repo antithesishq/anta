@@ -7,6 +7,10 @@ changes are not listed.
 
 ### Breaking
 
+- [Progress markup and styling](/progress/#migrate-from-shadow-parts) use light-DOM
+  indicator regions. Raw markup and `::part()` overrides need migration.
+  `AProgressElement` and `register_a_progress` are removed.
+
 - [Expandable raw Text](/text/#expand-raw-html) requires an `a-text-content`
   region and an `a-button` control. JSX props remain unchanged; granular
   expandable usage also imports the Button element entry.
@@ -40,8 +44,9 @@ changes are not listed.
 
 ### Changed
 
-- [Progress](/progress/) uses external CSS for its fill and loading animation.
-  Existing styling through `::part(indicator)` remains supported.
+- [Progress](/progress/) renders its fill and loading animation with external
+  CSS and works without JavaScript. Native `<progress data-anta>` remains a
+  standalone control.
 
 - [Text](/text/) renders and truncates in light DOM with external CSS.
   Expansion works in JSX and raw HTML without rewriting authored markup or

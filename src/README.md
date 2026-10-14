@@ -9,7 +9,7 @@ Portable UI component library. Framework-agnostic web components with JSX wrappe
 Works out of the box — no configuration needed.
 
 ```tsx
-import { Progress } from 'anta'
+import { Progress } from '@antadesign/anta/bundle'
 
 <Progress value={42} max={100} tone="info" />
 ```
@@ -23,7 +23,7 @@ If your project aliases `react` → `preact/compat`, anta works with no extra se
 Call `configure()` before rendering any anta components:
 
 ```ts
-import { configure } from 'anta'
+import { configure } from '@antadesign/anta'
 import { h, Fragment } from 'preact'
 
 configure(h, Fragment)
@@ -34,21 +34,28 @@ configure(h, Fragment)
 Pass any `h(type, props, ...children)` function:
 
 ```ts
-import { configure } from 'anta'
+import { configure } from '@antadesign/anta'
 configure(myH, myFragment)
 ```
 
 ## Web components
 
-Anta components are built on custom elements with shadow DOM. Import `anta/elements` to auto-register them, or use individual register functions:
+Anta combines CSS-only light-DOM components with custom elements for browser
+behavior. Import the element barrel to load their styles and register browser
+classes, or load individual entries:
 
 ```ts
-import 'anta/elements'           // auto-register all
-import { register_a_progress } from 'anta/elements'  // one at a time
+import '@antadesign/anta/elements'  // All styles and browser classes
+import '@antadesign/anta/elements/a-progress'  // CSS-only Progress entry
 ```
 
 Raw web components work without JSX:
 
 ```html
-<a-progress value="42" max="100" tone="info"></a-progress>
+<a-progress value="42" max="100" tone="info" role="progressbar"
+  aria-label="Upload" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">
+  <a-progress-indicator aria-hidden="true">
+    <svg width="42%" height="100%"></svg>
+  </a-progress-indicator>
+</a-progress>
 ```

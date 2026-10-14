@@ -135,6 +135,7 @@ export namespace JSX {
 export interface AntaIntrinsicElements {
   'a-avatar': AAvatarAttributes
   'a-progress': AProgressAttributes
+  'a-progress-indicator': BaseAttributes
   'a-loader': ALoaderAttributes
   'a-progress-label': BaseAttributes
   'a-progress-number': BaseAttributes

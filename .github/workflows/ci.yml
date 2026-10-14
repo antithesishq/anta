@@ -97,7 +97,7 @@ jobs:
             echo 'text=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
-            'src/elements/a-progress.*' src/components/Progress.tsx \
+            'src/elements/a-progress*' src/components/Progress.tsx \
             src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/progress-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \

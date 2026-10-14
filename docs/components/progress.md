@@ -104,11 +104,14 @@ radius.
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color variant, or any literal CSS color for a one-off custom tone (the surface / indicator / text are derived from it in oklch). Named tones track light/dark automatically. |
 | `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, to show indeterminate progress. Negative values are clamped to 0. |
 
-## Web Component
+## Raw HTML
 
 ```html
 <a-progress style="width: 100%" value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
+  <a-progress-indicator aria-hidden="true">
+    <svg width="42%" height="100%"></svg>
+  </a-progress-indicator>
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
     <a-progress-text>Upload</a-progress-text>
@@ -117,18 +120,22 @@ radius.
 
 <!-- Omit value for indeterminate progress. -->
 <a-progress style="width: 100%" round="50px" role="progressbar" aria-label="Preparing upload">
+  <a-progress-indicator aria-hidden="true"></a-progress-indicator>
   <a-progress-label>
     <a-progress-text>Preparing upload</a-progress-text>
   </a-progress-label>
 </a-progress>
 ```
 
-Use this when you are not using the React or Preact wrapper and a native HTML
-control does not fit: construct the equivalent Anta web component from the
-elements below.
+Use `a-progress` for a track with labels, hints, or custom content. Load its
+external CSS through `@antadesign/anta/elements/a-progress` or the full bundle.
+It works without JavaScript or custom element registration.
 
-Add the progressbar semantics and label structure when using the element
-directly.
+`a-progress-indicator` holds the visual indication. For known completion, give
+its SVG a percentage `width` calculated from `value / max`. The SVG is decorative;
+`role` and ARIA values belong on `a-progress`. When updating raw HTML, update the
+SVG width, visible text, and ARIA together. Changing `value` alone does not
+recalculate them. Omit `value` for the loading animation.
 
 ### Native HTML progress
 
@@ -150,22 +157,22 @@ For a plain HTML progress indicator, add `data-anta` to `<progress>`. It keeps
 the browser's native semantics, including indeterminate progress when `value`
 is absent, while using Anta's track, fill, tone, and size treatments. Native
 progress does not render Anta's label or hint structure; give it an accessible
-name instead.
+name instead. Load just its styles with
+`@antadesign/anta/elements/a-progress-native`, or use the Progress entry or full
+bundle, which include them. Native `<progress>` is a standalone control.
 
 ## Styling
 
 ```css
-/* a fancy bar: rounded track (all sides), a multi-stop gradient fill with a glow,
-   and a crisp hard right edge (the default soft right-edge fade is cleared). */
+/* Rounded track and gradient fill with a glow. */
 a-progress.fancy {
   border-radius: 999px;
   background: light-dark(var(--bg-5), #26232c);
 }
-a-progress.fancy::part(indicator) {
+a-progress.fancy > a-progress-indicator > svg {
   background: linear-gradient(90deg, #6a5acd, #d44ea3 55%, #ff8a5b);
   box-shadow: 0 0 12px color-mix(in oklch, #d44ea3 55%, transparent);   /* glow */
 }
-a-progress.fancy::part(indicator)::after { background: none; }   /* hard right edge */
 
 /* the percentage / label / hint are light-DOM children — recolor for the bar */
 a-progress.fancy a-progress-number,
@@ -173,6 +180,24 @@ a-progress.fancy a-progress-text { color: #fff; }
 a-progress.fancy a-progress-hint { color: var(--text-2); }
 ```
 
-For one-offs, the **track** is the host (style `a-progress` directly) and the
-**indicator** (fill bar) is a shadow **part** — `::part(indicator)`. The `.fancy`
-class is just for the demo.
+Style the track with `a-progress`. Target `a-progress-indicator > svg` for the
+fill, and `a-progress-indicator::before` for the loading stripes. Target the
+label tags or your custom children for text styling. `.fancy` is an
+application-defined class for this example.
+
+## Migrate from shadow parts
+
+Progress now uses light DOM and external CSS. The JSX wrapper renders its
+indicator and labels. For raw HTML, add the indicator markup shown in the
+Raw HTML reference and keep its SVG width and ARIA values in sync.
+
+Replace `a-progress::part(indicator)` with
+`a-progress > a-progress-indicator > svg` for determinate fill styles. Loading
+styles target `a-progress > a-progress-indicator::before`. The fill's background
+includes its right-edge fade; replacing the background replaces that fade too.
+Replace `::part(content)` styles with selectors for the label tags or your custom
+children.
+
+`AProgressElement` and `register_a_progress` are removed. Import the stylesheet
+entry for granular usage. Native `<progress data-anta>` remains independent and
+needs no indicator region.

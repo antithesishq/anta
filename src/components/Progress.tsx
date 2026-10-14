@@ -32,11 +32,9 @@ export interface ProgressProps extends BaseProps {
 /**
  * Progress indicator for task completion and indeterminate work.
  *
- * Renders an `<a-progress>` web component with an optional label area
- * showing percentage, text label, and hint.
- *
- * Requires `@antadesign/anta/elements` to be imported (client-side only)
- * to register the underlying custom element.
+ * Renders light-DOM indicator and label regions inside `<a-progress>`.
+ * Load the Progress stylesheet through its element entry or the full bundle.
+ * No browser element registration is required.
  *
  * @example Basic usage
  * ```tsx
@@ -65,7 +63,8 @@ export const Progress = ({ value, max = 100, tone, size, round, label, hint, cla
   const indeterminate = value == null || value === false
   const numericValue = typeof value === 'number' && Number.isFinite(value) ? value : 0
   const validMax = Number.isFinite(max) && max > 0
-  const percent = validMax ? Math.round(Math.min(100, Math.max(0, (numericValue / max) * 100))) : 0
+  const fillPercent = validMax ? Math.min(100, Math.max(0, (numericValue / max) * 100)) : 0
+  const percent = Math.round(fillPercent)
   // Clamp the announced value to [0, max] so screen readers never report an
   // out-of-range progress (e.g. "150 of 100") that contradicts the visually
   // clamped bar and the percentage shown in the label.
@@ -93,6 +92,10 @@ export const Progress = ({ value, max = 100, tone, size, round, label, hint, cla
       style={roundStyle(round, '--progress-round', toneStyle(tone, '--progress-tone-source', style))}
       {...rest}
     >
+      {/* SVG width accepts percentages without an inline style. */}
+      <a-progress-indicator aria-hidden="true">
+        <svg width={`${fillPercent}%`} height="100%" />
+      </a-progress-indicator>
       {hasChildren(children) ? children : (
         <a-progress-label>
           {!indeterminate && <a-progress-number>{`${percent}%`}</a-progress-number>}

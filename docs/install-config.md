@@ -52,7 +52,7 @@ import { Progress, Title, Tag } from '@antadesign/anta'
 ```
 
 Each element entry imports its own CSS for your bundler to include and registers
-its browser class when needed. Title and Tag load only CSS; they have no custom
+its browser class when needed. Progress, Title, and Tag load only CSS; they have no custom
 element class to register. Element entries do not import global tokens or the reset.
 
 JSX wrappers produce `<a-*>` tags and attributes. They do not register browser
@@ -420,7 +420,12 @@ bundler that processes module scripts and CSS imports:
   import '@antadesign/anta/elements/a-progress'
 </script>
 
-<a-progress value="42" max="100" tone="info"></a-progress>
+<a-progress value="42" max="100" tone="info" role="progressbar"
+  aria-label="Upload" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">
+  <a-progress-indicator aria-hidden="true">
+    <svg width="42%" height="100%"></svg>
+  </a-progress-indicator>
+</a-progress>
 ```
 
 An import map resolves module names but does not process the plain CSS imports
@@ -436,7 +441,12 @@ and root color scheme, including scrollbar colors. The reset, included in
 ```html
 <html class="dark">
   <body>
-    <a-progress value="50"></a-progress>
+    <a-progress value="50" role="progressbar" aria-label="Upload"
+      aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+      <a-progress-indicator aria-hidden="true">
+        <svg width="50%" height="100%"></svg>
+      </a-progress-indicator>
+    </a-progress>
   </body>
 </html>
 ```

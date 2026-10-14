@@ -175,15 +175,18 @@ export interface BaseAttributes extends DOMEventHandlers {
 }
 
 /**
- * Attributes for the `<a-progress>` custom element.
+ * Attributes for the CSS-only `<a-progress>` container.
  *
- * These are the low-level web component attributes. For the JSX wrapper with
- * typed props and computed labels, use `Progress` from `@antadesign/anta`.
+ * Raw authors supply an `a-progress-indicator` region and its SVG width.
+ * For typed props and computed labels, use the `Progress` JSX wrapper.
  */
 export interface AProgressAttributes extends BaseAttributes {
-  /** Current progress value. Omit this attribute for indeterminate progress. */
+  /** Current progress value. Presence selects determinate styling; raw authors
+   *  also set the indicator's SVG width and authored ARIA. Omit for loading. */
   value?: number | string | false
-  /** Maximum value. Defaults to 100. */
+  /** Upper bound for authored values. Raw authors calculate the SVG percentage
+   *  width from value / max and set matching ARIA values.
+   *  @defaultValue 100 */
   max?: number | string
   /** Color variant, or any literal CSS color for a custom tone (derived in
    *  oklch). Named tones track light/dark automatically. */

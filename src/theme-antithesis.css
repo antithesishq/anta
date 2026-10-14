@@ -512,7 +512,8 @@
   a-button,
   a[role="button"][data-anta],
   button[data-anta],
-  input[data-anta]:is([type="reset"], [type="submit"]) {
+  input[data-anta]:is([type="reset"], [type="submit"]),
+  a-tab {
     letter-spacing: 0.05ch;
   }
 
@@ -583,6 +584,16 @@
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])):not([round]) {
     --_radius: 999px;
+  }
+
+  /* Tabs round with buttons. Half the tab height (12/14/16px) gives a pill per
+     tab while a vertical track stays a rounded rectangle. Steps reuses the strip
+     without its track or pill, so it keeps its own geometry. */
+  a-tabs:not([round], [data-steps]) {
+    --tab-radius: calc(var(--tab-height) / 2);
+  }
+  a-tabs:not([round], [data-steps], [priority="secondary"], [priority="tertiary"]) {
+    border-radius: var(--tab-radius);
   }
 
   :is(a-button, a[role="button"][data-anta], button[data-anta],

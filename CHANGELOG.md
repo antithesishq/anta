@@ -67,6 +67,10 @@ changes are not listed.
   `true`, independent of title level and header height. Explicit radius values
   remain supported; native `details[data-anta][round]` uses the same default.
 
+- [Tabs rounding](/tabs/#styling): a custom `round` radius now applies to the
+  tabs and the sliding indicator as well as the primary track. Previously the
+  tabs and indicator stayed fully round.
+
 
 ### Fixed
 

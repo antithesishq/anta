@@ -274,7 +274,12 @@ export function TertiaryGlow() {
  *  padding for a taller capsule. */
 export function PillTabs() {
   useElements()
-  return <Tabs className="pill-tabs" round defaultValue="a" label="Sections" options={triad} />
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+      <Tabs className="pill-tabs" round defaultValue="a" label="Sections" options={triad} />
+      <Tabs round={8} defaultValue="a" label="Sections" options={triad} />
+    </div>
+  )
 }
 
 /** Styling: noslide — the highlight snaps between tabs instead of sliding. */

@@ -580,20 +580,20 @@ The demo classes (`.square-tabs`, `.glow-tabs`, …) are hooks. Replace them wit
 
 **Roomier track.** The strip hugs its tabs by default (0 padding), so it's exactly a
 same-size button tall. For a gap around the selected pill (the classic "well" look), add
-`padding` and bump `border-radius` by the same amount, so the outer corner stays concentric
-with the tabs' 4px. The strip grows 2×the padding taller.
+`padding` and add the same amount to the tabs' radius, `--tab-radius`, so the outer corner
+stays concentric with the tabs in every theme and size. The strip grows 2×the padding taller.
 
 <Preview background="var(--bg-base)">
   <RoomyTabs client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
-    a-tabs.roomy-1 { padding: 1px; border-radius: 5px; }
-    a-tabs.roomy-3 { padding: 3px; border-radius: 7px; }
+    a-tabs.roomy-1 { padding: 1px; border-radius: calc(var(--tab-radius) + 1px); }
+    a-tabs.roomy-3 { padding: 3px; border-radius: calc(var(--tab-radius) + 3px); }
   `}</style>
 </Preview>
 
 ```css folded
-a-tabs.roomy-1 { padding: 1px; border-radius: 5px; }   /* 4 + 1 */
-a-tabs.roomy-3 { padding: 3px; border-radius: 7px; }   /* 4 + 3 */
+a-tabs.roomy-1 { padding: 1px; border-radius: calc(var(--tab-radius) + 1px); }
+a-tabs.roomy-3 { padding: 3px; border-radius: calc(var(--tab-radius) + 3px); }
 ```
 
 **Squarer primary.** Square corners, heavier labels, and a roomier `4px` track with no
@@ -711,16 +711,17 @@ where anchor positioning isn't supported.
 <Tabs noslide defaultValue="a">…</Tabs>
 ```
 
-**Fully-rounded pill.** The built-in **`round`** prop rounds the track, every tab, **and**
-the sliding pill to `999px` in one flag, no CSS needed (it drives `--tab-radius`, which feeds
-the tabs, the moving indicator, and the primary track well):
+**Rounded corners.** The built-in **`round`** prop rounds the track, every tab, and the
+sliding pill together. `true` makes them full pills; a number (px) or CSS length sets one
+custom radius for all three:
 
 <Preview background="var(--bg-base)">
   <PillTabs client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
-<Tabs round defaultValue="a" label="Sections">…</Tabs>   {/* pill track + tabs + indicator */}
+<Tabs round defaultValue="a" label="Sections">…</Tabs>      {/* pill track + tabs + indicator */}
+<Tabs round={8} defaultValue="a" label="Sections">…</Tabs>  {/* 8px on all three */}
 ```
 
 </Disclosure>

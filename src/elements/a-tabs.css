@@ -267,21 +267,19 @@
     border-radius: 4px;
   }
 
-  /* `round` → fully-round tabs. `--tab-radius` feeds both each tab's box AND the
-     shared sliding indicator (see the anchor block below), so one token rounds
-     them together — the tabs stay full pills. A custom value applies only to the
-     TOP-LEVEL element (the primary track well) via `--tabs-round`; the pills +
-     indicator keep their 999px full-round. (Tertiary is an underline — a radius
-     is meaningless there — so the track rule excludes it.) */
+  /* `round` → fully-round tabs. A value (`round="8px"`, or the wrapper's inline
+     `--tabs-round`) sets one radius for the tabs, the sliding indicator, and the
+     primary track, which share edges at the default zero padding. (Tertiary is
+     an underline, so the track rule excludes it.) */
   a-tabs[round] {
-    --tab-radius: 999px;
     --tabs-round: 999px;
+    --tab-radius: var(--tabs-round, 999px);
     @supports (border-radius: attr(probe type(<length>), 1px)) {
       --tabs-round: attr(round type(<length>), 999px);
     }
   }
   a-tabs[round]:not([priority="secondary"], [priority="tertiary"]) {
-    border-radius: var(--tabs-round, 999px);
+    border-radius: var(--tab-radius);
   }
   a-tabs:not([priority="secondary"], [priority="tertiary"]) a-tab:state(selected) {
     /* Selected label = --tab-selected-text: neutral dark for the neutral tone (the docs

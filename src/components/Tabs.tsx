@@ -124,10 +124,9 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
    *  per tab so it snaps with no movement. (Browsers without anchor positioning get that
    *  per-tab paint automatically — `noslide` is the explicit opt-out.) */
   noslide?: boolean
-  /** Fully-round the tabs and the sliding indicator (and the primary track
-   *  well). Applies strip-wide; a single tab's `round` rounds just that tab. A
-   *  `number` (px) or CSS length string sets a custom radius on the top-level
-   *  track well only — the tab pills + indicator stay fully round. */
+  /** Fully-round the tabs, the sliding indicator, and the primary track.
+   *  Applies strip-wide; a single tab's `round` rounds just that tab. A
+   *  `number` (px) or CSS length string sets that radius on all three. */
   round?: boolean | number | string
   /** Disable the whole strip. */
   disabled?: boolean

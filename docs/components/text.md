@@ -31,8 +31,7 @@ integer ≥ 2. `0` and negative values disable truncation. Text uses CSS
 `-webkit-line-clamp` in `display: -webkit-box`, with `min-width: 0` for flex and grid layouts.
 
 Clipped, non-expandable JSX Text shows its content in an automatic tooltip.
-Nest `<Tooltip>` to replace it or an empty tooltip to suppress it. Tooltip has
-separate shadow styling and [CSP requirements](../install-config.md#content-security-policy).
+Nest `<Tooltip>` to replace it or an empty tooltip to suppress it.
 
 ```tsx
 {/* Single line */}
@@ -148,9 +147,8 @@ Migrate flat expandable raw markup to these two children. Plain Text needs no
 content wrapper, and JSX supplies expansion markup. Both modes use light DOM
 and external CSS, with no injected stylesheet.
 
-For multiline raw Text, set `--line-clamp` in an allowed stylesheet. JSX writes
-counts greater than one as an inline custom property; `style-src-attr 'none'`
-needs separate handling (see [Content Security Policy](../install-config.md#content-security-policy)):
+For multiline raw Text, set `--line-clamp` in your stylesheet. JSX sets the line
+count through the `truncate` prop:
 
 ```html
 <a-text class="summary" truncate="3" expandable collapsible>

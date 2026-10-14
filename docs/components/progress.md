@@ -109,7 +109,7 @@ radius.
 ```html
 <a-progress style="width: 100%" value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
-  <a-progress-indicator slot="indicator" aria-hidden="true">
+  <a-progress-indicator aria-hidden="true">
     <progress value="42" max="100"></progress>
   </a-progress-indicator>
   <a-progress-label>
@@ -120,7 +120,7 @@ radius.
 
 <!-- Omit value for indeterminate progress. -->
 <a-progress style="width: 100%" round="50px" role="progressbar" aria-label="Preparing upload">
-  <a-progress-indicator slot="indicator" aria-hidden="true">
+  <a-progress-indicator aria-hidden="true">
     <progress></progress>
   </a-progress-indicator>
   <a-progress-label>

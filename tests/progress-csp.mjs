@@ -40,7 +40,7 @@ before(async () => {
   const compiled = new Module(resolve('tests/progress-server.cjs'))
   compiled._compile(result.outputFiles[0].text, compiled.id)
   renderServer = compiled.exports.render
-  assert.doesNotMatch(renderServer(initialProps), /style=/)
+  assert.doesNotMatch(renderServer(initialProps), /style=|slot=/)
   for (const framework of ['React', 'Preact']) {
     const react = framework === 'React'
     const result = await build({

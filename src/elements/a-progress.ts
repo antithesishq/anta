@@ -19,8 +19,6 @@ export class AProgressElement extends HTMLElementBase {
 
     const slot = document.createElement('slot')
     slot.setAttribute('part', 'content')
-    // The authored indicator region paints before upgrade. Its named slot is
-    // unassigned, so projecting content leaves that region's DOM untouched.
     shadow.append(this.indicator, slot)
   }
 

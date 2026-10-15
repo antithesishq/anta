@@ -107,18 +107,44 @@ with `statusIcon={false}`.
 ## Leading, trailing, and clear
 
 ```tsx
-<div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '320px' }}>
-  <Input label="Leading icon" placeholder="Search…" leading={<Icon shape="search" />} autoComplete="off" />
-  <Input label="Trailing icon" placeholder="Enter a value" trailing={<Icon shape="info" />} autoComplete="off" />
-  <Input label="Clear action" placeholder="Search…" clearable dimActions defaultValue="design tokens" autoComplete="off" />
-  <Input label="All adornments" leading={<Icon shape="search" />} trailing={<Icon shape="info" />} clearable dimActions defaultValue="design tokens" autoComplete="off" />
-  <Input label="Text adornments" leading="from" trailing="each" defaultValue="$20" autoComplete="off" />
-</div>
+import { useState } from 'preact/hooks'
+import { Input, Icon, Button } from '@antadesign/anta'
+
+function SearchActions() {
+  const [caseSensitive, setCaseSensitive] = useState(false)
+  const [regex, setRegex] = useState(false)
+  return (
+    <>
+      <Button priority="tertiary" size="small" icon="case-sensitive"
+        aria-label="Case sensitive" title="Case sensitive"
+        selected={caseSensitive} aria-pressed={caseSensitive}
+        onClick={() => setCaseSensitive(value => !value)} />
+      <Button priority="tertiary" size="small" icon="regex"
+        aria-label="Regular expression" title="Regular expression"
+        selected={regex} aria-pressed={regex}
+        onClick={() => setRegex(value => !value)} />
+    </>
+  )
+}
+
+function Demo() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '320px' }}>
+      <Input label="Leading icon" placeholder="Search…" leading={<Icon shape="search" />} autoComplete="off" />
+      <Input label="Trailing actions" placeholder="Search…" trailing={<SearchActions />} dimActions autoComplete="off" />
+      <Input label="Clear action" placeholder="Search…" clearable dimActions defaultValue="design tokens" autoComplete="off" />
+      <Input label="All adornments" leading={<Icon shape="search" />} trailing={<SearchActions />} clearable dimActions defaultValue="design tokens" autoComplete="off" />
+      <Input label="Text adornments" leading="from" trailing="each" defaultValue="$20" autoComplete="off" />
+    </div>
+  )
+}
 ```
 
 `leading` and `trailing` place content at the field edges: an icon, a Button,
 or text such as “from” and “each.” Use either edge on its own, combine both, or
-add `clearable` alongside them.
+add `clearable` alongside them. The trailing buttons toggle case-sensitive and
+regular expression modes. Hover or focus the field to see `dimActions` brighten
+the buttons.
 
 **`type="search"`** is a shorthand for that search pattern: it defaults a leading
 search icon and `clearable` (override either — pass your own `leading`, or

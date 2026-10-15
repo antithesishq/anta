@@ -86,6 +86,8 @@
     "prepack": "pnpm run build:docs",
     "test:fuzz_component": "node tests/pbt/run.ts",
     "test:consumers": "node tests/consumers/run.mjs",
+    "test:tooltip": "node --test tests/tooltip-csp.mjs",
+    "test:tooltip:package": "node tests/tooltip-package.mjs",
     "test:text": "node --test tests/text-csp.mjs"
   },
   "devDependencies": {

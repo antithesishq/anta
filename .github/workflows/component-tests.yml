@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, expander, progress, text]
+        options: [all, banner, calendar, card, expander, progress, text, tooltip]
 permissions:
   contents: read
 jobs:
@@ -35,5 +35,13 @@ jobs:
         with:
           name: expander-visual
           path: tests/.test-output/expander
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Tooltip visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tooltip-visual
+          path: tests/.test-output/tooltip
           include-hidden-files: true
           if-no-files-found: ignore

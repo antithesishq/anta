@@ -164,11 +164,11 @@ function nodeHitsMenus(node: Node): boolean {
 }
 
 // Live open-state provider (reads `openStack` directly, so no push/pop
-// instrumentation is needed). Set once on module load; `a-tooltip` consumes it.
-setMenuPresence({
-  isOpen: () => openStack.length > 0,
+// instrumentation is needed). Register it per connected document for Tooltip.
+const menuPresence = {
+  isOpen: (doc?: Document) => openStack.some(menu => !doc || menu.ownerDocument === doc),
   contains: nodeHitsMenus,
-})
+}
 
 function onDocPointerDown(e: PointerEvent) {
   trackMouse(e)
@@ -513,6 +513,7 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    setMenuPresence(menuPresence, this.doc)
     // Ensure Enter/Space activation works even for a menu built only from link
     // items (`<a data-anta-menu-item>`), where no `<a-menu-item>` ever upgrades
     // to install the listener itself. Idempotent per document.

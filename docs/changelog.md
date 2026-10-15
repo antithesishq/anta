@@ -54,6 +54,10 @@ changes are not listed.
 
 ### Changed
 
+- [Tooltip](/tooltip/) uses external default styling under Content Security Policy
+  restrictions. Existing markup and bubble styling remain supported. Interactive
+  content stays open during keyboard travel, and reduced motion disables fades.
+
 - [Expander](/expander/) uses external default styling while retaining its native
   button, collapse animation, and cancelable state requests. Reconnection keeps
   applied state.

@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Expander, Progress, and Text are registered.
+running them. Banner, Calendar/InputDate, Card, Expander, Progress, Text, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -115,3 +115,24 @@ Set `ANTA_EXPANDER_CHROMIUM_EXECUTABLE` to test an exact Chrome executable.
 `ANTA_TEST_WEBKIT=0` selects Chromium only; otherwise Firefox and WebKit run too.
 `ANTA_EXPANDER_PACKAGE_ROOT` selects an extracted package for artifact checks;
 the installed-package command builds without source aliases or workspace links.
+
+## Tooltip
+
+Run `pnpm test:tooltip` for the source CSP matrix or
+`pnpm test:tooltip:package` for the installed npm package matrix. Core PR checks
+run through `pnpm test:components --tier fast --component tooltip`. Expanded
+browser, visual, and installed-package coverage belongs to the slow tier.
+
+The suite uses actual CSP response headers, including `style-src-attr 'none'`.
+It covers first rendering, SSR/hydration, pointer/keyboard/touch interaction,
+interactive content, placement, handoff, truncation, lifecycle cleanup,
+consumer overrides, reduced motion, and both independent build load orders.
+Text and Steps compose under that policy. Select and SelectFaceted retain
+Input/Menu's known blocked shadow styles; those cases record the existing
+violations separately and check that showing Tooltip adds none.
+
+Set `ANTA_TOOLTIP_CHROMIUM_EXECUTABLE` for an exact Chrome executable,
+`ANTA_TOOLTIP_PACKAGE_ROOT` for an extracted package, or
+`ANTA_TOOLTIP_CONSUMER_ROOT` for an isolated installed consumer. Current
+Playwright WebKit does not establish Safari 17.4 coverage. Screenshots from the
+slow visual matrix go to `tests/.test-output/tooltip`.

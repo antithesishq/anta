@@ -2,11 +2,9 @@ import type { BaseProps } from "../general_types"
 import { roundStyle, roundAttr } from "../anta_helpers"
 
 export interface TooltipProps extends BaseProps {
-  /** Tooltip content. Renders anything — text, markup, an icon + text.
-   *  Lives in the light DOM, so it's styleable with your own plain CSS. */
+  /** Supplementary text or markup. Content stays in light DOM for application CSS. */
   children?: React.ReactNode
-  /** Show delay in milliseconds after hover / focus. Never use `0` — use
-   *  ~`50` for a near-instant tooltip (0 has caused issues in practice).
+  /** Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay.
    *  @defaultValue 300 */
   delay?: number
   /** Which side of the anchor the bubble prefers. Auto-flips to the other
@@ -20,10 +18,9 @@ export interface TooltipProps extends BaseProps {
    *  pinned (anchored beneath the target) by default; pass `follow` for the
    *  cursor-tracking behavior, which fades by distance as the cursor leaves. */
   follow?: boolean
-  /** Make the bubble hoverable and clickable — enables pointer events and
-   *  keeps it open while the cursor is over it, so its content (links,
-   *  buttons) can be interacted with. Always pinned (an interactive bubble
-   *  can't follow the cursor, even with `follow`). */
+  /** Keep content available while the pointer or keyboard focus is inside it.
+   *  Enables pointer events and pins the bubble even with `follow`. Essential
+   *  actions belong in a Menu or Dialog with an explicit trigger. */
   interactive?: boolean
   /** Only show when the target is actually truncated (its text overflows and is
    *  ellipsized); a label that fits gets no tooltip. The check is a UI-thread
@@ -52,13 +49,12 @@ export interface TooltipProps extends BaseProps {
  *
  * @example Basic usage
  * ```tsx
- * import { Tooltip } from '@antadesign/anta'
+ * import { Tooltip, Button } from '@antadesign/anta'
  * import '@antadesign/anta/elements'
  *
- * <button>
- *   Save
+ * <Button label="Save">
  *   <Tooltip>Saves your work</Tooltip>
- * </button>
+ * </Button>
  * ```
  *
  * @example Above the anchor, rich content
@@ -73,10 +69,9 @@ export interface TooltipProps extends BaseProps {
  *
  * @example Follow the cursor
  * ```tsx
- * <button>
- *   Hover me
+ * <Button label="Hover me">
  *   <Tooltip follow>Tracks the pointer</Tooltip>
- * </button>
+ * </Button>
  * ```
  */
 export const Tooltip = ({

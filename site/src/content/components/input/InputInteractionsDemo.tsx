@@ -1,12 +1,12 @@
-export default `import { useState } from 'preact/hooks'
+import { useState } from 'preact/hooks'
 import { Input, Checkbox, Button } from '@antadesign/anta'
 
-function Demo() {
+export default function InputInteractionsDemo() {
   const [value, setValue] = useState('Keep this draft')
   const [protect, setProtect] = useState(true)
   const [event, setEvent] = useState('Edit the field or select Clear.')
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '320px', maxWidth: '100%' }}>
       <Input
         label="Draft"
         value={value}
@@ -27,7 +27,6 @@ function Demo() {
       <Checkbox label="Protect draft" checked={protect}
         onStateChange={(_, { next }) => setProtect(next)} />
       <Button label="Restore draft" onClick={() => setValue('Keep this draft')} />
-    </>
+    </div>
   )
 }
-`

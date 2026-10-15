@@ -165,26 +165,25 @@
     );
   }
 
-  /* ── Per-tab tone on the SELECTED tab drives the shared sliding indicator (::before),
-     which can't read a descendant's color: mirror the selected tab's NAMED tone onto the
-     strip via :has(), pointing --tabs-tone-source at it + setting the label and the SELECTED
-     ring color (--tab-selected-border — the track ring stays the strip's own, so only the
-     active tab's ring tones). A custom literal per-tab tone can't be enumerated, so its
-     label + noslide indicator tone but the slider keeps the strip tone. */
-  a-tabs:has(> a-tab[tone="brand"]:state(selected))    { --tabs-tone-source: var(--anta-seed-brand); --tab-selected-text: var(--text-1-brand);    --tab-selected-border: var(--border-2-brand); }
-  a-tabs:has(> a-tab[tone="info"]:state(selected))     { --tabs-tone-source: var(--anta-seed-info); --tab-selected-text: var(--text-1-info);     --tab-selected-border: var(--border-2-info); }
-  a-tabs:has(> a-tab[tone="success"]:state(selected))  { --tabs-tone-source: var(--anta-seed-success); --tab-selected-text: var(--text-1-success);  --tab-selected-border: var(--border-2-success); }
-  a-tabs:has(> a-tab[tone="warning"]:state(selected))  { --tabs-tone-source: var(--anta-seed-warning); --tab-selected-text: var(--text-1-warning);  --tab-selected-border: var(--border-2-warning); }
-  a-tabs:has(> a-tab[tone="critical"]:state(selected)) { --tabs-tone-source: var(--anta-seed-critical); --tab-selected-text: var(--text-1-critical); --tab-selected-border: var(--border-2-critical); }
-  a-tabs:has(> a-tab[tone]:state(selected):not([tone=""], [tone="neutral"])) {
-    --tabs-track-bg: light-dark(
-      oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.06),
-      oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.07)
-    );
-    /* Declared on the strip so non-toned sibling tabs inherit the tone too. */
+  /* Mirror named option tones for the shared indicator without changing the
+     strip's tone source, which also colors its track. */
+  a-tabs:has(> a-tab[tone="brand"]:state(selected))    { --tabs-indicator-tone-source: var(--anta-seed-brand); --tab-selected-text: var(--text-1-brand); --tab-selected-border: var(--border-2-brand); }
+  a-tabs:has(> a-tab[tone="info"]:state(selected))     { --tabs-indicator-tone-source: var(--anta-seed-info); --tab-selected-text: var(--text-1-info); --tab-selected-border: var(--border-2-info); }
+  a-tabs:has(> a-tab[tone="success"]:state(selected))  { --tabs-indicator-tone-source: var(--anta-seed-success); --tab-selected-text: var(--text-1-success); --tab-selected-border: var(--border-2-success); }
+  a-tabs:has(> a-tab[tone="warning"]:state(selected))  { --tabs-indicator-tone-source: var(--anta-seed-warning); --tab-selected-text: var(--text-1-warning); --tab-selected-border: var(--border-2-warning); }
+  a-tabs:has(> a-tab[tone="critical"]:state(selected)) { --tabs-indicator-tone-source: var(--anta-seed-critical); --tab-selected-text: var(--text-1-critical); --tab-selected-border: var(--border-2-critical); }
+  a-tabs:has(> a-tab:is([tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]):state(selected)) {
     --tab-secondary-bg: light-dark(
-      oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03),
-      oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.08)
+      oklch(from var(--tabs-indicator-tone-source) 0.55 0.14 h / 0.03),
+      oklch(from var(--tabs-indicator-tone-source) 0.8 0.12 h / 0.08)
+    );
+  }
+  a-tabs:has(> a-tab[tone="neutral"]:state(selected)) {
+    --tab-selected-text: var(--text-1);
+    --tab-selected-border: var(--border-2);
+    --tab-secondary-bg: light-dark(
+      oklch(from var(--anta-seed-neutral) 0.55 0.008 h / 0.03),
+      oklch(from var(--anta-seed-neutral) 0.8 0.008 h / 0.08)
     );
   }
   /* Custom literal-color tone (anything not a named tone): derive the source from the

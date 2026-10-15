@@ -43,6 +43,7 @@ custom color); columns are priorities.
 
 **Per-tab tone.** A `tone` on an individual option overrides the strip's tone for that one
 tab: it colors the label and icons in every mode, and the indicator when it's the active tab.
+The track background and border keep the strip's tone when selection changes.
 A named tone colors the sliding indicator too; a custom literal color tones the label
 everywhere but the indicator only under `noslide` (the single shared sliding element can't
 read a descendant's color).
@@ -368,7 +369,7 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `label?` | ReactNode | — | Visible label. The string shorthand for the tab's content; for richer content pass `children` instead (`label` wins when both are set). |
 | `round?` | boolean | — | Fully-round just this tab's box. `<Tabs round>` rounds the whole strip (tabs + sliding indicator) instead. |
 | `style?` | CSSProperties | — | Inline styles on the option's rendered row. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | inherits the strip's `tone | Per-tab tone override, same vocabulary as `<Tabs tone>` — colors this one tab's label + icons (all priorities/modes, named or custom color) and, when it's the active tab, its indicator. For a **custom literal color** the sliding indicator can't adopt it (the shared moving element can't read a descendant's color), so a custom tone colors the label everywhere and the indicator only in `noslide`; the six **named** tones color both in every mode. Overrides the strip's `tone` for this tab. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | inherits the strip's `tone | Per-tab tone override, same vocabulary as `<Tabs tone>` — colors this one tab's label + icons (all priorities/modes, named or custom color) and, when it's the active tab, its indicator. The track keeps the strip's tone. For a **custom literal color** the sliding indicator can't adopt it (the shared moving element can't read a descendant's color), so a custom tone colors the label everywhere and the indicator only in `noslide`; the six **named** tones color both in every mode. Overrides the strip's `tone` for this tab. |
 | `tooltip?` | ReactNode | — | Tooltip for this tab — a string or any node — shown **only when one of the tab's ellipsizing label parts is truncated** (tabs ellipsize when the strip overflows), so clipped content reveals its full text on hover while a tab that fits shows nothing. Rendered as a `truncatedOnly` `<Tooltip>` anchored to the tab. For an always-visible tooltip or other custom trigger content, use `children` with your own `<Tooltip>` instead. |
 
 ## TabPanel props

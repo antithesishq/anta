@@ -86,6 +86,10 @@ changes are not listed.
 
 ### Fixed
 
+- [Tabs per-option tones](/tabs/#tone) color the selected indicator without
+  recoloring the track. An explicit neutral option also resets the indicator
+  on a toned strip.
+
 - [Expander](/expander/) keeps content clipped during expansion and restores
   overflow once the section finishes opening.
 

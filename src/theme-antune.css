@@ -635,16 +635,19 @@ a-tag[tone="neutral"][priority="tertiary"] {
   --tag-border: color-mix(in oklch, var(--tag-edge) 25%, transparent);
 }
 
-/* Keep the neutral reference fills off toned strips and selected per-tab tones. */
-a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]):not(
-  :has(> a-tab[tone]:state(selected):not([tone=""], [tone="neutral"]))
-) {
+/* The track follows the strip's tone regardless of its selected option. */
+a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]) {
   --tabs-track-bg: light-dark(
     oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.06),
     color-mix(in oklch, #e4d1ef 7%, transparent)
   );
+}
+a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]):not(
+  :has(> a-tab:is([tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]):state(selected))
+),
+a-tabs:has(> a-tab[tone="neutral"]:state(selected)) {
   --tab-secondary-bg: light-dark(
-    oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.03),
+    oklch(from var(--anta-seed-neutral) 0.55 0.008 h / 0.03),
     color-mix(in oklch, #e4d1ef 8%, transparent)
   );
 }

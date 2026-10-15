@@ -42,9 +42,10 @@ export interface TabOption extends OptionPresentationProps {
   round?: boolean
   /** Per-tab tone override, same vocabulary as `<Tabs tone>` — colors this one tab's
    *  label + icons (all priorities/modes, named or custom color) and, when it's the
-   *  active tab, its indicator. For a **custom literal color** the sliding indicator can't
-   *  adopt it (the shared moving element can't read a descendant's color), so a custom tone
-   *  colors the label everywhere and the indicator only in `noslide`; the six **named**
+   *  active tab, its indicator. The track keeps the strip's tone. For a **custom literal
+   *  color** the sliding indicator can't adopt it (the shared moving element can't read
+   *  a descendant's color), so a custom tone colors the label everywhere and the indicator
+   *  only in `noslide`; the six **named**
    *  tones color both in every mode. Overrides the strip's `tone` for this tab.
    *  @defaultValue inherits the strip's `tone` */
   tone?: "neutral" | "brand" | "info" | "success" | "warning" | "critical" | (string & {})

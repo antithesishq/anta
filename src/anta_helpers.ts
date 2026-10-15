@@ -281,33 +281,40 @@ export function anchorRect(el: Element): DOMRect {
  * (Menu and tooltip are both top-layer popovers, stacked by show order, so a
  * tooltip opened while a menu is up would paint over it — z-index can't reorder
  * the top layer.) Decoupled on purpose: neither element imports the other, and
- * if `a-menu` never loads the provider stays null and every tooltip shows.
+ * if `a-menu` never loads there are no providers and tooltips remain available.
  */
 export interface MenuPresence {
   /** Is any `a-menu` open? */
-  isOpen(): boolean
+  isOpen(doc?: Document): boolean
   /** Is `node` inside the open menu system — a menu surface, a slotted item, or
    *  an open trigger? (A tooltip there is a menu-item tooltip and still shows,
    *  above the menu.) */
   contains(node: Node): boolean
 }
-let menuPresence: MenuPresence | null = null
-/** `a-menu` registers its live open-state provider here (once, on load). */
-export function setMenuPresence(p: MenuPresence | null): void {
-  menuPresence = p
+const MENU_PRESENCE = Symbol.for('anta.menu-presence')
+type MenuDocument = Document & { [MENU_PRESENCE]?: Set<MenuPresence> }
+/** Register every compiled provider; a later unused class must not replace the
+ * provider belonging to the class retained by the custom-element registry. */
+export function setMenuPresence(p: MenuPresence | null, doc = typeof document === 'undefined' ? undefined : document): void {
+  if (!doc) return
+  const providers = (doc as MenuDocument)[MENU_PRESENCE] ??= new Set()
+  if (p) providers.add(p)
+  else providers.clear()
 }
-/** True while any `a-menu` is open. */
-export function isMenuOpen(): boolean {
-  return menuPresence?.isOpen() ?? false
+/** True while a menu is open in this document. */
+export function isMenuOpen(doc = typeof document === 'undefined' ? undefined : document): boolean {
+  if (!doc) return false
+  return [...((doc as MenuDocument)[MENU_PRESENCE] ?? [])].some(provider => provider.isOpen(doc))
 }
-/** True if `node` sits inside the open menu system. */
+/** True if `node` sits inside an open menu in its document. */
 export function isInsideOpenMenu(node: Node): boolean {
-  return menuPresence?.contains(node) ?? false
+  const doc = node.ownerDocument
+  return doc != null && [...((doc as MenuDocument)[MENU_PRESENCE] ?? [])].some(provider => provider.contains(node))
 }
 
 /** Internal element protocol used by a popup to associate itself and its active
  * item with an Anta-owned focus target without serializing cross-root IDs. */
-export const SYNC_POPUP_ARIA = Symbol('anta.sync-popup-aria')
+export const SYNC_POPUP_ARIA = Symbol.for('anta.sync-popup-aria')
 export interface PopupAriaRelations {
   source: Element
   controls?: Element | null

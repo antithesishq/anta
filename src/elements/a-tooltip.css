@@ -32,6 +32,84 @@
     --tooltip-border: none;
 
     --tooltip-backdrop-filter: blur(8px);
+
+    display: contents;
+  }
+
+  /* Separate opacity layers preserve the lifecycle and cursor-distance fades. */
+  a-tooltip::part(container) {
+    --_dur: 150ms;
+
+    position: fixed;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    overflow: visible;
+    box-sizing: border-box;
+    width: fit-content;
+    pointer-events: none;
+    opacity: 0;
+    transition:
+      opacity var(--_dur) ease,
+      overlay var(--_dur) ease allow-discrete,
+      display var(--_dur) ease allow-discrete;
+  }
+
+  a-tooltip::part(container):popover-open { opacity: 1; }
+
+  @starting-style {
+    a-tooltip::part(container):popover-open { opacity: 0; }
+  }
+
+  a-tooltip::part(bubble) {
+    display: block;
+    box-sizing: border-box;
+    width: fit-content;
+    max-width: var(--tooltip-max-width, min(calc(100vw - 20px), 80ch));
+    max-height: calc(100vh - 20px);
+    overflow: clip;
+    text-align: left;
+    background: var(--tooltip-bg, Canvas);
+    color: var(--text-2, CanvasText);
+    box-shadow: var(--tooltip-shadow, 0 1px 8px color-mix(in oklch, black 20%, transparent));
+    -webkit-backdrop-filter: var(--tooltip-backdrop-filter, blur(8px));
+    backdrop-filter: var(--tooltip-backdrop-filter, blur(8px));
+    padding: var(--tooltip-padding, 4px 8px);
+    border: var(--tooltip-border, none);
+    border-radius: var(--tooltip-radius, 3px);
+    outline: none;
+    font-family: var(--sans-serif, system-ui, sans-serif);
+    font-size: 14px;
+    font-weight: 400;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1.5;
+    letter-spacing: var(--_tooltip-letter-spacing, 0.025ch);
+    word-spacing: normal;
+    text-transform: none;
+    white-space: break-spaces;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    /* Runtime proximity opacity belongs to the slot. An external part default
+       would outrank its shadow-inline value, so use the initial opacity here. */
+    transition: opacity 60ms linear;
+  }
+
+  a-tooltip[interactive]::part(container) { pointer-events: auto; }
+
+  a-tooltip:state(proximity-hidden)::part(bubble) {
+    transition: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-tooltip::part(container),
+    a-tooltip::part(bubble) {
+      transition: none;
+    }
   }
 
   /* `round` softens the bubble to a 20px radius, matching a round menu. A value

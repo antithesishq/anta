@@ -53,6 +53,7 @@ jobs:
             echo 'progress=true' >> "$GITHUB_OUTPUT"
             echo 'expander=true' >> "$GITHUB_OUTPUT"
             echo 'banner=true' >> "$GITHUB_OUTPUT"
+            echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
@@ -137,6 +138,23 @@ jobs:
           else
             echo 'expander=false' >> "$GITHUB_OUTPUT"
           fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-tooltip.*' 'src/elements/a-text.*' 'src/elements/a-button.*' \
+            'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-tab*' \
+            src/components/{Tooltip,Text,Button,Steps,Tabs,Select,SelectFaceted,Menu,MenuItem,Input}.tsx \
+            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts \
+            src/elements/{index,key-activation,shadow-aria}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'src/elements/a-steps.*' 'src/elements/a-select*' \
+            src/components/{Steps,select-parts}.css \
+            'tests/tooltip*' tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'tooltip=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'tooltip=false' >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -182,6 +200,11 @@ jobs:
       - name: Test Expander CSP, disclosure behavior, and initial layout
         if: steps.component-tests.outputs.expander == 'true'
         run: pnpm test:components --component expander
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Test Tooltip CSP and interaction
+        if: steps.component-tests.outputs.tooltip == 'true'
+        run: pnpm test:components --component tooltip
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Typecheck stickers

@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 14, 2026 on `codex/expander-light-dom`.
+Updated October 14, 2026 on `codex/tooltip-external-css`.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -47,8 +47,11 @@ and verification before moving to the next component.
    DOM rewriting. The 200ms collapse and indicator motion remain. Reconnection
    retains applied state. Source, installed-package, visual, minimum Chrome,
    and production checks passed; coverage limits are below.
-3. [ ] [Tooltip](src/elements/a-tooltip.ts): popover structure, positioning,
-   proximity opacity, and transitions. Shared by several composed components.
+3. [x] [Tooltip](src/elements/a-tooltip.ts): existing manual-popover container
+   and styled bubble slot retained. Defaults use external `container` and
+   `bubble` part rules. Positioning, interaction, proximity, and timers stay in
+   the element; coordination and observation belong to the connected document.
+   No injected stylesheet or authored host/light-DOM rewriting.
 4. [ ] [Input](src/elements/a-input.ts): input, textarea, and button modes;
    native controls, adornments, focus, labels, and hints.
 5. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
@@ -70,7 +73,7 @@ After their underlying elements are migrated, verify these compositions:
 
 - [ ] ButtonCopy and MenuItemCopy: Copy feedback and Menu.
 - [ ] Breadcrumbs: collapsed Menu and Copy feedback.
-- [ ] Steps: Tooltip hints.
+- [x] Steps: Tooltip hints, including clipped labels and hints.
 - [ ] InputDate and InputAutocomplete: Input and Menu.
 - [ ] Select and SelectFaceted: Input, Menu, and optional Tooltip.
 
@@ -216,6 +219,64 @@ and the [Safari 16.4 release notes](https://webkit.org/blog/13966/webkit-feature
 Custom-state styling support is recorded in the Banner verification above.
 The movement still uses the original grid transition; clipping uses standard
 CSS keyframes and an inherited custom property.
+
+### Tooltip verification
+
+Verified October 14, 2026:
+
+- All 107 source checks and 107 installed-package checks passed in Chrome `155.0.8059.40`, Firefox `155.0`, and
+  Playwright WebKit `26.6`. Source and installed-package results include React
+  and Preact's own SSR output, node-preserving hydration, full and granular
+  imports, and both independent build orders. Installed builds resolve npm
+  exports from an isolated tarball installation without source aliases or
+  workspace links.
+- CSP comes from HTTP response headers: same-origin scripts/styles,
+  `style-src-attr 'none'`, and data images for masks. Tooltip's strict cases
+  produce no violations. Coverage includes pre-upgrade hiding, initial position,
+  pointer and keyboard opening, Escape, touch hold/tap/drag/scroll cancellation,
+  trusted Chromium touch, interactive pointer/focus travel, clipping and
+  viewport flipping, content changes, truncation, explicit-tooltip precedence,
+  nesting, reconnection, adoption, and independent document coordination.
+- The native popover and bubble retain separate 150ms lifecycle and 60ms
+  proximity transitions. Paused browser transitions verify independent computed
+  opacity at intermediate times. External normal part rules outrank shadow-inline
+  declarations, so the default bubble rule leaves runtime-owned opacity unset.
+  The far-pointer cutoff uses element-owned state. Reduced motion removes both
+  transitions; initial positioning completes before the first visible paint.
+- Compared the registered original at `0c6c30c6` with the refactor across 10
+  variants in three engines. All 30 geometry, typography, and appearance
+  comparisons matched, including rich/wrapped content, top/left placement,
+  round, interactive content, RTL, dark mode, and consumer overrides. The slow
+  suite captures six variants per import mode and engine. Screenshots live in
+  `tests/.test-output/tooltip`; WebKit capture uses a separate context that
+  permits Playwright's animation-sync sheet. Behavior tests retain strict CSP.
+- Text's automatic tooltip and Steps' clipped hints compose under strict CSP.
+  Select and SelectFaceted retain Input/Menu's existing blocked shadow sheets;
+  their cases record that baseline and verify Tooltip introduces no additional
+  violation. Mixed-build tests also verify Input's native popup references and
+  authored accessible name when Input and Menu come from separate builds.
+- Accessible descriptions remain authored. Chromium's accessibility tree verifies
+  `aria-description` before and after opening. Referencing the Tooltip host with
+  `aria-describedby` alone did not expose a closed popover's description, so the
+  documentation uses a persistent authored description. Interactive content
+  retains its existing semantics; it is not presented as the conventional
+  nonfocusable ARIA tooltip pattern.
+- All five saved production consumer fixtures passed: Next.js full/granular and
+  Preact full/basic-granular/composed-granular. All 320 selected root regressions
+  passed with CI's existing debounce exclusion. Anta lint/type checking, sticker
+  type checking, site CSS lint, tier selection, the production build under Node
+  `24.15.0`, and all 10 production checks passed. The shared fast tier passed all
+  85 selected checks. PR CI selects Tooltip core regressions; expanded browser,
+  visual, and installed-package matrices stay in the slow tier.
+
+All 39 installed-package checks passed in Chrome for Testing `135.0.7049.114`.
+Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
+Current Playwright WebKit provides engine evidence, not a shipping Safari run.
+Safari 17.4 lacks `@starting-style`; display/overlay transition support also
+varies at the supported minimums. These existing animation enhancements remain
+progressive; this change adds no replacement animation. Custom JSX values that
+serialize style attributes, including custom `round` values, remain a separate
+CSP constraint.
 
 ## Scope and conclusion
 

@@ -7,12 +7,12 @@ const MARGIN = 4
 /** Approx pointer height — how far below the cursor the bubble sits in follow mode. */
 const CURSOR_SIZE = 16
 /** The bubble's horizontal padding (matches `padding: 4px 8px` in the shadow
- *  style). In cursor-follow mode the bubble is shifted left by this so the
+ *  stylesheet). In cursor-follow mode the bubble is shifted left by this so the
  *  cursor lands at the start of the text, not to the left of the whole bubble. */
 const PADDING_X = 8
 /** Default show delay (ms) when nothing else is open. Never use 0 — use ~50. */
 const DEFAULT_DELAY = 300
-/** Enter/exit fade duration (ms). Mirrors `--_dur` in the shadow style. */
+/** Enter/exit fade duration (ms). Matches the container transition in a-tooltip.css. */
 const FADE_MS = 150
 /**
  * Grace window (ms) after a tooltip closes during which the *next* tooltip
@@ -37,10 +37,6 @@ const CLOSE_DELAY = 120
  */
 const PROX_NEAR = 10
 const PROX_FAR = 100
-/** Transition (ms) on the proximity opacity channel — small, just to smooth the
- *  discrete mousemove steps. Must stay well under FADE_MS so it never competes
- *  with the enter / cross-fade on the outer container. */
-const PROX_FADE_MS = 60
 /**
  * Touch press-and-hold duration (ms) before a long-press opens the tooltip.
  * Touch has no hover, so a deliberate hold is the open gesture; a quick tap
@@ -73,82 +69,69 @@ const LEAVE_TOUCH_DELAY = 1500
  */
 const TOUCH_SLOP = 10
 
-/* ------------------------------------------------------------------ *
- * Module-level coordinator — PURE IN-MEMORY JS, never touches the DOM.
- * The host app may reconcile its DOM from a worker thread, so we must
- * not add/move nodes or write host attributes from here. This only
- * tracks "who is open" + a grace timer and calls each element's own
- * show()/hide() (which mutate only their own shadow internals).
- * ------------------------------------------------------------------ */
-let currentOpen: ATooltipElement | null = null
-let graceTimer: ReturnType<typeof setTimeout> | undefined
-let graceFollows = false
-
-function graceActive(): boolean {
-  return graceTimer !== undefined
-}
-
-/** Only two explicitly-following tooltips share a warm, delay-free handoff.
- * Non-follow tooltips are independent disclosures, so entering or leaving one
- * always resets the next tooltip's configured delay. */
-function isHot(next: ATooltipElement): boolean {
-  if (!next.hasAttribute('follow')) return false
-  if (currentOpen) return currentOpen.hasAttribute('follow')
-  return graceActive() && graceFollows
-}
-
-function clearGrace() {
-  if (graceTimer !== undefined) {
-    clearTimeout(graceTimer)
-    graceTimer = undefined
-  }
-  graceFollows = false
-}
-
-/** Called from an element as it shows: close the previous one (cross-fade) and claim the slot. */
-function claimOpen(el: ATooltipElement) {
-  if (currentOpen && currentOpen !== el) {
-    // Normally hide() (animated cross-fade). But if the previous tooltip was
-    // orphaned without its disconnectedCallback firing, the coordinator's
-    // strong ref kept it — and its document/window listeners — alive; fully
-    // tear it down instead so nothing leaks.
-    if (currentOpen.isConnected) currentOpen.hide()
-    else currentOpen.cleanup()
-  }
-  currentOpen = el
-  clearGrace()
-}
-
-/** Called from an element as it hides: release the slot and arm the grace window. */
-function releaseOpen(el: ATooltipElement) {
-  if (currentOpen !== el) return
-  currentOpen = null
-  clearGrace()
-  graceFollows = el.hasAttribute('follow')
-  graceTimer = setTimeout(() => {
-    graceTimer = undefined
-    graceFollows = false
-  }, GRACE_MS)
-}
-
-/* ------------------------------------------------------------------ *
- * Lazy-listener observer: attach the (relatively heavy) hover/focus
- * listeners only while the anchor is actually on-screen, mirroring the
- * legacy behavior. An anchor may own more than one tooltip: JSX <Text>
- * appends an automatic truncated-text tooltip after a consumer-provided one.
- * The consumer tooltip wins, and the registry keeps the automatic tooltip
- * ready to take over again if that consumer tooltip is removed.
- * ------------------------------------------------------------------ */
 type TooltipRegistry = {
   tooltips: Set<ATooltipElement>
   intersecting: boolean
+  frame?: number
+}
+type TooltipCoordination = {
+  currentOpen: ATooltipElement | null
+  graceTimer?: ReturnType<typeof setTimeout>
+  graceFollows: boolean
+  anchors: WeakMap<Element, TooltipRegistry>
+  observer?: IntersectionObserver
+  anchorCount: number
+}
+const COORDINATION = Symbol.for('anta.tooltip-coordination')
+type TooltipDocument = Document & { [COORDINATION]?: TooltipCoordination }
+
+// A document owns its observation and handoff state, including when independently
+// compiled entries or classes defined in another frame connect to it.
+function coordination(doc: Document): TooltipCoordination {
+  const owner = doc as TooltipDocument
+  return owner[COORDINATION] ??= {
+    currentOpen: null, graceFollows: false, anchors: new WeakMap(), anchorCount: 0,
+  }
 }
 
-const anchorToTooltips = new WeakMap<Element, TooltipRegistry>()
+function isHot(next: ATooltipElement): boolean {
+  if (!next.hasAttribute('follow')) return false
+  const state = coordination(next.ownerDocument)
+  if (state.currentOpen) return state.currentOpen.hasAttribute('follow')
+  return state.graceTimer !== undefined && state.graceFollows
+}
 
-/** Last connected explicit tooltip wins, preserving the prior last-write-wins
- * behavior for multiple consumer tooltips while letting it take precedence
- * over Text's trailing automatic tooltip. */
+function clearGrace(state: TooltipCoordination) {
+  if (state.graceTimer !== undefined) clearTimeout(state.graceTimer)
+  state.graceTimer = undefined
+  state.graceFollows = false
+}
+
+function claimOpen(el: ATooltipElement) {
+  const state = coordination(el.ownerDocument)
+  const previous = state.currentOpen
+  if (previous && previous !== el) {
+    if (previous.isConnected) previous.hide()
+    else previous.cleanup()
+  }
+  state.currentOpen = el
+  clearGrace(state)
+}
+
+function releaseOpen(el: ATooltipElement, doc: Document, grace = true) {
+  const state = coordination(doc)
+  if (state.currentOpen !== el) return
+  state.currentOpen = null
+  clearGrace(state)
+  if (!grace) return
+  state.graceFollows = el.hasAttribute('follow')
+  state.graceTimer = setTimeout(() => {
+    state.graceTimer = undefined
+    state.graceFollows = false
+  }, GRACE_MS)
+}
+
+/** Explicit content wins over the automatic tooltip appended by text wrappers. */
 function preferredTooltip(registry: TooltipRegistry): ATooltipElement | undefined {
   let automatic: ATooltipElement | undefined
   let explicit: ATooltipElement | undefined
@@ -159,39 +142,40 @@ function preferredTooltip(registry: TooltipRegistry): ATooltipElement | undefine
   return explicit ?? automatic
 }
 
-/** Keep listener ownership with the preferred tooltip for an anchor. The
- * observer state is shared so a tooltip that takes over after a sibling is
- * added or removed follows the same off-screen lazy-listening rule. */
-function syncAnchorListeners(anchor: Element, registry: TooltipRegistry) {
+function syncAnchorListeners(anchor: Element, registry: TooltipRegistry, doc: Document) {
   const preferred = preferredTooltip(registry)
   for (const tooltip of registry.tooltips) {
-    if (tooltip !== preferred) tooltip.teardownListeners()
+    if (tooltip !== preferred) tooltip.cleanup()
   }
-  if (!preferred || !registry.intersecting) {
-    preferred?.teardownListeners()
+  const view = doc.defaultView
+  if (registry.frame !== undefined) view?.cancelAnimationFrame(registry.frame)
+  registry.frame = undefined
+  if (!preferred || !registry.intersecting || !view) {
+    preferred?.cleanup()
     return
   }
-  requestAnimationFrame(() => {
-    const current = anchorToTooltips.get(anchor)
+  registry.frame = view.requestAnimationFrame(() => {
+    registry.frame = undefined
+    const current = coordination(doc).anchors.get(anchor)
     if (current !== registry || !current.intersecting || preferredTooltip(current) !== preferred) return
     preferred.setupListeners()
   })
 }
 
-function handleIntersection(entries: IntersectionObserverEntry[]) {
-  for (const entry of entries) {
-    const registry = anchorToTooltips.get(entry.target)
-    if (!registry) continue
-    registry.intersecting = entry.isIntersecting
-    syncAnchorListeners(entry.target, registry)
+function observeAnchor(anchor: Element, doc: Document, state: TooltipCoordination) {
+  const Observer = doc.defaultView?.IntersectionObserver
+  if (!state.observer && Observer) {
+    state.observer = new Observer(entries => {
+      for (const entry of entries) {
+        const registry = state.anchors.get(entry.target)
+        if (!registry) continue
+        registry.intersecting = entry.isIntersecting
+        syncAnchorListeners(entry.target, registry, doc)
+      }
+    }, { root: null, rootMargin: '0px', threshold: 0 })
   }
+  state.observer?.observe(anchor)
 }
-
-// threshold 0 only: any higher would re-fire on animated size changes.
-const lazyObserver: IntersectionObserver | null =
-  typeof IntersectionObserver !== 'undefined'
-    ? new IntersectionObserver(handleIntersection, { root: null, rootMargin: '0px', threshold: 0 })
-    : null
 
 /**
  * `<a-tooltip>` — floating bubble placed as a child of the element it
@@ -200,7 +184,7 @@ const lazyObserver: IntersectionObserver | null =
  * Styling notes (`a-tooltip.css` ships comment-free):
  * - `a-tooltip:not(:defined)` is hidden — before upgrade the host is an
  *   unknown inline element and its content would flash *inside the anchor*.
- *   Once defined, the shadow `:host { display: contents }` governs and
+ *   Once defined, external host CSS applies `display: contents` and
  *   content renders only in the popover via the slot.
  * - Only the bubble "chrome" is tokenized (`--tooltip-*`): it lives inside
  *   the shadow popover, unreachable from plain consumer CSS; the custom
@@ -234,6 +218,10 @@ export class ATooltipElement extends HTMLElementBase {
    *  container's enter/exit/cross-fade opacity. */
   private bubble!: HTMLSlotElement
   private anchor: HTMLElement | null = null
+  #connectedDocument?: Document
+  #globalDocument?: Document
+  #positionView?: Window
+  #internals: ElementInternals
 
   listening = false
   private shown = false
@@ -258,111 +246,13 @@ export class ATooltipElement extends HTMLElementBase {
     // Built ONCE, here, off the reconciliation path. All later changes
     // are confined to this shadow subtree — never the host or light DOM.
     const shadow = this.attachShadow({ mode: 'open' })
+    this.#internals = this.attachInternals()
 
-    // Two layers of opacity (they multiply): `.container` is the popover and
-    // owns the lifecycle fade — `allow-discrete` keeps the bubble rendered
-    // through its fade-out after hidePopover(), and `@starting-style` starts
-    // every open from opacity 0 so the first paint at a not-yet-computed
-    // transform is invisible (no flash at a stale spot). `.bubble` owns the
-    // visual chrome + the proximity (distance-from-anchor) opacity set from JS.
-    // `.container` also resets the UA `[popover]` defaults (solid border, 0.25em
-    // padding, Canvas background, overflow:auto) so only `.bubble` paints.
-    //
-    // No comments inside the CSS below: this string is injected verbatim into
-    // every instance's shadow root and isn't run through the CSS minifier.
-    // `.bubble` is the `<slot>` itself, promoted to `display:block` so it owns
-    // a box (chrome + the slotted content lay out inside it). It's the single
-    // text-baseline choke point — its font/letter properties flow down the
-    // flat-tree to the slotted content (inheritance passes through a styled
-    // slot), stopping the anchor's inheritable text styles from bleeding in; a
-    // consumer overrides by styling their own content. `display` is not an
-    // inherited property, so `display:block` on the slot does NOT leak onto the
-    // slotted children — they keep their own layout.
-    const style = document.createElement('style')
-    // Shadow bubble CSS (kept comment-free — this string ships into every
-    // consumer document). Non-obvious bits:
-    // - The container establishes its own text baseline (font style, stretch,
-    //   spacing, and transform all restated) so inheritable text properties
-    //   from the anchor — a condensed Button, its letter-spacing, or an
-    //   uppercase transform — don't bleed into the slotted content. The
-    //   content inherits from this container, the single choke point;
-    //   consumers customize one tooltip by classing their own content.
-    // - The fade uses transition + `allow-discrete`, which keeps the bubble
-    //   rendered through its fade-out after hidePopover(), and
-    //   `@starting-style` gives every open a from-opacity:0 — the first
-    //   paint at a not-yet-computed transform is invisible, and reappearing
-    //   is always clean.
-    // - `pointer-events` is off by default (click-through bubble); the
-    //   `[interactive]` host opts the container in so links/buttons inside
-    //   are clickable.
-    style.textContent = `
-      :host { display: contents; }
-
-      .container {
-        --_dur: ${FADE_MS}ms;
-        position: fixed;
-        left: 0;
-        top: 0;
-        margin: 0;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        color: inherit;
-        overflow: visible;
-        box-sizing: border-box;
-        width: fit-content;
-        pointer-events: none;
-        opacity: 0;
-        transition:
-          opacity var(--_dur) ease,
-          overlay var(--_dur) ease allow-discrete,
-          display var(--_dur) ease allow-discrete;
-      }
-
-      .container:popover-open { opacity: 1; }
-
-      @starting-style {
-        .container:popover-open { opacity: 0; }
-      }
-
-      .bubble {
-        display: block;
-        box-sizing: border-box;
-        width: fit-content;
-        max-width: var(--tooltip-max-width, min(calc(100vw - 20px), 80ch));
-        max-height: calc(100vh - 20px);
-        overflow: clip;
-        text-align: left;
-        background: var(--tooltip-bg, Canvas);
-        color: var(--text-2, CanvasText);
-        box-shadow: var(--tooltip-shadow, 0 1px 8px rgba(0, 0, 0, 0.2));
-        -webkit-backdrop-filter: var(--tooltip-backdrop-filter, blur(8px));
-        backdrop-filter: var(--tooltip-backdrop-filter, blur(8px));
-        padding: var(--tooltip-padding, 4px 8px);
-        border: var(--tooltip-border, none);
-        border-radius: var(--tooltip-radius, 3px);
-        outline: none;
-        font-family: var(--sans-serif, system-ui, sans-serif);
-        font-size: 14px;
-        font-weight: 400;
-        font-style: normal;
-        font-stretch: normal;
-        line-height: 1.5;
-        letter-spacing: var(--_tooltip-letter-spacing, 0.025ch);
-        word-spacing: normal;
-        text-transform: none;
-        white-space: break-spaces;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        opacity: 1;
-        transition: opacity ${PROX_FADE_MS}ms linear;
-      }
-
-      :host([interactive]) .container { pointer-events: auto; }
-    `
-
-    this.container = document.createElement('div')
+    // The popover and styled slot retain independent lifecycle/proximity fades.
+    // Defaults live in a-tooltip.css; runtime writes stay on these owned nodes.
+    this.container = this.doc.createElement('div')
     this.container.className = 'container'
+    this.container.setAttribute('part', 'container')
     this.container.setAttribute('popover', 'manual')
     this.container.setAttribute('role', 'tooltip')
 
@@ -373,7 +263,7 @@ export class ATooltipElement extends HTMLElementBase {
     // surface itself — `a-tooltip::part(bubble) { … }` (`::part` matches any
     // shadow element with the name, slots included) — for things the
     // `--tooltip-*` vars don't cover.
-    this.bubble = document.createElement('slot')
+    this.bubble = this.doc.createElement('slot')
     this.bubble.className = 'bubble'
     this.bubble.setAttribute('part', 'bubble')
     this.container.append(this.bubble)
@@ -385,40 +275,53 @@ export class ATooltipElement extends HTMLElementBase {
     this.container.addEventListener('mouseenter', () => { if (this.#isInteractive) this.cancelHide() })
     this.container.addEventListener('mouseleave', () => { if (this.#isInteractive && this.shown) this.scheduleHide() })
 
-    shadow.append(style, this.container)
+    this.container.addEventListener('focusin', () => { if (this.#isInteractive) this.cancelHide() })
+    this.container.addEventListener('focusout', () => {
+      if (this.#isInteractive && this.shown) this.scheduleHide()
+    })
+    shadow.append(this.container)
   }
 
   connectedCallback() {
     const parent = this.parentElement
     if (!parent) return
     this.anchor = parent
-    let registry = anchorToTooltips.get(parent)
+    const doc = this.#connectedDocument = this.doc
+    const state = coordination(doc)
+    let registry = state.anchors.get(parent)
     if (!registry) {
-      registry = { tooltips: new Set(), intersecting: false }
-      anchorToTooltips.set(parent, registry)
-      lazyObserver?.observe(parent)
+      registry = { tooltips: new Set(), intersecting: !doc.defaultView?.IntersectionObserver }
+      state.anchors.set(parent, registry)
+      state.anchorCount++
+      observeAnchor(parent, doc, state)
     }
     registry.tooltips.add(this)
-    syncAnchorListeners(parent, registry)
+    syncAnchorListeners(parent, registry, doc)
   }
 
   disconnectedCallback() {
-    // Single source of truth for teardown: closes the popover now, detaches
-    // every document/window/anchor listener, clears all timers, releases the
-    // coordinator slot. (Don't wait out the fade — the element is going away.)
     this.cleanup()
-    if (this.anchor) {
+    const doc = this.#connectedDocument
+    if (this.anchor && doc) {
       const anchor = this.anchor
-      const registry = anchorToTooltips.get(anchor)
+      const state = coordination(doc)
+      const registry = state.anchors.get(anchor)
       registry?.tooltips.delete(this)
       if (registry && registry.tooltips.size === 0) {
-        anchorToTooltips.delete(anchor)
-        lazyObserver?.unobserve(this.anchor)
+        if (registry.frame !== undefined) doc.defaultView?.cancelAnimationFrame(registry.frame)
+        state.anchors.delete(anchor)
+        state.observer?.unobserve(anchor)
+        if (--state.anchorCount === 0) {
+          state.observer?.disconnect()
+          state.observer = undefined
+          clearGrace(state)
+        }
       } else if (registry) {
-        syncAnchorListeners(anchor, registry)
+        syncAnchorListeners(anchor, registry, doc)
       }
-      this.anchor = null
     }
+    this.anchor = null
+    this.#connectedDocument = undefined
   }
 
   attributeChangedCallback(name: string) {
@@ -576,10 +479,11 @@ export class ATooltipElement extends HTMLElementBase {
   private observeContent() {
     if (typeof MutationObserver === 'undefined') return
     if (!this.contentObserver) {
-      this.contentObserver = new MutationObserver(() => {
+      this.contentObserver = new this.view.MutationObserver(() => {
         if (!this.shown) return
         this.syncAutomaticTextContent()
         if (this.isEmpty()) this.hide()
+        else this.position(this.lastMouse)
       })
     }
     this.contentObserver.observe(this.#isAutomaticTextTooltip ? this.anchor ?? this : this, {
@@ -599,7 +503,8 @@ export class ATooltipElement extends HTMLElementBase {
   private schedulePosition(compute: () => void) {
     this.pendingPosition = compute
     if (this.positionFrame != null) return
-    this.positionFrame = this.view.requestAnimationFrame(() => {
+    this.#positionView = this.view
+    this.positionFrame = this.#positionView.requestAnimationFrame(() => {
       this.positionFrame = undefined
       const run = this.pendingPosition
       this.pendingPosition = undefined
@@ -695,7 +600,7 @@ export class ATooltipElement extends HTMLElementBase {
     // paint over the menu (z-index can't reorder the top layer). A menu-item
     // tooltip (anchor inside the menu) still shows, above the menu. Mirrors the
     // menu dismissing its own trigger's tooltip on open.
-    if (isMenuOpen() && !isInsideOpenMenu(this.anchor)) return
+    if (isMenuOpen(this.doc) && !isInsideOpenMenu(this.anchor)) return
     if (this.hasExplicitTextTooltip()) return
     // Nothing to show → don't open a blank bubble (checked here so every show
     // path — hot-path, focus, touch long-press — is covered).
@@ -710,7 +615,8 @@ export class ATooltipElement extends HTMLElementBase {
     // of covering it with this ancestor's. (A descendant or unrelated anchor
     // falls through and takes over, giving the normal hand-off.) Without this
     // the outer + inner would thrash for the single open slot on every move.
-    if (currentOpen && currentOpen !== this && this.anchor.contains(currentOpen.anchor)) {
+    const currentOpen = coordination(this.doc).currentOpen
+    if (currentOpen && currentOpen !== this && currentOpen.anchor && this.anchor.contains(currentOpen.anchor)) {
       return
     }
     claimOpen(this) // closes any previously-open tooltip → cross-fade
@@ -719,9 +625,11 @@ export class ATooltipElement extends HTMLElementBase {
       this.fading = false
       // Start fully opaque — a fresh open, a re-enter, or a cross-fade-in all
       // begin at proximity 1; onDocMove then ramps it down as the cursor leaves.
+      this.#internals.states.delete('proximity-hidden')
       this.bubble.style.opacity = '1'
       if (this.fadeTimer !== undefined) { clearTimeout(this.fadeTimer); this.fadeTimer = undefined }
       this.container.showPopover()
+      this.#globalDocument = this.doc
       // A fixed-position popover doesn't scroll with the page, so dismiss
       // on any scroll (capture catches nested scroll containers too) rather
       // than leaving the bubble orphaned over empty space.
@@ -740,6 +648,13 @@ export class ATooltipElement extends HTMLElementBase {
     // (wrapped to max-width). Opacity is still ~0 here, so setting the
     // transform never flashes.
     this.position(e)
+    const initialPosition = this.pendingPosition
+    if (initialPosition) {
+      if (this.positionFrame !== undefined) this.#positionView?.cancelAnimationFrame(this.positionFrame)
+      this.positionFrame = undefined
+      this.pendingPosition = undefined
+      initialPosition()
+    }
   }
 
   hide = () => {
@@ -754,7 +669,7 @@ export class ATooltipElement extends HTMLElementBase {
     this.fading = true
     if (this.fadeTimer !== undefined) clearTimeout(this.fadeTimer)
     this.fadeTimer = setTimeout(() => this.detachGlobals(), FADE_MS)
-    releaseOpen(this)
+    releaseOpen(this, this.#connectedDocument ?? this.doc)
   }
 
   /** Remove every document / window listener this element binds and stop the
@@ -763,12 +678,14 @@ export class ATooltipElement extends HTMLElementBase {
   private detachGlobals() {
     if (this.fadeTimer !== undefined) { clearTimeout(this.fadeTimer); this.fadeTimer = undefined }
     this.fading = false
-    this.view.removeEventListener('scroll', this.hide, { capture: true } as any)
-    this.doc.removeEventListener('keydown', this.onKeyDown, true)
+    const doc = this.#globalDocument
+    doc?.defaultView?.removeEventListener('scroll', this.hide, { capture: true })
+    doc?.removeEventListener('keydown', this.onKeyDown, true)
     if (this.docMoveBound) {
-      this.doc.removeEventListener('mousemove', this.onDocMove)
+      doc?.removeEventListener('mousemove', this.onDocMove)
       this.docMoveBound = false
     }
+    this.#globalDocument = undefined
   }
 
   /** Full, immediate teardown: close the popover now (no fade), detach every
@@ -779,6 +696,11 @@ export class ATooltipElement extends HTMLElementBase {
    *  calls it. */
   cleanup() {
     this.cancelHide()
+    if (this.positionFrame !== undefined) this.#positionView?.cancelAnimationFrame(this.positionFrame)
+    this.positionFrame = undefined
+    this.#positionView = undefined
+    this.pendingPosition = undefined
+    this.lastMouse = undefined
     this.contentObserver?.disconnect()
     if (this.shown) {
       this.shown = false
@@ -787,7 +709,9 @@ export class ATooltipElement extends HTMLElementBase {
     }
     this.detachGlobals()
     this.teardownListeners()
-    releaseOpen(this)
+    releaseOpen(this, this.#connectedDocument ?? this.doc, false)
+    this.touchOpen = false
+    this.#internals.states.delete('proximity-hidden')
     this.bubble.style.opacity = ''
   }
 
@@ -809,14 +733,14 @@ export class ATooltipElement extends HTMLElementBase {
     // mouse samples. Safe for the cross-fade — a >PROX_FAR jump means there's no
     // adjacent anchor to hand off to.
     if (o === 0) {
-      this.bubble.style.transition = 'none'
+      this.#internals.states.add('proximity-hidden')
       this.bubble.style.opacity = '0'
       if (this.shown) this.hide()
       return
     }
     // Within the ramp: follow the cursor and fade smoothly by distance.
     this.positionToMouse(e)
-    this.bubble.style.transition = ''
+    this.#internals.states.delete('proximity-hidden')
     this.bubble.style.opacity = String(o)
   }
 
@@ -825,7 +749,11 @@ export class ATooltipElement extends HTMLElementBase {
    *  neighbouring anchor — and survive the trip into an interactive bubble. */
   private scheduleHide = (delay = CLOSE_DELAY) => {
     this.cancelHide()
-    this.closeTimer = setTimeout(() => { this.closeTimer = undefined; this.hide() }, delay)
+    this.closeTimer = setTimeout(() => {
+      this.closeTimer = undefined
+      if (this.#isInteractive && this.matches(':focus-within')) return
+      this.hide()
+    }, delay)
   }
 
   private cancelHide() {
@@ -894,6 +822,7 @@ export class ATooltipElement extends HTMLElementBase {
       anchor.removeEventListener('pointerleave', onLeave)
       anchor.removeEventListener('blur', onLeave)
       view.removeEventListener('pagehide', onLeave)
+      view.removeEventListener('scroll', onLeave, true)
       doc.removeEventListener('visibilitychange', onLeave)
       this.scheduleHide() // linger briefly instead of vanishing on exit
     }
@@ -904,6 +833,7 @@ export class ATooltipElement extends HTMLElementBase {
       anchor.addEventListener('pointermove', onPointerMove)
       anchor.addEventListener('pointerleave', onLeave)
       view.addEventListener('pagehide', onLeave)
+      view.addEventListener('scroll', onLeave, { capture: true, passive: true })
       doc.addEventListener('visibilitychange', onLeave)
       this.trigger(e)
     }
@@ -914,9 +844,11 @@ export class ATooltipElement extends HTMLElementBase {
     // so touch/mouse focus no longer pops the bubble (it was the main reason a
     // tap showed it). Mouse users still get it via hover above.
     const onFocus = () => {
-      if (!anchor.matches(':focus-visible')) return
+      const focused = anchor.shadowRoot?.activeElement ?? this.doc.activeElement
+      if (!focused?.matches(':focus-visible')) return
       anchor.addEventListener('blur', onLeave)
       view.addEventListener('pagehide', onLeave)
+      view.addEventListener('scroll', onLeave, { capture: true, passive: true })
       doc.addEventListener('visibilitychange', onLeave)
       this.trigger() // no pointer event → positions to the anchor
     }
@@ -955,7 +887,9 @@ export class ATooltipElement extends HTMLElementBase {
       anchor.removeEventListener('pointerup', onPressEnd)
       anchor.removeEventListener('pointercancel', onPressEnd)
       anchor.removeEventListener('contextmenu', preventContext)
+      view.removeEventListener('scroll', cancelPress, true)
     }
+    const cancelPress = () => { clearPressTimer(); detachPress() }
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === 'mouse') return // mouse uses the hover path above
       clearPressTimer()
@@ -965,15 +899,17 @@ export class ATooltipElement extends HTMLElementBase {
       anchor.addEventListener('pointercancel', onPressEnd)
       // Suppress the Android long-press context menu during the hold.
       anchor.addEventListener('contextmenu', preventContext)
+      view.addEventListener('scroll', cancelPress, { capture: true, passive: true })
       pressTimer = setTimeout(() => {
         pressTimer = undefined
         this.touchOpen = true
         this.show() // no event → pinned to the anchor, biased above (touchOpen)
+        if (!this.shown) this.touchOpen = false
       }, ENTER_TOUCH_DELAY)
     }
 
     anchor.addEventListener('pointerenter', onEnter)
-    anchor.addEventListener('focus', onFocus)
+    anchor.addEventListener('focusin', onFocus)
     anchor.addEventListener('pointerdown', onPointerDown)
 
     this.teardown = () => {
@@ -983,10 +919,11 @@ export class ATooltipElement extends HTMLElementBase {
       anchor.removeEventListener('pointermove', onPointerMove)
       anchor.removeEventListener('pointerenter', onEnter)
       anchor.removeEventListener('pointerleave', onLeave)
-      anchor.removeEventListener('focus', onFocus)
+      anchor.removeEventListener('focusin', onFocus)
       anchor.removeEventListener('blur', onLeave)
       anchor.removeEventListener('pointerdown', onPointerDown)
       view.removeEventListener('pagehide', onLeave)
+      view.removeEventListener('scroll', onLeave, true)
       doc.removeEventListener('visibilitychange', onLeave)
       this.listening = false
     }

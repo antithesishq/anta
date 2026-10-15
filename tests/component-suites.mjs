@@ -4,5 +4,6 @@ export const componentSuites = {
   expander: { tests: ['tests/expander-csp.mjs'], slow: ['tests/expander-package.mjs'] },
   card: { tests: ['tests/card-csp.mjs'] },
   progress: { tests: ['tests/progress-csp.mjs'] },
+  tooltip: { tests: ['tests/tooltip-csp.mjs'], slow: ['tests/tooltip-package.mjs'] },
   text: { tests: ['tests/text-csp.mjs'] },
 }

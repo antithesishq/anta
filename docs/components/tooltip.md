@@ -4,6 +4,32 @@ Use Tooltip for supplementary explanations and the full text of clipped labels.
 Place it inside the element it describes. It takes no space in that element's
 layout. Keep essential instructions and actions available without a tooltip.
 
+## Examples
+
+Hover Status for a text explanation, focus the underlined button with Tab,
+follow the cursor, or enter the interactive bubble to use its link.
+
+```tsx
+<div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+  <span style={{ cursor: 'help', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+    <span>Status</span>
+    <Icon shape="info" size={16} style={{ color: 'var(--text-5)' }} />
+    <Tooltip placement="top">Last checked 2 minutes ago</Tooltip>
+  </span>
+  <Button priority="tertiary" underline="dashed" label="Focus me with the keyboard">
+    <Tooltip delay={50}>Shows on focus, dismiss with Esc</Tooltip>
+  </Button>
+  <Button label="Follow the cursor">
+    <Tooltip follow>Tracks the pointer, fades as you leave</Tooltip>
+  </Button>
+  <Button label="Interact">
+    <Tooltip interactive placement="top">
+      See the <a href="/install/">full guide</a> for details
+    </Tooltip>
+  </Button>
+</div>
+```
+
 ## Hover and keyboard focus
 
 Hover the button or reach it with Tab to show its explanation after a delay.
@@ -58,7 +84,7 @@ that need an explicit trigger and popup semantics.
 ```tsx
 <Button label="Help" aria-description="Read the installation guide for setup details">
   <Tooltip id="help-tooltip" interactive placement="top">
-    Read the <a href="/install-config/">installation guide</a>.
+    Read the <a href="/install/">installation guide</a>.
   </Tooltip>
 </Button>
 ```
@@ -66,8 +92,24 @@ that need an explicit trigger and popup semantics.
 ## Show only when truncated
 
 Use `truncatedOnly` when the explanation repeats a label. A label that fits does
-not open a bubble. Text with `truncate` already creates an automatic tooltip for
-clipped, non-expandable content.
+not open a bubble. Hover both labels to compare a clipped target with one that
+fits.
+
+```tsx
+<div style={{ display: 'flex', gap: '28px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+  <span style={{ display: 'inline-block', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'help' }}>
+    A long label that gets truncated
+    <Tooltip truncatedOnly>A long label that gets truncated</Tooltip>
+  </span>
+  <span style={{ display: 'inline-block', cursor: 'help' }}>
+    Short label
+    <Tooltip truncatedOnly>Short label</Tooltip>
+  </span>
+</div>
+```
+
+Text with `truncate` already creates an automatic tooltip for clipped,
+non-expandable content.
 
 ```tsx
 <Text truncate style={{ maxWidth: '160px' }}>
@@ -93,10 +135,18 @@ while that anchor is active. Returning to the outer anchor makes its explanation
 available again.
 
 ```tsx
-<div tabIndex={0} aria-label="Release group">
-  <span>Release group</span>
-  <Tooltip>Information about this release group</Tooltip>
-  <Button label="Release details"><Tooltip>Information about this release</Tooltip></Button>
+<div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+  <div style={{ display: 'flex', gap: '12px' }}>
+    <Button label="First"><Tooltip follow>First tooltip</Tooltip></Button>
+    <Button label="Second"><Tooltip follow>Second tooltip</Tooltip></Button>
+  </div>
+  <div tabIndex={0} aria-label="Outer box" style={{ padding: '20px', border: '1px dashed var(--border-4)', borderRadius: '6px', cursor: 'help' }}>
+    <span>Outer box</span>
+    <Tooltip follow>Outer tooltip</Tooltip>
+    <div style={{ marginTop: '12px' }}>
+      <Button label="Inner button"><Tooltip follow>Inner tooltip</Tooltip></Button>
+    </div>
+  </div>
 </div>
 ```
 
@@ -109,6 +159,9 @@ is available on the next interaction. Use `round` for a softer shape.
 ```tsx
 <Button label="Release status">
   <Tooltip round><strong>Healthy</strong> · Checked two minutes ago</Tooltip>
+</Button>
+<Button icon="info" aria-label="Action details">
+  <Tooltip placement="top"><strong>Heads up</strong> · This action cannot be undone</Tooltip>
 </Button>
 <Button label="No explanation"><Tooltip>{''}</Tooltip></Button>
 ```
@@ -197,8 +250,8 @@ import { Tooltip, Button } from '@antadesign/anta'
 function Demo() {
   return (
     <div className="container">
-      <Button label="Publish" aria-description="Makes the draft public">
-        <Tooltip id="publish-help" delay={300}>Makes the draft public</Tooltip>
+      <Button label="Hover me">
+        <Tooltip delay={300}>Edit my props or code</Tooltip>
       </Button>
     </div>
   )

@@ -34,33 +34,35 @@ export interface RendererHooks {
 
 /** Renderer behavior configured before mounting components. */
 export interface RendererOptions {
-  /** Use `direct` when the renderer installs native event props immediately.
-   * `after-mount` applies the browser hydration workaround. Server and worker
-   * projections without `window` always forward event props immediately.
-   * @defaultValue after-mount */
-  nativeEventProps?: 'direct' | 'after-mount'
+  /** Enable the browser event-prop workaround when hydrating server-rendered
+   * HTML. Handlers attach after the first browser commit. Omit or pass `false`
+   * for immediate forwarding without listener hooks or an extra mount render.
+   * Server and worker projections without `window` always forward immediately.
+   * @defaultValue false */
+  hydratingEvents?: boolean
 }
 
 let _hooks: RendererHooks = React as RendererHooks
-let _nativeEventProps: NonNullable<RendererOptions['nativeEventProps']> = 'after-mount'
+let _hydratingEvents = false
 
-/** @internal Read the event mode without exposing mutable renderer configuration. */
-export function nativeEventPropsMode() {
-  return _nativeEventProps
+/** @internal Read the hydration option without exposing mutable configuration. */
+export function hydratingEventsEnabled() {
+  return _hydratingEvents
 }
 
 /**
  * Configure the JSX factory, fragment, and hooks before rendering Anta components.
- * React and Preact with React compatibility aliases work without configuration.
+ * Client-rendered React and Preact with React compatibility aliases need no setup.
  *
  * Pass your runtime's hooks object as a whole. It replaces the previous object;
  * omitted hooks never fall back to another renderer. A missing hook reports an
  * error when a component uses it. Omitting the object restores React's hooks.
  * Configure the same package entry in each process or thread that renders JSX.
- * Set `options.nativeEventProps` to `direct` for renderers that install event
- * subscriptions immediately, including workers with a `window` shim. Omitting
- * options restores the browser's `after-mount` behavior. Configure before mounting;
- * do not switch event modes for a mounted tree.
+ * Set `options.hydratingEvents` to `true` in the browser entry before hydrating
+ * server-rendered HTML. Client-only apps and worker renderers forward event
+ * subscriptions immediately by default, including workers with a `window` shim.
+ * Each call resets the option to `false` when omitted. Configure before mounting;
+ * keep the option unchanged for a mounted tree.
  *
  * @example Custom renderer
  * ```ts
@@ -79,7 +81,7 @@ export function configure(
   _jsx = jsx
   if (Fragment !== undefined) _Fragment = Fragment
   _hooks = hooks
-  _nativeEventProps = options.nativeEventProps ?? 'after-mount'
+  _hydratingEvents = options.hydratingEvents === true
 }
 
 function rendererHook<K extends keyof RendererHooks>(name: K): NonNullable<RendererHooks[K]> {

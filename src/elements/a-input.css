@@ -40,11 +40,11 @@
     box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
     transition: box-shadow 120ms ease;
   }
-  a-input[multiline]::part(field) { align-items: stretch; }
+  a-input:state(multiline)::part(field) { align-items: stretch; }
   a-input[size="small"] { --_fs: 13px; --_lh: 16px; --_input-action-size: 20px; }
   a-input[size="large"] { --_fs: 17px; --_lh: 22px; --_input-action-size: 28px; }
   /* Multiline actions fit the padded first text line, including their inset. */
-  a-input[multiline] { --_input-action-size: calc(var(--_lh) + var(--_pad-block) * 2 - 4px); }
+  a-input:state(multiline) { --_input-action-size: calc(var(--_lh) + var(--_pad-block) * 2 - 4px); }
   a-input[size="small"]::part(field) { min-height: var(--_input-measured-min-height, 24px); }
   a-input[size="large"]::part(field) { min-height: var(--_input-measured-min-height, 32px); }
   a-input[round]::part(field) { border-radius: var(--input-round, 999px); }
@@ -139,18 +139,9 @@
     box-sizing: border-box;
   }
   a-input:has(> [slot="clear"])::part(clear) { padding: 2px; }
-  /* Size the clear-request trigger; custom clear content keeps its own layout. */
-  a-input > [slot="clear"] :is(a-button[role="button"], button)[data-custom-event="clearrequest"],
-  a-input > :is(a-button[role="button"], button)[slot="clear"][data-custom-event="clearrequest"] {
-    box-sizing: border-box;
-    width: var(--_input-action-size);
-    height: var(--_input-action-size);
-    min-height: 0;
-    padding: 0;
-  }
   a-input:state(filled):not(:disabled):not([readonly])::part(clear) { visibility: visible; }
 
-  a-input[multiline]:state(filled)::part(clear) {
+  a-input:state(multiline):state(filled)::part(clear) {
     align-self: flex-start;
     height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
@@ -335,26 +326,28 @@
     margin-inline-end: var(--input-trailing-inset, 7px);
   }
   a-input:has(> [slot="leading"])::part(input) { padding-inline-start: 5px; }
-  a-input[truncate]:not([multiline])::part(input) { text-overflow: ellipsis; }
+  a-input[truncate]:not(:state(multiline))::part(input) { text-overflow: ellipsis; }
   a-input:has(> [slot="hint"])::part(hint) { display: flex; }
-  a-input[multiline]:has(> [slot="leading"])::part(leading),
-  a-input[multiline]:has(> [slot="trailing"])::part(trailing) {
+  a-input:state(multiline):has(> [slot="leading"])::part(leading),
+  a-input:state(multiline):has(> [slot="trailing"])::part(trailing) {
     align-self: flex-start;
     height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
 
-  a-input > [slot="trailing"] :is(a-button[role="button"], button),
-  a-input > :is(a-button[role="button"], button)[slot="trailing"] {
-    &:has(> a-icon):not(:has(> a-icon ~ a-icon, > :not(a-icon):not(a-tooltip):not(a-copy))) {
-      /* Size variants must also override Button's own minimum-height rules. */
-      &, &[size] {
-        box-sizing: border-box;
-        width: var(--_input-action-size);
-        height: var(--_input-action-size);
-        min-height: 0;
-        padding: 0;
-      }
-    }
+  /* Anta actions fit the field height; text determines their width.
+     Unmarked native buttons and other custom content keep their own sizing. */
+  a-input > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
+  a-input > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
+    --_fs: inherit;
+    --_lh: inherit;
+    --_pb: 0px;
+    box-sizing: border-box;
+    width: auto;
+    min-width: var(--_input-action-size);
+    height: var(--_input-action-size);
+    min-height: 0;
+    padding: 0 2px;
+    justify-content: center;
   }
 
   /* Defaults stay at use sites so inherited and local overrides both win. */

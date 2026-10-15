@@ -715,8 +715,12 @@ export interface ASwitchAttributes extends BaseAttributes {
  * field whose real `<input>` / `<textarea>` lives in shadow DOM. For the
  * typed JSX wrapper use `Input` from `@antadesign/anta`.
  *
- * Slots (light-DOM children): `label`, `leading`, `trailing`, `hint`.
- * The element exposes `::part(field | input | label | leading | trailing | hint)`
+ * Slots (light-DOM children): `label`, `leading`, `clear`, `trailing`, `hint`.
+ * Direct trailing buttons and buttons-only `<a-input-trailing slot="trailing">`
+ * groups use compact spacing. Other wrappers keep the text inset. Override
+ * either inset with the `--input-trailing-inset` CSS property. Anta buttons
+ * fit the field height; other controls keep their own sizing.
+ * The element exposes `::part(field | input | label | leading | clear | trailing | hint)`
  * for styling, and `:state(filled)` / `:state(invalid)` as CSS hooks.
  */
 export interface AInputAttributes extends BaseAttributes {

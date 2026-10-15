@@ -7,6 +7,11 @@ changes are not listed.
 
 ### Breaking
 
+- [Browser hydration](/install-config/#browser-hydration) requires
+  `configure(h, Fragment, hooks, { hydratingEvents: true })` before mounting.
+  Client-only apps and worker renderers forward event handlers immediately by
+  default, without listener setup hooks or an extra mount render.
+
 - [Custom renderer configuration](/install/#preact-without-compat) replaces the
   hooks object as a whole. Pass your runtime's hooks rather than selecting a few;
   missing hooks report an error instead of using another renderer's hooks.
@@ -51,10 +56,6 @@ changes are not listed.
 
 ### Added
 
-- [Custom renderer events](/install/#custom-renderer-events): set
-  `nativeEventProps: 'direct'` in the fourth `configure()` argument to forward
-  handlers immediately, without listener hooks or an extra render.
-
 - [Text's inert expansion mode](/text/#truncation-and-expansion):
   `expandableInert` makes the folded, overflowing preview one expand target and
   skips content interactions until expanded. Text that fits remains interactive.
@@ -69,8 +70,8 @@ changes are not listed.
 ### Changed
 
 - Input, Banner, Expander, and expandable Text share native event listener setup.
-  Worker renderers receive event subscriptions immediately; browser hydration
-  keeps its existing listener update without component-specific helpers.
+  Worker renderers receive event subscriptions immediately; opting into browser
+  hydration enables the shared listener update.
 
 - [Input](/input/) default styles now load from external CSS under strict CSP.
   Existing shadow controls, slots, parts, and interactions remain supported;
@@ -112,6 +113,13 @@ changes are not listed.
 
 
 ### Fixed
+
+- [Input actions](/input/#leading-trailing-and-clear) fit Anta buttons to the
+  field height while allowing labels to determine their width. Native Anta
+  buttons marked with `data-anta` receive the same sizing.
+
+- [Input multiline fields](/input/#multiline) apply the complete multiline layout
+  when `rows` is set without `multiline`, keeping actions aligned to the first line.
 
 - [Input trailing spacing](/input/#styling) honors `--input-trailing-inset` for
   text and actions, including inherited overrides. Mixed content and nested

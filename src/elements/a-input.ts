@@ -645,7 +645,7 @@ export class AInputElement extends HTMLElementBase {
           this.#trailingObserver ??= new this.view.MutationObserver(this.syncTrailingActions)
           this.#trailingObserver.observe(element, { childList: true, characterData: true, subtree: true })
           if (!onlyActions(element.childNodes)) return false
-        } else if (element.localName === 'a-button' || element.localName === 'button') {
+        } else if (element.localName === 'a-button' || element.localName === 'button' || element.matches('a[role="button"][data-anta]')) {
           hasAction = true
         } else return false
       }

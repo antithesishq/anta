@@ -48,6 +48,17 @@ async function productionPage(t, engine = chromium) {
 }
 
 for (const engine of engines) {
+  test(`${engine.name()}: Input islands deliver native events after hydration`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/input/')
+    await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'))
+    const input = inputByLabel(page, 'Draft')
+    await input.fill('Hydrated draft')
+    await page.locator('a-input-hint').getByText('Draft updated.', { exact: true }).waitFor()
+    assert.equal(await input.inputValue(), 'Hydrated draft')
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: facet text chips keep a bounded width, truncate long values, and preserve focus when empty`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/select-faceted/')

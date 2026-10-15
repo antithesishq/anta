@@ -84,7 +84,7 @@ test('configure replaces the hooks object and reports missing hooks without reta
 })
 
 test('browser Input reports the missing configured effect instead of invoking React hooks', () => {
-  runtime.configure(h, undefined, { useState: initial => [initial, () => {}] })
+  runtime.configure(h, undefined, { useState: initial => [initial, () => {}] }, { hydratingEvents: true })
   globalThis.window = {}
   try {
     assert.throws(() => runtime.Input({ label: 'Name' }), /configured renderer is missing useLayoutEffect/)
@@ -97,7 +97,7 @@ test('direct mode forwards browser-like projections without listener hooks', () 
   globalThis.window = {}
   try {
     const unexpectedHook = () => { throw new Error('Direct event props must not use listener hooks') }
-    runtime.configure(h, undefined, { useState: unexpectedHook, useLayoutEffect: unexpectedHook }, { nativeEventProps: 'direct' })
+    runtime.configure(h, undefined, { useState: unexpectedHook, useLayoutEffect: unexpectedHook }, { hydratingEvents: false })
     let value, dismissed = false, expanded = false
     const input = runtime.Input({ label: 'Draft', onInput: e => { value = e.target.value } })
     input.props.oninput({ target: { value: 'Immediate' } })
@@ -112,7 +112,7 @@ test('direct mode forwards browser-like projections without listener hooks', () 
       useState: initial => { stateCalls++; return [initial, next => { presentation = next(initial) }] },
       useMemo: factory => factory(),
       useLayoutEffect: unexpectedHook,
-    }, { nativeEventProps: 'direct' })
+    }, { hydratingEvents: false })
     const text = runtime.Text({ truncate: 1, expandable: true, children: 'Long content' })
     text.props.ontextpresentationchange(event({ expanded: true, overflowing: true }))
     assert.equal(stateCalls, 1, 'Only Text presentation state remains')
@@ -122,20 +122,42 @@ test('direct mode forwards browser-like projections without listener hooks', () 
   }
 })
 
-test('omitting renderer options restores the default browser listener behavior', () => {
+test('omitting renderer options restores immediate browser forwarding', () => {
   globalThis.window = {}
   try {
-    runtime.configure(h, undefined, {}, { nativeEventProps: 'direct' })
-    assert.equal(runtime.Input({ label: 'Name' }).type, 'a-input')
-    runtime.configure(h, undefined, { useState: initial => [initial, () => {}] })
+    runtime.configure(h, undefined, {useState: initial => [initial, () => {}]}, {hydratingEvents: true})
     assert.throws(() => runtime.Input({ label: 'Name' }), /configured renderer is missing useLayoutEffect/)
+    runtime.configure(h, undefined, {})
+    assert.equal(runtime.hydratingEventsEnabled(), false)
+    assert.equal(runtime.Input({ label: 'Name' }).type, 'a-input')
   } finally {
     delete globalThis.window
   }
 })
 
-for (const mode of ['after-mount', 'direct']) {
-test(`Preact without React aliases supports ${mode} event props`, async t => {
+for (const option of [undefined, false, true]) test(`hydratingEvents=${option} selects browser listener work only when enabled`, () => {
+  globalThis.window = {}
+  try {
+    let stateCalls=0,effectCalls=0
+    runtime.configure(h, undefined, {
+      useState: initial => {stateCalls++;return [initial,()=>{}]},
+      useLayoutEffect: () => {effectCalls++},
+    }, option === undefined ? {} : {hydratingEvents: option})
+    const field=runtime.Input({onInput:()=>{}})
+    assert.equal(typeof field.props.oninput, option === true ? 'undefined' : 'function')
+    assert.equal(stateCalls,option === true ? 1 : 0)
+    assert.equal(effectCalls,option === true ? 1 : 0)
+  } finally {delete globalThis.window}
+})
+
+test('server rendering skips listener hooks even when hydratingEvents is enabled', () => {
+  const unexpected=()=>{throw new Error('Server projection ran listener hooks')}
+  runtime.configure(h, undefined, {useState:unexpected,useLayoutEffect:unexpected}, {hydratingEvents:true})
+  assert.equal(typeof runtime.Input({onInput:()=>{}}).props.oninput,'function')
+})
+
+for (const hydratingEvents of [false, true]) {
+test(`Preact without React aliases supports hydratingEvents=${hydratingEvents}`, async t => {
   const { createRequire } = await import('node:module')
   const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
   const { chromium } = requireSite('playwright')
@@ -160,10 +182,10 @@ test(`Preact without React aliases supports ${mode} event props`, async t => {
         configure(h, Fragment, {
           ...hooks,
           useLayoutEffect: (...args) => {
-            if ('${mode}' === 'direct') throw new Error('Direct mode ran a listener effect')
+            if (!${hydratingEvents}) throw new Error('Direct mode ran a listener effect')
             return hooks.useLayoutEffect(...args)
           },
-        }, { nativeEventProps: '${mode}' })
+        }, { hydratingEvents: ${hydratingEvents} })
         window.reports = []
         window.show = version => render(<>
           <Input label="Draft" defaultValue="Original" clearable

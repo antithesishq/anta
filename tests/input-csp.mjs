@@ -84,9 +84,10 @@ before(async () => {
     renderers.set(framework, compiled.exports.render)
     staticRenderers.set(framework,compiled.exports.renderStatic)
     const client = await compile({stdin:{contents:`import React from 'react'; ${components};
+      import {configure} from '${consumerRoot ? '@antadesign/anta' : source+'/index'}';
       ${react ? "import {createRoot, hydrateRoot} from 'react-dom/client'" : "import {render, hydrate} from 'preact'"};
       ${factory}; let root; window.recoverableErrors=[];
-      window.hydrateInput = props => { ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(app(props), document.querySelector('#mount'))"} };
+      window.hydrateInput = props => { configure(React.createElement,React.Fragment,React,{hydratingEvents:true}); ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(app(props), document.querySelector('#mount'))"} };
       window.renderInput = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(app(props))" : "render(app(props), document.querySelector('#mount'))"} };
       window.renderAdornments = () => window.renderInput({
         leading:React.createElement('a-icon',{shape:'search'}),
@@ -107,7 +108,7 @@ before(async () => {
   }
   assets.set('/consumer-unlayered.css', 'span{display:inline-block} a-input::part(field){border-radius:13px}')
   assets.set('/consumer-utilities.css', '@layer utilities{span{display:block} a-input::part(field){border-radius:15px}}')
-  assets.set('/trailing-insets.css', '.inset-four{--input-trailing-inset:4px}.inset-zero{--input-trailing-inset:0px}.inherited-inset{--input-trailing-inset:6px}')
+  assets.set('/trailing-insets.css', '.inset-four{--input-trailing-inset:4px}.inset-zero{--input-trailing-inset:0px}.inherited-inset{--input-trailing-inset:6px}.custom-native-action{height:31px;width:111px;padding:3px}')
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .override::part(field){background:rgb(30,40,50);border-radius:11px;box-shadow:none}.override::part(input){color:white;font-size:18px}.override::part(input)::placeholder{color:rgb(200,210,220)}.narrow{width:180px}.spacer{height:900px}.dark{color-scheme:dark;background:#111}.rtl{direction:rtl}`)
 
@@ -191,10 +192,11 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
   test.fast(`${name}: action insets preserve field sizes and contain icon buttons`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const [size,height] of [['small',24],['medium',28],['large',32]]) {
-      for(const direct of [false,true]) for(const multiline of [false,true]) {
+      for(const direct of [false,true]) for(const attrs of ['', 'multiline', 'multiline rows="3"', 'rows="3"']) {
+        const multiline=attrs!==''
         const clear=`<a-button role="button" tabindex="0" size="${size}" data-custom-event="clearrequest" ${direct?'slot="clear"':''}><a-icon shape="x"></a-icon></a-button>`
         const trailing=`<a-button role="button" ${direct?`slot="trailing" size="${size}"`:''}><a-icon shape="regex"></a-icon></a-button>`
-        await mount(page,`<a-input size="${size}" value="Draft" ${multiline?'multiline rows="3"':''}>
+        await mount(page,`<a-input size="${size}" value="Draft" ${attrs}>
           <a-icon slot="leading" shape="search"></a-icon>
           ${direct?clear:`<a-input-clear slot="clear">${clear}</a-input-clear>`}
           ${direct?trailing:`<a-input-trailing slot="trailing">${trailing}</a-input-trailing>`}
@@ -244,8 +246,35 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     }),[0,'7px','0px'])
     await mount(page,'<a-input size="small"><a-button role="button" slot="trailing" size="large"><a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label></a-button></a-input>')
     const labeled=await page.locator('a-button').boundingBox()
-    assert.equal(labeled.height,32)
+    assert.equal(labeled.height,20)
     assert.ok(labeled.width>32)
+  })
+  test.fast(`${name}: Anta actions fit by height and text keeps its natural width`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    for(const [size,height,attrs] of [['small',24,''],['large',32,'rows="3"']]) {
+      const actionSize=attrs&&size==='large'?26:height-4
+      for(const tag of ['a-button','button','a']) for(const slot of ['clear','trailing']) for(const wrapped of [false,true]) {
+        const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
+        for(const content of ['<a-icon shape="search"></a-icon>','<a-icon shape="search"></a-icon>Find matches','<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>']) {
+          const action=`<${tag} ${extra} ${wrapped?'':`slot="${slot}"`} size="large" data-action data-custom-event="clearrequest">${content}</${tag}>`
+          await mount(page,`<a-input size="${size}" ${attrs} value="Draft">${wrapped?`<a-input-${slot} slot="${slot}">${action}</a-input-${slot}>`:action}</a-input>`)
+          const metrics=await page.locator('[data-action]').evaluate(node=>{
+            const box=node.getBoundingClientRect(),host=node.closest('a-input'),field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
+            return {width:box.width,height:box.height,top:box.top-field.top,right:field.right-box.right,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}
+          })
+          const context=JSON.stringify({size,attrs,tag,slot,wrapped,content,metrics})
+          assert.equal(metrics.height,actionSize,context)
+          assert.equal(metrics.top,2,context)
+          assert.ok(Math.abs(metrics.right-2)<0.05,context)
+          assert.ok(metrics.width>=actionSize,context)
+          if(content.includes('Find matches')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
+        }
+      }
+    }
+    // Unmarked native actions remain authored controls, including mixed text.
+    await page.addStyleTag({url:'/trailing-insets.css'})
+    await mount(page,'<a-input size="small"><button slot="trailing" class="custom-native-action" data-action><a-icon></a-icon>Find matches</button></a-input>')
+    const custom=await page.locator('[data-action]').boundingBox();assert.equal(custom.height,31);assert.equal(custom.width,111)
   })
   test.fast(`${name}: trailing insets honor overrides and distinguish mixed content`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)

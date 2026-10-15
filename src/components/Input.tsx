@@ -72,8 +72,10 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   clearable?: boolean
   /** Content at the start of the field, such as an icon or text. */
   leading?: React.ReactNode
-  /** Content at the end of the field, after the clear button. Icon-only buttons
-   * automatically fit the Input size. */
+  /** Content at the end of the field, after the clear button. Anta buttons fit
+   * the field height and keep their natural width. Pass buttons directly or in
+   * a fragment for compact spacing. Other wrapping elements keep the text inset.
+   * Override either inset with the `--input-trailing-inset` CSS property. */
   trailing?: React.ReactNode
   /** Choose the kind of information to enter. Ignored for multiline fields.
    * `search` adds a search icon and clear button. Replace the icon with

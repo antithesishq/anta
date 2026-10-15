@@ -848,8 +848,10 @@ Input's default styles are external. If a Content Security Policy blocks inline
 styles, use external CSS for custom colors and dimensions. Custom `tone`,
 custom `round`, and application `style` props can serialize style attributes.
 
-Some older browsers may show the number field's built-in stepper buttons.
-They keep their usual behavior.
+Some browsers may show native number steppers or controls on a raw
+`<a-input type="search">`. These keep their browser behavior. The JSX
+`<Input type="search">` uses a text input with Anta's own search icon and clear
+button.
 
 This example creates a borderless pill with a dark fill in light mode and a
 light fill in dark mode. The fill changes on focus.

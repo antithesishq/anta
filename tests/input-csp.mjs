@@ -187,6 +187,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
         const clear=`<a-button role="button" tabindex="0" size="${size}" data-custom-event="clearrequest" ${direct?'slot="clear"':''}><a-icon shape="x"></a-icon></a-button>`
         const trailing=`<a-button role="button" ${direct?`slot="trailing" size="${size}"`:''}><a-icon shape="regex"></a-icon></a-button>`
         await mount(page,`<a-input size="${size}" value="Draft" ${multiline?'multiline rows="3"':''}>
+          <a-icon slot="leading" shape="search"></a-icon>
           ${direct?clear:`<span slot="clear" data-input-contents>${clear}</span>`}
           ${direct?trailing:`<span slot="trailing" data-input-contents>${trailing}</span>`}
         </a-input>`)
@@ -196,17 +197,26 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
           const clear=host.querySelector('[data-custom-event="clearrequest"]').getBoundingClientRect()
           const trailing=host.shadowRoot.querySelector('[part="trailing"]')
           const action=host.querySelector('[slot="trailing"] a-button, a-button[slot="trailing"]').getBoundingClientRect()
-          return {fieldHeight:field.height,clearSize:[clear.width,clear.height],top:clear.top-field.top,
+          const leading=host.querySelector('[slot="leading"]').getBoundingClientRect()
+          const input=host.shadowRoot.querySelector('[part="input"]'),style=getComputedStyle(input)
+          const firstLine=input.getBoundingClientRect().top+parseFloat(style.paddingTop)+parseFloat(style.lineHeight)/2
+          return {firstLine,leadingCenter:leading.top+leading.height/2,clearCenter:clear.top+clear.height/2,
+            actionCenter:action.top+action.height/2,
+            fieldHeight:field.height,clearSize:[clear.width,clear.height],top:clear.top-field.top,
             clearPadding:getComputedStyle(clearSlot).padding,trailingPadding:getComputedStyle(trailing).paddingInlineEnd,
             end:field.right-action.right,actionSize:[action.width,action.height],actionTop:action.top-field.top}
         })
         if(!multiline)assert.equal(metrics.fieldHeight,height,JSON.stringify({size,direct,multiline,metrics}))
-        assert.deepEqual(metrics.clearSize,[height-4,height-4])
+        if(multiline) for(const center of ['leadingCenter','clearCenter','actionCenter']) {
+          assert.ok(Math.abs(metrics[center]-metrics.firstLine)<0.1,JSON.stringify({size,direct,center,metrics}))
+        }
+        const actionSize=multiline&&size==='large'?26:height-4
+        assert.deepEqual(metrics.clearSize,[actionSize,actionSize])
         assert.equal(metrics.clearPadding,'2px')
         assert.equal(metrics.top,2)
         assert.equal(metrics.trailingPadding,'2px')
         assert.equal(metrics.end,2)
-        assert.deepEqual(metrics.actionSize,[height-4,height-4])
+        assert.deepEqual(metrics.actionSize,[actionSize,actionSize])
         assert.equal(metrics.actionTop,2)
         await page.locator('[data-custom-event="clearrequest"]').click()
         assert.equal(await field(page).evaluate(host=>host.value),'')

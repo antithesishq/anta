@@ -43,6 +43,8 @@
   a-input[multiline]::part(field) { align-items: stretch; }
   a-input[size="small"] { --_fs: 13px; --_lh: 16px; --_input-action-size: 20px; }
   a-input[size="large"] { --_fs: 17px; --_lh: 22px; --_input-action-size: 28px; }
+  /* Multiline actions fit the padded first text line, including their inset. */
+  a-input[multiline] { --_input-action-size: calc(var(--_lh) + var(--_pad-block) * 2 - 4px); }
   a-input[size="small"]::part(field) { min-height: var(--_input-measured-min-height, 24px); }
   a-input[size="large"]::part(field) { min-height: var(--_input-measured-min-height, 32px); }
   a-input[round]::part(field) { border-radius: var(--input-round, 999px); }
@@ -149,7 +151,7 @@
 
   a-input[multiline]:state(filled)::part(clear) {
     align-self: flex-start;
-    height: calc(var(--_input-action-size) + 4px);
+    height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
 
   a-input::part(hint) {
@@ -359,11 +361,6 @@
   a-input:has(> :is(a-button, button)[slot="trailing"])::part(trailing) {
     margin-inline-end: 0;
     padding-inline-end: 2px;
-  }
-
-  a-input[multiline]:has(> [slot="trailing"] :is(a-button, button))::part(trailing),
-  a-input[multiline]:has(> :is(a-button, button)[slot="trailing"])::part(trailing) {
-    height: calc(var(--_input-action-size) + 4px);
   }
 
   /* `round` field radius: presence → 999px pill; a value (`round="20px"`, or the

@@ -723,6 +723,10 @@ Slots accept content; shadow parts expose regions for CSS. The `label`,
 `leading`, `clear`, `trailing`, and `hint` slots are independent of the parts
 with matching names. Unslotted children appear after the field and before the hint.
 
+Group trailing buttons in `<a-input-trailing slot="trailing">` to use compact
+action spacing. Mixed content keeps the text inset. The grouping tag needs no
+JavaScript registration.
+
 Set `role` and `aria-*` on `<a-input>` to describe the field to assistive
 technology. Input applies them to the control that receives focus. Explicit
 names and descriptions take precedence over its label and hint.
@@ -818,6 +822,10 @@ Style shadow regions with `::part(field)`, `::part(input)`, `::part(input-label)
 for the focused field. The clear button lives in the light DOM, so target it
 with a regular selector. Use `light-dark()` for theme-specific colors.
 
+Set `--input-trailing-inset` to override the ending space for any trailing
+content. Text and mixed content use the field's text inset by default;
+buttons-only groups use compact spacing.
+
 In button fields, `::part(input)` targets the native button, and
 `::part(input-label)` targets its value or placeholder text. `::part(label)`
 targets the separate visible field label.
@@ -826,6 +834,7 @@ targets the separate visible field label.
 a-input::part(field) { border-radius: 999px; }
 a-input::part(input) { font-variant-numeric: tabular-nums; }
 a-input::part(label) { text-transform: uppercase; }
+a-input.custom-inset { --input-trailing-inset: 4px; }
 ```
 
 To remove the field's border, use `box-shadow: none` as shown in the example.

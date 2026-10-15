@@ -107,6 +107,7 @@ before(async () => {
   }
   assets.set('/consumer-unlayered.css', 'span{display:inline-block} a-input::part(field){border-radius:13px}')
   assets.set('/consumer-utilities.css', '@layer utilities{span{display:block} a-input::part(field){border-radius:15px}}')
+  assets.set('/trailing-insets.css', '.inset-four{--input-trailing-inset:4px}.inset-zero{--input-trailing-inset:0px}.inherited-inset{--input-trailing-inset:6px}')
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .override::part(field){background:rgb(30,40,50);border-radius:11px;box-shadow:none}.override::part(input){color:white;font-size:18px}.override::part(input)::placeholder{color:rgb(200,210,220)}.narrow{width:180px}.spacer{height:900px}.dark{color-scheme:dark;background:#111}.rtl{direction:rtl}`)
 
@@ -245,6 +246,44 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     const labeled=await page.locator('a-button').boundingBox()
     assert.equal(labeled.height,32)
     assert.ok(labeled.width>32)
+  })
+  test.fast(`${name}: trailing insets honor overrides and distinguish mixed content`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.addStyleTag({url:'/trailing-insets.css'})
+    const button='<a-button role="button"><a-icon shape="regex"></a-icon></a-button>'
+    const variants=[
+      [`<a-button role="button" slot="trailing"><a-icon shape="regex"></a-icon></a-button>`,2],
+      [`<a-input-trailing slot="trailing"> \n ${button}<!-- gap -->${button}</a-input-trailing>`,2],
+      ['<a-input-trailing slot="trailing">each</a-input-trailing>',7],
+      [`<a-input-trailing slot="trailing">each ${button}</a-input-trailing>`,7],
+      [`<a-input-trailing slot="trailing">${button} each</a-input-trailing>`,7],
+      [`<a-input-trailing slot="trailing"><span>each ${button}</span></a-input-trailing>`,7],
+      [`<span slot="trailing">${button}</span>`,7],
+    ]
+    const inset=()=>field(page).evaluate(host=>{const style=getComputedStyle(host.shadowRoot.querySelector('[part="trailing"]'));return parseFloat(style.marginInlineEnd)+parseFloat(style.paddingInlineEnd)})
+    for(const dir of ['ltr','rtl']) for(const [content,defaultInset] of variants) {
+      for(const [className,expected,inherited] of [['',defaultInset,false],['inset-four',4,false],['inset-zero',0,false],['',6,true]]) {
+        await mount(page,`<div class="${inherited?'inherited-inset':''}"><a-input dir="${dir}" class="${className}" value="Draft">${content}</a-input></div>`)
+        assert.equal(await inset(),expected,JSON.stringify({dir,content,className,inherited}))
+      }
+    }
+    await mount(page,`<a-input value="Draft"><a-input-trailing slot="trailing"> ${button}</a-input-trailing></a-input>`)
+    assert.equal(await inset(),2)
+    await field(page).evaluate(host=>{host.querySelector('a-input-trailing').firstChild.data='each '})
+    await frames(page);assert.equal(await inset(),7)
+    await field(page).evaluate(host=>{host.querySelector('a-input-trailing').firstChild.data=' '})
+    await frames(page);assert.equal(await inset(),2)
+    await field(page).evaluate(host=>{
+      const slot=host.shadowRoot.querySelector('[part="trailing"]'),read=slot.assignedNodes
+      window.trailingReads=0;slot.assignedNodes=function(...args){trailingReads++;return read.apply(this,args)}
+      host.querySelector('a-button').setAttribute('selected','')
+    })
+    await control(page).fill('Typing');await frames(page)
+    assert.equal(await page.evaluate(()=>trailingReads),0)
+    await field(page).evaluate(host=>{host.remove();host.querySelector('a-input-trailing').firstChild.data='each ';document.querySelector('#mount').append(host)})
+    await frames(page);assert.equal(await inset(),7)
+    await field(page).evaluate(host=>{const group=host.querySelector('a-input-trailing');const button=group.querySelector('a-button');button.slot='trailing';group.replaceWith(button)})
+    await frames(page);assert.equal(await inset(),2)
   })
   test.fast(`${name}: values, input/change, composition, selection, and handoff`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)

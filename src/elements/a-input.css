@@ -294,10 +294,6 @@
     --input-adornment: var(--text-3);
     --input-hint: var(--text-3);
 
-    /* Static trailing adornments align with the text inset. Button groups use
-       their own 2px padding below. */
-    --input-trailing-inset: 7px;
-
     /* The host grid remains customizable independently of the field width. */
     width: 100%;
   }
@@ -360,11 +356,10 @@
     }
   }
 
-  /* Inset button groups while static adornments retain the text padding. */
-  a-input:has(> [slot="trailing"] :is(a-button, button))::part(trailing),
-  a-input:has(> :is(a-button, button)[slot="trailing"])::part(trailing) {
+  /* Defaults stay at use sites so inherited and local overrides both win. */
+  a-input:state(trailing-actions)::part(trailing) {
     margin-inline-end: 0;
-    padding-inline-end: 2px;
+    padding-inline-end: var(--input-trailing-inset, 2px);
   }
 
   /* `round` field radius: presence → 999px pill; a value (`round="20px"`, or the

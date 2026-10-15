@@ -155,6 +155,8 @@ export class AInputElement extends HTMLElementBase {
   private labelSlot: HTMLSlotElement
   private hintSlot: HTMLSlotElement
   private leadingSlot: HTMLSlotElement
+  #trailingSlot: HTMLSlotElement
+  #trailingObserver?: MutationObserver
   private control?: Control
   #buttonText?: HTMLSpanElement
   // The intended value, captured even before the control exists (a framework
@@ -215,9 +217,10 @@ export class AInputElement extends HTMLElementBase {
     this.leadingSlot = this.doc.createElement('slot')
     this.leadingSlot.name = 'leading'
     this.leadingSlot.setAttribute('part', 'leading')
-    const trailingSlot = this.doc.createElement('slot')
-    trailingSlot.name = 'trailing'
-    trailingSlot.setAttribute('part', 'trailing')
+    this.#trailingSlot = this.doc.createElement('slot')
+    this.#trailingSlot.name = 'trailing'
+    this.#trailingSlot.setAttribute('part', 'trailing')
+    this.#trailingSlot.addEventListener('slotchange', this.syncTrailingActions)
     // The clear button is projected here (rightmost). The element gates its
     // visibility via external CSS off the filled state — see updateFilled.
     const clearSlot = this.doc.createElement('slot')
@@ -226,7 +229,7 @@ export class AInputElement extends HTMLElementBase {
 
     // Leading, then (control inserted after leading on build), then clear, then
     // trailing — so the clear button sits to the LEFT of any trailing actions.
-    this.field.append(this.leadingSlot, clearSlot, trailingSlot)
+    this.field.append(this.leadingSlot, clearSlot, this.#trailingSlot)
 
     // The clear button (an <a-button data-custom-event="clearrequest"> in the
     // `clear` slot) fires CLEAR_TRIGGER on click/Enter/Space — without needing
@@ -290,12 +293,15 @@ export class AInputElement extends HTMLElementBase {
     if (!this.control) this.buildControl()
     else this.syncAutoHeight()
     this.ready = true
+    this.syncTrailingActions()
     this.applyLabelAria()
     this.applyDescriptionAria()
   }
 
   disconnectedCallback() {
     this.#labelObserver?.disconnect()
+    this.#trailingObserver?.disconnect()
+    this.#trailingObserver = undefined
     this.#releaseModality?.()
     this.#releaseModality = undefined
     this.onBlur()
@@ -624,6 +630,31 @@ export class AInputElement extends HTMLElementBase {
     if (modality?.active === this.syncControlFocus) modality.active = undefined
     this.internals?.states?.delete('control-focus')
     try { this.internals?.states?.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
+  }
+
+  private syncTrailingActions = () => {
+    if (!this.isConnected) return
+    this.#trailingObserver?.disconnect()
+    let hasAction = false
+    const onlyActions = (nodes: Iterable<Node>): boolean => {
+      for (const node of nodes) {
+        if (node.nodeType === 3 && node.textContent?.trim()) return false
+        if (node.nodeType !== 1) continue
+        const element = node as Element
+        if (element.localName === 'a-input-trailing') {
+          // CSS cannot distinguish bare text from a buttons-only group.
+          // Observe only these boxless groups, never values or button attributes.
+          this.#trailingObserver ??= new this.view.MutationObserver(this.syncTrailingActions)
+          this.#trailingObserver.observe(element, { childList: true, characterData: true, subtree: true })
+          if (!onlyActions(element.childNodes)) return false
+        } else if (element.localName === 'a-button' || element.localName === 'button') {
+          hasAction = true
+        } else return false
+      }
+      return true
+    }
+    const actions = onlyActions(this.#trailingSlot.assignedNodes()) && hasAction
+    this.internals?.states?.[actions ? 'add' : 'delete']('trailing-actions')
   }
 
   private onLabelSlotChange = () => {

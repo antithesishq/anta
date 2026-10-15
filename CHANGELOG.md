@@ -113,6 +113,10 @@ changes are not listed.
 
 ### Fixed
 
+- [Input trailing spacing](/input/#styling) honors `--input-trailing-inset` for
+  text and actions, including inherited overrides. Mixed content and nested
+  buttons keep the text inset by default.
+
 - [Input events](/input/#events) attach after React hydration. Nested clear
   actions affect their owning Input, and focus tracking releases document
   listeners when fields disconnect.

@@ -642,11 +642,8 @@ a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]) {
     color-mix(in oklch, #e4d1ef 7%, transparent)
   );
 }
-a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]):not(
-  :has(> a-tab:is([tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]):state(selected))
-),
-a-tabs:has(> a-tab[tone="neutral"]:state(selected)) {
-  --tab-secondary-bg: light-dark(
+a-tabs {
+  --tab-secondary-neutral-bg: light-dark(
     oklch(from var(--anta-seed-neutral) 0.55 0.008 h / 0.03),
     color-mix(in oklch, #e4d1ef 8%, transparent)
   );

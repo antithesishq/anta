@@ -51,11 +51,12 @@
     --tab-selected-border: var(--border-2);
     --tab-selected-shadow: inset 0 0 0px 0.5px var(--tab-selected-border);
 
-    /* Secondary's selected fill — the same track tint at a lower alpha. */
-    --tab-secondary-bg: light-dark(
-      oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.03),
-      oklch(from var(--tabs-tone-source) 0.8 0.008 h / 0.08)
+    /* Themes supply the neutral fill; tone rules select it or a colored fill. */
+    --tab-secondary-neutral-bg: light-dark(
+      oklch(from var(--anta-seed-neutral) 0.55 0.008 h / 0.03),
+      oklch(from var(--anta-seed-neutral) 0.8 0.008 h / 0.08)
     );
+    --tab-secondary-bg: var(--tab-secondary-neutral-bg);
 
     display: flex;
     flex-direction: row;
@@ -181,10 +182,7 @@
   a-tabs:has(> a-tab[tone="neutral"]:state(selected)) {
     --tab-selected-text: var(--text-1);
     --tab-selected-border: var(--border-2);
-    --tab-secondary-bg: light-dark(
-      oklch(from var(--anta-seed-neutral) 0.55 0.008 h / 0.03),
-      oklch(from var(--anta-seed-neutral) 0.8 0.008 h / 0.08)
-    );
+    --tab-secondary-bg: var(--tab-secondary-neutral-bg);
   }
   /* Custom literal-color tone (anything not a named tone): derive the source from the
      attribute via typed attr(), and the selected label by oklch (no --text-1-<tone>). */

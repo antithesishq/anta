@@ -17,16 +17,16 @@ Text, icons, and action buttons adjust together. The default is `medium`.
 
 ## Priority
 
-Use `priority` to choose how much the field stands out. `primary` has a filled
-background, `secondary` has an outline, and `tertiary` stays subtle until someone
-interacts with it. Use tertiary where the label or context makes the field easy
-to find. Status feedback and focus remain visible with every priority.
-
 ```tsx
 <Input label="Primary" placeholder="Filled field" autoComplete="off" />
 <Input priority="secondary" label="Secondary" placeholder="Outlined field" autoComplete="off" />
 <Input priority="tertiary" label="Tertiary" placeholder="Field on hover or focus" autoComplete="off" />
 ```
+
+Use `priority` to choose how much the field stands out. `primary` has a filled
+background, `secondary` has an outline, and `tertiary` stays subtle until someone
+interacts with it. Use tertiary where the label or context makes the field easy
+to find. Status feedback and focus remain visible with every priority.
 
 ## Label and hint
 

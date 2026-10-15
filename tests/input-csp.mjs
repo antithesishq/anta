@@ -88,6 +88,10 @@ before(async () => {
       ${factory}; let root; window.recoverableErrors=[];
       window.hydrateInput = props => { ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(app(props), document.querySelector('#mount'))"} };
       window.renderInput = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(app(props))" : "render(app(props), document.querySelector('#mount'))"} };
+      window.renderAdornments = () => window.renderInput({
+        leading:React.createElement('a-icon',{shape:'search'}),
+        trailing:React.createElement(React.Fragment,{},...['case-sensitive','regex'].map(icon=>React.createElement(Button,{key:icon,icon,'aria-label':icon}))),
+      });
       window.renderWithoutEvents = () => { const node=React.createElement(Input,{id:'field',label:'Message',defaultValue:'Fresh'}); ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(node)" : "render(node, document.querySelector('#mount'))"} };
       window.renderComposition = name => {
         const e=React.createElement;
@@ -101,6 +105,8 @@ before(async () => {
       define:{'process.env.NODE_ENV':'"production"'}, alias:{...alias, ...(react && !consumerRoot ? {'react-dom/client':requirePlot.resolve('react-dom/client')} : {})}})
     assets.set(`/${framework}.js`, client.outputFiles.find(f=>f.path.endsWith('.js')).text)
   }
+  assets.set('/consumer-unlayered.css', 'span{display:inline-block} a-input::part(field){border-radius:13px}')
+  assets.set('/consumer-utilities.css', '@layer utilities{span{display:block} a-input::part(field){border-radius:15px}}')
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .override::part(field){background:rgb(30,40,50);border-radius:11px;box-shadow:none}.override::part(input){color:white;font-size:18px}.override::part(input)::placeholder{color:rgb(200,210,220)}.narrow{width:180px}.spacer{height:900px}.dark{color-scheme:dark;background:#111}.rtl{direction:rtl}`)
 
@@ -368,6 +374,36 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.deepEqual(await page.evaluate(()=>focusReads),[])
   })
   for(const framework of ['React','Preact']) {
+    test.fast(`${name} ${framework}: boxless wrappers withstand consumer display rules`,async t=>{
+      const page=await pageFor(t,engine,mode,`&ssr&framework=${framework}`)
+      const before=await page.addStyleTag({url:'/consumer-unlayered.css'})
+      assert.equal(await page.locator('[slot="label"]').evaluate(node=>getComputedStyle(node).display),'block')
+      assert.deepEqual(await field(page).evaluate(host=>[...host.querySelectorAll(':scope > [slot]:not([slot="label"])')].map(node=>getComputedStyle(node).display)),['none','none','none','none'])
+      await before.evaluate(node=>node.remove())
+      await register(page,mode)
+      await page.addScriptTag({url:`/${framework}.js`,type:'module'})
+      await page.evaluate(()=>hydrateInput({name:'message'}));await frames(page)
+      await page.evaluate(()=>renderAdornments());await frames(page)
+      await page.evaluate(()=>{const span=document.createElement('span');span.id='consumer-span';span.textContent='Consumer';document.body.append(span)})
+      const layout=()=>field(page).evaluate(host=>{
+        const field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
+        const buttons=[...host.querySelectorAll('[slot="trailing"] a-button')].map(node=>node.getBoundingClientRect())
+        const clear=host.querySelector('[slot="clear"] a-button').getBoundingClientRect()
+        return {display:[...host.querySelectorAll(':scope > [data-input-contents]')].map(node=>getComputedStyle(node).display),
+          height:field.height,gap:buttons[1].left-buttons[0].right,right:field.right-buttons[1].right,
+          top:buttons[0].top-field.top,clearTop:clear.top-field.top}
+      })
+      const expected={display:Array(5).fill('contents'),height:28,gap:2,right:2,top:2,clearTop:2}
+      assert.deepEqual(await layout(),expected)
+      for(const [style,display,radius] of [['unlayered','inline-block','13px'],['utilities','block','15px']]) {
+        const sheet=await page.addStyleTag({url:`/consumer-${style}.css`});await frames(page)
+        assert.deepEqual(await layout(),expected)
+        assert.equal(await page.locator('#consumer-span').evaluate(node=>getComputedStyle(node).display),display)
+        assert.equal(await field(page).evaluate(host=>getComputedStyle(host.shadowRoot.querySelector('[part="field"]')).borderRadius),radius)
+        await sheet.evaluate(node=>node.remove())
+      }
+      assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+    })
     for (const registration of ['before render','after render']) {
       test.fast(`${name} ${framework}: client form names reflect with registration ${registration}`,async t=>{
         const page=await pageFor(t,engine,mode)

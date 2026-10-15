@@ -315,8 +315,11 @@
     }
   }
 
-  a-input > span[data-input-contents] {
-    display: contents;
+  /* Projected wrappers must stay boxless for slots to lay out their children.
+     Protect structure from normal consumer rules in later layers or no layer.
+     Before upgrade, the skeleton hides adornments and gives the label a box. */
+  a-input:defined > span[data-input-contents] {
+    display: contents !important;
   }
 
   /* Named slots are light-DOM state, so the host derives their visibility and

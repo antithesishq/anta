@@ -9,7 +9,7 @@ export function baseline(): PlotArgs<Node> {
 
   return {
     series: [
-      area<Node>({
+      area({
         data,
         y2: 0,
         color: { light: '#99f6e4', dark: '#134e4a' },
@@ -37,7 +37,7 @@ export function range(): PlotArgs<Node> {
 
   return {
     series: [
-      area<Node>({
+      area({
         data,
         y: 'high',
         y2: 'low',
@@ -68,21 +68,21 @@ export function layers(): PlotArgs<Node> {
 
   return {
     series: [
-      area<Node>({
+      area({
         data,
         y: 'first',
         y2: 0,
         color: { light: '#2dd4bf', dark: '#0d9488' },
         tooltip: ({ row }) => document.createTextNode('Network: ' + Math.round(Number(row.first))),
       }),
-      area<Node>({
+      area({
         data,
         y: 'second',
         y2: 'first',
         color: { light: '#a5b4fc', dark: '#6366f1' },
         tooltip: ({ row }) => document.createTextNode('Compute: ' + Math.round(Number(row.second) - Number(row.first))),
       }),
-      area<Node>({
+      area({
         data,
         y: 'total',
         y2: 'second',
@@ -110,7 +110,7 @@ export function horizontal(): PlotArgs<Node> {
 
   return {
     series: [
-      area<Node>({
+      area({
         data,
         x: 'low',
         x2: 'high',

@@ -65,12 +65,29 @@ test('hash and TOC navigation reopen collapsed ancestors after a page swap', asy
   assert.equal(await page.locator('#outer').evaluate(node => node.open), false)
 })
 
-test('heading links expand the nested section without toggling it closed', async t => {
+test('heading links toggle their section without folding its ancestors', async t => {
   const page = await pageFor(t)
   await page.locator('#outer > summary').click()
   await page.locator('a.header-anchor').click()
   await assertExpanded(page)
   assert.equal(new URL(page.url()).hash, '#payload')
   await page.locator('a.header-anchor').click()
+  assert.deepEqual(await page.locator('details').evaluateAll(nodes => nodes.map(node => node.open)), [true, false, false])
+  assert.equal(new URL(page.url()).hash, '#payload')
+  await page.locator('a.header-anchor').click()
   await assertExpanded(page)
+})
+
+test('a deep-linked section folds with Enter and reopens through same-hash TOC navigation', async t => {
+  const page = await pageFor(t, '#payload')
+  await page.evaluate(() => document.dispatchEvent(new Event('astro:page-load')))
+  await assertExpanded(page)
+  await page.locator('a.header-anchor').focus()
+  await page.keyboard.press('Enter')
+  assert.deepEqual(await page.locator('details').evaluateAll(nodes => nodes.map(node => node.open)), [true, false, false])
+  assert.equal(new URL(page.url()).hash, '#payload')
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('anta-tocnavigate', { detail: { id: 'payload' } })))
+  await assertExpanded(page)
+  await page.locator('a.header-anchor').click()
+  assert.deepEqual(await page.locator('details').evaluateAll(nodes => nodes.map(node => node.open)), [true, false, false])
 })

@@ -69,6 +69,8 @@
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "test": "node --test tests/*.test.mjs",
     "test:components": "node tests/components.mjs",
+    "test:expander": "node --test tests/expander-csp.mjs",
+    "test:expander:package": "node tests/expander-package.mjs",
     "test:banner": "node --test tests/banner-csp.mjs",
     "test:banner:package": "node tests/banner-package.mjs",
     "test:card": "node --test tests/card-csp.mjs",

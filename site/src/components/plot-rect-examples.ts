@@ -9,7 +9,7 @@ export function heatmap(): PlotArgs<Node> {
 
   return {
     series: [
-      rect<Node>({
+      rect({
         data,
         x: 'hour',
         y: 'day',
@@ -43,7 +43,7 @@ export function intervals(): PlotArgs<Node> {
 
   return {
     series: [
-      rect<Node>({
+      rect({
         data,
         x: 'start',
         x2: 'end',
@@ -75,7 +75,7 @@ export function sized(): PlotArgs<Node> {
 
   return {
     series: [
-      rect<Node>({
+      rect({
         data,
         size: { width: 16, height: 9 },
         color: row => Number(row.value) > 65
@@ -106,7 +106,7 @@ export function history(): PlotArgs<Node> {
 
   return {
     series: [
-      rect<Node>({
+      rect({
         data: data.filter(row => row.lane === 'Passed'),
         x: 'end_ms',
         y: 'lane',
@@ -117,7 +117,7 @@ export function history(): PlotArgs<Node> {
         stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 0.5 },
         tooltip: ({ row }) => document.createTextNode('Run ' + row.run + ': ' + row.lane),
       }),
-      rect<Node>({
+      rect({
         data: data.filter(row => row.lane === 'Failed'),
         x: 'end_ms',
         y: 'lane',

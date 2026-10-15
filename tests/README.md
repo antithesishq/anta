@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Progress, and Text are registered.
+running them. Banner, Calendar/InputDate, Card, Expander, Progress, and Text are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -97,3 +97,21 @@ focus, trusted mouse and touch input, pointer cancellation, touch-action,
 time-based inertia, independent Capture surfaces, and shared listener cleanup. Lifecycle
 and timing cases use synthetic pointer samples with a capture stub. Separate
 trusted-input cases exercise the browser's native pointer capture.
+
+## Expander
+
+Run `pnpm test:expander` for the full CSP source matrix or
+`pnpm test:expander:package` for the same checks through installed npm exports.
+The component runner includes installation only in the slow tier. Core checks
+cover both import modes, state requests, title interaction, focus, and hydration.
+Expanded coverage includes initial variants, custom indicators, animation,
+reconnection, nesting, adopted nodes, and consumer part overrides. The slow
+visual matrix saves screenshots to `tests/.test-output/expander`; the manual
+Component matrix workflow uploads them as an artifact. WebKit screenshots use
+a separate capture context that permits Playwright's injected animation-sync
+stylesheet; behavior and layout checks retain the strict CSP response headers.
+
+Set `ANTA_EXPANDER_CHROMIUM_EXECUTABLE` to test an exact Chrome executable.
+`ANTA_TEST_WEBKIT=0` selects Chromium only; otherwise Firefox and WebKit run too.
+`ANTA_EXPANDER_PACKAGE_ROOT` selects an extracted package for artifact checks;
+the installed-package command builds without source aliases or workspace links.

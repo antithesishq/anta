@@ -1,4 +1,4 @@
-import { area, bar, custom, line, rect, rule, scatter, type BarArgs, type CustomArgs, type LineArgs, type PlotArgs, type RectArgs, type RuleArgs, type Series } from '@antadesign/plot'
+import { area, bar, custom, line, rect, rule, scatter, type BarArgs, type CustomArgs, type LineArgs, type PlotArgs, type RectArgs, type RuleArgs, type CustomSeries } from '@antadesign/plot'
 
 function overviewExample(): PlotArgs<Node> {
   // Synthetic data, sampled every 15 minutes. No randomness: edits keep the same data.
@@ -24,8 +24,8 @@ function overviewExample(): PlotArgs<Node> {
 
   const meanExpected = forecast.reduce((sum, point) => sum + point.expected, 0) / forecast.length
 
-  const series: Series<Node>[] = [
-    area<Node>({
+  const series: PlotArgs<Node>['series'] = [
+    area({
       data: forecast,
       x: 'hour',
       y: 'high',
@@ -33,14 +33,14 @@ function overviewExample(): PlotArgs<Node> {
       color: { light: '#ede9fe', dark: '#30274e' },
       hoverable: false,
     }),
-    rule<Node>({
+    rule({
       y: meanExpected,
       color: { light: '#d97706', dark: '#fbbf24' },
       width: 2,
       dash: [8, 4],
       hoverable: false,
     }),
-    line<Node>({
+    line({
       data: forecast,
       x: 'hour',
       y: 'expected',
@@ -49,7 +49,7 @@ function overviewExample(): PlotArgs<Node> {
       dash: [5, 5],
       tooltip: ({ x, y }) => document.createTextNode('Forecast at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
     }),
-    line<Node>({
+    line({
       data: trend,
       x: 'hour',
       y: 'average',
@@ -57,7 +57,7 @@ function overviewExample(): PlotArgs<Node> {
       width: 3,
       tooltip: ({ x, y }) => document.createTextNode('Trend at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
     }),
-    scatter<Node>({
+    scatter({
       data: observations.filter(point => !point.outside),
       x: 'hour',
       y: 'actual',
@@ -65,7 +65,7 @@ function overviewExample(): PlotArgs<Node> {
       size: 4,
       tooltip: ({ x, y }) => document.createTextNode('Observed at ' + x + 'h: ' + y + ' requests/s'),
     }),
-    scatter<Node>({
+    scatter({
       data: observations.filter(point => point.outside),
       x: 'hour',
       y: 'actual',
@@ -120,11 +120,11 @@ function energyExample(): PlotArgs<Node> {
   ]
   return {
     series: [
-      bar<Node>({ data, y: ['solar', 'wind'],
+      bar({ data, y: ['solar', 'wind'],
         color: [{ light: '#fbbf24', dark: '#d97706' }, { light: '#2dd4bf', dark: '#0d9488' }],
         inset: 5, border_radius: 3,
         tooltip: ({ x, y, label }) => document.createTextNode('Site ' + x + ' · ' + label + ': ' + y + ' kW') }),
-      scatter<Node>({ data, y: 'demand', mark: 'diamond', size: 7,
+      scatter({ data, y: 'demand', mark: 'diamond', size: 7,
         tooltip: ({ x, y }) => document.createTextNode('Site ' + x + ' · Demand: ' + y + ' kW'),
         color: { light: '#7c3aed', dark: '#c4b5fd' },
         stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } }),
@@ -147,12 +147,12 @@ function latencyExample(): PlotArgs<Node> {
   const curve = Array.from({ length: 121 }, (_, i) => ({ x: i * 2, y: density(i * 2) }))
   return {
     series: [
-      area<Node>({ data: curve, y2: 0, color: { light: '#fce7f3', dark: '#452039' }, hoverable: false }),
-      rect<Node>({ data: bins, color: { light: '#f472b6', dark: '#be185d' },
+      area({ data: curve, y2: 0, color: { light: '#fce7f3', dark: '#452039' }, hoverable: false }),
+      rect({ data: bins, color: { light: '#f472b6', dark: '#be185d' },
         tooltip: ({ row, y }) => document.createTextNode(
           (Number(row.x) - 1) + '–' + (Number(row.x2) + 1) + ' ms · ' + Math.round(Number(y)) + ' requests',
         ) }),
-      line<Node>({ data: curve, color: { light: '#9d174d', dark: '#fbcfe8' }, width: 2.5,
+      line({ data: curve, color: { light: '#9d174d', dark: '#fbcfe8' }, width: 2.5,
         tooltip: ({ x, y }) => document.createTextNode('Distribution at ' + x + ' ms: ' + Number(y).toFixed(1) + ' requests') }),
 
     ],
@@ -198,24 +198,24 @@ function mixedExample(): PlotArgs<Node> {
   ]
   return {
     series: [
-      area<Node>({ data: Array.from({ length: 81 }, (_, i) => {
+      area({ data: Array.from({ length: 81 }, (_, i) => {
         const x = i * 1.25
         const center = 50 + 7 * Math.sin(i / 9) + 3 * Math.cos(i / 4)
         const spread = 3 + 1.5 * Math.sin(i / 11) ** 2
         return { x, y: center + spread, y2: center - spread }
       }), color: { light: '#99f6e4', dark: '#115e59' },
         stroke: { color: { light: '#14b8a6', dark: '#5eead4' }, width: 1 } }),
-      ...points.map((point, i) => scatter<Node>({ data: [point], size: [7, 12, 21, 10, 15, 9, 26, 13, 11, 8, 14][i],
+      ...points.map((point, i) => scatter({ data: [point], size: [7, 12, 21, 10, 15, 9, 26, 13, 11, 8, 14][i],
         mark: 'circle', color: colors[i % colors.length],
         tooltip: ({ x, y }) => document.createTextNode('Point ' + (i + 1) + ' · (' + x + ', ' + y + ')'),
         stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } })),
-      rect<Node>({ data: [{ x: 32, x2: 44, y: 31, y2: 47 }],
+      rect({ data: [{ x: 32, x2: 44, y: 31, y2: 47 }],
         color: { light: '#ddd6fe', dark: '#5b21b6' },
         stroke: { color: { light: '#8b5cf6', dark: '#c4b5fd' }, width: 1.5 } }),
-      rect<Node>({ data: [{ x: 76, x2: 97, y: 76, y2: 96 }],
+      rect({ data: [{ x: 76, x2: 97, y: 76, y2: 96 }],
         color: { light: 'rgba(254, 215, 170, 0.55)', dark: 'rgba(154, 52, 18, 0.55)' },
         stroke: { color: { light: '#f97316', dark: '#fdba74' }, width: 1.5 } }),
-      ...smoothPaths.map((data, i) => line<Node>({ data, width: 2.5, dash: i === 1 ? [7, 5] : [],
+      ...smoothPaths.map((data, i) => line({ data, width: 2.5, dash: i === 1 ? [7, 5] : [],
         tooltip: ({ x, y }) => document.createTextNode(
           'Line ' + (i + 1) + ' · (' + Number(x).toFixed(1) + ', ' + Number(y).toFixed(1) + ')',
         ),
@@ -223,7 +223,7 @@ function mixedExample(): PlotArgs<Node> {
           : { light: '#f97316', dark: '#fdba74' },
       })),
 
-      rule<Node>({ y: 10, color: { light: '#0284c7', dark: '#7dd3fc' }, width: 1.5, dash: [6, 4] }),
+      rule({ y: 10, color: { light: '#0284c7', dark: '#7dd3fc' }, width: 1.5, dash: [6, 4] }),
     ],
     axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
     background: { light: '#ffffff', dark: '#151b28' },
@@ -247,7 +247,7 @@ function scatterExample(): PlotArgs<Node> {
   })
 
   return {
-    series: [scatter<Node>({
+    series: [scatter({
       data,
       size: 3,
       color: { light: 'rgba(13, 148, 136, 0.65)', dark: 'rgba(94, 234, 212, 0.65)' },
@@ -279,7 +279,7 @@ function lineExample(): PlotArgs<Node> {
     tooltip: ({ x, y }) => document.createTextNode(x + ':00 · ' + y + ' requests/s'),
     hoverable: true,
     highlight: true,
-  } satisfies Omit<LineArgs<Node>, 'data' | 'on_select'>
+  } satisfies Omit<LineArgs<(typeof data)[number], Node>, 'data' | 'on_select'>
 
 
 
@@ -327,7 +327,7 @@ function barExample(): PlotArgs<Node> {
     tooltip: ({ x, y }) => document.createTextNode(x + ': ' + y + ' requests/s'),
     hoverable: true,
     highlight: true,
-  } satisfies Omit<BarArgs<Node>, 'data' | 'on_select'>
+  } satisfies Omit<BarArgs<(typeof data)[number], Node>, 'data' | 'on_select'>
 
 
 
@@ -372,7 +372,7 @@ function stackedExample(): PlotArgs<Node> {
     tooltip: ({ y, label }) => document.createTextNode(String(label) + ': ' + y + ' ms'),
     hoverable: true,
     highlight: true,
-  } satisfies Omit<BarArgs<Node>, 'data' | 'on_select'>
+  } satisfies Omit<BarArgs<(typeof data)[number], Node>, 'data' | 'on_select'>
 
 
 
@@ -407,9 +407,9 @@ function areaExample(): PlotArgs<Node> {
 
   return {
     series: [
-      area<Node>({ data, y: 'first', y2: 0, color: { light: '#2dd4bf', dark: '#0d9488' } }),
-      area<Node>({ data, y: 'second', y2: 'first', color: { light: '#a5b4fc', dark: '#6366f1' } }),
-      area<Node>({ data, y: 'total', y2: 'second', color: { light: '#fcd34d', dark: '#b45309' } }),
+      area({ data, y: 'first', y2: 0, color: { light: '#2dd4bf', dark: '#0d9488' } }),
+      area({ data, y: 'second', y2: 'first', color: { light: '#a5b4fc', dark: '#6366f1' } }),
+      area({ data, y: 'total', y2: 'second', color: { light: '#fcd34d', dark: '#b45309' } }),
     ],
     height: 160,
     margin: 8,
@@ -443,7 +443,7 @@ function rectExample(): PlotArgs<Node> {
     tooltip: ({ x, y, row }) => document.createTextNode(x + ' · ' + y + ' · activity ' + row.activity + '%'),
     hoverable: true,
     highlight: true,
-  } satisfies Omit<RectArgs<Node>, 'data' | 'on_select'>
+  } satisfies Omit<RectArgs<(typeof data)[number], Node>, 'data' | 'on_select'>
 
 
 
@@ -500,18 +500,18 @@ function ruleExample(): PlotArgs<Node> {
     tooltip: ({ y, row }) => document.createTextNode(String(row?.level) + ': ' + y + ' ms'),
     hoverable: true,
     highlight: true,
-  } satisfies Omit<RuleArgs<Node>, 'data' | 'on_select'>
+  } satisfies Omit<RuleArgs<(typeof data)[number], Node>, 'data' | 'on_select'>
 
 
 
   const plotArgs: PlotArgs<Node> = {
     series: [
-      rule<Node>({
+      rule({
         data: events, x: 'minute',
         color: { light: '#64748b', dark: '#94a3b8' }, width: 1.5, dash: [3, 5],
         tooltip: ({ row }) => document.createTextNode(String(row?.event)),
       }),
-      line<Node>({ data: samples, x: 'minute', y: 'latency', color: { light: '#cbd5e1', dark: '#475569' }, width: 1 }),
+      line({ data: samples, x: 'minute', y: 'latency', color: { light: '#cbd5e1', dark: '#475569' }, width: 1 }),
       rule({
         data,
         ...options,
@@ -594,13 +594,13 @@ function customExample(): PlotArgs<Node> {
     },
     tooltip: ({ x, y, row }) => document.createTextNode('Position (' + x + ', ' + y + ') · speed ' + Number(row?.speed).toFixed(1)),
     hoverable: true,
-  } satisfies Omit<CustomArgs<Node>, 'data' | 'on_select'>
+  } satisfies Omit<CustomArgs<(typeof data)[number], Node>, 'data' | 'on_select'>
 
 
 
   const plotArgs: PlotArgs<Node> = {
     series: [
-      custom<Node>({
+      custom({
         data,
         ...options,
       }),
@@ -623,8 +623,8 @@ export const galleryExamples = { overview: overviewExample,
   energy: energyExample, latency: latencyExample, mixed: mixedExample, scatter: scatterExample, line: lineExample, bar: barExample, stacked: stackedExample, area: areaExample, rect: rectExample, rule: ruleExample, custom: customExample }
 
 
-export function galleryLabel(text: string): Series<Node> {
-  return custom<Node>({
+export function galleryLabel(text: string): CustomSeries<{ part: string }, Node> {
+  return custom({
     data: [{ part: 'background' }, { part: 'text' }],
     color: (_, i) => i === 0
       ? { light: '#ffffff', dark: '#151b28' }

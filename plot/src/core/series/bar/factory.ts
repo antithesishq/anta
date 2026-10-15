@@ -1,28 +1,28 @@
-import { resolve_xy_columns, attach_resolved_columns, type ResolvedColumnMeta } from "../../template/column"
+import { resolve_xy_columns, attach_resolved_columns, type ResolvedColumnMeta, type ColumnArg } from "../../template/column"
 import { retain_factory_args } from "../factory_args"
 import { compact_column, dedupe_bands, warn_dropped_bands } from "./duplicates"
 import { array_extent, xy_extent } from "../../template/extent"
 import { resolve_color, resolve_highlight_colors } from "../../template/color"
 import { validate_hoverable, validate_hover_span, validate_non_negative } from "../../template/validate"
 import type { AxisContext, BarSeries, ColorArg, FieldArg, SelectFn, SideMode, ThemeColor, TooltipArg } from "../../types"
-import { expand_stack, resolve_stack_colors, resolve_stack_highlight_colors } from "./stack"
+import { expand_stack, resolve_stack_colors, resolve_stack_highlight_colors, type StackField } from "./stack"
 
-export type BarSideArg = FieldArg | string[]
-export type BarColorArg = ColorArg | ThemeColor[]
+export type BarSideArg<Row> = FieldArg<Row> | StackField<Row>[]
+export type BarColorArg<Row> = ColorArg<Row> | ThemeColor[]
 
-export type BarArgs<TooltipContent = unknown> = {
-    data: Record<string, unknown>[]
-    x?: BarSideArg
-    y?: BarSideArg
-    color?: BarColorArg
-    highlight_color?: BarColorArg
+export type BarArgs<Row, TooltipContent = unknown> = {
+    data: Row[]
+    x?: BarSideArg<Row>
+    y?: BarSideArg<Row>
+    color?: BarColorArg<Row>
+    highlight_color?: BarColorArg<Row>
     border_radius?: number
     inset?: number
     min_size?: number
     hover_span_x?: boolean
     hover_span_y?: boolean
-    tooltip?: TooltipArg<Record<string, unknown>, TooltipContent>
-    on_select?: SelectFn<Record<string, unknown>>
+    tooltip?: TooltipArg<Row, TooltipContent>
+    on_select?: SelectFn<Row>
     hoverable?: boolean
     highlight?: boolean
 }
@@ -33,7 +33,7 @@ export type BarArgs<TooltipContent = unknown> = {
  * @param args - bar series args (data, x, y, color)
  * @returns the resolved BarSeries
  */
-export function new_bar<TooltipContent = unknown>(args: BarArgs<TooltipContent>): BarSeries<TooltipContent> {
+export function new_bar<Row, TooltipContent = unknown>(args: BarArgs<Row, TooltipContent>): BarSeries<Row, TooltipContent> {
     const x_arg = args.x ?? 'x'
     const y_arg = args.y ?? 'y'
 
@@ -58,7 +58,7 @@ export function new_bar<TooltipContent = unknown>(args: BarArgs<TooltipContent>)
  * @param y_arg - the y field name or accessor
  * @returns the resolved BarSeries
  */
-function new_plain_bar<TooltipContent>(args: BarArgs<TooltipContent>, x_arg: FieldArg, y_arg: FieldArg): BarSeries<TooltipContent> {
+function new_plain_bar<Row, TooltipContent>(args: BarArgs<Row, TooltipContent>, x_arg: ColumnArg<Row>, y_arg: ColumnArg<Row>): BarSeries<Row, TooltipContent> {
     const color = args.color
     const highlight_color = args.highlight_color
     if (Array.isArray(highlight_color)) {
@@ -87,8 +87,9 @@ function new_plain_bar<TooltipContent>(args: BarArgs<TooltipContent>, x_arg: Fie
     }
     // a band on more than one row collapses to its last row
     const drawn = drop_shadowed_rows(args.data, resolved)
-    const series: BarSeries<TooltipContent> = {
+    const series: BarSeries<Row, TooltipContent> = {
         kind: 'bar',
+        rows: drawn.data,
         x: drawn.x,
         y: drawn.y,
         ...resolve_color(drawn.data, color),
@@ -96,7 +97,6 @@ function new_plain_bar<TooltipContent>(args: BarArgs<TooltipContent>, x_arg: Fie
     }
 
     apply_bar_options(series, args)
-    series.rows = drawn.data // caller's original for the tooltip
     attach_resolved_columns(series, resolved, x_arg, y_arg)
     return series
 }
@@ -108,10 +108,10 @@ function new_plain_bar<TooltipContent>(args: BarArgs<TooltipContent>, x_arg: Fie
  * @param resolved - the resolved x / y columns and their modes
  * @returns the rows and columns to draw
  */
-function drop_shadowed_rows(
-    data: Record<string, unknown>[],
+function drop_shadowed_rows<Row>(
+    data: Row[],
     resolved: ResolvedColumnMeta & { x: Float64Array; y: Float64Array },
-): { data: Record<string, unknown>[]; x: Float64Array; y: Float64Array } {
+): { data: Row[]; x: Float64Array; y: Float64Array } {
     const x_is_band = resolved.x_mode === 'categorical'
     const band_values = x_is_band ? resolved.x : resolved.y
     const categories = (x_is_band ? resolved.x_categories : resolved.y_categories) ?? []
@@ -127,7 +127,7 @@ function drop_shadowed_rows(
     }
     warn_dropped_bands(duplicates.repeated, 'plot.bar')
     const keep = duplicates.keep
-    const kept_data: Record<string, unknown>[] = new Array(keep.length)
+    const kept_data: Row[] = new Array(keep.length)
 
     for (let i = 0; i < keep.length; i++) {
         kept_data[i] = data[keep[i]]
@@ -144,12 +144,13 @@ function drop_shadowed_rows(
  * @param value_fields - the per-segment value field names, in stacking order
  * @returns the resolved BarSeries
  */
-function new_stacked_bar<TooltipContent>(args: BarArgs<TooltipContent>, band_arg: FieldArg, band_side: 'x' | 'y', value_fields: string[]): BarSeries<TooltipContent> {
+function new_stacked_bar<Row, TooltipContent>(args: BarArgs<Row, TooltipContent>, band_arg: ColumnArg<Row>, band_side: 'x' | 'y', value_fields: StackField<Row>[]): BarSeries<Row, TooltipContent> {
     const expanded = expand_stack(args.data, band_arg, band_side, value_fields, 'plot.bar')
     const is_vertical = band_side === 'x'
     const value_side = is_vertical ? 'y' : 'x'
-    const series: BarSeries<TooltipContent> = {
+    const series: BarSeries<Row, TooltipContent> = {
         kind: 'bar',
+        rows: expanded.rows,
         x: is_vertical ? expanded.band : expanded.value,
         y: is_vertical ? expanded.value : expanded.band,
         stack_base: expanded.stack_base,
@@ -160,7 +161,6 @@ function new_stacked_bar<TooltipContent>(args: BarArgs<TooltipContent>, band_arg
     }
 
     apply_bar_options(series, args)
-    series.rows = expanded.rows
     series.x_axis_kind = is_vertical ? 'categorical' : 'numeric'
     series.y_axis_kind = is_vertical ? 'numeric' : 'categorical'
 
@@ -184,7 +184,7 @@ function new_stacked_bar<TooltipContent>(args: BarArgs<TooltipContent>, band_arg
  * @param series - the series under construction
  * @param args - the caller's bar args
  */
-function apply_bar_options<TooltipContent>(series: BarSeries<TooltipContent>, args: BarArgs<TooltipContent>): void {
+function apply_bar_options<Row, TooltipContent>(series: BarSeries<Row, TooltipContent>, args: BarArgs<Row, TooltipContent>): void {
     retain_factory_args(series, args)
     if (args.border_radius !== undefined) {
         series.border_radius = validate_non_negative(args.border_radius, 'plot.bar: border_radius')
@@ -231,7 +231,7 @@ function apply_bar_options<TooltipContent>(series: BarSeries<TooltipContent>, ar
  * @param series - the bar series
  * @returns the [min, max] per axis
  */
-export function bar_domain_extent(series: BarSeries): { x: [number, number]; y: [number, number] } {
+export function bar_domain_extent<Row, TooltipContent>(series: BarSeries<Row, TooltipContent>): { x: [number, number]; y: [number, number] } {
     const stack_base = series.stack_base
 
     if (stack_base === undefined) {
@@ -265,7 +265,7 @@ export function bar_domain_extent(series: BarSeries): { x: [number, number]; y: 
  * @param series - the bar series, to skip the check when it has no rows
  * @param index - series index, for the error message
  */
-export function validate_bar_axes(x: AxisContext, y: AxisContext, series: BarSeries, index: number): void {
+export function validate_bar_axes<Row, TooltipContent>(x: AxisContext, y: AxisContext, series: BarSeries<Row, TooltipContent>, index: number): void {
 
     // empty series has no detectable band axis; nothing to draw, so don't enforce the requirement
     if (series.x.length === 0) {

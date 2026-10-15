@@ -62,7 +62,7 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
             clear_hover()
             host.on_pointer_change()
         },
-        handle_click(input: PointerOffset & { ctrlKey: boolean }): PointData | undefined {
+        handle_click(input: PointerOffset & { ctrlKey: boolean }): PointData<unknown> | undefined {
             const controller = host.controller()
             if (controller?.interaction_target(input) !== 'plot') return
             viewport.stop_animation(true)

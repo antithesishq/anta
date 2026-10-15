@@ -1,5 +1,5 @@
-import type { ComposedPlot, PlotTooltipHit, PointData, TooltipData } from "../types"
-import { resolve_point_data, type NearestPoint } from "./hit"
+import type { ComposedPlot, PlotTooltipHit, PointData } from "../types"
+import { has_point_row, resolve_point_data, type NearestPoint } from "./hit"
 import { original_factory_args } from "../series/factory_args"
 
 export type ResolvedTooltip<TooltipContent = unknown> =
@@ -14,7 +14,7 @@ export function resolve_tooltips<TooltipContent>(plot: ComposedPlot<TooltipConte
         for (const hit of hits) {
             const data = resolve_point_data(plot, hit)
             if (data !== undefined) {
-                hovered[hit.series_index] = { series: original_factory_args<TooltipContent>(plot.series[hit.series_index]), data }
+                hovered[hit.series_index] = { series: original_factory_args(plot.series[hit.series_index]), data }
                 has_hit = true
             }
         }
@@ -30,7 +30,8 @@ export function resolve_tooltips<TooltipContent>(plot: ComposedPlot<TooltipConte
     const resolved: ResolvedTooltip<TooltipContent>[] = []
 
     for (const hit of hits) {
-        const tooltip = plot.series[hit.series_index]?.tooltip
+        const series = plot.series[hit.series_index]
+        const tooltip = series?.tooltip
 
         if (tooltip === undefined) {
             continue
@@ -45,15 +46,19 @@ export function resolve_tooltips<TooltipContent>(plot: ComposedPlot<TooltipConte
             if (lines.length > 0) {
                 resolved.push({ kind: 'default', lines })
             }
-        } else {
-            // Column-backed series retain the existing payload with row omitted.
-            resolved.push({ kind: 'custom', content: tooltip(data as TooltipData<any>) })
+        } else if (has_point_row(data)) {
+            resolved.push({ kind: 'custom', content: tooltip(data) })
+        } else if (series.kind === 'rule') {
+            const callback = series.tooltip
+            if (typeof callback === 'function') {
+                resolved.push({ kind: 'custom', content: callback(data) })
+            }
         }
     }
     return resolved
 }
 
-function default_tooltip_lines<TooltipContent>(plot: ComposedPlot<TooltipContent>, data: PointData): string[] {
+function default_tooltip_lines<TooltipContent>(plot: ComposedPlot<TooltipContent>, data: PointData<unknown>): string[] {
     // the band side is whichever axis resolved to categories; the other side carries the value
     const x_is_band = plot.x_categories !== undefined
     const x_label = side_label(plot.x_axis?.label, 'x', data.label, !x_is_band)

@@ -2,20 +2,20 @@ import { resolve_column, validate_field_present, type ColumnMode } from "../../t
 import { retain_factory_args } from "../factory_args"
 import { resolve_color, resolve_highlight_colors } from "../../template/color"
 import { validate_finite, validate_hoverable, validate_non_negative, validate_positive } from "../../template/validate"
-import type { ColorArg, FieldArg, RuleSeries, SelectFn, TooltipArg } from "../../types"
+import type { ColorArg, FieldArg, RuleSeries, PointData } from "../../types"
 
-export type RuleValueArg = number | FieldArg
+export type RuleValueArg<Row> = number | FieldArg<Row>
 
-export type RuleArgs<TooltipContent = unknown> = {
-    data?: Record<string, unknown>[]
-    x?: RuleValueArg
-    y?: RuleValueArg
-    color?: ColorArg
-    highlight_color?: ColorArg
+export type RuleArgs<Row, TooltipContent = unknown> = {
+    data?: Row[]
+    x?: RuleValueArg<Row>
+    y?: RuleValueArg<Row>
+    color?: ColorArg<Row>
+    highlight_color?: ColorArg<Row>
     width?: number
     dash?: number[]
-    tooltip?: TooltipArg<Record<string, unknown> | undefined, TooltipContent>
-    on_select?: SelectFn<Record<string, unknown> | undefined>
+    tooltip?: true | ((data: PointData<Row>) => TooltipContent)
+    on_select?: (data: PointData<Row>) => unknown
     hoverable?: boolean
     highlight?: boolean
 }
@@ -34,11 +34,11 @@ type ResolvedRule = {
  * @param args - rule series args (x or y, data, color, width, dash)
  * @returns the resolved RuleSeries
  */
-export function new_rule<TooltipContent = unknown>(args: RuleArgs<TooltipContent>): RuleSeries<TooltipContent> {
+export function new_rule<Row, TooltipContent = unknown>(args: RuleArgs<Row, TooltipContent>): RuleSeries<Row, TooltipContent> {
     const side = rule_side(args)
     const resolved = resolve_rule_column(args[side], args.data, side)
     const unconstrained = new Float64Array(resolved.values.length).fill(NaN)
-    const series: RuleSeries<TooltipContent> = {
+    const series: RuleSeries<Row, TooltipContent> = {
         kind: 'rule',
         side,
         x: side === 'x' ? resolved.values : unconstrained,
@@ -55,7 +55,7 @@ export function new_rule<TooltipContent = unknown>(args: RuleArgs<TooltipContent
  * @param args - the rule series args
  * @returns the value's axis
  */
-function rule_side(args: RuleArgs): 'x' | 'y' {
+function rule_side<Row, TooltipContent>(args: RuleArgs<Row, TooltipContent>): 'x' | 'y' {
     const has_x = args.x !== undefined
     const has_y = args.y !== undefined
 
@@ -77,7 +77,7 @@ function rule_side(args: RuleArgs): 'x' | 'y' {
  * @param side - the rule's axis, for error messages
  * @returns the resolved values plus mode, categories, and source field
  */
-function resolve_rule_column(value: RuleValueArg | undefined, data: Record<string, unknown>[] | undefined, side: 'x' | 'y'): ResolvedRule {
+function resolve_rule_column<Row>(value: RuleValueArg<Row> | undefined, data: Row[] | undefined, side: 'x' | 'y'): ResolvedRule {
     if (data === undefined) {
         return resolve_bare_rule(value, side)
     }
@@ -86,7 +86,7 @@ function resolve_rule_column(value: RuleValueArg | undefined, data: Record<strin
         throw new Error(`plot.rule: ${side} is a number (${value}) but data was passed. Drop data for a single rule at ${value}, or name the field holding each rule's value.`)
     }
     // rule_side established that value is present; after excluding number it is a field or accessor.
-    const field_value = value as Exclude<RuleValueArg, number>
+    const field_value = value as Exclude<RuleValueArg<Row>, number>
 
     if (data.length > 0) {
         validate_field_present(data[0], field_value, false, 'plot.rule', side)
@@ -107,7 +107,7 @@ function resolve_rule_column(value: RuleValueArg | undefined, data: Record<strin
  * @param side - the rule's axis, for error messages
  * @returns the single-value resolved column
  */
-function resolve_bare_rule(value: RuleValueArg | undefined, side: 'x' | 'y'): ResolvedRule {
+function resolve_bare_rule<Row>(value: RuleValueArg<Row> | undefined, side: 'x' | 'y'): ResolvedRule {
     if (typeof value === 'function') {
         throw new Error(`plot.rule: ${side} is an accessor but no data was passed. An accessor reads a value per row, so it needs data; pass the value directly for a single rule.`)
     }
@@ -123,7 +123,7 @@ function resolve_bare_rule(value: RuleValueArg | undefined, side: 'x' | 'y'): Re
  * @param series - the series under construction
  * @param args - the rule series args
  */
-function apply_rule_options<TooltipContent>(series: RuleSeries<TooltipContent>, args: RuleArgs<TooltipContent>): void {
+function apply_rule_options<Row, TooltipContent>(series: RuleSeries<Row, TooltipContent>, args: RuleArgs<Row, TooltipContent>): void {
     retain_factory_args(series, args)
     apply_rule_color(series, args)
     Object.assign(series, resolve_highlight_colors(args.data, args.highlight_color))
@@ -164,7 +164,7 @@ function apply_rule_options<TooltipContent>(series: RuleSeries<TooltipContent>, 
  * @param series - the series under construction
  * @param args - the rule series args
  */
-function apply_rule_color<TooltipContent>(series: RuleSeries<TooltipContent>, args: RuleArgs<TooltipContent>): void {
+function apply_rule_color<Row, TooltipContent>(series: RuleSeries<Row, TooltipContent>, args: RuleArgs<Row, TooltipContent>): void {
     const data = args.data
 
     if (data !== undefined) {
@@ -197,7 +197,7 @@ function apply_rule_color<TooltipContent>(series: RuleSeries<TooltipContent>, ar
  * @param side - the rule's axis
  * @param resolved - the resolved value column
  */
-function attach_rule_column<TooltipContent>(series: RuleSeries<TooltipContent>, side: 'x' | 'y', resolved: ResolvedRule): void {
+function attach_rule_column<Row, TooltipContent>(series: RuleSeries<Row, TooltipContent>, side: 'x' | 'y', resolved: ResolvedRule): void {
     const axis_kind_key = side === 'x' ? 'x_axis_kind' : 'y_axis_kind'
     const categories_key = side === 'x' ? 'x_categories' : 'y_categories'
     const field_key = side === 'x' ? 'x_field' : 'y_field'

@@ -160,7 +160,6 @@ export class AInputElement extends HTMLElementBase {
   // may set the `value` property before the element connects), so the initial
   // value isn't lost when the control is built.
   private pendingValue?: string
-  #pendingName?: string
   #releaseModality?: () => void
   // True between connect and the first control build, so attribute changes for
   // forwarded props don't try to touch a control that doesn't exist yet.
@@ -342,7 +341,6 @@ export class AInputElement extends HTMLElementBase {
     // the old `value ?? ''` wiped the field to empty on attribute removal.
     if (name === 'value') { if (value !== null) this.value = value; return }
     if (name === 'defaultvalue') return
-    if (name === 'name') { this.#pendingName = undefined; this.syncFormValue(this.value) }
     // Forwarded attribute changed — also re-run validity, since a constraint
     // (required / pattern / min / max / step / minlength / maxlength / type) can
     // flip the inner control's validity. Symmetric with the `status` branch.
@@ -566,10 +564,7 @@ export class AInputElement extends HTMLElementBase {
     // Button-backed Inputs are triggers rather than form fields. The native
     // button is type="button"; keep the form-associated host equally inert.
     if (isButton(this.control)) { this.internals?.setFormValue(null); return }
-    if (this.#pendingName === undefined) { this.internals?.setFormValue(value); return }
-    const data = new this.view.FormData()
-    if (this.#pendingName) data.append(this.#pendingName, value)
-    this.internals?.setFormValue(data, value)
+    this.internals?.setFormValue(value)
   }
 
   /** Reflect `status` into the control's `aria-invalid` and the `:state(invalid)`
@@ -750,13 +745,13 @@ export class AInputElement extends HTMLElementBase {
   checkValidity(): boolean { return this.internals?.checkValidity() ?? true }
   reportValidity(): boolean { return this.internals?.reportValidity() ?? true }
 
-  /** Effective form field name. Property assignments stay off-DOM and supply
-   * named form entries; authored attribute changes restore the attribute channel. */
-  get name(): string { return this.#pendingName ?? this.getAttribute('name') ?? '' }
-  set name(v: string) {
-    this.#pendingName = v == null ? '' : String(v)
-    this.forward('name', this.#pendingName)
-    this.syncFormValue(this.value)
+  /** Form field name, reflected to the host attribute for native form lookup. */
+  get name(): string { return this.getAttribute('name') ?? '' }
+  set name(v: string | null | undefined) {
+    // React assigns this property on upgraded elements, including prop removal.
+    // Native form lookup and submission both use the host's name attribute.
+    if (v == null) this.removeAttribute('name')
+    else if (this.getAttribute('name') !== String(v)) this.setAttribute('name', String(v))
   }
 
   // --- Form-associated callbacks ---

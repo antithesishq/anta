@@ -283,13 +283,18 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       host.value='bad';const invalid=!host.checkValidity();host.value='good@example.com';const valid=host.checkValidity()
       const initial=values();host.name='renamed';const property=values();const attribute=host.getAttribute('name')
       host.setAttribute('name','authored');const authored=values()
+      const removed=['',null,undefined].map(name=>{
+        host.name=name
+        return {attribute:host.getAttribute('name'),name:host.name,entries:values(),lookup:form.elements.namedItem('authored')===null}
+      })
+      host.name='authored'
       host.setAttribute('status','critical');const critical=host.validity.customError
       host.removeAttribute('status');form.reset();const reset=host.value
       host.formStateRestoreCallback('restored@example.com');const restored=host.value
       fieldset.disabled=true;const disabled=values();fieldset.disabled=false
-      return {invalid,valid,initial,property,attribute,authored,critical,reset,restored,disabled,button:form.querySelector('[button]').checkValidity()}
+      return {invalid,valid,initial,property,attribute,authored,removed,critical,reset,restored,disabled,button:form.querySelector('[button]').checkValidity()}
     })
-    assert.deepEqual(result,{invalid:true,valid:true,initial:[['email','good@example.com']],property:[['renamed','good@example.com']],attribute:'email',authored:[['authored','good@example.com']],critical:true,reset:'seed@example.com',restored:'restored@example.com',disabled:[],button:true})
+    assert.deepEqual(result,{invalid:true,valid:true,initial:[['email','good@example.com']],property:[['renamed','good@example.com']],attribute:'renamed',authored:[['authored','good@example.com']],removed:[{attribute:'',name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true}],critical:true,reset:'seed@example.com',restored:'restored@example.com',disabled:[],button:true})
     await field(page).evaluate(host=>{host.setAttribute('type','number');host.setAttribute('min','2');host.setAttribute('max','8');host.setAttribute('step','2');host.value='3'})
     assert.equal(await field(page).evaluate(host=>host.validity.stepMismatch),true)
     await field(page).evaluate(host=>host.value='10')
@@ -312,6 +317,47 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await page.waitForFunction(()=>getComputedStyle(document.querySelector('a-input').shadowRoot.querySelector('[part="trailing"]')).opacity==='1')
   })
   for(const framework of ['React','Preact']) {
+    for (const registration of ['before render','after render']) {
+      test.fast(`${name} ${framework}: client form names reflect with registration ${registration}`,async t=>{
+        const page=await pageFor(t,engine,mode)
+        await page.locator('#mount').evaluate(node=>{
+          const form=document.createElement('form');node.before(form);form.append(node)
+        })
+        if(registration==='before render') await register(page,mode)
+        await page.addScriptTag({url:`/${framework}.js`,type:'module'})
+        await page.evaluate(()=>renderInput({name:'email'}));await frames(page)
+        if(registration==='after render') await register(page,mode)
+        const identity=()=>field(page).evaluate(host=>{
+          const form=host.closest('form'),name=host.name
+          return {name,attribute:host.getAttribute('name'),entries:[...new FormData(form)],
+            property:form.elements[name]===host,named:form.elements.namedItem(name)===host,
+            document:[...document.getElementsByName(name)].includes(host),
+            selector:document.querySelector(`a-input[name="${name}"]`)===host,
+            control:host.shadowRoot.querySelector('[part="input"]').getAttribute('name')}
+        })
+        for(const name of ['email','renamed']) {
+          if(name==='renamed') {
+            await field(page).evaluate(host=>{window.originalHost=host;host.value='Edited'})
+            await page.evaluate(()=>renderInput({name:'renamed'}));await frames(page)
+            assert.equal(await field(page).evaluate(host=>host===originalHost),true)
+            assert.equal(await page.evaluate(()=>document.querySelector('form').elements.namedItem('email')),null)
+          }
+          assert.deepEqual(await identity(),{name,attribute:name,entries:[[name,name==='email'?'Hello':'Edited']],
+            property:true,named:true,document:true,selector:true,control:name})
+        }
+        await control(page).fill('Snapshot')
+        assert.equal(await page.evaluate(()=>valueReport.name),'renamed')
+        for(const name of ['',null,undefined]) {
+          await page.evaluate(name=>renderInput({name}),name);await frames(page)
+          // Preact assigns an empty string when removing a property prop.
+          const attribute=name==null&&framework==='React'?null:''
+          assert.deepEqual(await field(page).evaluate(host=>({name:host.name,attribute:host.getAttribute('name'),
+            entries:[...new FormData(host.closest('form'))],old:host.closest('form').elements.namedItem('renamed'),
+            value:host.value,control:host.shadowRoot.querySelector('[part="input"]').getAttribute('name')})),
+            {name:'',attribute,entries:[],old:null,value:'Snapshot',control:attribute})
+        }
+      })
+    }
     test.fast(`${name} ${framework}: SSR hydration retains nodes, rich ARIA, and clear lifecycle`,async t=>{
       const page=await pageFor(t,engine,mode,`&ssr&framework=${framework}`)
       await field(page).evaluate(host=>{window.serverHost=host;window.serverChildren=[...host.children]})
@@ -319,6 +365,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       await page.addScriptTag({url:`/${framework}.js`,type:'module'})
       await page.evaluate(()=>window.hydrateInput({name:'message'}));await frames(page)
       assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+      assert.equal(await field(page).getAttribute('name'),'message')
       assert.equal(await field(page).evaluate(host=>host===serverHost&&serverChildren.every((node,i)=>host.children[i]===node)),true)
       const native=control(page)
       assert.equal(await native.evaluate(node=>node.ariaLabelledByElements[0].textContent),'Message')

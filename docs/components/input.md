@@ -448,7 +448,7 @@ Narrow the preview to see the layout adjust.
 | `min?` | number \| string | — | Minimum value for `type="number"`. |
 | `minLength?` | number | — | Minimum text length for native types that support it. |
 | `multiline?` | boolean | — | Allow longer text and grow the field as someone types. Use `maxRows` to limit growth or `rows` to keep a fixed height. |
-| `name?` | string | — | Form field name, submitted through ElementInternals. Property updates stay internal; they do not reflect into the host's `name` attribute. |
+| `name?` | string | — | Form field name for submission, named form lookup, and attribute selectors. |
 | `onBlur?` | (e) => void | — | Fires when the field loses focus. |
 | `onChange?` | (e) => void | — | Fires on native commit, such as blur or Enter, and on clear. Use `onInput` or `onValueChange` for live edits. Read `e.target.value`. |
 | `onClearClick?` | (e) => void | — | Fires before the built-in clear action. Call `e.preventDefault()` synchronously to keep the value and cancel `onClearInput`. Corresponds to the cancelable, bubbling `clearclick` event. |
@@ -491,11 +491,9 @@ The JSX `type="search"` shorthand uses a native text input. On a raw `<a-input>`
 `type="search"` uses a native search input. Listen for `clearclick` and
 `clearinput` with `addEventListener()` to handle clearing without a JSX wrapper.
 
-The `name` attribute supplies the form field name. Assigning the `name` property
-updates the effective name and submitted FormData without changing the host
-attribute. Read `element.name` for that effective value. Attribute selectors and
-`form.elements.namedItem()` continue to use authored attributes. A later `name`
-attribute update restores that attribute as the source of truth.
+The `name` property and attribute stay in sync. Updating either changes the
+submitted field name, `form.elements.namedItem()` lookup, and attribute selectors.
+Removing the name excludes the field from form submission.
 
 `checkValidity()`, `reportValidity()`, `validity`, `validationMessage`, and
 `willValidate` expose form validation. `status="critical"` adds a custom error;

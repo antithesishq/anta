@@ -93,8 +93,7 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
   /** Focus this field when its containing `Dialog` opens. */
   autoFocus?: boolean
-  /** Form field name, submitted through ElementInternals. Property updates
-   *  stay internal; they do not reflect into the host's `name` attribute. */
+  /** Form field name for submission, named form lookup, and attribute selectors. */
   name?: string
   /** Placeholder shown when empty. */
   placeholder?: string

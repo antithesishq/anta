@@ -16,11 +16,6 @@ changes are not listed.
   prior written permission. Earlier MIT-licensed copies keep their original terms.
   Antune and the default styles remain MIT licensed.
 
-- [Input form names](/input/#web-component): assigning `element.name` updates
-  the submitted name without reflecting into the host attribute. Use authored
-  attributes for CSS selectors and named form lookup, and `element.name` for the
-  effective value.
-
 - [Expander raw markup](/expander/#web-component) uses named regions instead of
   slot attributes. Put `level` on `a-expander-summary`, select built-in artwork
   with `a-expander-indicator shape="chevron"`, and place that region before the

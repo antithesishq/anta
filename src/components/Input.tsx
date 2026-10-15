@@ -26,16 +26,15 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Extra content between the field and hint. A `Tooltip` child anchors to the
    * field. Use `leading` and `trailing` for content inside the field. */
   children?: React.ReactNode
-  /** Visible field label and accessible name for the native control. Accepts text
-   * or JSX. Accessible naming follows the current label content. */
+  /** Explain what to enter. Accepts text or JSX and also names the field for
+   * screen readers. */
   label?: React.ReactNode
   /** Persistent help or feedback below the field. `status` colors the message and
    * adds a status icon. */
   hint?: React.ReactNode
-  /** Feedback color for the field and hint. `critical` marks the field invalid,
-   * sets `aria-invalid` and `:state(invalid)`, and blocks normal form submission.
-   * Other statuses add no validation error; native constraints still apply. Omit
-   * or use `neutral` for a plain field. */
+  /** Feedback for the field and hint. Use `critical` for an error that must be
+   * fixed before submission. Other statuses provide feedback without adding a
+   * validation error. Required fields and other validation rules still apply. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Icon before the hint. The defaults are `warning-diamond` for critical,
    * `warning-triangle` for warning, `circle-check` for success, `info` for info,
@@ -51,8 +50,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    *  Status borders remain visible at rest.
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary'
-  /** Field height, text size, and icon size. Field heights are 24px for small, 28px
-   * for medium, and 32px for large.
+  /** Adjust the field, text, icons, and action buttons together to suit the
+   * surrounding interface.
    * @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
   /** Controlled value. Update it with `onInput` or `onValueChange` for live
@@ -60,9 +59,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   value?: string
   /** Initial value for an uncontrolled field, restored on form reset. */
   defaultValue?: string
-  /** Render a textarea. Without `rows`, it grows with content up to `maxRows` when
-   * set. Autogrow uses native field sizing where supported, with a JavaScript
-   * fallback in WebKit and browsers without support. */
+  /** Allow longer text and grow the field as someone types. Use `maxRows` to
+   * limit growth or `rows` to keep a fixed height. */
   multiline?: boolean
   /** Fixed visible row count. Also enables `multiline`. */
   rows?: number
@@ -77,10 +75,9 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Content at the end of the field, after the clear button. Icon-only buttons
    * automatically fit the Input size. */
   trailing?: React.ReactNode
-  /** Native single-line input type. Ignored for multiline fields. `search` uses a
-   * native text input with a leading search icon, a clear button, and
-   * `inputmode="search"`. Override `leading` or set `clearable={false}` to
-   * customize it.
+  /** Choose the kind of information to enter. Ignored for multiline fields.
+   * `search` adds a search icon and clear button. Replace the icon with
+   * `leading` or hide the button with `clearable={false}`.
    * @defaultValue text */
   type?: 'text' | 'search' | 'email' | 'password' | 'tel' | 'url' | 'number'
   /** Native autocomplete token describing the field purpose. Overrides the token
@@ -115,11 +112,11 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   button?: boolean
   /** Mark the field required (drives native validity). */
   required?: boolean
-  /** Display leading, trailing, and clear content at 60% opacity, returning to full
-   * opacity when the field is hovered or focused. */
+  /** Keep leading, trailing, and clear content subtle until someone hovers over
+   * or focuses the field. */
   dimActions?: boolean
-  /** Use a 999px border radius. Pass a number in pixels or a CSS length for a
-   * custom radius. The clear button stays circular. */
+  /** Give the field fully rounded corners. Pass a number in pixels or a CSS
+   * length for a custom radius. The clear button stays circular. */
   round?: boolean | number | string
   /** Toggle native spell-checking. */
   spellCheck?: boolean
@@ -142,9 +139,9 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Fires on native commit, such as blur or Enter, and on clear. Use `onInput` or
    * `onValueChange` for live edits. Read `e.target.value`. */
   onChange?: (e: any) => void
-  /** Fires on both `input` and `change`, including clear, with a serializable
-   * snapshot of `value`, `name`, `empty`, `valid`, and `validationMessage`. Can
-   * run more than once per edit. Use `event.type` to distinguish the events. */
+  /** Receive the current text, field name, and validation result while editing
+   * and when an edit is committed, including clear. Can run more than once for
+   * the same value. Use `event.type` to distinguish the events. */
   onValueChange?: (event: any, attrs: InputChangeAttrs) => void
   /** Fires before the built-in clear action. Call `e.preventDefault()`
    * synchronously to keep the value and cancel `onClearInput`. Corresponds to the

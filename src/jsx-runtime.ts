@@ -32,7 +32,22 @@ export interface RendererHooks {
   useSyncExternalStore?: UseSyncExternalStore
 }
 
+/** Renderer behavior configured before mounting components. */
+export interface RendererOptions {
+  /** Use `direct` when the renderer installs native event props immediately.
+   * `after-mount` applies the browser hydration workaround. Server and worker
+   * projections without `window` always forward event props immediately.
+   * @defaultValue after-mount */
+  nativeEventProps?: 'direct' | 'after-mount'
+}
+
 let _hooks: RendererHooks = React as RendererHooks
+let _nativeEventProps: NonNullable<RendererOptions['nativeEventProps']> = 'after-mount'
+
+/** @internal Read the event mode without exposing mutable renderer configuration. */
+export function nativeEventPropsMode() {
+  return _nativeEventProps
+}
 
 /**
  * Configure the JSX factory, fragment, and hooks before rendering Anta components.
@@ -42,6 +57,10 @@ let _hooks: RendererHooks = React as RendererHooks
  * omitted hooks never fall back to another renderer. A missing hook reports an
  * error when a component uses it. Omitting the object restores React's hooks.
  * Configure the same package entry in each process or thread that renders JSX.
+ * Set `options.nativeEventProps` to `direct` for renderers that install event
+ * subscriptions immediately, including workers with a `window` shim. Omitting
+ * options restores the browser's `after-mount` behavior. Configure before mounting;
+ * do not switch event modes for a mounted tree.
  *
  * @example Custom renderer
  * ```ts
@@ -55,10 +74,12 @@ export function configure(
   jsx: JsxFunction,
   Fragment?: ComponentType,
   hooks: RendererHooks = React as RendererHooks,
+  options: RendererOptions = {},
 ) {
   _jsx = jsx
   if (Fragment !== undefined) _Fragment = Fragment
   _hooks = hooks
+  _nativeEventProps = options.nativeEventProps ?? 'after-mount'
 }
 
 function rendererHook<K extends keyof RendererHooks>(name: K): NonNullable<RendererHooks[K]> {

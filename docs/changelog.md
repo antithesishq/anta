@@ -55,6 +55,10 @@ changes are not listed.
 
 ### Added
 
+- [Custom renderer events](/install/#custom-renderer-events): set
+  `nativeEventProps: 'direct'` in the fourth `configure()` argument to forward
+  handlers immediately, without listener hooks or an extra render.
+
 - [Text's inert expansion mode](/text/#truncation-and-expansion):
   `expandableInert` makes the folded, overflowing preview one expand target and
   skips content interactions until expanded. Text that fits remains interactive.

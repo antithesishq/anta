@@ -368,6 +368,27 @@ the UI entries separately. The root package and the prebuilt bundle each have
 their own renderer configuration, so use `configure` from the same entry as
 your wrappers. The explicit `preact/compat` hook import does not require an alias.
 
+### Custom renderer events
+
+If your renderer installs event subscriptions as soon as it receives event
+props, enable direct forwarding before mounting components:
+
+```ts
+configure(h, Fragment, hooks, {
+  nativeEventProps: 'direct',
+})
+```
+
+This skips the listener setup effect and its extra render for Input, Banner,
+Expander, and expandable Text. Text still keeps its expansion state.
+Use this for a worker renderer even if it provides a `window` shim.
+
+React works without this option. The default `after-mount` mode keeps its browser
+hydration workaround. Ordinary servers and workers without `window` already
+forward event props immediately. Each `configure()` call resets the option to
+`after-mount` when omitted. Set the mode before mounting and keep it unchanged
+while that tree is mounted.
+
 ### TypeScript: typing raw `<a-*>` tags in JSX
 
 JSX wrappers such as `<Button>` and `<Progress>` need no extra typing. Configure

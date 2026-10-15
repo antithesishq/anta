@@ -93,7 +93,49 @@ test('browser Input reports the missing configured effect instead of invoking Re
   }
 })
 
-test('Preact without React aliases renders all shared listener consumers with a hooks namespace', async t => {
+test('direct mode forwards browser-like projections without listener hooks', () => {
+  globalThis.window = {}
+  try {
+    const unexpectedHook = () => { throw new Error('Direct event props must not use listener hooks') }
+    runtime.configure(h, undefined, { useState: unexpectedHook, useLayoutEffect: unexpectedHook }, { nativeEventProps: 'direct' })
+    let value, dismissed = false, expanded = false
+    const input = runtime.Input({ label: 'Draft', onInput: e => { value = e.target.value } })
+    input.props.oninput({ target: { value: 'Immediate' } })
+    assert.equal(value, 'Immediate')
+    runtime.Banner({ message: 'Saved', onDismiss: () => { dismissed = true } }).props.onstatechange(event({ next: 'closed' }))
+    runtime.Expander({ title: 'Details', onStateChange: (_, attrs) => { expanded = attrs.next } }).props.onstatechange(event({ next: 'open', prev: 'closed' }))
+    assert.equal(dismissed, true)
+    assert.equal(expanded, true)
+
+    let stateCalls = 0, presentation
+    runtime.configure(h, undefined, {
+      useState: initial => { stateCalls++; return [initial, next => { presentation = next(initial) }] },
+      useMemo: factory => factory(),
+      useLayoutEffect: unexpectedHook,
+    }, { nativeEventProps: 'direct' })
+    const text = runtime.Text({ truncate: 1, expandable: true, children: 'Long content' })
+    text.props.ontextpresentationchange(event({ expanded: true, overflowing: true }))
+    assert.equal(stateCalls, 1, 'Only Text presentation state remains')
+    assert.deepEqual(presentation, { expanded: true, overflowing: true })
+  } finally {
+    delete globalThis.window
+  }
+})
+
+test('omitting renderer options restores the default browser listener behavior', () => {
+  globalThis.window = {}
+  try {
+    runtime.configure(h, undefined, {}, { nativeEventProps: 'direct' })
+    assert.equal(runtime.Input({ label: 'Name' }).type, 'a-input')
+    runtime.configure(h, undefined, { useState: initial => [initial, () => {}] })
+    assert.throws(() => runtime.Input({ label: 'Name' }), /configured renderer is missing useLayoutEffect/)
+  } finally {
+    delete globalThis.window
+  }
+})
+
+for (const mode of ['after-mount', 'direct']) {
+test(`Preact without React aliases supports ${mode} event props`, async t => {
   const { createRequire } = await import('node:module')
   const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
   const { chromium } = requireSite('playwright')
@@ -115,7 +157,13 @@ test('Preact without React aliases renders all shared listener consumers with a 
         import './src/elements/a-text'
         import './src/elements/a-button'
         import './src/elements/a-icon'
-        configure(h, Fragment, hooks)
+        configure(h, Fragment, {
+          ...hooks,
+          useLayoutEffect: (...args) => {
+            if ('${mode}' === 'direct') throw new Error('Direct mode ran a listener effect')
+            return hooks.useLayoutEffect(...args)
+          },
+        }, { nativeEventProps: '${mode}' })
         window.reports = []
         window.show = version => render(<>
           <Input label="Draft" defaultValue="Original" clearable
@@ -163,3 +211,4 @@ test('Preact without React aliases renders all shared listener consumers with a 
   await page.waitForFunction(() => !document.querySelector('a-text-content').inert)
   assert.deepEqual(errors, [])
 })
+}

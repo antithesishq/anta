@@ -878,6 +878,10 @@ Policy blocks inline styles. Input's defaults do not inject a shadow stylesheet.
 Custom `tone`, custom `round`, and application `style` props can still serialize
 style attributes; provide equivalent consumer CSS under that policy.
 
+Chrome 135 can retain native number stepper buttons because its external
+`::part(input)` rules do not suppress them. The buttons and keyboard stepping
+keep their native behavior.
+
 The `.fancy` class is just for the demo — a borderless pill that fills dark-grey
 and darkens on focus in light mode, and the inverse in dark:
 

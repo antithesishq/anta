@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 14, 2026 on `codex/input-external-css`.
+Updated October 15, 2026 on `codex/input-external-css`.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -52,10 +52,10 @@ and verification before moving to the next component.
    `bubble` part rules. Positioning, interaction, proximity, and timers stay in
    the element; coordination and observation belong to the connected document.
    No injected stylesheet or authored host/light-DOM rewriting.
-4. [ ] [Input](src/elements/a-input.ts): external defaults implemented for the
+4. [x] [Input](src/elements/a-input.ts): external defaults implemented for the
    existing input, textarea, button, and slots. Source, installed-package,
    visual, form, and hydration checks pass in current engines. Chrome 135's
-   number-spinner reset remains a compatibility decision; see Input verification.
+   native number buttons are an accepted difference; see Input verification.
 5. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
    adornments, and native-field semantics.
 6. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
@@ -280,7 +280,7 @@ progressive; this change adds no replacement animation. Custom JSX values that
 serialize style attributes, including custom `round` values, remain a separate
 CSP constraint.
 
-### Input verification (in progress)
+### Input verification
 
 Verified October 14, 2026 on `codex/input-external-css`:
 
@@ -310,9 +310,13 @@ Verified October 14, 2026 on `codex/input-external-css`:
   the original shadow reset hides its number spinner, while the external part
   rule does not. `appearance: none`, `appearance: textfield`, and separate part
   rules for display, visibility, opacity, pointer events, and width did not
-  suppress its native spinner. The expanded minimum-browser run currently
-  passes 37 of 39 checks. The remaining choice is a small CSP-safe shadow fallback
-  or an explicitly accepted difference in that older engine.
+  suppress its native spinner. On October 15, the user accepted that older-engine
+  difference to keep all defaults external. The regression check explicitly
+  expects native number buttons in Chrome 135 and still checks keyboard stepping,
+  value handling, and the remaining native control behavior. No shadow fallback
+  is included, and this decision does not change the package's browser baseline.
+  All 39 installed-package checks pass with that explicit expectation, and both
+  original/current native-control comparisons pass in Chrome 135.
 - Native-decoration comparisons confirm Firefox's number spinner was present in
   the original and remains present. Current Chrome and WebKit suppress it.
   Keyboard incrementing, raw search decoration suppression, password type

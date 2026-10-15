@@ -60,7 +60,8 @@ changes are not listed.
 ### Changed
 
 - [Input](/input/) default styles now load from external CSS under strict CSP.
-  Existing shadow controls, slots, parts, and interactions remain supported.
+  Existing shadow controls, slots, parts, and interactions remain supported;
+  Chrome 135 can retain native number stepper buttons.
 
 - [Tooltip](/tooltip/) uses external default styling under Content Security Policy
   restrictions. Existing markup and bubble styling remain supported. Interactive

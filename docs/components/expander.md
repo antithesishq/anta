@@ -131,7 +131,7 @@ Share one open item identifier across a group of controlled Expanders when only
 one section should be open at a time.
 
 ```tsx
-import { Expander, Text } from '@antadesign/anta'
+import { Box, Expander, Text } from '@antadesign/anta'
 import { useState } from 'react'
 
 const items = [
@@ -141,12 +141,16 @@ const items = [
 
 function Accordion() {
   const [openId, setOpenId] = useState('shipping')
-  return items.map(item => (
-    <Expander key={item.id} title={item.title} open={openId === item.id}
-      onStateChange={(_, { next }) => setOpenId(next ? item.id : null)}>
-      <Text>{item.body}</Text>
-    </Expander>
-  ))
+  return (
+    <Box display="grid" gap={1}>
+      {items.map(item => (
+        <Expander key={item.id} title={item.title} open={openId === item.id}
+          onStateChange={(_, { next }) => setOpenId(next ? item.id : null)}>
+          <Text>{item.body}</Text>
+        </Expander>
+      ))}
+    </Box>
+  )
 }
 ```
 

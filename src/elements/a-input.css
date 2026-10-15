@@ -218,7 +218,7 @@
      it adopts the shadow `.label` (per-size scale, weight 500), and any height
      delta shifts the field below it. Setting the same metrics here keeps the
      label box the same height across upgrade, so the field doesn't jump. (Font
-     properties inherit through a node label's inline `display: contents`, so
+     properties inherit through a boxless node label, so
      both the string and node label forms track.) */
   a-input:not(:defined) > [slot="label"] {
     display: block;
@@ -315,11 +315,10 @@
     }
   }
 
-  /* Projected wrappers must stay boxless for slots to lay out their children.
-     Protect structure from normal consumer rules in later layers or no layer.
+  /* CSS-only grouping tags let slots lay out their children directly.
      Before upgrade, the skeleton hides adornments and gives the label a box. */
-  a-input:defined > span[data-input-contents] {
-    display: contents !important;
+  a-input:defined > a-input-content {
+    display: contents;
   }
 
   /* Named slots are light-DOM state, so the host derives their visibility and

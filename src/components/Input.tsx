@@ -163,7 +163,6 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
 }
 
 const presence = (on: boolean | undefined) => (on ? '' : undefined)
-const isStringish = (n: React.ReactNode) => typeof n === 'string' || typeof n === 'number'
 
 // Build the `onValueChange` attrs snapshot from the event target (the <a-input>
 // host — the value retargets to it). Carries the value + derived results only;
@@ -332,19 +331,14 @@ export const Input = ({
       style={roundStyle(round, '--input-round', toneStyle(tone, '--input-tone-source', style))}
       {...rest}
     >
-      {label != null &&
-        (isStringish(label) ? (
-          <span slot="label">{label}</span>
-        ) : (
-          <span slot="label" data-input-contents="">
-            {label}
-          </span>
-        ))}
+      {label != null && (
+        <a-input-content slot="label">{label}</a-input-content>
+      )}
 
       {resolvedLeading != null && (
-        <span slot="leading" data-input-contents="">
+        <a-input-content slot="leading">
           {resolvedLeading}
-        </span>
+        </a-input-content>
       )}
 
       {resolvedClearable && (
@@ -357,7 +351,7 @@ export const Input = ({
         // in the element (src/elements/a-input.ts). The string is duplicated, not
         // shared — importing the element module here would self-register it and
         // break the wrapper/element decoupling. Rename in both places.
-        <span slot="clear" data-input-contents="">
+        <a-input-content slot="clear">
           <Button
             priority="tertiary"
             size={size}
@@ -366,21 +360,21 @@ export const Input = ({
             aria-label="Clear"
             data-custom-event="clearrequest"
           />
-        </span>
+        </a-input-content>
       )}
       {trailing != null && (
-        <span slot="trailing" data-input-contents="">
+        <a-input-content slot="trailing">
           {trailing}
-        </span>
+        </a-input-content>
       )}
 
       {hint != null && (
-        <span slot="hint" data-input-contents="">
+        <a-input-content slot="hint">
           {glyph && (
             <Icon shape={glyph as IconShape} aria-hidden="true" />
           )}
           <span>{hint}</span>
-        </span>
+        </a-input-content>
       )}
 
       {/* Unslotted extras → default slot, rendered under the field above the hint. */}

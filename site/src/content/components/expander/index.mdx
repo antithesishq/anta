@@ -9,10 +9,11 @@ import Playground from '../../../components/PlaygroundEmbed.astro'
 import Preview from '../../../components/Preview.astro'
 import PropsTable from '../../../components/PropsTable.astro'
 import Disclosure from '../../../components/Disclosure.astro'
-import expanderDemo, { actionsDemo } from './expander.demo.ts'
+import expanderDemo from './expander.demo.ts'
 import { Expander, Text } from '@antadesign/anta'
 import { AccordionDemo } from '../../../components/AccordionDemo'
 import { CancelableExpanderDemo, ControlledExpanderDemo } from '../../../components/ExpanderStateDemo'
+import { ExpanderActionsDemo } from '../../../components/ExpanderActionsDemo'
 
 # Expander
 
@@ -76,7 +77,28 @@ visuals. Indicator artwork stays decorative and adds no focus stop.
 The demonstration uses a custom title, two indicator visuals, and an independent
 Download action. Open the section to see the action count.
 
-<Playground component="Expander" layout="side" codeInitiallyFolded initialCode={actionsDemo} />
+<Preview direction="column" align="stretch">
+  <ExpanderActionsDemo client:load />
+</Preview>
+
+```tsx folded
+import { Button, Expander, Icon, Text, Title } from '@antadesign/anta'
+import { useState } from 'react'
+
+function ExpanderActionsDemo() {
+  const [downloads, setDownloads] = useState(0)
+  return (
+    <Expander
+      title={<Title level={4}>Build artifacts</Title>}
+      indicatorPlacement="end"
+      indicator={{ closed: <Icon shape="plus" />, open: <Icon shape="minus" /> }}
+      actions={<Button size="small" label="Download" onClick={() => setDownloads(count => count + 1)} />}
+    >
+      <Text>Download requests: {downloads}. The action leaves the disclosure state unchanged.</Text>
+    </Expander>
+  )
+}
+```
 
 ## Round and outdent
 

@@ -78,9 +78,52 @@ Call `event.preventDefault()` in `onStateChange` to reject an uncontrolled
 request synchronously. The demonstration keeps the section open until you clear
 the checkbox.
 
+```tsx
+import { Box, Checkbox, Expander, Text } from '@antadesign/anta'
+import { useState } from 'react'
+
+function CancelableExample() {
+  const [keepOpen, setKeepOpen] = useState(true)
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Checkbox checked={keepOpen} onStateChange={(_, { next }) => setKeepOpen(next === true)}>Keep details open</Checkbox>
+      <Expander title="Unsaved changes" defaultOpen onStateChange={(event, { next }) => {
+        if (!next && keepOpen) event.preventDefault()
+      }}>
+        <Text>Clear the checkbox to allow this section to close.</Text>
+      </Expander>
+    </Box>
+  )
+}
+```
+
 Pass `open` to control the section. Update it with `detail.next` in
 `onStateChange` to accept a request, or leave it unchanged to reject. The
 following demonstration counts requests even when they are rejected.
+
+```tsx
+import { Box, Button, Checkbox, Expander, Text } from '@antadesign/anta'
+import { useState } from 'react'
+
+function ControlledExample() {
+  const [open, setOpen] = useState(false)
+  const [accept, setAccept] = useState(true)
+  const [requests, setRequests] = useState(0)
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Checkbox checked={accept} onStateChange={(_, { next }) => setAccept(next === true)}>Accept state requests</Checkbox>
+      <Expander title="Release details" open={open} onStateChange={(_, { next }) => {
+        setRequests(count => count + 1)
+        if (accept) setOpen(next)
+      }}>
+        <Text>The content stays mounted when closed.</Text>
+      </Expander>
+      <Text>State requests: {requests}</Text>
+      <Button label="Show details" onClick={() => setOpen(true)} />
+    </Box>
+  )
+}
+```
 
 ### Accordion
 
@@ -248,47 +291,6 @@ function Demo() {
     >
       <Text>Download requests: {downloads}. The action leaves the disclosure state unchanged.</Text>
     </Expander>
-  )
-}
-`
-
-export const stateDemo = `import { Expander, Button, Checkbox, Text } from '@antadesign/anta'
-import { useState } from 'preact/hooks'
-
-function Demo() {
-  const [open, setOpen] = useState(false)
-  const [accept, setAccept] = useState(true)
-  const [requests, setRequests] = useState(0)
-  return (
-    <div style={{ display: 'grid', gap: 12, width: '100%' }}>
-      <Checkbox checked={accept} onStateChange={(_, { next }) => setAccept(next === true)}>Accept state requests</Checkbox>
-      <Expander title="Release details" open={open} onStateChange={(_, { next }) => {
-        setRequests(count => count + 1)
-        if (accept) setOpen(next)
-      }}>
-        <Text>The content stays mounted when closed.</Text>
-      </Expander>
-      <Text>State requests: {requests}</Text>
-      <Button label="Show details" onClick={() => setOpen(true)} />
-    </div>
-  )
-}
-`
-
-export const vetoDemo = `import { Expander, Checkbox, Text } from '@antadesign/anta'
-import { useState } from 'preact/hooks'
-
-function Demo() {
-  const [keepOpen, setKeepOpen] = useState(true)
-  return (
-    <div style={{ display: 'grid', gap: 12, width: '100%' }}>
-      <Checkbox checked={keepOpen} onStateChange={(_, { next }) => setKeepOpen(next === true)}>Keep details open</Checkbox>
-      <Expander title="Unsaved changes" defaultOpen onStateChange={(event, { next }) => {
-        if (!next && keepOpen) event.preventDefault()
-      }}>
-        <Text>Clear the checkbox to allow this section to close.</Text>
-      </Expander>
-    </div>
   )
 }
 ```

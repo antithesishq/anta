@@ -107,28 +107,16 @@ with `statusIcon={false}`.
 ## Leading, trailing, and clear
 
 ```tsx
-{/* clearable — the clear button shows once there's a value */}
-{/* dimActions — adornments rest quiet, brighten when the field is hovered/focused */}
-<Input label="Search" placeholder="Search…" clearable dimActions defaultValue="design tokens" autoComplete="off" />
-
-{/* type="search" is a shorthand for the leading search icon + clearable below */}
-<Input label="Search" type="search" placeholder="Search…" autoComplete="off" />
-
-{/* leading / trailing take any node — see the live playground above */}
-<Input label="Search" leading={<Icon shape="search" />} clearable dimActions autoComplete="off" />
-<Input
-  label="Date"
-  autoComplete="off"
-  leading={<Icon shape="calendar" />}
-  trailing={<Button priority="quaternary" size="small" icon="eye" aria-label="Pick" />}
-  dimActions
-/>
+<Input label="Leading icon" placeholder="Search…" leading={<Icon shape="search" />} autoComplete="off" />
+<Input label="Trailing icon" placeholder="Enter a value" trailing={<Icon shape="info" />} autoComplete="off" />
+<Input label="Clear action" placeholder="Search…" clearable dimActions defaultValue="design tokens" autoComplete="off" />
+<Input label="All adornments" leading={<Icon shape="search" />} trailing={<Icon shape="info" />} clearable dimActions defaultValue="design tokens" autoComplete="off" />
+<Input label="Text adornments" leading="from" trailing="each" defaultValue="$20" autoComplete="off" />
 ```
 
-`leading` and `trailing` place content at the field edges: an icon, a Button, or a unit label. A leading item is inset from the
-left by the same `pad-x` as the text, so it lines up on the field's rhythm; the
-playground at the top of this page shows a live leading icon alongside the clear
-button.
+`leading` and `trailing` place content at the field edges: an icon, a Button,
+or text such as “from” and “each.” Use either edge on its own, combine both, or
+add `clearable` alongside them.
 
 **`type="search"`** is a shorthand for that search pattern: it defaults a leading
 search icon and `clearable` (override either — pass your own `leading`, or

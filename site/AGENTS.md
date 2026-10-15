@@ -101,6 +101,10 @@ The Playground regressions also use WebKit; install it with
 
 Astro renders static output. Sätteri handles Markdown/MDX and GFM; astro-expressive-code handles code blocks. Optional math and directive syntax are disabled. Keep interactive behavior in imported JSX components or the existing external Playground demo source; MDX composes the prose and previews. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
 
+Use an imported TSX component when a preview passes JSX through props such as
+Input's `leading` or `trailing`. Nested JSX props written directly in MDX can
+produce empty projected content. Static examples need no hydration directive.
+
 Smart punctuation also processes raw text inside MDX JSX. Use inline code for
 code identifiers, or a quoted JSX expression such as `{'--text-1'}` when a live
 preview must preserve its existing font. The package/LLM Markdown converter

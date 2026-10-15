@@ -449,21 +449,12 @@ export interface ATagAttributes extends BaseAttributes {
 }
 
 /**
- * Attributes for the `<a-expander>` collapsible disclosure.
- *
- * The element builds its own shadow DOM (no native `<details>`): a
- * `<button>` summary carrying `aria-expanded` plus an animated content
- * region. The title is projected via `slot="title"`; header actions
- * (rendered next to the trigger, outside it) via `slot="actions"`; the
- * body is the default slot. Low-level attributes; for the JSX wrapper
- * use `Expander` from `@antadesign/anta`.
+ * Attributes for the `<a-expander>` disclosure. Authors supply direct
+ * `a-expander-summary` (or `a-expander-title`), `a-expander-actions`,
+ * `a-expander-indicator`, and `a-expander-details` regions. The element owns
+ * its native shadow button and collapsed body; styles load externally.
  */
 export interface AExpanderAttributes extends BaseAttributes {
-  /** Built-in disclosure mark. Custom visuals use `slot="indicator"`.
-   *  Defaults to `chevron`. */
-  indicator?: 'chevron' | 'triangle' | 'plus'
-  /** Logical side for the disclosure mark. Defaults to `start`. */
-  'indicator-placement'?: 'start' | 'end'
   /** Controlled open state (`'open'` / `'closed'`). Present → controlled: the
    *  attribute is the source of truth, clicks only dispatch the cancelable
    *  `statechange` event, and the consumer answers by updating it. Absent →
@@ -490,9 +481,6 @@ export interface AExpanderAttributes extends BaseAttributes {
    *  color keeps its hue with lightness/chroma pinned. `'neutral'` is the
    *  default (same as omitting it). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Heading type scale for the summary, `'1'`–`'6'` (mirrors `<a-title>`
-   *  levels). Default (omitted) ≈ level 5. */
-  level?: '1' | '2' | '3' | '4' | '5' | '6'
   /** Fires before the open state changes — the element dispatches a
    *  `cancelable` `statechange` `CustomEvent` whose `detail` is
    *  `{ next, prev }` in the `'open'|'closed'` vocabulary. Uncontrolled,
@@ -503,6 +491,23 @@ export interface AExpanderAttributes extends BaseAttributes {
   onstatechange?: (
     e: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed' }>,
   ) => void
+}
+
+/** Decorative Expander artwork. Place before the title or after the actions. */
+export interface AExpanderIndicatorAttributes extends BaseAttributes {
+  /** Built-in artwork. Omit for custom children or an empty indicator. */
+  shape?: 'chevron' | 'triangle' | 'plus'
+  /** Keep custom artwork out of focus navigation. */
+  inert?: boolean
+  /** Select artwork for one disclosure state. */
+  'data-when'?: 'open' | 'closed'
+}
+
+/** Typography for the built-in Expander title. */
+export interface AExpanderSummaryAttributes extends BaseAttributes {
+  /** Visual title scale; custom heading nodes own their own scale.
+   * @defaultValue '5' */
+  level?: '1' | '2' | '3' | '4' | '5' | '6'
 }
 
 /**

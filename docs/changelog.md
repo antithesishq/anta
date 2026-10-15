@@ -7,6 +7,15 @@ changes are not listed.
 
 ### Breaking
 
+- [Expander raw markup](/expander/#web-component) uses named regions instead of
+  slot attributes. Put `level` on `a-expander-summary`, select built-in artwork
+  with `a-expander-indicator shape="chevron"`, and place that region before the
+  title or after the actions. JSX props and existing shadow parts remain supported.
+
+- [Banner markup and styling](/banner/#web-component) use light-DOM regions and
+  region selectors instead of shadow slots and `::part()`. JSX props remain
+  available; raw authors group actions in `a-banner-actions`.
+
 - [Progress styling](/progress/#styling) uses light-DOM selectors instead of
   `::part()`. `AProgressElement` and `register_a_progress` are removed; raw HTML
   supplies its own ARIA.
@@ -45,6 +54,13 @@ changes are not listed.
 
 ### Changed
 
+- [Expander](/expander/) uses external default styling while retaining its native
+  button, collapse animation, and cancelable state requests. Reconnection keeps
+  applied state.
+
+- [Banner](/banner/) renders its layout with external CSS before registration.
+  Dismissal retains its existing transitions and leaves children mounted.
+
 - [Progress](/progress/) renders its fill and loading animation with external
   CSS and works without JavaScript. Native `<progress data-anta>` remains a
   standalone control.
@@ -56,12 +72,20 @@ changes are not listed.
 - [Card](/card/) renders its final layout and native link directly in HTML. Its
   styling uses external CSS and no shadow stylesheet.
 
-- [Expander rounding](/expander/#round) uses a `1rem` radius when `round` is
+- [Expander rounding](/expander/#round-and-outdent) uses a `1rem` radius when `round` is
   `true`, independent of title level and header height. Explicit radius values
   remain supported; native `details[data-anta][round]` uses the same default.
 
 
 ### Fixed
+
+- [Expander](/expander/) keeps content clipped during expansion and restores
+  overflow once the section finishes opening.
+
+- [Banner visibility](/banner/#controlled-vs-uncontrolled) can be restored after
+  an initially dismissed notice. Nested Banner alignment and close styling stay
+  independent, close requests remain scoped after moving between documents, and
+  empty action regions take no layout space.
 
 - [Text expansion controls](/text/#truncation-and-expansion) precede content links
   in Tab order. Raw HTML authors place the control before `a-text-content` too.
@@ -157,7 +181,7 @@ changes are not listed.
 
 ### Added
 
-- [Expander indicators](/expander/#indicator) can sit after header actions and
+- [Expander indicators](/expander/#actions-and-indicators) can sit after header actions and
   use built-in chevron, triangle, or plus visuals. Custom indicators can rotate
   as one node or switch between closed and open nodes.
 - [Box measurements](/box/#measurements) can include
@@ -178,7 +202,7 @@ changes are not listed.
 
 ### Fixed
 
-- [Expander indicators](/expander/#indicator) leave the mark empty for
+- [Expander indicators](/expander/#actions-and-indicators) leave the mark empty for
   unrecognized strings and numbers instead of displaying them as text.
 - [Menu submenus](/menu/#submenus) stay open when a nested
   date picker closes under the pointer outside the submenu. Hover dismissal

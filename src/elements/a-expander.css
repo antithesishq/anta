@@ -2,6 +2,95 @@
 @layer anta.reset, anta.components, anta.theme;
 
 @layer anta.components {
+  /* Parts retain the existing shadow button and collapse geometry. */
+  a-expander::part(header) { display: flex; align-items: stretch; }
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(header) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto var(--_expander-indicator-track);
+  }
+  a-expander::part(actions) { display: none; }
+  a-expander:has(> a-expander-actions:not(:empty))::part(actions) {
+    display: flex;
+    align-items: center;
+    gap: var(--_expander-actions-gap);
+    flex-shrink: 0;
+    margin-inline: var(--_expander-actions-start) var(--_expander-actions-end);
+  }
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(actions) { grid-column: 2; grid-row: 1; z-index: 1; }
+  a-expander::part(summary) {
+    appearance: none;
+    background: none;
+    border: none;
+    margin: 0;
+    position: relative;
+    padding: var(--_expander-header-padding-block) var(--_expander-header-padding-end) var(--_expander-header-padding-block) var(--expander-gutter);
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-variation-settings: inherit;
+    color: inherit;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    cursor: pointer;
+    user-select: text;
+    border-radius: 2px;
+    outline: none;
+  }
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(summary) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: subgrid;
+    padding: var(--_expander-header-padding-block) 0;
+  }
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(title) { grid-column: 1; display: block; min-width: 0; margin-inline-start: var(--expander-gutter); }
+  a-expander::part(summary):focus-visible { outline: 1px solid var(--focus-ring); outline-offset: 0; }
+  a-expander::part(summary):enabled:hover { color: var(--expander-text-hover); --_expander-indicator-opacity: 1; }
+  a-expander[priority="tertiary"]::part(summary):enabled:hover { --_summary-underline: underline; }
+  a-expander::part(summary):enabled:active { color: var(--expander-text); }
+  a-expander::part(summary):disabled { cursor: default; }
+  a-expander:not(:state(open))::part(summary):enabled:active { --_expander-indicator-opacity: 0.6; }
+  a-expander::part(indicator) {
+    position: absolute;
+    inset-inline-start: var(--_expander-indicator-start);
+    top: 50%;
+    width: var(--_expander-indicator-size);
+    height: var(--_expander-indicator-size);
+    pointer-events: none;
+    opacity: var(--_expander-indicator-opacity, 0.6);
+    transform: translateY(-50%) rotate(var(--_expander-indicator-angle));
+    transition: transform 150ms ease, opacity 150ms ease;
+  }
+  a-expander::part(indicator-content) { display: grid; place-items: center; width: 100%; height: 100%; }
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator)::part(indicator) {
+    position: static;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    margin-inline-end: var(--_expander-indicator-edge);
+    transform: rotate(var(--_expander-indicator-angle));
+  }
+  a-expander::part(region) { display: grid; grid-template-rows: 0fr; grid-template-columns: minmax(0, 1fr); }
+  a-expander:state(open)::part(region) { grid-template-rows: 1fr; }
+  a-expander[priority="tertiary"][outdent]::part(header),
+  a-expander[priority="tertiary"][outdent]::part(region) { margin-inline-start: -1px; }
+  a-expander:not(:defined)[priority="tertiary"][outdent] > :is(a-expander-summary, a-expander-title) { margin-inline-start: -1px; }
+  a-expander:not(:defined)[priority="tertiary"][outdent] > a-expander-details { margin-inline-start: -5px; }
+  a-expander::part(content) { display: block; min-height: 0; overflow: var(--_expander-content-overflow); }
+  @keyframes anta-expander-unclip {
+    from { --_expander-content-overflow: clip; }
+    to { --_expander-content-overflow: visible; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    a-expander::part(region) { transition: grid-template-rows 200ms ease; }
+    /* Carry clipping through an inherited value: older browsers cannot defer
+       overflow or resolve document keyframes directly on the shadow part. */
+    a-expander:state(open) { animation: anta-expander-unclip 200ms step-end; }
+  }
+
   /* The component and the native disclosure use the same chevron mask. Keeping
      it at this scope lets a native summary render the Anta glyph rather than a
      browser marker. */
@@ -11,6 +100,9 @@
   }
 
   a-expander {
+    --_expander-content-overflow: clip;
+    --_expander-indicator-opacity: 0.6;
+    --_summary-underline: none;
     --expander-text: var(--text-2);
     --expander-text-hover: var(--text-1);
 
@@ -38,11 +130,10 @@
     --_expander-indicator-stroke: 2px;
     --_expander-indicator-track: calc(var(--_expander-indicator-edge) + var(--_expander-indicator-size) + var(--_expander-indicator-gap));
     --_expander-indicator-start: calc(var(--expander-gutter) - var(--_expander-indicator-size) - var(--_expander-indicator-gap));
-    --_expander-indicator-mask: var(--_expander-chevron);
-    --_expander-skeleton-indicator-start: var(--_expander-indicator-start);
-    --_expander-skeleton-indicator-end: auto;
-    --_expander-skeleton-indicator-top: 50%;
-    --_expander-skeleton-indicator-transform: translateY(-50%);
+    --_expander-open: 0;
+    --_expander-indicator-closed-angle: 0deg;
+    --_expander-indicator-open-angle: 90deg;
+    --_expander-indicator-angle: calc(var(--_expander-indicator-closed-angle) + (var(--_expander-indicator-open-angle) - var(--_expander-indicator-closed-angle)) * var(--_expander-open));
     --_expander-header-padding-block: 6px;
     --_expander-header-padding-end: 4px;
     --_expander-actions-gap: 2px;
@@ -63,21 +154,24 @@
     /* Smooth the closed-state hover/active surface change. */
     transition: background-color 100ms ease;
   }
-  a-expander[indicator-placement="end"] {
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) {
     --expander-gutter: 12px;
-    --_expander-skeleton-indicator-start: auto;
-    --_expander-skeleton-indicator-end: var(--_expander-indicator-edge);
-    --_expander-skeleton-indicator-top: 8px;
-    --_expander-skeleton-indicator-transform: rotate(90deg);
     --_expander-actions-end: var(--_expander-actions-gap);
+    --_expander-indicator-open-angle: 180deg;
   }
-  a-expander[indicator="triangle"] {
-    --_expander-indicator-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 2.5 12 8l-7 5.5z'/%3E%3C/svg%3E");
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator:is([shape="chevron"], [shape="triangle"])) {
+    --_expander-indicator-closed-angle: 90deg;
+    --_expander-indicator-open-angle: 270deg;
   }
-  a-expander[indicator="plus"] {
-    --_expander-indicator-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M7 2h2v12H7zM2 7h12v2H2z'/%3E%3C/svg%3E");
+  a-expander:has(> a-expander-indicator:is([shape="plus"], [data-when])) {
+    --_expander-indicator-closed-angle: 0deg;
+    --_expander-indicator-open-angle: 0deg;
   }
-  a-expander:not(:defined):has(> [slot="indicator"]) { --_expander-skeleton-indicator-display: none; }
+  a-expander:is(:state(open), :not(:defined)[state="open"], :not(:defined):not([state])[default-state="open"]) {
+    --_expander-content-overflow: visible;
+    --_expander-open: 1;
+    --_expander-indicator-opacity: 1;
+  }
 
   /* Boolean round uses a root-font-relative radius in both disclosure states.
      Explicit JSX values use --expander-round; raw lengths use typed attr(). */
@@ -88,110 +182,109 @@
     }
   }
 
-  /* The wrapper's `actions` slot span is layout-neutral post-upgrade: its buttons
-     project as flex children of the shadow `slot[name="actions"]` row, so the
-     span itself must generate no box. (Formerly an inline `display:contents` on
-     the span; moved here so the `:not(:defined)` skeleton below can lay it out
-     without `!important`.) */
-  a-expander > span[slot="actions"] { display: contents; }
-
-  /* FOUC guard for the gap before the custom element upgrades. Until `a-expander`
-     is `:defined`, there is no shadow DOM to collapse the region, so the light-DOM
-     body (`<a-expander-details>`, `display:block`) would paint fully open and then
-     snap shut on upgrade. Hide the body while not-defined; reveal it only when the
-     SSR markup already says open — controlled `state="open"` or uncontrolled
-     `default-state="open"` — so open-by-default expanders show immediately with no
-     flash, and everything else (the closed default carries neither attribute) stays
-     collapsed from first paint. Once the element upgrades, `:defined` drops this and
-     the shadow region owns visibility (with its open/close animation). */
-  a-expander:not(:defined) a-expander-details {
-    display: none;
-  }
-  a-expander:not(:defined)[state="open"] a-expander-details,
-  a-expander:not(:defined)[default-state="open"] a-expander-details {
-    display: block;
-  }
-
-  /* Pre-upgrade header match. Before the element upgrades there's no shadow
-     `<button>`, so the light-DOM `<a-expander-summary>` would sit flush at the
-     host edge with no chevron, then jump right + grow a chevron the instant the
-     shadow header takes over (a FOUC). Give the summary the same gutter padding
-     and a placeholder chevron here so the resting header looks identical before
-     and after upgrade. `:defined` drops this and the shadow `<button>` owns it. */
-  a-expander:not(:defined) a-expander-summary {
-    position: relative;
-    padding: var(--_expander-header-padding-block) var(--_expander-header-padding-end) var(--_expander-header-padding-block) var(--expander-gutter);
-  }
-  a-expander:not(:defined) a-expander-summary::before {
-    content: "";
-    display: var(--_expander-skeleton-indicator-display, block);
-    position: absolute;
-    inset-inline-start: var(--_expander-skeleton-indicator-start);
-    inset-inline-end: var(--_expander-skeleton-indicator-end);
-    top: var(--_expander-skeleton-indicator-top);
-    width: var(--_expander-indicator-size);
-    height: var(--_expander-indicator-size);
-    transform: var(--_expander-skeleton-indicator-transform);
-    background-color: currentColor;
-    -webkit-mask: var(--_expander-indicator-mask) center / contain no-repeat;
-            mask: var(--_expander-indicator-mask) center / contain no-repeat;
-    opacity: 0.6;
-    pointer-events: none;
-  }
-
-  a-expander:not(:defined)[indicator-placement="end"] a-expander-summary {
-    position: static;
-    grid-column: 1;
-    padding-inline-start: var(--expander-gutter);
-    padding-inline-end: var(--_expander-header-padding-end);
-  }
-  a-expander:not(:defined) > [slot="indicator"] {
+  a-expander > a-expander-actions,
+  a-expander > a-expander-title { display: contents; }
+  a-expander > a-expander-indicator {
     display: grid;
     place-items: center;
-    position: absolute;
-    inset-inline-start: var(--_expander-indicator-start);
-    top: 8px;
+    position: relative;
     width: var(--_expander-indicator-size);
     height: var(--_expander-indicator-size);
     pointer-events: none;
   }
-  a-expander:not(:defined)[indicator-placement="end"] > [slot="indicator"] {
-    inset-inline-start: auto;
-    inset-inline-end: var(--_expander-indicator-edge);
+  a-expander > a-expander-indicator[shape]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    mask: var(--_expander-chevron) center / contain no-repeat;
   }
-  a-expander:not(:defined) > [slot="indicator"][data-when="open"] { display: none; }
-  a-expander:not(:defined):is([state="open"], [default-state="open"]) > [slot="indicator"][data-when="open"] { display: grid; }
-  a-expander:not(:defined):is([state="open"], [default-state="open"]) > [slot="indicator"][data-when="closed"] { display: none; }
-  a-expander:not(:defined):is([state="open"], [default-state="open"]) > [slot="indicator"]:not([data-when]) { transform: rotate(90deg); }
-  a-expander:not(:defined)[indicator-placement="end"]:is([state="open"], [default-state="open"]) > [slot="indicator"]:not([data-when]) { transform: rotate(180deg); }
-  a-expander:not(:defined)[indicator-placement="end"] {
-    grid-template-columns: minmax(0, 1fr) auto var(--_expander-indicator-track);
+  a-expander > a-expander-indicator[shape="triangle"]::before {
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 2.5 12 8l-7 5.5z'/%3E%3C/svg%3E");
+  }
+  a-expander > a-expander-indicator[shape="plus"]::before,
+  a-expander > a-expander-indicator[shape="plus"]::after {
+    content: "";
+    position: absolute;
+    inset: auto;
+    background: currentColor;
+    mask: none;
+    border-radius: calc(var(--_expander-indicator-stroke) / 2);
+  }
+  a-expander > a-expander-indicator[shape="plus"]::before {
+    width: calc(var(--_expander-indicator-size) - 2 * var(--_expander-indicator-stroke));
+    height: var(--_expander-indicator-stroke);
+    left: var(--_expander-indicator-stroke);
+    top: calc((var(--_expander-indicator-size) - var(--_expander-indicator-stroke)) / 2);
+  }
+  a-expander > a-expander-indicator[shape="plus"]::after {
+    width: var(--_expander-indicator-stroke);
+    height: calc(var(--_expander-indicator-size) - 2 * var(--_expander-indicator-stroke));
+    left: calc((var(--_expander-indicator-size) - var(--_expander-indicator-stroke)) / 2);
+    top: var(--_expander-indicator-stroke);
+    transform: scaleY(calc(1 - var(--_expander-open)));
+    transition: transform 150ms ease;
   }
 
-  /* Reproduce the shadow `.header` row pre-upgrade. Without a shadow the
-     light-DOM children stack in document order, so the actions span would drop
-     to its own row below the title and snap up on upgrade. A two-column grid
-     mirrors the shadow header — [ summary (flex:1, ellipsizes) | actions (auto,
-     right) ] — and the actions column mirrors the shadow `slot[name="actions"]`
-     box metrics (flex, gap, insets) exactly, so upgrade is a pure content swap
-     with zero reflow. `:defined` drops this and the shadow header owns it. */
+  @media (prefers-reduced-motion: reduce) {
+    a-expander::part(indicator),
+    a-expander > a-expander-indicator[shape="plus"]::after { transition: none; }
+  }
+
+  /* Initial layout uses the same title, action, and indicator tracks. Only
+     the owned button and collapse region are introduced during upgrade. */
   a-expander:not(:defined) {
     display: grid;
     position: relative;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
+    align-items: stretch;
   }
-  a-expander:not(:defined) a-expander-summary { grid-column: 1; }
-  a-expander:not(:defined) > [slot="actions"] {
+  a-expander:not(:defined):has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) {
+    grid-template-columns: minmax(0, 1fr) auto var(--_expander-indicator-track);
+  }
+  a-expander:not(:defined) > :is(a-expander-summary, a-expander-title) {
+    position: relative;
+    display: block;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    padding: var(--_expander-header-padding-block) var(--_expander-header-padding-end) var(--_expander-header-padding-block) var(--expander-gutter);
+  }
+  a-expander:not(:defined):has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) > :is(a-expander-summary, a-expander-title) {
+    padding-inline: var(--expander-gutter) 0;
+    text-align: left;
+  }
+  a-expander:not(:defined) > a-expander-actions {
     grid-column: 2;
-    display: flex; /* overrides the base `display: contents` above */
+    grid-row: 1;
+    display: flex;
     align-items: center;
     gap: var(--_expander-actions-gap);
-    flex-shrink: 0;
-    margin-inline-start: var(--_expander-actions-start);
-    margin-inline-end: var(--_expander-actions-end);
+    margin-inline: var(--_expander-actions-start) var(--_expander-actions-end);
   }
-  a-expander:not(:defined) a-expander-details { grid-column: 1 / -1; }
+  a-expander:not(:defined) > a-expander-actions:empty { display: none; }
+  a-expander:not(:defined) > a-expander-indicator {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    justify-self: start;
+    margin-inline-start: var(--_expander-indicator-start);
+    width: var(--_expander-indicator-size);
+    height: var(--_expander-indicator-size);
+    transform: rotate(var(--_expander-indicator-angle));
+    opacity: var(--_expander-indicator-opacity);
+  }
+  a-expander:not(:defined):has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) > a-expander-indicator {
+    grid-column: 3;
+    justify-self: end;
+    margin-inline: 0 var(--_expander-indicator-edge);
+  }
+  a-expander:not(:defined) > a-expander-details { grid-column: 1 / -1; display: none; }
+  a-expander:not(:defined)[state="open"] > a-expander-details,
+  a-expander:not(:defined):not([state])[default-state="open"] > a-expander-details { display: block; }
+  a-expander > a-expander-indicator[data-when="open"] { display: none; }
+  a-expander:is(:state(open), :not(:defined)[state="open"], :not(:defined):not([state])[default-state="open"]) > a-expander-indicator[data-when="open"] { display: grid; }
+  a-expander:is(:state(open), :not(:defined)[state="open"], :not(:defined):not([state])[default-state="open"]) > a-expander-indicator[data-when="closed"] { display: none; }
 
   a-expander-summary {
     display: block;
@@ -199,22 +292,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    /* Heading type scale, mirroring <Title> (a-title.css). Level 5 is the
-       default; the weight matches <Title>. This lives on the summary — the
-       element the wrapper wraps a *string* title in — NOT the shadow button,
-       so a custom title node (passed through the wrapper's display:contents
-       span) inherits nothing from us and keeps its own typography. Because the
-       summary is light DOM, this also styles the pre-upgrade skeleton in step,
-       so the header font doesn't flash on upgrade. */
     font-size: 15px;
     line-height: 20px;
     font-weight: 584.62;
     letter-spacing: 0;
-    /* No explicit color: the title inherits `color` from the shadow
-       `::part(summary)` button across the slot boundary. That's what lets the
-       built-in hover/active recolor (driven on the button) AND a consumer's
-       `::part(summary):hover { color }` both reach the title. A custom title
-       node with its own `color` opts out of the recolor by overriding it. */
     text-decoration-line: var(--_summary-underline, none);
     text-decoration-style: dotted;
     text-decoration-color: color-mix(in oklch, currentColor 75%, transparent);
@@ -222,14 +303,11 @@
     text-underline-offset: 3px;
     transition: color 150ms ease;
   }
-  /* Per-level type scale (level 5 is the base above). Keyed off the host's
-     reflected `level` attribute; a light-DOM selector, so it applies pre- and
-     post-upgrade alike. */
-  a-expander[level="1"] a-expander-summary { font-size: 28px; line-height: 32px; }
-  a-expander[level="2"] a-expander-summary { font-size: 24px; line-height: 28px; }
-  a-expander[level="3"] a-expander-summary { font-size: 20px; line-height: 24px; }
-  a-expander[level="4"] a-expander-summary { font-size: 17px; line-height: 22px; }
-  a-expander[level="6"] a-expander-summary { font-size: 13px; line-height: 16px; }
+  a-expander-summary[level="1"] { font-size: 28px; line-height: 32px; }
+  a-expander-summary[level="2"] { font-size: 24px; line-height: 28px; }
+  a-expander-summary[level="3"] { font-size: 20px; line-height: 24px; }
+  a-expander-summary[level="4"] { font-size: 17px; line-height: 22px; }
+  a-expander-summary[level="6"] { font-size: 13px; line-height: 16px; }
   a-expander-details {
     display: block;
     /* Left padding = the same `--expander-gutter` the header uses, so the body
@@ -251,7 +329,7 @@
        room inside the clip (see the outdent rule below). */
     overflow: auto;
   }
-  a-expander[indicator-placement="end"] a-expander-details {
+  a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) > a-expander-details {
     padding-inline-start: var(--expander-gutter);
   }
 
@@ -263,7 +341,7 @@
      leading edge here, with an equal negative margin so the body stays visually
      flush while the clip/scroll box gains 4px of ring room. Outdent only — every
      other mode keeps the gutter, which is room enough. */
-  a-expander[priority="tertiary"][outdent] a-expander-details {
+  a-expander[priority="tertiary"][outdent] > a-expander-details {
     padding-inline-start: 4px;
     margin-inline-start: -4px;
   }
@@ -569,8 +647,7 @@
     line-height: 20px;
   }
 
-  /* The Expander chevron is a mask on the summary's pseudo-element. Give that
-     paint an explicit system foreground so forced colors cannot remap it away. */
+  /* Give decorative masks a system foreground in forced colors. */
   @media (forced-colors: active) {
     :is(a-expander, details[data-anta]) {
       border-color: CanvasText;
@@ -590,13 +667,16 @@
     a-expander[disabled]::part(indicator) {
       color: GrayText;
     }
-    a-expander:not(:defined) a-expander-summary::before,
+    a-expander > a-expander-indicator {
+      forced-color-adjust: none;
+      color: CanvasText;
+    }
     details[data-anta] > summary::before {
       forced-color-adjust: none;
       background-color: CanvasText;
     }
-    a-expander:not(:defined)[disabled] a-expander-summary::before {
-      background-color: GrayText;
+    a-expander[disabled] > a-expander-indicator {
+      color: GrayText;
     }
   }
 }
@@ -604,7 +684,7 @@
 /* The disclosure body owns its final inset. Apply the same rule to the native
    disclosure styling, while leaving nested layouts to control their spacing. */
 a-expander-details > p:last-child,
-a-expander-details > :not([slot]) > p:last-child,
+a-expander-details > * > p:last-child,
 details[data-anta] > p:last-child,
 details[data-anta] > :not(summary) > p:last-child {
   margin-block-end: 0;

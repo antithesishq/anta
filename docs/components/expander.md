@@ -1,343 +1,176 @@
 # Expander
 
-A collapsible disclosure: a header that toggles a region of content open
-and closed. The `Expander` JSX wrapper renders an `<a-expander>`, whose
-shadow DOM is a `<button>` summary plus a collapsible region — so focus,
-keyboard activation (Enter / Space), and the
-WAI-ARIA disclosure semantics (`aria-expanded`) come from the platform
-button. The expand / collapse animation matches the disclosure sections
-used across these docs.
+Expander keeps a section title visible while its content opens and closes. Use
+it for supporting details, settings groups, or sections that readers can reveal
+as needed. Select the header or focus it and press Enter or Space to toggle.
 
-The `title` is the always-visible header; the `children` are the
-collapsible body.
+## Priority and tone
 
-## Priority
-
-`priority` sets the surface, reusing `Button`/`Text`'s vocabulary.
-`primary` is the most pronounced card; `secondary` (the default) is a
-subtle filled box; `tertiary` is transparent — just the header row and
-its chevron, for an inline disclosure.
+Choose `primary` for a pronounced surface, `secondary` for a subtle filled box,
+or `tertiary` for a transparent disclosure in a content column. `tone` colors
+the header and filled surfaces using the current theme.
 
 ```tsx
-<Expander title="Primary" priority="primary">…</Expander>
-<Expander title="Secondary (default)">…</Expander>      {/* secondary is the default */}
-<Expander title="Tertiary" priority="tertiary">…</Expander>
+<Expander title="Primary" priority="primary" tone="brand"><Text>A pronounced section surface.</Text></Expander>
+<Expander title="Secondary"><Text>A subtle section surface.</Text></Expander>
+<Expander title="Tertiary" priority="tertiary"><Text>A disclosure in a content column.</Text></Expander>
 ```
-
-## Round
-
-`round` uses a `1rem` corner radius in both folded and expanded states. The
-radius follows the root font size and stays independent of the title `level`,
-wrapped text, or custom header content. Pass a number in pixels, such as
-`round={20}`, or a CSS length, such as `round="1.5rem"`, for a custom radius.
-
-```tsx
-<Expander round title="Details" priority="primary">…</Expander>
-```
-
-## Tone
-
-Pick a semantic `tone` to tint the header text and — on the filled
-priorities (`secondary` / `primary`) — the surface too. The set matches
-`Button` / `Tag`: `neutral` (the default) plus `brand`, `info`,
-`success`, `warning`, and `critical`. Color comes from the theme tokens,
-so every tone tracks light and dark mode automatically. Every tone is
-shown below across all three priorities, so you can compare (rows are
-tones, columns are priorities):
-
-**Primary**
-
-**Secondary** (default)
-
-**Tertiary**
-
-```tsx
-// every tone × every priority — e.g. brand:
-<Expander tone="brand" priority="primary" title="Brand" />
-<Expander tone="brand" title="Brand" />                       {/* secondary — the default */}
-<Expander tone="brand" priority="tertiary" title="Brand" />
-// …repeat for neutral / info / success / warning / critical
-```
-
-`tone` also accepts **any literal CSS color** for a one-off tint — the
-hue is kept while lightness and chroma are pinned to the named-tone curve
-(and re-tuned for dark mode), the same mechanism as `Button` / `Tag`:
-
-```tsx
-// shown on the `primary` surface — the custom tone tints the fill;
-// drop to "secondary" (the default) for a subtler card, or "tertiary" for text only.
-<Expander tone="#ff1493" priority="primary" title="Magenta" />
-<Expander tone="rebeccapurple" priority="primary" title="Purple" />
-<Expander tone="#0d9488" priority="primary" title="Teal" />
-```
-
-## Outdent
-
-By default the chevron sits **inside** the header row. On a transparent
-`priority="tertiary"` expander, add `outdent` to hang the chevron in the
-left gutter so the **title and body sit flush** with the surrounding
-content — the same layout as the section headers in these docs. Under the
-hood it zeroes `--expander-gutter`: the title and body lose their inset and
-the chevron, positioned in that gutter, auto-hangs to the left. The
-transparent border stays (it keeps tertiary content aligned with the filled
-priorities), and a small internal correction cancels the border's 1px inset
-so the title and body line up exactly with the surrounding content.
-
-```tsx
-<Expander priority="tertiary" outdent title="…">…</Expander>
-```
-
-`outdent` only takes effect on `tertiary` — on the filled priorities
-(`secondary` / `primary`) the container edge has to bound the chevron, so
-it's a no-op there. Use it where the expander sits in a content column
-with room to its left (a prose measure); in a full-width / edge-to-edge
-container the chevron would overhang the edge.
-
-## Indicator
-
-`indicatorPlacement="end"` puts the disclosure mark after the header actions.
-The mark stays inside the summary button, so selecting it toggles the section.
-Actions remain separate controls. The default `start` placement keeps the
-right-pointing chevron that turns down when open. At the end, it points down
-when closed and up when open.
-
-Choose `indicator="triangle"` for a filled arrow or `indicator="plus"` for a
-plus that becomes a minus. The default is `chevron`. The built-in motion follows
-the reduced-motion preference. An unrecognized string or number leaves the
-indicator empty; omit `indicator` to keep the default chevron.
-
-```tsx
-<Expander title="Download report" indicatorPlacement="end"
-  actions={<Button size="small" label="Download" />}>
-  …
-</Expander>
-<Expander title="Plus and minus" indicator="plus" indicatorPlacement="end">…</Expander>
-```
-
-Pass a decorative node as `indicator` to replace the built-in mark. One node
-rotates with the section. To switch between two visuals, pass `closed` and
-`open` nodes. Neither form adds a focus stop or an accessible name: the title
-names the summary button, and its `aria-expanded` reports the state. Put
-interactive controls in `actions`.
-
-```tsx
-<Expander title="Custom mark" indicatorPlacement="end"
-  indicator={<Icon shape="chevron-down" />}>…</Expander>
-<Expander title="Two marks" indicatorPlacement="end"
-  indicator={{ closed: <Icon shape="plus" />, open: <Icon shape="minus" /> }}>…</Expander>
-```
-
-On a tertiary end-placement expander, `outdent` still aligns the title and body
-with surrounding content. The indicator stays inside the end edge.
 
 ## Title and level
 
-`title` takes a string or any node. For a string, `level` (1–6) applies
-the matching heading **type scale** — the same scale as `<Title>` —
-without changing the document outline. Only the type scale changes: the
-title's left alignment is constant across every level (the chevron + a
-fixed 4px edge inset), so swapping `level` never shifts the header
-horizontally.
+A string or number title uses Expander's type scale. `level` changes that scale
+without adding heading semantics. Pass a `Title` or your own heading when the
+section belongs in the document outline; that node owns its typography.
 
 ```tsx
-<Expander title="Level 1" level={1}>…</Expander>
-<Expander title="Level 2" level={2}>…</Expander>
-<Expander title="Level 3" level={3}>…</Expander>
-<Expander title="Level 4" level={4}>…</Expander>
-<Expander title="Level 5 (default)">…</Expander>      {/* level 5 is the default */}
-<Expander title="Level 6" level={6}><Text size="small">…</Text></Expander>  {/* pair the smallest level with small body text */}
+<Expander title="Section title" level={2}><Text>A larger title scale.</Text></Expander>
+<Expander title="Supporting details" level={6}><Text>A compact title scale.</Text></Expander>
 ```
 
-When you need real heading **semantics** — so the title lands in a
-page's table of contents (and assistive tech announces it as a heading) —
-pass a `<Title>` (or an application `<h2>`–`<h6>`) as the `title` instead of a
-string. The heading's `level` sets its type scale, so set it on the heading,
-not on `<Expander>`. A slotted heading keeps its block margins, so reset them
-in the header:
+Selecting a link, input, or enabled control in the title activates that control
+without toggling the section. Selecting title text keeps the selection. Prefer
+`actions` for independent header controls so they sit outside the toggle button.
+
+## Actions and indicators
+
+Actions stay visible when the section is closed. Use them for operations that
+should remain available without opening the content. `indicatorPlacement="end"`
+places the disclosure mark after the actions. At the start, the chevron turns
+from right to down; at the end, it turns from down to up.
+
+Choose `triangle` for a filled arrow or `plus` for a plus that becomes a minus.
+Custom artwork can rotate as one node or switch between `closed` and `open`
+visuals. Indicator artwork stays decorative and adds no focus stop.
+
+The demonstration uses a custom title, two indicator visuals, and an independent
+Download action. Open the section to see the action count.
 
 ```tsx
-{/* A Title supplies its type scale and heading semantics. Set the level on
-   the Title, not on Expander. (The preview uses element composition
-   because these docs render statically; the title-prop form is identical.) */}
-<Expander title={<Title level={2}>Title level 2 example</Title>}>…</Expander>
-<Expander title={<Title level={4}>Title level 4 example</Title>}>…</Expander>
-<Expander title={<Title level={6}>Title level 6 example</Title>}>…</Expander>
+import { Button, Expander, Icon, Text, Title } from '@antadesign/anta'
+import { useState } from 'react'
 
-{/* a slotted heading keeps its block-rhythm margins — zero them in the header */}
-<style>{`
-  a-expander a-title { margin: 0; }
-`}</style>
-```
-
-## Controls in the title
-
-A control placed **inside** the `title` — a copy button next to the
-heading text, an inline link, an inline `Input` — copies or activates
-without toggling the section. The header refuses to toggle when the click
-landed on any Anta control (`Button` / `ButtonCopy`, `Checkbox`, `Radio`,
-`Input`, `Select`, `InputDate`, `Calendar`, a `Menu` item, a `Tab`) or a
-native control (`button` / `a[href]` / `input` / `select` / `textarea` /
-`label` / editable), so a `ButtonCopy` beside the title works with no
-extra wiring:
-
-```tsx
-{/* A ButtonCopy in the title copies without toggling — no stopPropagation needed. */}
-<Expander title={<>Debug timeline <ButtonCopy copy={moment} icon="copy" size="small" priority="tertiary" /></>}>
-  …
-</Expander>
-```
-
-The decision is read from the click's composed path synchronously in the
-element, so it holds even where event handlers run off the UI thread (a
-consumer's `stopPropagation()` can arrive too late to beat the toggle) —
-the same contract as `Menu`'s close-on-outside-click.
-
-A **disabled** control is inert, so its click toggles the section like the
-title text does — the exclusion applies only to live controls. For a
-control the detection can't recognize (a non-interactive custom widget
-with its own handler), mark it `data-expander-ignore` to opt it out of the
-toggle:
-
-```tsx
-<Expander title={<>Report <MyWidget data-expander-ignore /></>}>…</Expander>
-```
-
-## Actions
-
-Pass `actions` to render extra controls — buttons, tags — after the title.
-They sit **outside** the toggle trigger as its header siblings. Clicking them
-never toggles the expander; they're separately focusable and announced as
-their own controls.
-(Don't put interactive elements *inside* a custom `title` instead —
-nesting controls in a button is an accessibility anti-pattern.)
-
-```tsx
-<Expander title="Build artifacts" actions={<Button size="small" label="Download" />}>
-  …
-</Expander>
-```
-
-The header never wraps: actions keep their intrinsic size and the
-title ellipsizes first, so keep actions compact (a small button or
-two, a tag). Pass several controls as a fragment — they form a row
-with a 2px gap:
-
-```tsx
-<Expander
-  title="A very long expandable section title that shows how the actions would push content to ellipsize when space runs out"
-  actions={<><Button size="small" label="Expand" /><Button size="small" label="Share" /><Button size="small" label="Download" /></>}
->
-  …
-</Expander>
-```
-
-Actions stay visible in the folded state — the header represents the
-section whether it's open or not (the same convention as GitHub's file
-headers). If an action only makes sense while open, drive the expander
-in controlled mode and swap the `actions` node on toggle.
-
-## Disabled
-
-`disabled` freezes the expander: the header is no longer clickable or
-focusable, the hover affordance is off, and the text dims. The open
-state stays as-is — disabling an open expander keeps it open. Header
-`actions` stay live; disable them separately if needed.
-
-```tsx
-<Expander title="Disabled, closed" disabled>…</Expander>
-<Expander title="Disabled, open" disabled defaultOpen>…</Expander>
-```
-
-## Open state
-
-For uncontrolled use, pass `defaultOpen` for the initial state. The element
-then updates its open state after interaction. For controlled use, pass `open`
-and handle `onStateChange`. The expander follows the `open` prop and reports a
-requested change. Update application state with `detail.next` to accept it, or
-leave the state unchanged to reject it.
-
-`onStateChange` is event-first: `(event, { next, prev })`, where `next`/`prev`
-are booleans (the requested / previous open state). `statechange` fires
-**before** the element applies anything and is **cancelable**, so even
-uncontrolled you can veto a toggle synchronously with `event.preventDefault()`
-(e.g. a section that confirms before closing) — no need to lift state.
-
-```tsx
-// uncontrolled
-<Expander title="Details" defaultOpen>…</Expander>
-
-// uncontrolled, with a veto
-<Expander title="Details" onStateChange={(e, { next }) => {
-  if (!next && unsaved) e.preventDefault()   // refuse to close
-}}>…</Expander>
-
-// controlled
-const [open, setOpen] = useState(false)
-<Expander title="Details" open={open} onStateChange={(e, { next }) => setOpen(next)}>…</Expander>
-```
-
-## Controlled vs Uncontrolled
-
-Open state follows Anta's shared **state contract**. In uncontrolled use, the
-element updates open state. In controlled use, the application supplies it. The
-`<Expander>` wrapper uses booleans; the `<a-expander>` element uses a `state`
-string. The wrapper maps between them:
-
-| | `<Expander>` (JSX) | `<a-expander>` (element) |
-|---|---|---|
-| **Uncontrolled** | `defaultOpen` | `default-state="open" \| "closed"` |
-| **Controlled** | `open` + `onStateChange` | `state="open" \| "closed"` + `statechange` |
-| **Change event** | `onStateChange(event, { next, prev })` — `next` / `prev` are **booleans** | `statechange`, a `CustomEvent<{ next, prev }>` — `'open'` / `'closed'` |
-
-`statechange` is **cancelable** and fires *before* the element applies the
-change. Uncontrolled, call `event.preventDefault()` to veto a toggle (e.g.
-confirm before closing). Controlled, the element never self-applies — apply
-`detail.next` to `open` to accept, or do nothing to reject.
-
-### Accordion
-
-An accordion is the controlled pattern applied to a stack of expanders that share one
-open value: hold the open item's id in state, point each `open` at it, and on
-`onStateChange` set that id (or `null`) — so opening one folds the rest. Wrapping them
-in a `.accordion` lets you square the inner corners and overlap the borders by 1px, so
-the stack reads as one panel.
-
-```tsx
-const ITEMS = [
-  { id: 'shipping', title: 'Shipping & delivery', body: '…' },
-  { id: 'returns',  title: 'Returns',             body: '…' },
-  { id: 'warranty', title: 'Warranty',            body: '…' },
-]
-
-function Accordion() {
-  const [openId, setOpenId] = useState('shipping')  // null = all closed
+function ExpanderActionsDemo() {
+  const [downloads, setDownloads] = useState(0)
   return (
-    <div className="accordion">
-      {ITEMS.map((item) => (
-        <Expander
-          key={item.id}
-          title={item.title}
-          open={openId === item.id}
-          onStateChange={(_e, { next }) => setOpenId(next ? item.id : null)}
-        >
-          <Text>{item.body}</Text>
-        </Expander>
-      ))}
-    </div>
+    <Expander
+      title={<Title level={4}>Build artifacts</Title>}
+      indicatorPlacement="end"
+      indicator={{ closed: <Icon shape="plus" />, open: <Icon shape="minus" /> }}
+      actions={<Button size="small" label="Download" onClick={() => setDownloads(count => count + 1)} />}
+    >
+      <Text>Download requests: {downloads}. The action leaves the disclosure state unchanged.</Text>
+    </Expander>
   )
 }
 ```
 
-```css
-.accordion { display: flex; flex-direction: column; }
+## Round and outdent
 
-/* Overlap adjacent borders so they share one 1px line. */
-.accordion a-expander:not(:first-child) { margin-top: -1px; }
+Use `round` for a `1rem` radius that stays constant when the section opens.
+Use `outdent` with `priority="tertiary"` to align the title and body with
+surrounding prose. The start indicator hangs in the gutter; an end indicator
+stays inside the end edge.
 
-/* Square the inner corners so the stack reads as one panel. */
-.accordion a-expander:first-child { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-.accordion a-expander:last-child  { border-top-left-radius: 0; border-top-right-radius: 0; }
-.accordion a-expander:not(:first-child):not(:last-child) { border-radius: 0; }
+```tsx
+<Expander title="Rounded section" round><Text>The corners keep their radius when expanded.</Text></Expander>
+<Expander title="Aligned section" priority="tertiary" outdent defaultOpen><Text>The title and body align with the surrounding content.</Text></Expander>
+```
+
+## Disabled
+
+`disabled` removes the toggle button from focus navigation and prevents toggling.
+An open section stays open. Header actions remain available; disable those
+controls separately when needed.
+
+```tsx
+<Expander title="Disabled, closed" disabled><Text>Collapsed content.</Text></Expander>
+<Expander title="Disabled, open" disabled defaultOpen><Text>Content remains visible.</Text></Expander>
+```
+
+## Open state
+
+Without `open`, Expander owns its state. `defaultOpen` chooses its initial state.
+Closing keeps the content mounted and removes it from focus navigation and the
+accessibility tree. Reopening restores its visibility and interaction.
+
+Call `event.preventDefault()` in `onStateChange` to reject an uncontrolled
+request synchronously. The demonstration keeps the section open until you clear
+the checkbox.
+
+```tsx
+import { Box, Checkbox, Expander, Text } from '@antadesign/anta'
+import { useState } from 'react'
+
+function CancelableExample() {
+  const [keepOpen, setKeepOpen] = useState(true)
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Checkbox checked={keepOpen} onStateChange={(_, { next }) => setKeepOpen(next === true)}>Keep details open</Checkbox>
+      <Expander title="Unsaved changes" defaultOpen onStateChange={(event, { next }) => {
+        if (!next && keepOpen) event.preventDefault()
+      }}>
+        <Text>Clear the checkbox to allow this section to close.</Text>
+      </Expander>
+    </Box>
+  )
+}
+```
+
+Pass `open` to control the section. Update it with `detail.next` in
+`onStateChange` to accept a request, or leave it unchanged to reject. The
+following demonstration counts requests even when they are rejected.
+
+```tsx
+import { Box, Button, Checkbox, Expander, Text } from '@antadesign/anta'
+import { useState } from 'react'
+
+function ControlledExample() {
+  const [open, setOpen] = useState(false)
+  const [accept, setAccept] = useState(true)
+  const [requests, setRequests] = useState(0)
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Checkbox checked={accept} onStateChange={(_, { next }) => setAccept(next === true)}>Accept state requests</Checkbox>
+      <Expander title="Release details" open={open} onStateChange={(_, { next }) => {
+        setRequests(count => count + 1)
+        if (accept) setOpen(next)
+      }}>
+        <Text>The content stays mounted when closed.</Text>
+      </Expander>
+      <Text>State requests: {requests}</Text>
+      <Button label="Show details" onClick={() => setOpen(true)} />
+    </Box>
+  )
+}
+```
+
+### Accordion
+
+Share one open item identifier across a group of controlled Expanders when only
+one section should be open at a time.
+
+```tsx
+import { Box, Expander, Text } from '@antadesign/anta'
+import { useState } from 'react'
+
+const items = [
+  { id: 'shipping', title: 'Shipping', body: 'Orders ship within two business days.' },
+  { id: 'returns', title: 'Returns', body: 'Returns are accepted within 30 days.' },
+]
+
+function Accordion() {
+  const [openId, setOpenId] = useState('shipping')
+  return (
+    <Box display="grid" gap={1}>
+      {items.map(item => (
+        <Expander key={item.id} title={item.title} open={openId === item.id}
+          onStateChange={(_, { next }) => setOpenId(next ? item.id : null)}>
+          <Text>{item.body}</Text>
+        </Expander>
+      ))}
+    </Box>
+  )
+}
 ```
 
 ## Component props
@@ -360,182 +193,109 @@ function Accordion() {
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
-Slots hold the title, actions, and an optional custom indicator. The details
-element contains the collapsible body.
+Supply direct named regions. Use `a-expander-summary` for the built-in title
+scale, with `level` on that region. Use boxless `a-expander-title` for custom
+title markup. Put controls in `a-expander-actions` and body content in
+`a-expander-details`. Place `a-expander-indicator` before the title or after the
+actions to choose its position. Set its `shape` to `chevron`, `triangle`, or
+`plus`, or omit `shape` and supply custom artwork as children.
 
 ```html
 <a-expander default-state="open">
-  <a-expander-summary slot="title">Build artifacts</a-expander-summary>
-  <a-button slot="actions" role="button" tabindex="0" size="small">
-    <a-button-label>Share</a-button-label>
-  </a-button>
-  <a-expander-details>Everything without a slot attribute is the body.</a-expander-details>
+  <a-expander-summary level="4">Build artifacts</a-expander-summary>
+  <a-expander-actions>
+    <a-button role="button" tabindex="0" size="small">
+      <a-button-label>Download</a-button-label>
+    </a-button>
+  </a-expander-actions>
+  <a-expander-indicator shape="chevron" aria-hidden="true" inert></a-expander-indicator>
+  <a-expander-details>The title and indicator toggle this section. Download is an independent action.</a-expander-details>
 </a-expander>
 ```
 
-Use the `indicator` and `indicator-placement` attributes for built-in marks.
-For custom artwork, assign one element to `slot="indicator"`. Assign two
-elements with `data-when="closed"` and `data-when="open"` when the artwork
-changes between states. Indicator content is decorative and cannot receive focus
-or pointer events.
+The element retains a native button and inert collapse region in shadow DOM.
+It projects authored regions without changing their attributes, styles, ARIA,
+or children. The default styling loads from external CSS. Import
+`@antadesign/anta/elements/a-expander` for browser behavior; import the entries
+for any nested Anta controls separately. The full bundle includes them.
 
-```html
-<a-expander indicator="triangle" indicator-placement="end">…</a-expander>
+`state="open"` or `state="closed"` controls the section. Without `state`,
+`default-state` seeds it once; the omitted default is closed. Reconnection
+retains applied state. `statechange` is a cancelable, non-bubbling request with
+`{ next, prev }` in the `open`/`closed` vocabulary. Call `preventDefault()` to
+reject an uncontrolled request. For controlled use, update `state` to accept
+or leave it unchanged to reject. The element owns the native button's expanded
+and disabled states and the collapsed region's inertness.
 
-<a-expander indicator-placement="end">
-  <a-expander-summary slot="title">Custom mark</a-expander-summary>
-  <a-icon slot="indicator" shape="chevron-down" aria-hidden="true" inert></a-icon>
-  <a-expander-details>Content</a-expander-details>
-</a-expander>
+The same indicator element renders before and after registration. An omitted
+indicator renders no artwork. JSX creates the built-in chevron automatically;
+`indicatorPlacement` changes the region order.
 
-<a-expander indicator-placement="end">
-  <a-expander-summary slot="title">Two marks</a-expander-summary>
-  <a-icon slot="indicator" data-when="closed" shape="plus" aria-hidden="true" inert></a-icon>
-  <a-icon slot="indicator" data-when="open" shape="minus" aria-hidden="true" inert></a-icon>
-  <a-expander-details>Content</a-expander-details>
-</a-expander>
-```
+One custom `a-expander-indicator` rotates with state. Two regions with
+`data-when="closed"` and `data-when="open"` switch instead. Raw authors mark
+all indicator artwork `aria-hidden="true"` and `inert`. The owned indicator container
+also excludes its projected artwork from interaction and accessibility.
 
-### Native HTML details
+Omit unused regions. CSS hides empty actions regions. Whitespace counts as
+content; JSX omits whitespace-only string actions. Mark an otherwise
+unrecognized interactive title widget `data-expander-ignore` to prevent toggling.
+A disabled title control behaves like title text; actions never toggle.
 
-For a simple disclosure, add `data-anta` to native `<details>`. It keeps the
-browser's opening, keyboard, and accessibility behavior while taking on the
-neutral tertiary Expander treatment. Add `priority="secondary"` or `"primary"`
-for a filled surface. `round`, `tone`, tertiary `outdent`, and `level="1"`–`"6"`
-use the matching Expander visual treatments. `level` changes visual type only;
-use a heading inside the summary when you need heading semantics.
+Named regions replace public slot attributes, and raw `level` moves from
+`a-expander` to `a-expander-summary`. Raw indicator shape and placement now
+belong to its region and DOM order. Existing shadow part overrides remain
+supported. JSX props stay the same.
 
-```html
-<details data-anta priority="secondary" tone="info" round level="3" open>
-  <summary>Build artifacts</summary>
-  <div>Everything inside &lt;details&gt; is the collapsible body.</div>
-</details>
-```
+Named tones and boolean `round` need no inline styles. Custom tones and radii
+use JSX-owned CSS variables. Under a CSP that blocks style attributes, supply
+`--expander-tone-source` or `--expander-round` through external CSS. Raw authors
+also use those variables on browsers without typed CSS `attr()`.
+
+Native `details[data-anta]` shares this component's stylesheet and entry. Its
+`summary` and `open` attribute retain native behavior; it does not use Anta's
+cancelable state contract. Keep its `level` attribute on `details`.
 
 ## Styling
 
-Reach for the props first: **`tone`** sets the color (any CSS color for a custom
-tone — it derives the surface in oklch), **`priority`** the fill, **`level`** the
-heading. Two knobs are worth keeping: **`--expander-tone-source`** (the color a
-custom `tone` derives from — set it to drive the palette from your own variable) and
-**`--expander-gutter`** (the shared title and body inset; it also positions the
-start indicator). It is 24px at the start, 12px at the end, and `0` with tertiary
-`outdent`.
+Use `priority`, `tone`, `round`, and `outdent` for the built-in appearance.
+`--expander-tone-source` connects a custom tone to an application color, and
+`--expander-gutter` sets the shared title/body inset. Style authored regions
+directly and the owned button, actions row, indicator, or content through
+`::part()`. Unlayered rules override Anta's defaults without `!important`.
 
-```tsx
-<Expander tone="#e0457b" title="Custom" />
-```
+The classes below identify demonstrations. Substitute your own selectors.
 
-For everything else, `<a-expander>` exposes shadow **parts** — `::part(summary)` (the
-header button), `::part(indicator)` (the decorative mark), `::part(content)` (the
-body), and `::part(actions)` (the actions row) — and the light-DOM
-`<a-expander-summary>` / `<a-expander-details>` children, which you style directly.
-
-Each example keeps its CSS in a `<style>` **inside** its own preview, targeting a demo
-class on that preview's expander (e.g. `.hide-chevron`) — so the rule you read is
-literally in the preview's DOM, next to the element it styles, never a page-wide
-stylesheet. The folded recipe under each preview is that same CSS; in your app, swap the
-demo class for your own selector.
-
-**Hide the indicator.** A disclosure needs a visible affordance. If the title
-provides one, hide the indicator part and tighten the unused gutter:
+Hide the indicator and reduce the title/body inset.
 
 ```css
-a-expander.hide-chevron::part(indicator) { display: none; }
-a-expander.hide-chevron { --expander-gutter: 12px; }               /* tighten the inset (default 24px) */
+a-expander.hide-chevron > a-expander-indicator { display: none; }
+a-expander.hide-chevron { --expander-gutter: 12px; }
 ```
 
-**Change the indicator.** Use the built-in `triangle` or `plus` preset, or
-provide a custom node through `indicator` / `slot="indicator"`:
-
-```tsx
-<Expander title="Triangle indicator" indicator="triangle" priority="tertiary">…</Expander>
-```
-
-**Tint the whole header** on hover / press by styling the summary part (the header
-`<button>`):
+Change header height and hover appearance while keeping its focus ring.
 
 ```css
-a-expander.hover-tint::part(summary):hover  { background: var(--bg-3); }
-a-expander.hover-tint::part(summary):active { background: var(--bg-2); }
+a-expander.header-tint::part(summary) { min-height: 40px; }
+a-expander.header-tint::part(summary):enabled:hover { background: var(--bg-3); }
 ```
 
-**Highlight the title on hover.** The title inherits its `color` from `::part(summary)`,
-so recolor the part on hover and the title (and the `currentColor` chevron) follow — a
-custom title node that sets its own `color` opts out. Here we also drop the tertiary
-hover underline on the light-DOM `a-expander-summary`:
+Respond to applied state without managing CSS classes.
 
 ```css
-a-expander.title-highlight::part(summary):hover { color: #e5484d; }       /* title color on hover */
-a-expander.title-highlight a-expander-summary { text-decoration: none; }  /* drop the hover underline */
+a-expander.state-indicator > a-expander-indicator { color: var(--text-4); }
+a-expander.state-indicator:state(open) > a-expander-indicator { color: var(--text-1); }
 ```
 
-**React to open / closed state** with the **`:state(open)`** custom state — your CSS can
-respond to it in controlled and uncontrolled mode alike, no JS. Two worked examples.
-
-*A custom code block* — pointed at the code-block surface tokens so it reads like the
-foldable code blocks on this site: a darker header bar over a lighter content surface, a
-`border-5` frame, and a tertiary-button copy that fades in once open.
+## Example
 
 ```tsx
-{/* An Expander pointed at the code-block surface tokens so it reads like the
-    foldable code blocks on this site: a darker header bar over a lighter
-    content surface, a border-5 frame, and a tertiary-button copy that fades
-    in once open. */}
-<Expander
-  title="Example.tsx"
-  actions={<Button priority="tertiary"><Icon shape="copy" /></Button>}
-  className="code-like"
-  defaultOpen
->
-  <pre>{`import { Button } from '@antadesign/anta'
+import { Expander, Text } from '@antadesign/anta'
 
-export function SaveButton() {
-  return <Button priority="primary">Save</Button>
-}`}</pre>
-</Expander>
-
-<style>{`
-  a-expander.code-like {
-    background: var(--bg-pane);         /* header — a bit darker than the content */
-    border-color: var(--border-5);     /* the code-block frame outline */
-    color: var(--text-2);              /* title + code */
-
-    /* With custom corner radius don't reach for overflow:hidden (it would clip
-       the focus ring); instead give the host the radius and match it on the
-       parts: ::part(summary) the top corners, the body the bottom corners. */
-    border-radius: 0;
-  }
-  a-expander.code-like::part(summary):hover { color: var(--text-1); }  /* title brightens on hover */
-  a-expander.code-like::part(summary) { min-height: 36px; }
-  a-expander.code-like::part(actions) { gap: 6px; }        /* roomier action row */
-  a-expander.code-like a-expander-summary {
-    font-size: 14px;                       /* the title, a touch bigger */
-    letter-spacing: 0.02em;
-  }
-  a-expander.code-like::part(content) { background: var(--bg-canvas); }  /* content — lighter than the header */
-  a-expander.code-like a-expander-details {
-    padding: 12px 16px 14px;               /* roomier top padding above the code */
-    font-family: var(--monospace);
-    font-size: 13px;
-    font-weight: 440;
-    line-height: 20px;
-  }
-  a-expander.code-like a-expander-details pre { margin: 0; font: inherit; }
-  a-expander.code-like [slot="actions"] { opacity: 0; transition: opacity 150ms ease; }  /* copy appears once open */
-  a-expander.code-like:state(open) [slot="actions"] { opacity: 1; }
-`}</style>
-```
-
-*Style the indicator by state* with `:state(open)` and `::part(indicator)`. The
-example changes its color without changing the built-in glyph or motion:
-
-```tsx
-<Expander title="Build log" indicatorPlacement="end" className="indicator" defaultOpen>…</Expander>
-<style>{`
-  a-expander.indicator::part(indicator) { color: var(--text-4); }
-  a-expander.indicator:state(open)::part(indicator) { color: var(--text-1); }
-`}</style>
+function Demo() {
+  return (
+    <Expander title="What is automated testing?" defaultOpen>
+      <Text>Automated testing runs checks against your software and reports failures you can investigate and reproduce.</Text>
+    </Expander>
+  )
+}
 ```

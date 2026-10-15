@@ -1,4 +1,5 @@
-import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from "../anta_helpers";
+import { hasChildren, nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from "../anta_helpers";
+import { useLayoutEffect, useState } from "../jsx-runtime";
 import type { BaseProps } from "../general_types";
 
 /** Public props for the `<Expander>` disclosure. `title` is the always-
@@ -83,22 +84,9 @@ type StateChangeEvent =
   | { nativeEvent: CustomEvent<StateChangeDetail> };
 
 
-/**
- * `<Expander>` — a collapsible disclosure section.
- *
- * A pure, stateless pass-through to `<a-expander>`: the element handles all
- * interaction (toggle, keyboard, ARIA, animation), so the wrapper holds
- * no state and grabs no ref — it only maps props to attributes (safe
- * wherever the host DOM is reconciled, incl. off the UI thread).
- *
- * Uncontrolled (`defaultOpen`): the element updates its open state. The wrapper
- * emits `default-state="open"` — never `state` — so the DOM carries no stale
- * controlled attribute. Controlled (`open` + `onStateChange`): the wrapper
- * emits `state="open" | "closed"`; the element treats the attribute as the
- * source of truth and clicks only dispatch the cancelable `statechange` event,
- * giving real controlled semantics (a consumer can reject a toggle). See
- * STATEFUL-COMPONENTS.md.
- */
+/** Disclosure with named light-DOM regions and external styling. The element
+ * owns its native summary button, applied state, and collapsed accessibility.
+ * JSX owns region markup, attributes, and styles without DOM refs. */
 export const Expander = ({
   title,
   level,
@@ -119,7 +107,12 @@ export const Expander = ({
   ...rest
 }: ExpanderProps) => {
   const controlled = open !== undefined;
-  const presetIndicator: "chevron" | "triangle" | "plus" | undefined =
+  const [listening, setListening] = useState(false);
+  // React hydration installs custom event props after a state-only commit.
+  useLayoutEffect(() => setListening(true), []);
+  const hasActions = hasChildren(actions) && typeof actions !== "boolean" &&
+    (typeof actions !== "string" || Boolean(actions.trim()));
+  const presetIndicator: "chevron" | "triangle" | "plus" | undefined = indicator == null ? "chevron" :
     typeof indicator === "string" &&
     (indicator === "chevron" || indicator === "triangle" || indicator === "plus")
       ? indicator
@@ -129,49 +122,41 @@ export const Expander = ({
     "closed" in indicator && "open" in indicator
       ? indicator
       : undefined;
-  const useCustomSlot = indicator != null && !presetIndicator && !pairedIndicator;
+  const useCustomIndicator = indicator != null && !presetIndicator && !pairedIndicator;
   const customIndicator = typeof indicator === "object" ? indicator as React.ReactNode : null;
+  const indicatorNodes = pairedIndicator ? [
+    <a-expander-indicator key="indicator-closed" data-when="closed" aria-hidden="true" inert>{pairedIndicator.closed}</a-expander-indicator>,
+    <a-expander-indicator key="indicator-open" data-when="open" aria-hidden="true" inert>{pairedIndicator.open}</a-expander-indicator>,
+  ] : [<a-expander-indicator key="indicator" shape={presetIndicator} aria-hidden="true" inert>{useCustomIndicator ? customIndicator : null}</a-expander-indicator>];
 
   // A non-named tone is a literal CSS color: feed it to the element's
   // oklch derivation via an inline custom property (the CSS attr() form
   // is only a fallback for raw-HTML authors). Shared helper — see anta_helpers.
   const computedStyle = roundStyle(round, "--expander-round", toneStyle(tone, "--expander-tone-source", style));
 
-  // A string (or number) title is rendered as our <a-expander-summary>,
-  // which carries the hover affordance. A node title is the consumer's
-  // own markup: slot it through a layout-neutral display:contents span —
-  // the shadow hover hook targets ::slotted(a-expander-summary), so a
-  // custom title opts out of the summary styling automatically. (No
-  // cloneElement/isValidElement — those are React-only APIs that break
-  // the configure() portability story, and a wrapper span also handles
-  // fragments and arrays.)
   const titleNode =
     typeof title === "object" && title !== null ? (
-      <span slot="title" style={{ display: "contents" }}>
-        {title}
-      </span>
+      <a-expander-title key="title">{title}</a-expander-title>
     ) : (
-      <a-expander-summary slot="title">{title}</a-expander-summary>
+      <a-expander-summary key="title" level={level != null ? (String(level) as `${typeof level}`) : undefined}>{title}</a-expander-summary>
     );
+  const actionsNode = hasActions ? <a-expander-actions key="actions">{actions}</a-expander-actions> : null;
 
   return (
     <a-expander
       state={controlled ? (open ? "open" : "closed") : undefined}
       default-state={!controlled && defaultOpen ? "open" : undefined}
-      level={level != null ? (String(level) as `${typeof level}`) : undefined}
       tone={neutralToneAttr(tone)}
       priority={priority && priority !== "secondary" ? priority : undefined}
       outdent={outdent ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
-      indicator={presetIndicator}
-      indicator-placement={indicatorPlacement && indicatorPlacement !== "start" ? indicatorPlacement : undefined}
       // All-lowercase `onstatechange` is the one event-prop spelling both
       // renderers bind to our `statechange` event: React 19 keeps the case of
       // whatever follows `on` (so `onStateChange` would listen for "StateChange"),
       // Preact lowercases. Verified against real React 19 + Preact.
       onstatechange={
-        onStateChange
+        listening && onStateChange
           ? (e: StateChangeEvent) => {
               const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e);
               // Ignore a `statechange` bubbled from a control inside the expander;
@@ -189,13 +174,9 @@ export const Expander = ({
       style={computedStyle}
       {...rest}
     >
-      {titleNode}
-      {actions != null && <span slot="actions">{actions}</span>}
-      {pairedIndicator && <>
-        <span slot="indicator" data-when="closed" aria-hidden="true" inert>{pairedIndicator.closed}</span>
-        <span slot="indicator" data-when="open" aria-hidden="true" inert>{pairedIndicator.open}</span>
-      </>}
-      {useCustomSlot && <span slot="indicator" aria-hidden="true" inert>{customIndicator}</span>}
+      {indicatorPlacement === "end"
+        ? [titleNode, actionsNode, ...indicatorNodes]
+        : [...indicatorNodes, titleNode, actionsNode]}
       <a-expander-details>{children}</a-expander-details>
     </a-expander>
   );

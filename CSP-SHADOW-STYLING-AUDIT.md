@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 14, 2026 on `codex/banner-light-dom`.
+Updated October 14, 2026 on `codex/expander-light-dom`.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -40,10 +40,13 @@ and verification before moving to the next component.
    and CSS hides empty regions. No content observers or DOM rewriting.
    Dismissal transitions retained. Source, installed-package, minimum Chrome,
    original-layout, and production checks passed; coverage limits are below.
-2. [ ] [Expander](src/elements/a-expander.ts): header, content, indicators, and
-   collapse animation. Boolean `round` now uses a CSS radius; the measured-radius
-   issue described in the historical audit is resolved. Static shadow styles
-   remain.
+2. [x] [Expander](src/elements/a-expander.ts): named authored regions with
+   manual shadow projection. The owned native button and inert collapse region
+   remain; all defaults are external part rules. Raw `level` belongs to the
+   summary. No public slot aliases, fallback markup, injected styles, or authored
+   DOM rewriting. The 200ms collapse and indicator motion remain. Reconnection
+   retains applied state. Source, installed-package, visual, minimum Chrome,
+   and production checks passed; coverage limits are below.
 3. [ ] [Tooltip](src/elements/a-tooltip.ts): popover structure, positioning,
    proximity opacity, and transitions. Shared by several composed components.
 4. [ ] [Input](src/elements/a-input.ts): input, textarea, and button modes;
@@ -137,6 +140,82 @@ and [Safari 17.4 release notes](https://webkit.org/blog/15063/webkit-features-in
 The existing display and intrinsic-size transitions remain progressive
 enhancements; this refactor adds no animation fallback or newer baseline API.
 Current Playwright WebKit is engine evidence, not a shipping Safari 17.4 run.
+
+### Expander verification
+
+Verified October 14, 2026:
+
+- `pnpm test:expander` passed all 85 source checks in Chrome `155.0.8059.40`,
+  Firefox `155.0`, and Playwright WebKit `26.6`.
+- `pnpm test:expander:package` passed the same 85 checks through an npm tarball
+  installed in an isolated consumer. Builds resolve public granular and full
+  bundle exports without Anta source aliases or workspace links. React/React DOM
+  `19.3.0`, Preact `10.29.8`, and `preact-render-to-string` `6.7.0` each generate
+  their own SSR output; hydration retains nodes without React recovery errors.
+- The installed suite passed all 29 checks in Chrome for Testing
+  `135.0.7049.114`. Set `ANTA_EXPANDER_CHROMIUM_EXECUTABLE` to select an exact
+  executable and `ANTA_TEST_WEBKIT=0` for the Chromium-only run.
+- Behavior and layout checks use actual CSP response headers with same-origin
+  scripts/styles, `style-src-attr 'none'`, and data images for masks. No component
+  CSP violations occurred. Coverage includes initial controlled/uncontrolled
+  visibility, pointer/keyboard activation, actions, interactive title children,
+  selection, cancellation, controlled rejection/restoration, handoff,
+  reconnection, nesting, empty regions, adopted nodes, accessible names,
+  collapsed focus exclusion, reduced motion, overrides, and both mixed import
+  orders. Chrome's native accessibility tree excludes collapsed body links.
+- Compared the registered original at `f263d70a` with the refactor across 19
+  variants in initial and open states. All 114 geometry comparisons matched in
+  Chrome, Firefox, and WebKit. Screenshots retain the original appearance,
+  including start/end placement, RTL, custom titles, pairs, actions, levels,
+  round, outdent, and disabled-open sections.
+- The reusable slow visual matrix checks 19 variants before/after upgrade,
+  captures closed/open screenshots, and verifies native `details[data-anta]`.
+  Screenshots go to `tests/.test-output/expander` and the manual Component matrix
+  workflow uploads them. WebKit's Playwright screenshot helper injects an
+  animation-sync stylesheet; WebKit captures use a separate context that permits
+  that tool action. Original behavior/layout pages retain strict CSP enforcement.
+- Review regressions cover short, wrapped, and rich titles beside 60px actions,
+  plus initially open plus indicators at both placements with `state` and
+  `default-state`. They reproduce the original failures and pass through granular
+  and full bundle imports under CSP. All 16 Expander fast-tier checks passed.
+  The CI gate also selects Expander for an isolated `key-activation.ts` change.
+  Production Chrome and WebKit checks confirmed the historic `#indicator` and
+  `#round` documentation fragments still resolve to their sections.
+- Built-in and custom artwork now share the authored `a-expander-indicator`.
+  Built-ins select `shape`; sibling order selects start/end placement. There is
+  no shadow glyph, initial-render fallback artwork, or host indicator/placement
+  alias. The existing indicator part retains color and rotation overrides.
+  React and Preact preserve indicator nodes, including pairs, when JSX changes
+  placement. Nested indicators retain independent applied state. The 150ms
+  indicator transition and plus bar both stop under reduced motion; the override
+  follows the drawing rules so their cascade order cannot restore animation.
+- The original 200ms grid transition and 150ms indicator motion remain. A stepped
+  keyframe animates an inherited host value to keep content clipped until the
+  row finishes expanding, then restores visible overflow. Discrete overflow
+  transitions through `::part()` revealed content at zero height, and document
+  keyframes directly on the part still failed in Chrome 135. The timing test
+  samples the start, middle, and end, interrupts closing with reopening, and
+  verifies immediate opening under reduced motion in granular and full builds.
+  Applied state continues to read the owned button's ARIA,
+  keeping custom-state query behavior out of the interaction algorithm. The new
+  title-focus guard prevents Chromium's native summary activation for Space in
+  a projected input.
+- The shared fast tier passed all 52 selected checks across registered components.
+  PR CI selects Expander core regressions; expanded browser, visual, and installed
+  matrices stay in the slow tier. The production site built and all 10 production
+  checks passed. Expander's production demonstrations passed in Chrome and WebKit,
+  including controlled rejection and reopening. All 313 selected root regressions,
+  Anta lint/type checks, sticker type checks, and site CSS lint passed.
+
+Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
+Chrome 135 provides minimum Chromium evidence; current Playwright WebKit is
+engine evidence, not a shipping Safari 17.4 run. Manual slot assignment is
+supported before these minimum versions, according to
+[MDN compatibility data](https://github.com/mdn/browser-compat-data/blob/main/api/HTMLSlotElement.json)
+and the [Safari 16.4 release notes](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/).
+Custom-state styling support is recorded in the Banner verification above.
+The movement still uses the original grid transition; clipping uses standard
+CSS keyframes and an inherited custom property.
 
 ## Scope and conclusion
 

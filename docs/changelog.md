@@ -7,6 +7,11 @@ changes are not listed.
 
 ### Breaking
 
+- The [Antithesis theme](/theming/) is copyright Antithesis Operations LLC and
+  now has a separate license. Noncommercial use is free; commercial use requires
+  prior written permission. Earlier MIT-licensed copies keep their original terms.
+  Antune and the default styles remain MIT licensed.
+
 - [Input form names](/input/#web-component): assigning `element.name` updates
   the submitted name without reflecting into the host attribute. Use authored
   attributes for CSS selectors and named form lookup, and `element.name` for the

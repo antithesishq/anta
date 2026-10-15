@@ -118,7 +118,12 @@ When naming components, props, CSS variables, internal class names, or suggestin
 
 See [`FIGMA.md`](../FIGMA.md) for rules when extracting tokens, components, or styles from the Anta Figma library. Key rule: **always read the full variable list directly from the collection** — don't infer the token set from `get_variable_defs` on a sample node, because tokens that aren't placed on the queried node won't appear, and you'll silently miss values.
 
-## Fonts
+## Themes and fonts
+
+`theme-antithesis.css` is separately licensed under `LICENSE-ANTITHESIS.md`.
+Preserve its `/*! ... */` legal notice in minified and copied CSS. Keep the root
+license exception, package contents, and theming documentation in sync when
+changing its licensing terms.
 
 Published themes must not load fonts or select hosted font families. Keep their
 font stacks application-owned and font-specific features/variation axes out of

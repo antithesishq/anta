@@ -1,13 +1,15 @@
 {
   "name": "@antadesign/anta",
   "version": "0.3.34",
+  "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
     "docs",
-    "NOTICES.md"
+    "NOTICES.md",
+    "LICENSE-ANTITHESIS.md"
   ],
   "packageManager": "pnpm@10.11.1",
   "exports": {

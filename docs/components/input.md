@@ -129,7 +129,7 @@ function SearchActions() {
 
 function Demo() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '320px' }}>
+    <div className="input-adornments" style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '320px' }}>
       <Input label="Leading icon" placeholder="Search…" leading={<Icon shape="search" />} autoComplete="off" />
       <Input className="trailing-actions" label="Trailing actions" placeholder="Search…" trailing={<SearchActions />} dimActions autoComplete="off" />
       <Input label="Clear action" placeholder="Search…" clearable dimActions defaultValue="design tokens" autoComplete="off" />
@@ -142,13 +142,20 @@ function Demo() {
 
 ```css
 a-input.trailing-actions::part(trailing) { padding-right: 2px; }
+.input-adornments a-input::part(clear) { padding: 2px; }
+.input-adornments a-input > [slot="clear"] a-button {
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+}
 ```
 
 `leading` and `trailing` place content at the field edges: an icon, a Button,
 or text such as “from” and “each.” Use either edge on its own, combine both, or
 add `clearable` alongside them. The trailing buttons toggle case-sensitive and
 regular expression modes. Hover or focus the field to see `dimActions` brighten
-the buttons. The `trailing-actions` class adds a 2px inset for this example.
+the buttons. The demo classes give the clear and trailing buttons a 2px inset.
 
 **`type="search"`** is a shorthand for that search pattern: it defaults a leading
 search icon and `clearable` (override either — pass your own `leading`, or

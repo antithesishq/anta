@@ -346,8 +346,11 @@
     min-width: var(--_input-action-size);
     height: var(--_input-action-size);
     min-height: 0;
-    padding: 0 2px;
     justify-content: center;
+
+    /* JSX marks known icon-only buttons; raw markup can opt in explicitly.
+       Element-child selectors cannot distinguish an icon from icon + bare text. */
+    &[data-anta-icon-only] { width: var(--_input-action-size); }
   }
 
   /* Defaults stay at use sites so inherited and local overrides both win. */

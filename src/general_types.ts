@@ -719,7 +719,9 @@ export interface ASwitchAttributes extends BaseAttributes {
  * Direct trailing buttons and buttons-only `<a-input-trailing slot="trailing">`
  * groups use compact spacing. Other wrappers keep the text inset. Override
  * either inset with the `--input-trailing-inset` CSS property. Anta buttons
- * fit the field height; other controls keep their own sizing.
+ * fit the field height and keep their padding. Mark a raw icon-only action with
+ * `data-anta-icon-only` for a square box; unmarked content keeps its natural width.
+ * Other controls keep their own sizing.
  * The element exposes `::part(field | input | label | leading | clear | trailing | hint)`
  * for styling, and `:state(filled)` / `:state(invalid)` as CSS hooks.
  */

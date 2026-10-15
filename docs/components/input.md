@@ -470,7 +470,7 @@ Narrow the preview to see the layout adjust.
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Icon before the hint. The defaults are `warning-diamond` for critical, `warning-triangle` for warning, `circle-check` for success, `info` for info, and `circle-small-solid` for brand. Pass a shape to replace it or `false` to hide it. Neutral has no default icon. |
 | `step?` | number \| string | — | Allowed increment for `type="number"`. |
 | `tone?` | string | — | Custom CSS border color. A non-neutral `status` takes precedence. The focus ring uses the global `--focus-ring`. |
-| `trailing?` | ReactNode | — | Content at the end of the field, after the clear button. Anta buttons fit the field height and keep their natural width. Pass buttons directly or in a fragment for compact spacing. Other wrapping elements keep the text inset. Override either inset with the `--input-trailing-inset` CSS property. |
+| `trailing?` | ReactNode | — | Content at the end of the field, after the clear button. Anta buttons fit the field height and keep their padding. Icon-only Buttons are square; text buttons keep their natural width. Pass buttons directly or in a fragment for compact spacing. Other wrapping elements keep the text inset. Override either inset with the `--input-trailing-inset` CSS property. |
 | `truncate?` | boolean | true | Ellipsize an overflowing single-line value. Read-only inputs already do this; pass `false` when an editable field should show the full value. |
 | `type?` | 'text' \| 'search' \| 'email' \| 'password' \| 'tel' \| 'url' \| 'number' | text | Choose the kind of information to enter. Ignored for multiline fields. `search` adds a search icon and clear button. Replace the icon with `leading` or hide the button with `clearable={false}`. |
 | `value?` | string | — | Controlled value. Update it with `onInput` or `onValueChange` for live editing. |
@@ -486,6 +486,11 @@ with matching names. Unslotted children appear after the field and before the hi
 Group trailing buttons in `<a-input-trailing slot="trailing">` to use compact
 action spacing. Mixed content keeps the text inset. The grouping tag needs no
 JavaScript registration.
+
+Anta buttons fit the field height and keep their own padding. Add
+`data-anta-icon-only` to a raw icon-only button for a square box. Text buttons
+keep their natural width. The JSX Button and ButtonCopy wrappers mark their
+icon-only actions automatically.
 
 Set `role` and `aria-*` on `<a-input>` to describe the field to assistive
 technology. Input applies them to the control that receives focus. Explicit

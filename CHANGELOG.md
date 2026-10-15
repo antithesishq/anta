@@ -115,8 +115,10 @@ changes are not listed.
 ### Fixed
 
 - [Input actions](/input/#leading-trailing-and-clear) fit Anta buttons to the
-  field height while allowing labels to determine their width. Native Anta
-  buttons marked with `data-anta` receive the same sizing.
+  field height while preserving their padding. Icon-only Buttons are square;
+  text buttons keep their natural width. Native Anta buttons marked with
+  `data-anta` receive the same height, and raw icon actions can opt into square
+  sizing with `data-anta-icon-only`.
 
 - [Input multiline fields](/input/#multiline) apply the complete multiline layout
   when `rows` is set without `multiline`, keeping actions aligned to the first line.

@@ -73,7 +73,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Content at the start of the field, such as an icon or text. */
   leading?: React.ReactNode
   /** Content at the end of the field, after the clear button. Anta buttons fit
-   * the field height and keep their natural width. Pass buttons directly or in
+   * the field height and keep their padding. Icon-only Buttons are square; text
+   * buttons keep their natural width. Pass buttons directly or in
    * a fragment for compact spacing. Other wrapping elements keep the text inset.
    * Override either inset with the `--input-trailing-inset` CSS property. */
   trailing?: React.ReactNode

@@ -10,7 +10,7 @@
     --_fs: 15px;
     --_pad-block: 4px;
     --_lh: 20px;
-    --_input-clear-size: 24px;
+    --_input-action-size: 24px;
 
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -41,8 +41,8 @@
     transition: box-shadow 120ms ease;
   }
   a-input[multiline]::part(field) { align-items: stretch; }
-  a-input[size="small"] { --_fs: 13px; --_lh: 16px; --_input-clear-size: 20px; }
-  a-input[size="large"] { --_fs: 17px; --_lh: 22px; --_input-clear-size: 28px; }
+  a-input[size="small"] { --_fs: 13px; --_lh: 16px; --_input-action-size: 20px; }
+  a-input[size="large"] { --_fs: 17px; --_lh: 22px; --_input-action-size: 28px; }
   a-input[size="small"]::part(field) { min-height: var(--_input-measured-min-height, 24px); }
   a-input[size="large"]::part(field) { min-height: var(--_input-measured-min-height, 32px); }
   a-input[round]::part(field) { border-radius: var(--input-round, 999px); }
@@ -140,8 +140,8 @@
   a-input > [slot="clear"] :is(a-button[role="button"], button)[data-custom-event="clearrequest"],
   a-input > :is(a-button[role="button"], button)[slot="clear"][data-custom-event="clearrequest"] {
     box-sizing: border-box;
-    width: var(--_input-clear-size);
-    height: var(--_input-clear-size);
+    width: var(--_input-action-size);
+    height: var(--_input-action-size);
     min-height: 0;
     padding: 0;
   }
@@ -149,7 +149,7 @@
 
   a-input[multiline]:state(filled)::part(clear) {
     align-self: flex-start;
-    height: calc(var(--_input-clear-size) + 4px);
+    height: calc(var(--_input-action-size) + 4px);
   }
 
   a-input::part(hint) {
@@ -340,11 +340,30 @@
     height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
 
+  a-input > [slot="trailing"] :is(a-button[role="button"], button),
+  a-input > :is(a-button[role="button"], button)[slot="trailing"] {
+    &:has(> a-icon):not(:has(> a-icon ~ a-icon, > :not(a-icon):not(a-tooltip):not(a-copy))) {
+      /* Size variants must also override Button's own minimum-height rules. */
+      &, &[size] {
+        box-sizing: border-box;
+        width: var(--_input-action-size);
+        height: var(--_input-action-size);
+        min-height: 0;
+        padding: 0;
+      }
+    }
+  }
+
   /* Inset button groups while static adornments retain the text padding. */
   a-input:has(> [slot="trailing"] :is(a-button, button))::part(trailing),
   a-input:has(> :is(a-button, button)[slot="trailing"])::part(trailing) {
     margin-inline-end: 0;
     padding-inline-end: 2px;
+  }
+
+  a-input[multiline]:has(> [slot="trailing"] :is(a-button, button))::part(trailing),
+  a-input[multiline]:has(> :is(a-button, button)[slot="trailing"])::part(trailing) {
+    height: calc(var(--_input-action-size) + 4px);
   }
 
   /* `round` field radius: presence → 999px pill; a value (`round="20px"`, or the

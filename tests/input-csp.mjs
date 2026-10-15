@@ -180,24 +180,25 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.equal(await control(page).evaluate(node=>node.localName),'button')
     assert.equal(await control(page).evaluate(node=>node.type),'button')
   })
-  test.fast(`${name}: action insets preserve field sizes and contain clear buttons`, async t => {
+  test.fast(`${name}: action insets preserve field sizes and contain icon buttons`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const [size,height] of [['small',24],['medium',28],['large',32]]) {
       for(const direct of [false,true]) for(const multiline of [false,true]) {
         const clear=`<a-button role="button" tabindex="0" size="${size}" data-custom-event="clearrequest" ${direct?'slot="clear"':''}><a-icon shape="x"></a-icon></a-button>`
+        const trailing=`<a-button role="button" ${direct?`slot="trailing" size="${size}"`:''}><a-icon shape="regex"></a-icon></a-button>`
         await mount(page,`<a-input size="${size}" value="Draft" ${multiline?'multiline rows="3"':''}>
           ${direct?clear:`<span slot="clear" data-input-contents>${clear}</span>`}
-          <a-button slot="trailing" role="button" size="small"><a-icon shape="regex"></a-icon></a-button>
+          ${direct?trailing:`<span slot="trailing" data-input-contents>${trailing}</span>`}
         </a-input>`)
         const metrics=await field(page).evaluate(host=>{
           const field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
           const clearSlot=host.shadowRoot.querySelector('[part="clear"]')
           const clear=host.querySelector('[data-custom-event="clearrequest"]').getBoundingClientRect()
           const trailing=host.shadowRoot.querySelector('[part="trailing"]')
-          const action=host.querySelector('[slot="trailing"]').getBoundingClientRect()
+          const action=host.querySelector('[slot="trailing"] a-button, a-button[slot="trailing"]').getBoundingClientRect()
           return {fieldHeight:field.height,clearSize:[clear.width,clear.height],top:clear.top-field.top,
             clearPadding:getComputedStyle(clearSlot).padding,trailingPadding:getComputedStyle(trailing).paddingInlineEnd,
-            end:field.right-action.right}
+            end:field.right-action.right,actionSize:[action.width,action.height],actionTop:action.top-field.top}
         })
         if(!multiline)assert.equal(metrics.fieldHeight,height,JSON.stringify({size,direct,multiline,metrics}))
         assert.deepEqual(metrics.clearSize,[height-4,height-4])
@@ -205,6 +206,8 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
         assert.equal(metrics.top,2)
         assert.equal(metrics.trailingPadding,'2px')
         assert.equal(metrics.end,2)
+        assert.deepEqual(metrics.actionSize,[height-4,height-4])
+        assert.equal(metrics.actionTop,2)
         await page.locator('[data-custom-event="clearrequest"]').click()
         assert.equal(await field(page).evaluate(host=>host.value),'')
       }
@@ -221,6 +224,10 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       const trailing=getComputedStyle(host.shadowRoot.querySelector('[part="trailing"]'))
       return [clear.getBoundingClientRect().width,trailing.marginInlineEnd,trailing.paddingInlineEnd]
     }),[0,'7px','0px'])
+    await mount(page,'<a-input size="small"><a-button role="button" slot="trailing" size="large"><a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label></a-button></a-input>')
+    const labeled=await page.locator('a-button').boundingBox()
+    assert.equal(labeled.height,32)
+    assert.ok(labeled.width>32)
   })
   test.fast(`${name}: values, input/change, composition, selection, and handoff`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)

@@ -6,11 +6,11 @@ function SearchActions() {
   const [regex, setRegex] = useState(false)
   return (
     <>
-      <Button priority="tertiary" size="small" icon="case-sensitive"
+      <Button priority="tertiary" icon="case-sensitive"
         aria-label="Case sensitive" title="Case sensitive"
         selected={caseSensitive} aria-pressed={caseSensitive}
         onClick={() => setCaseSensitive(value => !value)} />
-      <Button priority="tertiary" size="small" icon="regex"
+      <Button priority="tertiary" icon="regex"
         aria-label="Regular expression" title="Regular expression"
         selected={regex} aria-pressed={regex}
         onClick={() => setRegex(value => !value)} />

@@ -26,7 +26,6 @@ export default function InputPasswordDemo() {
       trailing={
         <Button
           priority="tertiary"
-          size="small"
           icon={reveal ? 'eye-closed' : 'eye'}
           aria-label={reveal ? 'Hide password' : 'Show password'}
           onClick={() => setReveal((v) => !v)}

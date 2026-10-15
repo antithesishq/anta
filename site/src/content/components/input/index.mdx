@@ -234,11 +234,11 @@ function SearchActions() {
   const [regex, setRegex] = useState(false)
   return (
     <>
-      <Button priority="tertiary" size="small" icon="case-sensitive"
+      <Button priority="tertiary" icon="case-sensitive"
         aria-label="Case sensitive" title="Case sensitive"
         selected={caseSensitive} aria-pressed={caseSensitive}
         onClick={() => setCaseSensitive(value => !value)} />
-      <Button priority="tertiary" size="small" icon="regex"
+      <Button priority="tertiary" icon="regex"
         aria-label="Regular expression" title="Regular expression"
         selected={regex} aria-pressed={regex}
         onClick={() => setRegex(value => !value)} />
@@ -267,7 +267,9 @@ or text such as “from” and “each.” Use either edge on its own, combine b
 add `clearable` alongside them. The trailing buttons toggle case-sensitive and
 regular expression modes. Hover or focus the field to see `dimActions` brighten
 the buttons. Clear buttons have a 2px inset on all sides. Trailing button groups
-have a 2px inset at the end of the field.
+have a 2px inset at the end of the field. Trailing icon-only buttons follow
+the Input size: 20px in small fields, 24px in medium fields, and 28px in large
+fields. They fit inside the border without a separate Button `size` prop.
 
 **`type="search"`** is a shorthand for that search pattern: it defaults a leading
 search icon and `clearable` (override either — pass your own `leading`, or
@@ -319,7 +321,6 @@ const [reveal, setReveal] = useState(false)
   trailing={
     <Button
       priority="tertiary"
-      size="small"
       icon={reveal ? 'eye-closed' : 'eye'}
       aria-label={reveal ? 'Hide password' : 'Show password'}
       onClick={() => setReveal(v => !v)}

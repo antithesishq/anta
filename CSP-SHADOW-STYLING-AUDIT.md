@@ -282,6 +282,15 @@ CSP constraint.
 
 ### Input verification
 
+October 15 follow-up: action spacing is now a component default in `a-input.css`.
+Clear-request buttons measure 20/24/28px in 24/28/32px fields with 2px padding;
+trailing button groups have 2px end padding. The preview has no spacing classes
+or CSS overrides. New CSP checks cover all sizes, direct and wrapped clear
+controls, multiline alignment, RTL, static adornments, and empty slots.
+All 121 source and 121 installed-package checks pass in the three current
+engines, along with the existing 44 Input regressions. Both new inset checks
+also pass in Chrome for Testing `135.0.7049.114`.
+
 Verified October 14, 2026 on `codex/input-external-css`:
 
 - All 115 source checks and 115 installed-package checks passed in Chrome

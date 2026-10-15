@@ -180,6 +180,48 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.equal(await control(page).evaluate(node=>node.localName),'button')
     assert.equal(await control(page).evaluate(node=>node.type),'button')
   })
+  test.fast(`${name}: action insets preserve field sizes and contain clear buttons`, async t => {
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    for(const [size,height] of [['small',24],['medium',28],['large',32]]) {
+      for(const direct of [false,true]) for(const multiline of [false,true]) {
+        const clear=`<a-button role="button" tabindex="0" size="${size}" data-custom-event="clearrequest" ${direct?'slot="clear"':''}><a-icon shape="x"></a-icon></a-button>`
+        await mount(page,`<a-input size="${size}" value="Draft" ${multiline?'multiline rows="3"':''}>
+          ${direct?clear:`<span slot="clear" data-input-contents>${clear}</span>`}
+          <a-button slot="trailing" role="button" size="small"><a-icon shape="regex"></a-icon></a-button>
+        </a-input>`)
+        const metrics=await field(page).evaluate(host=>{
+          const field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
+          const clearSlot=host.shadowRoot.querySelector('[part="clear"]')
+          const clear=host.querySelector('[data-custom-event="clearrequest"]').getBoundingClientRect()
+          const trailing=host.shadowRoot.querySelector('[part="trailing"]')
+          const action=host.querySelector('[slot="trailing"]').getBoundingClientRect()
+          return {fieldHeight:field.height,clearSize:[clear.width,clear.height],top:clear.top-field.top,
+            clearPadding:getComputedStyle(clearSlot).padding,trailingPadding:getComputedStyle(trailing).paddingInlineEnd,
+            end:field.right-action.right}
+        })
+        if(!multiline)assert.equal(metrics.fieldHeight,height,JSON.stringify({size,direct,multiline,metrics}))
+        assert.deepEqual(metrics.clearSize,[height-4,height-4])
+        assert.equal(metrics.clearPadding,'2px')
+        assert.equal(metrics.top,2)
+        assert.equal(metrics.trailingPadding,'2px')
+        assert.equal(metrics.end,2)
+        await page.locator('[data-custom-event="clearrequest"]').click()
+        assert.equal(await field(page).evaluate(host=>host.value),'')
+      }
+    }
+    await field(page).evaluate(host=>host.dir='rtl')
+    assert.equal(await field(page).evaluate(host=>{
+      const field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
+      const trailing=host.querySelector('[slot="trailing"]').getBoundingClientRect()
+      return trailing.left-field.left
+    }),2)
+    await mount(page,'<a-input><span slot="trailing">each</span></a-input>')
+    assert.deepEqual(await field(page).evaluate(host=>{
+      const clear=host.shadowRoot.querySelector('[part="clear"]')
+      const trailing=getComputedStyle(host.shadowRoot.querySelector('[part="trailing"]'))
+      return [clear.getBoundingClientRect().width,trailing.marginInlineEnd,trailing.paddingInlineEnd]
+    }),[0,'7px','0px'])
+  })
   test.fast(`${name}: values, input/change, composition, selection, and handoff`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
     await mount(page,'<a-input defaultvalue="Seed"></a-input>')

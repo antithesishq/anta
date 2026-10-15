@@ -10,6 +10,7 @@
     --_fs: 15px;
     --_pad-block: 4px;
     --_lh: 20px;
+    --_input-clear-size: 24px;
 
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -40,8 +41,8 @@
     transition: box-shadow 120ms ease;
   }
   a-input[multiline]::part(field) { align-items: stretch; }
-  a-input[size="small"] { --_fs: 13px; --_lh: 16px; }
-  a-input[size="large"] { --_fs: 17px; --_lh: 22px; }
+  a-input[size="small"] { --_fs: 13px; --_lh: 16px; --_input-clear-size: 20px; }
+  a-input[size="large"] { --_fs: 17px; --_lh: 22px; --_input-clear-size: 28px; }
   a-input[size="small"]::part(field) { min-height: var(--_input-measured-min-height, 24px); }
   a-input[size="large"]::part(field) { min-height: var(--_input-measured-min-height, 32px); }
   a-input[round]::part(field) { border-radius: var(--input-round, 999px); }
@@ -132,12 +133,23 @@
     align-items: center;
     flex-shrink: 0;
     visibility: hidden;
+    box-sizing: border-box;
+  }
+  a-input:has(> [slot="clear"])::part(clear) { padding: 2px; }
+  /* Size the clear-request trigger; custom clear content keeps its own layout. */
+  a-input > [slot="clear"] :is(a-button[role="button"], button)[data-custom-event="clearrequest"],
+  a-input > :is(a-button[role="button"], button)[slot="clear"][data-custom-event="clearrequest"] {
+    box-sizing: border-box;
+    width: var(--_input-clear-size);
+    height: var(--_input-clear-size);
+    min-height: 0;
+    padding: 0;
   }
   a-input:state(filled):not(:disabled):not([readonly])::part(clear) { visibility: visible; }
 
   a-input[multiline]:state(filled)::part(clear) {
     align-self: flex-start;
-    height: calc(var(--_lh) + var(--_pad-block) * 2);
+    height: calc(var(--_input-clear-size) + 4px);
   }
 
   a-input::part(hint) {
@@ -280,10 +292,8 @@
     --input-adornment: var(--text-3);
     --input-hint: var(--text-3);
 
-    /* Inset of the trailing slot from the field edge, mirroring the leading slot.
-       A static adornment (text, an indicator icon) keeps it; a trailing BUTTON
-       drops it to 0 below so the control reaches the edge for a bigger hit target.
-       The var inherits into the shadow, where the trailing slot's margin reads it. */
+    /* Static trailing adornments align with the text inset. Button groups use
+       their own 2px padding below. */
     --input-trailing-inset: 7px;
 
     /* The host grid remains customizable independently of the field width. */
@@ -330,13 +340,11 @@
     height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
 
-  /* A trailing button reaches the edge (matches the `:has()` content-conditional
-     padding a-button does): flush when the trailing slot holds a button, whether
-     the button is the slotted node or wrapped (the `Input` wrapper's display:contents
-     span). Static trailing content keeps --input-trailing-inset. */
-  a-input:has([slot="trailing"] :is(a-button, button)),
-  a-input:has([slot="trailing"]:is(a-button, button)) {
-    --input-trailing-inset: 0;
+  /* Inset button groups while static adornments retain the text padding. */
+  a-input:has(> [slot="trailing"] :is(a-button, button))::part(trailing),
+  a-input:has(> :is(a-button, button)[slot="trailing"])::part(trailing) {
+    margin-inline-end: 0;
+    padding-inline-end: 2px;
   }
 
   /* `round` field radius: presence → 999px pill; a value (`round="20px"`, or the

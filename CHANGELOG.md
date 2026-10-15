@@ -80,6 +80,9 @@ changes are not listed.
   tabs and the sliding indicator as well as the primary track. Previously the
   tabs and indicator stayed fully round.
 
+- [Tabs sizing](/tabs/#size) in the Antithesis theme matches text buttons'
+  horizontal padding: 10px, 12px, and 14px per side for small, medium, and large.
+
 
 ### Fixed
 

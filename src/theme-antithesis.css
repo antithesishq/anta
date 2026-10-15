@@ -595,6 +595,9 @@
   a-tabs:not([round], [data-steps], [priority="secondary"], [priority="tertiary"]) {
     border-radius: var(--tab-radius);
   }
+  a-tabs:not([data-steps]) > a-tab {
+    --tab-padding-x: round(0.8em, 1px);
+  }
 
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])) {

@@ -70,6 +70,9 @@ Three sizes reuse [Button](./button.md)'s type scale, so a strip lines up with
 same-size buttons and inputs: `small`, `medium` (default), `large`. Icons scale
 with the tab.
 
+In the Antithesis theme, tabs match text buttons' horizontal padding:
+10px per side at `small`, 12px at `medium`, and 14px at `large`.
+
 ## Orientation
 
 `horizontal` (default) lays the tabs in a row; `vertical` stacks them into a column.

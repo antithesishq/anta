@@ -9,7 +9,7 @@
     "dist",
     "docs",
     "NOTICES.md",
-    "LICENSE-ANTITHESIS.md"
+    "theme-antithesis-license.md"
   ],
   "packageManager": "pnpm@10.11.1",
   "exports": {

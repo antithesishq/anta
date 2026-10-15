@@ -120,7 +120,7 @@ See [`FIGMA.md`](../FIGMA.md) for rules when extracting tokens, components, or s
 
 ## Themes and fonts
 
-`theme-antithesis.css` is separately licensed under `LICENSE-ANTITHESIS.md`.
+`theme-antithesis.css` is separately licensed under `theme-antithesis-license.md`.
 Preserve its `/*! ... */` legal notice in minified and copied CSS. Keep the root
 license exception, package contents, and theming documentation in sync when
 changing its licensing terms.

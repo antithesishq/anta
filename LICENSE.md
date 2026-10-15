@@ -4,7 +4,7 @@ The MIT license below applies to Anta except for the Antithesis theme in
 `src/theme-antithesis.css`, its built copy `dist/theme-antithesis.css`
 (exported as `@antadesign/anta/theme-antithesis.css`), and copies or
 modifications of that theme. The theme is licensed separately under
-[the Antithesis theme license](./LICENSE-ANTITHESIS.md): noncommercial use is
+[the Antithesis theme license](./theme-antithesis-license.md): noncommercial use is
 free, and commercial use requires prior written permission from Antithesis
 Operations LLC. That exception does not restrict rights already granted in
 earlier MIT-licensed copies of the theme.

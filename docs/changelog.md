@@ -80,8 +80,19 @@ changes are not listed.
   `true`, independent of title level and header height. Explicit radius values
   remain supported; native `details[data-anta][round]` uses the same default.
 
+- [Tabs rounding](/tabs/#styling): a custom `round` radius now applies to the
+  tabs and the sliding indicator as well as the primary track. Previously the
+  tabs and indicator stayed fully round.
+
+- [Tabs sizing](/tabs/#size) in the Antithesis theme matches text buttons'
+  horizontal padding: 10px, 12px, and 14px per side for small, medium, and large.
+
 
 ### Fixed
+
+- [Tabs per-option tones](/tabs/#tone) color the selected indicator without
+  recoloring the track. An explicit neutral option also resets the indicator
+  on a toned strip.
 
 - [Expander](/expander/) keeps content clipped during expansion and restores
   overflow once the section finishes opening.

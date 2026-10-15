@@ -177,6 +177,7 @@ export const Card = ({
     >
       {linked ? (
         <a
+          data-anta-card-link=""
           href={loading ? undefined : href}
           target={loading ? undefined : target}
           rel={loading ? undefined : rel}
@@ -185,7 +186,9 @@ export const Card = ({
           {...aria}
           aria-label={label ?? (loading ? undefined : textName)}
           aria-busy={busy ?? (loading ? "true" : undefined)}
-        >{content}</a>
+        >
+          <a-card-layout>{content}</a-card-layout>
+        </a>
       ) : content}
     </a-card>
   )

@@ -1389,7 +1389,9 @@ export interface ATabpanelAttributes extends BaseAttributes {
 
 /** Surface attributes for the CSS-only `<a-card>` tag. Its `a-card-*` children
  * define the layout. Put navigation attributes and link ARIA on a native `<a>`
- * directly under `a-card`, wrapping its media and content. The JSX `Card` wrapper emits this structure. */
+ * directly under `a-card`, marked with `data-anta-card-link`. Its
+ * `a-card-layout` child groups media and content. The JSX `Card` wrapper emits
+ * this structure. */
 export interface ACardAttributes extends BaseAttributes {
   /** Semantic tone, or any literal CSS color for a one-off custom tone. Named tones
    *  re-point the surface + text; a custom color keeps its hue with lightness/chroma

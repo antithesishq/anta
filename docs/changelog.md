@@ -35,8 +35,9 @@ changes are not listed.
   raw HTML users must update their markup using the linked example.
 
 - [Card markup](/card/#migrate-from-shadow-parts) uses light-DOM `a-card-*`
-  regions. JSX props remain available; raw slot markup and `::part()` overrides
-  need migration. `ACardElement` and `register_a_card` are removed.
+  regions. Raw link Cards use `a[data-anta-card-link] > a-card-layout`. JSX props
+  remain available; raw slot markup and `::part()` overrides need migration.
+  `ACardElement` and `register_a_card` are removed.
 
 - [Browser support](/install-config/#browser-support) now requires Chrome/Edge
   135+ and Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints
@@ -95,7 +96,8 @@ changes are not listed.
   attributes. One-way expansion hides its control instead of removing it.
 
 - [Card](/card/) renders its final layout and native link directly in HTML. Its
-  styling uses external CSS and no shadow stylesheet.
+  styling uses external CSS and no shadow stylesheet. Generic anchor display
+  rules preserve the media and content arrangement in link Cards.
 
 - [Expander rounding](/expander/#round-and-outdent) uses a `1rem` radius when `round` is
   `true`, independent of title level and header height. Explicit radius values

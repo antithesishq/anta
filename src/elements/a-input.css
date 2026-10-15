@@ -52,8 +52,9 @@
   @media (hover: hover) and (pointer: fine) {
     a-input:not(:disabled)::part(field):hover { --_bw: 1px; --_bc: var(--input-border); }
   }
-  a-input:not([readonly]):state(control-focus)::part(field),
-  a-input[readonly]:state(kb-focus)::part(field) {
+  a-input:not(:disabled):not([readonly]):not(:state(button)):focus::part(field),
+  a-input:not(:disabled):not([readonly]):state(button):focus:state(button-focus)::part(field),
+  a-input:not(:disabled)[readonly]:focus:state(kb-focus)::part(field) {
     --_bw: 1px;
     --_bc: var(--input-border);
     outline: var(--_input-focus-width, 1px) solid var(--focus-ring);

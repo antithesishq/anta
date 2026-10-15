@@ -363,14 +363,49 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await mount(page,'<a-input><span slot="trailing"><a-button role="button" tabindex="0" aria-label="Action">Action</a-button></span></a-input><a-input readonly value="Pick"></a-input><a-input button value="Open"></a-input>')
     const ring=host=>host.evaluate(node=>getComputedStyle(node.shadowRoot.querySelector('[part="field"]')).outlineStyle)
     await control(page).click();assert.equal(await ring(field(page)),'solid')
+    await field(page).evaluate(host=>host.setAttribute('readonly',''));assert.equal(await ring(field(page)),'none')
+    await field(page).evaluate(host=>host.removeAttribute('readonly'));assert.equal(await ring(field(page)),'solid')
     await page.locator('a-button').click();assert.equal(await ring(field(page)),'none')
-    const readonly=page.locator('a-input[readonly]');await readonly.locator('input').click();assert.equal(await ring(readonly),'none')
+    const readonly=page.locator('a-input').nth(1);await readonly.locator('input').click();assert.equal(await ring(readonly),'none')
     await control(page).click();await page.keyboard.press('Tab');await page.keyboard.press('Tab')
     assert.equal(await ring(readonly),'solid')
+    await readonly.evaluate(host=>host.removeAttribute('readonly'));assert.equal(await ring(readonly),'solid')
+    await readonly.evaluate(host=>host.setAttribute('readonly',''));assert.equal(await ring(readonly),'solid')
+    await readonly.locator('input').evaluate(node=>node.addEventListener('blur',event=>event.stopImmediatePropagation(),true))
+    await page.locator('#after').focus();assert.equal(await ring(readonly),'none')
     const button=page.locator('a-input[button]');await button.locator('button').click();assert.equal(await ring(button),'none')
     await page.keyboard.press('Tab');await button.locator('button').focus();await frames(page);assert.equal(await ring(button),await button.locator('button').evaluate(node=>node.matches(':focus-visible')?'solid':'none'))
+    await button.locator('button').evaluate(node=>node.addEventListener('blur',event=>event.stopImmediatePropagation(),true))
+    await page.locator('#after').focus();assert.equal(await ring(button),'none')
     await field(page).evaluate(host=>{host.setAttribute('dim-actions','');host.shadowRoot.querySelector('input').focus()})
     await page.waitForFunction(()=>getComputedStyle(document.querySelector('a-input').shadowRoot.querySelector('[part="trailing"]')).opacity==='1')
+  })
+  test.fast(`${name}: editable focus rings follow CSS when focus handlers are missed`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    const ring=()=>field(page).evaluate(host=>getComputedStyle(host.shadowRoot.querySelector('[part="field"]')).outlineStyle)
+    for(const attrs of ['', 'multiline', 'rows="2"']) {
+      await mount(page,`<fieldset><a-input ${attrs} value="Draft">${['leading','clear','trailing'].map(slot=>`<a-button slot="${slot}" role="button" tabindex="0">${slot}</a-button>`).join('')}</a-input></fieldset>`)
+      await field(page).evaluate(host=>{
+        window.editableFocusReads=0
+        const read=Object.getOwnPropertyDescriptor(ShadowRoot.prototype,'activeElement').get
+        Object.defineProperty(host.shadowRoot,'activeElement',{configurable:true,get(){editableFocusReads++;return read.call(this)}})
+      })
+      await control(page).focus();assert.equal(await ring(),'solid',attrs)
+      await page.locator('#after').focus();assert.equal(await ring(),'none',attrs)
+      assert.equal(await page.evaluate(()=>editableFocusReads),0,attrs)
+      await control(page).evaluate(node=>{
+        for(const type of ['focus','blur']) node.addEventListener(type,event=>event.stopImmediatePropagation(),true)
+      })
+      await control(page).focus();assert.equal(await ring(),'solid',attrs)
+      for(const slot of ['leading','clear','trailing']) {
+        await page.locator(`a-button[slot="${slot}"]`).focus();assert.equal(await ring(),'none',`${attrs} ${slot}`)
+        await control(page).focus();assert.equal(await ring(),'solid',attrs)
+      }
+      await page.locator('#after').focus();assert.equal(await ring(),'none',attrs)
+      await control(page).focus();assert.equal(await ring(),'solid',attrs)
+      await page.locator('fieldset').evaluate(node=>node.disabled=true);assert.equal(await ring(),'none',attrs)
+      assert.equal(await page.evaluate(()=>editableFocusReads),0,attrs)
+    }
   })
   test.fast(`${name}: document modality refresh visits only the focused button Input`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
@@ -390,13 +425,13 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await page.evaluate(()=>{focusReads=[]})
     await page.keyboard.press('a');await frames(page)
     assert.deepEqual(await page.evaluate(()=>focusReads),['focus-199'])
-    assert.equal(await page.locator('#focus-199').evaluate(host=>host.matches(':state(control-focus)')===host.shadowRoot.querySelector('button').matches(':focus-visible')),true)
+    assert.equal(await page.locator('#focus-199').evaluate(host=>host.matches(':state(button-focus)')===host.shadowRoot.querySelector('button').matches(':focus-visible')),true)
     await page.evaluate(()=>{focusReads=[]})
     await button.click();await frames(page)
     // WebKit can blur the button on pointer activation, leaving no refresh target.
     const pointerReads=await page.evaluate(()=>focusReads)
     assert.ok(pointerReads.length<=1&&pointerReads.every(id=>id==='focus-199'))
-    assert.equal(await page.locator('#focus-199').evaluate(host=>host.matches(':state(control-focus)')===host.shadowRoot.querySelector('button').matches(':focus-visible')),true)
+    assert.equal(await page.locator('#focus-199').evaluate(host=>host.matches(':state(button-focus)')===host.shadowRoot.querySelector('button').matches(':focus-visible')),true)
     // The document's activeElement is an outer host when focus is in a closed root.
     await page.evaluate(()=>{
       window.nestedInput=document.querySelector('#focus-199')
@@ -407,7 +442,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await page.evaluate(()=>{focusReads=[]})
     await page.keyboard.press('a');await frames(page)
     assert.deepEqual(await page.evaluate(()=>focusReads),['focus-199'])
-    assert.equal(await page.evaluate(()=>nestedInput.matches(':state(control-focus)')===nestedInput.shadowRoot.querySelector('button').matches(':focus-visible')),true)
+    assert.equal(await page.evaluate(()=>nestedInput.matches(':state(button-focus)')===nestedInput.shadowRoot.querySelector('button').matches(':focus-visible')),true)
     await page.locator('#after').focus();await frames(page)
     await page.evaluate(()=>{focusReads=[]})
     await page.keyboard.press('a');await frames(page)

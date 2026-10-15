@@ -276,7 +276,7 @@ export class AInputElement extends HTMLElementBase {
 
   connectedCallback() {
     this.#releaseModality?.()
-    this.#releaseModality = trackFocusModality(this.doc, this.syncControlFocus)
+    this.#releaseModality = trackFocusModality(this.doc, this.syncButtonFocus)
     // A `value` set as a property before the element upgraded shadows the
     // accessor as an own data property — re-apply it through the setter so the
     // initial controlled value isn't lost when the control is built.
@@ -353,7 +353,7 @@ export class AInputElement extends HTMLElementBase {
     // flip the inner control's validity. Symmetric with the `status` branch.
     if (this.control) {
       this.forward(name, value)
-      if (name === 'readonly' || name === 'type') this.syncControlFocus()
+      if (name === 'readonly' || name === 'type') this.syncButtonFocus()
       this.syncButtonPresentation()
       this.updateValidity()
     }
@@ -600,26 +600,24 @@ export class AInputElement extends HTMLElementBase {
   // `change` is not composed; re-emit one on the host so it escapes the shadow.
   private onChange = () => { this.dispatchEvent(new Event('change', { bubbles: true })) }
 
-  // Stamp the off-DOM `:state(kb-focus)` when this focus arrived via the keyboard
-  // (see `trackFocusModality`), so the read-only field's ring can draw for keyboard
-  // focus but not a mouse click — the one distinction Chromium's `:focus-visible`
-  // won't make for an <input>. Editable fields ignore the state (ring on `:focus`).
-  private syncControlFocus = () => {
-    const focused = this.shadowRoot?.activeElement === this.control
-    const show = focused && (!isButton(this.control) || this.control.matches(':focus-visible'))
-    this.internals?.states?.[show ? 'add' : 'delete']('control-focus')
+  private syncButtonFocus = () => {
+    if (!isButton(this.control)) return
+    const show = this.shadowRoot?.activeElement === this.control && this.control.matches(':focus-visible')
+    this.internals?.states?.[show ? 'add' : 'delete']('button-focus')
   }
 
   private onFocus = () => {
-    this.syncControlFocus()
+    if (isButton(this.control)) this.syncButtonFocus()
     const modality = (this.doc as InputDocument)[MODALITY]
     if (modality) {
       // Only a focused button's ring can change with document input modality.
       // Focus events also identify Inputs nested inside closed shadow roots.
-      modality.active = isButton(this.control) ? this.syncControlFocus : undefined
+      modality.active = isButton(this.control) ? this.syncButtonFocus : undefined
       // WebKit settles native :focus-visible after dispatching focus.
-      modality.refresh()
+      if (isButton(this.control)) modality.refresh()
     }
+    // Remember focus origin even while editable: readonly can change in place.
+    // Native text controls can match :focus-visible after pointer focus.
     try {
       if ((this.doc as InputDocument)[MODALITY]?.keyboard) this.internals?.states?.add('kb-focus')
       else this.internals?.states?.delete('kb-focus')
@@ -627,8 +625,8 @@ export class AInputElement extends HTMLElementBase {
   }
   private onBlur = () => {
     const modality = (this.doc as InputDocument)[MODALITY]
-    if (modality?.active === this.syncControlFocus) modality.active = undefined
-    this.internals?.states?.delete('control-focus')
+    if (modality?.active === this.syncButtonFocus) modality.active = undefined
+    if (isButton(this.control)) this.internals?.states?.delete('button-focus')
     try { this.internals?.states?.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
   }
 

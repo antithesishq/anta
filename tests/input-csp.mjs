@@ -326,6 +326,47 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await field(page).evaluate(host=>{host.setAttribute('dim-actions','');host.shadowRoot.querySelector('input').focus()})
     await page.waitForFunction(()=>getComputedStyle(document.querySelector('a-input').shadowRoot.querySelector('[part="trailing"]')).opacity==='1')
   })
+  test.fast(`${name}: document modality refresh visits only the focused button Input`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,Array.from({length:200},(_,i)=>`<a-input id="focus-${i}" ${i===199?'button':''} value="Field"></a-input>`).join(''))
+    await page.locator('#focus-0').locator('[part="input"]').click();await frames(page)
+    await page.evaluate(()=>{
+      window.focusReads=[]
+      const read=Object.getOwnPropertyDescriptor(ShadowRoot.prototype,'activeElement').get
+      for(const host of document.querySelectorAll('a-input')) Object.defineProperty(host.shadowRoot,'activeElement',{
+        configurable:true,get(){focusReads.push(host.id);return read.call(this)},
+      })
+    })
+    await page.keyboard.type('Typing');await frames(page)
+    assert.deepEqual(await page.evaluate(()=>focusReads),[])
+    const button=page.locator('#focus-199').locator('[part="input"]')
+    await button.click();await button.focus();await frames(page)
+    await page.evaluate(()=>{focusReads=[]})
+    await page.keyboard.press('a');await frames(page)
+    assert.deepEqual(await page.evaluate(()=>focusReads),['focus-199'])
+    assert.equal(await page.locator('#focus-199').evaluate(host=>host.matches(':state(control-focus)')===host.shadowRoot.querySelector('button').matches(':focus-visible')),true)
+    await page.evaluate(()=>{focusReads=[]})
+    await button.click();await frames(page)
+    // WebKit can blur the button on pointer activation, leaving no refresh target.
+    const pointerReads=await page.evaluate(()=>focusReads)
+    assert.ok(pointerReads.length<=1&&pointerReads.every(id=>id==='focus-199'))
+    assert.equal(await page.locator('#focus-199').evaluate(host=>host.matches(':state(control-focus)')===host.shadowRoot.querySelector('button').matches(':focus-visible')),true)
+    // The document's activeElement is an outer host when focus is in a closed root.
+    await page.evaluate(()=>{
+      window.nestedInput=document.querySelector('#focus-199')
+      const outer=document.createElement('div');document.querySelector('#mount').append(outer)
+      outer.attachShadow({mode:'closed'}).append(nestedInput)
+      nestedInput.shadowRoot.querySelector('button').focus()
+    });await frames(page)
+    await page.evaluate(()=>{focusReads=[]})
+    await page.keyboard.press('a');await frames(page)
+    assert.deepEqual(await page.evaluate(()=>focusReads),['focus-199'])
+    assert.equal(await page.evaluate(()=>nestedInput.matches(':state(control-focus)')===nestedInput.shadowRoot.querySelector('button').matches(':focus-visible')),true)
+    await page.locator('#after').focus();await frames(page)
+    await page.evaluate(()=>{focusReads=[]})
+    await page.keyboard.press('a');await frames(page)
+    assert.deepEqual(await page.evaluate(()=>focusReads),[])
+  })
   for(const framework of ['React','Preact']) {
     for (const registration of ['before render','after render']) {
       test.fast(`${name} ${framework}: client form names reflect with registration ${registration}`,async t=>{

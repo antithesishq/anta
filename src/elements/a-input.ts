@@ -74,7 +74,7 @@ const BOOL_FORWARDED = new Set(['readonly', 'required'])
 // Shared across independently compiled entries, with listeners owned by the
 // connected document and released after its last Input disconnects.
 const MODALITY = Symbol.for('anta.input-focus-modality')
-type Modality = { keyboard: boolean; readers: Set<() => void>; key: () => void; pointer: () => void; refresh: () => void; frame?: number }
+type Modality = { keyboard: boolean; readers: Set<() => void>; active?: () => void; key: () => void; pointer: () => void; refresh: () => void; frame?: number }
 type InputDocument = Document & { [MODALITY]?: Modality }
 function trackFocusModality(doc: InputDocument, reader: () => void) {
   let state = doc[MODALITY]
@@ -83,10 +83,10 @@ function trackFocusModality(doc: InputDocument, reader: () => void) {
     state = { keyboard: false, readers, key: () => {}, pointer: () => {}, refresh: () => {} }
     const current = state
     current.refresh = () => {
-      if (current.frame !== undefined) return
+      if (!current.active || current.frame !== undefined) return
       current.frame = doc.defaultView?.requestAnimationFrame(() => {
         current.frame = undefined
-        for (const sync of current.readers) sync()
+        current.active?.()
       })
     }
     current.key = () => { current.keyboard = true; current.refresh() }
@@ -98,6 +98,7 @@ function trackFocusModality(doc: InputDocument, reader: () => void) {
   state.readers.add(reader)
   return () => {
     state.readers.delete(reader)
+    if (state.active === reader) state.active = undefined
     if (state.readers.size) return
     if (state.frame !== undefined) doc.defaultView?.cancelAnimationFrame(state.frame)
     doc.removeEventListener('keydown', state.key, true)
@@ -605,14 +606,22 @@ export class AInputElement extends HTMLElementBase {
 
   private onFocus = () => {
     this.syncControlFocus()
-    // WebKit settles native :focus-visible after dispatching focus.
-    ;(this.doc as InputDocument)[MODALITY]?.refresh()
+    const modality = (this.doc as InputDocument)[MODALITY]
+    if (modality) {
+      // Only a focused button's ring can change with document input modality.
+      // Focus events also identify Inputs nested inside closed shadow roots.
+      modality.active = isButton(this.control) ? this.syncControlFocus : undefined
+      // WebKit settles native :focus-visible after dispatching focus.
+      modality.refresh()
+    }
     try {
       if ((this.doc as InputDocument)[MODALITY]?.keyboard) this.internals?.states?.add('kb-focus')
       else this.internals?.states?.delete('kb-focus')
     } catch { /* CustomStateSet unsupported */ }
   }
   private onBlur = () => {
+    const modality = (this.doc as InputDocument)[MODALITY]
+    if (modality?.active === this.syncControlFocus) modality.active = undefined
     this.internals?.states?.delete('control-focus')
     try { this.internals?.states?.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
   }

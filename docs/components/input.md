@@ -141,14 +141,14 @@ function Demo() {
 ```
 
 ```css
-a-input.trailing-actions::part(trailing) { padding-right: 1px; }
+a-input.trailing-actions::part(trailing) { padding-right: 2px; }
 ```
 
 `leading` and `trailing` place content at the field edges: an icon, a Button,
 or text such as “from” and “each.” Use either edge on its own, combine both, or
 add `clearable` alongside them. The trailing buttons toggle case-sensitive and
 regular expression modes. Hover or focus the field to see `dimActions` brighten
-the buttons. The `trailing-actions` class adds a 1px inset for this example.
+the buttons. The `trailing-actions` class adds a 2px inset for this example.
 
 **`type="search"`** is a shorthand for that search pattern: it defaults a leading
 search icon and `clearable` (override either — pass your own `leading`, or

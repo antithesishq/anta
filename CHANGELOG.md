@@ -79,6 +79,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Expander](/expander/) keeps content clipped during expansion and restores
+  overflow once the section finishes opening.
+
 - [Banner visibility](/banner/#controlled-vs-uncontrolled) can be restored after
   an initially dismissed notice. Nested Banner alignment and close styling stay
   independent, close requests remain scoped after moving between documents, and

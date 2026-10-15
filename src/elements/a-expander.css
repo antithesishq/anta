@@ -79,10 +79,16 @@
   a-expander[priority="tertiary"][outdent]::part(region) { margin-inline-start: -1px; }
   a-expander:not(:defined)[priority="tertiary"][outdent] > :is(a-expander-summary, a-expander-title) { margin-inline-start: -1px; }
   a-expander:not(:defined)[priority="tertiary"][outdent] > a-expander-details { margin-inline-start: -5px; }
-  a-expander::part(content) { display: block; min-height: 0; overflow: clip; }
-  a-expander:state(open)::part(content) { overflow: visible; transition: overflow 0s 200ms; transition-behavior: allow-discrete; }
+  a-expander::part(content) { display: block; min-height: 0; overflow: var(--_expander-content-overflow); }
+  @keyframes anta-expander-unclip {
+    from { --_expander-content-overflow: clip; }
+    to { --_expander-content-overflow: visible; }
+  }
   @media (prefers-reduced-motion: no-preference) {
     a-expander::part(region) { transition: grid-template-rows 200ms ease; }
+    /* Carry clipping through an inherited value: older browsers cannot defer
+       overflow or resolve document keyframes directly on the shadow part. */
+    a-expander:state(open) { animation: anta-expander-unclip 200ms step-end; }
   }
 
   /* The component and the native disclosure use the same chevron mask. Keeping
@@ -94,6 +100,7 @@
   }
 
   a-expander {
+    --_expander-content-overflow: clip;
     --_expander-indicator-opacity: 0.6;
     --_summary-underline: none;
     --expander-text: var(--text-2);
@@ -161,6 +168,7 @@
     --_expander-indicator-open-angle: 0deg;
   }
   a-expander:is(:state(open), :not(:defined)[state="open"], :not(:defined):not([state])[default-state="open"]) {
+    --_expander-content-overflow: visible;
     --_expander-open: 1;
     --_expander-indicator-opacity: 1;
   }

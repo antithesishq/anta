@@ -15,7 +15,7 @@ const resolveDir = consumerRoot ?? process.cwd()
 const nodePaths = consumerRoot ? [resolve(consumerRoot, 'node_modules')] : [resolve('node_modules'), resolve('site/node_modules')]
 const { chromium, firefox, webkit } = requireSite('playwright')
 // These engines do not substitute for minimum shipping-browser validation.
-// The existing grid and discrete-overflow transitions remain unchanged.
+// The existing grid and indicator motion remain; clipping lasts through expansion.
 const engines = componentEngines([chromium, firefox, webkit])
 const source = process.env.ANTA_EXPANDER_PACKAGE_ROOT ? resolve(process.env.ANTA_EXPANDER_PACKAGE_ROOT, 'dist') : resolve('src')
 const jsxAlias = consumerRoot ? {} : { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime') }
@@ -227,6 +227,55 @@ test.fast('Expander SSR owns named regions and summary level without structural 
 
 for (const engine of engines) {
   for (const mode of ['granular', 'bundle']) {
+    test.fast(`${engine.name()} ${mode}: content stays clipped until expansion finishes, including interrupted toggles`, async t => {
+      const page = await pageFor(t, engine, mode)
+      await page.emulateMedia({reducedMotion:'no-preference'})
+      await mount(page)
+      await register(page, mode)
+      const samples = await page.locator('a-expander').evaluate(host => {
+        const button = host.shadowRoot.querySelector('button')
+        const region = host.shadowRoot.querySelector('[part="region"]')
+        const content = host.shadowRoot.querySelector('[part="content"]')
+        const animations = () => [...host.getAnimations(), ...host.shadowRoot.getAnimations()]
+        const sample = () => ({height: region.getBoundingClientRect().height, overflow: getComputedStyle(content).overflow})
+        const seek = time => {
+          for (const animation of animations()) {
+            animation.pause()
+            animation.currentTime = time
+          }
+          return sample()
+        }
+        button.click()
+        const start = seek(0), middle = seek(100), end = seek(200)
+        for (const animation of animations()) animation.finish()
+        button.click()
+        const closing = seek(50)
+        button.click()
+        const reopening = seek(0)
+        seek(250)
+        const reopened = sample()
+        for (const animation of animations()) animation.finish()
+        button.click()
+        const closed = seek(250)
+        return {start, middle, end, closing, reopening, reopened, closed}
+      })
+      assert.equal(samples.start.overflow, 'clip')
+      assert.equal(samples.start.height, 0)
+      assert.equal(samples.middle.overflow, 'clip')
+      assert.ok(samples.middle.height > 0 && samples.middle.height < samples.end.height)
+      assert.equal(samples.end.overflow, 'visible')
+      assert.equal(samples.closing.overflow, 'clip')
+      assert.equal(samples.reopening.overflow, 'clip')
+      assert.equal(samples.reopened.overflow, 'visible')
+      assert.equal(samples.reopened.height, samples.end.height)
+      assert.deepEqual(samples.closed, {height: 0, overflow: 'clip'})
+      await page.emulateMedia({reducedMotion:'reduce'})
+      await button(page).evaluate(n=>n.click())
+      assert.equal(await page.locator('a-expander [part="content"]').evaluate(n=>getComputedStyle(n).overflow), 'visible')
+      assert.equal(await page.locator('a-expander [part="region"]').evaluate(n=>n.getAnimations().length), 0)
+      assert.equal(await page.locator('a-expander [part="content"]').evaluate(n=>n.getAnimations().length), 0)
+      assert.equal(await page.locator('a-expander').evaluate(n=>n.getAnimations().some(a=>a.animationName==='anta-expander-unclip')), false)
+    })
     test.fast(`${engine.name()} ${mode}: indicator DOM order changes placement without changing applied state or authored markup`, async t => {
       const page = await pageFor(t, engine, mode)
       await mount(page)

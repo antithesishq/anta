@@ -145,14 +145,14 @@ Current Playwright WebKit is engine evidence, not a shipping Safari 17.4 run.
 
 Verified October 14, 2026:
 
-- `pnpm test:expander` passed all 79 source checks in Chrome `155.0.8059.40`,
+- `pnpm test:expander` passed all 85 source checks in Chrome `155.0.8059.40`,
   Firefox `155.0`, and Playwright WebKit `26.6`.
-- `pnpm test:expander:package` passed the same 79 checks through an npm tarball
+- `pnpm test:expander:package` passed the same 85 checks through an npm tarball
   installed in an isolated consumer. Builds resolve public granular and full
   bundle exports without Anta source aliases or workspace links. React/React DOM
   `19.3.0`, Preact `10.29.8`, and `preact-render-to-string` `6.7.0` each generate
   their own SSR output; hydration retains nodes without React recovery errors.
-- The installed suite passed all 27 checks in Chrome for Testing
+- The installed suite passed all 29 checks in Chrome for Testing
   `135.0.7049.114`. Set `ANTA_EXPANDER_CHROMIUM_EXECUTABLE` to select an exact
   executable and `ANTA_TEST_WEBKIT=0` for the Chromium-only run.
 - Behavior and layout checks use actual CSP response headers with same-origin
@@ -177,7 +177,7 @@ Verified October 14, 2026:
 - Review regressions cover short, wrapped, and rich titles beside 60px actions,
   plus initially open plus indicators at both placements with `state` and
   `default-state`. They reproduce the original failures and pass through granular
-  and full bundle imports under CSP. All 14 Expander fast-tier checks passed.
+  and full bundle imports under CSP. All 16 Expander fast-tier checks passed.
   The CI gate also selects Expander for an isolated `key-activation.ts` change.
   Production Chrome and WebKit checks confirmed the historic `#indicator` and
   `#round` documentation fragments still resolve to their sections.
@@ -189,8 +189,14 @@ Verified October 14, 2026:
   placement. Nested indicators retain independent applied state. The 150ms
   indicator transition and plus bar both stop under reduced motion; the override
   follows the drawing rules so their cascade order cannot restore animation.
-- The original 200ms grid transition, 150ms indicator motion, and delayed overflow
-  transition remain. Applied state continues to read the owned button's ARIA,
+- The original 200ms grid transition and 150ms indicator motion remain. A stepped
+  keyframe animates an inherited host value to keep content clipped until the
+  row finishes expanding, then restores visible overflow. Discrete overflow
+  transitions through `::part()` revealed content at zero height, and document
+  keyframes directly on the part still failed in Chrome 135. The timing test
+  samples the start, middle, and end, interrupts closing with reopening, and
+  verifies immediate opening under reduced motion in granular and full builds.
+  Applied state continues to read the owned button's ARIA,
   keeping custom-state query behavior out of the interaction algorithm. The new
   title-focus guard prevents Chromium's native summary activation for Space in
   a projected input.
@@ -208,7 +214,8 @@ supported before these minimum versions, according to
 [MDN compatibility data](https://github.com/mdn/browser-compat-data/blob/main/api/HTMLSlotElement.json)
 and the [Safari 16.4 release notes](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/).
 Custom-state styling support is recorded in the Banner verification above.
-This refactor adds no newer animation requirement or animation fallback.
+The movement still uses the original grid transition; clipping uses standard
+CSS keyframes and an inherited custom property.
 
 ## Scope and conclusion
 

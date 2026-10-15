@@ -586,8 +586,6 @@ their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 
 ## Styling
 
-## Styling
-
 Reach for the props first: **`priority`** sets the field surface,
 **`status`** a validation tone (border + message), **`tone`** a custom accent
 color for the border (any CSS color), and **`size`** the dimensions. The focus

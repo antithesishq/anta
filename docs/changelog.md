@@ -7,6 +7,11 @@ changes are not listed.
 
 ### Breaking
 
+- [Input form names](/input/#web-component): assigning `element.name` updates
+  the submitted name without reflecting into the host attribute. Use authored
+  attributes for CSS selectors and named form lookup, and `element.name` for the
+  effective value.
+
 - [Expander raw markup](/expander/#web-component) uses named regions instead of
   slot attributes. Put `level` on `a-expander-summary`, select built-in artwork
   with `a-expander-indicator shape="chevron"`, and place that region before the
@@ -54,6 +59,9 @@ changes are not listed.
 
 ### Changed
 
+- [Input](/input/) default styles now load from external CSS under strict CSP.
+  Existing shadow controls, slots, parts, and interactions remain supported.
+
 - [Tooltip](/tooltip/) uses external default styling under Content Security Policy
   restrictions. Existing markup and bubble styling remain supported. Interactive
   content stays open during keyboard travel, and reduced motion disables fades.
@@ -89,6 +97,10 @@ changes are not listed.
 
 
 ### Fixed
+
+- [Input events](/input/#events) attach after React hydration. Nested clear
+  actions affect their owning Input, and focus tracking releases document
+  listeners when fields disconnect.
 
 - [Tabs per-option tones](/tabs/#tone) color the selected indicator without
   recoloring the track. An explicit neutral option also resets the indicator

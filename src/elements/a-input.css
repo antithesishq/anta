@@ -2,6 +2,155 @@
 @layer anta.reset, anta.components, anta.theme;
 
 @layer anta.components {
+  /* External part defaults retain the owned shadow controls. Runtime sizing
+     writes only internal properties; measured min-height participates here
+     because a document part rule outranks a shadow inline declaration. */
+
+  a-input {
+    --_fs: 15px;
+    --_pad-block: 4px;
+    --_lh: 20px;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+    outline: none;
+  }
+
+  a-input::part(label) {
+    display: none;
+    color: var(--input-label);
+    font-family: var(--sans-serif);
+    font-size: var(--_fs);
+    line-height: var(--_lh);
+    font-weight: 500;
+  }
+
+  a-input::part(field) {
+    --_bc: var(--input-rest-border);
+    --_bw: var(--input-border-width);
+
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: var(--_input-measured-min-height, 28px);
+    background: var(--input-bg);
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
+    transition: box-shadow 120ms ease;
+  }
+  a-input[multiline]::part(field) { align-items: stretch; }
+  a-input[size="small"] { --_fs: 13px; --_lh: 16px; }
+  a-input[size="large"] { --_fs: 17px; --_lh: 22px; }
+  a-input[size="small"]::part(field) { min-height: var(--_input-measured-min-height, 24px); }
+  a-input[size="large"]::part(field) { min-height: var(--_input-measured-min-height, 32px); }
+  a-input[round]::part(field) { border-radius: var(--input-round, 999px); }
+
+  @media (hover: hover) and (pointer: fine) {
+    a-input:not(:disabled)::part(field):hover { --_bw: 1px; --_bc: var(--input-border); }
+  }
+  a-input:not([readonly]):state(control-focus)::part(field),
+  a-input[readonly]:state(kb-focus)::part(field) {
+    --_bw: 1px;
+    --_bc: var(--input-border);
+    outline: var(--_input-focus-width, 1px) solid var(--focus-ring);
+    outline-offset: var(--_input-focus-offset, 1px);
+  }
+  @media (forced-colors: active) { a-input::part(field) { border: 1px solid ButtonBorder; } }
+
+  a-input::part(input) {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    border: 0;
+    margin: 0;
+    padding-block: 0;
+    padding-inline: 7px;
+    background: transparent;
+    outline: none;
+    color: var(--input-text);
+    font-family: var(--sans-serif);
+    font-stretch: normal;
+    font-style: normal;
+    font-variation-settings: inherit;
+    font-size: var(--_fs);
+    line-height: var(--_lh);
+    font-weight: 400;
+    -webkit-appearance: none;
+            appearance: none;
+  }
+  a-input:state(multiline)::part(input) {
+    resize: none;
+    padding-block: var(--_pad-block);
+    overflow-y: auto;
+  }
+  a-input:state(button)::part(input) { align-self: stretch; text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
+  a-input:state(button):not(:state(filled))::part(input) { color: var(--input-placeholder); }
+  a-input[maxrows]:not([rows]):state(multiline)::part(input) {
+    max-height: calc(var(--_lh) * var(--_maxrows) + var(--_pad-block) * 2);
+  }
+  a-input:not(:state(button))::part(input)::placeholder { color: var(--input-placeholder); opacity: 1; }
+  a-input::part(input):disabled { cursor: not-allowed; }
+  a-input[readonly]:not([disabled])::part(field),
+  a-input[readonly]:not([disabled]):not(:state(multiline)):not(:state(button))::part(input),
+  a-input[readonly]:not([disabled]):state(multiline)::part(input) { cursor: pointer; }
+  a-input[readonly]:not([disabled]):not(:state(multiline)):not(:state(button))::part(input) { text-overflow: ellipsis; }
+  a-input:not(:state(multiline)):not(:state(button))::part(input)::-webkit-search-cancel-button,
+  a-input:not(:state(multiline)):not(:state(button))::part(input)::-webkit-search-decoration,
+  a-input:not(:state(multiline)):not(:state(button))::part(input)::-webkit-search-results-button,
+  a-input:not(:state(multiline)):not(:state(button))::part(input)::-webkit-search-results-decoration,
+  a-input:not(:state(multiline)):not(:state(button))::part(input)::-webkit-inner-spin-button,
+  a-input:not(:state(multiline)):not(:state(button))::part(input)::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; display: none; }
+  a-input:not(:state(multiline)):not(:state(button))::part(input)::-ms-clear,
+  a-input:not(:state(multiline)):not(:state(button))::part(input)::-ms-reveal { display: none; }
+
+  a-input::part(leading),
+  a-input::part(trailing) {
+    display: none;
+    color: var(--input-adornment);
+    font-size: var(--_fs);
+    line-height: var(--_lh);
+    font-stretch: var(--_input-adornment-font-stretch, normal);
+  }
+  a-input[dim-actions]::part(leading),
+  a-input[dim-actions]::part(trailing),
+  a-input[dim-actions]::part(clear) {
+    opacity: var(--_input-actions-opacity, 0.6);
+    transition: opacity 120ms ease;
+  }
+  a-input[dim-actions]:not(:disabled)::part(field):hover,
+  a-input[dim-actions]:not(:disabled)::part(field):focus-within {
+    --_input-actions-opacity: 1;
+  }
+
+  a-input:disabled::part(leading),
+  a-input:disabled::part(trailing) { opacity: 0.5; pointer-events: none; }
+
+  a-input::part(clear) {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    visibility: hidden;
+  }
+  a-input:state(filled):not(:disabled):not([readonly])::part(clear) { visibility: visible; }
+
+  a-input[multiline]:state(filled)::part(clear) {
+    align-self: flex-start;
+    height: calc(var(--_lh) + var(--_pad-block) * 2);
+  }
+
+  a-input::part(hint) {
+    display: none;
+    gap: 4px;
+    align-items: flex-start;
+    padding-inline-start: 1px;
+    color: var(--input-hint);
+    font-family: var(--sans-serif);
+    font-size: calc(var(--_fs) - 1px);
+    line-height: calc(var(--_lh) - 2px);
+  }
+
   /* Token surface — all literal/role-pointed values live here so external CSS
      can re-point a single instance or a whole theme. Text/bg/border point at
      Anta's theme-aware role tokens (so dark mode is mostly free); the focus ring
@@ -38,8 +187,7 @@
          above the field box rather than below it. All three fade into place
          with the rest of the shadow content on `:defined`. The label stays: it
          renders above the box, which is where it belongs.
-         `!important` overrides the `display: contents` the `Input` wrapper sets
-         inline on these slot spans (an inline style otherwise wins). */
+         These rules also cover older wrappers with inline slot layout. */
   a-input:not(:defined) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -138,8 +286,7 @@
        The var inherits into the shadow, where the trailing slot's margin reads it. */
     --input-trailing-inset: 7px;
 
-    /* `display` is owned by the shadow `:host` (a grid) so consumer CSS can
-       re-template it; we only set the box width here. */
+    /* The host grid remains customizable independently of the field width. */
     width: 100%;
   }
 
@@ -154,6 +301,10 @@
     a-input:not(:defined):not(:disabled):hover::after {
       box-shadow: inset 0 0 0 1px var(--input-border);
     }
+  }
+
+  a-input > span[data-input-contents] {
+    display: contents;
   }
 
   /* Named slots are light-DOM state, so the host derives their visibility and

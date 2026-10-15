@@ -1,10 +1,8 @@
 # Input
 
-A text field. The `Input` wrapper renders an `<a-input>` web component whose
-real `<input>` / `<textarea>` lives in **shadow DOM** — so the field is
-self-contained (you never pass a control in) yet fully native underneath:
-focus, IME, autofill, and form submission all work, and the control is reachable
-for styling through `::part(input)`.
+Enter and edit text with a label, helpful message, and optional actions. Use
+Input for forms, search fields, passwords, and multiline notes. Its native
+control supports browser editing and form validation.
 
 ## Size
 
@@ -51,16 +49,13 @@ visible at rest.
 (`--text-3`, no icon). Both accept a **string or a React node**, so you can
 embed links, `<code>`, or a `<Text>` for full control.
 
-The label is wired as the control's accessible name automatically — the element
-mirrors the label text into `aria-label`, since a native `<label for>` can't
-cross the shadow boundary. The `hint` (or error) is mirrored the same way into
-`aria-description`, so a screen reader announces the message too.
+The label names the native control and the hint describes it through live element
+references. Rich content can include emphasis, links, and changing text without
+copying that content into ARIA strings. Keep essential instructions in a label
+or hint so they remain available while someone types.
 
-Standard `role` and `aria-*` attributes on `<Input>` or raw `<a-input>` are
-applied to the native input, textarea, or button inside its shadow root. This
-keeps the focused native control as the single accessible control. If you query
-the DOM directly, read those semantics from `a-input.control` rather than from
-the custom-element host.
+Standard `role` and `aria-*` declarations apply to the focused native control.
+See the Web Component reference for delegation and explicit overrides.
 
 ## Tooltip
 
@@ -130,8 +125,7 @@ with `statusIcon={false}`.
 />
 ```
 
-`leading` and `trailing` paste any node at the field edges (like the expander's
-`actions`) — an icon, a button, a unit label. A leading item is inset from the
+`leading` and `trailing` place content at the field edges: an icon, a Button, or a unit label. A leading item is inset from the
 left by the same `pad-x` as the text, so it lines up on the field's rhythm; the
 playground at the top of this page shows a live leading icon alongside the clear
 button.
@@ -154,14 +148,11 @@ element turns into the lifecycle below.
 Two hooks bracket the clear. **`onClearClick`** fires first and is **cancelable** —
 `e.preventDefault()` keeps the value (e.g. a "discard unsaved text?" confirm). If
 it isn't prevented, the field clears: it empties, fires `input` / `change` (a
-controlled `onChange` runs with the empty value), refocuses, then fires
-**`onClearInput`**. On a raw `<a-input>`, bind both lowercase (`onclearclick` /
+controlled `onChange` runs with the empty value), fires **`onClearInput`**, then refocuses the native control. On a raw `<a-input>`, bind both lowercase (`onclearclick` /
 `onclearinput`) — that form binds in React and Preact alike.
 
-Note: there's no `type="search"` — that type makes browsers inject their own
-clear button and magnifier (and style them inconsistently). Anta owns every
-in-field control, and the element resets the native search/number/reveal
-decorations across browsers.
+The wrapper's search shorthand uses a native text input. Raw `type="search"`
+remains available on the Web Component, with Anta's native-decoration resets.
 
 ### Password reveal
 
@@ -245,16 +236,9 @@ since the framework skips the re-render. Constrain hard with `maxLength` /
 | `onValueChange(e, attrs)` | on `input` **and** `change` (and clear) | `{ value, name, empty, valid, validationMessage }` |
 | `onClearClick(e)` | before the `clearable` × clears | ✅ `e.preventDefault()` keeps the value |
 
-**Input has no `onStateChange`, on purpose.** That event belongs to components
-with a *discrete* state — a small enum like `Checkbox`'s `checked · unchecked ·
-indeterminate` or a menu's `open · closed` — where a transition can be vetoed as
-a unit before it applies. A text field's value is **free-form**, not a discrete
-state, so there's nothing to model as `state` and nothing to veto wholesale;
-you control it the native way (`value` + `onInput`/`onChange`, reject by not
-updating). Reach for `onValueChange` as the one unified "the value changed"
-handler — it's the same callback `Checkbox`, `RadioGroup`, and `Select` expose,
-so form code reads the same across all of them. (`Select`, likewise composed and
-value-based, also has only `onValueChange`.)
+Use `onValueChange` for a serializable snapshot of the value, name, emptiness,
+and validation result. Clear can be cancelled synchronously in `onClearClick`.
+Try editing this controlled draft, rejecting Clear, then allowing it:
 
 ## Forms
 
@@ -283,8 +267,8 @@ restores the field to its `defaultValue` via `formResetCallback`.
 ```
 
 `type` accepts `text` (default), `email`, `password`, `tel`, `url`, and
-`number` — each gets the right mobile keyboard, autofill behavior, and native
-constraint validation. (`search` is omitted on purpose — see above.)
+`number`. Use `search` for the search icon and clear-action shorthand.
+`autoComplete` and `inputMode` describe the field to autofill and virtual keyboards.
 `number` also takes `min` / `max` / `step`.
 
 Set `autoComplete` to describe the field's purpose. `email`, `tel`, and `url`
@@ -340,13 +324,9 @@ field goes red, shows the warning glyph, and reports invalid to the form. Mark
 the form `noValidate` so the browser's default bubbles step aside for Anta's
 styling. Try submitting empty, or with a bad email / out-of-range age.
 
-**Enter doesn't submit the form.** The real `<input>` lives in shadow DOM, so
-it isn't a light-DOM member of the `<form>`, and pressing Enter won't trigger
-native implicit submission — a deliberate choice, since auto-submitting a
-half-filled multi-field form is usually more annoyance than help. To submit on
-Enter, handle it yourself (`onKeyDown` → `form.requestSubmit()`), or reach for
-Anta's upcoming `<Form>` component. Everything else — value submission under
-`name`, `checkValidity()`, `formReset` — works natively.
+The shadow input does not trigger native implicit form submission on Enter.
+Use the form's submit Button, or handle Enter in the application when that
+interaction fits the form.
 
 ## Layout
 
@@ -464,7 +444,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 | `disabled?` | boolean | — | Disable the field. |
 | `hint?` | ReactNode | — | Message below the field. Neutral helper text by default; `status` recolors it and prefixes the matching glyph. |
 | `inputMode?` | 'none' \| 'text' \| 'decimal' \| 'numeric' \| 'tel' \| 'search' \| 'email' \| 'url' | — | Virtual-keyboard hint. Overrides the value derived from `type`. |
-| `label?` | ReactNode | — | Field label, shown above the control. A string is rendered with the label type scale; pass a node for full control. Associated with the control as its accessible name (the element mirrors the label text to `aria-label`, since `<label for>` can't cross the shadow boundary). |
+| `label?` | ReactNode | — | Field label, shown above the control. A string is rendered with the label type scale; pass a node for full control. Associated with the native control through live element references as its accessible name. |
 | `leading?` | ReactNode | — | Content pinned to the start of the field (e.g. an icon). |
 | `max?` | number \| string | — |  |
 | `maxLength?` | number | — | Max input length. |
@@ -472,7 +452,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 | `min?` | number \| string | — | Min / max / step — for `type="number"`. |
 | `minLength?` | number | — | Min input length. |
 | `multiline?` | boolean | — | Render a `<textarea>` instead of an `<input>`. Without `rows` it grows with its content from one line (capped by `maxRows` if set). Autogrow uses CSS `field-sizing` in supported engines except WebKit. WebKit and browsers without native support use a built-in JS resize on value updates. |
-| `name?` | string | — | Form field name — submitted with the form via ElementInternals. |
+| `name?` | string | — | Form field name, submitted through ElementInternals. Property updates stay internal; they do not reflect into the host's `name` attribute. |
 | `onBlur?` | (e) => void | — | Fires when the field loses focus. |
 | `onChange?` | (e) => void | — | Fires on **commit** (blur / Enter) — the platform `change` semantics, **not** React's per-keystroke `onChange`. This is a web component, so `onChange` keeps the native meaning; reach for `onInput` (every keystroke) or `onValueChange` (both) for live updates. Read `e.target.value`. |
 | `onClearClick?` | (e) => void | — | Fires when the built-in clear button (`clearable`) is clicked, *before* the field is cleared. Call `e.preventDefault()` to keep the current value — the clear is cancelled and `onClearInput` won't fire. Backed by the element's cancelable, bubbling `clearclick` event. |
@@ -503,7 +483,31 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-Slots hold the label, hint, and controls around the native field.
+Slots place authored content around the owned native control. The existing
+`label`, `leading`, `clear`, `trailing`, and `hint` slot names remain independent
+of the shadow parts used for styling. Unslotted children appear after the field
+and before the hint.
+
+Standard `role` and `aria-*` declarations on the host are consumed and applied to
+its native shadow control. Later attribute and ARIAMixin property updates and
+removal follow the same channel. Explicit accessible names, descriptions, and
+popup relationships take precedence over generated references. Inspect semantics
+on `::part(input)` through `shadowRoot`; the host remains neutral.
+
+The `name` attribute supplies the form field name. Assigning the `name` property
+updates the effective name and submitted FormData without changing the host
+attribute. Read `element.name` for that effective value. Attribute selectors and
+`form.elements.namedItem()` continue to use authored attributes. A later `name`
+attribute update restores that attribute as the source of truth.
+
+`checkValidity()`, `reportValidity()`, `validity`, `validationMessage`, and
+`willValidate` expose form validation. `status="critical"` adds a custom error;
+other statuses remain advisory. There is no public `setCustomValidity()` method.
+
+Autogrow uses native field sizing where supported, with a JavaScript fallback in
+WebKit. Fixed `rows` disables autogrow, and `maxrows` caps it when `rows` is absent.
+Runtime size updates stay on owned shadow nodes. In the fallback, typography or
+width changes are remeasured on the next value update.
 
 ```html
 <a-input name="email" type="email" autocomplete="email" placeholder="you@example.com">
@@ -547,6 +551,8 @@ their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 
 ## Styling
 
+## Styling
+
 Reach for the props first: **`priority`** sets the field surface,
 **`status`** a validation tone (border + message), **`tone`** a custom accent
 color for the border (any CSS color), and **`size`** the dimensions. The focus
@@ -558,7 +564,7 @@ ring is the global [`--focus-ring`](../colors.md#focus-ring).
 
 For everything else, `<a-input>` is shadow-DOM — style its **parts** with plain
 CSS: `::part(field | input | input-label | label | leading | trailing | clear | hint)`, plus the
-`:state(filled)` / `:state(invalid)` state hooks and `:focus-within::part(field)`
+`:state(filled)` / `:state(invalid)` state hooks and `:state(control-focus)::part(field)`
 for the focused state. The clear button is a real `<a-button>` in the `clear` slot,
 so style it directly. `light-dark()` works too (Anta sets `color-scheme` from its
 theme toggle).
@@ -577,11 +583,10 @@ The border is drawn as an **inset `box-shadow`**, so its width (`0.5px` at rest,
 including tertiary's transparent border, and `1px` on hover, focus, or
 non-neutral status)
 never changes the box size. The field height stays aligned with `Button`.
-Drop the leading `inset` to draw the border as an outset ring instead. You can
-also re-point an `--input-*` color token on one instance
-(`style={{ '--input-border': 'var(--border-1)' }}`)
-or a wrapping selector; the resolver lives in `@layer anta`, so any un-layered rule
-of yours wins.
+Use external rules for custom colors and dimensions when a Content Security
+Policy blocks inline styles. Input's defaults do not inject a shadow stylesheet.
+Custom `tone`, custom `round`, and application `style` props can still serialize
+style attributes; provide equivalent consumer CSS under that policy.
 
 The `.fancy` class is just for the demo — a borderless pill that fills dark-grey
 and darkens on focus in light mode, and the inverse in dark:
@@ -602,7 +607,7 @@ a-input.fancy::part(input)::placeholder {
   color: light-dark(#b8b8b8, #666666);
   opacity: 1;
 }
-a-input.fancy:focus-within::part(field) { background: light-dark(#161616, #ffffff); }
+a-input.fancy:state(control-focus)::part(field) { background: light-dark(#161616, #ffffff); }
 ```
 
 ### Placeholder contrast

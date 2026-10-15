@@ -53,6 +53,7 @@ jobs:
             echo 'progress=true' >> "$GITHUB_OUTPUT"
             echo 'expander=true' >> "$GITHUB_OUTPUT"
             echo 'banner=true' >> "$GITHUB_OUTPUT"
+            echo 'input=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -155,6 +156,21 @@ jobs:
           else
             echo 'tooltip=false' >> "$GITHUB_OUTPUT"
           fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-input*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
+            'src/elements/a-menu*' 'src/elements/a-calendar.*' 'src/elements/a-select*' \
+            src/components/{Input,InputDate,InputAutocomplete,Select,SelectFaceted,Button,Tooltip,Menu,Icon}.tsx \
+            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts \
+            src/elements/{index,key-activation,shadow-aria}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/input-*' tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'input=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'input=false' >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -205,6 +221,11 @@ jobs:
       - name: Test Tooltip CSP and interaction
         if: steps.component-tests.outputs.tooltip == 'true'
         run: pnpm test:components --component tooltip
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Test Input CSP, forms, and sizing
+        if: steps.component-tests.outputs.input == 'true'
+        run: pnpm test:components --component input
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Typecheck stickers

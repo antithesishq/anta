@@ -1,8 +1,9 @@
-import type { BaseProps, DOMEventHandlers } from '../general_types'
+import type { AInputAttributes, BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
+import { useLayoutEffect, useState } from '../jsx-runtime'
 
 /** Convenience snapshot passed as the 2nd argument to `onValueChange`. */
 export interface InputChangeAttrs {
@@ -14,7 +15,7 @@ export interface InputChangeAttrs {
   name?: string
   /** `true` when the value is empty. */
   empty: boolean
-  /** Whether the field currently passes validation (native + `error`). `undefined`
+  /** Whether the field currently passes validation (native constraints and `status`). `undefined`
    *  where `ElementInternals` is unsupported. */
   valid?: boolean
   /** Current validation message (`''` when valid). */
@@ -30,8 +31,7 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   children?: React.ReactNode
   /** Field label, shown above the control. A string is rendered with the
    *  label type scale; pass a node for full control. Associated with the
-   *  control as its accessible name (the element mirrors the label text to
-   *  `aria-label`, since `<label for>` can't cross the shadow boundary). */
+   *  native control through live element references as its accessible name. */
   label?: React.ReactNode
   /** Message below the field. Neutral helper text by default; `status` recolors
    *  it and prefixes the matching glyph. */
@@ -104,7 +104,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
   /** Focus this field when its containing `Dialog` opens. */
   autoFocus?: boolean
-  /** Form field name — submitted with the form via ElementInternals. */
+  /** Form field name, submitted through ElementInternals. Property updates
+   *  stay internal; they do not reflect into the host's `name` attribute. */
   name?: string
   /** Placeholder shown when empty. */
   placeholder?: string
@@ -192,7 +193,7 @@ const attrsOf = (e: any): InputChangeAttrs => {
   const value = el.value ?? ''
   return {
     value,
-    name: el.getAttribute?.('name') ?? undefined,
+    name: el.name || undefined,
     empty: !value,
     valid: el.validity ? el.validity.valid : undefined,
     validationMessage: el.validationMessage ?? '',
@@ -223,15 +224,34 @@ const STATUS_ICON: Record<string, IconShape> = {
   brand: 'circle-small-solid',
 }
 
+type InputElementProps = AInputAttributes & { children?: React.ReactNode }
+
+function HydratedInput({ children, oninput, onchange, onclearclick, onclearinput, ...attributes }: InputElementProps) {
+  const [listening, setListening] = useState(false)
+  // React hydration attaches native custom-element event props after a commit.
+  useLayoutEffect(() => setListening(true), [])
+  return (
+    <a-input {...attributes}
+      oninput={listening ? oninput : undefined}
+      onchange={listening ? onchange : undefined}
+      onclearclick={listening ? onclearclick : undefined}
+      onclearinput={listening ? onclearinput : undefined}
+    >
+      {children}
+    </a-input>
+  )
+}
+
 /**
  * `<Input>` — a text field. Renders an `<a-input>` web component whose real
  * `<input>` / `<textarea>` lives in shadow DOM, so it's self-contained: focus,
  * forms (via `ElementInternals`), IME, and autofill are all native, and the
  * control is reachable for styling through `::part(input)`.
  *
- * The wrapper is stateless — it maps props to attributes and slots. The clear
- * button is dropped into `slot="trailing"`; its click finds the host and calls
- * `clear()`, and its visibility is CSS off the element's `:state(filled)`.
+ * The wrapper maps props to attributes and slots. In the browser, a state-only
+ * mount commit installs event handlers after hydration without DOM access. The clear
+ * button uses the `clear` slot and requests clearing through a native event.
+ * Its visibility follows the element's `:state(filled)`.
  *
  * Requires `@antadesign/anta/elements` to be imported (client-side only).
  *
@@ -287,6 +307,10 @@ export const Input = ({
   style,
   ...rest
 }: InputProps) => {
+  // Server and worker projections stay pure. The browser helper stays mounted
+  // when callbacks change, preserving the native control and uncontrolled value.
+  const InputTag = typeof window === 'undefined' ? 'a-input' : HydratedInput
+
   // `hint` is the single message channel; `status` only recolors it + adds a
   // glyph. `statusIcon` overrides the per-status default; `false` drops it.
   const statusTone = status && status !== 'neutral' ? status : undefined
@@ -302,7 +326,7 @@ export const Input = ({
   const resolvedClearable = isSearch ? clearable ?? true : clearable
 
   return (
-    <a-input
+    <InputTag
       priority={priority && priority !== 'primary' ? priority : undefined}
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
@@ -349,13 +373,13 @@ export const Input = ({
         (isStringish(label) ? (
           <span slot="label">{label}</span>
         ) : (
-          <span slot="label" style={{ display: 'contents' }}>
+          <span slot="label" data-input-contents="">
             {label}
           </span>
         ))}
 
       {resolvedLeading != null && (
-        <span slot="leading" style={{ display: 'contents' }}>
+        <span slot="leading" data-input-contents="">
           {resolvedLeading}
         </span>
       )}
@@ -370,7 +394,7 @@ export const Input = ({
         // in the element (src/elements/a-input.ts). The string is duplicated, not
         // shared — importing the element module here would self-register it and
         // break the wrapper/element decoupling. Rename in both places.
-        <span slot="clear" style={{ display: 'contents' }}>
+        <span slot="clear" data-input-contents="">
           <Button
             priority="tertiary"
             size={size}
@@ -382,13 +406,13 @@ export const Input = ({
         </span>
       )}
       {trailing != null && (
-        <span slot="trailing" style={{ display: 'contents' }}>
+        <span slot="trailing" data-input-contents="">
           {trailing}
         </span>
       )}
 
       {hint != null && (
-        <span slot="hint" style={{ display: 'contents' }}>
+        <span slot="hint" data-input-contents="">
           {glyph && (
             <Icon shape={glyph as IconShape} aria-hidden="true" />
           )}
@@ -398,6 +422,6 @@ export const Input = ({
 
       {/* Unslotted extras → default slot, rendered under the field above the hint. */}
       {children}
-    </a-input>
+    </InputTag>
   )
 }

@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Expander, Progress, Text, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Expander, Input, Progress, Text, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -136,3 +136,20 @@ Set `ANTA_TOOLTIP_CHROMIUM_EXECUTABLE` for an exact Chrome executable,
 `ANTA_TOOLTIP_CONSUMER_ROOT` for an isolated installed consumer. Current
 Playwright WebKit does not establish Safari 17.4 coverage. Screenshots from the
 slow visual matrix go to `tests/.test-output/tooltip`.
+
+## Input
+
+Run `pnpm test:input` for Input's CSP source matrix, or
+`pnpm test:input:package` for the same checks through installed npm exports.
+The shared fast tier covers both import modes, React/Preact hydration, values,
+selection, forms, focus, clear cancellation, and fallback autogrow. The slow tier
+adds Firefox/WebKit, lifecycle and document adoption, compositions, independent
+build orders, visual variants, and installed-package coverage. Existing root
+Input accessibility, priority, and autosizing regressions remain in `pnpm test`.
+
+The suite supplies CSP through response headers and asserts computed sizing.
+Menu-dependent compositions record existing blocked Menu sheets separately.
+Set `ANTA_INPUT_CHROMIUM_EXECUTABLE` to select an exact browser executable.
+Set `ANTA_INPUT_COMPARE_ORIGINAL=1` in a checkout containing commit `56eafcdd`
+to compare the source visual matrix with the original implementation.
+Screenshots go to `tests/.test-output/input` and are uploaded by Component matrix.

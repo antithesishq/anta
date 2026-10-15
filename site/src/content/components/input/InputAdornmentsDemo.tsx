@@ -5,7 +5,7 @@ function SearchActions() {
   const [caseSensitive, setCaseSensitive] = useState(false)
   const [regex, setRegex] = useState(false)
   return (
-    <>
+    <span style={{ display: 'inline-flex', gap: '2px', paddingRight: '1px' }}>
       <Button priority="tertiary" size="small" icon="case-sensitive"
         aria-label="Case sensitive" title="Case sensitive"
         selected={caseSensitive} aria-pressed={caseSensitive}
@@ -14,7 +14,7 @@ function SearchActions() {
         aria-label="Regular expression" title="Regular expression"
         selected={regex} aria-pressed={regex}
         onClick={() => setRegex(value => !value)} />
-    </>
+    </span>
   )
 }
 

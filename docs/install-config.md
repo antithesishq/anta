@@ -265,7 +265,9 @@ import '@antadesign/anta/elements/a-title'
 Rendering a JSX wrapper does not register its browser element. Raw `<a-*>`
 markup uses the same browser entries and can omit the JSX wrappers.
 For a custom JSX runtime, call `configure()` in the process or thread that
-renders the wrappers; see [Framework setup](#framework-setup).
+renders the wrappers; see [Framework setup](#framework-setup). Worker renderers
+receive native event subscriptions in the first projection. The browser listener
+workaround does not delay worker subscriptions or require access to UI-thread DOM.
 
 ## Framework setup
 
@@ -349,13 +351,16 @@ to `configure()` before rendering Anta components. For full bundle usage:
 import '@antadesign/anta/bundle.css'
 import { configure } from '@antadesign/anta/bundle'
 import { h, Fragment } from 'preact'
-import { useState, useId, useMemo, useRef, useLayoutEffect } from 'preact/hooks'
+import * as hooks from 'preact/hooks'
 import { useSyncExternalStore } from 'preact/compat'
 
-configure(h, Fragment, {
-  useState, useId, useMemo, useRef, useLayoutEffect, useSyncExternalStore,
-})
+configure(h, Fragment, { ...hooks, useSyncExternalStore })
 ```
+
+Pass the hooks object as a whole. It replaces the previous renderer's hooks;
+missing hooks report an error when used. React's hooks are the default when no
+object is supplied. The extra `useSyncExternalStore` export supports components
+that subscribe to external stores.
 
 Import JSX wrappers from `@antadesign/anta/bundle` with this setup. For granular
 usage, import both `configure` and the wrappers from `@antadesign/anta` and load

@@ -21,81 +21,76 @@ type UseSyncExternalStore = <T>(
 
 let _jsx: JsxFunction = React.createElement as JsxFunction
 let _Fragment: ComponentType = React.Fragment as ComponentType
-// Default to React's hooks. Under Preact-compat (the documented Preact path), the
-// `react` specifier already aliases to `preact/compat`, so these resolve to Preact's
-// hooks automatically — no `configure()` needed. A non-compat custom runtime passes
-// its own via `configure(jsx, Fragment, { useState, useId })`.
-let _useState: UseState = React.useState as UseState
-let _useId: UseId = React.useId as UseId
-let _useMemo: UseMemo = React.useMemo as UseMemo
-let _useRef: UseRef = React.useRef as UseRef
-let _useLayoutEffect: UseLayoutEffect = React.useLayoutEffect as UseLayoutEffect
-let _useSyncExternalStore: UseSyncExternalStore = React.useSyncExternalStore as UseSyncExternalStore
+/** Renderer hooks used by Anta wrappers. Pass the runtime's hooks object to
+ * `configure()`. Only hooks used by the rendered components need to be present. */
+export interface RendererHooks {
+  useState?: UseState
+  useId?: UseId
+  useMemo?: UseMemo
+  useRef?: UseRef
+  useLayoutEffect?: UseLayoutEffect
+  useSyncExternalStore?: UseSyncExternalStore
+}
+
+let _hooks: RendererHooks = React as RendererHooks
 
 /**
- * Swap the underlying JSX factory (and, optionally, the hooks) used by all anta
- * components.
+ * Configure the JSX factory, fragment, and hooks before rendering Anta components.
+ * React and Preact with React compatibility aliases work without configuration.
  *
- * Not needed for React or Preact-with-compat — those work automatically. Call this
- * before rendering any anta components when using Preact without compat aliasing,
- * or a custom JSX runtime. Pass `hooks` when your runtime's hooks don't resolve via
- * the `react` specifier (the stateful wrappers — `RadioGroup`, `Calendar`,
- * `InputDate`, `Banner`, and expandable `Text` — need the configured hooks); omit it and they default
- * to whatever `react` resolves to.
+ * Pass your runtime's hooks object as a whole. It replaces the previous object;
+ * omitted hooks never fall back to another renderer. A missing hook reports an
+ * error when a component uses it. Omitting the object restores React's hooks.
+ * Configure the same package entry in each process or thread that renders JSX.
  *
- * @example Preact without compat
+ * @example Custom renderer
  * ```ts
  * import { configure } from '@antadesign/anta'
  * import { h, Fragment } from 'preact'
- * import { useState, useId, useMemo, useLayoutEffect } from 'preact/hooks'
- * configure(h, Fragment, { useState, useId, useMemo, useLayoutEffect })
+ * import * as hooks from 'preact/hooks'
+ * configure(h, Fragment, hooks)
  * ```
  */
 export function configure(
   jsx: JsxFunction,
   Fragment?: ComponentType,
-  hooks?: {
-    useState?: UseState
-    useId?: UseId
-    useMemo?: UseMemo
-    useRef?: UseRef
-    useLayoutEffect?: UseLayoutEffect
-    useSyncExternalStore?: UseSyncExternalStore
-  },
+  hooks: RendererHooks = React as RendererHooks,
 ) {
   _jsx = jsx
   if (Fragment !== undefined) _Fragment = Fragment
-  if (hooks?.useState) _useState = hooks.useState
-  if (hooks?.useId) _useId = hooks.useId
-  if (hooks?.useMemo) _useMemo = hooks.useMemo
-  if (hooks?.useRef) _useRef = hooks.useRef
-  if (hooks?.useLayoutEffect) _useLayoutEffect = hooks.useLayoutEffect
-  if (hooks?.useSyncExternalStore) _useSyncExternalStore = hooks.useSyncExternalStore
+  _hooks = hooks
 }
 
-/** Hooks indirection so wrappers depend on the configured renderer, not a hard
- *  `import … from 'react'`. Call these exactly like the React hooks. */
+function rendererHook<K extends keyof RendererHooks>(name: K): NonNullable<RendererHooks[K]> {
+  const hook = _hooks[name]
+  if (typeof hook !== 'function') {
+    throw new Error(`Anta: the configured renderer is missing ${name}. Pass its hooks object to configure().`)
+  }
+  return hook as NonNullable<RendererHooks[K]>
+}
+
+/** Hooks delegate to the object supplied to `configure()`, or React by default. */
 export function useState<S>(initial: S | (() => S)): [S, (next: S | ((prev: S) => S)) => void] {
-  return _useState(initial)
+  return rendererHook('useState')(initial)
 }
 export function useId(): string {
-  return _useId()
+  return rendererHook('useId')()
 }
 export function useMemo<T>(factory: () => T, deps: unknown[]): T {
-  return _useMemo(factory, deps)
+  return rendererHook('useMemo')(factory, deps)
 }
 export function useRef<T>(initial: T): { current: T } {
-  return _useRef(initial)
+  return rendererHook('useRef')(initial)
 }
 export function useLayoutEffect(effect: () => void | (() => void), deps?: unknown[]): void {
-  return _useLayoutEffect(effect, deps)
+  return rendererHook('useLayoutEffect')(effect, deps)
 }
 export function useSyncExternalStore<T>(
   subscribe: (onChange: () => void) => () => void,
   getSnapshot: () => T,
   getServerSnapshot?: () => T,
 ): T {
-  return _useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  return rendererHook('useSyncExternalStore')(subscribe, getSnapshot, getServerSnapshot)
 }
 
 export function jsx(type: ComponentType, props: Record<string, unknown> | null, key?: string | number): unknown {

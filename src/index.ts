@@ -231,7 +231,7 @@ export type {
 } from './components/Toaster'
 export type { BaseProps, BaseAttributes, ToneScope } from './general_types'
 export { configure } from './jsx-runtime'
-export type { AntaIntrinsicElements } from './jsx-runtime'
+export type { AntaIntrinsicElements, RendererHooks } from './jsx-runtime'
 
 /**
  * Seed interface for the icon shape registry. The generated

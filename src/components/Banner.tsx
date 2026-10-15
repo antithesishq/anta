@@ -1,7 +1,7 @@
 import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr, type StateChangeEvent, hasChildren } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
 import { Button } from "./Button"
-import { useLayoutEffect, useState } from "../jsx-runtime"
+import { useNativeEventProps } from "../native-event-props"
 
 /** Props for the `<Banner>` message strip. `message` leads, `children` precede
  *  `actions`, and `align` places the row. */
@@ -93,9 +93,14 @@ export const Banner = ({
   ...rest
 }: BannerProps) => {
   const controlled = dismissed != null
-  const [listening, setListening] = useState(false)
-  // React hydration installs custom event props after a state-only commit.
-  useLayoutEffect(() => setListening(true), [])
+  const eventProps = useNativeEventProps({
+    onstatechange: onDismiss
+      ? (e: StateChangeEvent<StateChangeDetail>) => {
+          const { detail, isOwn } = nativeStateChange<StateChangeDetail>(e)
+          if (isOwn && detail?.next === "closed") onDismiss()
+        }
+      : undefined,
+  })
 
   const computedStyle = roundStyle(
     round,
@@ -122,14 +127,7 @@ export const Banner = ({
       align={align === "center" ? "center" : undefined}
       round={roundAttr(round)}
       role={role}
-      onstatechange={
-        listening && onDismiss
-          ? (e: StateChangeEvent<StateChangeDetail>) => {
-              const { detail, isOwn } = nativeStateChange<StateChangeDetail>(e)
-              if (isOwn && detail?.next === "closed") onDismiss()
-            }
-          : undefined
-      }
+      {...eventProps}
       class={className}
       style={computedStyle}
       {...rest}

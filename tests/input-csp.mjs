@@ -76,7 +76,7 @@ before(async () => {
       export const renderStatic = () => {
         configure(React.createElement,React.Fragment,{useState:()=>{throw new Error('Static Input must not use hooks')},useLayoutEffect:()=>{throw new Error('Static Input must not use hooks')}});
         try { return renderToString(React.createElement(Input,{label:'Static field',name:'static'})) }
-        finally {configure(React.createElement,React.Fragment,{useState:React.useState,useLayoutEffect:React.useLayoutEffect})}
+        finally {configure(React.createElement,React.Fragment,React)}
       };`, resolveDir}, platform:'node', format:'cjs',
       jsx:'automatic', jsxImportSource:'@antadesign/anta', alias:{...alias, ...(consumerRoot ? {} : react ? {'react-dom/server':requirePlot.resolve('react-dom/server')} : {'preact-render-to-string':requireRenderer.resolve('preact-render-to-string')})}})
     const compiled = new Module(resolve(`tests/input-${framework}-server.cjs`))

@@ -7,6 +7,10 @@ changes are not listed.
 
 ### Breaking
 
+- [Custom renderer configuration](/install/#preact-without-compat) replaces the
+  hooks object as a whole. Pass your runtime's hooks rather than selecting a few;
+  missing hooks report an error instead of using another renderer's hooks.
+
 - The [Antithesis theme](/theming/) is copyright Antithesis Operations LLC and
   now has a separate license. Noncommercial use is free; commercial use requires
   prior written permission. Earlier MIT-licensed copies keep their original terms.
@@ -63,6 +67,10 @@ changes are not listed.
   `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
+
+- Input, Banner, Expander, and expandable Text share native event listener setup.
+  Worker renderers receive event subscriptions immediately; browser hydration
+  keeps its existing listener update without component-specific helpers.
 
 - [Input](/input/) default styles now load from external CSS under strict CSP.
   Existing shadow controls, slots, parts, and interactions remain supported;

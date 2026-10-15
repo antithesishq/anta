@@ -1,9 +1,9 @@
-import type { AInputAttributes, BaseProps, DOMEventHandlers } from '../general_types'
+import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
-import { useLayoutEffect, useState } from '../jsx-runtime'
+import { useNativeEventProps } from '../native-event-props'
 
 /** Convenience snapshot passed as the 2nd argument to `onValueChange`. */
 export interface InputChangeAttrs {
@@ -206,33 +206,15 @@ const STATUS_ICON: Record<string, IconShape> = {
   brand: 'circle-small-solid',
 }
 
-type InputElementProps = AInputAttributes & { children?: React.ReactNode }
-
-function HydratedInput({ children, oninput, onchange, onclearclick, onclearinput, ...attributes }: InputElementProps) {
-  const [listening, setListening] = useState(false)
-  // React hydration attaches native custom-element event props after a commit.
-  useLayoutEffect(() => setListening(true), [])
-  return (
-    <a-input {...attributes}
-      oninput={listening ? oninput : undefined}
-      onchange={listening ? onchange : undefined}
-      onclearclick={listening ? onclearclick : undefined}
-      onclearinput={listening ? onclearinput : undefined}
-    >
-      {children}
-    </a-input>
-  )
-}
-
 /**
  * `<Input>` — a text field. Renders an `<a-input>` web component whose real
  * `<input>` / `<textarea>` lives in shadow DOM, so it's self-contained: focus,
  * forms (via `ElementInternals`), IME, and autofill are all native, and the
  * control is reachable for styling through `::part(input)`.
  *
- * The wrapper maps props to attributes and slots. In the browser, a state-only
- * mount commit installs event handlers after hydration without DOM access. The clear
- * button uses the `clear` slot and requests clearing through a native event.
+ * The wrapper maps props to attributes and slots. Native event props use the
+ * shared listener helper without DOM access. The clear button uses the `clear`
+ * slot and requests clearing through a native event.
  * Its visibility follows the element's `:state(filled)`.
  *
  * Requires `@antadesign/anta/elements` to be imported (client-side only).
@@ -289,9 +271,12 @@ export const Input = ({
   style,
   ...rest
 }: InputProps) => {
-  // Server and worker projections stay pure. The browser helper stays mounted
-  // when callbacks change, preserving the native control and uncontrolled value.
-  const InputTag = typeof window === 'undefined' ? 'a-input' : HydratedInput
+  const eventProps = useNativeEventProps({
+    oninput: onInput || onValueChange ? (e: any) => { onInput?.(e); onValueChange?.(e, attrsOf(e)) } : undefined,
+    onchange: onChange || onValueChange ? (e: any) => { onChange?.(e); onValueChange?.(e, attrsOf(e)) } : undefined,
+    onclearclick: onClearClick ? (e: any) => onClearClick(nativeStateChange(e).event) : undefined,
+    onclearinput: onClearInput ? (e: any) => onClearInput(nativeStateChange(e).event) : undefined,
+  })
 
   // `hint` is the single message channel; `status` only recolors it + adds a
   // glyph. `statusIcon` overrides the per-status default; `false` drops it.
@@ -308,7 +293,7 @@ export const Input = ({
   const resolvedClearable = isSearch ? clearable ?? true : clearable
 
   return (
-    <InputTag
+    <a-input
       priority={priority && priority !== 'primary' ? priority : undefined}
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
@@ -343,10 +328,7 @@ export const Input = ({
       step={step}
       aria-invalid={status === 'critical' ? 'true' : undefined}
       role={role ?? (isSearch ? 'searchbox' : undefined)}
-      oninput={onInput || onValueChange ? (e: any) => { onInput?.(e); onValueChange?.(e, attrsOf(e)) } : undefined}
-      onchange={onChange || onValueChange ? (e: any) => { onChange?.(e); onValueChange?.(e, attrsOf(e)) } : undefined}
-      onclearclick={onClearClick ? (e: any) => onClearClick(nativeStateChange(e).event) : undefined}
-      onclearinput={onClearInput ? (e: any) => onClearInput(nativeStateChange(e).event) : undefined}
+      {...eventProps}
       class={className}
       style={roundStyle(round, '--input-round', toneStyle(tone, '--input-tone-source', style))}
       {...rest}
@@ -404,6 +386,6 @@ export const Input = ({
 
       {/* Unslotted extras → default slot, rendered under the field above the hint. */}
       {children}
-    </InputTag>
+    </a-input>
   )
 }

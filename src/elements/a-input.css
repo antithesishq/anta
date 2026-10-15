@@ -317,7 +317,9 @@
 
   /* CSS-only grouping tags let slots lay out their children directly.
      Before upgrade, the skeleton hides adornments and gives the label a box. */
-  a-input:defined > a-input-content {
+  a-input:defined > :is(
+    a-input-label, a-input-leading, a-input-clear, a-input-trailing, a-input-hint
+  ) {
     display: contents;
   }
 

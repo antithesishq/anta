@@ -155,8 +155,8 @@ test.fast('React and Preact SSR keep rich regions without fixed inline styles', 
     const html = render({name:'message'})
     assert.match(html, /<a-input/)
     assert.match(html, /<strong>Message<\/strong>/)
-    assert.match(html, /<a-input-content slot="clear"/)
-    assert.doesNotMatch(html, /data-input-contents/)
+    for(const slot of ['label','leading','clear','trailing','hint']) assert.match(html,new RegExp(`<a-input-${slot} slot="${slot}"`))
+    assert.doesNotMatch(html, /data-input-contents|a-input-content/)
     assert.doesNotMatch(html, /style=|<input|<textarea|part=/)
   }
 })
@@ -195,8 +195,8 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
         const trailing=`<a-button role="button" ${direct?`slot="trailing" size="${size}"`:''}><a-icon shape="regex"></a-icon></a-button>`
         await mount(page,`<a-input size="${size}" value="Draft" ${multiline?'multiline rows="3"':''}>
           <a-icon slot="leading" shape="search"></a-icon>
-          ${direct?clear:`<a-input-content slot="clear">${clear}</a-input-content>`}
-          ${direct?trailing:`<a-input-content slot="trailing">${trailing}</a-input-content>`}
+          ${direct?clear:`<a-input-clear slot="clear">${clear}</a-input-clear>`}
+          ${direct?trailing:`<a-input-trailing slot="trailing">${trailing}</a-input-trailing>`}
         </a-input>`)
         const metrics=await field(page).evaluate(host=>{
           const field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
@@ -390,13 +390,13 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
         const field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
         const buttons=[...host.querySelectorAll('[slot="trailing"] a-button')].map(node=>node.getBoundingClientRect())
         const clear=host.querySelector('[slot="clear"] a-button').getBoundingClientRect()
-        return {display:[...host.querySelectorAll(':scope > a-input-content')].map(node=>getComputedStyle(node).display),
+        return {display:[...host.querySelectorAll(':scope > :is(a-input-label,a-input-leading,a-input-clear,a-input-trailing,a-input-hint)')].map(node=>getComputedStyle(node).display),
           height:field.height,gap:buttons[1].left-buttons[0].right,right:field.right-buttons[1].right,
           top:buttons[0].top-field.top,clearTop:clear.top-field.top}
       })
       const expected={display:Array(5).fill('contents'),height:28,gap:2,right:2,top:2,clearTop:2}
       assert.deepEqual(await layout(),expected)
-      assert.equal(await page.evaluate(()=>customElements.get('a-input-content')),undefined)
+      assert.equal(await page.evaluate(()=>['label','leading','clear','trailing','hint'].every(slot=>customElements.get(`a-input-${slot}`)===undefined)),true)
       for(const [style,display,radius] of [['unlayered','inline-block','13px'],['utilities','block','15px']]) {
         const sheet=await page.addStyleTag({url:`/consumer-${style}.css`});await frames(page)
         assert.deepEqual(await layout(),expected)

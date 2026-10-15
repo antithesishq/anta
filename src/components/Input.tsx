@@ -332,13 +332,13 @@ export const Input = ({
       {...rest}
     >
       {label != null && (
-        <a-input-content slot="label">{label}</a-input-content>
+        <a-input-label slot="label">{label}</a-input-label>
       )}
 
       {resolvedLeading != null && (
-        <a-input-content slot="leading">
+        <a-input-leading slot="leading">
           {resolvedLeading}
-        </a-input-content>
+        </a-input-leading>
       )}
 
       {resolvedClearable && (
@@ -351,7 +351,7 @@ export const Input = ({
         // in the element (src/elements/a-input.ts). The string is duplicated, not
         // shared — importing the element module here would self-register it and
         // break the wrapper/element decoupling. Rename in both places.
-        <a-input-content slot="clear">
+        <a-input-clear slot="clear">
           <Button
             priority="tertiary"
             size={size}
@@ -360,21 +360,21 @@ export const Input = ({
             aria-label="Clear"
             data-custom-event="clearrequest"
           />
-        </a-input-content>
+        </a-input-clear>
       )}
       {trailing != null && (
-        <a-input-content slot="trailing">
+        <a-input-trailing slot="trailing">
           {trailing}
-        </a-input-content>
+        </a-input-trailing>
       )}
 
       {hint != null && (
-        <a-input-content slot="hint">
+        <a-input-hint slot="hint">
           {glyph && (
             <Icon shape={glyph as IconShape} aria-hidden="true" />
           )}
           <span>{hint}</span>
-        </a-input-content>
+        </a-input-hint>
       )}
 
       {/* Unslotted extras → default slot, rendered under the field above the hint. */}

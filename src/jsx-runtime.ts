@@ -185,7 +185,11 @@ export interface AntaIntrinsicElements {
   'a-switch-hint': BaseAttributes
   'a-tooltip': ATooltipAttributes
   'a-input': AInputAttributes
-  'a-input-content': BaseAttributes
+  'a-input-label': BaseAttributes
+  'a-input-leading': BaseAttributes
+  'a-input-clear': BaseAttributes
+  'a-input-trailing': BaseAttributes
+  'a-input-hint': BaseAttributes
   'a-slider': ASliderAttributes
   'a-input-time': AInputTimeAttributes
   'a-calendar': ACalendarAttributes

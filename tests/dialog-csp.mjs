@@ -87,6 +87,16 @@ before(async () => {
     .motion-override::part(dialog){transition-duration:400ms}
     .motion-override::part(dialog):modal{opacity:.8}
     iframe{width:700px;height:450px;border:0} .long{height:1500px} .generic span{display:block;padding:13px}`)
+  assets.set('/layer-overrides.css', `@layer base, anta, components, utilities;
+    @layer base {
+      .base-override::part(dialog){width:640px}
+      .base-override::part(body){padding:0}
+    }
+    @layer components {
+      .layer-override::part(dialog){width:640px}
+      .layer-override::part(body){padding:0}
+      .layer-override::part(header-close){padding-inline-end:64px}
+    }`)
   if (!consumerRoot && process.env.ANTA_DIALOG_COMPARE_ORIGINAL === '1') {
     save(await build({stdin:{contents:`import '${source}/tokens.css';import '${source}/reset.css';import '${source}/elements/a-dialog';`,resolveDir},bundle:true,write:false,outfile:'original.js',format:'esm',target:'es2022',nodePaths,alias:{...jsxAlias,react:compat},plugins:[{
       name:'original-dialog',setup(build){for(const ext of ['ts','css']) build.onLoad({filter:new RegExp('/a-dialog\\.'+ext+'$')},()=>({contents:execFileSync('git',['show',`aeea7c08:src/elements/a-dialog.${ext}`],{encoding:'utf8'}),loader:ext}))},
@@ -148,6 +158,9 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     await page.locator('#opener').focus();await page.keyboard.press('Enter');await settled(page)
     assert.equal(await native(page).evaluate(d=>d.matches(':modal')&&d.getRootNode().activeElement===d),true)
     assert.deepEqual(await page.locator('#dialog').evaluate(el=>({children:el.shadowRoot.children.length,sheets:el.shadowRoot.querySelectorAll('style,link').length,slots:[...el.shadowRoot.querySelectorAll('slot')].map(s=>s.name)})),{children:1,sheets:0,slots:['header','','footer','close']})
+    assert.deepEqual(await page.locator('#dialog').evaluate(el=>[...el.shadowRoot.querySelectorAll('slot')].map(s=>[...s.part].sort())),[
+      ['header','header-close','header-filled'],['body'],['footer','footer-filled'],['close','close-filled'],
+    ])
     assert.equal(await native(page).getAttribute('aria-label'),'Edit project')
     await page.keyboard.press('Tab');assert.equal(await page.locator('#field').evaluate(el=>el===document.activeElement),true)
     await page.keyboard.press('Escape');await closed(page)
@@ -171,11 +184,35 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     await page.locator('#dialog').evaluate(el=>el.close());assert.equal(await applied(page),true)
     await page.locator('#dialog').evaluate(el=>el.close());await closed(page)
   })
+  test.fast(`${name}: accessible name follows header edits, reassignment, and reconnects without observing detached content`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page,raw('default-state="open"'));await settled(page)
+    const label=()=>native(page).getAttribute('aria-label')
+    await page.locator('[slot=header]').evaluate(el=>el.firstChild.nodeValue='Renamed project')
+    await page.waitForFunction(()=>document.querySelector('#dialog').shadowRoot.querySelector('dialog').getAttribute('aria-label')==='Renamed project')
+    await page.locator('[slot=header]').evaluate(el=>{el.innerHTML='<span>Nested title</span>'})
+    await page.locator('[slot=header] span').evaluate(el=>el.firstChild.nodeValue='Updated nested title')
+    await frames(page);assert.equal(await label(),'Updated nested title')
+    await page.evaluate(()=>{window.oldHeader=document.querySelector('[slot=header]');oldHeader.remove();const h=document.createElement('h2');h.slot='header';h.textContent='Replacement';document.querySelector('#dialog').prepend(h)})
+    await frames(page);assert.equal(await label(),'Replacement')
+    await page.evaluate(()=>oldHeader.textContent='Stale title');await frames(page);assert.equal(await label(),'Replacement')
+    await page.evaluate(()=>{window.detachedDialog=document.querySelector('#dialog');detachedDialog.remove()});await frames(page)
+    await page.evaluate(()=>detachedDialog.querySelector('[slot=header]').textContent='Detached edit');await frames(page)
+    assert.equal(await page.evaluate(()=>detachedDialog.shadowRoot.querySelector('dialog').getAttribute('aria-label')),'Replacement')
+    await page.evaluate(()=>document.querySelector('#mount').append(detachedDialog));await settled(page)
+    assert.equal(await label(),'Detached edit')
+    await page.locator('[slot=header]').evaluate(el=>el.textContent='');await frames(page);assert.equal(await label(),null)
+    await page.locator('[slot=header]').evaluate(el=>el.remove());await frames(page);assert.equal(await label(),null)
+    assert.equal(await page.locator('#dialog').evaluate(el=>el.shadowRoot.querySelector('[name=header]').part.contains('header-filled')),false)
+  })
   for(const framework of ['React','Preact'])test.fast(`${name} ${framework}: real SSR hydration preserves nodes and supports controlled updates and callback replacement`,async t=>{
     const page=await pageFor(t,engine,mode,`&ssr&framework=${framework}`);await register(page,mode)
     await page.evaluate(()=>{window.originalHost=document.querySelector('a-dialog');window.originalField=document.querySelector('#draft')})
     await page.evaluate(framework=>import(`/${framework}.js`),framework);await page.evaluate(()=>hydrateDialog());await frames(page)
+    await page.evaluate(()=>{window.originalHeader=document.querySelector('[slot=header]');window.originalTitle=originalHeader.firstChild;renderDialog({header:'Updated project'})})
+    await page.waitForFunction(()=>document.querySelector('a-dialog').shadowRoot.querySelector('dialog').getAttribute('aria-label')==='Updated project')
+    assert.equal(await page.evaluate(()=>originalHeader===document.querySelector('[slot=header]')&&originalTitle===originalHeader.firstChild),true)
     await page.evaluate(()=>renderDialog({open:true}));await settled(page,'a-dialog')
+    assert.equal(await native(page,'a-dialog').getAttribute('aria-label'),'Edit project')
     await page.keyboard.press('Escape');await page.waitForFunction(()=>reports.length>0);assert.equal(await applied(page,'a-dialog'),true)
     assert.deepEqual(await page.evaluate(()=>reports.at(-1)),['second',{next:false,prev:true}])
     await page.locator('#draft').fill('Edited');await page.evaluate(()=>renderDialog({open:false}));await closed(page,'a-dialog')
@@ -232,7 +269,11 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     const frame=page.frames().find(f=>f!==page.mainFrame());await frame.waitForLoadState()
     await page.evaluate(()=>document.querySelector('iframe').contentDocument.querySelector('#mount').append(document.querySelector('#dialog')))
     await frame.locator('#dialog').evaluate(el=>el.show());await settled(frame);assert.deepEqual(await frame.evaluate(()=>violations),[])
+    await frame.locator('[slot=header]').evaluate(el=>el.firstChild.nodeValue='Adopted title');await frames(frame)
+    assert.equal(await native(frame).getAttribute('aria-label'),'Adopted title')
     await page.evaluate(()=>{const iframe=document.querySelector('iframe');document.querySelector('#mount').append(iframe.contentDocument.querySelector('#dialog'));iframe.remove()});await settled(page)
+    await page.locator('[slot=header]').evaluate(el=>el.firstChild.nodeValue='Returned title');await frames(page)
+    assert.equal(await native(page).getAttribute('aria-label'),'Returned title')
     await native(page).evaluate(el=>el.close());await closed(page);await frames(page)
     await page.locator('#dialog').evaluate(el=>{el.remove();document.querySelector('#mount').append(el)})
     assert.equal(await applied(page),false,'A dropped old-document close task must not consume the later native close')
@@ -299,6 +340,41 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     await page.waitForFunction(()=>+getComputedStyle(document.querySelector('#dialog').shadowRoot.querySelector('dialog')).opacity===.8)
     assert.equal(await native(page).evaluate(el=>getComputedStyle(el).transitionDuration.split(',')[0]),'0.4s')
     await page.keyboard.press('Escape');await closed(page);assert.equal(await applied(page),false)
+  })
+  test(`${name}: external CSS can style a Dialog inside a consumer shadow root`,async t=>{
+    const page=await pageFor(t,engine,mode);await page.emulateMedia({reducedMotion:'reduce'});await register(page,mode)
+    await page.locator('#mount').evaluate((mount,html)=>{
+      const scope=document.createElement('div');scope.id='scope';mount.append(scope)
+      const root=scope.attachShadow({mode:'open'});root.innerHTML=html
+      root.querySelector('#opener').addEventListener('click',()=>root.querySelector('a-dialog').show())
+    },raw('', '<h2 slot="header">Scoped dialog</h2><p>Body</p><a-dialog-footer slot="footer"><button>Save</button></a-dialog-footer><a-dialog-close slot="close"><button>Close</button></a-dialog-close>'))
+    await page.locator('#scope').evaluate(async (scope,mode)=>{
+      const css=document.createElement('link');css.rel='stylesheet';css.href=`/${mode}.css`
+      const loaded=new Promise((resolve,reject)=>{css.onload=resolve;css.onerror=reject});scope.shadowRoot.prepend(css);await loaded
+    },mode)
+    const host=page.locator('#scope').locator('a-dialog'),dialog=host.locator('dialog')
+    await page.locator('#scope').locator('#opener').focus();await page.keyboard.press('Enter')
+    assert.deepEqual(await dialog.evaluate(el=>({modal:el.matches(':modal'),width:el.getBoundingClientRect().width,direction:getComputedStyle(el).flexDirection})),{modal:true,width:480,direction:'column'})
+    assert.deepEqual(await host.locator('a-dialog-close,a-dialog-footer').evaluateAll(nodes=>nodes.map(el=>getComputedStyle(el).display)),['contents','contents'])
+    assert.deepEqual(await host.locator('slot').evaluateAll(nodes=>nodes.map(el=>getComputedStyle(el).display)),['block','block','flex','block'])
+    assert.equal(await dialog.getAttribute('aria-label'),'Scoped dialog')
+    await host.locator('[slot=header]').evaluate(el=>el.firstChild.nodeValue='Updated scoped title');await frames(page)
+    assert.equal(await dialog.getAttribute('aria-label'),'Updated scoped title')
+    await page.keyboard.press('Escape');assert.equal(await host.evaluate(el=>el.open),false)
+    assert.equal(await page.locator('#scope').locator('#opener').evaluate(el=>el.getRootNode().activeElement===el),true)
+  })
+  test(`${name}: later-layer consumer part overrides preserve modal state`,async t=>{
+    const page=await pageFor(t,engine,mode);await page.emulateMedia({reducedMotion:'reduce'});await register(page,mode)
+    await page.evaluate(async()=>{
+      const css=document.createElement('link');css.rel='stylesheet';css.href='/layer-overrides.css'
+      const loaded=new Promise((resolve,reject)=>{css.onload=resolve;css.onerror=reject});document.head.append(css);await loaded
+    })
+    await mount(page,raw('class="base-override"'));await page.locator('#opener').click();await settled(page)
+    const base=await metrics(page);assert.equal(base[0].width,480);assert.equal(base[2].padding,'8px 20px 12px')
+    await page.locator('#dialog').evaluate(el=>el.className='layer-override')
+    const m=await metrics(page);assert.equal(m[0].width,640);assert.equal(m[2].padding,'0px');assert.equal(m[1].padding,'18px 64px 8px 20px')
+    assert.equal(await native(page).evaluate(el=>el.matches(':modal')),true)
+    await page.keyboard.press('Escape');await closed(page)
   })
   for(const framework of ['React','Preact'])test(`${name} ${framework}: initially open SSR and direct rendering keep boxless groups and uncontrolled veto`,async t=>{
     const page=await pageFor(t,engine,mode,`&ssr&initial-open&framework=${framework}`);await register(page,mode);await settled(page,'a-dialog')

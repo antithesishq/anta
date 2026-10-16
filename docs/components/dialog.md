@@ -236,6 +236,9 @@ restoration, and Escape handling. It escapes ancestor clipping and stacking
 contexts. The element leaves host attributes and authored children unchanged. Load the element stylesheet
 with the granular entry or load `bundle.css` with the full bundle. Default
 layout and transitions require no injected styles or fixed inline styles.
+Load CSS before opening a dialog, including one with `defaultOpen`. Without it,
+the native modal remains visible and closable, but Anta's layout, boxless region
+groups, close-control placement, and animations are unavailable.
 Application-supplied `style` props and custom `round` amounts can still produce
 style attributes blocked by `style-src-attr 'none'`.
 
@@ -270,6 +273,27 @@ dialog. The native dialog controls closing independently of CSS transitions.
 Entry and exit effects follow the browser's existing `@starting-style`, display,
 and overlay-transition support; reduced motion disables Anta's transitions.
 
+Defaults belong to `anta.components`, within the layer order
+`base, anta, components, utilities`. Put consumer overrides in `components`,
+`utilities`, or unlayered CSS. Overrides in the earlier `base` layer lose to
+Anta's defaults. Previously, outer part rules took precedence over the internal
+shadow stylesheet regardless of their layer.
+
+The slots also expose these supported state parts. Anta updates them as slot
+assignment changes. Each state part targets the same slot as its regular region
+part, so it adds no DOM elements.
+
+| State part | When it applies |
+| --- | --- |
+| `::part(header-filled)` | The header slot has assigned nodes. |
+| `::part(footer-filled)` | The footer slot has assigned nodes. |
+| `::part(close-filled)` | The close slot has assigned nodes. |
+| `::part(header-close)` | The close slot has assigned nodes. Reserves header clearance for the close control. |
+| `::part(body-close)` | The close slot has assigned nodes and the header slot has none. Reserves body clearance for the close control. |
+
+The two clearance parts default to `padding-inline-end: 52px`. The example below
+uses `header-close` to increase it to `64px`.
+
 **Scope the rule to a position (or a class).** A bare `a-dialog::part(dialog)`
 hits every dialog, drawers included, where a `width` override would collapse a
 bottom sheet off its full-bleed edge. Target the one you mean: a class for a
@@ -285,6 +309,9 @@ a-dialog.styled-dialog::part(dialog) {
 }
 a-dialog.styled-dialog::part(dialog)::backdrop {
   background: color-mix(in oklch, black 60%, transparent);
+}
+a-dialog.styled-dialog::part(header-close) {
+  padding-inline-end: 64px;
 }
 ```
 

@@ -226,6 +226,11 @@ tier adds expanded engines, pointer drags and cancellation, nested focus, scroll
 optional regions, consumer overrides, reduced motion, reconnects, mixed builds,
 visual comparisons, and installed-package checks.
 
+Header-name regressions include in-place text edits after hydration, replaced
+headers, disconnect/reconnect, and document adoption. Observation reads assigned
+header content only and stops on disconnection. The slow matrix also checks
+external CSS loaded inside a consumer shadow root.
+
 Behavioral pages use real CSP response headers including `style-src-attr 'none'`.
 Set `ANTA_DIALOG_CHROMIUM_EXECUTABLE` for an exact Chrome executable or
 `ANTA_DIALOG_CONSUMER_ROOT` for an installed consumer. Set

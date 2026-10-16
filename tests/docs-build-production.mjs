@@ -69,6 +69,13 @@ for (const engine of engines) {
     await raw.locator('dialog').waitFor({state:'visible'})
     await raw.locator('[slot="close"]').click()
     await raw.locator('dialog').waitFor({state:'hidden'})
+    await page.locator('details.disclosure').filter({has:page.locator('#styling')}).locator(':scope > summary').click()
+    await page.locator('[data-dialog-open="styled"]').click()
+    const styled = page.locator('a-dialog[name="styled"]')
+    await styled.locator('dialog').waitFor({state:'visible'})
+    assert.equal(await styled.locator('slot[name="header"]').evaluate(el=>getComputedStyle(el).paddingInlineEnd),'64px')
+    await styled.locator('[slot="close"]').click()
+    await styled.locator('dialog').waitFor({state:'hidden'})
     assert.deepEqual(errors, [])
   })
 

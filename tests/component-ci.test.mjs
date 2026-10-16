@@ -47,6 +47,7 @@ test('Dialog CI gate includes its dependencies and skips unrelated documentation
     for (const [path,wanted] of [
       ['src/elements/a-dialog.ts',true],['src/components/Dialog.tsx',true],
       ['src/native-event-props.ts',true],['tests/dialog-csp.mjs',true],
+      ['src/input-events.ts',true],['src/elements/input-trailing-actions.ts',true],['src/elements/a-loader.css',true],
       ['.github/workflows/ci.yml',true],['src/elements/a-menu.ts',false],['docs/components/dialog.md',false],
     ]) {
       const base = git(['rev-parse','HEAD']).trim()

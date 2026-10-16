@@ -72,6 +72,8 @@ and verification before moving to the next component.
    four slots retained. Surface, optional regions, backdrop, and transitions
    use external part rules. JSX owns boxless close/footer groups. Native focus,
    open/close semantics, and existing parts remain; verification is below.
+   - [ ] Decide the styling contract inside a consumer shadow root. Document
+     styles cannot reach a Dialog there; loading external CSS in that root works.
 10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
     markers, affixes, dragging, and focus states.
 11. [x] [Copy feedback](src/elements/a-copy.ts): retains its shadow manual
@@ -128,7 +130,7 @@ merged into main at `aeea7c08`.
   Fixed layout produces no inline styles. Custom `round` amounts and
   application-authored styles remain separate `style-src-attr 'none'` constraints.
 
-Verification on the final implementation:
+Initial verification at `57b2af4`:
 
 - All 109 source checks and 109 installed-package checks pass in Chrome
   `155.0.8059.84`, Firefox `155.0`, and Playwright WebKit `26.6`. React/React DOM
@@ -165,6 +167,38 @@ Verification on the final implementation:
   Chromium coverage. Lint, Anta/sticker/Plot types, site CSS lint, workflow gates,
   and documentation checks pass. Only Dialog and changelog package docs were
   regenerated after changes. Expanded matrices stay in the slow tier.
+
+Review follow-up, October 16, 2026:
+
+- Header naming now follows in-place text edits, child replacement, and slot
+  reassignment. One header slot listener shares its assigned-node snapshot with
+  region and naming synchronization. A header-only observer reads authored
+  content while connected, disconnects on removal, and is recreated in the
+  current document after adoption. React/Preact hydration regressions reproduce
+  the previous stale name and retain the original header nodes after the fix.
+- Dialog's CI gate includes `input-events.ts`, `input-trailing-actions.ts`, and
+  `a-loader.css`. Gate regressions verify changes to each select Dialog.
+- Dialog follows the existing `base, anta, components, utilities` layer order.
+  Earlier `base` overrides lose to defaults; consumer overrides belong in a
+  later layer or unlayered CSS. This compatibility change is documented in
+  Styling and the package changelog. Region-state parts are supported public
+  hooks with documented assignment conditions and a working clearance example.
+- Missing/late CSS preserves native visibility and closing, rather than Anta's
+  styled layout. Documentation states the loading dependency. The consumer-shadow
+  decision remains open: a scoped external stylesheet restores layout and modal
+  behavior, but automatic scoped loading has not been implemented.
+- All 127 source checks, including original appearance and sampled motion,
+  pass in Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`. All 42
+  focused installed-package checks pass in those engines. All 14 focused source
+  cases pass in Chrome for Testing `135.0.7049.114`. Separate final layer checks
+  verify earlier-base/later-component precedence and the public clearance hook
+  in both import modes in all three current engines.
+- All 25 shared event/workflow checks and 13 selected existing Search Dialog
+  regressions pass with CI's Chromium setting and existing debounce exclusion.
+  The production build and both Chromium/WebKit Dialog preview checks pass,
+  including the first preview, raw HTML, and the state-part clearance example.
+  Package build, lint, types, site CSS lint, scoped package docs, and stale-author
+  checks pass. The original 66 screenshot pairs still match byte-for-byte.
 
 Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 are not covered
 by the current engine runs. Playwright WebKit is engine evidence. Safari 17.4

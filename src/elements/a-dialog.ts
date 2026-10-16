@@ -150,6 +150,7 @@ export class ADialogElement extends HTMLElementBase {
   // it can be torn down (and re-wired when `name` / controlled-ness changes).
   #triggerListener?: (e: Event) => void
   #triggerDocument?: Document
+  #headerObserver?: MutationObserver
 
   constructor() {
     super()
@@ -177,11 +178,10 @@ export class ADialogElement extends HTMLElementBase {
     this.footerSlot.name = 'footer'
     this.footerSlot.setAttribute('part', 'footer')
 
-    for (const slot of [this.headerSlot, this.footerSlot, this.closeSlot]) {
+    this.headerSlot.addEventListener('slotchange', () => this.#syncHeader())
+    for (const slot of [this.footerSlot, this.closeSlot]) {
       slot.addEventListener('slotchange', () => this.#syncRegions())
     }
-    // Keep the header-derived accessible name on the owned native dialog.
-    this.headerSlot.addEventListener('slotchange', () => this.#syncAccessibleName())
 
     // Close slot is appended LAST so the ✕ is the LAST tab stop, not the first —
     // Tab from the container (see #open) reaches content controls first, the ✕
@@ -236,7 +236,7 @@ export class ADialogElement extends HTMLElementBase {
   }
 
   connectedCallback() {
-    this.#syncRegions()
+    this.#syncHeader()
     if (this.#controlled) {
       this.#reflect(parseOpenState(this.getAttribute('state')))
     } else {
@@ -252,11 +252,12 @@ export class ADialogElement extends HTMLElementBase {
       if (this.#wantOpen) this.#open()
     }
     this.#syncTriggerListener()
-    this.#syncAccessibleName()
   }
 
   disconnectedCallback() {
     this.#teardownTriggerListener()
+    this.#headerObserver?.disconnect()
+    this.#headerObserver = undefined
     this.#pressedBackdrop = false
     // Leaving the DOM while open would strand the top-layer entry; close quietly.
     // Count it as ours so the async `close` event doesn't clear `#wantOpen` — a
@@ -376,8 +377,7 @@ export class ADialogElement extends HTMLElementBase {
     this.dialog.close()
   }
 
-  #syncRegions() {
-    const header = this.headerSlot.assignedNodes().length > 0
+  #syncRegions(header = this.headerSlot.assignedNodes().length > 0) {
     const footer = this.footerSlot.assignedNodes().length > 0
     const close = this.closeSlot.assignedNodes().length > 0
     this.headerSlot.part.toggle('header-filled', header)
@@ -387,10 +387,26 @@ export class ADialogElement extends HTMLElementBase {
     this.bodySlot.part.toggle('body-close', close && !header)
   }
 
+  #syncHeader() {
+    // A detached slotchange must not restart observation after teardown.
+    if (!this.isConnected) return
+    const nodes = this.headerSlot.assignedNodes()
+    this.#syncRegions(nodes.length > 0)
+    this.#syncAccessibleName(nodes)
+    this.#headerObserver?.disconnect()
+    this.#headerObserver = undefined
+    if (!nodes.length) return
+    // Renderers edit text within an existing assigned node without slotchange.
+    // Read only the header; write its name only to the owned native dialog.
+    this.#headerObserver = new this.view.MutationObserver(() => this.#syncAccessibleName(nodes))
+    for (const node of nodes) {
+      this.#headerObserver.observe(node, { childList: true, characterData: true, subtree: true })
+    }
+  }
+
   /** Keep the header-derived name on the owned native dialog. */
-  #syncAccessibleName() {
-    const text = this.headerSlot
-      .assignedNodes()
+  #syncAccessibleName(nodes: Node[]) {
+    const text = nodes
       .map((n) => n.textContent ?? '')
       .join(' ')
       .trim()

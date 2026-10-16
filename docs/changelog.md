@@ -7,6 +7,9 @@ changes are not listed.
 
 ### Breaking
 
+- [Dialog styling](/dialog/#styling) follows Anta's cascade layers. Move part
+  overrides from `base` to `components`, `utilities`, or unlayered CSS.
+
 - [Browser hydration](/install-config/#browser-hydration) requires
   `configure(h, Fragment, hooks, { hydratingEvents: true })` before mounting.
   Client-only apps and worker renderers forward event handlers immediately by
@@ -72,7 +75,8 @@ changes are not listed.
 - [Dialog](/dialog/) uses external default styles under strict CSP, including
   its backdrop and optional regions. Native modal behavior and existing parts
   remain; hydration uses the shared event configuration, and named triggers
-  release their listeners on removal and document adoption.
+  release their listeners on removal and document adoption. State parts expose
+  populated regions and close-control clearance for styling.
 
 - [Copy feedback](/button/#copy-feedback) loads its default styles from external
   CSS under strict CSP while preserving existing copy inputs and compositions.
@@ -132,6 +136,9 @@ changes are not listed.
 
 
 ### Fixed
+
+- [Dialog](/dialog/) updates its accessible name when header text changes in
+  place, including React and Preact updates after hydration.
 
 - [InputTime touch editing](/input-time/#the-field) waits for a completed tap
   before focusing field padding. Canceled gestures no longer affect later

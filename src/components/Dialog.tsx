@@ -128,9 +128,13 @@ export const Dialog = ({
     typeof round === "string" && ROUND_SIDES.has(round) ? round : undefined;
 
   const events = useNativeEventProps({
+    // React 19 keeps the event name's case after `on`; Preact lowercases it.
+    // Both bind `statechange` with this spelling, whereas `onStateChange` does not.
     onstatechange: onStateChange
       ? (e: StateChangeEvent) => {
           const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e);
+          // A slotted control can bubble its own statechange through the dialog.
+          // Only this host's event describes a Dialog open/close request.
           if (isOwn && detail)
             onStateChange(event, {
               next: detail.next === "open",
@@ -150,9 +154,6 @@ export const Dialog = ({
       persistent={persistent ? "" : undefined}
       round={roundSide ?? roundAttr(round)}
       name={!controlled ? name : undefined}
-      // All-lowercase `onstatechange` is the one spelling both renderers bind to
-      // the element's `statechange` event (React 19 keeps the case after `on`, so
-      // `onStateChange` would listen for "StateChange"; Preact lowercases).
       {...events}
       class={className}
       // A side keyword sets no amount; anything else feeds --dialog-round (a

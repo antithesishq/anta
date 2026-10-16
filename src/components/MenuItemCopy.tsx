@@ -1,6 +1,6 @@
 import { MenuItem, type MenuItemCommonProps, type MenuItemActionMode } from './MenuItem'
 import { useCopyFeedback } from '../anta_helpers'
-import { type CopyTarget, copyElementProps, isNodeCopy } from './copy-props'
+import { type CopyTarget, useCopyElementProps, isNodeCopy } from './copy-props'
 import type { IconShape } from '../elements/a-icon.shapes'
 
 /** Action-mode menu-item props plus a required copy target (a copying row must
@@ -73,7 +73,7 @@ export const MenuItemCopy = ({
       : iconPlacement === 'none'
         ? {}
         : { icon: shownIcon }
-  const copyAttrs = copyElementProps({
+  const copyAttrs = useCopyElementProps({
     copy,
     copyNode,
     copyUrl,

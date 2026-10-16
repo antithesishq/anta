@@ -13,7 +13,8 @@ before(async () => {
         export { InputTime } from './src/components/InputTime';
         export { Banner } from './src/components/Banner';
         export { Expander } from './src/components/Expander';
-        export { Text } from './src/components/Text';`,
+        export { Text } from './src/components/Text';
+        export { useCopyElementProps } from './src/components/copy-props';`,
       resolveDir: process.cwd(),
     },
     bundle: true, write: false, platform: 'node', format: 'cjs',
@@ -250,4 +251,23 @@ for (const hydratingEvents of [false, true]) test(`InputTime worker and browser 
     assert.equal(typeof field.props.onclearclick, hydratingEvents ? 'undefined' : 'function')
     assert.equal(calls, hydratingEvents ? 1 : 0)
   } finally { delete globalThis.window }
+})
+
+test('worker copy props forward own request/result callbacks immediately, including a window shim', () => {
+  for (const shim of [false, true]) {
+    if (shim) globalThis.window = {}
+    try {
+      runtime.configure(h, undefined, {})
+      let requested = 0, copied
+      const props = runtime.useCopyElementProps({copy:'Value',onCopyRequest:()=>requested++,onCopied:ok=>{copied=ok}})
+      props.oncopyrequest(event())
+      props.oncopydone(event({ok:true}))
+      assert.equal(requested,1)
+      assert.equal(copied,true)
+      props.oncopyrequest({target:'child',currentTarget:'copy'})
+      props.oncopydone({target:'child',currentTarget:'copy',detail:{ok:false}})
+      assert.equal(requested,1)
+      assert.equal(copied,true)
+    } finally { if (shim) delete globalThis.window }
+  }
 })

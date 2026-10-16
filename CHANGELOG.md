@@ -69,6 +69,11 @@ changes are not listed.
 
 ### Changed
 
+- [Copy feedback](/button/#copy-feedback) loads its default styles from external
+  CSS under strict CSP while preserving existing copy inputs and compositions.
+  Disconnecting clears feedback and prevents stale clipboard results
+  from reopening it after reconnection.
+
 - [InputTime default styles](/input-time/#styling) load from external CSS under
   strict CSP. JSX slot groups use `a-input-time-*` tags; update selectors that
   target their former spans. Existing slots, parts, and segmented editing remain.

@@ -412,6 +412,37 @@ Input PR #236 at `2d2ba6e6`:
   tests are registered with shared tiers and dependency-sensitive PR gates;
   expanded source/installed matrices and visual artifacts stay in slow coverage.
 
+Review follow-up for PR #238:
+
+- Padding focus uses compatibility `mousedown`, so a touch contact or scroll does
+  not focus the editor. Pointer-origin markers are cleared on release,
+  cancellation, focus departure, and keyboard navigation. Regressions cover
+  completed taps, canceled touch contacts, Chromium trusted touch scrolling,
+  refocus after clicking an already-focused segment, and cross-segment native
+  caret placement. The stale refocus case fails against `c40420d3` and passes
+  after the fix.
+- Neutral status retains custom tone. Default group label/hint references are
+  assigned once during the initial build and refreshed on reconnection. Both
+  fields share the action classifier in `input-trailing-actions.ts`, observing
+  only grouping child lists and their direct text nodes. Button label changes do
+  not trigger classification. Clear names and nearest-field ownership are shared
+  in the side-effect-free `input-events.ts`, also used by the JSX clear triggers.
+- The suggested readonly normalization was not applied: incomplete edits retain
+  their text and report an empty canonical value before and after readonly is
+  enabled. This behavior predates the readonly guard. A regression verifies
+  blur's empty `change` value and completing the time after unlocking, without
+  erasing the partial input or inventing a complete time.
+- The expanded source and installed-package suites each pass 140 checks in
+  Chromium `153.0.8010.12`, Firefox `155.0`, and Playwright WebKit `26.6`.
+  The touch-scroll protocol checks run only in Chromium; other engines retain
+  synthetic contact/cancellation and completed-tap coverage. The installed suite
+  also passes all 48 checks in Chrome for Testing `135.0.7049.114`. All 193 Input
+  source checks and 336 selected root regressions pass after the shared-helper
+  extraction. The Node `24.15.0` production build and all 14 production checks
+  pass, along with lint, types, stylesheet lint, workflow parsing, and the
+  documentation author check. Only the affected changelog package docs were
+  regenerated for this follow-up.
+
 Exact Edge `135`, Firefox `136`, Safari/iOS Safari `17.4`, and React `18` were not
 executed. Playwright WebKit is engine evidence, not a shipping Safari/iOS run.
 Touch gestures use browser automation; physical mobile keyboards were not

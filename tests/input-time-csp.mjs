@@ -62,7 +62,7 @@ before(async()=>{
       window.showDate=()=>{const node=React.createElement(InputDate,{label:'Meeting',time:true,locale:'en-US',defaultValue:'2026-10-15T09:30',name:'meeting'});${react?"root??=createRoot(document.querySelector('#mount'));root.render(node)":"render(node,document.querySelector('#mount'))"}};`,resolveDir},outfile:`${framework}.js`,format:'esm',jsx:'automatic',jsxImportSource:'@antadesign/anta',define:{'process.env.NODE_ENV':'"production"'},alias:{...aliases,...(react&&!consumer?{'react-dom/client':requirePlot.resolve('react-dom/client')}:{})}}),framework)
   }
   assets.set('/boot.js',`window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
-  assets.set('/fixture.css',`body{margin:32px;font-family:system-ui}#mount{width:550px}.dark{color-scheme:dark}.rtl{direction:rtl}.override{width:300px}.override::part(field){min-height:45px;border-radius:13px;outline:3px solid blue}.override::part(segment){font-size:19px;width:70px;color:rgb(100,20,30)}.override::part(period){width:100px}.override::part(segment)::placeholder{color:rgb(10,90,20)}.override::part(literal){color:rgb(90,20,100)}.inset{--input-time-trailing-inset:9px}span{display:inline-block}`)
+  assets.set('/fixture.css',`body{margin:32px;font-family:system-ui}.tone-color{--input-time-tone-source:#7c3aed}.touch-time{width:300px;margin-top:300px}.touch-time::after{content:"";display:block;height:2000px}#mount{width:550px}.dark{color-scheme:dark}.rtl{direction:rtl}.override{width:300px}.override::part(field){min-height:45px;border-radius:13px;outline:3px solid blue}.override::part(segment){font-size:19px;width:70px;color:rgb(100,20,30)}.override::part(period){width:100px}.override::part(segment)::placeholder{color:rgb(10,90,20)}.override::part(literal){color:rgb(90,20,100)}.inset{--input-time-trailing-inset:9px}span{display:inline-block}`)
   server=createServer((req,res)=>{
     const url=new URL(req.url,'http://localhost'),mode=url.searchParams.get('mode')??'granular'
     res.setHeader('Content-Security-Policy',mode==='original'?policy.replace("style-src 'self'","style-src 'self' 'unsafe-inline'"):policy)
@@ -91,6 +91,109 @@ async function client(page,framework){await page.evaluate(framework=>import(`/${
 
 for(const engine of engines)for(const mode of ['granular','bundle']){
   const name=`${engine.name()} ${mode}`
+  test.fast(`${name}: review: touch contact and cancellation do not focus padding`,async t=>{
+    const page=await pageFor(t,engine,mode,'',{hasTouch:true});await register(page,mode)
+    await mount(page,'<a-input-time locale="en-GB" value="10:30"></a-input-time>')
+    const focused=await host(page).evaluate(el=>{
+      const row=el.shadowRoot.querySelector('[part=segments]')
+      row.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',pointerId:1,bubbles:true}))
+      row.dispatchEvent(new PointerEvent('pointercancel',{pointerType:'touch',pointerId:1,bubbles:true}))
+      return el.shadowRoot.activeElement!==null
+    })
+    assert.equal(focused,false)
+    await segment(page,'hour').evaluate(el=>{
+      el.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',pointerId:2,bubbles:true}))
+      el.dispatchEvent(new PointerEvent('pointercancel',{pointerType:'touch',pointerId:2,bubbles:true}))
+      el.focus()
+    });await frames(page)
+    assert.deepEqual(await segment(page,'hour').evaluate(el=>[el.selectionStart,el.selectionEnd]),[0,2])
+    await host(page).locator('[part=field]').tap({position:{x:2,y:14}})
+    assert.equal(await segment(page,'hour').evaluate(el=>el===el.getRootNode().activeElement),true)
+  })
+  if(engine===chromium) test(`${name}: review: a trusted touch scroll over the segment row does not focus the editor`,async t=>{
+    const page=await pageFor(t,engine,mode,'',{hasTouch:true});await register(page,mode)
+    await mount(page,'<a-input-time class="touch-time" locale="en-GB" value="10:30"></a-input-time>')
+    const field=host(page).locator('[part=field]'),rect=await field.boundingBox(),session=await page.context().newCDPSession(page)
+    const point={x:rect.x+rect.width-5,y:rect.y+rect.height/2}
+    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]})
+    assert.equal(await host(page).evaluate(el=>el.shadowRoot.activeElement!==null),false)
+    for(const distance of [30,60,100,150])await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{...point,y:point.y-distance}]})
+    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await frames(page)
+    assert.ok(await page.evaluate(()=>scrollY)>0);assert.equal(await host(page).evaluate(el=>el.shadowRoot.activeElement!==null),false)
+    await session.detach()
+  })
+  test.fast(`${name}: review: clicking an already-focused segment cannot suppress later keyboard selection`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<a-input-time locale="en-GB" value="10:30"></a-input-time>')
+    const minute=segment(page,'minute')
+    await minute.focus();await minute.click();await minute.evaluate(el=>el.setSelectionRange(1,1))
+    await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');await frames(page)
+    assert.deepEqual(await minute.evaluate(el=>[el.selectionStart,el.selectionEnd]),[0,2])
+    await minute.press('4');assert.equal(await value(page),'10:04')
+    await host(page).evaluate(el=>el.value='10:30');await minute.focus();await minute.click()
+    await minute.evaluate(el=>el.setSelectionRange(1,1));await page.locator('#after').focus();await minute.focus();await frames(page)
+    assert.deepEqual(await minute.evaluate(el=>[el.selectionStart,el.selectionEnd]),[0,2])
+    await segment(page,'hour').focus();await minute.click()
+    assert.equal(await minute.evaluate(el=>el.selectionStart===el.selectionEnd),true,'Pointer focus preserves a collapsed native caret')
+  })
+  test.fast(`${name}: review: readonly retains incomplete edits and editing can resume`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<a-input-time locale="en-GB" required></a-input-time>')
+    await segment(page,'hour').fill('1')
+    await host(page).evaluate(el=>{window.commits=[];el.addEventListener('change',()=>commits.push(el.value));el.setAttribute('readonly','')})
+    await page.locator('#after').focus();await frames(page)
+    assert.equal(await value(page),'');assert.equal(await segment(page,'hour').inputValue(),'1')
+    assert.equal(await segment(page,'minute').inputValue(),'');assert.deepEqual(await page.evaluate(()=>commits),[''])
+    await host(page).evaluate(el=>el.removeAttribute('readonly'));await segment(page,'minute').fill('30')
+    assert.equal(await value(page),'01:30')
+  })
+  test.fast(`${name}: review: neutral status preserves the authored custom tone`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<a-input-time locale="en-GB" class="tone-color" tone="#7c3aed"></a-input-time>')
+    const border=()=>host(page).locator('[part=field]').evaluate(el=>getComputedStyle(el).boxShadow)
+    const tone=await border();await host(page).evaluate(el=>el.setAttribute('status','neutral'));assert.equal(await border(),tone)
+    await host(page).evaluate(el=>el.setAttribute('status','critical'));assert.notEqual(await border(),tone)
+    await host(page).evaluate(el=>el.setAttribute('status','neutral'));assert.equal(await border(),tone)
+  })
+  test.fast(`${name}: review: ARIA slot references initialize once and refresh on reconnect`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    const result=await page.evaluate(()=>{
+      const el=document.createElement('a-input-time'),group=el.shadowRoot.querySelector('[part=segments]'),counts={}
+      for(const name of ['ariaLabelledByElements','ariaDescribedByElements']){
+        let proto=group,descriptor
+        while(proto&&!descriptor){descriptor=Object.getOwnPropertyDescriptor(proto,name);proto=Object.getPrototypeOf(proto)}
+        counts[name]=0
+        Object.defineProperty(group,name,{get(){return descriptor.get.call(this)},set(value){counts[name]++;descriptor.set.call(this,value)}})
+      }
+      el.innerHTML='<span slot="label">Start</span><span slot="hint">Hint</span>'
+      document.querySelector('#mount').append(el);const initial={...counts}
+      el.remove();document.querySelector('#mount').append(el)
+      return {initial,reconnected:counts}
+    })
+    assert.deepEqual(result,{initial:{ariaLabelledByElements:1,ariaDescribedByElements:1},reconnected:{ariaLabelledByElements:2,ariaDescribedByElements:2}})
+  })
+  test.fast(`${name}: review: trailing observation ignores button descendants and follows direct group text`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.evaluate(()=>{
+      window.trailingChanges=0
+      const Observer=window.MutationObserver
+      window.MutationObserver=class extends Observer {constructor(callback){super((records,observer)=>{window.trailingChanges++;callback(records,observer)})}}
+    })
+    for(const tag of ['a-input','a-input-time']){
+      await mount(page,`<${tag} locale="en-GB"><${tag}-trailing slot="trailing"> <a-button><span>Save</span></a-button></${tag}-trailing></${tag}>`)
+      const field=page.locator(tag).first(),group=field.locator(`${tag}-trailing`)
+      await page.evaluate(()=>window.trailingChanges=0)
+      await group.locator('span').evaluate(el=>el.textContent='Updated countdown');await frames(page)
+      assert.equal(await page.evaluate(()=>trailingChanges),0)
+      assert.equal(await field.evaluate(el=>el.matches(':state(trailing-actions)')),true)
+      await group.evaluate(el=>el.firstChild.data='Unit');await frames(page)
+      assert.equal(await field.evaluate(el=>el.matches(':state(trailing-actions)')),false)
+      await group.evaluate(el=>el.firstChild.data=' ');await frames(page)
+      assert.equal(await field.evaluate(el=>el.matches(':state(trailing-actions)')),true)
+      await group.evaluate(el=>el.replaceChildren());await frames(page)
+      assert.equal(await field.evaluate(el=>el.matches(':state(trailing-actions)')),false)
+    }
+  })
   test.fast(`${name}: external defaults, parts, sizing and initial skeleton under CSP`,async t=>{
     const page=await pageFor(t,engine,mode)
     await mount(page,'<a-input-time locale="en-GB" defaultvalue="09:30"><span slot="label">Start</span></a-input-time>')

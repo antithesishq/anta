@@ -1,3 +1,4 @@
+import { CLEAR_TRIGGER } from '../input-events'
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
@@ -345,15 +346,7 @@ export const Input = ({
       )}
 
       {resolvedClearable && (
-        // A real <a-button> (light DOM → fully styled, keyboard-focusable) in
-        // the element's `clear` slot — the element controls its visibility (shown
-        // only when filled + editable). It fires the bubbling `clearrequest`
-        // event via a-button's global listener, so clearing works even without
-        // framework hydration; the element turns that into clearclick→clear().
-        // CONTRACT: the `data-custom-event` value below MUST match `CLEAR_TRIGGER`
-        // in the element (src/elements/a-input.ts). The string is duplicated, not
-        // shared — importing the element module here would self-register it and
-        // break the wrapper/element decoupling. Rename in both places.
+        // The UI element handles the clear lifecycle before framework hydration.
         <a-input-clear slot="clear">
           <Button
             priority="tertiary"
@@ -361,7 +354,7 @@ export const Input = ({
             round={!!round}
             icon="x"
             aria-label="Clear"
-            data-custom-event="clearrequest"
+            data-custom-event={CLEAR_TRIGGER}
           />
         </a-input-clear>
       )}

@@ -1,3 +1,4 @@
+import { CLEAR_TRIGGER } from '../input-events'
 import { useNativeEventProps } from '../native-event-props'
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
@@ -211,11 +212,7 @@ export const InputTime = ({
       )}
 
       {clearable && (
-        // Real <a-button> in the element's `clear` slot; the element controls its
-        // visibility (shown only when filled). It fires `clearrequest`, which the
-        // element turns into clear(). CONTRACT: `data-custom-event` MUST match
-        // CLEAR_TRIGGER in src/elements/a-input-time.ts (string duplicated, not
-        // shared, to keep the wrapper/element decoupled).
+        // The UI element handles the clear lifecycle before framework hydration.
         <a-input-time-clear slot="clear">
           <Button
             priority="tertiary"
@@ -223,7 +220,7 @@ export const InputTime = ({
             round={!!round}
             icon="x"
             aria-label="Clear"
-            data-custom-event="clearrequest"
+            data-custom-event={CLEAR_TRIGGER}
           />
         </a-input-time-clear>
       )}

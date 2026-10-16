@@ -294,7 +294,7 @@
   a-input-time[size="small"] a-icon { --icon-size: 14px; }
   a-input-time[size="large"] a-icon { --icon-size: 18px; }
 
-  a-input-time[tone]:not([tone=""]):not([status]) {
+  a-input-time[tone]:not([tone=""]):not([status]:not([status="neutral"])) {
     --input-time-tone-source: var(--border-2);
     --input-time-border: light-dark(
       oklch(from var(--input-time-tone-source) 0.7 calc(c * 0.8) h),

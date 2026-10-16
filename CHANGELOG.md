@@ -118,6 +118,10 @@ changes are not listed.
 
 ### Fixed
 
+- [InputTime touch editing](/input-time/#the-field) waits for a completed tap
+  before focusing field padding. Canceled gestures no longer affect later
+  segment selection, and a neutral status preserves a custom tone.
+
 - [InputTime](/input-time/) retains incomplete edits on reconnection and uses live
   label and hint references. Read-only fields prevent edits, and clear actions
   can be canceled with `onClearClick`.

@@ -1,3 +1,5 @@
+import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest } from '../input-events'
+import { inputTrailingActions } from './input-trailing-actions'
 import { HTMLElementBase, isModifiedNavigationKey } from '../anta_helpers'
 import { applyShadowAria, ariaAttributeProperty, type ShadowAriaAttribute } from './shadow-aria'
 import { MODALITY, trackFocusModality, type InputDocument } from './input-focus-modality'
@@ -38,12 +40,6 @@ const WRITE_DELEGATED_ARIA = Symbol('writeDelegatedAria')
  * control, state is shadow-internal or off-DOM through `ElementInternals`. The
  * element never mutates consumer-owned light DOM.
  */
-
-// Kept in sync with the `data-custom-event` the `<InputTime>` wrapper sets on its
-// clear <Button> (mirrors a-input's CLEAR_TRIGGER; duplicated, not shared, because
-// the wrapper can't import this module without self-registering the element).
-const CLEAR_TRIGGER = 'clearrequest'
-const CLEAR_INPUT_EVENT = 'clearinput'
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 // Native input `size` counts Latin-character columns. East Asian wide glyphs
@@ -124,7 +120,7 @@ export class AInputTimeElement extends HTMLElementBase {
   #hintSlot: HTMLSlotElement
   #segRow: HTMLDivElement
   #trailingSlot: HTMLSlotElement
-  #trailingObserver?: MutationObserver
+  #trailingActions: ReturnType<typeof inputTrailingActions>
   #releaseModality?: () => void
   #ready = false
   #formDisabled = false
@@ -173,8 +169,13 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#field = shadow.querySelector<HTMLDivElement>('.field')!
     this.#segRow = shadow.querySelector<HTMLDivElement>('.segments')!
     this.#trailingSlot = shadow.querySelector<HTMLSlotElement>('slot[name=trailing]')!
-    this.#trailingSlot.addEventListener('slotchange', this.#syncTrailingActions)
-    this.#field.addEventListener('pointerdown', this.#onFieldPointerDown)
+    this.#trailingActions = inputTrailingActions(this, this.#trailingSlot, 'a-input-time-trailing', actions => {
+      this.#internals?.states?.[actions ? 'add' : 'delete']('trailing-actions')
+    })
+    this.#trailingSlot.addEventListener('slotchange', this.#trailingActions.sync)
+    this.#field.addEventListener('mousedown', this.#onFieldMouseDown)
+    this.#field.addEventListener('mouseup', this.#resetPointerSegment)
+    this.#field.addEventListener('pointercancel', this.#resetPointerSegment)
     this.#segRow.addEventListener('input', this.#onInput)
     this.#segRow.addEventListener('keydown', this.#onKeyDown)
     this.#segRow.addEventListener('focusin', this.#onFocusIn)
@@ -182,9 +183,8 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#segRow.addEventListener('paste', this.#onPaste)
 
     this.addEventListener(CLEAR_TRIGGER, event => {
-      const owner = event.composedPath().find(node => ['a-input', 'a-input-time'].includes((node as Element)?.localName))
-      if (owner !== this || this.#disabled || this.hasAttribute('readonly')) return
-      if (this.dispatchEvent(new CustomEvent('clearclick', { bubbles: true, cancelable: true }))) this.clear()
+      if (!ownsInputClearRequest(this, event) || this.#disabled || this.hasAttribute('readonly')) return
+      if (this.dispatchEvent(new CustomEvent(CLEAR_CLICK_EVENT, { bubbles: true, cancelable: true }))) this.clear()
     })
   }
 
@@ -212,15 +212,18 @@ export class AInputTimeElement extends HTMLElementBase {
       // Guarded so a property-set value isn't clobbered by an empty attribute.
       this.#seed(this.getAttribute('value') ?? this.getAttribute('defaultvalue') ?? '')
     }
-    if (!this.#ready) this.#buildSegments()
-    this.#ready = true
-    this.#applyGroupLabel()
-    this.#applyGroupDescription()
-    this.#syncTrailingActions()
+    if (this.#ready) {
+      this.#applyGroupLabel()
+      this.#applyGroupDescription()
+    } else {
+      this.#buildSegments()
+      this.#ready = true
+    }
+    this.#trailingActions.sync()
   }
 
   disconnectedCallback() {
-    this.#trailingObserver?.disconnect()
+    this.#trailingActions.disconnect()
     this.#releaseModality?.()
     this.#releaseModality = undefined
     this.#pointerSegment = undefined
@@ -433,12 +436,14 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   // Clicking the field's padding (rather than a native input) moves focus into
-  // the editor. A real pointer interaction leaves caret placement to the browser.
-  #onFieldPointerDown = (e: PointerEvent) => {
+  // the editor. Compatibility mousedown waits until a touch tap completes;
+  // native input targets keep the browser's caret placement.
+  #onFieldMouseDown = (e: MouseEvent) => {
+    if (e.button !== 0) return
     this.#syncFocus()
     const seg = this.#segFromTarget(e.target)
     if (seg) {
-      this.#pointerSegment = seg.el
+      this.#pointerSegment = this.shadowRoot?.activeElement === seg.el ? undefined : seg.el
       return
     }
     if (e.target === this.#field || e.target === this.#segRow) {
@@ -446,6 +451,8 @@ export class AInputTimeElement extends HTMLElementBase {
       this.#focusSegment(this.#segs[0])
     }
   }
+
+  #resetPointerSegment = () => { this.#pointerSegment = undefined }
 
   #onFocusIn = (e: FocusEvent) => {
     const seg = this.#segFromTarget(e.target)
@@ -460,7 +467,8 @@ export class AInputTimeElement extends HTMLElementBase {
     }
   }
 
-  #onFocusOut = (_e: FocusEvent) => {
+  #onFocusOut = (e: FocusEvent) => {
+    if (this.#pointerSegment === e.target) this.#resetPointerSegment()
     // `focusout` fires for hops within the row too. Defer until focus settles,
     // then commit the group only when it has genuinely lost focus.
     queueMicrotask(() => {
@@ -474,6 +482,7 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #onKeyDown = (e: KeyboardEvent) => {
+    this.#resetPointerSegment()
     if (isModifiedNavigationKey(e)) return
     const seg = this.#segFromTarget(e.target)
     if (!seg) return
@@ -772,28 +781,6 @@ export class AInputTimeElement extends HTMLElementBase {
     }
     const keyboard = modality?.keyboard
     this.#internals?.states?.[keyboard && focused ? 'add' : 'delete']('kb-focus')
-  }
-
-  #syncTrailingActions = () => {
-    if (!this.isConnected) return
-    this.#trailingObserver?.disconnect()
-    let hasAction = false
-    const onlyActions = (nodes: Iterable<Node>): boolean => {
-      for (const node of nodes) {
-        if (node.nodeType === 3 && node.textContent?.trim()) return false
-        if (node.nodeType !== 1) continue
-        const element = node as Element
-        if (element.localName === 'a-input-time-trailing') {
-          this.#trailingObserver ??= new this.view.MutationObserver(this.#syncTrailingActions)
-          this.#trailingObserver.observe(element, { childList: true, characterData: true, subtree: true })
-          if (!onlyActions(element.childNodes)) return false
-        } else if (element.localName === 'a-button' || element.localName === 'button' || element.matches('a[role="button"][data-anta]')) hasAction = true
-        else return false
-      }
-      return true
-    }
-    const actions = onlyActions(this.#trailingSlot.assignedNodes()) && hasAction
-    this.#internals?.states?.[actions ? 'add' : 'delete']('trailing-actions')
   }
 
   #syncDisabled() {

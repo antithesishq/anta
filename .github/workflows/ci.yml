@@ -53,6 +53,7 @@ jobs:
             echo 'progress=true' >> "$GITHUB_OUTPUT"
             echo 'expander=true' >> "$GITHUB_OUTPUT"
             echo 'banner=true' >> "$GITHUB_OUTPUT"
+            echo 'input-time=true' >> "$GITHUB_OUTPUT"
             echo 'input=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
@@ -66,7 +67,7 @@ jobs:
             'src/elements/a-button.*' 'src/elements/a-menu*' \
             'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
             src/{calendar-core,jsx-runtime,native-event-props,anta_helpers,general_types,index}.ts \
-            src/elements/{index,key-activation,shadow-aria,focus,copy-behavior}.ts \
+            src/elements/{index,key-activation,shadow-aria,focus,copy-behavior,input-focus-modality}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             tests/calendar-controlled.mjs .github/workflows/ci.yml \
             'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
@@ -144,7 +145,7 @@ jobs:
             'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-tab*' \
             src/components/{Tooltip,Text,Button,Steps,Tabs,Select,SelectFaceted,Menu,MenuItem,Input}.tsx \
             src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
-            src/elements/{index,key-activation,shadow-aria}.ts \
+            src/elements/{index,key-activation,shadow-aria,input-focus-modality}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'src/elements/a-steps.*' 'src/elements/a-select*' \
             src/components/{Steps,select-parts}.css \
@@ -161,7 +162,7 @@ jobs:
             'src/elements/a-menu*' 'src/elements/a-calendar.*' 'src/elements/a-select*' \
             src/components/{Input,InputDate,InputAutocomplete,Select,SelectFaceted,Button,Tooltip,Menu,Icon}.tsx \
             src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
-            src/elements/{index,key-activation,shadow-aria}.ts \
+            src/elements/{index,key-activation,shadow-aria,input-focus-modality}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/input-*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -170,6 +171,20 @@ jobs:
             echo 'input=true' >> "$GITHUB_OUTPUT"
           else
             echo 'input=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-input*' src/elements/{input-focus-modality,shadow-aria,key-activation,index}.ts \
+            'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-menu*' 'src/elements/a-calendar.*' \
+            src/components/{InputTime,Input,InputDate,Button,Icon,Menu,Calendar}.tsx \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/input-time*' tests/native-event-props.test.mjs tests/consumers/templates/nextjs/package.json \
+            'tests/component*.mjs' scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'input-time=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'input-time=false' >> "$GITHUB_OUTPUT"
           fi
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
@@ -188,6 +203,11 @@ jobs:
           # The debounce case races the browser clock during setup.
           NODE_OPTIONS: >-
             --test-skip-pattern="^debounces typing, keeps previous matches, and shows activity only in the input$"
+      - name: Test InputTime CSP and editing
+        if: steps.component-tests.outputs.input-time == 'true'
+        run: pnpm test:components --component input-time
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Test Calendar and InputDate
         if: steps.component-tests.outputs.calendar == 'true'
         run: pnpm test:components --component calendar

@@ -56,7 +56,7 @@ changes.
 `size` (`small` / `medium` / `large`) matches the other inputs' scale; `status`
 recolors the box and hint (only `critical` marks it invalid); `clearable` adds a
 clear button once a value is set — clearing empties every section back to the
-placeholder dashes. `disabled` behaves as it does on `Input`.
+placeholder dashes. `disabled` prevents focus and editing. `readOnly` keeps the time selectable and focusable while preventing edits.
 
 `min` and `max` (24-hour `"HH:mm"`) bound the value: a complete time outside the
 range is clamped to the nearest bound as you step or leave the field, and flags
@@ -66,6 +66,25 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 <InputTime label="Meeting" size="small" defaultValue="10:00" clearable />
 <InputTime label="Deadline" status="critical" hint="Pick a time in the future." />
 <InputTime label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
+```
+
+## Controlled values and clearing
+
+Update `value` from `onValueChange` to control the time. An incomplete time reports
+an empty string while the native segments retain the text being edited. Call
+`preventDefault()` in `onClearClick` to keep a value when clearing is disallowed.
+
+```tsx
+const [value, setValue] = useState('09:30')
+const [keep, setKeep] = useState(false)
+
+<InputTime label="Meeting" locale="en-US" value={value} clearable
+  onValueChange={(_, attrs) => setValue(attrs.value)}
+  onClearClick={event => { if (keep) event.preventDefault() }} />
+<Checkbox checked={keep} onStateChange={(_, { next }) => setKeep(next === true)}>
+  Keep the value when clearing
+</Checkbox>
+<Tag>{value || 'Incomplete time'}</Tag>
 ```
 
 ## InputTime props
@@ -87,9 +106,11 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 | `min?` | string | — | Earliest allowed time, 24-hour `"HH:mm"`. A complete value below it is clamped up (on step / blur) and flagged `rangeUnderflow` for form validity. |
 | `name?` | string | — | Form field name — the 24-hour value submits under this key. |
 | `onBlur?` | (e) => void | — | Fires when the field loses focus. |
+| `onClearClick?` | (e) => void | — | Fires before clearing. Call `preventDefault()` synchronously to keep the value. |
 | `onClearInput?` | (e) => void | — | Fires after the built-in clear button has cleared the field. |
 | `onFocus?` | (e) => void | — | Fires when the field gains focus. |
 | `onValueChange?` | (event, attrs) => void | — | Fires on every edit (`input`), with the native event + an `attrs` snapshot (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on `change` (blur) and on clear. |
+| `readOnly?` | boolean | — | Keep the time selectable and focusable while preventing edits. |
 | `required?` | boolean | — | Mark the field required (drives native validity). |
 | `round?` | boolean \| number \| string | — | Fully-round the field, or a custom radius (`number` px / CSS length). |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px tall. |
@@ -103,7 +124,25 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-Slots supply the field label and leading icon.
+Slots supply the label, leading content, clear action, trailing content, and hint.
+The owned native inputs remain inside the shadow root. The `segments` part groups
+them; `hour`, `minute`, and `period` keep their meanings in every locale.
+
+JSX groups slot content in CSS-only `a-input-time-label`, `a-input-time-leading`,
+`a-input-time-clear`, `a-input-time-trailing`, and `a-input-time-hint` tags. These
+replace the wrapper's spans. Update span-based consumer selectors to the grouping
+tags or slot attributes. Raw HTML can keep its existing slot markup.
+
+Defaults load from external CSS, including under `style-src-attr 'none'`.
+Custom `tone`, numeric `round`, and application `style` props can still serialize
+inline styles that a policy blocks. Before browser SSR hydration, configure
+`hydratingEvents: true` as described in [Browser hydration](../install-config.md#browser-hydration).
+Client-only and worker renderers forward events immediately by default.
+
+The canonical value remains `HH:mm`, or an empty string for an incomplete time.
+`input` bubbles and is composed; `change` bubbles on commit. A clear action first
+fires cancelable, bubbling `clearclick`, then `input`, `change`, and `clearinput`
+when accepted. Cancel `clearclick` synchronously to retain the value.
 
 ```html
 <a-input-time name="start-time" defaultvalue="09:30">
@@ -129,7 +168,7 @@ field treatments.
 
 `InputTime` renders an `<a-input-time>` whose field chrome mirrors `<a-input>`.
 Route feedback color through `status`; everything else is reachable as plain CSS on
-the host or through `::part()`. `segment` targets every editable input. `hour`,
+the host or through `::part()`. Unlayered consumer rules override Anta's layered defaults. `segment` targets every editable input. `hour`,
 `minute`, and `period` target one segment type regardless of locale order. `literal`
 targets the localized separator. The element also exposes `field`, `segments`,
 `leading`, `label`, `hint`, `clear`, and `trailing`. Don't override the internal
@@ -143,6 +182,8 @@ targets the localized separator. The element also exposes `field`, `segments`,
 .my-time::part(period) { color: var(--text-3); }
 .my-time::part(literal) { color: var(--text-4); }
 ```
+
+The example classes are consumer selectors; replace them with your own.
 
 Drop the clock icon with the `icon={false}` prop, and point the `segments` part at
 a monospaced family for fixed-width digits — a small `padding-top` re-centers the

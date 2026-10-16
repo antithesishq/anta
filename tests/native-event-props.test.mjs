@@ -10,6 +10,7 @@ before(async () => {
     stdin: {
       contents: `export * from './src/jsx-runtime';
         export { Input } from './src/components/Input';
+        export { InputTime } from './src/components/InputTime';
         export { Banner } from './src/components/Banner';
         export { Expander } from './src/components/Expander';
         export { Text } from './src/components/Text';`,
@@ -234,3 +235,19 @@ test(`Preact without React aliases supports hydratingEvents=${hydratingEvents}`,
   assert.deepEqual(errors, [])
 })
 }
+
+for (const hydratingEvents of [false, true]) test(`InputTime worker and browser projection uses shared hydratingEvents=${hydratingEvents}`, () => {
+  let calls = 0
+  runtime.configure(h, undefined, {
+    useState: initial => { calls++; return [initial, () => {}] }, useLayoutEffect: () => {},
+  }, { hydratingEvents })
+  const props = { onValueChange: () => {}, onClearClick: () => {} }
+  assert.equal(typeof runtime.InputTime(props).props.oninput, 'function')
+  assert.equal(calls, 0, 'Server/worker forwarding never needs hooks')
+  globalThis.window = {}
+  try {
+    const field = runtime.InputTime(props)
+    assert.equal(typeof field.props.onclearclick, hydratingEvents ? 'undefined' : 'function')
+    assert.equal(calls, hydratingEvents ? 1 : 0)
+  } finally { delete globalThis.window }
+})

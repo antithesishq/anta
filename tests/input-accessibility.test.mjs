@@ -625,7 +625,7 @@ test('InputTime names its group and exposes required and invalid on every segmen
     const segments = [...host.shadowRoot.querySelectorAll('input')]
     return {
       hostInvalid: host.hasAttribute('aria-invalid'),
-      label: group.getAttribute('aria-label'),
+      label: group.ariaLabelledByElements?.map(el => el.textContent).join(' '),
       required: segments.map(segment => segment.getAttribute('aria-required')),
       invalid: segments.map(segment => segment.getAttribute('aria-invalid')),
     }

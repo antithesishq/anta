@@ -92,7 +92,9 @@
     "test:input:package": "node tests/input-package.mjs",
     "test:tooltip": "node --test tests/tooltip-csp.mjs",
     "test:tooltip:package": "node tests/tooltip-package.mjs",
-    "test:text": "node --test tests/text-csp.mjs"
+    "test:text": "node --test tests/text-csp.mjs",
+    "test:input-time": "node --test tests/input-time-csp.mjs",
+    "test:input-time:package": "node tests/input-time-package.mjs"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

@@ -1,3 +1,4 @@
+import { MODALITY, trackFocusModality, type InputDocument } from './input-focus-modality'
 import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from '../anta_helpers'
 import {
   applyShadowAria,
@@ -70,42 +71,6 @@ const FORWARDED = [
 ] as const
 // Presence-based among the forwarded set (toggled, not value-copied).
 const BOOL_FORWARDED = new Set(['readonly', 'required'])
-
-// Shared across independently compiled entries, with listeners owned by the
-// connected document and released after its last Input disconnects.
-const MODALITY = Symbol.for('anta.input-focus-modality')
-type Modality = { keyboard: boolean; readers: Set<() => void>; active?: () => void; key: () => void; pointer: () => void; refresh: () => void; frame?: number }
-type InputDocument = Document & { [MODALITY]?: Modality }
-function trackFocusModality(doc: InputDocument, reader: () => void) {
-  let state = doc[MODALITY]
-  if (!state) {
-    const readers = new Set<() => void>()
-    state = { keyboard: false, readers, key: () => {}, pointer: () => {}, refresh: () => {} }
-    const current = state
-    current.refresh = () => {
-      if (!current.active || current.frame !== undefined) return
-      current.frame = doc.defaultView?.requestAnimationFrame(() => {
-        current.frame = undefined
-        current.active?.()
-      })
-    }
-    current.key = () => { current.keyboard = true; current.refresh() }
-    current.pointer = () => { current.keyboard = false; current.refresh() }
-    doc[MODALITY] = current
-    doc.addEventListener('keydown', current.key, true)
-    doc.addEventListener('pointerdown', current.pointer, true)
-  }
-  state.readers.add(reader)
-  return () => {
-    state.readers.delete(reader)
-    if (state.active === reader) state.active = undefined
-    if (state.readers.size) return
-    if (state.frame !== undefined) doc.defaultView?.cancelAnimationFrame(state.frame)
-    doc.removeEventListener('keydown', state.key, true)
-    doc.removeEventListener('pointerdown', state.pointer, true)
-    delete doc[MODALITY]
-  }
-}
 
 // Internal trigger the clear button dispatches (via a-button's
 // `data-custom-event`) when activated by click/Enter/Space — fired with no
@@ -240,7 +205,7 @@ export class AInputElement extends HTMLElementBase {
     // what a controlled consumer reacts to; an uncontrolled field is just
     // emptied. One path serves both.
     this.addEventListener(CLEAR_TRIGGER, event => {
-      const owner = event.composedPath().find(node => (node as Element)?.localName === 'a-input')
+      const owner = event.composedPath().find(node => ['a-input', 'a-input-time'].includes((node as Element)?.localName))
       if (owner !== this || this.control?.disabled || this.hasAttribute('readonly')) return
       const proceed = this.dispatchEvent(
         new CustomEvent(CLEAR_CLICK_EVENT, { bubbles: true, cancelable: true }),

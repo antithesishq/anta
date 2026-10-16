@@ -1,3 +1,4 @@
+import { useNativeEventProps } from '../native-event-props'
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
@@ -61,6 +62,8 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
   name?: string
   /** Disable the field. */
   disabled?: boolean
+  /** Keep the time selectable and focusable while preventing edits. */
+  readOnly?: boolean
   /** Mark the field required (drives native validity). */
   required?: boolean
   /** Leading icon at the start of the field — the clock affordance. Pass another
@@ -81,6 +84,8 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
    *  (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on
    *  `change` (blur) and on clear. */
   onValueChange?: (event: any, attrs: InputTimeChangeAttrs) => void
+  /** Fires before clearing. Call `preventDefault()` synchronously to keep the value. */
+  onClearClick?: (e: CustomEvent) => void
   /** Fires after the built-in clear button has cleared the field. */
   onClearInput?: (e: CustomEvent) => void
   /** Fires when the field gains focus. */
@@ -90,14 +95,13 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
 }
 
 const presence = (on: boolean | undefined) => (on ? '' : undefined)
-const isStringish = (n: React.ReactNode) => typeof n === 'string' || typeof n === 'number'
 
 const attrsOf = (e: any): InputTimeChangeAttrs => {
   const el = e?.target ?? {}
   const value = el.value ?? ''
   return {
     value,
-    name: el.getAttribute?.('name') ?? undefined,
+    name: el.name || undefined,
     empty: !value,
     valid: el.validity ? el.validity.valid : undefined,
     validationMessage: el.validationMessage ?? '',
@@ -126,8 +130,8 @@ const STATUS_ICON: Record<string, IconShape> = {
  * (`value` + `onValueChange`) or uncontrolled (`defaultValue`), submitting under
  * `name`.
  *
- * Requires `@antadesign/anta/elements` (client-side only). Reads
- * `navigator.language` at render, so render client-side (not SSR-safe).
+ * Import element behavior in the browser. The wrapper supports server rendering;
+ * the owned segments resolve the locale when the element connects.
  *
  * @example
  * ```tsx
@@ -150,6 +154,7 @@ export const InputTime = ({
   max,
   name,
   disabled,
+  readOnly,
   required,
   icon,
   clearable,
@@ -157,12 +162,19 @@ export const InputTime = ({
   trailing,
   autoFocus,
   onValueChange,
+  onClearClick,
   onClearInput,
   children,
   className,
   style,
   ...rest
 }: InputTimeProps) => {
+  const eventProps = useNativeEventProps({
+    oninput: onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined,
+    onchange: onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined,
+    onclearclick: onClearClick ? (e: any) => onClearClick(nativeStateChange(e).event) : undefined,
+    onclearinput: onClearInput ? (e: any) => onClearInput(nativeStateChange(e).event) : undefined,
+  })
   const statusTone = status && status !== 'neutral' ? status : undefined
   const glyph = statusIcon === undefined ? (statusTone ? STATUS_ICON[statusTone] : undefined) : statusIcon
 
@@ -180,30 +192,22 @@ export const InputTime = ({
       tone={neutralToneAttr(tone)}
       name={name}
       disabled={presence(disabled)}
+      readonly={presence(readOnly)}
       required={presence(required)}
       dim-actions={presence(dimActions)}
       autofocus={autoFocus ? true : undefined}
       aria-invalid={status === 'critical' ? 'true' : undefined}
-      oninput={onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined}
-      onchange={onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined}
-      onclearinput={onClearInput ? (e: any) => onClearInput(nativeStateChange(e).event) : undefined}
+      {...eventProps}
       class={className}
       style={roundStyle(round, '--input-time-round', toneStyle(tone, '--input-time-tone-source', style))}
       {...rest}
     >
-      {label != null &&
-        (isStringish(label) ? (
-          <span slot="label">{label}</span>
-        ) : (
-          <span slot="label" style={{ display: 'contents' }}>
-            {label}
-          </span>
-        ))}
+      {label != null && <a-input-time-label slot="label">{label}</a-input-time-label>}
 
       {icon !== false && (
-        <span slot="leading" style={{ display: 'contents' }}>
+        <a-input-time-leading slot="leading">
           <Icon shape={icon ?? 'clock'} />
-        </span>
+        </a-input-time-leading>
       )}
 
       {clearable && (
@@ -212,7 +216,7 @@ export const InputTime = ({
         // element turns into clear(). CONTRACT: `data-custom-event` MUST match
         // CLEAR_TRIGGER in src/elements/a-input-time.ts (string duplicated, not
         // shared, to keep the wrapper/element decoupled).
-        <span slot="clear" style={{ display: 'contents' }}>
+        <a-input-time-clear slot="clear">
           <Button
             priority="tertiary"
             size={size}
@@ -221,19 +225,19 @@ export const InputTime = ({
             aria-label="Clear"
             data-custom-event="clearrequest"
           />
-        </span>
+        </a-input-time-clear>
       )}
       {trailing != null && (
-        <span slot="trailing" style={{ display: 'contents' }}>
+        <a-input-time-trailing slot="trailing">
           {trailing}
-        </span>
+        </a-input-time-trailing>
       )}
 
       {hint != null && (
-        <span slot="hint" style={{ display: 'contents' }}>
+        <a-input-time-hint slot="hint">
           {glyph && <Icon shape={glyph as IconShape} aria-hidden="true" />}
           <span>{hint}</span>
-        </span>
+        </a-input-time-hint>
       )}
 
       {children}

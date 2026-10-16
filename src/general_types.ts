@@ -886,6 +886,8 @@ export interface AInputTimeAttributes extends BaseAttributes {
   tone?: string
   /** Disabled state. Presence-based. */
   disabled?: boolean | ''
+  /** Prevent editing while retaining focus and selection. Presence-based. */
+  readonly?: boolean | ''
   /** Required — drives native validity. Presence-based. */
   required?: boolean | ''
   /** Dim the trailing adornments at rest (0.6); brighten on hover / focus. */
@@ -901,6 +903,8 @@ export interface AInputTimeAttributes extends BaseAttributes {
   oninput?: (e: any) => void
   /** Fires on commit (blur). */
   onchange?: (e: any) => void
+  /** Cancelable request before clearing. */
+  onclearclick?: (e: any) => void
   /** Fires after the built-in clear button empties the field (`clearinput`). */
   onclearinput?: (e: any) => void
   'aria-invalid'?: 'true' | 'false' | boolean

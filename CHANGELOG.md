@@ -69,6 +69,10 @@ changes are not listed.
 
 ### Changed
 
+- [InputTime default styles](/input-time/#styling) load from external CSS under
+  strict CSP. JSX slot groups use `a-input-time-*` tags; update selectors that
+  target their former spans. Existing slots, parts, and segmented editing remain.
+
 - Input, Banner, Expander, and expandable Text share native event listener setup.
   Worker renderers receive event subscriptions immediately; opting into browser
   hydration enables the shared listener update.
@@ -113,6 +117,10 @@ changes are not listed.
 
 
 ### Fixed
+
+- [InputTime](/input-time/) retains incomplete edits on reconnection and uses live
+  label and hint references. Read-only fields prevent edits, and clear actions
+  can be canceled with `onClearClick`.
 
 - [Input actions](/input/#leading-trailing-and-clear) fit Anta buttons to the
   field height while preserving their padding. Icon-only Buttons are square;

@@ -111,7 +111,7 @@ Copy #240 are already merged in that baseline.
   CSP. Active-option scrolling touches only the owned scroll body.
 - Menu keeps its 100ms entry, 140ms exit, and width transitions, including the
   existing reduced-motion policy. There are no named-keyframe lookups, duplicate
-  fallback effects, animation discovery, activation-time style probes, or JS
+  fallback effects, animation discovery, activation-time animation probes, or JS
   completion gates. Missing/delayed CSS, interrupted closing/reopening, and
   intermediate opacity are checked. Toast and Copy's minimum-Chrome keyframe
   findings informed this choice; Menu needs no new Web Animation.
@@ -132,13 +132,29 @@ Copy #240 are already merged in that baseline.
   viewport-edge flips, and vertical anchor following pass in both directions.
   Placement names and keyboard semantics are unchanged.
 
+Review follow-up:
+
+- Initial offscreen observation preserves programmatic and controlled opens.
+  Leaving the viewport still dismisses a menu whose trigger was listening.
+  Overlapping replacements release the previous trigger listeners, cancel its
+  observation work, and request a fresh initial entry for the new owner.
+- Hide tolerates ancestors without the optional hover-hold method and clears
+  a nonempty combobox cursor once. Empty descendants do not emit redundant null
+  notifications during stack replacement or disconnect. Row guards are shared
+  with MenuItem, and stack operations cache the document-owned stack locally.
+- Active rows respect the owned scrollport's computed padding, including
+  asymmetric lengths and percentages, without scrolling outer ancestors.
+- Structural region defaults use zero specificity. Normal part overrides in
+  `base` now lose to document-level `anta.components` defaults; the changelog and
+  Menu styling docs explain migration to unlayered CSS or a later layer.
+
 Verification:
 
-- All 117 source checks passed in Chrome `155.0.8059.84`, Firefox `155.0`, and
+- All 153 source checks passed in Chrome `155.0.8059.84`, Firefox `155.0`, and
   Playwright WebKit `26.6`, across granular and full-bundle imports. The isolated
-  installed-package suite passed all 111 checks in the same engines. It resolves
+  installed-package suite passed all 147 checks in the same engines. It resolves
   public npm exports without source aliases or workspace links.
-- All 39 installed-package checks passed in Chrome for Testing
+- All 51 installed-package checks passed in Chrome for Testing
   `135.0.7049.114`. One initial assertion sampled an unfinished transition after
   a fixed wall-clock delay under concurrent load; the harness now waits for the
   actual transition. No runtime animation workaround was added.
@@ -158,8 +174,8 @@ Verification:
   Another six comparison cases match the 42 paired exit-opacity/translation
   samples. Screenshots and metrics are in `tests/.test-output/menu`. Capture
   pages are separate from assertions collecting CSP violations.
-- All 96 batched fast checks across Menu, Input, Tooltip, Copy, and Calendar pass.
-  All 341 selected root regressions pass with serialized files, Chromium, and
+- All 108 batched fast checks across Menu, Input, Tooltip, Copy, and Calendar pass.
+  All 342 selected root regressions pass with serialized files, Chromium, and
   CI's existing search-debounce exclusion. Dedicated Menu source/package commands,
   shared tiers, CI change gates, and manual visual artifacts are registered.
 - Lint, Anta/sticker/Plot type checks, site CSS lint, documentation-author checks,
@@ -590,7 +606,7 @@ Verified October 14, 2026:
   85 selected checks. PR CI selects Tooltip core regressions; expanded browser,
   visual, and installed-package matrices stay in the slow tier.
 
-All 39 installed-package checks passed in Chrome for Testing `135.0.7049.114`.
+All 51 installed-package checks passed in Chrome for Testing `135.0.7049.114`.
 Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
 Current Playwright WebKit provides engine evidence, not a shipping Safari run.
 Safari 17.4 lacks `@starting-style`; display/overlay transition support also
@@ -646,7 +662,7 @@ Verified October 14, 2026 on `codex/input-external-css`:
   expects native number buttons in Chrome 135 and still checks keyboard stepping,
   value handling, and the remaining native control behavior. No shadow fallback
   is included, and this decision does not change the package's browser baseline.
-  All 39 installed-package checks pass with that explicit expectation, and both
+  All 51 installed-package checks pass with that explicit expectation, and both
   original/current native-control comparisons pass in Chrome 135.
 - Native-decoration comparisons confirm Firefox's number spinner was present in
   the original and remains present. Current Chrome and WebKit suppress it.

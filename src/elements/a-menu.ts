@@ -7,7 +7,7 @@ import {
   setMenuPresence,
   type PopupAriaReceiver,
 } from '../anta_helpers'
-import { AMenuItemElement, MENU_ITEM_SELECTOR, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
+import { AMenuItemElement, MENU_ITEM_SELECTOR, isMenuItemEl, isCustomMenuItem, ensureMenuItemKeyListener } from './a-menu-item'
 import { activeFocus, cycleFocus, focusParent, tabStops } from './focus'
 import { emitCopyRequest } from './copy-behavior'
 import './a-menu.css'
@@ -58,10 +58,6 @@ type StateChangeDetail = {
 
 function isElement(node: EventTarget | null): node is HTMLElement {
   return !!node && (node as Node).nodeType === 1
-}
-
-function isCustomMenuItem(node: EventTarget | null): node is AMenuItemElement {
-  return isElement(node) && node.localName === 'a-menu-item'
 }
 
 function pathCrossesTopLayerBeforeAnchor(e: Event, anchor: HTMLElement): boolean {
@@ -236,6 +232,16 @@ function createCoordination(doc: Document): MenuCoordination {
   let observer: IntersectionObserver | undefined
 
   function observe(menu: AMenuElement, anchor: HTMLElement) {
+    const previous = anchorToMenu.get(anchor)
+    if (previous && previous !== menu) {
+      previous.teardownListeners()
+      const frame = frames.get(anchor)
+      if (frame !== undefined) doc.defaultView?.cancelAnimationFrame(frame)
+      frames.delete(anchor)
+      // Re-observing an existing target is a no-op. Start a new observation so
+      // an overlapping replacement receives its own initial visibility entry.
+      observer?.unobserve(anchor)
+    }
     anchorToMenu.set(anchor, menu)
     const Observer = doc.defaultView?.IntersectionObserver
     if (!Observer) { menu.setupListeners(); return }
@@ -251,7 +257,7 @@ function createCoordination(doc: Document): MenuCoordination {
           frames.delete(entry.target)
           if (anchorToMenu.get(entry.target) !== menu || !menu.isConnected || menu.ownerDocument !== doc) return
           if (entry.isIntersecting) menu.setupListeners()
-          else {
+          else if (menu.listening) {
             menu.teardownListeners()
             if (menu.isOpen) menu.close()
           }
@@ -678,11 +684,17 @@ export class AMenuElement extends HTMLElementBase {
   private scrollItemIntoView(item: HTMLElement) {
     const c = this.scrollEl
     if (!c) return
-    const pad = 4
+    const style = this.view.getComputedStyle(c)
+    const padding = (value: string) => {
+      const amount = Number.parseFloat(value)
+      return Number.isFinite(amount) ? amount * (value.endsWith('%') ? c.clientHeight / 100 : 1) : 0
+    }
     const cr = c.getBoundingClientRect()
+    const top = cr.top + c.clientTop + padding(style.scrollPaddingTop)
+    const bottom = cr.top + c.clientTop + c.clientHeight - padding(style.scrollPaddingBottom)
     const ir = item.getBoundingClientRect()
-    if (ir.top < cr.top + pad) c.scrollTop -= cr.top + pad - ir.top
-    else if (ir.bottom > cr.bottom - pad) c.scrollTop += ir.bottom - cr.bottom + pad
+    if (ir.top < top) c.scrollTop -= top - ir.top
+    else if (ir.bottom > bottom) c.scrollTop += ir.bottom - bottom
   }
 
   /** Fade the scrolling body's content into the top / bottom edges — but only on the
@@ -944,6 +956,7 @@ export class AMenuElement extends HTMLElementBase {
    *  uncontrolled and not vetoed. */
   requestClose(originEvent?: Event) {
     if (!this._shown) return
+    const stack = this.#coordination.stack
     // Close any menus stacked ABOVE this one first — e.g. `Calendar`'s year/month
     // jump menu, which sits inside `InputDate`'s popover: toggling that popover
     // shut via its own anchor closes it but would otherwise leave the jump menu in
@@ -951,14 +964,14 @@ export class AMenuElement extends HTMLElementBase {
     // can never be reopened. Emit a notify-only `statechange('closed')` for each
     // (as `closeAll` / `show`'s trim do) so a controlled one resets, then hide +
     // pop them. No-op in the common case where this IS the top of the stack.
-    const idx = this.#coordination.stack.indexOf(this)
+    const idx = stack.indexOf(this)
     if (idx !== -1) {
-      for (let i = this.#coordination.stack.length - 1; i > idx; i--) {
-        const m = this.#coordination.stack[i]
+      for (let i = stack.length - 1; i > idx; i--) {
+        const m = stack[i]
         if (m.isOpen && !m._dismissNotified) m.emitChange('closed')
         m._doHide()
       }
-      this.#coordination.stack.length = idx + 1
+      stack.length = idx + 1
     }
     const ok = this.emitChange('closed', { originEvent })
     if (this.isControlled) {
@@ -971,24 +984,25 @@ export class AMenuElement extends HTMLElementBase {
   /** Apply OPEN to the DOM (no event) — used by uncontrolled intent and by the
    *  controlled `state` sync. */
   private show(coord?: [number, number], viaKeyboard = false, _originEvent?: Event) {
+    const stack = this.#coordination.stack
     if (this.isSubmenu) {
       // Collapse any deeper menus opened from sibling items.
       const parent = this.#ownerMenu
       if (parent) {
-        const pidx = this.#coordination.stack.indexOf(parent)
+        const pidx = stack.indexOf(parent)
         if (pidx !== -1) {
-          for (let i = this.#coordination.stack.length - 1; i > pidx; i--) {
-            const menu = this.#coordination.stack[i]
+          for (let i = stack.length - 1; i > pidx; i--) {
+            const menu = stack[i]
             // Replacing a submenu also displaces any controlled popup inside it.
             // Notify its owner before hiding it, as the other stack trims do.
             // Reopening this same submenu is not a dismissal of that submenu.
             if (menu !== this && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
             menu._doHide()
           }
-          this.#coordination.stack.length = pidx + 1
+          stack.length = pidx + 1
         }
       }
-    } else if (!this.#coordination.stack.includes(this)) {
+    } else if (!stack.includes(this)) {
       // A fresh root normally closes any other open menu system entirely. But if
       // this menu's trigger lives inside an already-open menu's content — a menu
       // opened from within another menu, e.g. `Calendar`'s year/month jump menu
@@ -1006,40 +1020,40 @@ export class AMenuElement extends HTMLElementBase {
       // (the root also `contains()` the anchor), which would trim away the flyout.
       let container: AMenuElement | undefined
       if (anchor)
-        for (let i = this.#coordination.stack.length - 1; i >= 0; i--) {
-          if (this.#coordination.stack[i] !== this && this.#coordination.stack[i].contains(anchor)) {
-            container = this.#coordination.stack[i]
+        for (let i = stack.length - 1; i >= 0; i--) {
+          if (stack[i] !== this && stack[i].contains(anchor)) {
+            container = stack[i]
             break
           }
         }
       if (container) {
-        const idx = this.#coordination.stack.indexOf(container)
+        const idx = stack.indexOf(container)
         // Trim everything stacked above the container. Emit a notify-only
         // `statechange('closed')` for each (as closeAll does), so a controlled
         // menu among them isn't left `open` in consumer state with no surface.
-        for (let i = this.#coordination.stack.length - 1; i > idx; i--) {
-          const m = this.#coordination.stack[i]
+        for (let i = stack.length - 1; i > idx; i--) {
+          const m = stack[i]
           if (m.isOpen && !m._dismissNotified) m.emitChange('closed')
           m._doHide()
         }
-        this.#coordination.stack.length = idx + 1
+        stack.length = idx + 1
       } else {
         this.#closeAll()
       }
     }
 
-    if (this.#coordination.stack.includes(this)) {
+    if (stack.includes(this)) {
       // Already open — just reposition (e.g. a context re-trigger).
       this.position(coord)
       return
     }
 
-    const wasEmpty = this.#coordination.stack.length === 0
+    const wasEmpty = stack.length === 0
     // Opening atop an already-open menu (a submenu over its parent, or a
     // sibling submenu) appears INSTANTLY — the enter-fade reads as a blink next
     // to the static menu already on screen. A fresh root menu still fades in.
     this._doShow(coord, !wasEmpty)
-    this.#coordination.stack.push(this)
+    stack.push(this)
     if (wasEmpty) {
       this.#coordination.bind(this.doc, this.view)
     }
@@ -1080,18 +1094,19 @@ export class AMenuElement extends HTMLElementBase {
   /** Apply CLOSE without notifying this menu's owner. Notify nested menus so
    *  their controlled state follows the closing parent. */
   private hide(notifyDescendants = true) {
-    const idx = this.#coordination.stack.indexOf(this)
+    const stack = this.#coordination.stack
+    const idx = stack.indexOf(this)
     if (idx === -1) {
       if (this._shown) this._doHide()
       return
     }
-    for (let i = this.#coordination.stack.length - 1; i >= idx; i--) {
-      const menu = this.#coordination.stack[i]
+    for (let i = stack.length - 1; i >= idx; i--) {
+      const menu = stack[i]
       if (notifyDescendants && i > idx && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
       menu._doHide()
     }
-    this.#coordination.stack.length = idx
-    if (this.#coordination.stack.length === 0) this.#coordination.unbind()
+    stack.length = idx
+    if (stack.length === 0) this.#coordination.unbind()
   }
 
   /** Shadow-only show: open the popover and position it. `instant` positions
@@ -1129,7 +1144,7 @@ export class AMenuElement extends HTMLElementBase {
     this.comboObserver?.disconnect()
     this.comboObserver = undefined
     this.#pendingComboActivate = null
-    this.setActive(null)
+    if (this.activeItem) this.setActive(null)
     this._flippedTop = null
     this._flippedSide = null
     clearTimeout(this.typeTimer)
@@ -1147,7 +1162,7 @@ export class AMenuElement extends HTMLElementBase {
         ancestor;
         ancestor = ancestor.parentElement?.closest('a-menu') as AMenuElement | null
       ) {
-        ancestor.holdHoverClose()
+        ancestor.holdHoverClose?.()
       }
     }
     this.#stopAnchorTracking()

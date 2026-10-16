@@ -15,9 +15,9 @@ declare global {
  * chevron) is slotted light DOM, styled entirely from `a-menu-item.css`.
  * The element carries almost no logic — the parent `<a-menu>` owns
  * click delegation, keyboard navigation, and the close contract. This
- * class exists so the menu can identify items via `instanceof` and so
- * Enter / Space on a focused item synthesizes a click (the single
- * activation path that flows through the menu's click delegation).
+ * class owns the active cursor state and ensures Enter / Space on a focused
+ * item synthesizes a click (the single activation path through the menu's
+ * click delegation).
  *
  * ARIA (`role="menuitem"`, `tabindex`, `aria-haspopup` on submenu parents) is
  * added by the `MenuItem` JSX wrapper, never here — the element must stay
@@ -92,6 +92,11 @@ export class AMenuItemElement extends HTMLElementBase {
  *  (`<a data-anta-menu-item href>`) that `MenuItem` renders when given an `href`.
  *  Used for hit-testing (Enter/Space activation, arrow nav, close-on-select). */
 export const MENU_ITEM_SELECTOR = 'a-menu-item, a[data-anta-menu-item]'
+
+/** True for a custom menu row across independently compiled builds and realms. */
+export function isCustomMenuItem(el: EventTarget | null | undefined): el is AMenuItemElement {
+  return isMenuItemEl(el) && el.localName === 'a-menu-item'
+}
 
 /** True for either menu-item shape (see `MENU_ITEM_SELECTOR`). Narrows an
  *  `EventTarget` / focused node to the row element. */

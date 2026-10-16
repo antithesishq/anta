@@ -71,7 +71,9 @@ changes are not listed.
 
 - [Menu](/menu/#styling) default styles load from external CSS under strict CSP.
   Existing popover structure, slots, parts, and interactions remain supported;
-  header and footer slots now expose styling parts.
+  header and footer slots now expose styling parts. Move normal part overrides
+  from the `base` layer to unlayered CSS or a later layer such as `components`;
+  Menu defaults now participate in the document's `anta.components` layer.
 
 - [Copy feedback](/button/#copy-feedback) loads its default styles from external
   CSS under strict CSP while preserving existing copy inputs and compositions.

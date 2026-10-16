@@ -87,8 +87,8 @@
     flex: none;
   }
 
-  a-menu > :is(a-menu-header, a-select-header)[slot="header"],
-  a-menu > :is(a-menu-footer, a-select-footer)[slot="footer"] {
+  :where(a-menu > :is(a-menu-header, a-select-header)[slot="header"]),
+  :where(a-menu > :is(a-menu-footer, a-select-footer)[slot="footer"]) {
     display: block;
     padding: var(--menu-padding, 4px);
   }

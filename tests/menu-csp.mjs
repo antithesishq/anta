@@ -65,6 +65,19 @@ before(async()=>{
     Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>copied.push(value)}});
     window.framesPending=new Set();const raf=requestAnimationFrame.bind(window),caf=cancelAnimationFrame.bind(window);
     window.requestAnimationFrame=fn=>{const id=raf(t=>{framesPending.delete(id);fn(t)});framesPending.add(id);return id};window.cancelAnimationFrame=id=>{framesPending.delete(id);caf(id)};`)
+  assets.set('/review.css',`
+    @layer base { .layer-base::part(menu) { background: rgb(1, 2, 3); } }
+    @layer anta.components {
+      :where(.layer-same) > :is(a-menu-header, a-menu-footer) { padding: 13px; }
+    }
+    @layer anta.theme { .layer-theme::part(menu) { background: rgb(4, 5, 6); } }
+    @layer components { .layer-components::part(menu) { background: rgb(7, 8, 9); } }
+    @layer utilities { .layer-utilities::part(menu) { background: rgb(10, 11, 12); } }
+    .layer-unlayered::part(menu) { background: rgb(13, 14, 15); }
+    .scroll-inset { --menu-padding: 8px; }
+    .scroll-padding::part(scroll) { scroll-padding-block: 12px 20px; }
+    .scroll-percent::part(scroll) { scroll-padding-block: 5% 10%; }
+  `)
   assets.set('/fixture.css',`body{margin:0;font:14px/20px system-ui}#mount{position:absolute;left:100px;top:150px}#trigger{width:160px}#outside{position:fixed;left:4px;top:4px}a-menu-item{min-height:28px}.clip{overflow:hidden;contain:paint;height:40px;width:200px}.override::part(menu){background:rgb(20,40,60);border-radius:12px;min-width:210px}.override::part(scroll){padding:8px}.override::part(header){color:rgb(60,80,100)}.tall{height:900px}iframe{width:600px;height:400px;border:0}dialog{margin:80px;padding:20px}.outside-tooltip{position:fixed;left:500px;top:80px}`)
   if(!consumer&&process.env.ANTA_MENU_COMPARE_ORIGINAL==='1'){
     const original=new Map(['a-menu.ts','a-menu.css'].map(name=>[name,execFileSync('git',['show',`aeea7c08:src/elements/${name}`],{encoding:'utf8'})]))
@@ -111,6 +124,74 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     assert.equal((await metrics(page)).display,'none');assert.deepEqual(await page.evaluate(()=>reports),['open','select','closed']);assert.equal(await page.locator('#mount').innerHTML(),before);assert.deepEqual(await page.evaluate(()=>mutations),[])
     await page.locator('#trigger').click();await shown(page);await page.keyboard.press('Escape');await shown(page,false);assert.equal(await page.evaluate(()=>document.activeElement.id),'trigger')
     await page.locator('#trigger').click();await shown(page);await page.locator('#outside').click();await shown(page,false)
+  })
+  test.fast(`${name}: preserve initially offscreen open requests`,async t=>{
+    for(const controlled of [false,true]){
+      const page=await pageFor(t,engine,mode);await register(page,mode)
+      await page.evaluate(()=>{const Observer=IntersectionObserver;window.intersections=0;window.IntersectionObserver=class extends Observer{constructor(callback,options){super((entries,observer)=>{window.intersections+=entries.length;callback(entries,observer)},options)}};document.querySelector('#mount').style.top='1500px'})
+      await mount(page,raw(controlled?'state="open"':''));await page.locator('#menu').evaluate((el,controlled)=>{el.addEventListener('statechange',e=>reports.push(e.detail.next));if(!controlled)el.open()},controlled)
+      await page.waitForFunction(()=>intersections>0);await settled(page)
+      assert.equal(await page.locator('#menu').evaluate(el=>el.isOpen),true)
+      assert.deepEqual(await page.evaluate(()=>reports),controlled?[]:['open'])
+      assert.equal(await page.locator('#menu').evaluate(el=>el.listening),false)
+      await page.locator('#mount').evaluate(el=>el.style.top='150px');await page.waitForFunction(()=>menu.listening)
+      await page.locator('#mount').evaluate(el=>el.style.top='1500px');await page.waitForFunction(()=>reports.at(-1)==='closed')
+    }
+  })
+  test.fast(`${name}: transfer overlapping trigger ownership`,async t=>{
+    const page=await pageFor(t,engine,mode);await mount(page,raw());await register(page,mode)
+    await page.locator('#menu').evaluate(el=>{const replacement=el.cloneNode(true);replacement.id='replacement';el.before(replacement)})
+    await page.waitForFunction(()=>document.querySelector('#replacement').listening)
+    assert.equal(await page.locator('#menu').evaluate(el=>el.listening),false)
+    await page.locator('#trigger').click();await shown(page,true,'#replacement');await shown(page,false)
+    await page.locator('#menu').evaluate(el=>el.remove());await page.locator('#replacement').evaluate(el=>el.close());await page.locator('#trigger').click();await shown(page,true,'#replacement')
+    // Replace twice before the new observation's pending work can run.
+    await page.locator('#replacement').evaluate(el=>{el.close();const next=el.cloneNode(true);next.id='next';el.before(next);const last=next.cloneNode(true);last.id='last';next.before(last);el.remove();next.remove()})
+    await page.waitForFunction(()=>document.querySelector('#last').listening);await page.locator('#trigger').click();await shown(page,true,'#last')
+  })
+  test.fast(`${name}: hide safely without optional ancestor capabilities`,async t=>{
+    const page=await pageFor(t,engine,mode);await mount(page,raw('',`<a-menu-item id="parent" submenu tabindex="0">More<a-menu id="child">${row('leaf','Leaf')}</a-menu></a-menu-item>`));await register(page,mode)
+    await page.locator('#menu').evaluate(el=>{el.open();el.holdHoverClose=undefined;document.querySelector('#child').open()});await settled(page)
+    await page.locator('#leaf').hover();await page.locator('#child').evaluate(el=>el.close());await shown(page,false,'#child')
+    assert.equal(await page.locator('#child').evaluate(el=>el.surface.matches(':popover-open')),false)
+  })
+  test.fast(`${name}: notify only when hiding a nonempty active cursor`,async t=>{
+    const page=await pageFor(t,engine,mode);await mount(page,raw('',`<a-menu-item id="parent" submenu tabindex="0">More<a-menu id="child">${row('leaf','Leaf')}</a-menu></a-menu-item>`));await register(page,mode)
+    await page.evaluate(()=>{for(const el of document.querySelectorAll('a-menu'))el.addEventListener('activedescendant',e=>reports.push([el.id,e.detail.id]));menu.open();child.open();menu.close()})
+    assert.deepEqual(await page.evaluate(()=>reports),[])
+    await mount(page,raw('',`<a-menu-header slot="header"><a-input id="search" data-menu-search></a-input></a-menu-header>${row('alpha','Alpha')}`));await page.waitForFunction(()=>menu.listening)
+    await page.locator('#menu').evaluate(el=>el.open());await page.keyboard.press('ArrowDown')
+    await page.evaluate(()=>{window.reports=[];window.ownedSearch=document.querySelector('#search');menu.addEventListener('activedescendant',e=>reports.push(e.detail.id));menu.close();menu.remove()})
+    assert.deepEqual(await page.evaluate(()=>reports),[null])
+    assert.equal(await page.evaluate(()=>ownedSearch.shadowRoot.querySelector('input').ariaActiveDescendantElement),null)
+    await mount(page,raw('',`<a-menu-item id="parent" submenu tabindex="0">More<a-menu id="child"><a-menu-header slot="header"><a-input id="search" data-menu-search></a-input></a-menu-header>${row('leaf','Leaf')}</a-menu></a-menu-item>`)+`<button>Other</button><a-menu id="other">${row('otherItem')}</a-menu>`);await page.waitForFunction(()=>menu.listening)
+    await page.evaluate(()=>{menu.open();child.open()});await page.keyboard.press('ArrowDown')
+    await page.evaluate(()=>{window.reports=[];window.ownedSearch=document.querySelector('#search');child.addEventListener('activedescendant',e=>reports.push(e.detail.id));other.open();menu.remove()})
+    assert.deepEqual(await page.evaluate(()=>reports),[null])
+    assert.equal(await page.evaluate(()=>ownedSearch.shadowRoot.querySelector('input').ariaActiveDescendantElement),null)
+  })
+  test.fast(`${name}: retain low-specificity regions and document layer precedence`,async t=>{
+    const page=await pageFor(t,engine,mode);await mount(page,raw('class="layer-same"','<a-menu-header id="header" slot="header">Header</a-menu-header>'+row('alpha')+'<a-menu-footer id="footer" slot="footer">Footer</a-menu-footer>'));await register(page,mode)
+    await page.evaluate(()=>new Promise(r=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/review.css';link.onload=r;document.head.append(link)}));await page.locator('#menu').evaluate(el=>el.open());await settled(page)
+    assert.equal(await page.locator('#header').evaluate(el=>getComputedStyle(el).padding),'13px');assert.equal(await page.locator('#footer').evaluate(el=>getComputedStyle(el).padding),'13px')
+    for(const [layer,color] of [['base',null],['theme','rgb(4, 5, 6)'],['components','rgb(7, 8, 9)'],['utilities','rgb(10, 11, 12)'],['unlayered','rgb(13, 14, 15)']]){
+      await page.locator('#menu').evaluate((el,layer)=>el.className=`layer-${layer}`,layer)
+      const actual=(await metrics(page)).background
+      if(color)assert.equal(actual,color);else assert.notEqual(actual,'rgb(1, 2, 3)')
+    }
+  })
+  test.fast(`${name}: keep active rows within owned scroll padding`,async t=>{
+    const page=await pageFor(t,engine,mode);await mount(page,raw('class="scroll-padding"',`<a-menu-header slot="header"><input id="search" data-menu-search></a-menu-header>${Array.from({length:40},(_,i)=>row(`item${i}`)).join('')}`));await register(page,mode)
+    await page.evaluate(()=>new Promise(r=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/review.css';link.onload=r;document.head.append(link)}));await page.locator('#menu').evaluate(el=>el.open());await settled(page)
+    for(const variant of ['scroll-inset','scroll-padding','scroll-percent']){
+      await page.locator('#menu').evaluate((el,variant)=>{el.close();el.className=variant;el.open()},variant);await settled(page)
+      await page.locator('#search').focus();for(let i=0;i<20;i++)await page.keyboard.press('ArrowDown')
+      const bottom=await page.locator('#menu').evaluate(el=>{const c=el.scrollEl,r=c.getBoundingClientRect(),item=el.querySelector('a-menu-item:state(active)').getBoundingClientRect();return {gap:r.top+c.clientTop+c.clientHeight-item.bottom,height:c.clientHeight,outer:window.scrollY}})
+      assert.ok(bottom.gap>=(variant==='scroll-inset'?8:variant==='scroll-padding'?20:bottom.height*.1)-1,JSON.stringify(bottom));assert.equal(bottom.outer,0)
+      for(let i=0;i<10;i++)await page.keyboard.press('ArrowUp')
+      const top=await page.locator('#menu').evaluate(el=>{const c=el.scrollEl,r=c.getBoundingClientRect(),item=el.querySelector('a-menu-item:state(active)').getBoundingClientRect();return {gap:item.top-r.top-c.clientTop,height:c.clientHeight,outer:window.scrollY}})
+      assert.ok(top.gap>=(variant==='scroll-inset'?8:variant==='scroll-padding'?12:top.height*.05)-1,JSON.stringify(top));assert.equal(top.outer,0)
+    }
   })
   test.fast(`${name}: controlled updates and cancelable requests never apply optimistically`,async t=>{
     const page=await pageFor(t,engine,mode);await mount(page,raw('state="closed"'));await register(page,mode)

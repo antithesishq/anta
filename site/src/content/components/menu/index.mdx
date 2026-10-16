@@ -820,6 +820,14 @@ chrome (background, frost, border, radius, shadow, padding, min-width) with
 height follow the trigger and viewport; overrides of positioning, visibility,
 transforms, or transitions can change those behaviors.
 
+Menu defaults use the document's `anta.components` cascade layer. Use unlayered
+consumer rules or the later `anta.theme`, `components`, or `utilities` layers for
+overrides. When migrating from shadow-injected defaults, move normal `::part(...)`
+overrides out of the earlier `base` layer: Anta's document-level defaults take
+precedence over that layer. Header and footer tag rules can override the region
+padding within `anta.components` because the default region selectors have zero
+specificity.
+
 Menu items are light DOM, so style them (and their
 `a-icon` / `kbd` / `a-menu-item-label` children) directly. Match **both** item
 shapes — the `a-menu-item` custom element and the `a[data-anta-menu-item]` link —

@@ -126,6 +126,10 @@ changes are not listed.
   label and hint references. Read-only fields prevent edits, and clear actions
   can be canceled with `onClearClick`.
 
+- [InputTime commits](/input-time/#web-component) finish when the field is removed
+  during blur. Read-only focus visits emit `change` only for a pending edit, and
+  disabling a parent fieldset clears the keyboard focus state.
+
 - [Input actions](/input/#leading-trailing-and-clear) fit Anta buttons to the
   field height while preserving their padding. Icon-only Buttons are square;
   text buttons keep their natural width. Native Anta buttons marked with

@@ -443,6 +443,29 @@ Review follow-up for PR #238:
   documentation author check. Only the affected changelog package docs were
   regenerated for this follow-up.
 
+Second review follow-up for PR #238:
+
+- Deferred blur still clamps an editable value, updates form submission, and
+  dispatches `change` if the host is removed before the microtask runs. Focus
+  cleanup checks connection and effective disabled state independently of the
+  commit. Fieldset disablement explicitly refreshes keyboard-focus state and
+  clears the active readonly focus reader.
+- A readonly field commits an edit made before readonly was enabled once;
+  unchanged readonly focus visits are silent. Incomplete segment text remains
+  intact. Mouse presses no longer synchronize focus before it moves, and the
+  unused `pointercancel` listener is removed.
+- Regressions for removed blur, fieldset focus cleanup, repeated readonly blur,
+  and untouched readonly fields fail against `b93dd6b9` and pass after the fix.
+  They run in the dedicated fast tier and expanded browser/package matrices.
+- Source and isolated installed-package matrices each pass 158 checks in
+  Chromium `153.0.8010.12`, Firefox `155.0`, and WebKit `26.6`; the installed
+  Chrome `135.0.7049.114` matrix passes all 54 checks. The Node `24.15.0` site
+  build and all 14 production checks pass, along with lint, type checks, site
+  stylesheet lint, and the documentation author check. Only InputTime and
+  changelog package docs were regenerated. Shared Input and root regressions
+  retain the preceding follow-up's results; they were not rerun for these
+  InputTime-only fixes. Exact-version and manual coverage gaps below remain.
+
 Exact Edge `135`, Firefox `136`, Safari/iOS Safari `17.4`, and React `18` were not
 executed. Playwright WebKit is engine evidence, not a shipping Safari/iOS run.
 Touch gestures use browser automation; physical mobile keyboards were not

@@ -145,6 +145,7 @@ export class AInputTimeElement extends HTMLElementBase {
   // Pointer-focused inputs keep the browser's caret placement. Keyboard focus
   // selects the segment so a new value can be typed immediately.
   #pointerSegment?: HTMLInputElement
+  #editedSinceChange = false
 
   constructor() {
     super()
@@ -175,7 +176,6 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#trailingSlot.addEventListener('slotchange', this.#trailingActions.sync)
     this.#field.addEventListener('mousedown', this.#onFieldMouseDown)
     this.#field.addEventListener('mouseup', this.#resetPointerSegment)
-    this.#field.addEventListener('pointercancel', this.#resetPointerSegment)
     this.#segRow.addEventListener('input', this.#onInput)
     this.#segRow.addEventListener('keydown', this.#onKeyDown)
     this.#segRow.addEventListener('focusin', this.#onFocusIn)
@@ -440,7 +440,6 @@ export class AInputTimeElement extends HTMLElementBase {
   // native input targets keep the browser's caret placement.
   #onFieldMouseDown = (e: MouseEvent) => {
     if (e.button !== 0) return
-    this.#syncFocus()
     const seg = this.#segFromTarget(e.target)
     if (seg) {
       this.#pointerSegment = this.shadowRoot?.activeElement === seg.el ? undefined : seg.el
@@ -472,11 +471,14 @@ export class AInputTimeElement extends HTMLElementBase {
     // `focusout` fires for hops within the row too. Defer until focus settles,
     // then commit the group only when it has genuinely lost focus.
     queueMicrotask(() => {
-      if (!this.isConnected) return
       this.#syncFocus()
       const active = this.shadowRoot?.activeElement
-      if (this.#segs.some((seg) => seg.el === active)) return
-      if (!this.hasAttribute('readonly') && this.#clampIfComplete()) this.#commitEdit()
+      if (this.isConnected && this.#segs.some((seg) => seg.el === active)) return
+      const readonly = this.hasAttribute('readonly')
+      // Locking the field must retain partial digits and one pending edit, but
+      // subsequent readonly focus visits do not create new commits.
+      if (readonly && !this.#editedSinceChange) return
+      if (!readonly && this.#clampIfComplete()) this.#commitEdit()
       this.#dispatch('change')
     })
   }
@@ -539,6 +541,7 @@ export class AInputTimeElement extends HTMLElementBase {
   #onInput = (e: Event) => {
     const seg = this.#segFromTarget(e.target)
     if (!seg || this.#disabled || this.hasAttribute('readonly') || (e as InputEvent).isComposing) return
+    this.#editedSinceChange = true
     if (seg.kind === 'period') this.#onPeriodInput(e, seg)
     else this.#onNumericInput(seg)
   }
@@ -621,6 +624,7 @@ export class AInputTimeElement extends HTMLElementBase {
    *  from empty, ↑ lands on min and ↓ on max. Clamps the resulting complete value
    *  into the field's `min`/`max` range (so ↑ can't step past `max`). */
   #step(seg: Seg, delta: number) {
+    this.#editedSinceChange = true
     if (seg.kind === 'period') {
       // From empty, land on AM; otherwise toggle.
       this.#period = this.#period == null ? 'am' : this.#period === 'am' ? 'pm' : 'am'
@@ -747,6 +751,7 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #dispatch(type: 'input' | 'change') {
+    if (type === 'change') this.#editedSinceChange = false
     this.dispatchEvent(new Event(type, { bubbles: true, composed: type === 'input' }))
   }
 
@@ -774,7 +779,7 @@ export class AInputTimeElement extends HTMLElementBase {
 
   #syncFocus = () => {
     const modality = (this.doc as InputDocument)[MODALITY]
-    const focused = this.#segs.some(seg => seg.el === this.shadowRoot?.activeElement)
+    const focused = this.isConnected && !this.#disabled && this.#segs.some(seg => seg.el === this.shadowRoot?.activeElement)
     if (modality) {
       if (focused && this.hasAttribute('readonly')) modality.active = this.#syncFocus
       else if (modality.active === this.#syncFocus) modality.active = undefined
@@ -889,7 +894,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#commitEdit()
     this.#dispatch('change')
   }
-  formDisabledCallback(disabled: boolean) { this.#formDisabled = disabled; this.#syncDisabled() }
+  formDisabledCallback(disabled: boolean) { this.#formDisabled = disabled; this.#syncDisabled(); this.#syncFocus() }
   formStateRestoreCallback(state: string) { this.value = state ?? '' }
 }
 

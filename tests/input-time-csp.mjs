@@ -144,8 +144,45 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await page.locator('#after').focus();await frames(page)
     assert.equal(await value(page),'');assert.equal(await segment(page,'hour').inputValue(),'1')
     assert.equal(await segment(page,'minute').inputValue(),'');assert.deepEqual(await page.evaluate(()=>commits),[''])
+    await segment(page,'hour').focus();await page.locator('#after').focus();await frames(page)
+    assert.deepEqual(await page.evaluate(()=>commits),[''],'Readonly refocus does not repeat the pending edit commit')
     await host(page).evaluate(el=>el.removeAttribute('readonly'));await segment(page,'minute').fill('30')
     assert.equal(await value(page),'01:30')
+  })
+  test.fast(`${name}: review: untouched readonly fields do not emit change on blur`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<a-input-time locale="en-GB" readonly value="10:30"></a-input-time>')
+    await host(page).evaluate(el=>{window.commits=[];el.addEventListener('change',()=>commits.push(el.value))})
+    for(const kind of ['hour','minute']){await segment(page,kind).focus();await page.locator('#after').focus();await frames(page)}
+    assert.deepEqual(await page.evaluate(()=>commits),[])
+  })
+  test.fast(`${name}: review: removal during deferred blur still clamps and commits`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<form><a-input-time locale="en-GB" name="time" value="10:30" max="17:00"></a-input-time></form>')
+    await segment(page,'hour').fill('18')
+    await host(page).evaluate(el=>{
+      window.removedField=el;window.commits=[]
+      for(const type of ['input','change'])el.addEventListener(type,e=>commits.push([e.type,el.value]))
+      document.querySelector('#after').focus();el.remove()
+    });await frames(page)
+    assert.equal(await page.evaluate(()=>removedField.value),'17:00')
+    assert.deepEqual(await page.evaluate(()=>commits),[['input','17:00'],['change','17:00']])
+    await page.evaluate(()=>document.querySelector('form').append(removedField));await frames(page)
+    assert.deepEqual(await page.locator('form').evaluate(el=>[...new FormData(el)]),[['time','17:00']])
+  })
+  test.fast(`${name}: review: fieldset disabling clears keyboard focus even without a focusout callback`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<fieldset><a-input-time locale="en-GB" readonly value="10:30"></a-input-time></fieldset>')
+    await page.keyboard.press('Tab');await segment(page,'hour').focus();await frames(page)
+    assert.equal(await host(page).evaluate(el=>el.matches(':state(kb-focus)')),true)
+    const disabled=await host(page).evaluate(el=>{
+      const group=el.shadowRoot.querySelector('[part=segments]')
+      group.addEventListener('focusout',e=>e.stopImmediatePropagation(),true)
+      el.closest('fieldset').disabled=true
+      return {keyboard:el.matches(':state(kb-focus)'),active:!!document[Symbol.for('anta.input-focus-modality')]?.active,
+        segments:[...group.querySelectorAll('input')].every(input=>input.disabled)}
+    })
+    assert.deepEqual(disabled,{keyboard:false,active:false,segments:true})
   })
   test.fast(`${name}: review: neutral status preserves the authored custom tone`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)

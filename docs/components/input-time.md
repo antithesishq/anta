@@ -109,8 +109,8 @@ const [keep, setKeep] = useState(false)
 | `onClearClick?` | (e) => void | — | Fires before clearing. Call `preventDefault()` synchronously to keep the value. |
 | `onClearInput?` | (e) => void | — | Fires after the built-in clear button has cleared the field. |
 | `onFocus?` | (e) => void | — | Fires when the field gains focus. |
-| `onValueChange?` | (event, attrs) => void | — | Fires on every edit (`input`), with the native event + an `attrs` snapshot (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on `change` (blur) and on clear. |
-| `readOnly?` | boolean | — | Keep the time selectable and focusable while preventing edits. |
+| `onValueChange?` | (event, attrs) => void | — | Fires on every edit (`input`), with the native event + an `attrs` snapshot (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on `change` (blur) and on clear. Read-only blur is silent unless committing an edit made before the field became read-only. |
+| `readOnly?` | boolean | — | Keep the time selectable and focusable while preventing edits. Blur emits `change` only if an edit was pending when the field became read-only. |
 | `required?` | boolean | — | Mark the field required (drives native validity). |
 | `round?` | boolean \| number \| string | — | Fully-round the field, or a custom radius (`number` px / CSS length). |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px tall. |
@@ -143,6 +143,11 @@ The canonical value remains `HH:mm`, or an empty string for an incomplete time.
 `input` bubbles and is composed; `change` bubbles on commit. A clear action first
 fires cancelable, bubbling `clearclick`, then `input`, `change`, and `clearinput`
 when accepted. Cancel `clearclick` synchronously to retain the value.
+
+A read-only field emits `change` on blur only for an edit made before it became
+read-only. Partial digits remain visible, with an empty canonical value until
+editing resumes and completes the time. Removing the field while blur settles
+still completes a pending commit, including range clamping on an editable field.
 
 ```html
 <a-input-time name="start-time" defaultvalue="09:30">

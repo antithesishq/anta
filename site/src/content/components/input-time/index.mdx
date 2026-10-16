@@ -167,6 +167,11 @@ The canonical value remains `HH:mm`, or an empty string for an incomplete time.
 fires cancelable, bubbling `clearclick`, then `input`, `change`, and `clearinput`
 when accepted. Cancel `clearclick` synchronously to retain the value.
 
+A read-only field emits `change` on blur only for an edit made before it became
+read-only. Partial digits remain visible, with an empty canonical value until
+editing resumes and completes the time. Removing the field while blur settles
+still completes a pending commit, including range clamping on an editable field.
+
 <Preview>
   <a-input-time name="start-time" defaultvalue="09:30">
     <span slot="label">Start time</span>

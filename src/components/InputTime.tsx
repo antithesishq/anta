@@ -63,7 +63,8 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
   name?: string
   /** Disable the field. */
   disabled?: boolean
-  /** Keep the time selectable and focusable while preventing edits. */
+  /** Keep the time selectable and focusable while preventing edits. Blur emits
+   *  `change` only if an edit was pending when the field became read-only. */
   readOnly?: boolean
   /** Mark the field required (drives native validity). */
   required?: boolean
@@ -83,7 +84,8 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
   autoFocus?: boolean
   /** Fires on every edit (`input`), with the native event + an `attrs` snapshot
    *  (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on
-   *  `change` (blur) and on clear. */
+   *  `change` (blur) and on clear. Read-only blur is silent unless committing
+   *  an edit made before the field became read-only. */
   onValueChange?: (event: any, attrs: InputTimeChangeAttrs) => void
   /** Fires before clearing. Call `preventDefault()` synchronously to keep the value. */
   onClearClick?: (e: CustomEvent) => void

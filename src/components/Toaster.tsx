@@ -3,7 +3,7 @@ import { useMemo, useSyncExternalStore } from "../jsx-runtime"
 import { createToaster, type Toaster as ToasterStore, type ToastEntry } from "../toaster"
 import { Banner } from "./Banner"
 import { useNativeEventProps } from "../native-event-props"
-import { nativeStateChange } from "../anta_helpers"
+import { nativeStateChange, isDOMNode } from "../anta_helpers"
 
 export interface ToasterProps extends BaseProps {
   /** The store this region renders. Omit to bind the default store driven by
@@ -24,9 +24,7 @@ export interface ToasterProps extends BaseProps {
 const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- content is a function of id+rev only
   const content = useMemo(() => entry.render(entry.id), [entry.id, entry.rev])
-  // A supplied node can belong to another document's realm.
-  const isNode = content != null && typeof content === "object"
-    && typeof (content as Node).nodeType === "number" && typeof (content as Node).cloneNode === "function"
+  const isNode = isDOMNode(content)
   const isText = typeof content === "string" || typeof content === "number"
   const eventProps = useNativeEventProps({
     ondismiss: (event: CustomEvent) => {

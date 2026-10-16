@@ -2,6 +2,16 @@ import { jsx, useState, useMemo } from "./jsx-runtime"
 import type { IconShape } from "./elements/a-icon.shapes"
 import type { OptionPresentationProps } from "./general_types"
 
+/** @internal Check the native Node brand across realms without reading a document. */
+export function isDOMNode(value: unknown): value is Node {
+  if (typeof Node === 'undefined' || value == null || typeof value !== 'object') return false
+  try {
+    return Node.prototype.isSameNode.call(value, value as Node)
+  } catch {
+    return false
+  }
+}
+
 export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
 }

@@ -118,6 +118,10 @@ changes are not listed.
 
 ### Fixed
 
+- [Toaster's DOM-node content](/toaster/#web-component) clears to `null` when
+  its prop is removed. Refilled fragments can be assigned again to replace their
+  previous children.
+
 - [Input actions](/input/#leading-trailing-and-clear) fit Anta buttons to the
   field height while preserving their padding. Icon-only Buttons are square;
   text buttons keep their natural width. Native Anta buttons marked with

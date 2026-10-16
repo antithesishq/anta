@@ -93,20 +93,22 @@ Implemented on `codex/toaster-external-css`, October 15, 2026:
 
 - The existing hierarchy, six native slot names, top-layer region, and content
   location are retained. Each placement slot exposes `zone` and its placement
-  part; Toast exposes `content`. All default styles and keyframe values are in
+  part; Toast exposes `content`. All default styles and countdown endpoint values are in
   `a-toast.css` and `a-toaster.css`. No shadow stylesheet is injected or adopted.
 - Runtime countdown duration and animation controls stay on the owned slot.
-  Chrome 135 computes an external part animation name without resolving its
-  keyframes. A runtime animation reads CSS-supplied endpoints only when that
-  requested CSS animation is absent. Firefox needs literal endpoints in the
-  external keyframes; its variable-valued endpoints produced an animation that
-  left computed progress at `1`. Both failures were reproduced before fixing.
+  One Web Animation reads CSS endpoint values when created and is reused on
+  restart. There is no CSS countdown animation, global countdown keyframe name,
+  custom-state requirement, or missing-animation detection. The initial design
+  used external named keyframes with a Chrome 135 fallback. Review reproduced
+  duplicate effects after hidden insertion and a frozen countdown without
+  ElementInternals; the single-effect design replaces that fallback. Firefox
+  requires literal values read from CSS rather than var() keyframe values.
 - The DOM-node `content` property retains explicit insertion ownership in light
   DOM. Original nodes and attached behavior survive replacement and updates.
   Fragment children are tracked individually; authored siblings are untouched.
   Cross-realm nodes and dismiss controls use realm-independent checks.
 - Disconnect clears timers through their originating windows, cancels the owned
-  fallback animation, and releases hover/focus listeners and pause holds.
+  countdown animation, and releases hover/focus listeners and pause holds.
   Reconnection starts a fresh duration or finishes an interrupted exit. Dismiss
   requests and completion events are scoped to the owning toast.
 - JSX uses the shared runtime hooks and `useNativeEventProps`. Event forwarding
@@ -120,7 +122,7 @@ that Preact compatibility hooks read the live snapshot during SSR, while React
 uses the empty server snapshot. This existing difference is unchanged; docs
 instruct authors to keep server stores empty.
 
-Verified October 15, 2026:
+Initial verification, October 15, 2026:
 
 - All 132 source checks and 132 installed-package checks passed in Chrome
   `155.0.8059.84`, Firefox `155.0`, and Playwright WebKit `26.6`. React/React DOM
@@ -129,7 +131,8 @@ Verified October 15, 2026:
   consumer resolves public npm exports from an isolated tarball installation,
   without Anta source aliases or workspace links.
 - All 44 installed-package checks passed in Chrome for Testing
-  `135.0.7049.114`, including the runtime countdown fallback. Set
+  `135.0.7049.114`. This initial run included the previous countdown fallback;
+  review follow-up coverage is recorded below. Set
   `ANTA_TOASTER_CHROMIUM_EXECUTABLE` for an exact browser executable and
   `ANTA_TEST_WEBKIT=0` for the Chromium-only matrix.
 - Behavioral pages use real HTTP CSP response headers with same-origin scripts
@@ -163,6 +166,31 @@ motion using `@starting-style` remains progressive at older supported versions;
 this refactor introduces no newer baseline requirement. Application-supplied
 `style` props can still serialize CSP-blocked attributes. Independent builds'
 default managers and Preact's populated-store SSR behavior remain unchanged.
+
+Review follow-up:
+
+- Keep hover initialization event-driven, matching the original implementation.
+  Ordinary pointer-over pause remains intentional. Focus transfers use
+  `relatedTarget` directly; the reported trusted-Tab dismissal was not reproduced
+  in Chrome, and its exhausted-time regression passes.
+- Reassigning a refilled fragment replaces its previous inserted children.
+  The getter keeps returning the assigned fragment, including its normal emptied
+  state after insertion. Preact's empty-string prop removal normalizes to null.
+- A shared native Node brand check accepts foreign-realm nodes and rejects
+  look-alikes, including otherwise valid JSX objects with node-like fields.
+  The report's claimed append TypeError is not general: append can stringify an
+  ordinary object. Routing such JSX into the node-content path is still wrong.
+- Restart no longer queries computed styles or scans animations. Creating an
+  effect retains one CSS-value lookup; no broader performance work was added.
+- After these fixes, all 150 source checks passed in Chrome `155.0.8059.84`,
+  Firefox `155.0`, and Playwright WebKit `26.6`. All 50 installed-package checks
+  passed in Chrome for Testing `135.0.7049.114`. New cases cover hidden insertion,
+  absent ElementInternals, consumer keyframe collisions, restart without style
+  probes, trusted internal Tab transfer, and content ownership edge cases.
+  Anta lint/type checks, site CSS lint, documentation checks, the Node `24.15.0`
+  production build, and both Toaster production checks (Chrome/WebKit) passed.
+  The broader root/shared suites and original visual comparison above were not
+  repeated for this follow-up.
 
 ### Banner verification
 

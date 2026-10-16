@@ -48,15 +48,4 @@
     display: block;
   }
 
-  /* Resolve the keyframe name in the same scope as its external declaration.
-     JS supplies the owned slot's duration and controls the countdown animation. */
-  a-toast:state(counting)::part(content) {
-    animation: toast-remaining var(--_toast-countdown-duration, 0ms) linear forwards;
-  }
-
-  @keyframes toast-remaining {
-    /* Firefox does not resolve var() endpoints in this external part animation. */
-    from { --toast-remaining: 1; }
-    to { --toast-remaining: 0; }
-  }
 }

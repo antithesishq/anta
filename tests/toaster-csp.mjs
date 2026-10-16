@@ -82,7 +82,7 @@ before(async () => {
         const render=id=>kind==='text'?'Saved':kind==='banner'?e(Banner,{message:'Saved',round:true,dismissed:false,onDismiss:()=>manager.dismiss(id)}):
           kind==='card'?e(Card,{header:'Ready'},e('a',{href:'#details'},'Details'),e(Button,{label:'Dismiss','data-toast-dismiss':''})):
           kind==='interactive'?e(Card,{header:'Edit'},e(Input,{label:'Name',defaultValue:'Keep me'}),e(Button,{label:'Keep',onClick:()=>window.clicks++}),e(Button,{label:'Dismiss','data-toast-dismiss':''})):
-          kind==='node'?window.contentNode:kind==='nested'?e('a-toast',{id:'nested',duration:'Infinity'},e(Button,{label:'Nested dismiss','data-toast-dismiss':''})):e('strong',{},kind);
+          kind==='lookalike'?{...e('strong',{},'JSX lookalike'),nodeType:1,cloneNode(){}}:kind==='node'?window.contentNode:kind==='nested'?e('a-toast',{id:'nested',duration:'Infinity'},e(Button,{label:'Nested dismiss','data-toast-dismiss':''})):e('strong',{},kind);
         return manager.add(render,opts);
       };
       window.update=(id,kind)=>store.update(id,()=>kind==='node'?window.contentNode:e('strong',{},kind));
@@ -93,6 +93,7 @@ before(async () => {
       };`,resolveDir},outfile:`${framework}.js`,format:'esm',jsx:'automatic',jsxImportSource:'@antadesign/anta',define:{'process.env.NODE_ENV':'"production"'},
       alias:{...alias,...(react&&!consumerRoot?{'react-dom/client':requirePlot.resolve('react-dom/client')}:{})}}))
   }
+  assets.set('/consumer-countdown.css','@keyframes toast-remaining {from{--toast-remaining:0.4}to{--toast-remaining:0.4}}');
   assets.set('/boot.js',`window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push(e.effectiveDirective));`)
   assets.set('/fixture.css',`body{margin:0;font-family:system-ui}.later{inset:0;margin:0;padding:0;border:0;width:100vw;height:100vh;background:wheat}.surface{height:70px;padding:10px;background:lightblue}#under{position:fixed;left:50%;top:50%}.clipped{transform:translate(20px,20px);overflow:hidden;width:100px;height:100px}.override{--toaster-width:310px;--toaster-gap:19px;--toaster-inset:23px}.override::part(zone){border-radius:7px}.override-toast{--toast-dur:80ms}.motion-toast{--toast-dur:1s}.override-toast::part(content){padding:3px}.dark{color-scheme:dark;background:#111}.progress{height:3px;transform:scaleX(var(--toast-remaining));transform-origin:left;background:blue}`)
   server=createServer((req,res)=>{
@@ -139,6 +140,36 @@ for(const engine of engines) for(const mode of ['granular','bundle']){
     await page.locator('a-toast').evaluate(t=>t.dispatchEvent(new PointerEvent('pointerleave')));await page.waitForTimeout(120);assert.ok(await progress(page)<0.99)
     await page.locator('a-toast').evaluate(t=>{t.setAttribute('duration','Infinity');t.restart()});assert.equal(await progress(page),1)
     assert.equal(await page.locator('a-toast').evaluate(t=>t.shadowRoot.querySelector('slot').getAnimations().length),0)
+  })
+  test.fast(`${prefix}: one countdown survives hidden insertion, consumer keyframes, and repeated restarts`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.evaluate(()=>{document.querySelector('#mount').hidden=true;const css=document.createElement('link');css.rel='stylesheet';css.href='/consumer-countdown.css';document.head.append(css)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(s=>s.href?.endsWith('/consumer-countdown.css')))
+    await raw(page,{duration:'1800'});await page.waitForTimeout(100)
+    await page.locator('#mount').evaluate(m=>m.hidden=false);await page.waitForTimeout(60)
+    assert.equal(await page.locator('a-toast').evaluate(t=>t.shadowRoot.querySelector('slot').getAnimations().length),1)
+    const value=await progress(page);assert.ok(value>0.65&&value<1,`progress ${value}`)
+    const counts=await page.locator('a-toast').evaluate(t=>{
+      const slot=t.shadowRoot.querySelector('slot'),styles=window.getComputedStyle,animations=Element.prototype.getAnimations;let reads=0,scans=0
+      window.getComputedStyle=(el,...args)=>{if(el===slot)reads++;return styles.call(window,el,...args)}
+      Element.prototype.getAnimations=function(...args){if(this===slot)scans++;return animations.apply(this,args)}
+      try {t.restart();t.restart();t.restart();return {reads,scans}}
+      finally {window.getComputedStyle=styles;Element.prototype.getAnimations=animations}
+    });assert.deepEqual(counts,{reads:0,scans:0})
+  })
+  test.fast(`${prefix}: countdown remains independent of ElementInternals`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.evaluate(()=>{HTMLElement.prototype.attachInternals=undefined})
+    await raw(page,{duration:'1400',content:'<span>Countdown</span>'});await page.waitForTimeout(120)
+    assert.ok(await progress(page)<0.99);assert.equal(await page.locator('a-toast').evaluate(t=>t.shadowRoot.querySelector('slot').getAnimations().length),1)
+  })
+  test.fast(`${prefix}: trusted Tab keeps an exhausted timer paused between descendants`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await raw(page,{duration:'10000',content:'<button id="first">First</button><button id="second">Second</button>'})
+    await page.evaluate(()=>{const now=Date.now;Date.now=()=>now()+20000;try{document.querySelector('#first').focus()}finally{Date.now=now}})
+    await page.keyboard.press('Tab');assert.equal(await page.locator('#second').evaluate(el=>el===document.activeElement),true)
+    assert.equal(await page.locator('a-toast').evaluate(t=>t.matches(':state(leaving)')),false)
+    await page.locator('#after').focus();await page.waitForFunction(()=>!document.querySelector('a-toast'))
   })
   test.fast(`${prefix}: named slots retain placement, stacking, viewport width, and pointer pass-through`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
@@ -223,9 +254,9 @@ for(const engine of engines) for(const mode of ['granular','bundle']){
       const attributes=toast.outerHTML,node=document.createElement('button');let clicks=0;node.addEventListener('click',()=>clicks++);node.textContent='Widget';
       toast.content=node;node.click();const first=toast.lastChild===node;toast.content=node;const same=toast.lastChild===node;
       const fragment=document.createDocumentFragment(),one=document.createElement('span'),two=document.createElement('span');fragment.append(one,two);toast.content=fragment;
-      const fragmentIdentity=toast.contains(one)&&toast.contains(two);toast.content=null;
-      return {first,same,clicks,fragmentIdentity,removed:!toast.contains(one)&&!toast.contains(two)&&!toast.contains(node),unchanged:toast.outerHTML===attributes}
-    });assert.deepEqual(result,{first:true,same:true,clicks:1,fragmentIdentity:true,removed:true,unchanged:true})
+      const fragmentIdentity=toast.contains(one)&&toast.contains(two);const replacement=document.createElement('em');fragment.append(replacement);toast.content=fragment;const refilled=toast.contains(replacement)&&!toast.contains(one)&&!toast.contains(two);toast.content='';const cleared=toast.content===null&&!toast.contains(replacement);
+      return {first,same,clicks,fragmentIdentity,refilled,cleared,removed:!toast.contains(one)&&!toast.contains(two)&&!toast.contains(node),unchanged:toast.outerHTML===attributes}
+    });assert.deepEqual(result,{first:true,same:true,clicks:1,fragmentIdentity:true,refilled:true,cleared:true,removed:true,unchanged:true})
   })
   test(`${prefix}: nested toast dismissal does not remove or dismiss the outer toast`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await page.evaluate(()=>import('/React.js'));await page.evaluate(()=>mount());await page.waitForSelector('#toaster',{state:'attached'})
@@ -237,7 +268,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']){
     const page=await pageFor(t,engine,mode);await register(page,mode);await raw(page,{duration:'1200',attributes:'class="override-toast"'})
     await page.locator('#toaster').evaluate(t=>t.className='override')
     assert.equal(await page.locator('a-toast').evaluate(t=>t.getBoundingClientRect().width),310)
-    assert.equal(await page.locator('a-toast').evaluate(t=>getComputedStyle(t.shadowRoot.querySelector('slot')).animationDuration),'1.2s')
+    assert.equal(await page.locator('a-toast').evaluate(t=>t.shadowRoot.querySelector('slot').getAnimations()[0].effect.getTiming().duration),1200)
     assert.equal(await page.locator('a-toast').evaluate(t=>getComputedStyle(t).transitionDuration),'0s')
     await page.waitForTimeout(120);assert.ok(await progress(page)<0.99)
     const start=Date.now();await page.locator('a-toast a-button').click();await page.waitForFunction(()=>!document.querySelector('a-toast'));assert.ok(Date.now()-start<700)
@@ -279,10 +310,10 @@ for(const engine of engines) for(const mode of ['granular','bundle']){
       await page.evaluate(()=>{const frame=document.createElement('iframe');document.body.append(frame);const node=frame.contentDocument.createElement('button');node.textContent='Widget';node.addEventListener('click',()=>window.clicks++);window.contentNode=node;add('node',{id:'widget',duration:Infinity})})
       await page.waitForSelector('#toaster button');await page.locator('#toaster button').click();assert.equal(await page.evaluate(()=>clicks),1)
       assert.equal(await page.evaluate(()=>document.querySelector('#toaster a-toast').firstChild===contentNode),true)
-      await page.evaluate(()=>update('widget','Updated JSX'));await page.waitForSelector('#toaster strong');assert.equal(await page.locator('#toaster button').count(),0)
+      await page.evaluate(()=>update('widget','Updated JSX'));await page.waitForSelector('#toaster strong');assert.equal(await page.locator('#toaster button').count(),0);assert.equal(await page.locator('#toaster a-toast').evaluate(t=>t.content),null)
       await page.evaluate(()=>update('widget','node'));await page.waitForSelector('#toaster button');assert.equal(await page.evaluate(()=>document.querySelector('#toaster button')===contentNode),true)
       await page.locator('#toaster button').click();assert.equal(await page.evaluate(()=>clicks),2)
-      await page.evaluate(()=>store.clear());await page.waitForFunction(()=>!document.querySelector('#toaster a-toast'))
+      await page.evaluate(()=>store.clear());await page.waitForFunction(()=>!document.querySelector('#toaster a-toast'));await page.evaluate(()=>add('lookalike',{duration:Infinity}));await page.waitForSelector('#toaster strong');assert.equal(await page.locator('#toaster strong').textContent(),'JSX lookalike')
     })
     test(`${prefix} ${framework}: interactive Card content retains focus and values across store updates`,async t=>{
       const page=await pageFor(t,engine,mode);await register(page,mode);await page.evaluate(framework=>import(`/${framework}.js`),framework);await page.evaluate(()=>mount());await page.waitForSelector('#toaster',{state:'attached'})
@@ -321,7 +352,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']){
     assert.equal(await page.locator('a-toast a-toast span').evaluate(el=>Number(getComputedStyle(el).getPropertyValue('--toast-remaining'))),1)
     for(const duration of ['', '0','-5','junk']){
       await raw(page,{duration})
-      assert.equal(await page.locator('a-toast').evaluate(t=>getComputedStyle(t.shadowRoot.querySelector('slot')).animationDuration),'5s')
+      assert.equal(await page.locator('a-toast').evaluate(t=>t.shadowRoot.querySelector('slot').getAnimations()[0].effect.getTiming().duration),5000)
     }
   })
 

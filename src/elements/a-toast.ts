@@ -1,4 +1,4 @@
-import { HTMLElementBase, installDismissTrigger } from '../anta_helpers'
+import { HTMLElementBase, installDismissTrigger, isDOMNode } from '../anta_helpers'
 import './a-toast.css'
 
 /** Exit animation duration (ms). Fallback for the external `--toast-dur` token. */
@@ -47,7 +47,7 @@ export class AToastElement extends HTMLElementBase {
   #exitTimer?: ReturnType<typeof setTimeout>
   #timerView?: Window
   #exitView?: Window
-  #countdownFallback?: Animation
+  #countdown?: Animation
   /** Time left on the auto-dismiss timer (ms), tracked across pause/resume. */
   #remaining = 0
   /** When the current run started, for computing remaining on pause. */
@@ -87,7 +87,6 @@ export class AToastElement extends HTMLElementBase {
     this.addEventListener('pointerleave', this.#onPointerLeave)
     this.addEventListener('focusin', this.#onFocusIn)
     this.addEventListener('focusout', this.#onFocusOut)
-    this.#hovered = this.matches(':hover')
     this.#focused = this.matches(':focus-within')
     // A region remount can re-render an entry that's already leaving; honour it.
     if (this.#leaving || this.hasAttribute('leaving')) {
@@ -100,9 +99,8 @@ export class AToastElement extends HTMLElementBase {
   disconnectedCallback() {
     this.#clearTimer()
     this.#clearExitTimer()
-    this.#internals?.states?.delete('counting')
-    this.#countdownFallback?.cancel()
-    this.#countdownFallback = undefined
+    this.#countdown?.cancel()
+    this.#countdown = undefined
     this.#hovered = false
     this.#focused = false
     this.removeEventListener('pointerenter', this.#onPointerEnter)
@@ -141,7 +139,7 @@ export class AToastElement extends HTMLElementBase {
     return this.#content ?? null
   }
   set content(node: Node | null) {
-    this.#content = node ?? undefined
+    this.#content = isDOMNode(node) ? node : undefined
     this.#applyContent()
   }
 
@@ -153,7 +151,8 @@ export class AToastElement extends HTMLElementBase {
    *  arrives as reconciler-owned children, so `#content` is undefined and this
    *  only clears any node we had slotted. */
   #applyContent() {
-    if (this.#content === this.#appliedContent) return
+    if (this.#content === this.#appliedContent
+      && !(this.#content?.nodeType === 11 && this.#content.hasChildNodes())) return
     for (const node of this.#slotted) {
       if (node.parentNode === this) this.removeChild(node)
     }
@@ -192,50 +191,35 @@ export class AToastElement extends HTMLElementBase {
    *  static full bar where custom-property animation is unsupported. Sticky
    *  (`Infinity` duration) runs no countdown; the var stays at its initial 1. */
   #startCountdown() {
-    this.#countdownFallback?.cancel()
-    this.#countdownFallback = undefined
-    if (Number.isFinite(this.#duration)) {
-      this.#slot.style.setProperty('--_toast-countdown-duration', `${this.#duration}ms`)
-      this.#internals?.states?.add('counting')
-      // Chrome 135 can compute an external part animation name without resolving
-      // its keyframes. Keep the values in CSS and use an owned runtime effect
-      // only when the requested CSS animation did not materialize.
-      try {
+    if (!Number.isFinite(this.#duration)) {
+      this.#countdown?.cancel()
+      this.#countdown = undefined
+      return
+    }
+    try {
+      if (!this.#countdown) {
+        // A single owned effect works while hidden and without ElementInternals.
+        // Read literal CSS endpoints once: Firefox cannot animate var() endpoints.
         const styles = this.view.getComputedStyle(this.#slot)
-        if (styles.animationName.split(',').some(name => name.trim() === 'toast-remaining')
-          && !this.#slot.getAnimations?.().some(a => (a as CSSAnimation).animationName === 'toast-remaining')) {
-          this.#countdownFallback = this.#slot.animate?.({
-            '--toast-remaining': [
-              styles.getPropertyValue('--_toast-countdown-from').trim(),
-              styles.getPropertyValue('--_toast-countdown-to').trim(),
-            ],
-          }, { duration: this.#duration, fill: 'forwards' })
-        }
-      } catch {
-        /* Display-only: animation support must not prevent auto-dismissal. */
+        this.#countdown = this.#slot.animate?.({
+          '--toast-remaining': [
+            styles.getPropertyValue('--_toast-countdown-from').trim(),
+            styles.getPropertyValue('--_toast-countdown-to').trim(),
+          ],
+        }, { duration: this.#duration, fill: 'forwards' })
+      } else {
+        this.#countdown.effect?.updateTiming({ duration: this.#duration })
       }
-      // Restart from the beginning even when the animation string is unchanged
-      // (a same-duration `rev` restart wouldn't otherwise re-trigger it).
-      this.#eachCountdown((a) => {
-        a.currentTime = 0
-      })
-      // A restart while paused (hover / focus) or already leaving must not let the
-      // fresh, auto-playing animation run ahead of the stopped dismiss timer.
+      if (this.#countdown) this.#countdown.currentTime = 0
       if (this.#paused || this.#leaving) this.#pauseCountdown()
-    } else {
-      this.#internals?.states?.delete('counting')
-      this.#slot.style.removeProperty('--_toast-countdown-duration')
+    } catch {
+      /* Display-only: animation support must not prevent auto-dismissal. */
     }
   }
 
-  /** Run `fn` for the `--toast-remaining` animation on the slot, if present.
-   *  Guarded — `getAnimations` / animation control may be absent in a partial
-   *  runtime, and the countdown is non-essential (never let it break the toast). */
   #eachCountdown(fn: (a: Animation) => void) {
     try {
-      for (const a of this.#slot.getAnimations?.() ?? []) {
-        if (a === this.#countdownFallback || (a as CSSAnimation).animationName === 'toast-remaining') fn(a)
-      }
+      if (this.#countdown) fn(this.#countdown)
     } catch {
       /* display-only */
     }
@@ -305,13 +289,10 @@ export class AToastElement extends HTMLElementBase {
     this.#focused = true
     this.#pause()
   }
-  #onFocusOut = () => {
-    // Focus moving between descendants must retain the same pause hold.
-    queueMicrotask(() => {
-      if (!this.isConnected) return
-      this.#focused = this.matches(':focus-within')
-      this.#armIfActive()
-    })
+  #onFocusOut = (event: FocusEvent) => {
+    if (isDOMNode(event.relatedTarget) && this.contains(event.relatedTarget)) return
+    this.#focused = false
+    this.#armIfActive()
   }
 
   #reducedMotion(): boolean {

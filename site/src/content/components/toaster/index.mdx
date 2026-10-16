@@ -406,8 +406,10 @@ Setting the `content` property explicitly transfers insertion ownership of that
 node to Toast. It moves the original node into light DOM without cloning it, so
 listeners and widget state remain attached. Replacing or clearing `content`
 removes only nodes previously supplied through that property, including a
-fragment's inserted children. Do not supply a node still owned by another
-reconciler. Removing the toast does not restore the node's previous parent.
+fragment's inserted children. Refill and reassign a fragment to replace those
+children. The getter returns the assigned node; a fragment is normally empty
+after insertion. Clearing the property returns `null`. Do not supply a node
+still owned by another reconciler. Removing the toast does not restore the node's previous parent.
 
 `duration="Infinity"` is sticky. Missing, empty, zero, negative, and invalid
 values use 5000ms. Updating `rev` or calling `restart()` restarts the countdown;

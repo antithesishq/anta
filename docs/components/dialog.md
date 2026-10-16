@@ -1,14 +1,8 @@
 # Dialog
 
-A modal dialog: content that opens above a dimmed overlay and holds focus until
-it's dismissed. The `Dialog` wrapper renders an `<a-dialog>` whose shadow DOM
-wraps a native `<dialog>`, so the top layer (which escapes any `overflow` or
-stacking context on the page), the focus trap, focus return on close, the
-backdrop, and Esc all come from the platform.
-
-It has three optional zones: a `header`, the body (`children`), and a `footer`,
-plus a close button in the top-right corner. Set `position` to make it an edge
-drawer instead.
+Dialog opens content above a dimmed backdrop and keeps focus inside until it
+closes. It has optional header and footer regions, a scrollable body, and a close
+button. Set `position` to use an edge drawer.
 
 ## Zones
 
@@ -19,22 +13,21 @@ when there are no actions. The footer lays its content out in a right-aligned
 row.
 
 ```tsx
-const [open, setOpen] = useState(false)
-
-<Button onClick={() => setOpen(true)}>Open dialog</Button>
-<Dialog
-  open={open}
-  onStateChange={(_e, { next }) => setOpen(next)}
-  header={<Title level={4}>Enable telemetry?</Title>}
-  footer={
-    <>
-      <Button onClick={() => setOpen(false)}>Not now</Button>
-      <Button priority="primary" onClick={() => setOpen(false)}>Enable</Button>
-    </>
-  }
->
-  <Text>Anonymous usage data helps us find the bugs that matter.</Text>
-</Dialog>
+<a-button tabindex="0" data-dialog-open="zones">Open dialog</a-button>
+<a-dialog name="zones">
+  <Title slot="header" level={4}>Enable telemetry?</Title>
+  <Text>
+    Anonymous usage data helps us find the bugs that matter. You can change
+    this any time in settings.
+  </Text>
+  <a-dialog-footer slot="footer">
+    <Button data-dialog-close="zones">Not now</Button>
+    <Button priority="primary" data-dialog-close="zones">Enable</Button>
+  </a-dialog-footer>
+  <a-button tabindex="0" slot="close" priority="tertiary" size="large" aria-label="Close" data-dialog-close="zones">
+    <Icon shape="x" />
+  </a-button>
+</a-dialog>
 ```
 
 ## Position
@@ -172,10 +165,22 @@ state: the dialog reopens if `open` is still true. Drive closing through your
 state, setting `open` to `false` in `onStateChange`.
 
 ```tsx
-// controlled
 const [open, setOpen] = useState(false)
-<Button onClick={() => setOpen(true)}>Open</Button>
-<Dialog open={open} onStateChange={(_e, { next }) => setOpen(next)}>…</Dialog>
+
+<Button onClick={() => setOpen(true)}>Open dialog</Button>
+<Dialog
+  open={open}
+  onStateChange={(_e, { next }) => setOpen(next)}
+  header={<Title level={4}>Enable telemetry?</Title>}
+  footer={
+    <>
+      <Button onClick={() => setOpen(false)}>Not now</Button>
+      <Button priority="primary" onClick={() => setOpen(false)}>Enable</Button>
+    </>
+  }
+>
+  <Text>Anonymous usage data helps us find the bugs that matter.</Text>
+</Dialog>
 
 // uncontrolled, veto the close while there are unsaved changes
 <Dialog defaultOpen onStateChange={(e, { next }) => {
@@ -221,8 +226,20 @@ On close, focus returns to whatever opened the dialog, from the native `<dialog>
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-Slots hold the header, footer, and close control. Add `tabindex="0"` to every
-raw `<a-button>`.
+Slots hold the header, footer, and close control. JSX uses boxless
+`a-dialog-footer` and `a-dialog-close` groups. Raw authors can use those groups
+or assign controls directly to the slots. Existing slot markup remains supported.
+
+The element owns the shadow-native dialog and its runtime state. The native
+`<dialog>` supplies top-layer placement, backdrop, focus containment, focus
+restoration, and Escape handling. It escapes ancestor clipping and stacking
+contexts. The element leaves host attributes and authored children unchanged. Load the element stylesheet
+with the granular entry or load `bundle.css` with the full bundle. Default
+layout and transitions require no injected styles or fixed inline styles.
+Application-supplied `style` props and custom `round` amounts can still produce
+style attributes blocked by `style-src-attr 'none'`.
+
+Add `tabindex="0"` to every raw `<a-button>`.
 
 ```html
 <a-button role="button" tabindex="0" data-dialog-open="invite"><a-button-label>Invite teammates</a-button-label></a-button>
@@ -244,9 +261,14 @@ radius). For everything else, style the shadow **parts** in plain CSS.
 
 `<a-dialog>` exposes `::part(dialog)` (the surface), `::part(header)`,
 `::part(body)`, `::part(footer)`, `::part(close)`, and `::part(dialog)::backdrop`
-(the overlay). A `::part` rule wins over the element's internal styles with no
+(the overlay). Defaults live in external CSS. An unlayered consumer rule
+overrides them with no
 `!important`, so the surface, size, radius, shadow, overlay, and zone padding are
-all reachable.
+all reachable. Keep visibility and motion overrides scoped to
+`::part(dialog):modal`; setting `display` on the base part can reveal a closed
+dialog. The native dialog controls closing independently of CSS transitions.
+Entry and exit effects follow the browser's existing `@starting-style`, display,
+and overlay-transition support; reduced motion disables Anta's transitions.
 
 **Scope the rule to a position (or a class).** A bare `a-dialog::part(dialog)`
 hits every dialog, drawers included, where a `width` override would collapse a

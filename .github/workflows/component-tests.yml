@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, copy, expander, input, input-time, progress, text, toaster, tooltip]
+        options: [all, banner, calendar, card, copy, dialog, expander, input, input-time, progress, text, toaster, tooltip]
 permissions:
   contents: read
 jobs:
@@ -75,5 +75,13 @@ jobs:
         with:
           name: copy-visual
           path: tests/.test-output/copy
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Dialog visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dialog-visual
+          path: tests/.test-output/dialog
           include-hidden-files: true
           if-no-files-found: ignore

@@ -69,6 +69,11 @@ changes are not listed.
 
 ### Changed
 
+- [Dialog](/dialog/) uses external default styles under strict CSP, including
+  its backdrop and optional regions. Native modal behavior and existing parts
+  remain; hydration uses the shared event configuration, and named triggers
+  release their listeners on removal and document adoption.
+
 - [Copy feedback](/button/#copy-feedback) loads its default styles from external
   CSS under strict CSP while preserving existing copy inputs and compositions.
   Copying remains available while its stylesheet loads.

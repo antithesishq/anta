@@ -1,5 +1,6 @@
 import { nativeStateChange, roundStyle, roundAttr } from "../anta_helpers";
 import type { BaseProps } from "../general_types";
+import { useNativeEventProps } from "../native-event-props";
 import { Button } from "./Button";
 
 /** The `round` side keywords, which select corners rather than set an amount. */
@@ -126,6 +127,19 @@ export const Dialog = ({
   const roundSide =
     typeof round === "string" && ROUND_SIDES.has(round) ? round : undefined;
 
+  const events = useNativeEventProps({
+    onstatechange: onStateChange
+      ? (e: StateChangeEvent) => {
+          const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e);
+          if (isOwn && detail)
+            onStateChange(event, {
+              next: detail.next === "open",
+              prev: detail.prev === "open",
+            });
+        }
+      : undefined,
+  });
+
   return (
     <a-dialog
       state={controlled ? (open ? "open" : "closed") : undefined}
@@ -139,22 +153,7 @@ export const Dialog = ({
       // All-lowercase `onstatechange` is the one spelling both renderers bind to
       // the element's `statechange` event (React 19 keeps the case after `on`, so
       // `onStateChange` would listen for "StateChange"; Preact lowercases).
-      onstatechange={
-        onStateChange
-          ? (e: StateChangeEvent) => {
-              const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e);
-              // Ignore a `statechange` bubbled up from a control inside the dialog
-              // (a Checkbox, a consumer's own element): its detail speaks a different
-              // vocabulary and would read as a spurious close. Only the dialog's own
-              // open/closed request counts. See nativeStateChange / STATEFUL-COMPONENTS.md.
-              if (isOwn && detail)
-                onStateChange(event, {
-                  next: detail.next === "open",
-                  prev: detail.prev === "open",
-                });
-            }
-          : undefined
-      }
+      {...events}
       class={className}
       // A side keyword sets no amount; anything else feeds --dialog-round (a
       // number → px, a string verbatim, so a shorthand like "12px 12px 0 0" works).
@@ -170,7 +169,7 @@ export const Dialog = ({
         // element (src/elements/a-dialog.ts). Duplicated, not shared — importing
         // the element module here would self-register it and break the
         // wrapper/element decoupling. Rename in both places.
-        <span slot="close" style={{ display: "contents" }}>
+        <a-dialog-close slot="close">
           <Button
             priority="tertiary"
             size="large"
@@ -178,14 +177,14 @@ export const Dialog = ({
             aria-label="Close"
             data-custom-event="closerequest"
           />
-        </span>
+        </a-dialog-close>
       )}
       {header != null && <div slot="header">{header}</div>}
       {children}
       {footer != null && (
-        <span slot="footer" style={{ display: "contents" }}>
+        <a-dialog-footer slot="footer">
           {footer}
-        </span>
+        </a-dialog-footer>
       )}
     </a-dialog>
   );

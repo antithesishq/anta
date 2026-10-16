@@ -239,6 +239,8 @@ export interface AntaIntrinsicElements {
   'a-step-desc': BaseAttributes
   'a-step-hint': BaseAttributes
   'a-dialog': ADialogAttributes
+  'a-dialog-close': BaseAttributes
+  'a-dialog-footer': BaseAttributes
   'a-card': ACardAttributes
   'a-card-layout': BaseAttributes
   'a-card-icon-chip': BaseAttributes

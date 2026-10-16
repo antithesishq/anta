@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Copy, Expander, Input, Progress, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, Progress, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -40,6 +40,9 @@ mode in fast coverage. Keep known regressions in the fast tier when practical.
 Use `componentEngines` when preparing browsers so fast checks launch only Chromium.
 Add installation, exhaustive visual/property matrices, and other expensive runners
 to the suite's `slow` list. Update the workflow change gates and manual selector.
+Installed-package runners must pass their own consumer-root option and verify the
+child suite selected it. Log the selected build source and assert build inputs
+resolve to the installed `dist` tree without repository source aliases.
 
 Existing commands such as `pnpm test:banner` and `pnpm test:calendar` still run the
 full source suite by default. `ANTA_COMPONENT_TEST_TIER=fast` selects the same core
@@ -212,3 +215,23 @@ behavioral pages retain CSP.
 Set `ANTA_COPY_CHROMIUM_EXECUTABLE` for an exact Chrome executable or
 `ANTA_COPY_CONSUMER_ROOT` for an isolated installed package. Current Playwright
 WebKit does not establish Safari 17.4 coverage.
+
+## Dialog
+
+Run `pnpm test:dialog` for the source CSP matrix or `pnpm test:dialog:package`
+for an isolated installed tarball. The shared fast tier covers both import modes,
+raw modal behavior, controlled state, Escape/cancel and native close, focus return,
+React/Preact SSR/hydration, CSS loading, and document listener cleanup. The slow
+tier adds expanded engines, pointer drags and cancellation, nested focus, scrolling,
+optional regions, consumer overrides, reduced motion, reconnects, mixed builds,
+visual comparisons, and installed-package checks.
+
+Behavioral pages use real CSP response headers including `style-src-attr 'none'`.
+Set `ANTA_DIALOG_CHROMIUM_EXECUTABLE` for an exact Chrome executable or
+`ANTA_DIALOG_CONSUMER_ROOT` for an installed consumer. Set
+`ANTA_DIALOG_COMPARE_ORIGINAL=1` to compare the registered implementation at
+`aeea7c08`. Screenshots and metrics go to `tests/.test-output/dialog`.
+WebKit capture uses a separate page that permits the screenshot tool's stylesheet;
+behavior and computed-style checks retain strict CSP. Playwright WebKit does not
+establish shipping Safari 17.4 coverage. Existing native discrete exit support
+varies by engine; compare it with the original rather than asserting a new fallback.

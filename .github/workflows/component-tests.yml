@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, expander, input, progress, text, tooltip]
+        options: [all, banner, calendar, card, expander, input, progress, text, toaster, tooltip]
 permissions:
   contents: read
 jobs:
@@ -51,5 +51,13 @@ jobs:
         with:
           name: input-visual
           path: tests/.test-output/input
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Toaster visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: toaster-visual
+          path: tests/.test-output/toaster
           include-hidden-files: true
           if-no-files-found: ignore

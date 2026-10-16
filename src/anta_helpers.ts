@@ -2,6 +2,16 @@ import { jsx, useState, useMemo } from "./jsx-runtime"
 import type { IconShape } from "./elements/a-icon.shapes"
 import type { OptionPresentationProps } from "./general_types"
 
+/** @internal Check the native Node brand across realms without reading a document. */
+export function isDOMNode(value: unknown): value is Node {
+  if (typeof Node === 'undefined' || value == null || typeof value !== 'object') return false
+  try {
+    return Node.prototype.isSameNode.call(value, value as Node)
+  } catch {
+    return false
+  }
+}
+
 export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
 }
@@ -145,10 +155,16 @@ export function parseOpenState(v: string | null): 'open' | 'closed' {
  *  (e.g. skipping `[disabled]` triggers) lands for every element at once. */
 export function installDismissTrigger(host: HTMLElement, attr: string, onDismiss: () => void): void {
   host.addEventListener('click', (e) => {
-    const target = e.target
-    if (!(target instanceof Element)) return
-    const trigger = target.closest(`[${attr}]`)
-    if (trigger && trigger.closest(host.localName) === host) onDismiss()
+    let triggered = false
+    for (const target of e.composedPath()) {
+      const element = target as Element
+      if (element.nodeType !== 1) continue
+      if (element.localName === host.localName) {
+        if (element === host && (triggered || element.hasAttribute(attr))) onDismiss()
+        return
+      }
+      if (element.hasAttribute(attr)) triggered = true
+    }
   })
 }
 

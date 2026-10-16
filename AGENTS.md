@@ -63,8 +63,10 @@ Keep new component-specific browser matrices separate from `pnpm test`. Give the
 a dedicated command and register them in `tests/component-suites.mjs`. Use
 `tests/component-tier.mjs` to mark core regressions as fast and keep expanded
 matrices in the slow tier. Gate fast PR checks on relevant component, shared
-runtime, dependency, test, and workflow changes. Manual CI runs include the slow
-tier; the Component matrix workflow also runs the full browser coverage.
+runtime, dependency, test, and workflow changes. Batch selected fast suites
+through the shared runner instead of serializing one command per component.
+Manual CI runs include the slow tier; the Component matrix workflow also runs
+the full browser coverage.
 See [Component test tiers](tests/README.md#component-test-tiers) for commands and
 classification. Calendar and InputDate share the Calendar suite.
 

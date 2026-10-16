@@ -1,4 +1,4 @@
-import { jsx, useState, useMemo } from "./jsx-runtime"
+import { jsx, useState, useMemo, useOptionalClientLayoutEffect } from "./jsx-runtime"
 import type { IconShape } from "./elements/a-icon.shapes"
 import type { OptionPresentationProps } from "./general_types"
 
@@ -262,6 +262,8 @@ export function useCopyFeedback(
   // useMemo with [] deps is a stable per-instance holder — a useRef stand-in the
   // jsx-runtime indirection doesn't re-export.
   const box = useMemo(() => ({ timer: undefined as ReturnType<typeof setTimeout> | undefined }), [])
+
+  useOptionalClientLayoutEffect(() => () => clearTimeout(box.timer), [box])
 
   const handleCopied = (ok: boolean) => {
     clearTimeout(box.timer)

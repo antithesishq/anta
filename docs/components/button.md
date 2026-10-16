@@ -358,6 +358,25 @@ submit a surrounding form. Use `type="submit"` or `type="reset"` for form action
 <button type="button" data-anta disabled>Unavailable</button>
 ```
 
+### Copy feedback
+
+Put `<a-copy>` directly inside an activatable control. Add `toast` for the
+floating success confirmation and `copied-label` to change its text. The
+confirmation uses a manual shadow popover, escapes clipping ancestors, and lets
+pointer events pass through. Style it with `a-copy::part(feedback)`.
+
+```html
+<button type="button" data-anta>
+  Copy command
+  <a-copy copy="npm i @antadesign/anta" toast copied-label="Copied"></a-copy>
+</button>
+```
+
+`copyrequest` asks for a controlled `copy` refresh before activation.
+`copydone` reports `{ ok: boolean }` after the clipboard attempt. Both events
+are non-bubbling. Full-bundle imports and the granular `elements/a-copy` entry
+include feedback styling. Under CSP, load their emitted CSS from an allowed URL.
+
 ## Styling
 
 Use `tone`, `priority`, `size`, and `round` before adding custom CSS. For a
@@ -375,3 +394,6 @@ a-button.checkout {
 a-button.checkout:hover { background: #5931c4; }
 a-button.checkout:active { background: #48269f; }
 ```
+
+Style the copy confirmation with `a-copy::part(feedback)`. If you customize
+`display`, use `a-copy::part(feedback):popover-open` so closed popovers stay hidden.

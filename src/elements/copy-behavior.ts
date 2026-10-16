@@ -40,9 +40,9 @@
  */
 
 /** Write plain text to the clipboard. Resolves `true` on success. */
-async function writeText(text: string): Promise<boolean> {
+async function writeText(text: string, view: Window & typeof globalThis): Promise<boolean> {
   try {
-    await navigator.clipboard.writeText(text)
+    await view.navigator.clipboard.writeText(text)
     return true
   } catch {
     return false
@@ -51,7 +51,7 @@ async function writeText(text: string): Promise<boolean> {
 
 /** Serialize a node to `text/html` + `text/plain` and write it. Falls back to
  *  plain text where `ClipboardItem` is unavailable. */
-async function writeNode(node: Element): Promise<boolean> {
+async function writeNode(node: Element, view: Window & typeof globalThis): Promise<boolean> {
   // Clone so we can strip the copy control(s) without touching the live tree
   // (the app DOM may be owned by a worker — never mutate light DOM here).
   const clone = node.cloneNode(true) as Element
@@ -59,16 +59,16 @@ async function writeNode(node: Element): Promise<boolean> {
   const html = clone.outerHTML
   const text = clone.textContent ?? ''
   try {
-    if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          'text/html': new Blob([html], { type: 'text/html' }),
-          'text/plain': new Blob([text], { type: 'text/plain' }),
+    if (typeof view.ClipboardItem !== 'undefined' && view.navigator.clipboard?.write) {
+      await view.navigator.clipboard.write([
+        new view.ClipboardItem({
+          'text/html': new view.Blob([html], { type: 'text/html' }),
+          'text/plain': new view.Blob([text], { type: 'text/plain' }),
         }),
       ])
       return true
     }
-    await navigator.clipboard.writeText(text)
+    await view.navigator.clipboard.writeText(text)
     return true
   } catch {
     return false
@@ -86,23 +86,21 @@ function resolveNodeTarget(el: Element): Element | null {
 
 /** Run a copy `work` promise and announce the outcome (non-bubbling `copydone`,
  *  `detail: { ok }`) so the wrapper can render feedback. */
-function run(el: HTMLElement, work: Promise<boolean>): void {
-  void work.then((ok) => {
-    el.dispatchEvent(new CustomEvent('copydone', { bubbles: false, detail: { ok } }))
-  })
+function run(work: Promise<boolean>, complete: (ok: boolean) => void): void {
+  void work.then(complete)
 }
 
 /** The current page URL, or '' outside a document (SSR). */
-function currentUrl(): string {
-  return typeof location !== 'undefined' ? location.href : ''
+function currentUrl(el: Element): string {
+  return el.ownerDocument.defaultView?.location.href ?? ''
 }
 
 /** Resolve the text a string-copy control writes: the page URL for `copy-url`,
  *  otherwise the `copy` value, optionally prefixed with the URL (`copy-with-url`). */
 function resolveText(el: Element): string {
-  if (el.hasAttribute('copy-url')) return currentUrl()
+  if (el.hasAttribute('copy-url')) return currentUrl(el)
   const base = el.getAttribute('copy') ?? ''
-  if (el.hasAttribute('copy-with-url')) return `// URL: ${currentUrl()}\n${base}`
+  if (el.hasAttribute('copy-with-url')) return `// URL: ${currentUrl(el)}\n${base}`
   return base
 }
 
@@ -119,7 +117,8 @@ function isTextCopy(el: Element): boolean {
  */
 export function emitCopyRequest(el: HTMLElement): void {
   if (!el.hasAttribute('copy')) return
-  el.dispatchEvent(new CustomEvent('copyrequest', { bubbles: false }))
+  const view = (el.ownerDocument.defaultView ?? globalThis) as Window & typeof globalThis
+  el.dispatchEvent(new view.CustomEvent('copyrequest', { bubbles: false }))
 }
 
 /**
@@ -127,13 +126,14 @@ export function emitCopyRequest(el: HTMLElement): void {
  * `true` if the element is a copy control (so the caller knows the copy path
  * ran); `false` for a plain, non-copy element.
  */
-export function runCopy(el: HTMLElement): boolean {
+export function runCopy(el: HTMLElement, complete: (ok: boolean) => void): boolean {
+  const view = (el.ownerDocument.defaultView ?? globalThis) as Window & typeof globalThis
   if (el.hasAttribute('copy-node')) {
     const target = resolveNodeTarget(el)
-    run(el, target ? writeNode(target) : Promise.resolve(false))
+    run(target ? writeNode(target, view) : Promise.resolve(false), complete)
     return true
   }
   if (!isTextCopy(el)) return false
-  run(el, writeText(resolveText(el)))
+  run(writeText(resolveText(el), view), complete)
   return true
 }

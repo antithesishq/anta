@@ -2,12 +2,6 @@ import { HTMLElementBase } from "../anta_helpers";
 import { emitCopyRequest, runCopy } from "./copy-behavior";
 import "./a-copy.css";
 
-declare global {
-  interface Document {
-    hasCopyDelegation?: boolean;
-  }
-}
-
 /**
  * `<a-copy>` — the copy-to-clipboard behavior, as a composable child.
  *
@@ -23,10 +17,10 @@ declare global {
  *
  * Attaching a listener to every host would mean one listener per (possibly
  * offscreen) copy control — the cost `<a-button>` avoids with a single delegated
- * handler per document. `<a-copy>` does the same: `installCopyDelegation` wires
+ * handler per document. `<a-copy>` does the same: `copyDelegation` wires
  * exactly one `pointerdown` / `keydown` / `click` / `menuselect` handler per
- * document (guarded by a flag), and each resolves the activated host from the
- * event, then the host's own `<a-copy>` child. `menuselect` is dispatched
+ * document while copy elements are connected. Each resolves the activated host
+ * from the event, then the host's own `<a-copy>` child. `menuselect` is dispatched
  * `bubbles: false`, but a capture-phase document listener still sees it (the
  * capture phase runs root→target regardless of bubbling), so menu rows need no
  * special path.
@@ -63,7 +57,13 @@ const MENU_HOST = "a-menu-item, [role=menuitem]";
 const ANY_HOST = `${BUTTON_HOST}, ${MENU_HOST}`;
 
 type PointerOrigin = { x: number; y: number };
-const pointerOrigins = new WeakMap<ACopyElement, PointerOrigin>();
+const COPY_DELEGATION = Symbol.for("anta.copy-delegation");
+type CopyDelegation = {
+  readers: Set<Element>;
+  origins: WeakMap<Element, PointerOrigin>;
+  dispose: () => void;
+};
+type CopyDocument = Document & { [COPY_DELEGATION]?: CopyDelegation };
 
 /** The `<a-copy>` belonging to a host — the direct child a wrapper drops in. */
 function copyChild(host: Element | null): ACopyElement | null {
@@ -79,62 +79,56 @@ function hostBlocked(host: Element): boolean {
   );
 }
 
-/** Install the one-per-document delegated handlers (idempotent). Mirrors
- * `<a-button>`'s single delegated set — no listeners hang off individual hosts. */
-function installCopyDelegation(doc: Document | undefined) {
-  if (!doc || doc.hasCopyDelegation) return;
-
-  const preRequest = (target: EventTarget | null, origin?: PointerOrigin) => {
-    const host = (target as HTMLElement)?.closest?.(ANY_HOST);
+/** Share one delegated set across independent full and granular builds. */
+function copyDelegation(doc: CopyDocument): CopyDelegation {
+  if (doc[COPY_DELEGATION]) return doc[COPY_DELEGATION];
+  const origins = new WeakMap<Element, PointerOrigin>();
+  // Resolve the nearest activatable region before filtering its activation kind.
+  // An inner menu item or native control must not activate an ancestor copy.
+  const hostFor = (event: Event) => (event.target as Element | null)?.closest?.(ANY_HOST);
+  const preRequest = (event: Event, origin?: PointerOrigin) => {
+    const host = hostFor(event);
     if (!host || hostBlocked(host)) return;
     const el = copyChild(host);
     if (!el) return;
-    if (origin) pointerOrigins.set(el, origin);
-    else pointerOrigins.delete(el);
+    if (origin) origins.set(el, origin);
+    else origins.delete(el);
     emitCopyRequest(el);
   };
-
-  doc.addEventListener(
-    "pointerdown",
-    (e) => preRequest(e.target, { x: (e as PointerEvent).clientX, y: (e as PointerEvent).clientY }),
-    true,
-  );
-  doc.addEventListener(
-    "keydown",
-    (e) => {
-      if ((e as KeyboardEvent).key === "Enter" || (e as KeyboardEvent).key === " ")
-        preRequest(e.target);
+  const pointerdown = (e: PointerEvent) => preRequest(e, { x: e.clientX, y: e.clientY });
+  const keydown = (e: KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") preRequest(e);
+  };
+  const click = (e: MouseEvent) => {
+    const host = hostFor(e);
+    if (!host?.matches(BUTTON_HOST) || hostBlocked(host)) return;
+    const el = copyChild(host);
+    if (!el) return;
+    if (e.detail) origins.set(el, { x: e.clientX, y: e.clientY });
+    else origins.delete(el);
+    el.activate();
+  };
+  const menuselect = (e: Event) => {
+    const host = hostFor(e);
+    if (!host?.matches(MENU_HOST) || hostBlocked(host)) return;
+    copyChild(host)?.activate();
+  };
+  doc.addEventListener("pointerdown", pointerdown, true);
+  doc.addEventListener("keydown", keydown, true);
+  doc.addEventListener("click", click, true);
+  doc.addEventListener("menuselect", menuselect, true);
+  const delegation: CopyDelegation = {
+    readers: new Set(), origins,
+    dispose: () => {
+      doc.removeEventListener("pointerdown", pointerdown, true);
+      doc.removeEventListener("keydown", keydown, true);
+      doc.removeEventListener("click", click, true);
+      doc.removeEventListener("menuselect", menuselect, true);
+      delete doc[COPY_DELEGATION];
     },
-    true,
-  );
-  // Button activation: a real click (keyboard activation is a synthesized click).
-  doc.addEventListener(
-    "click",
-    (e) => {
-      const host = (e.target as HTMLElement)?.closest?.(BUTTON_HOST);
-      if (!host || hostBlocked(host)) return;
-      const el = copyChild(host);
-      if (!el) return;
-      if ((e as MouseEvent).detail)
-        pointerOrigins.set(el, { x: (e as MouseEvent).clientX, y: (e as MouseEvent).clientY });
-      else pointerOrigins.delete(el);
-      el.activate();
-    },
-    true,
-  );
-  // Menu-row activation: the menu's pre-filtered `menuselect` (non-bubbling —
-  // caught here in the capture phase).
-  doc.addEventListener(
-    "menuselect",
-    (e) => {
-      const host = (e.target as HTMLElement)?.closest?.(MENU_HOST);
-      if (!host || hostBlocked(host)) return;
-      copyChild(host)?.activate();
-    },
-    true,
-  );
-
-  doc.hasCopyDelegation = true;
+  };
+  doc[COPY_DELEGATION] = delegation;
+  return delegation;
 }
 
 /** How long the confirmation label lives before it leaves the top layer (ms). */
@@ -142,45 +136,6 @@ const FEEDBACK_MS = 900;
 
 const COPY_FEEDBACK_TEMPLATE = typeof document === "undefined" ? undefined : (() => {
   const template = document.createElement("template");
-  const style = document.createElement("style");
-  style.textContent = `
-    .feedback {
-      position: fixed;
-      margin: 0;
-      padding: 0;
-      border: 0;
-      inset: auto;
-      background: none;
-      overflow: visible;
-      pointer-events: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      box-sizing: border-box;
-      color: var(--text-2-success);
-      font-family: var(--sans-serif);
-      font-size: 13px;
-      line-height: 16px;
-      font-weight: 500;
-      white-space: nowrap;
-      --_feedback-y-from: calc(-100% - 10px);
-      --_feedback-y-to: calc(-100% - 1.5em);
-      transform: translate(var(--_feedback-x), var(--_feedback-y-from));
-    }
-    .feedback[data-placement="below"] {
-      --_feedback-y-from: 10px;
-      --_feedback-y-to: 1.5em;
-    }
-    .feedback[data-measure-end] {
-      transform: translate(var(--_feedback-x), var(--_feedback-y-to));
-    }
-    .feedback:not(:popover-open) { display: none; }
-    .feedback[data-show] { animation: a-copy-feedback-rise ${FEEDBACK_MS}ms ease-out forwards; }
-    @keyframes a-copy-feedback-rise {
-      from { opacity: 1; transform: translate(var(--_feedback-x), var(--_feedback-y-from)); }
-      to { opacity: 0; transform: translate(var(--_feedback-x), var(--_feedback-y-to)); }
-    }
-  `;
   const feedback = document.createElement("div");
   feedback.className = "feedback";
   feedback.part.add("feedback");
@@ -192,29 +147,54 @@ const COPY_FEEDBACK_TEMPLATE = typeof document === "undefined" ? undefined : (()
   const label = document.createElement("span");
   label.className = "label";
   feedback.append(icon, label);
-  template.content.append(style, feedback);
+  template.content.append(feedback);
   return template;
 })();
 
 export class ACopyElement extends HTMLElementBase {
   #feedback?: HTMLElement;
   #feedbackLabel?: HTMLElement;
-  #feedbackTimer?: ReturnType<typeof setTimeout>;
+  #feedbackTimer?: number;
+  #timerView?: Window;
+  #delegation?: CopyDelegation;
+  #connectedDocument?: Document;
+  #generation = 0;
+  #completion?: { current: boolean; origin?: PointerOrigin };
+  #animation?: Animation;
+  #motion?: { above: string[]; below: string[]; opacity: string[]; easing: string };
+  #reconnectOrigin?: { doc: Document; origin?: PointerOrigin };
 
   connectedCallback() {
-    installCopyDelegation(this.doc);
+    this.#delegation = copyDelegation(this.doc);
+    this.#connectedDocument = this.doc;
+    this.#delegation.readers.add(this);
+    if (this.#reconnectOrigin?.doc === this.doc && this.#reconnectOrigin.origin) {
+      this.#delegation.origins.set(this, this.#reconnectOrigin.origin);
+    }
+    this.#reconnectOrigin = undefined;
     this.addEventListener("copydone", this.#onCopyDone);
   }
 
   /** Run the copy for the activated host. Called from the delegated click /
    * menuselect handlers; the confirmation follows a successful `copydone`. */
   activate(): void {
-    runCopy(this);
+    const generation = this.#generation;
+    const origin = this.#delegation?.origins.get(this);
+    this.#delegation?.origins.delete(this);
+    runCopy(this, (ok) => {
+      this.#completion = { current: this.isConnected && generation === this.#generation, origin };
+      try {
+        this.dispatchEvent(new this.view.CustomEvent("copydone", { detail: { ok } }));
+      } finally {
+        this.#completion = undefined;
+      }
+    });
   }
 
   #onCopyDone = (e: Event) => {
-    const origin = pointerOrigins.get(this);
-    pointerOrigins.delete(this);
+    if (e.target !== this || this.#completion?.current === false || !this.isConnected) return;
+    const origin = this.#completion ? this.#completion.origin : this.#delegation?.origins.get(this);
+    if (!this.#completion) this.#delegation?.origins.delete(this);
     if (!this.hasAttribute("toast")) return;
     if (!(e as CustomEvent<{ ok: boolean }>).detail?.ok) return;
     const host = this.closest(ANY_HOST);
@@ -240,40 +220,80 @@ export class ACopyElement extends HTMLElementBase {
     if (origin) {
       feedback.style.left = `${origin.x}px`;
       feedback.style.top = `${origin.y}px`;
-      feedback.style.setProperty("--_feedback-x", "8px");
+      feedback.style.translate = "8px 0";
       belowTop = origin.y;
     } else {
       const rect = host.getBoundingClientRect();
       const rtl = this.view.getComputedStyle(host).direction === "rtl";
       feedback.style.left = `${rtl ? rect.right - 12 : rect.left + 12}px`;
       feedback.style.top = `${rect.top}px`;
-      feedback.style.setProperty("--_feedback-x", rtl ? "-100%" : "0");
+      feedback.style.translate = rtl ? "-100% 0" : "0 0";
       belowTop = rect.bottom;
     }
 
-    clearTimeout(this.#feedbackTimer);
-    feedback.removeAttribute("data-show");
-    feedback.removeAttribute("data-placement");
-    if (feedback.matches(":popover-open")) feedback.hidePopover();
-    feedback.showPopover();
-    feedback.setAttribute("data-measure-end", "");
-    const crossesTopEdge = feedback.getBoundingClientRect().top < 0;
-    feedback.removeAttribute("data-measure-end");
-    if (crossesTopEdge) {
-      feedback.setAttribute("data-placement", "below");
-      feedback.style.top = `${belowTop}px`;
+    if (!this.#motion) {
+      // Literal CSS endpoints avoid shadow keyframe lookup and Firefox var() effects.
+      const styles = this.view.getComputedStyle(feedback);
+      const motion = {
+        opacity: [styles.getPropertyValue("--_copy-opacity-from").trim(), styles.getPropertyValue("--_copy-opacity-to").trim()],
+        easing: styles.getPropertyValue("--_copy-easing").trim(),
+        above: [styles.getPropertyValue("--_copy-above-from").trim(), styles.getPropertyValue("--_copy-above-to").trim()],
+        below: [styles.getPropertyValue("--_copy-below-from").trim(), styles.getPropertyValue("--_copy-below-to").trim()],
+      };
+      // CSS may still be loading. Do not open unstyled feedback or cache empty
+      // endpoints; a later activation can create the effect once CSS is ready.
+      if (![...motion.opacity, ...motion.above, ...motion.below, motion.easing].every(Boolean)) return;
+      this.#motion = motion;
     }
-    void feedback.offsetWidth;
-    feedback.setAttribute("data-show", "");
-    this.#feedbackTimer = setTimeout(() => {
-      feedback.removeAttribute("data-show");
-      if (feedback.matches(":popover-open")) feedback.hidePopover();
-    }, FEEDBACK_MS);
+    this.#clearFeedback();
+    feedback.showPopover();
+    feedback.style.transform = this.#motion.above[1];
+    const below = feedback.getBoundingClientRect().top < 0;
+    if (below) feedback.style.top = `${belowTop}px`;
+    const transforms = below ? this.#motion.below : this.#motion.above;
+    feedback.style.transform = transforms[0];
+    if (!this.#animation) {
+      this.#animation = feedback.animate({ opacity: this.#motion.opacity, transform: transforms }, {
+        duration: FEEDBACK_MS, easing: this.#motion.easing, fill: "forwards",
+      });
+    } else {
+      (this.#animation.effect as KeyframeEffect).setKeyframes({ opacity: this.#motion.opacity, transform: transforms });
+      this.#animation.play();
+    }
+    this.#animation.currentTime = 0;
+    this.#timerView = this.view;
+    this.#feedbackTimer = this.#timerView.setTimeout(() => this.#clearFeedback(), FEEDBACK_MS);
+  }
+
+  #clearFeedback() {
+    if (this.#feedbackTimer != null) this.#timerView?.clearTimeout(this.#feedbackTimer);
+    this.#feedbackTimer = undefined;
+    this.#timerView = undefined;
+    this.#animation?.cancel();
+    if (this.#feedback?.matches(":popover-open")) this.#feedback.hidePopover();
+  }
+
+  adoptedCallback() {
+    this.#animation?.cancel();
+    this.#animation = undefined;
+    this.#motion = undefined;
+    this.#reconnectOrigin = undefined;
+    this.#connectedDocument = undefined;
   }
 
   disconnectedCallback() {
-    clearTimeout(this.#feedbackTimer);
-    pointerOrigins.delete(this);
+    this.#generation++;
+    this.#clearFeedback();
+    // A synchronous DOM move preserves a pending menu pointer request. A real
+    // removal or adoption must not carry its origin into a later connection.
+    const pending = this.#reconnectOrigin = { doc: this.#connectedDocument!, origin: this.#delegation?.origins.get(this) };
+    queueMicrotask(() => {
+      if (this.#reconnectOrigin === pending) this.#reconnectOrigin = undefined;
+    });
+    this.#delegation?.origins.delete(this);
+    this.#delegation?.readers.delete(this);
+    if (this.#delegation?.readers.size === 0) this.#delegation.dispose();
+    this.#delegation = undefined;
     this.removeEventListener("copydone", this.#onCopyDone);
   }
 }

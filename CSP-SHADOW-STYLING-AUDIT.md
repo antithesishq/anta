@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 15, 2026, including the InputTime and Toast/Toaster refactors.
+Updated October 15, 2026, including the InputTime, Toast/Toaster, and Copy refactors.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -72,12 +72,15 @@ and verification before moving to the next component.
    backdrop, focus management, and close behavior.
 10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
     markers, affixes, dragging, and focus states.
-11. [ ] [Copy feedback](src/elements/a-copy.ts): feedback popover, placement,
-    measuring/showing states, and animation.
+11. [x] [Copy feedback](src/elements/a-copy.ts): retains its shadow manual
+    popover, `feedback` part, icon, and label. Defaults and motion endpoints are
+    external; positioning, measurement, and one reusable Web Animation stay on
+    the owned feedback node. Verification is recorded below.
 
 After their underlying elements are migrated, verify these compositions:
 
-- [ ] ButtonCopy and MenuItemCopy: Copy feedback and Menu.
+- [ ] ButtonCopy and MenuItemCopy: Copy feedback verified; Menu retains its
+  existing blocked shadow stylesheet under strict CSP.
 - [ ] Breadcrumbs: collapsed Menu and Copy feedback.
 - [x] Steps: Tooltip hints, including clipped labels and hints.
 - [ ] InputDate and InputAutocomplete: Input and Menu.
@@ -89,6 +92,113 @@ composition, and consumer CSS overrides. Check full and granular imports under
 an actual CSP response header. Custom values serialized into `style` attributes
 remain a separate constraint; completing the stylesheet checklist does not make
 every dynamic JSX prop compatible with `style-src-attr 'none'`.
+
+### Copy verification
+
+Implemented and verified on `codex/copy-external-css`, October 15, 2026.
+
+The shadow hierarchy and public copy inputs/events are retained. JSX/raw authors
+own host attributes and light DOM. Feedback defaults and literal motion endpoints
+live in `a-copy.css`; JS retains coordinates, top-edge measurement, label updates,
+the 900ms lifetime, and one reusable rise/fade effect. Reduced-motion behavior
+matches the original. Default part rules omit runtime placement/animation properties.
+
+Toast's final review findings informed the animation choice. A platform probe in
+Chrome `135.0.7049.114` created no animation for document keyframes referenced by
+an external part rule. Literal CSS endpoints used by a Web Animation worked in
+that minimum Chrome and current Chrome `155.0.8059.84`, Firefox `155.0`, and
+Playwright WebKit `26.6`. This avoids named-keyframe lookup, duplicate fallback
+effects, and repeated endpoint probes after effect creation. The initial setup
+reads and validates the CSS endpoints; feedback waits for a later activation if
+its stylesheet has not applied.
+
+Copy owns document delegation through a shared symbol and releases listeners
+after its last reader disconnects. Each clipboard attempt retains its pointer
+origin. Disconnect cancels feedback and invalidates stale visual completions,
+while `copydone` still reports the clipboard result. Adopted controls resolve
+their clipboard and URL from the owning document. The shared wrapper timer clears
+on browser unmount when the renderer supplies lifecycle hooks; SSR and
+state/memo-only runtimes need no layout hook. Copy callbacks use the opt-in
+hydration event helper.
+
+Verification:
+
+- All 97 source checks and 97 installed-package checks passed in Chrome
+  `155.0.8059.84`, Firefox `155.0`, and Playwright WebKit `26.6`. React/React DOM
+  `19.3.0`, Preact `10.29.8`, and `preact-render-to-string` `6.7.0` generate real
+  server HTML. Hydration preserves authored nodes without recovery errors. The
+  installed consumer resolves npm exports without source aliases or workspace links.
+- All 33 installed-package checks passed in Chrome for Testing `135.0.7049.114`.
+  Use `ANTA_COPY_CHROMIUM_EXECUTABLE` to select an exact executable.
+- Strict pages use real HTTP response headers with same-origin scripts/styles,
+  `style-src-attr 'none'`, and data images for Icon masks. Copy introduces no CSP
+  violations. Menu cases record its existing blocked shadow sheets separately.
+  Coverage includes pointer/keyboard input, controlled refresh, success/failure,
+  repeated and overlapping activation, custom labels, RTL, top/bottom edges,
+  clipping escape, pointer pass-through, reduced motion, overrides, disconnect,
+  reconnect, document adoption, nested ownership, and independent import orders.
+  Clipboard source selection, URL prefixes, and rich/plain formats are retained.
+  Clipboard API completions are stubbed for deterministic success/failure;
+  serialization and real ClipboardItem formats are checked.
+- Compared seven variants against the registered original at `2d2ba6e6` in all
+  three engines and both import modes. All 42 variants matched geometry,
+  typography, color, and opacity at the start and midpoint of the animation:
+  84 sampled frames with zero geometry or opacity difference. Screenshots and
+  metrics live in `tests/.test-output/copy`. Capture pages permit Playwright's
+  synchronization stylesheet; behavioral pages retain strict CSP.
+- Toast/Toaster merged while Copy was in progress. After rebasing onto main at
+  `114d2a21`, all 163 shared fast checks, 11 installed Copy core checks, 20 focused
+  feedback/event/tier regressions, the Node `24.15.0` production build, and all
+  14 production checks passed. The first ButtonCopy preview, no-icon feedback,
+  and the raw copy example also passed in Chrome and WebKit. Anta lint/type
+  checks, sticker/Plot type checks, site CSS lint, workflow parsing, and
+  documentation checks passed. The root run initially passed 334 of 335 checks;
+  Tooltip's warm-delay timing case failed during concurrent browser work and
+  both Tooltip checks passed on an isolated rerun.
+
+- The serialized root run with CI's Chromium setting and existing debounce
+  exclusion passed all 330 checks. The earlier full-browser Tooltip timing
+  failure did not recur.
+- Final coordination review reproduced an older clipboard completion consuming
+  a newer menu pointer request. The completion handler now leaves pending
+  request origins untouched. All six source and six installed-package regression
+  cases passed across the three engines and both import modes. The expanded
+  suite now contains 103 cases; the earlier full matrices contained 97.
+  All 13 final source core checks and 13 installed Chrome 135 core checks passed.
+- InputTime subsequently merged into main at `0593fb73`. Rebased again while
+  retaining its completed checklist, guidance, and test registrations. Copy's
+  implementation and suite are unchanged by that rebase. All 13 Copy fast checks
+  and 22 shared event, feedback-placement, and tier regressions passed on the
+  combined baseline, along with lint, type checking, and workflow parsing.
+- PR timing review moved repeated feedback lifetimes and the full icon
+  success/failure/reset matrix to the slow tier, retaining 11 fast core cases.
+  Splitting the icon checks from hydration adds cases without removing coverage;
+  the full source suite now contains 115 cases. All 39 Chromium slow cases and
+  eight CI-selection/tier checks passed. Selected PR component suites now run
+  together through the existing two-worker runner rather than serial commands.
+- Reviewer follow-up: absent CSS skips visual feedback without caching empty
+  endpoints; re-enabling CSS allows the next activation to show feedback. Only
+  open popovers receive `display: inline-flex`. Retargeted event ownership retains
+  copy controls containing open shadow trees. Same-document reconnection reuses
+  the canceled effect; synchronous moves retain pending pointer origins. Adoption
+  releases the old timeline and motion cache even before a later reconnection.
+  Copy's completion callback is required, and `copyrequest` uses its owning realm.
+- All 145 expanded checks passed in Chrome `155.0.8059.84`, Firefox `155.0`, and
+  WebKit `26.6`, including the 42 original/current visual variants and both
+  old/new import orders (one write and one result in each case). The regular
+  source suite has 133 cases; original comparisons add 12 legacy-order cases.
+  Final adoption cleanup passed 18 focused lifecycle checks across those engines.
+  All 28 shared event, placement, CI-selection, and tier regressions passed.
+  React/React DOM `18.3.1` server-rendered ButtonCopy and MenuItemCopy without
+  warnings; state/memo-only runtime projections passed with and without a window
+  shim. Copy's 13 fast checks, lint, type checking, and documentation checks passed.
+  The final installed package passed all 45 slow checks in Chrome for Testing
+  `135.0.7049.114`, including missing CSS, closed-popover display, and adoption.
+
+Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
+Current Playwright WebKit is engine evidence, not a shipping Safari run.
+Application-provided style attributes remain a separate CSP constraint. Copy's
+original rise/fade also runs under reduced motion; this refactor preserves that policy.
 
 ### Toast and Toaster verification
 

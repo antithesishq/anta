@@ -1,6 +1,6 @@
 import { Button, type ButtonProps } from './Button'
 import { useCopyFeedback } from '../anta_helpers'
-import { type CopyTarget, copyElementProps, isNodeCopy } from './copy-props'
+import { type CopyTarget, useCopyElementProps, isNodeCopy } from './copy-props'
 import type { IconShape } from '../elements/a-icon.shapes'
 
 /** A copy button is a plain action control, so `ButtonCopy` keeps the `Button`
@@ -90,7 +90,7 @@ export const ButtonCopy = ({
         : { icon: shownIcon }
 
   const hasText = label != null || children != null
-  const copyAttrs = copyElementProps({
+  const copyAttrs = useCopyElementProps({
     copy,
     copyNode,
     copyUrl,

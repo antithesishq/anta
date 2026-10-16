@@ -15,14 +15,15 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Expander, Input, Progress, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Expander, Input, Progress, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
 The CSP suites keep a core case for both granular and full-bundle imports.
-PR CI uses this tier and retains the existing change gates. Shared runtime or
-dependency changes can select several components, but do not run their full
-matrices. Root `pnpm test` regressions are unchanged.
+PR CI uses this tier and retains the existing change gates. Selected component
+suites run together through the shared runner with two test-file workers. Shared
+runtime or dependency changes can select several components, but do not run their
+full matrices. Root `pnpm test` regressions are unchanged.
 
 Slow includes the fast checks, additional cases, all supported test engines, and
 installed-package checks. It runs only when requested. Use the **Component matrix**
@@ -187,3 +188,27 @@ metrics go to `tests/.test-output/toaster`. Screenshot contexts permit
 the capture tool's injected stylesheet; behavioral pages retain strict CSP.
 Independent package entries keep their existing module-local default managers;
 the mixed-build checks pass an explicit shared store.
+
+## Copy
+
+Run `pnpm test:copy` for the feedback CSP matrix, or `pnpm test:copy:package`
+for the same checks through an isolated installed npm package. The shared fast
+tier covers both import modes, authored markup, pointer/keyboard activation,
+request/result callbacks, React/Preact SSR/hydration, missing-CSS recovery, async
+ownership, and blocked controls. Slow adds feedback lifetimes and the icon
+success/failure/reset matrix, browser engines, lifecycle/adoption, nested
+ownership, compositions, clipboard sources/formats, mixed imports, visuals,
+and installation.
+The existing root feedback-placement and code-copy regressions remain in `pnpm test`.
+
+The suite supplies actual CSP response headers, including `style-src-attr 'none'`.
+Menu compositions record Menu's existing blocked shadow sheets and assert that
+Copy adds no violations. Reduced-motion tests preserve the original rise/fade.
+Set `ANTA_COPY_COMPARE_ORIGINAL=1` to compare geometry and sampled motion against
+`2d2ba6e6` and check both old/new element import orders. The original fixture uses
+its matching clipboard helper. Visual artifacts go to `tests/.test-output/copy`;
+capture pages permit the screenshot tool's synchronization stylesheet while
+behavioral pages retain CSP.
+Set `ANTA_COPY_CHROMIUM_EXECUTABLE` for an exact Chrome executable or
+`ANTA_COPY_CONSUMER_ROOT` for an isolated installed package. Current Playwright
+WebKit does not establish Safari 17.4 coverage.

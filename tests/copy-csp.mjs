@@ -92,7 +92,10 @@ before(async () => {
     iframe{width:800px;height:450px;border:0} #mount.edge{position:fixed;top:0;left:0}`)
   if (!consumerRoot && process.env.ANTA_COPY_COMPARE_ORIGINAL === '1') {
     const old = execFileSync('git',['show','2d2ba6e6:src/elements/a-copy.ts'],{encoding:'utf8'})
-    save(await build({stdin:{contents:old,resolveDir:resolve('src/elements'),loader:'ts'},bundle:true,write:false,outfile:'original.js',format:'esm',target:'es2022',nodePaths,alias:{...jsxAlias}}),'original')
+    const behavior = execFileSync('git',['show','2d2ba6e6:src/elements/copy-behavior.ts'],{encoding:'utf8'})
+    save(await build({stdin:{contents:old,resolveDir:resolve('src/elements'),loader:'ts'},bundle:true,write:false,outfile:'original.js',format:'esm',target:'es2022',nodePaths,alias:{...jsxAlias},plugins:[{
+      name:'original-copy-behavior',setup(build){build.onLoad({filter:/[/\\]copy-behavior\.ts$/},()=>({contents:behavior,loader:'ts'}))},
+    }]}),'original')
   }
   server = createServer((req,res) => {
     const url = new URL(req.url,'http://localhost'), mode = url.searchParams.get('mode') ?? 'granular'
@@ -155,6 +158,15 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await page.mouse.click(point.x,point.y);assert.equal(await page.evaluate(()=>underClicks),1);assert.equal(await page.evaluate(()=>writes.length),2)
     await page.waitForTimeout(450);assert.equal(await feedback(page).evaluate(el=>el.matches(':popover-open')),true);await shown(page,false);assert.equal((await sample(page)).display,'none')
   })
+  test.fast(`${name}: missing CSS cannot open stuck feedback or poison later activation`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator(`link[href="/${mode}.css"]`).evaluate(el=>el.disabled=true);await mount(page)
+    await page.locator('#control').click();await page.waitForFunction(()=>outcomes.length===1)
+    assert.equal(await feedback(page).evaluate(el=>el.matches(':popover-open')),false)
+    await page.locator(`link[href="/${mode}.css"]`).evaluate(el=>el.disabled=false)
+    await page.locator('#control').click();await shown(page);assert.equal((await sample(page)).effects,1)
+    await feedback(page).evaluate(el=>el.hidePopover());assert.equal((await sample(page)).display,'none')
+  })
   for(const framework of ['React','Preact'])test.fast(`${name} ${framework}: real SSR hydrates without replacement; callbacks and controlled refresh update`,async t=>{
     const page=await pageFor(t,engine,mode,`&ssr&framework=${framework}`);await register(page,mode)
     await page.evaluate(()=>{window.originalCopy=document.querySelector('a-copy');window.originalControl=document.querySelector('a-button')})
@@ -206,11 +218,27 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await page.locator('a-copy').evaluate(el=>{window.copy=el;el.remove();document.querySelector('#control').append(el)})
     await page.evaluate(()=>pending.shift()());await page.waitForFunction(()=>outcomes.length===1);assert.equal(await page.locator('a-copy').evaluate(el=>!!el.shadowRoot?.querySelector('[popover]')?.matches(':popover-open')),false)
     await page.evaluate(()=>window.defer=false);await page.locator('#control').click();await shown(page)
-    await page.locator('a-copy').evaluate(el=>{el.remove();document.querySelector('#control').append(el)})
+    await page.locator('a-copy').evaluate(el=>{window.retainedEffect=el.shadowRoot.querySelector('[popover]').getAnimations()[0];el.remove();document.querySelector('#control').append(el)})
     assert.equal((await sample(page)).effects,0);assert.equal(await feedback(page).evaluate(el=>el.matches(':popover-open')),false)
     await page.locator('#control').click();await shown(page);assert.equal((await sample(page)).effects,1)
+    assert.equal(await feedback(page).evaluate(el=>el.getAnimations()[0]===window.retainedEffect),true)
     await page.locator('a-copy').evaluate(el=>el.remove());assert.equal(await page.evaluate(()=>!!document[Symbol.for('anta.copy-delegation')]),false)
     await page.evaluate(()=>document.querySelector('#control').append(window.copy));await page.locator('#control').click();await shown(page)
+  })
+  test(`${name}: synchronous menu moves preserve pointer origin and reuse motion without style probes`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page,'<div role="menuitem" id="control">Copy<a-copy copy="Value" toast></a-copy></div>')
+    await page.evaluate(()=>document.querySelector('#control').dispatchEvent(new CustomEvent('menuselect')));await shown(page)
+    await page.evaluate(()=>{
+      const copy=document.querySelector('a-copy'),host=document.querySelector('#control');
+      window.retainedEffect=copy.shadowRoot.querySelector('[popover]').getAnimations()[0];
+      const original=window.getComputedStyle;window.styleReads=0;
+      window.getComputedStyle=(...args)=>{styleReads++;return original(...args)};
+      host.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:145,clientY:205}));
+      copy.remove();host.append(copy);host.dispatchEvent(new CustomEvent('menuselect'));
+    });await page.waitForFunction(()=>outcomes.length===2);await shown(page)
+    assert.equal(await page.evaluate(()=>styleReads),0)
+    assert.equal((await sample(page)).left,'145px');assert.equal((await sample(page)).top,'205px')
+    assert.equal(await feedback(page).evaluate(el=>el.getAnimations()[0]===window.retainedEffect),true)
   })
   test(`${name}: overlapping clipboard completions retain each activation origin and lifetime`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page);await page.evaluate(()=>window.defer=true)
@@ -233,10 +261,13 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
   })
   test(`${name}: adopted controls use the owning document, clipboard, URL, animation, and delegation`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page)
-    await page.evaluate(async()=>{const frame=document.createElement('iframe');frame.src='/?frame=1';document.body.append(frame);await new Promise(r=>frame.onload=r);const doc=frame.contentDocument;const control=document.querySelector('#control');control.querySelector('a-copy').setAttribute('copy-url','');doc.querySelector('#mount').append(doc.adoptNode(control));window.frame=frame})
+    await page.locator('#control').click();await shown(page)
+    await page.evaluate(async()=>{window.oldEffect=document.querySelector('a-copy').shadowRoot.querySelector('[popover]').getAnimations()[0];window.writes=[];window.outcomes=[];const frame=document.createElement('iframe');frame.src='/?frame=1';document.body.append(frame);await new Promise(r=>frame.onload=r);const doc=frame.contentDocument;const control=document.querySelector('#control');const copy=control.querySelector('a-copy');copy.setAttribute('copy-url','');doc.querySelector('#mount').append(doc.adoptNode(control));copy.addEventListener('copyrequest',e=>frame.contentWindow.requestInRealm=e instanceof frame.contentWindow.CustomEvent);window.frame=frame})
     const child=page.frames().find(f=>f!==page.mainFrame());await child.locator('#control').click();await child.waitForFunction(()=>outcomes.length===1)
     assert.deepEqual(await child.evaluate(()=>writes),[`${origin}/?frame=1`]);assert.deepEqual(await page.evaluate(()=>writes),[])
     assert.equal(await child.locator('a-copy').evaluate(el=>el.shadowRoot.querySelector('[popover]').matches(':popover-open')),true)
+    assert.equal(await child.evaluate(()=>requestInRealm),true)
+    assert.equal(await child.locator('a-copy').evaluate(el=>{const effect=el.shadowRoot.querySelector('[popover]').getAnimations()[0];return effect!==parent.oldEffect&&effect.timeline===document.timeline}),true)
     assert.equal(await page.evaluate(()=>!!document[Symbol.for('anta.copy-delegation')]),false)
     assert.deepEqual(await child.evaluate(()=>violations),[])
   })
@@ -247,6 +278,20 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await page.locator('#inner').evaluate(el=>el.dispatchEvent(new CustomEvent('menuselect')));await shown(page,true,'#innercopy');assert.deepEqual(await page.evaluate(()=>writes),['Inner'])
     await page.locator('#outercopy').evaluate(el=>{const child=document.createElement('span');el.append(child);child.dispatchEvent(new CustomEvent('copydone',{bubbles:true,detail:{ok:true}}))})
     assert.equal(await page.locator('#outercopy').evaluate(el=>!!el.shadowRoot),false)
+  })
+  test(`${name}: retargeted shadow controls activate their light-DOM copy owner`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<div role="button" id="control"><copy-content></copy-content><a-copy copy="Value" toast></a-copy></div>')
+    await page.locator('copy-content').evaluate(el=>el.attachShadow({mode:'open'}).innerHTML='<button id="inner">Copy content</button>')
+    await page.locator('#inner').click();await shown(page);assert.deepEqual(await page.evaluate(()=>writes),['Value'])
+    await page.locator('#inner').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>writes.length===2)
+    assert.deepEqual(await page.evaluate(()=>writes),['Value','Value'])
+  })
+  for(const order of [['original',mode],[mode,'original']])if(!consumerRoot&&process.env.ANTA_COPY_COMPARE_ORIGINAL==='1')test(`${name}: legacy load order ${order.join(' then ')} activates once`,async t=>{
+    const page=await pageFor(t,engine,mode,'',true)
+    for(const entry of order)await register(page,entry)
+    await mount(page);await page.locator('#control').click();await page.waitForFunction(()=>outcomes.length===1)
+    assert.deepEqual(await page.evaluate(()=>writes),['Value']);assert.deepEqual(await page.evaluate(()=>outcomes.map(x=>x.ok)),[true])
   })
   test(`${name}: existing clipboard modes retain text, URL prefix, node sources, and rich formats`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page,'<section data-copy-source><p>Content</p><button id="control" data-copy-node-button>Copy<a-copy copy="Text"></a-copy></button></section>')

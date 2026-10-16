@@ -14,6 +14,8 @@ before(async () => {
         export { Banner } from './src/components/Banner';
         export { Expander } from './src/components/Expander';
         export { Text } from './src/components/Text';
+        export { ButtonCopy } from './src/components/ButtonCopy';
+        export { MenuItemCopy } from './src/components/MenuItemCopy';
         export { useCopyElementProps } from './src/components/copy-props';`,
       resolveDir: process.cwd(),
     },
@@ -32,6 +34,24 @@ const h = (type, props, ...children) => {
   return typeof type === 'function' ? type(attributes) : { type, props: attributes }
 }
 const event = detail => ({ target: 'field', currentTarget: 'field', detail })
+
+for (const browserShim of [false, true]) test(`Copy presets support state/memo-only runtimes (window shim: ${browserShim})`, () => {
+  if (browserShim) globalThis.window = {}
+  try {
+    runtime.configure(h, undefined, {useState: initial => [initial, () => {}], useMemo: factory => factory()})
+    assert.equal(runtime.ButtonCopy({copy:'Value',label:'Copy'}).type, 'a-button')
+    assert.equal(runtime.MenuItemCopy({copy:'Value',label:'Copy'}).type, 'a-menu-item')
+  } finally { if (browserShim) delete globalThis.window }
+})
+
+test('Copy server projections do not invoke a configured layout effect', () => {
+  runtime.configure(h, undefined, {
+    useState: initial => [initial, () => {}], useMemo: factory => factory(),
+    useLayoutEffect: () => {throw new Error('Server invoked layout effect')},
+  })
+  assert.equal(runtime.ButtonCopy({copy:'Value',label:'Copy'}).type, 'a-button')
+  assert.equal(runtime.MenuItemCopy({copy:'Value',label:'Copy'}).type, 'a-menu-item')
+})
 
 test('worker Input projection forwards edits and clear callbacks without lifecycle hooks', () => {
   runtime.configure(h, Symbol.for('fragment'), {})

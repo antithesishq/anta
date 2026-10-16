@@ -85,8 +85,7 @@ function copyDelegation(doc: CopyDocument): CopyDelegation {
   const origins = new WeakMap<Element, PointerOrigin>();
   // Resolve the nearest activatable region before filtering its activation kind.
   // An inner menu item or native control must not activate an ancestor copy.
-  const hostFor = (event: Event) => event.composedPath().find((node) =>
-    (node as Element).matches?.(ANY_HOST)) as Element | undefined;
+  const hostFor = (event: Event) => (event.target as Element | null)?.closest?.(ANY_HOST);
   const preRequest = (event: Event, origin?: PointerOrigin) => {
     const host = hostFor(event);
     if (!host || hostBlocked(host)) return;
@@ -158,14 +157,21 @@ export class ACopyElement extends HTMLElementBase {
   #feedbackTimer?: number;
   #timerView?: Window;
   #delegation?: CopyDelegation;
+  #connectedDocument?: Document;
   #generation = 0;
   #completion?: { current: boolean; origin?: PointerOrigin };
   #animation?: Animation;
   #motion?: { above: string[]; below: string[]; opacity: string[]; easing: string };
+  #reconnectOrigin?: { doc: Document; origin?: PointerOrigin };
 
   connectedCallback() {
     this.#delegation = copyDelegation(this.doc);
+    this.#connectedDocument = this.doc;
     this.#delegation.readers.add(this);
+    if (this.#reconnectOrigin?.doc === this.doc && this.#reconnectOrigin.origin) {
+      this.#delegation.origins.set(this, this.#reconnectOrigin.origin);
+    }
+    this.#reconnectOrigin = undefined;
     this.addEventListener("copydone", this.#onCopyDone);
   }
 
@@ -225,18 +231,22 @@ export class ACopyElement extends HTMLElementBase {
       belowTop = rect.bottom;
     }
 
-    this.#clearFeedback();
-    feedback.showPopover();
     if (!this.#motion) {
       // Literal CSS endpoints avoid shadow keyframe lookup and Firefox var() effects.
       const styles = this.view.getComputedStyle(feedback);
-      this.#motion = {
+      const motion = {
         opacity: [styles.getPropertyValue("--_copy-opacity-from").trim(), styles.getPropertyValue("--_copy-opacity-to").trim()],
         easing: styles.getPropertyValue("--_copy-easing").trim(),
         above: [styles.getPropertyValue("--_copy-above-from").trim(), styles.getPropertyValue("--_copy-above-to").trim()],
         below: [styles.getPropertyValue("--_copy-below-from").trim(), styles.getPropertyValue("--_copy-below-to").trim()],
       };
+      // CSS may still be loading. Do not open unstyled feedback or cache empty
+      // endpoints; a later activation can create the effect once CSS is ready.
+      if (![...motion.opacity, ...motion.above, ...motion.below, motion.easing].every(Boolean)) return;
+      this.#motion = motion;
     }
+    this.#clearFeedback();
+    feedback.showPopover();
     feedback.style.transform = this.#motion.above[1];
     const below = feedback.getBoundingClientRect().top < 0;
     if (below) feedback.style.top = `${belowTop}px`;
@@ -263,11 +273,23 @@ export class ACopyElement extends HTMLElementBase {
     if (this.#feedback?.matches(":popover-open")) this.#feedback.hidePopover();
   }
 
+  adoptedCallback() {
+    this.#animation?.cancel();
+    this.#animation = undefined;
+    this.#motion = undefined;
+    this.#reconnectOrigin = undefined;
+    this.#connectedDocument = undefined;
+  }
+
   disconnectedCallback() {
     this.#generation++;
     this.#clearFeedback();
-    this.#animation = undefined;
-    this.#motion = undefined;
+    // A synchronous DOM move preserves a pending menu pointer request. A real
+    // removal or adoption must not carry its origin into a later connection.
+    const pending = this.#reconnectOrigin = { doc: this.#connectedDocument!, origin: this.#delegation?.origins.get(this) };
+    queueMicrotask(() => {
+      if (this.#reconnectOrigin === pending) this.#reconnectOrigin = undefined;
+    });
     this.#delegation?.origins.delete(this);
     this.#delegation?.readers.delete(this);
     if (this.#delegation?.readers.size === 0) this.#delegation.dispose();

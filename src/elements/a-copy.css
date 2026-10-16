@@ -30,7 +30,6 @@
     background: none;
     overflow: visible;
     pointer-events: none;
-    display: inline-flex;
     align-items: center;
     gap: 4px;
     box-sizing: border-box;
@@ -42,7 +41,7 @@
     white-space: nowrap;
   }
 
-  a-copy::part(feedback):not(:popover-open) {
-    display: none;
+  a-copy::part(feedback):popover-open {
+    display: inline-flex;
   }
 }

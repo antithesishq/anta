@@ -108,14 +108,18 @@ Chrome `135.0.7049.114` created no animation for document keyframes referenced b
 an external part rule. Literal CSS endpoints used by a Web Animation worked in
 that minimum Chrome and current Chrome `155.0.8059.84`, Firefox `155.0`, and
 Playwright WebKit `26.6`. This avoids named-keyframe lookup, duplicate fallback
-effects, and repeated activation-time endpoint probes.
+effects, and repeated endpoint probes after effect creation. The initial setup
+reads and validates the CSS endpoints; feedback waits for a later activation if
+its stylesheet has not applied.
 
 Copy owns document delegation through a shared symbol and releases listeners
 after its last reader disconnects. Each clipboard attempt retains its pointer
 origin. Disconnect cancels feedback and invalidates stale visual completions,
 while `copydone` still reports the clipboard result. Adopted controls resolve
 their clipboard and URL from the owning document. The shared wrapper timer clears
-on unmount, and copy callbacks use the opt-in hydration event helper.
+on browser unmount when the renderer supplies lifecycle hooks; SSR and
+state/memo-only runtimes need no layout hook. Copy callbacks use the opt-in
+hydration event helper.
 
 Verification:
 
@@ -172,6 +176,24 @@ Verification:
   the full source suite now contains 115 cases. All 39 Chromium slow cases and
   eight CI-selection/tier checks passed. Selected PR component suites now run
   together through the existing two-worker runner rather than serial commands.
+- Reviewer follow-up: absent CSS skips visual feedback without caching empty
+  endpoints; re-enabling CSS allows the next activation to show feedback. Only
+  open popovers receive `display: inline-flex`. Retargeted event ownership retains
+  copy controls containing open shadow trees. Same-document reconnection reuses
+  the canceled effect; synchronous moves retain pending pointer origins. Adoption
+  releases the old timeline and motion cache even before a later reconnection.
+  Copy's completion callback is required, and `copyrequest` uses its owning realm.
+- All 145 expanded checks passed in Chrome `155.0.8059.84`, Firefox `155.0`, and
+  WebKit `26.6`, including the 42 original/current visual variants and both
+  old/new import orders (one write and one result in each case). The regular
+  source suite has 133 cases; original comparisons add 12 legacy-order cases.
+  Final adoption cleanup passed 18 focused lifecycle checks across those engines.
+  All 28 shared event, placement, CI-selection, and tier regressions passed.
+  React/React DOM `18.3.1` server-rendered ButtonCopy and MenuItemCopy without
+  warnings; state/memo-only runtime projections passed with and without a window
+  shim. Copy's 13 fast checks, lint, type checking, and documentation checks passed.
+  The final installed package passed all 45 slow checks in Chrome for Testing
+  `135.0.7049.114`, including missing CSS, closed-popover display, and adoption.
 
 Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
 Current Playwright WebKit is engine evidence, not a shipping Safari run.

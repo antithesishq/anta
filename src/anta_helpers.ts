@@ -1,4 +1,4 @@
-import { jsx, useState, useMemo, useLayoutEffect } from "./jsx-runtime"
+import { jsx, useState, useMemo, useOptionalClientLayoutEffect } from "./jsx-runtime"
 import type { IconShape } from "./elements/a-icon.shapes"
 import type { OptionPresentationProps } from "./general_types"
 
@@ -263,7 +263,7 @@ export function useCopyFeedback(
   // jsx-runtime indirection doesn't re-export.
   const box = useMemo(() => ({ timer: undefined as ReturnType<typeof setTimeout> | undefined }), [])
 
-  useLayoutEffect(() => () => clearTimeout(box.timer), [box])
+  useOptionalClientLayoutEffect(() => () => clearTimeout(box.timer), [box])
 
   const handleCopied = (ok: boolean) => {
     clearTimeout(box.timer)

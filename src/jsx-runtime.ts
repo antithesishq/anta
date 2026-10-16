@@ -108,6 +108,11 @@ export function useRef<T>(initial: T): { current: T } {
 export function useLayoutEffect(effect: () => void | (() => void), deps?: unknown[]): void {
   return rendererHook('useLayoutEffect')(effect, deps)
 }
+/** @internal Optional browser cleanup for presets that also support runtimes
+ * without lifecycle hooks. Configure hooks before mounting and keep them stable. */
+export function useOptionalClientLayoutEffect(effect: () => void | (() => void), deps?: unknown[]): void {
+  if (typeof window !== 'undefined') _hooks.useLayoutEffect?.(effect, deps)
+}
 export function useSyncExternalStore<T>(
   subscribe: (onChange: () => void) => () => void,
   getSnapshot: () => T,

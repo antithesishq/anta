@@ -86,11 +86,8 @@ function resolveNodeTarget(el: Element): Element | null {
 
 /** Run a copy `work` promise and announce the outcome (non-bubbling `copydone`,
  *  `detail: { ok }`) so the wrapper can render feedback. */
-function run(el: HTMLElement, work: Promise<boolean>, complete?: (ok: boolean) => void): void {
-  void work.then((ok) => {
-    if (complete) complete(ok)
-    else el.dispatchEvent(new CustomEvent('copydone', { bubbles: false, detail: { ok } }))
-  })
+function run(work: Promise<boolean>, complete: (ok: boolean) => void): void {
+  void work.then(complete)
 }
 
 /** The current page URL, or '' outside a document (SSR). */
@@ -120,7 +117,8 @@ function isTextCopy(el: Element): boolean {
  */
 export function emitCopyRequest(el: HTMLElement): void {
   if (!el.hasAttribute('copy')) return
-  el.dispatchEvent(new CustomEvent('copyrequest', { bubbles: false }))
+  const view = (el.ownerDocument.defaultView ?? globalThis) as Window & typeof globalThis
+  el.dispatchEvent(new view.CustomEvent('copyrequest', { bubbles: false }))
 }
 
 /**
@@ -128,14 +126,14 @@ export function emitCopyRequest(el: HTMLElement): void {
  * `true` if the element is a copy control (so the caller knows the copy path
  * ran); `false` for a plain, non-copy element.
  */
-export function runCopy(el: HTMLElement, complete?: (ok: boolean) => void): boolean {
+export function runCopy(el: HTMLElement, complete: (ok: boolean) => void): boolean {
   const view = (el.ownerDocument.defaultView ?? globalThis) as Window & typeof globalThis
   if (el.hasAttribute('copy-node')) {
     const target = resolveNodeTarget(el)
-    run(el, target ? writeNode(target, view) : Promise.resolve(false), complete)
+    run(target ? writeNode(target, view) : Promise.resolve(false), complete)
     return true
   }
   if (!isTextCopy(el)) return false
-  run(el, writeText(resolveText(el), view), complete)
+  run(writeText(resolveText(el), view), complete)
   return true
 }

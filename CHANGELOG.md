@@ -71,6 +71,7 @@ changes are not listed.
 
 - [Copy feedback](/button/#copy-feedback) loads its default styles from external
   CSS under strict CSP while preserving existing copy inputs and compositions.
+  Copying remains available while its stylesheet loads.
   Disconnecting clears feedback and prevents stale clipboard results
   from reopening it after reconnection.
 

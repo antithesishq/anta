@@ -118,6 +118,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Toaster](/toaster/) preserves countdown progress when an exit reconnects.
+  Reattaching an already-dismissed toast emits completion for its new owner.
+
 - [Toaster's DOM-node content](/toaster/#web-component) clears to `null` when
   its prop is removed. Refilled fragments can be assigned again to replace their
   previous children.

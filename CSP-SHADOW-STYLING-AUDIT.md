@@ -191,6 +191,16 @@ Review follow-up:
   production build, and both Toaster production checks (Chrome/WebKit) passed.
   The broader root/shared suites and original visual comparison above were not
   repeated for this follow-up.
+- A further reconnect fix retains the countdown's exit position off-DOM while
+  cancelling the detached effect, then restores it for the resumed exit. A toast
+  reattached after completion notifies its new connected owner once; repeated
+  dismissal in the same connection remains idempotent. The unused region class
+  was removed without changing the region part or structure.
+  All 18 focused lifecycle checks passed across the same three engines and both
+  import modes, all 24 fast checks passed in current Chrome, and all 52
+  installed-package checks passed in Chrome `135.0.7049.114`. Lint, type checks,
+  and documentation checks passed. Broader source/production suites were not
+  repeated for this reconnect fix.
 
 ### Banner verification
 

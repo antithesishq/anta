@@ -48,6 +48,7 @@ export class AToastElement extends HTMLElementBase {
   #timerView?: Window
   #exitView?: Window
   #countdown?: Animation
+  #exitCountdownTime: Animation['currentTime'] = null
   /** Time left on the auto-dismiss timer (ms), tracked across pause/resume. */
   #remaining = 0
   /** When the current run started, for computing remaining on pause. */
@@ -90,6 +91,12 @@ export class AToastElement extends HTMLElementBase {
     this.#focused = this.matches(':focus-within')
     // A region remount can re-render an entry that's already leaving; honour it.
     if (this.#leaving || this.hasAttribute('leaving')) {
+      // A new connected owner must receive completion even after a prior exit.
+      this.#dismissed = false
+      if (this.#exitCountdownTime != null) {
+        this.#startCountdown(this.#exitCountdownTime)
+        this.#exitCountdownTime = null
+      }
       this.dismiss()
       return
     }
@@ -99,6 +106,7 @@ export class AToastElement extends HTMLElementBase {
   disconnectedCallback() {
     this.#clearTimer()
     this.#clearExitTimer()
+    if (this.#leaving) this.#exitCountdownTime = this.#countdown?.currentTime ?? this.#exitCountdownTime
     this.#countdown?.cancel()
     this.#countdown = undefined
     this.#hovered = false
@@ -129,6 +137,7 @@ export class AToastElement extends HTMLElementBase {
     this.#clearExitTimer()
     this.#leaving = false
     this.#dismissed = false
+    this.#exitCountdownTime = null
     this.#internals?.states?.delete('leaving')
     if (this.isConnected) this.restart()
   }
@@ -190,7 +199,7 @@ export class AToastElement extends HTMLElementBase {
    *  only — the auto-dismiss above is the real JS timer — so it degrades to a
    *  static full bar where custom-property animation is unsupported. Sticky
    *  (`Infinity` duration) runs no countdown; the var stays at its initial 1. */
-  #startCountdown() {
+  #startCountdown(currentTime: Animation['currentTime'] = 0) {
     if (!Number.isFinite(this.#duration)) {
       this.#countdown?.cancel()
       this.#countdown = undefined
@@ -210,7 +219,7 @@ export class AToastElement extends HTMLElementBase {
       } else {
         this.#countdown.effect?.updateTiming({ duration: this.#duration })
       }
-      if (this.#countdown) this.#countdown.currentTime = 0
+      if (this.#countdown) this.#countdown.currentTime = currentTime
       if (this.#paused || this.#leaving) this.#pauseCountdown()
     } catch {
       /* Display-only: animation support must not prevent auto-dismissal. */
@@ -325,7 +334,7 @@ export class AToastElement extends HTMLElementBase {
 
   /** Play the exit (shadow only), then emit a bubbling `dismiss`. The owner
    *  removes the node on that event — the element never removes itself.
-   *  Idempotent. */
+   *  Idempotent within each connection. */
   dismiss() {
     if (this.#exitTimer != null || this.#dismissed) return
     this.#leaving = true

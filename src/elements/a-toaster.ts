@@ -41,7 +41,6 @@ export class AToasterElement extends HTMLElementBase {
     // The popover surface: full-viewport, click-through, top layer. Only the
     // toasts inside opt back into pointer events through the external child rule.
     this.#region = this.doc.createElement('div')
-    this.#region.className = 'region'
     this.#region.setAttribute('part', 'region')
     this.#region.setAttribute('popover', 'manual')
 

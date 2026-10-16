@@ -20,9 +20,10 @@ running them. Banner, Calendar/InputDate, Card, Copy, Expander, Input, Progress,
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
 The CSP suites keep a core case for both granular and full-bundle imports.
-PR CI uses this tier and retains the existing change gates. Shared runtime or
-dependency changes can select several components, but do not run their full
-matrices. Root `pnpm test` regressions are unchanged.
+PR CI uses this tier and retains the existing change gates. Selected component
+suites run together through the shared runner with two test-file workers. Shared
+runtime or dependency changes can select several components, but do not run their
+full matrices. Root `pnpm test` regressions are unchanged.
 
 Slow includes the fast checks, additional cases, all supported test engines, and
 installed-package checks. It runs only when requested. Use the **Component matrix**
@@ -193,9 +194,10 @@ the mixed-build checks pass an explicit shared store.
 Run `pnpm test:copy` for the feedback CSP matrix, or `pnpm test:copy:package`
 for the same checks through an isolated installed npm package. The shared fast
 tier covers both import modes, authored markup, pointer/keyboard activation,
-request/result callbacks, React/Preact SSR/hydration, repeated activation, and
-blocked controls. Slow adds browser engines, lifecycle/adoption, nested ownership,
-compositions, clipboard sources/formats, mixed imports, visuals, and installation.
+request/result callbacks, React/Preact SSR/hydration, async ownership, and blocked
+controls. Slow adds feedback lifetimes and the icon success/failure/reset matrix,
+browser engines, lifecycle/adoption, nested ownership, compositions, clipboard
+sources/formats, mixed imports, visuals, and installation.
 The existing root feedback-placement and code-copy regressions remain in `pnpm test`.
 
 The suite supplies actual CSP response headers, including `style-src-attr 'none'`.

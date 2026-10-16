@@ -166,6 +166,12 @@ Verification:
   implementation and suite are unchanged by that rebase. All 13 Copy fast checks
   and 22 shared event, feedback-placement, and tier regressions passed on the
   combined baseline, along with lint, type checking, and workflow parsing.
+- PR timing review moved repeated feedback lifetimes and the full icon
+  success/failure/reset matrix to the slow tier, retaining 11 fast core cases.
+  Splitting the icon checks from hydration adds cases without removing coverage;
+  the full source suite now contains 115 cases. All 39 Chromium slow cases and
+  eight CI-selection/tier checks passed. Selected PR component suites now run
+  together through the existing two-worker runner rather than serial commands.
 
 Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
 Current Playwright WebKit is engine evidence, not a shipping Safari run.

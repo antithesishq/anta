@@ -134,7 +134,7 @@ test.fast('Copy SSR keeps light DOM authored and emits no feedback or layout sty
 })
 for(const engine of engines)for(const mode of ['granular','bundle']){
   const name=`${engine.name()} ${mode}`
-  test.fast(`${name}: raw pointer activation preserves feedback structure, lifetime, failure, and authored DOM`,async t=>{
+  test.fast(`${name}: raw pointer activation preserves feedback structure, failure, and authored DOM`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page)
     const initial=await page.locator('#mount').innerHTML()
     await page.evaluate(()=>{window.authored=[];new MutationObserver(rs=>authored.push(...rs.map(r=>r.type))).observe(document.querySelector('#mount'),{subtree:true,attributes:true,childList:true,characterData:true})})
@@ -143,10 +143,9 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     assert.deepEqual(await page.locator('a-copy').evaluate(el=>({children:el.shadowRoot.children.length,style:el.shadowRoot.querySelectorAll('style,link').length,popover:el.shadowRoot.firstElementChild.popover,role:el.shadowRoot.firstElementChild.getAttribute('role'),spans:el.shadowRoot.firstElementChild.children.length})),{children:1,style:0,popover:'manual',role:'status',spans:2})
     assert.deepEqual(await page.evaluate(()=>writes),['Value']);assert.deepEqual(await page.evaluate(()=>outcomes.map(x=>x.ok)),[true])
     assert.equal(await page.locator('#mount').innerHTML(),initial);assert.deepEqual(await page.evaluate(()=>authored),[])
-    await shown(page,false);assert.equal((await sample(page)).display,'none')
-    await page.evaluate(()=>window.fail=true);await page.locator('#control').click();await page.waitForFunction(()=>outcomes.length===2);assert.equal(await feedback(page).evaluate(el=>el.matches(':popover-open')),false);assert.deepEqual(await page.evaluate(()=>outcomes.map(x=>x.ok)),[true,false])
+    await mount(page);await page.evaluate(()=>window.fail=true);await page.locator('#control').click();await page.waitForFunction(()=>outcomes.length===2);assert.equal(await page.locator('a-copy').evaluate(el=>!!el.shadowRoot?.querySelector('[popover]')?.matches(':popover-open')),false);assert.deepEqual(await page.evaluate(()=>outcomes.map(x=>x.ok)),[true,false])
   })
-  test.fast(`${name}: repeated activation reuses one effect without endpoint probes and retains pointer pass-through`,async t=>{
+  test(`${name}: repeated activation reuses one effect without endpoint probes and retains pointer pass-through`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page)
     await page.locator('#control').click();await shown(page);await seek(page,450);const mid=await sample(page);assert.ok(mid.opacity>0&&mid.opacity<1)
     await page.evaluate(()=>{window.effect=document.querySelector('a-copy').shadowRoot.querySelector('[popover]').getAnimations()[0];window.styleReads=0;const old=window.getComputedStyle;window.getComputedStyle=(el,...rest)=>{if(el.part?.contains('feedback'))styleReads++;return old.call(window,el,...rest)}})
@@ -154,9 +153,9 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     assert.equal(await feedback(page).evaluate(el=>el.getAnimations()[0]===window.effect),true);assert.equal((await sample(page)).effects,1);assert.equal(await page.evaluate(()=>styleReads),1,'Only the test sample reads styles after activation')
     const point=await feedback(page).evaluate(el=>{const r=el.getBoundingClientRect();const under=document.createElement('button');under.textContent='Under feedback';Object.assign(under.style,{position:'fixed',left:`${r.x}px`,top:`${r.y}px`,width:`${r.width}px`,height:`${r.height}px`,margin:'0',padding:'0'});under.addEventListener('click',()=>window.underClicks=(window.underClicks??0)+1);document.body.append(under);return {x:r.x+r.width/2,y:r.y+r.height/2}})
     await page.mouse.click(point.x,point.y);assert.equal(await page.evaluate(()=>underClicks),1);assert.equal(await page.evaluate(()=>writes.length),2)
-    await page.waitForTimeout(450);assert.equal(await feedback(page).evaluate(el=>el.matches(':popover-open')),true);await shown(page,false)
+    await page.waitForTimeout(450);assert.equal(await feedback(page).evaluate(el=>el.matches(':popover-open')),true);await shown(page,false);assert.equal((await sample(page)).display,'none')
   })
-  for(const framework of ['React','Preact'])test.fast(`${name} ${framework}: real SSR hydrates without replacement; callbacks, controlled refresh, and icon feedback update`,async t=>{
+  for(const framework of ['React','Preact'])test.fast(`${name} ${framework}: real SSR hydrates without replacement; callbacks and controlled refresh update`,async t=>{
     const page=await pageFor(t,engine,mode,`&ssr&framework=${framework}`);await register(page,mode)
     await page.evaluate(()=>{window.originalCopy=document.querySelector('a-copy');window.originalControl=document.querySelector('a-button')})
     await page.evaluate(framework=>import(`/${framework}.js`),framework);await page.evaluate(()=>hydrateCopy());await page.waitForTimeout(80)
@@ -166,15 +165,18 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await page.waitForFunction(()=>reports.some(r=>r[0]==='second'&&r[1]===true));assert.deepEqual(await page.evaluate(()=>writes),['Initial','Refreshed'])
     assert.equal((await sample(page)).label,'✓Saved');assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
     assert.equal(await page.evaluate(()=>originalCopy===document.querySelector('a-copy')&&originalControl===document.querySelector('a-button')),true)
-    await page.evaluate(()=>renderCopy({iconPlacement:'leading'}));await page.waitForFunction(()=>document.querySelector('a-icon'))
-    await page.locator('a-button').click();await page.waitForFunction(()=>document.querySelector('a-icon').getAttribute('shape')==='check')
-    await page.evaluate(()=>window.fail=true);await page.locator('a-button').click();await page.waitForFunction(()=>document.querySelector('a-icon').getAttribute('shape')==='x')
-    await page.waitForFunction(()=>document.querySelector('a-icon').getAttribute('shape')==='copy')
     await page.evaluate(()=>renderCopy({onCopied:undefined,onCopyRequest:undefined}));await page.waitForTimeout(40);const count=await page.evaluate(()=>reports.length)
     await page.locator('a-button').click();await page.waitForTimeout(40);assert.equal(await page.evaluate(()=>reports.length),count)
     await page.evaluate(()=>{window.fail=false;renderDynamicCopy()});await page.waitForTimeout(80)
     await page.locator('a-button').hover();await page.mouse.down();await page.waitForFunction(()=>document.querySelector('a-copy').getAttribute('copy')==='Dynamic 1');await page.mouse.up()
     await page.waitForFunction(()=>writes.at(-1)==='Dynamic 1');await page.locator('a-button').focus();await page.keyboard.down('Enter');await page.waitForFunction(()=>document.querySelector('a-copy').getAttribute('copy')==='Dynamic 2');await page.keyboard.up('Enter');await page.waitForFunction(()=>writes.at(-1)==='Dynamic 2')
+  })
+  for(const framework of ['React','Preact'])test(`${name} ${framework}: icon feedback shows success, failure, and returns to its resting state`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode);await page.evaluate(framework=>import(`/${framework}.js`),framework)
+    await page.evaluate(()=>renderCopy({iconPlacement:'leading'}));await page.waitForFunction(()=>document.querySelector('a-icon'))
+    await page.locator('a-button').click();await page.waitForFunction(()=>document.querySelector('a-icon').getAttribute('shape')==='check')
+    await page.evaluate(()=>window.fail=true);await page.locator('a-button').click();await page.waitForFunction(()=>document.querySelector('a-icon').getAttribute('shape')==='x')
+    await page.waitForFunction(()=>document.querySelector('a-icon').getAttribute('shape')==='copy')
   })
   test.fast(`${name}: copyrequest refreshes value before pointer and keyboard activation; blocked controls do not copy`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page)

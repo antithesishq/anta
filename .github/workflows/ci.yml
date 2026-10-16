@@ -235,61 +235,20 @@ jobs:
           # The debounce case races the browser clock during setup.
           NODE_OPTIONS: >-
             --test-skip-pattern="^debounces typing, keeps previous matches, and shows activity only in the input$"
-      - name: Test InputTime CSP and editing
-        if: steps.component-tests.outputs.input-time == 'true'
-        run: pnpm test:components --component input-time
+      - name: Test selected components
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Calendar and InputDate
-        if: steps.component-tests.outputs.calendar == 'true'
-        run: pnpm test:components --component calendar
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Card CSP and initial layout
-        if: steps.component-tests.outputs.card == 'true'
-        run: pnpm test:components --component card
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Text CSP, expansion, and initial layout
-        if: steps.component-tests.outputs.text == 'true'
-        run: pnpm test:components --component text
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Progress CSP and initial layout
-        if: steps.component-tests.outputs.progress == 'true'
-        run: pnpm test:components --component progress
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Banner CSP, dismissal, and initial layout
-        if: steps.component-tests.outputs.banner == 'true'
-        run: pnpm test:components --component banner
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Toaster CSP, placement, countdown, and hydration
-        if: steps.component-tests.outputs.toaster == 'true'
-        run: pnpm test:components --component toaster
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Expander CSP, disclosure behavior, and initial layout
-        if: steps.component-tests.outputs.expander == 'true'
-        run: pnpm test:components --component expander
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Tooltip CSP and interaction
-        if: steps.component-tests.outputs.tooltip == 'true'
-        run: pnpm test:components --component tooltip
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Input CSP, forms, and sizing
-        if: steps.component-tests.outputs.input == 'true'
-        run: pnpm test:components --component input
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-      - name: Test Copy component
-        if: steps.component-tests.outputs.copy == 'true'
-        env:
-          CAPTURE_TEST_BROWSER_CHANNEL: chrome
-        run: pnpm test:components --component copy
+          COMPONENT_TEST_SELECTION: ${{ toJSON(steps.component-tests.outputs) }}
+        run: |
+          components=$(node --input-type=module -e '
+            import { componentSuites } from "./tests/component-suites.mjs";
+            const selection = JSON.parse(process.env.COMPONENT_TEST_SELECTION);
+            process.stdout.write(Object.keys(componentSuites)
+              .filter(name => selection[name] === "true").join(","));
+          ')
+          if [ -n "$components" ]; then
+            pnpm test:components --component "$components"
+          fi
 
       - name: Typecheck stickers
         run: pnpm --filter @antadesign/stickers run typecheck

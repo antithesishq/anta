@@ -5,6 +5,11 @@ changes are not listed.
 
 ## Unreleased
 
+### Fixed
+
+- [Calendar](/calendar/) centers unbounded year menus on the displayed year,
+  including dates supplied through `value` and `defaultValue`.
+
 ### Breaking
 
 - [Browser hydration](/install-config/#browser-hydration) requires

@@ -715,8 +715,14 @@ export interface ASwitchAttributes extends BaseAttributes {
  * field whose real `<input>` / `<textarea>` lives in shadow DOM. For the
  * typed JSX wrapper use `Input` from `@antadesign/anta`.
  *
- * Slots (light-DOM children): `label`, `leading`, `trailing`, `hint`.
- * The element exposes `::part(field | input | label | leading | trailing | hint)`
+ * Slots (light-DOM children): `label`, `leading`, `clear`, `trailing`, `hint`.
+ * Direct trailing buttons and buttons-only `<a-input-trailing slot="trailing">`
+ * groups use compact spacing. Other wrappers keep the text inset. Override
+ * either inset with the `--input-trailing-inset` CSS property. Anta buttons
+ * fit the field height and keep their padding. Mark a raw icon-only action with
+ * `data-anta-icon-only` for a square box; unmarked content keeps its natural width.
+ * Other controls keep their own sizing.
+ * The element exposes `::part(field | input | label | leading | clear | trailing | hint)`
  * for styling, and `:state(filled)` / `:state(invalid)` as CSS hooks.
  */
 export interface AInputAttributes extends BaseAttributes {
@@ -1389,7 +1395,9 @@ export interface ATabpanelAttributes extends BaseAttributes {
 
 /** Surface attributes for the CSS-only `<a-card>` tag. Its `a-card-*` children
  * define the layout. Put navigation attributes and link ARIA on a native `<a>`
- * directly under `a-card`, wrapping its media and content. The JSX `Card` wrapper emits this structure. */
+ * directly under `a-card`, marked with `data-anta-card-link`. Its
+ * `a-card-layout` child groups media and content. The JSX `Card` wrapper emits
+ * this structure. */
 export interface ACardAttributes extends BaseAttributes {
   /** Semantic tone, or any literal CSS color for a one-off custom tone. Named tones
    *  re-point the surface + text; a custom color keeps its hue with lightness/chroma

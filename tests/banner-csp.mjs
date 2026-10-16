@@ -84,6 +84,7 @@ before(async () => {
       stdin: { contents: `
         import React from 'react'
         ${componentImports}
+        import {configure} from '${consumerRoot ? '@antadesign/anta' : source+'/index'}'
         ${react ? "import {createRoot, hydrateRoot} from 'react-dom/client'" : "import {render, hydrate} from 'preact'"}
         ${factory}
         ${react ? 'let root' : ''}
@@ -98,6 +99,7 @@ before(async () => {
           ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(app(props))" : "render(app(props), document.querySelector('#mount'))"}
         }
         window.hydrateBanner = props => {
+          configure(React.createElement,React.Fragment,React,{hydratingEvents:true})
           window.bannerProps = props
           ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError: error => window.recoverableErrors.push(error.message)})" : "hydrate(app(props), document.querySelector('#mount'))"}
         }

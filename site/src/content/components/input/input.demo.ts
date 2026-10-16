@@ -5,14 +5,18 @@
  */
 export default `import { Input, Icon } from '@antadesign/anta'
 
-<Input
-  label="Search"
-  autoComplete="off"
-  placeholder="Search the docs…"
-  hint="Press Enter to search."
-  leading={<Icon shape="search" />}
-  clearable
-  dimActions
-  defaultValue="design tokens"
-/>
+function Demo() {
+  return (
+    <Input
+      label="Search"
+      autoComplete="off"
+      placeholder="Search the docs…"
+      hint="Press Enter to search."
+      leading={<Icon shape="search" />}
+      clearable
+      dimActions
+      defaultValue="design tokens"
+    />
+  )
+}
 `

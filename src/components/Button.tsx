@@ -237,6 +237,7 @@ export const Button = ({
     // own `aria-label` (via ...rest) wins by spread order — that's the channel
     // ButtonCopy uses to name an icon-only copy button "Copy".
     'aria-label': isIconOnly ? icon : undefined,
+    'data-anta-icon-only': isIconOnly ? '' : undefined,
     class: className,
     style: computedStyle,
     onClick: unavailable ? undefined : onClick,

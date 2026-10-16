@@ -53,6 +53,7 @@ jobs:
             echo 'progress=true' >> "$GITHUB_OUTPUT"
             echo 'expander=true' >> "$GITHUB_OUTPUT"
             echo 'banner=true' >> "$GITHUB_OUTPUT"
+            echo 'input=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -64,7 +65,7 @@ jobs:
             'src/elements/a-calendar.*' 'src/elements/a-input*' \
             'src/elements/a-button.*' 'src/elements/a-menu*' \
             'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
-            src/{calendar-core,jsx-runtime,anta_helpers,general_types,index}.ts \
+            src/{calendar-core,jsx-runtime,native-event-props,anta_helpers,general_types,index}.ts \
             src/elements/{index,key-activation,shadow-aria,focus,copy-behavior}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             tests/calendar-controlled.mjs .github/workflows/ci.yml \
@@ -78,7 +79,7 @@ jobs:
             'src/elements/a-card.*' \
             src/components/Card.tsx src/components/Title.tsx src/components/Text.tsx src/components/Icon.tsx \
             'src/elements/a-title.*' 'src/elements/a-text.*' 'src/elements/a-icon*' \
-            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/card-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
             'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
@@ -90,7 +91,7 @@ jobs:
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-text.*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' \
             src/components/{Text,Tooltip}.tsx \
-            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
             src/elements/{index,key-activation}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/text-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
@@ -102,7 +103,7 @@ jobs:
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-progress*' src/components/Progress.tsx \
-            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/progress-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
             'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
@@ -114,7 +115,7 @@ jobs:
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-banner.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
             src/components/{Banner,Button,Icon}.tsx \
-            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
             src/elements/{index,key-activation}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/banner-csp*' tests/banner-package.mjs tests/consumers/templates/nextjs/package.json \
@@ -128,7 +129,7 @@ jobs:
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-expander.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
             src/components/{Expander,Button,Icon}.tsx \
-            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts src/elements/{index,key-activation}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts src/elements/{index,key-activation}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/expander-*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -142,7 +143,7 @@ jobs:
             'src/elements/a-tooltip.*' 'src/elements/a-text.*' 'src/elements/a-button.*' \
             'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-tab*' \
             src/components/{Tooltip,Text,Button,Steps,Tabs,Select,SelectFaceted,Menu,MenuItem,Input}.tsx \
-            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
             src/elements/{index,key-activation,shadow-aria}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'src/elements/a-steps.*' 'src/elements/a-select*' \
@@ -154,6 +155,21 @@ jobs:
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
           else
             echo 'tooltip=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-input*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
+            'src/elements/a-menu*' 'src/elements/a-calendar.*' 'src/elements/a-select*' \
+            src/components/{Input,InputDate,InputAutocomplete,Select,SelectFaceted,Button,Tooltip,Menu,Icon}.tsx \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/elements/{index,key-activation,shadow-aria}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/input-*' tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'input=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'input=false' >> "$GITHUB_OUTPUT"
           fi
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
@@ -205,6 +221,11 @@ jobs:
       - name: Test Tooltip CSP and interaction
         if: steps.component-tests.outputs.tooltip == 'true'
         run: pnpm test:components --component tooltip
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Test Input CSP, forms, and sizing
+        if: steps.component-tests.outputs.input == 'true'
+        run: pnpm test:components --component input
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Typecheck stickers

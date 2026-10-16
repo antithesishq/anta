@@ -116,7 +116,7 @@ for (const engine of engines) {
     assert.equal(await textarea.evaluate(el => el.style.getPropertyValue('field-sizing')),
       engine === chromium ? 'content' : 'fixed')
     const initial = await textarea.evaluate(el => ({ width: el.clientWidth, height: el.clientHeight }))
-    await textarea.evaluate(el => el.style.lineHeight = '40px')
+    await page.addStyleTag({ content: '#growing::part(input) { line-height: 40px; }' })
     if (engine === webkit) await page.locator('#growing').evaluate(el => el.value = el.value)
     await page.waitForFunction(height => {
       const ta = document.getElementById('growing').shadowRoot.querySelector('textarea')

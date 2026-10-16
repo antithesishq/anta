@@ -265,14 +265,17 @@ import '@antadesign/anta/elements/a-title'
 Rendering a JSX wrapper does not register its browser element. Raw `<a-*>`
 markup uses the same browser entries and can omit the JSX wrappers.
 For a custom JSX runtime, call `configure()` in the process or thread that
-renders the wrappers; see [Framework setup](#framework-setup).
+renders the wrappers; see [Framework setup](#framework-setup). Worker renderers
+receive native event subscriptions in the first projection. The browser listener
+workaround does not delay worker subscriptions or require access to UI-thread DOM.
 
 ## Framework setup
 
 ### React
 
-React needs no `configure()` call. Load the JavaScript and CSS entries for your
-chosen import strategy before rendering.
+Client-rendered React apps need no `configure()` call. Load the JavaScript and CSS
+entries for your chosen import strategy before rendering. If your app hydrates
+server-rendered HTML, enable [browser hydration](#browser-hydration).
 
 ### Next.js
 
@@ -294,11 +297,13 @@ Import the runtime and JSX wrappers in a Client Component:
 // app/page.tsx
 'use client'
 
-import { useState } from 'react'
-import { Button, Title } from '@antadesign/anta/bundle'
+import * as React from 'react'
+import { Button, Title, configure } from '@antadesign/anta/bundle'
+
+configure(React.createElement, React.Fragment, React, { hydratingEvents: true })
 
 export default function Page() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = React.useState(0)
   return <>
     <Title>Anta in Next.js</Title>
     <Button label={`Count: ${count}`} onClick={() => setCount(value => value + 1)} />
@@ -310,6 +315,7 @@ Next.js prerenders Client Components on the server for the initial page load.
 `'use client'` marks the client/server module boundary; it does not disable
 server rendering. Anta guards element registration when browser APIs are absent
 and registers the elements when the client module runs before hydration.
+The configuration enables the event-prop workaround for that hydration.
 
 For granular usage, replace the layout's bundle stylesheet with shared tokens
 and the optional reset:
@@ -326,10 +332,12 @@ Keep the same page component and replace its imports with:
 // app/page.tsx
 'use client'
 
-import { useState } from 'react'
+import * as React from 'react'
 import '@antadesign/anta/elements/a-button'
 import '@antadesign/anta/elements/a-title'
-import { Button, Title } from '@antadesign/anta'
+import { Button, Title, configure } from '@antadesign/anta'
+
+configure(React.createElement, React.Fragment, React, { hydratingEvents: true })
 ```
 
 Both setups work with Next.js's default Turbopack bundler.
@@ -337,8 +345,9 @@ Both setups work with Next.js's default Turbopack bundler.
 ### Preact with compat
 
 If your bundler aliases `react` to `preact/compat`, Anta needs no `configure()`
-call. Load the entries for your chosen import strategy. The Vite Preact preset
-provides these runtime aliases.
+call for client rendering. Load the entries for your chosen import strategy.
+The Vite Preact preset provides these runtime aliases. For server-rendered HTML,
+enable [browser hydration](#browser-hydration).
 
 ### Preact without compat
 
@@ -349,19 +358,96 @@ to `configure()` before rendering Anta components. For full bundle usage:
 import '@antadesign/anta/bundle.css'
 import { configure } from '@antadesign/anta/bundle'
 import { h, Fragment } from 'preact'
-import { useState, useId, useMemo, useRef, useLayoutEffect } from 'preact/hooks'
+import * as hooks from 'preact/hooks'
 import { useSyncExternalStore } from 'preact/compat'
 
-configure(h, Fragment, {
-  useState, useId, useMemo, useRef, useLayoutEffect, useSyncExternalStore,
-})
+configure(h, Fragment, { ...hooks, useSyncExternalStore })
 ```
+
+Pass the hooks object as a whole. It replaces the previous renderer's hooks;
+missing hooks report an error when used. React's hooks are the default when no
+object is supplied. The extra `useSyncExternalStore` export supports components
+that subscribe to external stores.
 
 Import JSX wrappers from `@antadesign/anta/bundle` with this setup. For granular
 usage, import both `configure` and the wrappers from `@antadesign/anta` and load
 the UI entries separately. The root package and the prebuilt bundle each have
 their own renderer configuration, so use `configure` from the same entry as
 your wrappers. The explicit `preact/compat` hook import does not require an alias.
+
+### Browser hydration
+
+When your browser app hydrates server-rendered HTML, set `hydratingEvents: true`
+before mounting Anta components:
+
+```ts
+import * as React from 'react'
+import { configure } from '@antadesign/anta/bundle'
+
+configure(React.createElement, React.Fragment, React, {
+  hydratingEvents: true,
+})
+```
+
+This lets Input, Banner, Expander, and expandable Text attach their native event
+handlers after the first browser commit. With `false` or no option, handlers
+pass through immediately without a listener setup effect or extra mount render.
+Client-only apps use that default without configuration.
+
+Use `configure` from the same entry as your wrappers: `@antadesign/anta` or
+`@antadesign/anta/bundle`. For Preact without compat aliases, pass its factory
+and hooks with the same fourth argument. Configure each rendering process or
+thread separately. Servers and workers without `window` forward immediately,
+even when this option is enabled.
+
+Keep the option unchanged while components are mounted. If any root using that
+package entry hydrates server HTML, enable it before mounting any root. Each
+`configure()` call resets an omitted option to `false`, so later setup calls must
+preserve `hydratingEvents: true`. Next.js Client Components still hydrate on the
+initial page load; `'use client'` does not make an app client-only.
+
+### Astro
+
+For hydrated React or Preact islands, configure Anta before Astro hydrates them.
+Use Astro's `before-hydration` script stage in an integration:
+
+```js
+// astro.config.mjs: add to integrations alongside your React or Preact integration
+{
+  name: 'anta-hydration',
+  hooks: {
+    'astro:config:setup': ({ injectScript }) => {
+      injectScript('before-hydration', `
+        import * as React from 'react';
+        import { configure } from '@antadesign/anta/bundle';
+        configure(React.createElement, React.Fragment, React, {
+          hydratingEvents: true,
+        });
+      `)
+    },
+  },
+}
+```
+
+This example uses full bundle wrappers. For granular wrappers, use
+`@antadesign/anta` instead and load browser elements separately. Import
+`bundle.css` in your layout for the full bundle. Preact requires the
+`@astrojs/preact` integration's `compat: true` setting for this example.
+Static markup and `client:only` islands do not need the hydration option.
+
+### Custom renderer events
+
+Worker renderers receive event subscriptions in their first projection by
+default, including renderers with a `window` shim:
+
+```ts
+configure(h, Fragment, hooks)
+```
+
+Pass the runtime's hooks object as a whole. You do not need to opt into browser
+hydration for worker projections. If shared setup previously enabled it, pass
+`{ hydratingEvents: false }` as the fourth argument before mounting the worker
+UI.
 
 ### TypeScript: typing raw `<a-*>` tags in JSX
 

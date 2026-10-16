@@ -1,6 +1,7 @@
 import type { ATextAttributes, BaseProps, TextPresentation } from "../general_types"
 import { lineClamp, nativeStateChange, neutralToneAttr, toneStyle } from "../anta_helpers"
-import { useLayoutEffect, useMemo, useState } from '../jsx-runtime'
+import { useMemo, useState } from '../jsx-runtime'
+import { useNativeEventProps } from '../native-event-props'
 import { Tooltip } from "./Tooltip"
 
 /** Expansion requires `truncate`. `expandableInert` and `collapsible` require
@@ -65,17 +66,14 @@ export type TextProps = BaseProps & {
 
 function ExpandableText({ attributes, children, expandableInert }: { attributes: ATextAttributes; children: React.ReactNode; expandableInert?: boolean }) {
   const [presentation, setPresentation] = useState<TextPresentation>({ expanded: false, overflowing: false })
-  const [listening, setListening] = useState(false)
-  // React hydration does not attach custom event props until they change.
-  // This state-only commit installs the listener without reading the app DOM.
-  useLayoutEffect(() => setListening(true), [])
   const onPresentation = useMemo(() => (input: Parameters<NonNullable<ATextAttributes['ontextpresentationchange']>>[0]) => {
     const { detail, isOwn } = nativeStateChange(input)
     if (!isOwn || !detail) return
     setPresentation(previous => previous.expanded === detail.expanded && previous.overflowing === detail.overflowing ? previous : detail)
   }, [])
+  const eventProps = useNativeEventProps({ ontextpresentationchange: onPresentation })
   return (
-    <a-text {...attributes} expandable-inert={expandableInert ? '' : undefined} ontextpresentationchange={listening ? onPresentation : undefined}>
+    <a-text {...attributes} expandable-inert={expandableInert ? '' : undefined} {...eventProps}>
       <a-button role="button" tabIndex={0} priority="quaternary" paddingless="" />
       {/* Native inert is a boolean property; React 19 assigns it directly. */}
       <a-text-content inert={Boolean(expandableInert && presentation.overflowing && !presentation.expanded)}>{children}</a-text-content>

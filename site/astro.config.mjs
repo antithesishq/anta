@@ -59,8 +59,23 @@ export default defineConfig({
   build: { inlineStylesheets: 'never' },
   integrations: [
     // compat:true aliases react / react-dom → preact/compat so Anta's JSX
-    // wrappers (typed against React) run under Preact without calling configure().
+    // wrappers (typed against React) use the same Preact runtime as islands.
     preact({ compat: true }),
+    {
+      name: 'anta-hydration',
+      hooks: {
+        'astro:config:setup': ({ injectScript }) => {
+          // Both entries are used by site islands and have separate configuration.
+          injectScript('before-hydration', `
+            import * as React from 'react';
+            import { configure } from '@antadesign/anta';
+            import { configure as configureBundle } from '@antadesign/anta/bundle';
+            configure(React.createElement, React.Fragment, React, { hydratingEvents: true });
+            configureBundle(React.createElement, React.Fragment, React, { hydratingEvents: true });
+          `)
+        },
+      },
+    },
     astroExpressiveCode(),
     mdx({ optimize: true }),
     sitemap({ filter: (page) => !page.endsWith('/theme-preview/') }),

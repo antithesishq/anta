@@ -1,13 +1,15 @@
 {
   "name": "@antadesign/anta",
   "version": "0.3.34",
+  "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
     "docs",
-    "NOTICES.md"
+    "NOTICES.md",
+    "theme-antithesis-license.md"
   ],
   "packageManager": "pnpm@10.11.1",
   "exports": {
@@ -86,6 +88,8 @@
     "prepack": "pnpm run build:docs",
     "test:fuzz_component": "node tests/pbt/run.ts",
     "test:consumers": "node tests/consumers/run.mjs",
+    "test:input": "node --test tests/input-csp.mjs",
+    "test:input:package": "node tests/input-package.mjs",
     "test:tooltip": "node --test tests/tooltip-csp.mjs",
     "test:tooltip:package": "node tests/tooltip-package.mjs",
     "test:text": "node --test tests/text-csp.mjs"

@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 14, 2026 on `codex/tooltip-external-css`.
+Updated October 15, 2026 on `codex/input-external-css`.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -52,8 +52,10 @@ and verification before moving to the next component.
    `bubble` part rules. Positioning, interaction, proximity, and timers stay in
    the element; coordination and observation belong to the connected document.
    No injected stylesheet or authored host/light-DOM rewriting.
-4. [ ] [Input](src/elements/a-input.ts): input, textarea, and button modes;
-   native controls, adornments, focus, labels, and hints.
+4. [x] [Input](src/elements/a-input.ts): external defaults implemented for the
+   existing input, textarea, button, and slots. Source, installed-package,
+   visual, form, and hydration checks pass in current engines. Chrome 135's
+   native number buttons are an accepted difference; see Input verification.
 5. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
    adornments, and native-field semantics.
 6. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
@@ -277,6 +279,73 @@ varies at the supported minimums. These existing animation enhancements remain
 progressive; this change adds no replacement animation. Custom JSX values that
 serialize style attributes, including custom `round` values, remain a separate
 CSP constraint.
+
+### Input verification
+
+October 15 follow-up: action spacing is now a component default in `a-input.css`.
+Clear and trailing icon buttons measure 20/24/28px in 24/28/32px fields. Clear
+slots have 2px padding, and trailing button groups have 2px end padding. The preview has no spacing classes
+or CSS overrides. New CSP checks cover all sizes, direct and wrapped clear
+controls, multiline alignment, RTL, static adornments, and empty slots.
+All 121 source and 121 installed-package checks pass in the three current
+engines, along with the existing 44 Input regressions. Both new inset checks
+also pass in Chrome for Testing `135.0.7049.114`. The trailing-icon sizing
+follow-up reran all 17 fast source and 17 fast installed-package checks, six
+action-layout checks across current engines, and both Chrome 135 checks. The
+layout cases also verify that labeled buttons keep their authored size.
+
+Verified October 14, 2026 on `codex/input-external-css`:
+
+- All 115 source checks and 115 installed-package checks passed in Chrome
+  `155.0.8059.40`, Firefox `155.0`, and Playwright WebKit `26.6`. Both full and
+  granular imports, React/Preact SSR and node-preserving hydration, forms,
+  pointer/keyboard/touch, autogrow, ownership, reconnection, adoption, labels,
+  hints, popup references, and both independent build orders are covered.
+- CSP is supplied through HTTP response headers with same-origin scripts and
+  styles, `style-src-attr 'none'`, and data images for masks. Input-only cases
+  have no violations. Runtime textarea height and field measurement are checked
+  through computed sizes under that policy, including a forced fallback path.
+- Compared 16 registered variants against `56eafcdd` in all three engines and
+  both import modes. All 96 geometry, typography, and appearance comparisons
+  matched. The slow matrix saves screenshots and metrics in
+  `tests/.test-output/input`. WebKit uses a separate permissive capture context;
+  behavioral and computed-style checks retain CSP.
+- The existing 44 Input accessibility, priority, and autosizing regressions pass.
+  All 321 selected root regressions passed with CI's existing debounce exclusion,
+  and all 100 shared fast component checks passed. Anta lint/type checking,
+  sticker and Plot type checks, site CSS lint, workflow parsing, documentation
+  review-marker checks, the Node `24.15.0` production build, and all 10 production
+  checks passed. Production password, validation, and clear-cancellation demos
+  passed in Chrome and WebKit.
+- Chrome for Testing `135.0.7049.114` passed the initial 39 installed-package
+  checks. An added native-spinner interaction probe then exposed a regression:
+  the original shadow reset hides its number spinner, while the external part
+  rule does not. `appearance: none`, `appearance: textfield`, and separate part
+  rules for display, visibility, opacity, pointer events, and width did not
+  suppress its native spinner. On October 15, the user accepted that older-engine
+  difference to keep all defaults external. The regression check explicitly
+  expects native number buttons in Chrome 135 and still checks keyboard stepping,
+  value handling, and the remaining native control behavior. No shadow fallback
+  is included, and this decision does not change the package's browser baseline.
+  All 39 installed-package checks pass with that explicit expectation, and both
+  original/current native-control comparisons pass in Chrome 135.
+- Native-decoration comparisons confirm Firefox's number spinner was present in
+  the original and remains present. Current Chrome and WebKit suppress it.
+  Keyboard incrementing, raw search decoration suppression, password type
+  changes, and native-dialog autofocus pass in current engines. Composition
+  events are covered; operating-system IME, autofill, and password-manager flows
+  were not manually exercised.
+- Menu-dependent compositions retain Menu's existing blocked shadow stylesheet.
+  Input introduces no shadow sheet, and its native field styling and popup
+  references are checked independently. InputTime remains a separate refactor.
+  Browser Input hydration uses a state-only commit through configured hooks;
+  server and worker projections stay pure, and callback changes retain the
+  native control and uncontrolled value.
+
+Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
+Playwright WebKit is engine evidence, not a shipping Safari run. Existing
+pre-upgrade skeleton behavior and motion are retained. Custom tone, radius, and
+application style props can still serialize CSP-blocked style attributes.
 
 ## Scope and conclusion
 

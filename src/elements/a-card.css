@@ -132,7 +132,7 @@
   /* Hover — gated so it doesn't stick after a tap. */
   @media (hover: hover) and (pointer: fine) {
     /* Background lift, link cards only. */
-    a-card:has(> a):not([loading]):hover {
+    a-card:has(> a[data-anta-card-link]):not([loading]):hover {
       background: oklch(from var(--card-bg) calc(l + var(--card-bg-hover-lift)) c h);
     }
     /* Edge steps up one level on hover (any non-loading card). */
@@ -143,7 +143,7 @@
   /* A pressed LINK card settles its edge back to the rest color — only link cards
      have a meaningful active state. Higher specificity than the hover rule above,
      so it wins while the card is both hovered and active. */
-  a-card:has(> a):not([loading]):active {
+  a-card:has(> a[data-anta-card-link]):not([loading]):active {
     box-shadow: 0 0 0 1px var(--card-border), var(--card-selection-shadow);
   }
 
@@ -151,10 +151,9 @@
     a-card { transition: none; }
   }
 
-  a-card > a {
-    display: flex;
+  a-card > a[data-anta-card-link] {
+    display: block;
     flex: 1 1 auto;
-    flex-direction: var(--card-direction, column);
     box-sizing: border-box;
     width: 100%;
     height: 100%;
@@ -165,9 +164,19 @@
     -webkit-user-drag: none;
     user-select: none;
   }
-  a-card > a:focus-visible {
+  a-card > a[data-anta-card-link]:focus-visible {
     outline: none;
     box-shadow: inset 0 0 0 1px transparent, inset 0 0 0 2px var(--focus-ring);
+  }
+  /* Native anchor display rules must not determine the media/content layout. */
+  a-card > a[data-anta-card-link] > a-card-layout {
+    display: flex;
+    flex-direction: var(--card-direction, column);
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
   }
   a-card-media { display: block; flex: var(--card-media-flex, 0 1 auto); }
 
@@ -338,9 +347,9 @@
       border: 1px solid CanvasText;
       box-shadow: none;
     }
-    a-card:has(> a) { border-color: LinkText; }
+    a-card:has(> a[data-anta-card-link]) { border-color: LinkText; }
     a-card[selected],
-    a-card > a:focus-visible {
+    a-card > a[data-anta-card-link]:focus-visible {
       outline: 2px solid Highlight;
       outline-offset: -3px;
       box-shadow: none;

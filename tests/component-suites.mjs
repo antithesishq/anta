@@ -1,4 +1,5 @@
 export const componentSuites = {
+  input: { tests: ['tests/input-csp.mjs'], slow: ['tests/input-package.mjs'] },
   banner: { tests: ['tests/banner-csp.mjs'], slow: ['tests/banner-package.mjs'] },
   calendar: { tests: ['tests/calendar-controlled.mjs'] },
   expander: { tests: ['tests/expander-csp.mjs'], slow: ['tests/expander-package.mjs'] },

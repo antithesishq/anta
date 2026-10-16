@@ -7,6 +7,20 @@ changes are not listed.
 
 ### Breaking
 
+- [Browser hydration](/install-config/#browser-hydration) requires
+  `configure(h, Fragment, hooks, { hydratingEvents: true })` before mounting.
+  Client-only apps and worker renderers forward event handlers immediately by
+  default, without listener setup hooks or an extra mount render.
+
+- [Custom renderer configuration](/install/#preact-without-compat) replaces the
+  hooks object as a whole. Pass your runtime's hooks rather than selecting a few;
+  missing hooks report an error instead of using another renderer's hooks.
+
+- The [Antithesis theme](/theming/) is copyright Antithesis Operations LLC and
+  now has a separate license. Noncommercial use is free; commercial use requires
+  prior written permission. Earlier MIT-licensed copies keep their original terms.
+  Antune and the default styles remain MIT licensed.
+
 - [Expander raw markup](/expander/#web-component) uses named regions instead of
   slot attributes. Put `level` on `a-expander-summary`, select built-in artwork
   with `a-expander-indicator shape="chevron"`, and place that region before the
@@ -26,8 +40,9 @@ changes are not listed.
   raw HTML users must update their markup using the linked example.
 
 - [Card markup](/card/#migrate-from-shadow-parts) uses light-DOM `a-card-*`
-  regions. JSX props remain available; raw slot markup and `::part()` overrides
-  need migration. `ACardElement` and `register_a_card` are removed.
+  regions. Raw link Cards use `a[data-anta-card-link] > a-card-layout`. JSX props
+  remain available; raw slot markup and `::part()` overrides need migration.
+  `ACardElement` and `register_a_card` are removed.
 
 - [Browser support](/install-config/#browser-support) now requires Chrome/Edge
   135+ and Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints
@@ -54,6 +69,14 @@ changes are not listed.
 
 ### Changed
 
+- Input, Banner, Expander, and expandable Text share native event listener setup.
+  Worker renderers receive event subscriptions immediately; opting into browser
+  hydration enables the shared listener update.
+
+- [Input](/input/) default styles now load from external CSS under strict CSP.
+  Existing shadow controls, slots, parts, and interactions remain supported;
+  Chrome 135 can retain native number stepper buttons.
+
 - [Tooltip](/tooltip/) uses external default styling under Content Security Policy
   restrictions. Existing markup and bubble styling remain supported. Interactive
   content stays open during keyboard travel, and reduced motion disables fades.
@@ -74,7 +97,8 @@ changes are not listed.
   attributes. One-way expansion hides its control instead of removing it.
 
 - [Card](/card/) renders its final layout and native link directly in HTML. Its
-  styling uses external CSS and no shadow stylesheet.
+  styling uses external CSS and no shadow stylesheet. Generic anchor display
+  rules preserve the media and content arrangement in link Cards.
 
 - [Expander rounding](/expander/#round-and-outdent) uses a `1rem` radius when `round` is
   `true`, independent of title level and header height. Explicit radius values
@@ -89,6 +113,23 @@ changes are not listed.
 
 
 ### Fixed
+
+- [Input actions](/input/#leading-trailing-and-clear) fit Anta buttons to the
+  field height while preserving their padding. Icon-only Buttons are square;
+  text buttons keep their natural width. Native Anta buttons marked with
+  `data-anta` receive the same height, and raw icon actions can opt into square
+  sizing with `data-anta-icon-only`.
+
+- [Input multiline fields](/input/#multiline) apply the complete multiline layout
+  when `rows` is set without `multiline`, keeping actions aligned to the first line.
+
+- [Input trailing spacing](/input/#styling) honors `--input-trailing-inset` for
+  text and actions, including inherited overrides. Mixed content and nested
+  buttons keep the text inset by default.
+
+- [Input events](/input/#events) attach after React hydration. Nested clear
+  actions affect their owning Input, and focus tracking releases document
+  listeners when fields disconnect.
 
 - [Tabs per-option tones](/tabs/#tone) color the selected indicator without
   recoloring the track. An explicit neutral option also resets the indicator

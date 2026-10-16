@@ -49,11 +49,12 @@ before(async () => {
       stdin: { contents: `
         import React from 'react'
         import {Text} from '${source}/components/Text'
+        import {configure} from '${source}/jsx-runtime'
         ${react ? "import {createRoot, hydrateRoot} from 'react-dom/client'" : "import {render, hydrate} from 'preact'"}
         ${factory}
         ${react ? 'let root' : ''}
         window.renderText = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(node(props))" : "render(node(props), document.querySelector('#mount'))"} }
-        window.hydrateText = props => { ${react ? "root = hydrateRoot(document.querySelector('#mount'), node(props))" : "hydrate(node(props), document.querySelector('#mount'))"} }
+        window.hydrateText = props => { configure(React.createElement,React.Fragment,React,{hydratingEvents:true}); ${react ? "root = hydrateRoot(document.querySelector('#mount'), node(props))" : "hydrate(node(props), document.querySelector('#mount'))"} }
         window.renderLinkedText = (props = {}) => window.renderText({
           truncate: 3, expandable: true, collapsible: true,
           children: [React.createElement('a', { href: '#content-link', key: 'link' }, 'Content link'), ${JSON.stringify(longText)}], ...props,

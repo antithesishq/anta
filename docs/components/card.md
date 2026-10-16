@@ -262,7 +262,23 @@ slot markup. Raw HTML authors must add those regions explicitly. Replace
 for the other regions. Direct child paths keep an outer Card's overrides from
 reaching a nested Card.
 
-Navigation attributes belong on a native `<a>` directly under `a-card`.
+Navigation attributes belong on a native `<a data-anta-card-link>` directly
+under `a-card`. Its `a-card-layout` child arranges media and content independently
+of generic link display rules. JSX creates this structure automatically. Raw
+link Cards use:
+
+```html
+<a-card>
+  <a data-anta-card-link href="/guide">
+    <a-card-layout>
+      <a-card-content>
+        <a-card-body>Read the guide</a-card-body>
+      </a-card-content>
+    </a-card-layout>
+  </a>
+</a-card>
+```
+
 Changing `href` or `loading` on a raw `a-card` no longer updates a link. The JSX
 wrapper renders those updates from props. `aria-*` props and `tabIndex` apply to
 the anchor in link mode and to `a-card` otherwise. A text header or body supplies
@@ -301,8 +317,8 @@ and work with `style-src 'self'`. Custom tones and custom radii can produce inli
 styles in server-rendered JSX and need separate CSP handling.
 
 Card renders its complete light-DOM structure immediately. Its regions are
-`a-card-media`, `a-card-content`, `a-card-header`, `a-card-icon`,
-`a-card-title`, `a-card-body`, and `a-card-footer`. Use child selectors to style
+`a-card-layout` in link mode, `a-card-media`, `a-card-content`, `a-card-header`,
+`a-card-icon`, `a-card-title`, `a-card-body`, and `a-card-footer`. Use child selectors to style
 these tags. Card needs no shadow parts or pre-upgrade layout.
 
 Each example keeps its CSS in a `<style>` **inside** its own preview, targeting a

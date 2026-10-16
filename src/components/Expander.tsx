@@ -1,5 +1,5 @@
 import { hasChildren, nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from "../anta_helpers";
-import { useLayoutEffect, useState } from "../jsx-runtime";
+import { useNativeEventProps } from "../native-event-props";
 import type { BaseProps } from "../general_types";
 
 /** Public props for the `<Expander>` disclosure. `title` is the always-
@@ -107,9 +107,21 @@ export const Expander = ({
   ...rest
 }: ExpanderProps) => {
   const controlled = open !== undefined;
-  const [listening, setListening] = useState(false);
-  // React hydration installs custom event props after a state-only commit.
-  useLayoutEffect(() => setListening(true), []);
+  const eventProps = useNativeEventProps({
+    onstatechange: onStateChange
+      ? (e: StateChangeEvent) => {
+          const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e);
+          // Ignore a `statechange` bubbled from a control inside the expander;
+          // only the expander's own open/closed request counts. See
+          // nativeStateChange / STATEFUL-COMPONENTS.md.
+          if (isOwn && detail)
+            onStateChange(event, {
+              next: detail.next === "open",
+              prev: detail.prev === "open",
+            });
+        }
+      : undefined,
+  });
   const hasActions = hasChildren(actions) && typeof actions !== "boolean" &&
     (typeof actions !== "string" || Boolean(actions.trim()));
   const presetIndicator: "chevron" | "triangle" | "plus" | undefined = indicator == null ? "chevron" :
@@ -155,21 +167,7 @@ export const Expander = ({
       // renderers bind to our `statechange` event: React 19 keeps the case of
       // whatever follows `on` (so `onStateChange` would listen for "StateChange"),
       // Preact lowercases. Verified against real React 19 + Preact.
-      onstatechange={
-        listening && onStateChange
-          ? (e: StateChangeEvent) => {
-              const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e);
-              // Ignore a `statechange` bubbled from a control inside the expander;
-              // only the expander's own open/closed request counts. See
-              // nativeStateChange / STATEFUL-COMPONENTS.md.
-              if (isOwn && detail)
-                onStateChange(event, {
-                  next: detail.next === "open",
-                  prev: detail.prev === "open",
-                });
-            }
-          : undefined
-      }
+      {...eventProps}
       class={className}
       style={computedStyle}
       {...rest}

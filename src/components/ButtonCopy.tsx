@@ -110,6 +110,7 @@ export const ButtonCopy = ({
       // Icon-only (no visible text) gets an accessible name; a consumer's own
       // `aria-label` wins.
       aria-label={ariaLabel ?? (hasText ? undefined : 'Copy')}
+      data-anta-icon-only={!hasText && shownIcon != null ? '' : undefined}
       // For `copyNode`, mark the whole button so the serializer strips it (and
       // its `<a-copy>` child) from the copied region.
       data-copy-node-button={isNodeCopy({ copyNode }) ? '' : undefined}

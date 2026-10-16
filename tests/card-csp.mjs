@@ -78,6 +78,8 @@ before(async () => {
     for (const file of result.outputFiles) assets.set(`/${framework}.${file.path.endsWith('.css') ? 'css' : 'js'}`, file.text)
   }
   assert.doesNotMatch(renderServer({ header: false, subtitle: false, icon: false, media: false, footer: false, children: false }), /<a-card-(header|title|body|icon|media|footer)>/)
+  assets.set('/consumer-links.css', 'a{display:inline-block;flex-direction:row}')
+  assets.set('/consumer-links-utilities.css', '@layer utilities{a{display:block;flex-direction:column}}')
   assets.set('/fixture.css', await readFile(new URL('./card-csp.fixture.css', import.meta.url), 'utf8'))
   assets.set('/boot.js', `window.cspViolations=[]; document.addEventListener('securitypolicyviolation', e=>window.cspViolations.push(e.effectiveDirective));`)
   server = createServer((req, res) => {
@@ -172,6 +174,31 @@ for (const engine of engines) {
     }
   })
   for (const mode of ['granular', 'bundle']) {
+    test.fast(`${engine.name()}: ${mode} linked Card layout survives generic anchor rules`,async t=>{
+      const page=await pageFor(t,engine,mode)
+      const content=markup.replace('<button>First</button><button>Second</button>','Footer')
+      for(const position of ['top','bottom','left','right']) for(const size of ['small','medium','large']) for(const tall of [false,true]) {
+        const attrs={'media-position':position,size,...(tall?{class:'tall'}:{})}
+        await mount(page,content,attrs)
+        const plain=await geometry(page)
+        await mount(page,`<a data-anta-card-link href="#target"><a-card-layout>${content}</a-card-layout></a>`,attrs)
+        sameGeometry(plain,await geometry(page))
+        for(const sheet of ['consumer-links','consumer-links-utilities']) {
+          const style=await page.addStyleTag({url:`/${sheet}.css`})
+          sameGeometry(plain,await geometry(page))
+          const boxes=await page.locator('a-card').evaluate(host=>{
+            const size=node=>{const r=node.getBoundingClientRect();return [r.width,r.height]}
+            const anchor=host.querySelector(':scope > a[data-anta-card-link]')
+            return [size(host),size(anchor),size(anchor.querySelector(':scope > a-card-layout'))]
+          })
+          assert.deepEqual(boxes[0],boxes[1])
+          assert.deepEqual(boxes[1],boxes[2])
+          await style.evaluate(node=>node.remove())
+        }
+      }
+      await mount(page,'<a href="#ordinary">Ordinary content link</a>')
+      assert.notEqual(await page.locator('a-card > a').evaluate(node=>getComputedStyle(node).display),'flex')
+    })
     test.fast(`${engine.name()}: ${mode} Card regions, overrides, loading, and nested state work under CSP`, async t => {
       const page = await pageFor(t, engine, mode)
       await mount(page, markup, { selected: '', class: 'override tall' })
@@ -201,6 +228,8 @@ for (const engine of engines) {
   for (const framework of ['React', 'Preact']) {
     test.fast(`${engine.name()}: ${framework} hydrates Card without layout or ownership changes`, async t => {
       const page = await pageFor(t, engine, 'granular', true)
+      assert.equal(await page.locator('a-card > a[data-anta-card-link] > a-card-layout').count(),1)
+      await page.locator('a-card').evaluate(host=>{window.serverAnchor=host.querySelector('a');window.serverLayout=host.querySelector('a-card-layout')})
       const before = await geometry(page)
       const html = await page.locator('a-card').evaluate(n => n.outerHTML)
       await page.evaluate(framework => import(`/${framework}.js`), framework)
@@ -208,6 +237,7 @@ for (const engine of engines) {
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
       sameGeometry(before, await geometry(page))
       assert.equal(await page.locator('a-card').evaluate(n => n.outerHTML), html)
+      assert.equal(await page.locator('a-card').evaluate(host=>host.querySelector('a')===serverAnchor&&host.querySelector('a-card-layout')===serverLayout),true)
       await page.evaluate(() => window.renderCard({ href: '#next', 'aria-label': 'Next name', loading: true, 'data-owner': 'app' }))
       await page.waitForFunction(() => document.querySelector('a-card').hasAttribute('loading'))
       const state = await page.locator('a-card').evaluate(n => ({

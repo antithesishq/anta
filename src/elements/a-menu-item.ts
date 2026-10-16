@@ -97,8 +97,8 @@ export const MENU_ITEM_SELECTOR = 'a-menu-item, a[data-anta-menu-item]'
  *  `EventTarget` / focused node to the row element. */
 export function isMenuItemEl(el: EventTarget | null | undefined): el is HTMLElement {
   return (
-    el instanceof AMenuItemElement ||
-    (el instanceof HTMLElement && el.matches('a[data-anta-menu-item]'))
+    !!el && (el as Node).nodeType === 1 &&
+    (el as HTMLElement).matches(MENU_ITEM_SELECTOR)
   )
 }
 

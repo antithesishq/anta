@@ -70,6 +70,8 @@
     "stop": "node scripts/dev-stop.mjs",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "test": "node --test tests/*.test.mjs",
+    "test:menu": "node --test tests/menu-csp.mjs",
+    "test:menu:package": "node tests/menu-package.mjs",
     "test:copy": "node --test tests/copy-csp.mjs",
     "test:copy:package": "node tests/copy-package.mjs",
     "test:components": "node tests/components.mjs",

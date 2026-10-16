@@ -692,7 +692,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       await page.waitForFunction(()=>[...document.querySelectorAll('a-menu')].some(menu=>menu.isOpen))
       assert.equal(await field(page).evaluate(host=>host.getAnchorRect().height<host.getBoundingClientRect().height),true)
       const violations=await page.evaluate(()=>window.violations)
-      assert.ok(violations.every(v=>v.directive==='style-src-elem' || v.directive==='style-src-attr'))
+      assert.ok(violations.every(v=>v.directive==='style-src-attr'))
       assert.equal(await control(page).evaluate(node=>node.ariaControlsElements?.length>0),true)
     }
   })

@@ -366,13 +366,13 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await segment(page,'hour').focus();assert.equal(await host(page).locator('[part=trailing]').evaluate(el=>getComputedStyle(el).opacity),'1')
     assert.equal(await host(page).locator('[part=field]').evaluate(el=>getComputedStyle(el).transitionDuration),'0s')
   })
-  test(`${name}: InputDate time composition commits on blur with Menu CSP isolated`,async t=>{
+  test(`${name}: InputDate time composition commits on blur under strict CSP`,async t=>{
     const page=await pageFor(t,engine,mode,'',{menu:true});await register(page,mode);await client(page,'Preact');await page.evaluate(()=>showDate());await frames(page)
     await page.locator('a-input').locator('[part=input]').click();await frames(page)
     await segment(page,'hour').fill('11');await page.locator('a-input').locator('[part=input]').click();await frames(page)
     assert.equal(await page.locator('input[type=hidden]').inputValue(),'2026-10-15T11:30')
     assert.equal(await host(page).evaluate(el=>el.shadowRoot.querySelectorAll('style').length),0)
-    const violations=await page.evaluate(()=>window.violations);assert.ok(violations.length>0,'Menu still injects its existing stylesheet');assert.ok(violations.every(v=>v.directive==='style-src-elem'))
+    const violations=await page.evaluate(()=>window.violations);assert.deepEqual(violations,[])
   })
   test(`${name}: touch places the caret and edits native segments`,async t=>{
     const page=await pageFor(t,engine,mode,'',{hasTouch:true});await register(page,mode);await mount(page,'<a-input-time locale="en-GB" value="10:30"></a-input-time>')

@@ -23,6 +23,90 @@
     --menu-min-width: 88px;
     --menu-backdrop-filter: blur(20px);
     --menu-width-duration: 160ms;
+    --_anchor-width: initial;
+    --_menu-max-height: initial;
+    --_menu-fade-top: initial;
+    --_menu-fade-bottom: initial;
+    --_menu-gap-top: initial;
+
+    display: contents;
+  }
+
+  a-menu::part(menu) {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: auto;
+    bottom: auto;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    flex-direction: column;
+    min-width: max(var(--menu-min-width, 88px), var(--_anchor-width, 0px));
+    max-width: calc(100vw - 8px);
+    max-height: var(--_menu-max-height, calc(100dvh - 8px));
+    overflow: hidden;
+    background: var(--menu-bg, Canvas);
+    color: var(--text-2, CanvasText);
+    border: var(--menu-border, 1px solid);
+    border-radius: var(--menu-radius, 8px);
+    box-shadow: var(--menu-shadow, 0 8px 24px color-mix(in oklch, black 20%, transparent));
+    -webkit-backdrop-filter: var(--menu-backdrop-filter, blur(20px));
+    backdrop-filter: var(--menu-backdrop-filter, blur(20px));
+    outline: none;
+    opacity: 0;
+    translate: 0 -4px;
+    transition:
+      opacity 140ms ease-out,
+      translate 140ms ease-out,
+      width var(--menu-width-duration, 160ms) ease,
+      display 140ms allow-discrete,
+      overlay 140ms allow-discrete;
+  }
+
+  /* Closed display stays UA-owned so the invisible popover cannot intercept input. */
+  a-menu::part(menu):popover-open {
+    display: flex;
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity 100ms ease-out,
+      translate 100ms ease-out,
+      width var(--menu-width-duration, 160ms) ease,
+      display 100ms allow-discrete,
+      overlay 100ms allow-discrete;
+  }
+
+  @starting-style {
+    a-menu::part(menu):popover-open { opacity: 0; translate: 0 -4px; }
+  }
+
+  a-menu::part(header),
+  a-menu::part(footer) {
+    display: block;
+    flex: none;
+  }
+
+  a-menu > :is(a-menu-header, a-select-header)[slot="header"],
+  a-menu > :is(a-menu-footer, a-select-footer)[slot="footer"] {
+    display: block;
+    padding: var(--menu-padding, 4px);
+  }
+
+  a-menu::part(scroll) {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding: var(--menu-padding, 4px);
+    scroll-padding-block: var(--menu-padding, 4px);
+    /* Defaults at the use sites keep runtime shadow-inline measurements authoritative. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--_menu-gap-top, 0px), #000 var(--_menu-fade-top, 0px), #000 calc(100% - var(--_menu-fade-bottom, 0px)), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, transparent var(--_menu-gap-top, 0px), #000 var(--_menu-fade-top, 0px), #000 calc(100% - var(--_menu-fade-bottom, 0px)), transparent 100%);
   }
 
   @media (prefers-reduced-motion: reduce) {

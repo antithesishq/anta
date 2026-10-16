@@ -69,6 +69,10 @@ changes are not listed.
 
 ### Changed
 
+- [Menu](/menu/#styling) default styles load from external CSS under strict CSP.
+  Existing popover structure, slots, parts, and interactions remain supported;
+  header and footer slots now expose styling parts.
+
 - [Copy feedback](/button/#copy-feedback) loads its default styles from external
   CSS under strict CSP while preserving existing copy inputs and compositions.
   Copying remains available while its stylesheet loads.
@@ -127,6 +131,10 @@ changes are not listed.
 
 
 ### Fixed
+
+- [Menu](/menu/) stays within the viewport in RTL layouts. Menus in separate
+  documents keep independent open stacks, and closing or removing a menu clears
+  pending navigation and positioning work.
 
 - [InputTime touch editing](/input-time/#the-field) waits for a completed tap
   before focusing field padding. Canceled gestures no longer affect later

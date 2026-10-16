@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, copy, expander, input, input-time, progress, text, toaster, tooltip]
+        options: [all, banner, calendar, card, copy, expander, input, input-time, menu, progress, text, toaster, tooltip]
 permissions:
   contents: read
 jobs:
@@ -15,6 +15,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -28,6 +30,7 @@ jobs:
       - name: Run full component coverage
         env:
           COMPONENT: ${{ inputs.component }}
+          ANTA_MENU_COMPARE_ORIGINAL: '1'
         run: pnpm test:components --tier slow --component "$COMPONENT"
       - name: Save Expander visual matrix
         if: always()
@@ -75,5 +78,13 @@ jobs:
         with:
           name: copy-visual
           path: tests/.test-output/copy
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Menu visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: menu-visual
+          path: tests/.test-output/menu
           include-hidden-files: true
           if-no-files-found: ignore

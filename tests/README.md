@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Copy, Expander, Input, Progress, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Expander, Input, InputTime, Menu, Progress, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -212,3 +212,19 @@ behavioral pages retain CSP.
 Set `ANTA_COPY_CHROMIUM_EXECUTABLE` for an exact Chrome executable or
 `ANTA_COPY_CONSUMER_ROOT` for an isolated installed package. Current Playwright
 WebKit does not establish Safari 17.4 coverage.
+
+## Menu
+
+Run `pnpm test:menu` for the source CSP matrix or `pnpm test:menu:package` for
+an isolated tarball installation. The shared fast tier covers full/granular
+imports, raw ownership and state requests, React/Preact hydration, and independent
+document coordination. Expanded keyboard, touch, placement, scrolling, lifecycle,
+composition, visual, and installed-package coverage belongs to the slow tier.
+The server supplies real CSP response headers, including `style-src-attr 'none'`.
+
+Set `ANTA_MENU_CHROMIUM_EXECUTABLE` for an exact browser executable,
+`ANTA_MENU_CONSUMER_ROOT` for an installed consumer, and
+`ANTA_MENU_COMPARE_ORIGINAL=1` to compare against `aeea7c08`. Screenshots and
+computed metrics go to `tests/.test-output/menu`. RTL comparisons explicitly
+record the original opposite-inset overflow and assert the corrected position.
+Playwright WebKit does not establish shipping Safari 17.4 coverage.

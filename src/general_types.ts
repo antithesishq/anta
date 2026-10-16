@@ -1461,7 +1461,7 @@ export interface ABannerAttributes extends BaseAttributes {
  * Attributes for the `<a-toaster>` custom element — a viewport-anchored
  * notification region. One instance hosts all six placement zones; each
  * `<a-toast>` routes to a corner/edge by its `slot` attribute. Keep one mounted
- * (the `<Toaster>` wrapper, or by hand). Exposes `::part(region)`. Low-level
+ * (the `<Toaster>` wrapper, or by hand). Exposes `::part(region)`, `::part(zone)`, and a part for each placement. Low-level
  * attributes; for the typed JSX wrapper use `Toaster` from `@antadesign/anta`.
  */
 export interface AToasterAttributes extends BaseAttributes {
@@ -1488,10 +1488,11 @@ export interface AToastAttributes extends BaseAttributes {
   leaving?: boolean | ''
   /** Bumped on an in-place update so the element restarts its auto-dismiss timer. */
   rev?: number | string
-  /** A live DOM node to show as the content (the wrapper's DOM-node branch);
-   *  set as a property, not a string attribute. String / JSX content is slotted
-   *  as children instead. */
-  content?: Node
+  /** Transfer insertion ownership of a live node to Toast. Set as a property;
+   * never supply a node still owned by another reconciler. Identity and listeners
+   * are retained. Replacing or clearing removes only the supplied node or a
+   * fragment's inserted children. String/JSX content remains authored children. */
+  content?: Node | null
   /** Fires after the exit animation, when the toast has dismissed — a bubbling
    *  `CustomEvent`. The owner removes the node in response. All-lowercase so both
    *  renderers bind it (React 19 keeps the case after `on`; Preact lowercases). */

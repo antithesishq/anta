@@ -145,10 +145,16 @@ export function parseOpenState(v: string | null): 'open' | 'closed' {
  *  (e.g. skipping `[disabled]` triggers) lands for every element at once. */
 export function installDismissTrigger(host: HTMLElement, attr: string, onDismiss: () => void): void {
   host.addEventListener('click', (e) => {
-    const target = e.target
-    if (!(target instanceof Element)) return
-    const trigger = target.closest(`[${attr}]`)
-    if (trigger && trigger.closest(host.localName) === host) onDismiss()
+    let triggered = false
+    for (const target of e.composedPath()) {
+      const element = target as Element
+      if (element.nodeType !== 1) continue
+      if (element.localName === host.localName) {
+        if (element === host && (triggered || element.hasAttribute(attr))) onDismiss()
+        return
+      }
+      if (element.hasAttribute(attr)) triggered = true
+    }
   })
 }
 

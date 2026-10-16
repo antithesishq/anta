@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 15, 2026 on `codex/input-external-css`.
+Updated October 15, 2026 on `codex/toaster-external-css`.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -56,18 +56,19 @@ and verification before moving to the next component.
    existing input, textarea, button, and slots. Source, installed-package,
    visual, form, and hydration checks pass in current engines. Chrome 135's
    native number buttons are an accepted difference; see Input verification.
-5. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
+5. [x] [Toast](src/elements/a-toast.ts): content, entry/exit animations, and
+   countdown pause, restart, and dismissal. Taken together with Toaster before
+   InputTime; verification is recorded below.
+6. [x] [Toaster](src/elements/a-toaster.ts): existing manual-popover region and
+   six named placement slots retained. Defaults use external part rules.
+7. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
    adornments, and native-field semantics.
-6. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
+8. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
    scrolling, keyboard navigation, and focus ownership. Verify with Input.
-7. [ ] [Dialog](src/elements/a-dialog.ts): modal structure, optional regions,
+9. [ ] [Dialog](src/elements/a-dialog.ts): modal structure, optional regions,
    backdrop, focus management, and close behavior.
-8. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
-   markers, affixes, dragging, and focus states.
-9. [ ] [Toast](src/elements/a-toast.ts): content, entry/exit animations, and
-   countdown pause, restart, and dismissal.
-10. [ ] [Toaster](src/elements/a-toaster.ts): placement regions and pointer
-    handling. Verify together with Toast.
+10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
+    markers, affixes, dragging, and focus states.
 11. [ ] [Copy feedback](src/elements/a-copy.ts): feedback popover, placement,
     measuring/showing states, and animation.
 
@@ -85,6 +86,83 @@ composition, and consumer CSS overrides. Check full and granular imports under
 an actual CSP response header. Custom values serialized into `style` attributes
 remain a separate constraint; completing the stylesheet checklist does not make
 every dynamic JSX prop compatible with `style-src-attr 'none'`.
+
+### Toast and Toaster verification
+
+Implemented on `codex/toaster-external-css`, October 15, 2026:
+
+- The existing hierarchy, six native slot names, top-layer region, and content
+  location are retained. Each placement slot exposes `zone` and its placement
+  part; Toast exposes `content`. All default styles and keyframe values are in
+  `a-toast.css` and `a-toaster.css`. No shadow stylesheet is injected or adopted.
+- Runtime countdown duration and animation controls stay on the owned slot.
+  Chrome 135 computes an external part animation name without resolving its
+  keyframes. A runtime animation reads CSS-supplied endpoints only when that
+  requested CSS animation is absent. Firefox needs literal endpoints in the
+  external keyframes; its variable-valued endpoints produced an animation that
+  left computed progress at `1`. Both failures were reproduced before fixing.
+- The DOM-node `content` property retains explicit insertion ownership in light
+  DOM. Original nodes and attached behavior survive replacement and updates.
+  Fragment children are tracked individually; authored siblings are untouched.
+  Cross-realm nodes and dismiss controls use realm-independent checks.
+- Disconnect clears timers through their originating windows, cancels the owned
+  fallback animation, and releases hover/focus listeners and pause holds.
+  Reconnection starts a fresh duration or finishes an interrupted exit. Dismiss
+  requests and completion events are scoped to the owning toast.
+- JSX uses the shared runtime hooks and `useNativeEventProps`. Event forwarding
+  is immediate by default; browser hydration alone opts into listener setup.
+  Independent JSX builds retain their existing module-local default managers;
+  an explicitly shared `createToaster()` store coordinates across entries.
+
+The SSR fixtures use each renderer's real server output with empty stores and
+preserve authored nodes during hydration. A prepopulated-store probe confirmed
+that Preact compatibility hooks read the live snapshot during SSR, while React
+uses the empty server snapshot. This existing difference is unchanged; docs
+instruct authors to keep server stores empty.
+
+Verified October 15, 2026:
+
+- All 132 source checks and 132 installed-package checks passed in Chrome
+  `155.0.8059.84`, Firefox `155.0`, and Playwright WebKit `26.6`. React/React DOM
+  `19.3.0`, Preact `10.29.8`, and `preact-render-to-string` `6.7.0` generate actual
+  server HTML and preserve authored nodes through hydration. The installed
+  consumer resolves public npm exports from an isolated tarball installation,
+  without Anta source aliases or workspace links.
+- All 44 installed-package checks passed in Chrome for Testing
+  `135.0.7049.114`, including the runtime countdown fallback. Set
+  `ANTA_TOASTER_CHROMIUM_EXECUTABLE` for an exact browser executable and
+  `ANTA_TEST_WEBKIT=0` for the Chromium-only matrix.
+- Behavioral pages use real HTTP CSP response headers with same-origin scripts
+  and styles, `style-src-attr 'none'`, and data images for masks. No component
+  violations occurred. Coverage includes six placements, stacking, narrow
+  viewports, clipping escape, natural top-layer ordering, pointer pass-through,
+  empty and unmatched regions, pointer/keyboard dismissal, combined hover/focus
+  holds, descendant focus transfer, restart, sticky duration, revival,
+  reconnection, document adoption, cleanup, nested toasts, node/fragment
+  ownership, Banner/Card/interactive content, consumer overrides, and motion.
+- Compared 12 variants with registered originals at `2d2ba6e6` in three engines
+  and both import modes. All 72 geometry, typography, appearance, and transition
+  declaration comparisons matched. Entry and exit tests sample intermediate
+  opacity; reduced-motion cases retain countdown behavior without host motion.
+  Screenshots and metrics are in `tests/.test-output/toaster/source`. Capture
+  contexts permit the screenshot tool's injected stylesheet; behavior and
+  computed-style assertions retain strict CSP. Theme transitions are settled
+  before comparing colors.
+- All 329 selected root checks passed with serialized test files and CI's existing
+  debounce exclusion. All 144 shared fast component checks passed. Toaster is registered in the
+  shared tiers and CI change gates; expanded engines, visuals, and installed
+  consumers remain in the slow tier. The Node `24.15.0` production build and
+  all 14 production checks passed, including the preserved first Toaster demo,
+  countdown pause, Card keyboard dismissal, and raw HTML examples in Chrome and
+  WebKit. Anta lint/type checks, sticker/Plot type checks, site CSS lint,
+  workflow parsing, tier selection, and documentation review-marker checks pass.
+
+Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
+Playwright WebKit is engine evidence, not a shipping Safari run. Existing entry
+motion using `@starting-style` remains progressive at older supported versions;
+this refactor introduces no newer baseline requirement. Application-supplied
+`style` props can still serialize CSP-blocked attributes. Independent builds'
+default managers and Preact's populated-store SSR behavior remain unchanged.
 
 ### Banner verification
 

@@ -7,7 +7,7 @@ nav:
 ---
 import Playground from '../../../components/PlaygroundEmbed.astro'
 import toasterDemoCode from './toaster.demo.ts'
-import ToasterDemo from '../../../components/ToasterDemo'
+import ToasterPreview from '../../../components/ToasterPreview.astro'
 import Preview from '../../../components/Preview.astro'
 import Disclosure from '../../../components/Disclosure.astro'
 import PropsTable from '../../../components/PropsTable.astro'
@@ -16,21 +16,164 @@ import { Tag, Tooltip, Text } from '@antadesign/anta'
 
 # Toaster <Tag tone="critical" size="large" allcaps label="Alpha" style={{ verticalAlign: 'middle', marginInlineStart: '0.4em' }} /><Tooltip delay={0}><Text size="large">Early in the development, it might just not work!</Text></Tooltip>
 
-A viewport-anchored region that shows toasts — short, self-dismissing notices
-stacked in a corner. It isn't a fixed "toast card": you toast **anything** — a
-`Banner`, a `Card`, a `Sticker`, a string, a bespoke node — and the region handles
-placement, stacking, and the auto-dismiss timer.
+Show temporary notices in one of six viewport placements. Toast a `Banner`,
+`Card`, string, JSX, or an existing DOM node. Toaster handles placement, stacking,
+and dismissal timing.
 
-Two pieces work together. **`<Toaster>`** is the region; you mount one and keep it
-mounted (a portal is fine). **`Toaster.manager`** is the store you drive from
-anywhere: `Toaster.manager.add(render)` adds a toast, where `render` is a function
-returning the content. The store holds no DOM — the mounted `<Toaster>` subscribes
-to it and renders each toast through React/Preact, so there's nowhere for a toast
-to go if no `<Toaster>` is mounted.
+Mount `<Toaster>` once and add content through `Toaster.manager.add(render)`.
+The mounted region renders the store through React or Preact.
 
-<Preview>
-  <ToasterDemo client:visible />
-</Preview>
+<ToasterPreview />
+
+```tsx folded title="ToasterDemo.tsx"
+import { useState, useEffect } from 'preact/hooks'
+import { Toaster, Button, Input, Banner, Card } from '@antadesign/anta'
+import { StickerClap } from '@antadesign/stickers'
+import styles from './ToasterDemo.module.css'
+
+export default function ToasterDemo() {
+  const [duration, setDuration] = useState('4000')
+
+  // Register the elements client-side (idempotent; the layout also does anta's).
+  useEffect(() => {
+    import('@antadesign/anta/elements')
+    import('@antadesign/stickers/elements')
+  }, [])
+
+  // Empty / zero / non-numeric → the 5000ms default (0 is not sticky; sticky is Infinity).
+  const opts = () => ({ placement: 'bottom-right' as const, duration: Number(duration) || 5000 })
+
+  return (
+    <div className={styles.demo}>
+      {/* The region — kept mounted for the store to render into. */}
+      <Toaster />
+
+      <div className={styles.controls}>
+        <Input
+          leading="Duration"
+          trailing="ms"
+          type="number"
+          defaultValue="4000"
+          onValueChange={(_e, a) => setDuration(a.value)}
+        />
+      </div>
+
+      <div className={styles.buttons}>
+        <Button
+          priority="secondary"
+          label="Toast text"
+          onClick={() => Toaster.manager.add(() => 'Your changes were saved.', opts())}
+        />
+        <Button
+          priority="secondary"
+          tone="success"
+          label="Toast a Banner"
+          onClick={() =>
+            Toaster.manager.add(
+              (id) => (
+                <Banner
+                  tone="success"
+                  round
+                  message="Your changes were saved."
+                  onDismiss={() => Toaster.manager.dismiss(id)}
+                />
+              ),
+              opts(),
+            )
+          }
+        />
+        <Button
+          priority="secondary"
+          tone="info"
+          label="Toast a Card"
+          onClick={() =>
+            Toaster.manager.add(
+              () => (
+                <Card tone="info" size="small" header="Deployment ready">
+                  Your build passed all checks.{' '}
+                  <Button size="small" priority="tertiary" label="Dismiss" data-toast-dismiss />
+                </Card>
+              ),
+              opts(),
+            )
+          }
+        />
+        <Button
+          priority="secondary"
+          tone="brand"
+          label="Toast a Sticker"
+          onClick={() => Toaster.manager.add(() => <StickerClap size={96} label="Nice work" />, opts())}
+        />
+        <Button
+          priority="secondary"
+          label="Toast with countdown"
+          onClick={() => {
+            const ms = Number(duration) || 5000
+            Toaster.manager.add(
+              (id) => (
+                <div className={styles.countdownToast}>
+                  <Banner
+                    tone="info"
+                    round
+                    message="Auto-dismissing — hover to pause"
+                    onDismiss={() => Toaster.manager.dismiss(id)}
+                  />
+                  {/* Reads the toast's own --toast-remaining — no duration passed. */}
+                  <span className={styles.countdownBar} />
+                </div>
+              ),
+              { placement: 'bottom-right', duration: ms },
+            )
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+```
+
+```css folded title="ToasterDemo.module.css"
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.countdownToast {
+  position: relative;
+}
+
+.countdownBar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 5px;
+  height: 3px;
+  border-radius: 999px;
+  transform-origin: left;
+  background: color-mix(in oklch, currentColor 35%, transparent);
+  transform: scaleX(var(--toast-remaining));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdownBar {
+    display: none;
+  }
+}
+```
 
 Configure one toast and fire it — the playground shows the render function plus the
 options object you pass to `add`. Edit the `Banner` in the code (or the props panel)
@@ -82,7 +225,7 @@ content closes its toast.
 The render function can return a **string, JSX, or a live DOM node** — the same
 `add` handles all three. A bare string / number is wrapped in a dismissible `Banner`;
 other JSX renders through the reconciler as-is; a DOM node is slotted by the element
-(return a *stable* node, created once, not a fresh one per call).
+(return a stable node that is not owned by another React or Preact tree).
 
 ```tsx
 // JSX — rendered as-is
@@ -203,15 +346,6 @@ Toaster.manager.add(
 }
 ```
 
-**Why a variable, not a prop?** You could instead pass `secondsLeft` into the render
-function and tick it. But updating a prop re-runs the render function and re-diffs the
-whole toast — the Banner, its ✕, everything — many times a second, which can disturb
-focus, text selection, or an in-progress animation inside the content. `--toast-remaining`
-updates a single inherited value the browser interpolates on the compositor: the
-content renders **once**, nothing reconciles, and it's smooth at display refresh rate
-instead of the application's tick interval. The toast already tracks its timer
-and pause state, so exposing the value keeps one source of truth.
-
 `--toast-remaining` is display only — the real dismissal is the toast's own timer — so
 where a browser can't animate a custom property it simply stays full. A **sticky**
 (`duration: Infinity`) toast has no countdown; the value stays `1`.
@@ -243,7 +377,7 @@ One store drives one `<Toaster>`.
 ## Announcements
 
 Announcement is opt-in **per toast**: pass `politeness` to give that toast an
-`aria-live` region — `'polite'` waits for a pause, `'assertive'` interrupts. Omit
+`role` of `status` or `alert`: `'polite'` waits for a pause, `'assertive'` interrupts. Omit
 it for no announcement, which is right when the content carries its own live
 semantics (a `Banner` defaults to `role="status"`).
 
@@ -263,6 +397,30 @@ Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, 
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
+The region retains one manual-popover surface and six named slots. Each slot is
+its placement column. Toast retains one content slot. The element changes only
+its owned shadow nodes and off-DOM state; JSX or raw authors own host attributes
+and authored children. The owner removes a toast after its `dismiss` event.
+
+Setting the `content` property explicitly transfers insertion ownership of that
+node to Toast. It moves the original node into light DOM without cloning it, so
+listeners and widget state remain attached. Replacing or clearing `content`
+removes only nodes previously supplied through that property, including a
+fragment's inserted children. Do not supply a node still owned by another
+reconciler. Removing the toast does not restore the node's previous parent.
+
+`duration="Infinity"` is sticky. Missing, empty, zero, negative, and invalid
+values use 5000ms. Updating `rev` or calling `restart()` restarts the countdown;
+changing `duration` alone applies on the next restart. Hover and focus pause it
+independently. Reconnection starts a fresh duration or resumes a pending exit.
+
+Keep stores empty during server rendering. React uses the empty server snapshot;
+Preact compatibility hooks can read the live snapshot. Configure browser event
+hydration before mounting, as described in [Browser hydration](/install-config/#browser-hydration).
+Use one JSX entry for a region and its default `Toaster.manager`; independent
+full and granular builds have separate module-local default stores. Pass the
+same `createToaster()` store explicitly when coordinating across those entries.
+
 Place each `<a-toast>` in a positional slot. This button clones the toast template
 into the toaster. `data-toast-dismiss` requests removal; listen for `dismiss` and
 remove the toast from the DOM.
@@ -270,20 +428,20 @@ remove the toast from the DOM.
 <Preview minHeight={96}>
   <WebComponentComposition kind="toaster">
     <a-button data-toast-add="" role="button" tabindex="0"><a-button-label>Show update</a-button-label></a-button>
-    <a-toaster role="region" aria-label="Notifications" style={{ position: 'relative', inset: 'auto', width: '100%' }}>
+    <a-toaster role="region" aria-label="Notifications">
     </a-toaster>
     <template data-toast-template="">
       <a-toast slot="bottom-center" aria-live="polite">
         <a-banner tone="info" round>
-          <a-banner-message slot="message">A new version is available.</a-banner-message>
-          <a-button slot="actions" role="button" tabindex="0" data-toast-dismiss><a-button-label>Dismiss</a-button-label></a-button>
+          <a-banner-message>A new version is available.</a-banner-message>
+          <a-banner-actions><a-button role="button" tabindex="0" data-toast-dismiss><a-button-label>Dismiss</a-button-label></a-button></a-banner-actions>
         </a-banner>
       </a-toast>
     </template>
   </WebComponentComposition>
 </Preview>
 
-```html
+```html folded
 <div data-anta-composition="toaster">
   <a-button data-toast-add role="button" tabindex="0"><a-button-label>Show update</a-button-label></a-button>
   <a-toaster role="region" aria-label="Notifications">
@@ -291,8 +449,8 @@ remove the toast from the DOM.
   <template data-toast-template>
     <a-toast slot="bottom-center" aria-live="polite">
       <a-banner tone="info" round>
-        <a-banner-message slot="message">A new version is available.</a-banner-message>
-        <a-button slot="actions" role="button" tabindex="0" data-toast-dismiss><a-button-label>Dismiss</a-button-label></a-button>
+        <a-banner-message>A new version is available.</a-banner-message>
+        <a-banner-actions><a-button role="button" tabindex="0" data-toast-dismiss><a-button-label>Dismiss</a-button-label></a-button></a-banner-actions>
       </a-banner>
     </a-toast>
   </template>
@@ -318,7 +476,7 @@ remove the toast from the DOM.
 <Disclosure title="Styling">
 
 The region and item are plain custom elements — style them with ordinary CSS
-(`@layer anta`, so an un-layered rule of yours wins without `!important`).
+(defaults use `@layer anta.components`, so an unlayered rule wins without `!important`).
 
 Region spacing lives on `a-toaster` as tokens: **`--toaster-inset`** (gap from the
 viewport edge), **`--toaster-gap`** (space between stacked toasts), and
@@ -336,7 +494,11 @@ a-toaster { --toaster-width: 420px; --toaster-gap: 10px; }
 a-toast { filter: drop-shadow(0 6px 20px color-mix(in oklch, black 22%, transparent)); }
 ```
 
-The content keeps its own styling — a toned `Banner` brings its surface, a `Card`
-its border.
+The content keeps its own styling. A toned `Banner` brings its surface; a `Card`
+brings its border. `a-toaster::part(region)` reaches the popover surface.
+`::part(zone)` reaches all six columns, and `::part(top-left)` through
+`::part(bottom-right)` reaches one placement. `a-toast::part(content)` reaches
+the content slot. Keep columns and the region click-through when customizing
+their appearance. Countdown timing belongs to `duration` and `restart()`.
 
 </Disclosure>

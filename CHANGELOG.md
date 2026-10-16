@@ -69,6 +69,10 @@ changes are not listed.
 
 ### Changed
 
+- [Toaster](/toaster/) loads default styling from external CSS under strict CSP.
+  Placement, content identity, and countdown behavior remain supported, including
+  restarting timers and completing interrupted exits after reconnection.
+
 - Input, Banner, Expander, and expandable Text share native event listener setup.
   Worker renderers receive event subscriptions immediately; opting into browser
   hydration enables the shared listener update.

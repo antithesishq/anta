@@ -32,30 +32,30 @@ const ZONES = TOAST_PLACEMENTS
 export class AToasterElement extends HTMLElementBase {
   #region: HTMLElement
   #shown = false
+  #slots: HTMLSlotElement[] = []
 
   constructor() {
     super()
     const shadow = this.attachShadow({ mode: 'open' })
 
-    const style = document.createElement('style')
-    style.textContent = SHADOW_STYLE
-
     // The popover surface: full-viewport, click-through, top layer. Only the
-    // toasts inside opt back into pointer events (::slotted below).
-    this.#region = document.createElement('div')
+    // toasts inside opt back into pointer events through the external child rule.
+    this.#region = this.doc.createElement('div')
     this.#region.className = 'region'
     this.#region.setAttribute('part', 'region')
     this.#region.setAttribute('popover', 'manual')
 
     for (const zone of ZONES) {
-      const slot = document.createElement('slot')
+      const slot = this.doc.createElement('slot')
       slot.name = zone
+      slot.setAttribute('part', `zone ${zone}`)
       // slotchange bubbles to the region; one handler covers every zone.
       this.#region.append(slot)
+      this.#slots.push(slot)
     }
     this.#region.addEventListener('slotchange', this.#syncVisibility)
 
-    shadow.append(style, this.#region)
+    shadow.append(this.#region)
   }
 
   connectedCallback() {
@@ -69,15 +69,15 @@ export class AToasterElement extends HTMLElementBase {
     this.#shown = false
   }
 
-  /** Show the region while it holds a toast, hide it when empty. A child count
-   *  read + a shadow popover toggle — no host or light-DOM mutation. */
+  /** Show the popover while a placement has assigned elements. Unmatched
+   * children do not keep an empty region in the top layer. */
   #syncVisibility = () => {
     const region = this.#region as HTMLElement & {
       showPopover?: () => void
       hidePopover?: () => void
     }
     if (typeof region.showPopover !== 'function') return
-    const has = this.childElementCount > 0
+    const has = this.#slots.some(slot => slot.assignedElements().length > 0)
     if (has && !this.#shown) {
       if (!this.isConnected) return
       try {
@@ -96,57 +96,6 @@ export class AToasterElement extends HTMLElementBase {
     }
   }
 }
-
-// Shadow styles, injected verbatim into every <a-toaster> shadow root — kept
-// COMMENT-FREE (it ships + re-injects per instance; see the "no comments inside
-// shadow-<style> strings" rule in AGENTS.md). Rationale:
-//
-//  • :host is display:contents — the host takes no layout box; the fixed popover
-//    region does all the positioning. The tokens (--toaster-*) are defined on the
-//    host in a-toaster.css and inherit across the shadow boundary.
-//  • .region resets the UA [popover] chrome (border/background/padding) and covers
-//    the viewport, click-through. display is set only on :popover-open so the UA
-//    `[popover]:not(:popover-open){display:none}` keeps an empty region hidden.
-//  • Each zone slot is the flex column itself (slot-is-the-box). Bottom zones use
-//    `column` anchored to the bottom (newest sits at the edge, older rise); top
-//    zones use `column-reverse` anchored to the top (newest at the edge). Items
-//    stretch to the zone width; center zones translate to the middle.
-//  • Only the toasts are interactive (::slotted pointer-events:auto).
-const SHADOW_STYLE = `
-  :host { display: contents; }
-
-  .region {
-    position: fixed;
-    inset: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    overflow: visible;
-    pointer-events: none;
-    width: auto;
-    height: auto;
-  }
-  .region:popover-open { display: block; }
-
-  slot {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    gap: var(--toaster-gap, 12px);
-    width: min(var(--toaster-width, 380px), calc(100vw - 2 * var(--toaster-inset, 16px)));
-    box-sizing: border-box;
-    pointer-events: none;
-  }
-
-  ::slotted(*) { pointer-events: auto; }
-
-  slot[name^="top-"] { top: var(--toaster-inset, 16px); flex-direction: column-reverse; }
-  slot[name^="bottom-"] { bottom: var(--toaster-inset, 16px); flex-direction: column; }
-  slot[name$="-left"] { left: var(--toaster-inset, 16px); }
-  slot[name$="-right"] { right: var(--toaster-inset, 16px); }
-  slot[name$="-center"] { left: 50%; transform: translateX(-50%); }
-`
 
 export function register_a_toaster() {
   if (typeof customElements === 'undefined') return

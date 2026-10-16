@@ -11,7 +11,8 @@ import Preview from '../../../components/Preview.astro'
 import PropsTable from '../../../components/PropsTable.astro'
 import Disclosure from '../../../components/Disclosure.astro'
 import timeInputDemoCode from './input-time.demo.ts'
-import InputTimeDemo from '../../../components/InputTimeDemo'
+import { InputTime } from '@antadesign/anta'
+import InputTimeInteractions from '../../../components/InputTimeInteractions'
 
 # Time input
 
@@ -58,7 +59,7 @@ reads as one field while preserving native caret behavior. In a
 `6 PM`, so pasted 24-hour times work.
 
 <Preview background="var(--bg-2)">
-  <InputTimeDemo client:only="preact" label="Start time" defaultValue="09:30" />
+  <InputTime label="Start time" defaultValue="09:30" />
 </Preview>
 
 ```tsx folded
@@ -77,10 +78,10 @@ space for the longer locale label, so its width stays the same when the period
 changes.
 
 <Preview background="var(--bg-2)" gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
-  <InputTimeDemo client:only="preact" label="US English" locale="en-US" defaultValue="14:05" />
-  <InputTimeDemo client:only="preact" label="German" locale="de-DE" defaultValue="14:05" />
-  <InputTimeDemo client:only="preact" label="Japanese (12h)" locale="ja-JP" hour12 defaultValue="14:05" />
-  <InputTimeDemo client:only="preact" label="Force 24h" hour12={false} defaultValue="14:05" />
+  <InputTime label="US English" locale="en-US" defaultValue="14:05" />
+  <InputTime label="German" locale="de-DE" defaultValue="14:05" />
+  <InputTime label="Japanese (12h)" locale="ja-JP" hour12 defaultValue="14:05" />
+  <InputTime label="Force 24h" hour12={false} defaultValue="14:05" />
 </Preview>
 
 ```tsx folded
@@ -95,22 +96,45 @@ changes.
 `size` (`small` / `medium` / `large`) matches the other inputs' scale; `status`
 recolors the box and hint (only `critical` marks it invalid); `clearable` adds a
 clear button once a value is set — clearing empties every section back to the
-placeholder dashes. `disabled` behaves as it does on `Input`.
+placeholder dashes. `disabled` prevents focus and editing. `readOnly` keeps the time selectable and focusable while preventing edits.
 
 `min` and `max` (24-hour `"HH:mm"`) bound the value: a complete time outside the
 range is clamped to the nearest bound as you step or leave the field, and flags
 `rangeUnderflow` / `rangeOverflow` for form validity in the meantime.
 
 <Preview background="var(--bg-2)" gap="16px" style="flex-direction: column; align-items: flex-start;">
-  <InputTimeDemo client:only="preact" label="Meeting" size="small" defaultValue="10:00" clearable />
-  <InputTimeDemo client:only="preact" label="Deadline" status="critical" hint="Pick a time in the future." />
-  <InputTimeDemo client:only="preact" label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
+  <InputTime label="Meeting" size="small" defaultValue="10:00" clearable />
+  <InputTime label="Deadline" status="critical" hint="Pick a time in the future." />
+  <InputTime label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
 </Preview>
 
 ```tsx folded
 <InputTime label="Meeting" size="small" defaultValue="10:00" clearable />
 <InputTime label="Deadline" status="critical" hint="Pick a time in the future." />
 <InputTime label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
+```
+
+## Controlled values and clearing
+
+Update `value` from `onValueChange` to control the time. An incomplete time reports
+an empty string while the native segments retain the text being edited. Call
+`preventDefault()` in `onClearClick` to keep a value when clearing is disallowed.
+
+<Preview>
+  <InputTimeInteractions client:load />
+</Preview>
+
+```tsx folded
+const [value, setValue] = useState('09:30')
+const [keep, setKeep] = useState(false)
+
+<InputTime label="Meeting" locale="en-US" value={value} clearable
+  onValueChange={(_, attrs) => setValue(attrs.value)}
+  onClearClick={event => { if (keep) event.preventDefault() }} />
+<Checkbox checked={keep} onStateChange={(_, { next }) => setKeep(next === true)}>
+  Keep the value when clearing
+</Checkbox>
+<Tag>{value || 'Incomplete time'}</Tag>
 ```
 
 <Disclosure title="InputTime props" open>
@@ -123,7 +147,30 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-Slots supply the field label and leading icon.
+Slots supply the label, leading content, clear action, trailing content, and hint.
+The owned native inputs remain inside the shadow root. The `segments` part groups
+them; `hour`, `minute`, and `period` keep their meanings in every locale.
+
+JSX groups slot content in CSS-only `a-input-time-label`, `a-input-time-leading`,
+`a-input-time-clear`, `a-input-time-trailing`, and `a-input-time-hint` tags. These
+replace the wrapper's spans. Update span-based consumer selectors to the grouping
+tags or slot attributes. Raw HTML can keep its existing slot markup.
+
+Defaults load from external CSS, including under `style-src-attr 'none'`.
+Custom `tone`, numeric `round`, and application `style` props can still serialize
+inline styles that a policy blocks. Before browser SSR hydration, configure
+`hydratingEvents: true` as described in [Browser hydration](/install/#browser-hydration).
+Client-only and worker renderers forward events immediately by default.
+
+The canonical value remains `HH:mm`, or an empty string for an incomplete time.
+`input` bubbles and is composed; `change` bubbles on commit. A clear action first
+fires cancelable, bubbling `clearclick`, then `input`, `change`, and `clearinput`
+when accepted. Cancel `clearclick` synchronously to retain the value.
+
+A read-only field emits `change` on blur only for an edit made before it became
+read-only. Partial digits remain visible, with an empty canonical value until
+editing resumes and completes the time. Removing the field while blur settles
+still completes a pending commit, including range clamping on an editable field.
 
 <Preview>
   <a-input-time name="start-time" defaultvalue="09:30">
@@ -132,7 +179,7 @@ Slots supply the field label and leading icon.
   </a-input-time>
 </Preview>
 
-```html
+```html folded
 <a-input-time name="start-time" defaultvalue="09:30">
   <span slot="label">Start time</span>
   <a-icon slot="leading" shape="clock" aria-hidden="true"></a-icon>
@@ -152,7 +199,7 @@ field treatments.
   <input data-anta style={{ marginBottom: '8px' }} type="time" name="reminder-at" value="09:00" />
 </Preview>
 
-```html
+```html folded
 <input data-anta type="time" name="reminder-at" value="09:00">
 ```
 
@@ -160,16 +207,18 @@ field treatments.
 
 ## Styling
 
+<Disclosure title="Styling" anchor={false}>
+
 `InputTime` renders an `<a-input-time>` whose field chrome mirrors `<a-input>`.
 Route feedback color through `status`; everything else is reachable as plain CSS on
-the host or through `::part()`. `segment` targets every editable input. `hour`,
+the host or through `::part()`. Unlayered consumer rules override Anta's layered defaults. `segment` targets every editable input. `hour`,
 `minute`, and `period` target one segment type regardless of locale order. `literal`
 targets the localized separator. The element also exposes `field`, `segments`,
 `leading`, `label`, `hint`, `clear`, and `trailing`. Don't override the internal
 `--input-time-*` values directly; they are defaults, not a styling API.
 
 <Preview background="var(--bg-2)">
-  <InputTimeDemo client:only="preact" className="my-time" label="Full width, red" defaultValue="09:30" />
+  <InputTime className="my-time" label="Full width, red" defaultValue="09:30" />
   <style is:inline>{`
     .my-time { width: 100%; }
     .my-time::part(segments) { color: #e5484d; }
@@ -187,12 +236,14 @@ targets the localized separator. The element also exposes `field`, `segments`,
 .my-time::part(literal) { color: var(--text-4); }
 ```
 
+The example classes are consumer selectors; replace them with your own.
+
 Drop the clock icon with the `icon={false}` prop, and point the `segments` part at
 a monospaced family for fixed-width digits — a small `padding-top` re-centers the
 tighter `1em` line:
 
 <Preview background="var(--bg-2)">
-  <InputTimeDemo client:only="preact" className="plain-time" icon={false} label="Monospaced" defaultValue="09:30" />
+  <InputTime className="plain-time" icon={false} label="Monospaced" defaultValue="09:30" />
   <style is:inline>{`
     .plain-time::part(segments) {
       font-family: var(--monospace, ui-monospace, monospace);
@@ -219,9 +270,11 @@ tints the resting + hover border — the focus ring stays the global ring. It's 
 color, not a named tone; the named feedback tones live on `status`.
 
 <Preview background="var(--bg-2)">
-  <InputTimeDemo client:only="preact" label="Accent" tone="#7c3aed" defaultValue="09:30" />
+  <InputTime label="Accent" tone="#7c3aed" defaultValue="09:30" />
 </Preview>
 
 ```tsx folded
 <InputTime label="Accent" tone="#7c3aed" defaultValue="09:30" />
 ```
+
+</Disclosure>

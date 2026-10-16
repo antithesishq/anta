@@ -154,6 +154,22 @@ Set `ANTA_INPUT_COMPARE_ORIGINAL=1` in a checkout containing commit `56eafcdd`
 to compare the source visual matrix with the original implementation.
 Screenshots go to `tests/.test-output/input` and are uploaded by Component matrix.
 
+## InputTime
+
+Run `pnpm test:input-time` for the source CSP matrix and
+`pnpm test:input-time:package` for the same checks against an installed tarball.
+`pnpm test:components --tier fast --component input-time` selects core Chromium
+editing, form, CSP, and React/Preact hydration checks. The slow tier adds locale,
+consumer override, lifecycle, touch, visual, mixed-import, and InputDate coverage
+in Chromium, Firefox, and WebKit, plus package installation.
+
+The suite verifies HTTP CSP headers and computed styles. InputDate cases keep
+Menu's existing blocked stylesheet separate. Set
+`ANTA_INPUT_TIME_CHROMIUM_EXECUTABLE` for an exact browser executable, or
+`ANTA_INPUT_TIME_CONSUMER_ROOT` for an installed consumer. Set
+`ANTA_INPUT_TIME_COMPARE_ORIGINAL=1` to compare registered variants against
+`2d2ba6e6`. Screenshots go to `tests/.test-output/input-time`.
+
 ## Toast and Toaster
 
 Run `pnpm test:toaster` for the source CSP matrix or `pnpm test:toaster:package`

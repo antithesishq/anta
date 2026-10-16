@@ -48,6 +48,24 @@ async function productionPage(t, engine = chromium) {
 }
 
 for (const engine of engines) {
+  test(`${engine.name()}: InputTime previews edit and cancel clearing after hydration`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/input-time/')
+    await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'))
+    const island = page.locator('astro-island[component-url*="InputTimeInteractions"]')
+    const time = island.locator('a-input-time')
+    await time.locator('[part~="hour"]').fill('11')
+    assert.equal(await time.evaluate(el => el.value), '11:30')
+    await island.locator('a-checkbox').click()
+    await time.locator('[slot="clear"] a-button').click()
+    assert.equal(await time.evaluate(el => el.value), '11:30')
+    await island.locator('a-checkbox').click()
+    await time.locator('[slot="clear"] a-button').click()
+    assert.equal(await time.evaluate(el => el.value), '')
+    await island.locator('a-tag').getByText('Incomplete time', { exact: true }).waitFor()
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: Toaster previews preserve dismissal, countdown, and raw markup examples`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/toaster/')

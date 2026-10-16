@@ -1,3 +1,6 @@
+import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest } from '../input-events'
+import { inputTrailingActions } from './input-trailing-actions'
+import { MODALITY, trackFocusModality, type InputDocument } from './input-focus-modality'
 import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from '../anta_helpers'
 import {
   applyShadowAria,
@@ -71,63 +74,6 @@ const FORWARDED = [
 // Presence-based among the forwarded set (toggled, not value-copied).
 const BOOL_FORWARDED = new Set(['readonly', 'required'])
 
-// Shared across independently compiled entries, with listeners owned by the
-// connected document and released after its last Input disconnects.
-const MODALITY = Symbol.for('anta.input-focus-modality')
-type Modality = { keyboard: boolean; readers: Set<() => void>; active?: () => void; key: () => void; pointer: () => void; refresh: () => void; frame?: number }
-type InputDocument = Document & { [MODALITY]?: Modality }
-function trackFocusModality(doc: InputDocument, reader: () => void) {
-  let state = doc[MODALITY]
-  if (!state) {
-    const readers = new Set<() => void>()
-    state = { keyboard: false, readers, key: () => {}, pointer: () => {}, refresh: () => {} }
-    const current = state
-    current.refresh = () => {
-      if (!current.active || current.frame !== undefined) return
-      current.frame = doc.defaultView?.requestAnimationFrame(() => {
-        current.frame = undefined
-        current.active?.()
-      })
-    }
-    current.key = () => { current.keyboard = true; current.refresh() }
-    current.pointer = () => { current.keyboard = false; current.refresh() }
-    doc[MODALITY] = current
-    doc.addEventListener('keydown', current.key, true)
-    doc.addEventListener('pointerdown', current.pointer, true)
-  }
-  state.readers.add(reader)
-  return () => {
-    state.readers.delete(reader)
-    if (state.active === reader) state.active = undefined
-    if (state.readers.size) return
-    if (state.frame !== undefined) doc.defaultView?.cancelAnimationFrame(state.frame)
-    doc.removeEventListener('keydown', state.key, true)
-    doc.removeEventListener('pointerdown', state.pointer, true)
-    delete doc[MODALITY]
-  }
-}
-
-// Internal trigger the clear button dispatches (via a-button's
-// `data-custom-event`) when activated by click/Enter/Space — fired with no
-// framework hydration needed. The element converts it into the public clear
-// lifecycle (see the constructor listener): a cancelable `clearclick`, then —
-// if not prevented — `clear()`, which empties the field and fires `clearinput`.
-//
-// CONTRACT: this string MUST stay in sync with the `data-custom-event` value
-// the `<Input>` wrapper sets on its clear `<Button>` (src/components/Input.tsx).
-// It's duplicated rather than shared because the wrapper can't import from this
-// module without pulling in element registration (the tiers are decoupled, and
-// importing here self-registers `a-input` + its CSS). Rename in both places.
-const CLEAR_TRIGGER = 'clearrequest'
-
-// Public clear events. Both bubble and are all-lowercase so they bind portably
-// as `onclearclick` / `onclearinput` in React *and* Preact (React keeps the
-// case after `on`; Preact lowercases) — same rule as `oninput`/`onchange`.
-// `clearclick` fires first and is cancelable (preventDefault keeps the value);
-// `clearinput` fires after the value has actually been cleared.
-const CLEAR_CLICK_EVENT = 'clearclick'
-const CLEAR_INPUT_EVENT = 'clearinput'
-
 // Use JS autosizing in WebKit to avoid crashes inside closed <details>, even
 // when CSS.supports returns true. Desktop Chrome also includes AppleWebKit in
 // its user agent; Chrome and Firefox on iOS use WebKit.
@@ -156,7 +102,7 @@ export class AInputElement extends HTMLElementBase {
   private hintSlot: HTMLSlotElement
   private leadingSlot: HTMLSlotElement
   #trailingSlot: HTMLSlotElement
-  #trailingObserver?: MutationObserver
+  #trailingActions: ReturnType<typeof inputTrailingActions>
   private control?: Control
   #buttonText?: HTMLSpanElement
   // The intended value, captured even before the control exists (a framework
@@ -220,7 +166,10 @@ export class AInputElement extends HTMLElementBase {
     this.#trailingSlot = this.doc.createElement('slot')
     this.#trailingSlot.name = 'trailing'
     this.#trailingSlot.setAttribute('part', 'trailing')
-    this.#trailingSlot.addEventListener('slotchange', this.syncTrailingActions)
+    this.#trailingActions = inputTrailingActions(this, this.#trailingSlot, 'a-input-trailing', actions => {
+      this.internals?.states?.[actions ? 'add' : 'delete']('trailing-actions')
+    })
+    this.#trailingSlot.addEventListener('slotchange', this.#trailingActions.sync)
     // The clear button is projected here (rightmost). The element gates its
     // visibility via external CSS off the filled state — see updateFilled.
     const clearSlot = this.doc.createElement('slot')
@@ -240,8 +189,7 @@ export class AInputElement extends HTMLElementBase {
     // what a controlled consumer reacts to; an uncontrolled field is just
     // emptied. One path serves both.
     this.addEventListener(CLEAR_TRIGGER, event => {
-      const owner = event.composedPath().find(node => (node as Element)?.localName === 'a-input')
-      if (owner !== this || this.control?.disabled || this.hasAttribute('readonly')) return
+      if (!ownsInputClearRequest(this, event) || this.control?.disabled || this.hasAttribute('readonly')) return
       const proceed = this.dispatchEvent(
         new CustomEvent(CLEAR_CLICK_EVENT, { bubbles: true, cancelable: true }),
       )
@@ -293,15 +241,14 @@ export class AInputElement extends HTMLElementBase {
     if (!this.control) this.buildControl()
     else this.syncAutoHeight()
     this.ready = true
-    this.syncTrailingActions()
+    this.#trailingActions.sync()
     this.applyLabelAria()
     this.applyDescriptionAria()
   }
 
   disconnectedCallback() {
     this.#labelObserver?.disconnect()
-    this.#trailingObserver?.disconnect()
-    this.#trailingObserver = undefined
+    this.#trailingActions.disconnect()
     this.#releaseModality?.()
     this.#releaseModality = undefined
     this.onBlur()
@@ -628,31 +575,6 @@ export class AInputElement extends HTMLElementBase {
     if (modality?.active === this.syncButtonFocus) modality.active = undefined
     if (isButton(this.control)) this.internals?.states?.delete('button-focus')
     try { this.internals?.states?.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
-  }
-
-  private syncTrailingActions = () => {
-    if (!this.isConnected) return
-    this.#trailingObserver?.disconnect()
-    let hasAction = false
-    const onlyActions = (nodes: Iterable<Node>): boolean => {
-      for (const node of nodes) {
-        if (node.nodeType === 3 && node.textContent?.trim()) return false
-        if (node.nodeType !== 1) continue
-        const element = node as Element
-        if (element.localName === 'a-input-trailing') {
-          // CSS cannot distinguish bare text from a buttons-only group.
-          // Observe only these boxless groups, never values or button attributes.
-          this.#trailingObserver ??= new this.view.MutationObserver(this.syncTrailingActions)
-          this.#trailingObserver.observe(element, { childList: true, characterData: true, subtree: true })
-          if (!onlyActions(element.childNodes)) return false
-        } else if (element.localName === 'a-button' || element.localName === 'button' || element.matches('a[role="button"][data-anta]')) {
-          hasAction = true
-        } else return false
-      }
-      return true
-    }
-    const actions = onlyActions(this.#trailingSlot.assignedNodes()) && hasAction
-    this.internals?.states?.[actions ? 'add' : 'delete']('trailing-actions')
   }
 
   private onLabelSlotChange = () => {

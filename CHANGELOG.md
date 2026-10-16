@@ -69,6 +69,10 @@ changes are not listed.
 
 ### Changed
 
+- [InputTime default styles](/input-time/#styling) load from external CSS under
+  strict CSP. JSX slot groups use `a-input-time-*` tags; update selectors that
+  target their former spans. Existing slots, parts, and segmented editing remain.
+
 - [Toaster](/toaster/) loads default styling from external CSS under strict CSP.
   Placement, content identity, and countdown behavior remain supported, including
   restarting timers and completing interrupted exits after reconnection.
@@ -117,6 +121,18 @@ changes are not listed.
 
 
 ### Fixed
+
+- [InputTime touch editing](/input-time/#the-field) waits for a completed tap
+  before focusing field padding. Canceled gestures no longer affect later
+  segment selection, and a neutral status preserves a custom tone.
+
+- [InputTime](/input-time/) retains incomplete edits on reconnection and uses live
+  label and hint references. Read-only fields prevent edits, and clear actions
+  can be canceled with `onClearClick`.
+
+- [InputTime commits](/input-time/#web-component) finish when the field is removed
+  during blur. Read-only focus visits emit `change` only for a pending edit, and
+  disabling a parent fieldset clears the keyboard focus state.
 
 - [Toaster](/toaster/) preserves countdown progress when an exit reconnects.
   Reattaching an already-dismissed toast emits completion for its new owner.

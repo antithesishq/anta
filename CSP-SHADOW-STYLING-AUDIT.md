@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 15, 2026 on `codex/toaster-external-css`.
+Updated October 15, 2026, including the InputTime and Toast/Toaster refactors.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -61,8 +61,11 @@ and verification before moving to the next component.
    InputTime; verification is recorded below.
 6. [x] [Toaster](src/elements/a-toaster.ts): existing manual-popover region and
    six named placement slots retained. Defaults use external part rules.
-7. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
-   adornments, and native-field semantics.
+7. [x] [InputTime](src/elements/a-input-time.ts): external defaults for the owned
+   native segments, separators, field, and slots. Locale layout and value/event
+   contracts remain. JSX owns CSS-only slot groups; readonly and cancelable clear
+   actions follow Input. Source, installed-package, minimum Chrome, original
+   layout, and production checks pass; coverage limits are below.
 8. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
    scrolling, keyboard navigation, and focus ownership. Verify with Input.
 9. [ ] [Dialog](src/elements/a-dialog.ts): modal structure, optional regions,
@@ -462,6 +465,131 @@ Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
 Playwright WebKit is engine evidence, not a shipping Safari run. Existing
 pre-upgrade skeleton behavior and motion are retained. Custom tone, radius, and
 application style props can still serialize CSP-blocked style attributes.
+
+### InputTime verification
+
+Verified October 15, 2026 on `codex/input-time-external-css`, based on merged
+Input PR #236 at `2d2ba6e6`:
+
+- `pnpm test:input-time` passed 102 source checks in Chrome `155.0.8059.84`,
+  Firefox `155.0`, and Playwright WebKit `26.6`. The final source matrix also
+  passes with Playwright Chromium `153.0.8010.12`. The separate
+  `pnpm test:input-time:package` matrix passed all 102 checks against an npm
+  tarball installed in an isolated consumer, using Chromium `153.0.8010.12`,
+  Firefox `155.0`, and WebKit `26.6`. Public full/granular exports resolve without
+  Anta source aliases or workspace links. React/React DOM `19.3.0`, Preact
+  `10.29.8`, and `preact-render-to-string` `6.7.0` generate their own SSR output;
+  hydration retains authored nodes without recovery errors. Callback removal and
+  reattachment retain uncontrolled values and the owned native inputs.
+- HTTP responses supply `default-src 'self'; script-src 'self'; style-src 'self';
+  style-src-attr 'none'; img-src 'self' data:; object-src 'none'`. Strict standalone
+  cases have no CSP violations or injected shadow sheets. Coverage checks computed
+  defaults, external part precedence, native segment sizes, and state changes.
+  Consumer field/segment overrides remain effective through focus, status, size,
+  and clock-mode changes. Dynamic application styles, custom tone, and numeric
+  round props can still serialize CSP-blocked inline styles.
+- The same source and installed-package suites each passed all 34 checks in
+  Chrome for Testing `135.0.7049.114`. Select an exact executable with
+  `ANTA_INPUT_TIME_CHROMIUM_EXECUTABLE` and set `ANTA_TEST_WEBKIT=0` for Chromium
+  only. No browser baseline change or shadow styling fallback is introduced.
+- Editing checks cover digit entry/auto-advance, 24-hour input in 12-hour mode,
+  AM/PM editing, increment/wrap, page increments, incomplete values, selection,
+  caret boundaries, modified shortcuts, canonical-time paste, and native touch
+  focus. Locale checks cover `en-US`, `en-GB`, `fi-FI`, `ja-JP`, `zh-CN`, `ko-KR`,
+  `ar-EG`, and `es-MX` in both clock modes, including period order, separators,
+  label width, and stable AM/PM sizing. Form checks cover submission, required and
+  range validity, critical status changes, reset, restoration callbacks,
+  fieldset disablement, readonly, clear cancellation, and nested clear ownership.
+- Labels and hints use live element references on the group. Explicit names,
+  descriptions, invalid state, and error references retain their delegation.
+  Chromium's accessibility tree confirms the named/described group and native
+  segment textboxes. Reconnection preserves incomplete text and native nodes;
+  adoption keeps editing in the new document, and document listeners and pending
+  focus work are released after the last field disconnects. Reduced-motion checks
+  include field and dim-action transitions. Input shares its existing focus
+  coordinator through `input-focus-modality.ts`; editable typing does not request
+  focus refreshes.
+- Compared 11 registered variants against `2d2ba6e6` in three engines and both
+  import modes. All 66 geometry, typography, and appearance comparisons matched;
+  both Chrome 135 import modes also matched all 11 variants. Set
+  `ANTA_INPUT_TIME_COMPARE_ORIGINAL=1` to repeat the comparison. Screenshots are
+  saved in `tests/.test-output/input-time`. WebKit captures use a separate
+  permissive capture page; behavior and computed-style pages retain strict CSP.
+- Time-enabled InputDate commits edited time on blur under both import modes in
+  every engine. Its Menu retains the existing blocked shadow stylesheet; those
+  violations are checked separately from InputTime. This does not complete the
+  remaining Menu or composed-component checklist items.
+- All 142 shared fast component checks and all 336 selected root regressions
+  passed, using CI's existing debounce exclusion. Anta lint/type checks, sticker
+  and Plot type checks, site CSS lint, workflow parsing, and documentation author
+  checks pass. The Node `24.15.0` production site build and 12 production checks
+  passed. Two additional production checks confirm the InputTime controlled-value
+  and clear-cancellation preview in Chromium and WebKit. Dedicated InputTime
+  tests are registered with shared tiers and dependency-sensitive PR gates;
+  expanded source/installed matrices and visual artifacts stay in slow coverage.
+
+Review follow-up for PR #238:
+
+- Padding focus uses compatibility `mousedown`, so a touch contact or scroll does
+  not focus the editor. Pointer-origin markers are cleared on release,
+  cancellation, focus departure, and keyboard navigation. Regressions cover
+  completed taps, canceled touch contacts, Chromium trusted touch scrolling,
+  refocus after clicking an already-focused segment, and cross-segment native
+  caret placement. The stale refocus case fails against `c40420d3` and passes
+  after the fix.
+- Neutral status retains custom tone. Default group label/hint references are
+  assigned once during the initial build and refreshed on reconnection. Both
+  fields share the action classifier in `input-trailing-actions.ts`, observing
+  only grouping child lists and their direct text nodes. Button label changes do
+  not trigger classification. Clear names and nearest-field ownership are shared
+  in the side-effect-free `input-events.ts`, also used by the JSX clear triggers.
+- The suggested readonly normalization was not applied: incomplete edits retain
+  their text and report an empty canonical value before and after readonly is
+  enabled. This behavior predates the readonly guard. A regression verifies
+  blur's empty `change` value and completing the time after unlocking, without
+  erasing the partial input or inventing a complete time.
+- The expanded source and installed-package suites each pass 140 checks in
+  Chromium `153.0.8010.12`, Firefox `155.0`, and Playwright WebKit `26.6`.
+  The touch-scroll protocol checks run only in Chromium; other engines retain
+  synthetic contact/cancellation and completed-tap coverage. The installed suite
+  also passes all 48 checks in Chrome for Testing `135.0.7049.114`. All 193 Input
+  source checks and 336 selected root regressions pass after the shared-helper
+  extraction. The Node `24.15.0` production build and all 14 production checks
+  pass, along with lint, types, stylesheet lint, workflow parsing, and the
+  documentation author check. Only the affected changelog package docs were
+  regenerated for this follow-up.
+
+Second review follow-up for PR #238:
+
+- Deferred blur still clamps an editable value, updates form submission, and
+  dispatches `change` if the host is removed before the microtask runs. Focus
+  cleanup checks connection and effective disabled state independently of the
+  commit. Fieldset disablement explicitly refreshes keyboard-focus state and
+  clears the active readonly focus reader.
+- A readonly field commits an edit made before readonly was enabled once;
+  unchanged readonly focus visits are silent. Incomplete segment text remains
+  intact. Mouse presses no longer synchronize focus before it moves, and the
+  unused `pointercancel` listener is removed.
+- Regressions for removed blur, fieldset focus cleanup, repeated readonly blur,
+  and untouched readonly fields fail against `b93dd6b9` and pass after the fix.
+  They run in the dedicated fast tier and expanded browser/package matrices.
+- Source and isolated installed-package matrices each pass 158 checks in
+  Chromium `153.0.8010.12`, Firefox `155.0`, and WebKit `26.6`; the installed
+  Chrome `135.0.7049.114` matrix passes all 54 checks. The Node `24.15.0` site
+  build and all 14 production checks pass, along with lint, type checks, site
+  stylesheet lint, and the documentation author check. Only InputTime and
+  changelog package docs were regenerated. Shared Input and root regressions
+  retain the preceding follow-up's results; they were not rerun for these
+  InputTime-only fixes. Exact-version and manual coverage gaps below remain.
+
+Exact Edge `135`, Firefox `136`, Safari/iOS Safari `17.4`, and React `18` were not
+executed. Playwright WebKit is engine evidence, not a shipping Safari/iOS run.
+Touch gestures use browser automation; physical mobile keyboards were not
+exercised. Paste checks supply clipboard payloads through synthetic paste events;
+OS clipboard, IME, autofill, assistive-technology interaction, and real browser
+history restoration were not manually exercised. Restoration checks invoke the
+form-associated callback. The pre-upgrade neutral time skeleton and upgrade fade
+retain their existing behavior.
 
 ## Scope and conclusion
 

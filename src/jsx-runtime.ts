@@ -194,6 +194,11 @@ export interface AntaIntrinsicElements {
   'a-input-hint': BaseAttributes
   'a-slider': ASliderAttributes
   'a-input-time': AInputTimeAttributes
+  'a-input-time-label': BaseAttributes
+  'a-input-time-leading': BaseAttributes
+  'a-input-time-clear': BaseAttributes
+  'a-input-time-trailing': BaseAttributes
+  'a-input-time-hint': BaseAttributes
   'a-calendar': ACalendarAttributes
   'a-radio': ARadioAttributes
   'a-radio-group': ARadioGroupAttributes

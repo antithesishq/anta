@@ -2,6 +2,139 @@
 @layer anta.reset, anta.components, anta.theme;
 
 @layer anta.components {
+  a-input-time {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+    outline: none;
+  }
+
+  a-input-time::part(label) {
+    display: none;
+    color: var(--input-time-label);
+    font-family: var(--sans-serif);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
+    font-weight: 500;
+  }
+
+  a-input-time::part(field) {
+    --_bc: var(--input-time-border);
+    --_bw: 0.5px;
+
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: var(--input-time-field-height);
+    background: var(--input-time-bg);
+    border-radius: var(--input-time-field-radius);
+    box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
+    transition: box-shadow 120ms ease;
+  }
+  a-input-time[status]:not([status="neutral"])::part(field) { --_bw: 1px; }
+
+  @media (hover: hover) and (pointer: fine) {
+    a-input-time:not(:disabled)::part(field):hover {
+      --_bc: var(--input-time-border-hover);
+      --_bw: 1px;
+    }
+  }
+  a-input-time:not(:disabled):not([readonly]):focus::part(field),
+  a-input-time:not(:disabled)[readonly]:focus:state(kb-focus)::part(field) {
+    --_bc: var(--input-time-border-hover);
+    --_bw: 1px;
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  @media (forced-colors: active) { a-input-time::part(field) { border: 1px solid ButtonBorder; } }
+
+  a-input-time::part(leading) {
+    display: none;
+    color: var(--input-time-adornment);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
+  }
+  a-input-time:disabled::part(leading),
+  a-input-time:disabled::part(trailing) { opacity: 0.5; pointer-events: none; }
+
+  a-input-time::part(segments) {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-inline: 7px;
+    color: var(--input-time-text);
+    font-family: var(--sans-serif);
+    font-stretch: normal;
+    font-style: normal;
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
+    font-weight: 400;
+  }
+
+  a-input-time::part(segment) {
+    appearance: none;
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 0;
+    padding-inline: 1px;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-variation-settings: inherit;
+    font-stretch: inherit;
+    font-style: inherit;
+    line-height: inherit;
+    text-align: center;
+    white-space: nowrap;
+    outline: none;
+    cursor: text;
+    font-variant-numeric: tabular-nums;
+  }
+  a-input-time::part(period) {
+    color: var(--input-time-period-color);
+  }
+  a-input-time::part(segment)::placeholder {
+    color: var(--input-time-placeholder);
+    opacity: 1;
+  }
+  a-input-time::part(literal) {
+    margin-inline: -1px;
+    white-space: pre;
+    color: var(--input-time-text);
+  }
+
+  a-input-time:disabled::part(segments) { cursor: not-allowed; }
+  a-input-time:disabled::part(segment) { cursor: not-allowed; }
+
+  a-input-time::part(trailing) {
+    display: none;
+    color: var(--input-time-adornment);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
+  }
+  a-input-time::part(clear) {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    visibility: hidden;
+    box-sizing: border-box;
+  }
+  a-input-time:state(filled):not(:disabled):not([readonly])::part(clear) { visibility: visible; }
+
+  a-input-time::part(hint) {
+    display: none;
+    gap: 4px;
+    align-items: flex-start;
+    padding-inline-start: 1px;
+    color: var(--input-time-hint);
+    font-family: var(--sans-serif);
+    font-size: calc(var(--input-time-font-size) - 1px);
+    line-height: calc(var(--input-time-line-height) - 2px);
+  }
+
   /* Token surface — mirrors a-input's field chrome (same literal/role values) so a
      time field reads as one of the other inputs, under `--input-time-*` names. */
 
@@ -61,6 +194,7 @@
   }
 
   a-input-time {
+    --_input-time-action-size: 24px;
     --input-time-bg: var(--bg-1);
     --input-time-border: var(--border-2);
     --input-time-border-hover: var(--border-1);
@@ -84,33 +218,67 @@
     max-width: 100%;
   }
 
-  a-input-time:has(> [slot="label"])::part(label) { display: block; }
-  a-input-time:has(> [slot="leading"])::part(leading) {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    margin-inline-start: 7px;
+  /* CSS-only grouping tags let slots lay out their children directly.
+     Before upgrade, the skeleton hides adornments and gives the label a box. */
+  a-input-time:defined > :is(
+    a-input-time-label, a-input-time-leading, a-input-time-clear, a-input-time-trailing, a-input-time-hint
+  ) {
+    display: contents;
   }
-  a-input-time:has(> [slot="leading"])::part(segments) { padding-inline-start: 4px; }
+
+  /* Named slots are light-DOM state, so the host derives their visibility and
+     spacing with :has() instead of mirroring them into shadow-only classes. */
+  a-input-time:has(> [slot="label"])::part(label) { display: block; }
+  a-input-time:has(> [slot="leading"])::part(leading),
   a-input-time:has(> [slot="trailing"])::part(trailing) {
     display: flex;
     align-items: center;
-    gap: 2px;
     flex-shrink: 0;
-    color: var(--input-time-adornment);
-    font-size: var(--input-time-font-size);
   }
+  a-input-time:has(> [slot="leading"])::part(leading) { margin-inline-start: 7px; }
+  a-input-time:has(> [slot="trailing"])::part(trailing) {
+    gap: 2px;
+    margin-inline-end: var(--input-time-trailing-inset, 7px);
+  }
+  a-input-time:has(> [slot="leading"])::part(segments) { padding-inline-start: 4px; }
   a-input-time:has(> [slot="hint"])::part(hint) { display: flex; }
+
+  /* Anta actions fit the field height; text determines their width.
+     Unmarked native buttons and other custom content keep their own sizing. */
+  a-input-time > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
+  a-input-time > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
+    --_fs: var(--input-time-font-size);
+    --_lh: var(--input-time-line-height);
+    --_pb: 0px;
+    box-sizing: border-box;
+    width: auto;
+    min-width: var(--_input-time-action-size);
+    height: var(--_input-time-action-size);
+    min-height: 0;
+    justify-content: center;
+
+    /* JSX marks known icon-only buttons; raw markup can opt in explicitly.
+       Element-child selectors cannot distinguish an icon from icon + bare text. */
+    &[data-anta-icon-only] { width: var(--_input-time-action-size); }
+  }
+
+  /* Defaults stay at use sites so inherited and local overrides both win. */
+  a-input-time:state(trailing-actions)::part(trailing) {
+    margin-inline-end: 0;
+    padding-inline-end: var(--input-time-trailing-inset, 2px);
+  }
 
   a-input-time[size="small"] {
     --input-time-font-size: 13px;
     --input-time-line-height: 16px;
     --input-time-field-height: 24px;
+    --_input-time-action-size: 20px;
   }
   a-input-time[size="large"] {
     --input-time-font-size: 17px;
     --input-time-line-height: 22px;
     --input-time-field-height: 32px;
+    --_input-time-action-size: 28px;
   }
 
   a-input-time[round] {
@@ -126,7 +294,7 @@
   a-input-time[size="small"] a-icon { --icon-size: 14px; }
   a-input-time[size="large"] a-icon { --icon-size: 18px; }
 
-  a-input-time[tone]:not([tone=""]) {
+  a-input-time[tone]:not([tone=""]):not([status]:not([status="neutral"])) {
     --input-time-tone-source: var(--border-2);
     --input-time-border: light-dark(
       oklch(from var(--input-time-tone-source) 0.7 calc(c * 0.8) h),
@@ -141,15 +309,15 @@
   /* Status — mirrors a-input: border derives in oklch from the tone's seed
      (rest = hover), bg tint + message are the tone's role tokens (both themes
      free). */
-  a-input-time[status="critical"] { --input-time-tone-source: var(--anta-seed-critical); --input-time-bg: var(--bg-2-critical); --input-time-hint: var(--text-2-critical); }
-  a-input-time[status="warning"]  { --input-time-tone-source: var(--anta-seed-warning);  --input-time-bg: var(--bg-2-warning);  --input-time-hint: var(--text-2-warning); }
-  a-input-time[status="success"]  { --input-time-tone-source: var(--anta-seed-success);  --input-time-bg: var(--bg-2-success);  --input-time-hint: var(--text-2-success); }
-  a-input-time[status="info"]     { --input-time-tone-source: var(--anta-seed-info);     --input-time-bg: var(--bg-2-info);     --input-time-hint: var(--text-2-info); }
-  a-input-time[status="brand"]    { --input-time-tone-source: var(--anta-seed-brand);    --input-time-bg: var(--bg-2-brand);    --input-time-hint: var(--text-2-brand); }
+  a-input-time[status="critical"] { --input-time-status-source: var(--anta-seed-critical); --input-time-bg: var(--bg-2-critical); --input-time-hint: var(--text-2-critical); }
+  a-input-time[status="warning"]  { --input-time-status-source: var(--anta-seed-warning);  --input-time-bg: var(--bg-2-warning);  --input-time-hint: var(--text-2-warning); }
+  a-input-time[status="success"]  { --input-time-status-source: var(--anta-seed-success);  --input-time-bg: var(--bg-2-success);  --input-time-hint: var(--text-2-success); }
+  a-input-time[status="info"]     { --input-time-status-source: var(--anta-seed-info);     --input-time-bg: var(--bg-2-info);     --input-time-hint: var(--text-2-info); }
+  a-input-time[status="brand"]    { --input-time-status-source: var(--anta-seed-brand);    --input-time-bg: var(--bg-2-brand);    --input-time-hint: var(--text-2-brand); }
   a-input-time[status]:not([status="neutral"]) {
     --input-time-border: light-dark(
-      oklch(from var(--input-time-tone-source) 0.58 c h),
-      oklch(from var(--input-time-tone-source) 0.52 c h)
+      oklch(from var(--input-time-status-source) 0.58 c h),
+      oklch(from var(--input-time-status-source) 0.52 c h)
     );
     --input-time-border-hover: var(--input-time-border);
   }
@@ -166,4 +334,24 @@
   /* Neutral dark border needs no override: base points at --border-2 / --border-1
      (seed-derived dark values). */
 
+}
+
+@layer anta.components {
+  a-input-time[dim-actions]::part(leading),
+  a-input-time[dim-actions]::part(trailing),
+  a-input-time[dim-actions]::part(clear) {
+    opacity: var(--_input-time-actions-opacity, 0.6);
+    transition: opacity 120ms ease;
+  }
+  a-input-time[dim-actions]:not(:disabled)::part(field):hover,
+  a-input-time[dim-actions]:not(:disabled)::part(field):focus-within { --_input-time-actions-opacity: 1; }
+  a-input-time:has(> [slot="clear"])::part(clear) { padding: 2px; }
+  a-input-time[dim-actions]:disabled::part(leading),
+  a-input-time[dim-actions]:disabled::part(trailing) { opacity: 0.5; }
+  @media (prefers-reduced-motion: reduce) {
+    a-input-time::part(field),
+    a-input-time[dim-actions]::part(leading),
+    a-input-time[dim-actions]::part(trailing),
+    a-input-time[dim-actions]::part(clear) { transition: none; }
+  }
 }

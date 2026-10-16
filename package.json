@@ -94,7 +94,9 @@
     "test:tooltip:package": "node tests/tooltip-package.mjs",
     "test:toaster": "node --test tests/toaster-csp.mjs",
     "test:toaster:package": "node tests/toaster-package.mjs",
-    "test:text": "node --test tests/text-csp.mjs"
+    "test:text": "node --test tests/text-csp.mjs",
+    "test:input-time": "node --test tests/input-time-csp.mjs",
+    "test:input-time:package": "node tests/input-time-package.mjs"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

@@ -55,6 +55,7 @@ jobs:
             echo 'banner=true' >> "$GITHUB_OUTPUT"
             echo 'input-time=true' >> "$GITHUB_OUTPUT"
             echo 'input=true' >> "$GITHUB_OUTPUT"
+            echo 'toaster=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -186,6 +187,22 @@ jobs:
           else
             echo 'input-time=false' >> "$GITHUB_OUTPUT"
           fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-toast*' 'src/elements/a-banner.*' 'src/elements/a-card.*' \
+            'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-input.*' \
+            'src/elements/a-title.*' 'src/elements/a-text.*' 'src/elements/a-tooltip.*' \
+            src/components/{Toaster,Banner,Card,Button,Icon,Input,Title,Text,Tooltip}.tsx \
+            src/{toaster,jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/elements/{index,input-focus-modality,input-trailing-actions,key-activation,shadow-aria}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/toaster-*' tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'toaster=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'toaster=false' >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -231,6 +248,11 @@ jobs:
       - name: Test Banner CSP, dismissal, and initial layout
         if: steps.component-tests.outputs.banner == 'true'
         run: pnpm test:components --component banner
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Test Toaster CSP, placement, countdown, and hydration
+        if: steps.component-tests.outputs.toaster == 'true'
+        run: pnpm test:components --component toaster
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Test Expander CSP, disclosure behavior, and initial layout

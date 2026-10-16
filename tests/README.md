@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Expander, Input, Progress, Text, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Expander, Input, Progress, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -169,3 +169,21 @@ Menu's existing blocked stylesheet separate. Set
 `ANTA_INPUT_TIME_CONSUMER_ROOT` for an installed consumer. Set
 `ANTA_INPUT_TIME_COMPARE_ORIGINAL=1` to compare registered variants against
 `2d2ba6e6`. Screenshots go to `tests/.test-output/input-time`.
+
+## Toast and Toaster
+
+Run `pnpm test:toaster` for the source CSP matrix or `pnpm test:toaster:package`
+for installed-package coverage. Fast checks cover full/granular imports,
+countdown restart/pause, six placements, dismissal, reconnection, and React/Preact
+SSR/hydration. The slow tier adds document adoption, cleanup, nested and
+interactive content, consumer overrides, motion, independent build orders,
+visual comparisons, and the installed consumer.
+
+The server supplies real CSP response headers, including `style-src-attr 'none'`.
+Set `ANTA_TOASTER_CHROMIUM_EXECUTABLE` for an exact browser executable.
+Set `ANTA_TOASTER_COMPARE_ORIGINAL=1` in a checkout containing `2d2ba6e6` to
+compare the visual matrix with the original implementation. Screenshots and
+metrics go to `tests/.test-output/toaster`. Screenshot contexts permit
+the capture tool's injected stylesheet; behavioral pages retain strict CSP.
+Independent package entries keep their existing module-local default managers;
+the mixed-build checks pass an explicit shared store.

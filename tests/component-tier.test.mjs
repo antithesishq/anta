@@ -29,14 +29,14 @@ for (const tier of ['fast', 'slow']) {
   })
 }
 
-test('Component runner keeps package installation in the slow tier', () => {
-  const run = tier => spawnSync(process.execPath, ['tests/components.mjs', '--tier', tier, '--component', 'banner', '--list'], {encoding: 'utf8'})
+for (const component of ['banner', 'toaster']) test(`Component runner keeps ${component} installation in the slow tier`, () => {
+  const run = tier => spawnSync(process.execPath, ['tests/components.mjs', '--tier', tier, '--component', component, '--list'], {encoding: 'utf8'})
   const fast = run('fast'), slow = run('slow')
   assert.equal(fast.status, 0, fast.stderr)
   assert.equal(slow.status, 0, slow.stderr)
-  assert.match(fast.stdout, /tests\/banner-csp\.mjs/)
-  assert.doesNotMatch(fast.stdout, /banner-package/)
-  assert.match(slow.stdout, /tests\/banner-package\.mjs/)
+  assert.match(fast.stdout, new RegExp(`tests/${component}-csp\\.mjs`))
+  assert.doesNotMatch(fast.stdout, new RegExp(`${component}-package`))
+  assert.match(slow.stdout, new RegExp(`tests/${component}-package\\.mjs`))
 })
 
 test('Component runner rejects invalid selectors instead of passing with no tests', () => {

@@ -1,0 +1,40 @@
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.countdownToast {
+  position: relative;
+}
+
+.countdownBar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 5px;
+  height: 3px;
+  border-radius: 999px;
+  transform-origin: left;
+  background: color-mix(in oklch, currentColor 35%, transparent);
+  transform: scaleX(var(--toast-remaining));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdownBar {
+    display: none;
+  }
+}

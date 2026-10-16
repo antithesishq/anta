@@ -73,6 +73,10 @@ changes are not listed.
   strict CSP. JSX slot groups use `a-input-time-*` tags; update selectors that
   target their former spans. Existing slots, parts, and segmented editing remain.
 
+- [Toaster](/toaster/) loads default styling from external CSS under strict CSP.
+  Placement, content identity, and countdown behavior remain supported, including
+  restarting timers and completing interrupted exits after reconnection.
+
 - Input, Banner, Expander, and expandable Text share native event listener setup.
   Worker renderers receive event subscriptions immediately; opting into browser
   hydration enables the shared listener update.
@@ -129,6 +133,13 @@ changes are not listed.
 - [InputTime commits](/input-time/#web-component) finish when the field is removed
   during blur. Read-only focus visits emit `change` only for a pending edit, and
   disabling a parent fieldset clears the keyboard focus state.
+
+- [Toaster](/toaster/) preserves countdown progress when an exit reconnects.
+  Reattaching an already-dismissed toast emits completion for its new owner.
+
+- [Toaster's DOM-node content](/toaster/#web-component) clears to `null` when
+  its prop is removed. Refilled fragments can be assigned again to replace their
+  previous children.
 
 - [Input actions](/input/#leading-trailing-and-clear) fit Anta buttons to the
   field height while preserving their padding. Icon-only Buttons are square;

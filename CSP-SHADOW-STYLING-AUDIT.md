@@ -72,8 +72,8 @@ and verification before moving to the next component.
    four slots retained. Surface, optional regions, backdrop, and transitions
    use external part rules. JSX owns boxless close/footer groups. Native focus,
    open/close semantics, and existing parts remain; verification is below.
-   - [ ] Decide the styling contract inside a consumer shadow root. Document
-     styles cannot reach a Dialog there; loading external CSS in that root works.
+   - [x] Document the consumer-shadow styling contract in Dialog's TSDoc:
+     load external Dialog CSS in that root because document styles cannot reach it.
 10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
     markers, affixes, dragging, and focus states.
 11. [x] [Copy feedback](src/elements/a-copy.ts): retains its shadow manual
@@ -184,9 +184,10 @@ Review follow-up, October 16, 2026:
   Styling and the package changelog. Region-state parts are supported public
   hooks with documented assignment conditions and a working clearance example.
 - Missing/late CSS preserves native visibility and closing, rather than Anta's
-  styled layout. Documentation states the loading dependency. The consumer-shadow
-  decision remains open: a scoped external stylesheet restores layout and modal
-  behavior, but automatic scoped loading has not been implemented.
+  styled layout. Documentation states the loading dependency. Consumers rendering
+  Dialog inside another shadow root load external Dialog CSS in that root,
+  as noted in TSDoc. The scoped stylesheet restores layout and modal behavior;
+  Anta does not load it automatically.
 - All 127 source checks, including original appearance and sampled motion,
   pass in Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`. All 42
   focused installed-package checks pass in those engines. All 14 focused source

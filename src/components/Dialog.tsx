@@ -88,6 +88,7 @@ type StateChangeEvent =
  *
  * Requires `@antadesign/anta/elements` to be imported (client-side only) to
  * register the underlying custom element.
+ * Inside another shadow root, load `@antadesign/anta/elements/a-dialog.css` there with a stylesheet `<link>` because document CSS cannot reach it.
  *
  * @example Controlled
  * ```tsx

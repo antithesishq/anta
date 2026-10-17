@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, copy, expander, input, input-time, menu, progress, select, text, toaster, tooltip]
+        options: [all, banner, calendar, card, copy, dialog, expander, input, input-time, menu, progress, select, text, toaster, tooltip]
       select_compare_ref:
         description: Optional Git ref for a one-off Select appearance comparison
         type: string
@@ -100,5 +100,14 @@ jobs:
         with:
           name: select-visual
           path: tests/.test-output/select
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+      - name: Save Dialog visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dialog-visual
+          path: tests/.test-output/dialog
           include-hidden-files: true
           if-no-files-found: ignore

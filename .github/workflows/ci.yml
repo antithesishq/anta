@@ -48,6 +48,7 @@ jobs:
         run: |
           if [ -z "$TEST_BASE_SHA" ]; then
             echo 'select=true' >> "$GITHUB_OUTPUT"
+            echo 'dialog=true' >> "$GITHUB_OUTPUT"
             echo 'menu=true' >> "$GITHUB_OUTPUT"
             echo 'copy=true' >> "$GITHUB_OUTPUT"
             echo 'calendar=true' >> "$GITHUB_OUTPUT"
@@ -76,6 +77,20 @@ jobs:
             echo 'select=true' >> "$GITHUB_OUTPUT"
           else
             echo 'select=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-dialog.*' 'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-input.*' \
+            src/elements/{index,key-activation,shadow-aria,input-focus-modality,input-trailing-actions}.ts src/elements/a-loader.css \
+            src/components/{Dialog,Button,Icon,Input}.tsx \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/dialog-*' tests/native-event-props.test.mjs tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'dialog=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'dialog=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' 'src/elements/a-copy.*' \

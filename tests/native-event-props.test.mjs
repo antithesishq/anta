@@ -9,6 +9,7 @@ before(async () => {
   const result = await build({
     stdin: {
       contents: `export * from './src/jsx-runtime';
+        export { Dialog } from './src/components/Dialog';
         export { Menu } from './src/components/Menu';
         export { Input } from './src/components/Input';
         export { InputTime } from './src/components/InputTime';
@@ -306,4 +307,19 @@ for (const shim of [false, true]) test(`Menu worker subscriptions are immediate 
     menu.props.onstatechange({target:'child',currentTarget:'menu',detail:{next:'closed',prev:'open'}})
     assert.deepEqual(state, {next:true,prev:false})
   } finally { if (shim) delete globalThis.window }
+})
+
+for (const shim of [false, true]) test(`Dialog forwards worker requests immediately (window shim: ${shim})`, () => {
+  if (shim) globalThis.window = {}
+  try {
+    runtime.configure(h, undefined, {})
+    let detail, prevented = false
+    const dialog = runtime.Dialog({onStateChange:(e,d)=>{detail=d;e.preventDefault()}})
+    dialog.props.onstatechange({...event({next:'closed',prev:'open'}),preventDefault:()=>{prevented=true}})
+    assert.deepEqual(detail,{next:false,prev:true})
+    assert.equal(prevented,true)
+    detail=undefined
+    dialog.props.onstatechange({target:'child',currentTarget:'dialog',detail:{next:'closed',prev:'open'}})
+    assert.equal(detail,undefined)
+  } finally {if(shim)delete globalThis.window}
 })

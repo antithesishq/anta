@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 16, 2026, including Menu, InputTime, Toast/Toaster, and Copy.
+Updated October 17, 2026, including Dialog and the merged Menu refactor.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -69,8 +69,14 @@ and verification before moving to the next component.
 8. [x] [Menu](src/elements/a-menu.ts): existing popover surface, header/footer,
    scrolling, keyboard navigation, and focus ownership retained with external
    defaults. Input coordination and compositions verified; see Menu verification.
-9. [ ] [Dialog](src/elements/a-dialog.ts): modal structure, optional regions,
-   backdrop, focus management, and close behavior.
+9. [x] [Dialog](src/elements/a-dialog.ts): existing shadow-native modal and
+   four slots retained. Surface, optional regions, backdrop, and transitions
+   use external part rules; off-DOM host states follow header/footer assignment,
+   while host `:has()` selects close-control clearance.
+   JSX owns boxless close/footer groups. Native focus,
+   open/close semantics, and existing parts remain; verification is below.
+   - [x] Document the consumer-shadow styling contract in Dialog's TSDoc:
+     load external Dialog CSS in that root because document styles cannot reach it.
 10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
     markers, affixes, dragging, and focus states.
 11. [x] [Copy feedback](src/elements/a-copy.ts): retains its shadow manual
@@ -92,6 +98,233 @@ composition, and consumer CSS overrides. Check full and granular imports under
 an actual CSP response header. Custom values serialized into `style` attributes
 remain a separate constraint; completing the stylesheet checklist does not make
 every dynamic JSX prop compatible with `style-src-attr 'none'`.
+
+### Dialog verification
+
+Implemented on `codex/dialog-external-css`, October 16, 2026, after Copy PR #240
+merged into main at `aeea7c08`.
+
+- The owned native dialog retains header, body, footer, and close slots, with
+  close last in tab order. Existing slot names, parts, props, imperative methods,
+  header-derived accessible name, and cancelable state requests remain.
+  Off-DOM host states handle header/footer visibility; host `:has()` selects
+  close-control clearance. Neither adds part tokens or attributes.
+  JSX replaces two boxless spans with CSS-only `a-dialog-close` and
+  `a-dialog-footer` groups carrying the same native slot attributes. Raw authors
+  can keep existing slot composition or use these groups.
+- Default surface, sizing, placement, scrolling, backdrop, and the existing 200ms
+  transitions live in `a-dialog.css`. Native `::part(dialog):open` selects open
+  surface styles; `:modal` retains modal layout and backdrop styling. The UA still
+  hides the closed native dialog. Closing is
+  synchronous with respect to native open state and does not wait for CSS,
+  transition events, or a timer. Missing/late CSS cannot strand an invisible
+  modal. No shadow sheet, named keyframes, Web Animation, animation discovery,
+  activation-time style probe, or extra animation fallback is introduced.
+  Toast/Copy's Chrome 135 keyframe findings informed this choice.
+- Element JS changes only its owned shadow nodes. Trigger listeners attach only
+  while connected and release from the originating document during adoption.
+  Trigger and close-event ownership works across realms. Pointer cancellation
+  clears backdrop intent. Queued owned closes are ignored before clearing that
+  intent, so an older close cannot erase a new backdrop press after reopening.
+  Outer focus entry excludes closed nested Dialog autofocus. Reconnection retains the original uncontrolled intent and native
+  close-event reconciliation. No shared-runtime rewrite or Menu migration is
+  included.
+- JSX uses `useNativeEventProps`, forwarding events immediately by default and
+  applying the existing opt-in browser hydration workaround. It has no DOM refs.
+  Fixed layout produces no inline styles. Custom `round` amounts and
+  application-authored styles remain separate `style-src-attr 'none'` constraints.
+
+Initial verification at `57b2af4`:
+
+- All 109 source checks and 109 installed-package checks pass in Chrome
+  `155.0.8059.84`, Firefox `155.0`, and Playwright WebKit `26.6`. React/React DOM
+  `19.3.0`, Preact `10.29.8`, and `preact-render-to-string` `6.7.0` generate real
+  SSR output; hydration retains authored nodes without recovery errors. The
+  installed runner packs current artifacts with `npm pack --ignore-scripts`,
+  installs the tarball outside the workspace, and checks public exports and
+  esbuild inputs without Anta source aliases. It requires an installed-mode
+  marker from the child suite and rejects a deliberately miswired source fallback.
+- All 37 installed-package checks pass in Chrome for Testing `135.0.7049.114`.
+  The separate original comparison passes all 22 variants in that browser.
+- Behavioral pages supply actual HTTP CSP headers, including
+  `style-src-attr 'none'`, and report no component violations. Coverage includes
+  both imports, raw markup, initial controlled/uncontrolled state, pointer and
+  keyboard input, cancel/close events, persistent and vetoed dismissal, native
+  close reconciliation, focus containment/restoration, nested autofocus, scrolling
+  and clipping ancestors, optional regions, consumer overrides, reduced motion,
+  missing/late CSS, interrupted transitions, disconnect/reconnect, document
+  adoption and destruction, and independent full/granular build orders.
+- Compared 11 variants with the registered original at `aeea7c08` in all three
+  current engines and both import modes. All 66 geometry, typography, surface,
+  and backdrop comparisons match. Entry and exit computed styles match at
+  0/100/199ms, preserving each engine's native exit support. All 66 saved
+  original/current PNG pairs are byte-identical. Screenshots and metrics live
+  under `tests/.test-output/dialog`, separated by source/package, engine version,
+  and import mode. WebKit screenshots use separate permissive capture pages;
+  behavior and layout checks retain strict CSP.
+- All 212 shared fast component checks and 342 selected root checks pass with
+  serialized files, CI's Chromium setting,
+  and its existing search-debounce exclusion. The Node `24.15.0` production build
+  and all 18 production checks pass. The preserved first Dialog preview and raw
+  example also pass on the final prose build in Chrome and WebKit. Existing
+  Panel-with-Dialog regressions pass in Firefox and WebKit, alongside root's
+  Chromium coverage. Lint, Anta/sticker/Plot types, site CSS lint, workflow gates,
+  and documentation checks pass. Only Dialog and changelog package docs were
+  regenerated after changes. Expanded matrices stay in the slow tier.
+
+Review follow-up, October 16, 2026:
+
+- Header naming now follows in-place text edits, child replacement, and slot
+  reassignment. One header slot listener shares its assigned-node snapshot with
+  region and naming synchronization. A header-only observer reads authored
+  content while connected, disconnects on removal, and is recreated in the
+  current document after adoption. React/Preact hydration regressions reproduce
+  the previous stale name and retain the original header nodes after the fix.
+- Dialog's CI gate includes `input-events.ts`, `input-trailing-actions.ts`, and
+  `a-loader.css`. Gate regressions verify changes to each select Dialog.
+- Dialog follows the existing `base, anta, components, utilities` layer order.
+  Earlier `base` overrides lose to defaults; consumer overrides belong in a
+  later layer or unlayered CSS. This compatibility change is documented in
+  Styling and the package changelog. Region-state parts are supported public
+  hooks with documented assignment conditions and a working clearance example.
+- Missing/late CSS preserves native visibility and closing, rather than Anta's
+  styled layout. Documentation states the loading dependency. Consumers rendering
+  Dialog inside another shadow root load external Dialog CSS in that root,
+  as noted in TSDoc. The scoped stylesheet restores layout and modal behavior;
+  Anta does not load it automatically.
+- All 127 source checks, including original appearance and sampled motion,
+  pass in Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`. All 42
+  focused installed-package checks pass in those engines. All 14 focused source
+  cases pass in Chrome for Testing `135.0.7049.114`. Separate final layer checks
+  verify earlier-base/later-component precedence and the public clearance hook
+  in both import modes in all three current engines.
+- All 25 shared event/workflow checks and 13 selected existing Search Dialog
+  regressions pass with CI's Chromium setting and existing debounce exclusion.
+  The production build and both Chromium/WebKit Dialog preview checks pass,
+  including the first preview, raw HTML, and the state-part clearance example.
+  Package build, lint, types, site CSS lint, scoped package docs, and stale-author
+  checks pass. The original 66 screenshot pairs still match byte-for-byte.
+
+Selector fallback hardening, October 17, 2026:
+
+- Surface and backdrop fades are separately gated by `@supports selector(...)`
+  for their complete modal part selectors. Unsupported surface selectors retain
+  the native visible default; unsupported backdrop-state selectors retain the
+  static tint. Supported engines keep the existing transitions. No JS probe,
+  timer, runtime stylesheet, DOM change, or public API change is introduced.
+- Fast CSP regressions simulate rejection by replacing those selectors with an
+  unsupported pseudo-class in the served CSS, including feature queries. Both
+  import modes remain visible, editable, tinted, and dismissible through Escape
+  and close controls, with native focus restoration. All 12 cases pass in Chrome
+  `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`, and through an installed
+  package. All four cases also pass in Chrome for Testing `135.0.7049.114`.
+- All 139 source checks pass in the three current engines, including unchanged
+  sampled entry/exit motion and 66 byte-identical original/current screenshot
+  pairs. The production build and both Chromium/WebKit Dialog preview checks
+  pass. Package builds, CSS lint, scoped docs, and stale-author checks pass.
+  Feature queries detect unsupported syntax; they cannot detect an engine that
+  reports support but implements selector matching incorrectly.
+
+Final review follow-up, October 17, 2026:
+
+- Surface fades now require `::part(dialog):open`, covering native modal and
+  non-modal opening. Unsupported `:open` retains visible static surfaces and the
+  separate `:modal` layout rule. No new JS observer or public API is added.
+  Backdrop motion keeps its separate modal selector guard. This deliberately
+  skips surface fades in engines without `:open`, including older Safari;
+  [Mozilla compatibility data](https://github.com/mdn/browser-compat-data/blob/main/css/selectors/open.json)
+  records Safari support from 26.5. Exact shipping Safari remains untested.
+- New CSP cases exercise inner native `show()` with and without `:open` support,
+  native closing, and subsequent modal opening through Anta's public method.
+  The combined fallback matrix passes all 30 source and installed-package cases
+  in Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`; all ten focused
+  cases also pass in Chrome for Testing `135.0.7049.114`.
+- Existing part names remain available through `::part()`. The changelog and
+  Styling docs explain token-aware shadow queries such as `[part~="close"]`
+  because region parts now contain state tokens.
+- Zones uses the actual Dialog `header`/`footer` props and matching expandable
+  code. A static TSX helper avoids MDX's nested-JSX-prop limitation, without
+  hydration. The raw example remains in Web Component. The overlay fallback is
+  shared on the backdrop itself; the late `[round]` radius rule is retained.
+- All 157 source checks pass in the three current engines. Original appearance
+  and sampled animation match in all 66 current-engine variants and 22 Chrome
+  135 variants; all 88 screenshot pairs are byte-identical. Both production
+  Dialog checks pass, including populated props and the default close control.
+  The revised Zones modal also matches its previous Chromium screenshot and
+  geometry byte-for-byte. Package build, production site build, lint, scoped
+  package documentation, and stale-author checks pass.
+
+Slot-presence simplification, October 17, 2026:
+
+- Replaced the five region-state part tokens with three off-DOM host states:
+  `has-header`, `has-footer`, and `has-close`. Original part attributes remain
+  single-token values. This supersedes the public state-part and token-query
+  migration notes in the earlier follow-ups. Docs and the working clearance
+  example now use host `:state()` selectors before the original region parts.
+- CSS-only `:has(> [slot="…"])` handled insertion/removal, but Firefox 155 left
+  styles stale when an existing child's slot changed from header to footer.
+  A standalone probe reproduced the problem for direct part rules and inherited
+  host variables. `ElementInternals.states` follows native slot assignment
+  without rewriting authored attributes, part names, or light DOM.
+- The fast optional-region regression now covers insertion, removal, slot
+  reassignment, nested nonassigned slot attributes, computed clearance, and
+  unchanged part names. All 29 shared fast Dialog checks and 18 focused source
+  checks pass in Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`
+  (fast checks use Chromium). Six focused checks also pass in Chrome for Testing
+  `135.0.7049.114`. These use actual CSP response headers with
+  `style-src-attr 'none'` and both import modes.
+
+- All 30 focused installed-package checks pass in the three current engines,
+  including React/Preact hydration and layered clearance overrides. The production
+  build and both Chromium/WebKit Dialog preview checks pass. Lint, types, scoped
+  package documentation, and stale-author checks pass.
+- All six original-comparison cases pass, covering 11 variants in both import
+  modes and all three current engines. Geometry and sampled entry/exit animation
+  match the original; all 66 original/current PNG pairs are byte-identical.
+- [Mozilla compatibility data](https://github.com/mdn/browser-compat-data/blob/main/css/selectors/state.json)
+  lists `:state()` from Chrome 125, Firefox 126, and Safari 17.4, within the
+  existing minimum browser range. Exact shipping-browser gaps remain below.
+
+Close-slot simplification, October 17, 2026:
+
+- The close slot always uses its original `::part(close)` positioning rule.
+  An empty absolutely positioned slot is zero-sized and adds no layout space;
+  it does not need conditional display. `has-close` currently controls only
+  content clearance. All six optional-region cases pass in Chrome
+  `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`, in both import modes.
+  All 29 shared fast Dialog checks and package lint pass.
+
+Close-clearance choice, October 17, 2026:
+
+- The consumer chose host `:has(> [slot="close"])` for close clearance and
+  accepted Firefox's rare slot-reassignment limitation. Removed `has-close`
+  tracking and the close-slot listener. Only `has-header` and `has-footer`
+  remain as off-DOM states for optional-region visibility. The close part stays
+  unconditionally positioned; its empty slot remains zero-sized.
+- Adding/removing close children retains exact clearance. Reassigning an existing
+  child into or out of `close` can leave Firefox padding stale, including missing
+  clearance. Docs, contributor guidance, and the fast regression record this
+  accepted layout limitation. The regression allows either clearance in Firefox
+  while requiring the reassigned close control to render and dismiss normally;
+  other engines require exact clearance.
+- All 29 shared fast Dialog checks and 30 focused source checks pass. Focused
+  source coverage uses both imports in Chrome `155.0.8059.84`, Firefox `155.0`,
+  and WebKit `26.6`; fast checks use Chromium. Actual CSP headers retain
+  `style-src-attr 'none'`.
+
+- All 12 focused installed-package cases, four Chrome for Testing 135 cases,
+  and both Chromium/WebKit production Dialog checks pass. The production build,
+  lint, types, scoped Dialog docs, and stale-author checks pass. The Firefox
+  reassignment diagnostic records `20px` clearance in both import modes, as
+  explicitly accepted; the close control still dismisses normally.
+
+Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 are not covered
+by the current engine runs. Playwright WebKit is engine evidence. Safari 17.4
+lacks `@starting-style`; discrete display and overlay transitions vary by engine.
+Motion remains progressive: engines without `:open` use static surfaces, without
+raising the browser baseline or promising identical exit animation in every
+engine. React 18, physical
+mobile keyboards, and assistive-technology interaction were not manually tested.
 
 ### Menu verification
 

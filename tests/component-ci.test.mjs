@@ -69,3 +69,27 @@ test('manual Menu coverage retains baseline history and captures the visual matr
   assert.equal(manual.on.workflow_dispatch.inputs.select_compare_ref.default,'')
   assert.equal(steps.find(step => step.name === 'Run full component coverage').env.ANTA_SELECT_COMPARE_REF, '${{ inputs.select_compare_ref }}')
 })
+
+test('Dialog CI gate includes its dependencies and skips unrelated documentation and Menu', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-dialog-gate-'))
+  const git = args => execFileSync('git', args, {cwd:directory, encoding:'utf8'})
+  try {
+    git(['init','-b','fixture']);git(['config','user.name','Fixture']);git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection = workflow.jobs.build.steps.find(step=>step.id==='component-tests').run
+    for (const [path,wanted] of [
+      ['src/elements/a-dialog.ts',true],['src/components/Dialog.tsx',true],
+      ['src/native-event-props.ts',true],['tests/dialog-csp.mjs',true],
+      ['src/input-events.ts',true],['src/elements/input-trailing-actions.ts',true],['src/elements/a-loader.css',true],
+      ['.github/workflows/ci.yml',true],['src/elements/a-menu.ts',false],['docs/components/dialog.md',false],
+    ]) {
+      const base = git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true})
+      await writeFile(join(directory,path),'fixture')
+      git(['add',path]);git(['commit','-m',path])
+      const output=join(directory,'outputs');await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'),new RegExp(`^dialog=${wanted}$`,'m'),path)
+    }
+  } finally {await rm(directory,{recursive:true})}
+})

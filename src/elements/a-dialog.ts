@@ -21,10 +21,10 @@ import './a-dialog.css'
  * Shadow structure — every node carries a `part` so consumers can reach it:
  *
  *   <dialog part="dialog">                 ← the native dialog; flex column when open
- *     <slot name="close" part="close">     ← top-right close button; display:none until filled
  *     <slot name="header" part="header">   ← display:none until filled
  *     <slot part="body">                   ← the default slot IS the scrollable body box
  *     <slot name="footer" part="footer">   ← display:none until filled
+ *     <slot name="close" part="close">     ← top-right close button; last tab stop
  *
  * ## Open state — the `state` contract (mirrors `<a-menu>` / `<a-expander>`)
  *
@@ -112,196 +112,6 @@ import './a-dialog.css'
 // the wrapper can't import this module without pulling in element registration.
 const CLOSE_TRIGGER = 'closerequest'
 
-// Enter / exit transition duration (ms), interpolated into the shadow style's
-// `--_dur`. Purely CSS-driven (the exit runs via `allow-discrete`), so no JS
-// timer reads it — it's a single source for the two transitions' duration.
-const ANIM_MS = 200
-
-// Shadow styles, injected verbatim into every <a-dialog> shadow root — kept
-// COMMENT-FREE (it ships + re-injects per instance; see the "no comments inside
-// shadow-<style> strings" rule in AGENTS.md). Rationale lives here instead:
-//
-//  • :host — display:contents so the host itself contributes no box; the dialog
-//    renders in the top layer. a-dialog.css hides the host until :defined to
-//    avoid a pre-upgrade flash of the light-DOM children.
-//  • dialog — the token values (--dialog-bg / -border / -radius / -shadow /
-//    -overlay / …) are DEFINED in a-dialog.css on the host and only REFERENCED
-//    here with literal fallbacks, so external CSS (lower specificity than :host)
-//    can still override them. The surface is --bg-1 with a composed box-shadow
-//    whose first inset layer is the hairline border (drawn inside, so no reflow).
-//    display flips to flex when [open]; the UA centers a modal dialog, and the
-//    :host([position=…]) rules re-pin it to an edge as a drawer. flex-direction
-//    stays on the BASE rule, not dialog[open]: on close, display is held at flex
-//    through the exit fade by allow-discrete, but flex-direction isn't a
-//    transitioned property, so if it were [open]-scoped it would snap back to row
-//    the instant [open] drops, reflowing the zones for the whole fade-out. On the
-//    base rule it's inert while display:none and stays column through the exit.
-//  • enter / exit — opacity + transform transition with `overlay` / `display`
-//    on `allow-discrete`, and `@starting-style` so every open starts from the
-//    hidden state (fade/scale in). The exit runs because allow-discrete keeps the
-//    dialog rendered through the transition after close(). ::backdrop fades its
-//    --dialog-overlay the same way. All gated under prefers-reduced-motion.
-//  • slots — header / footer / close are display:none until they hold content
-//    (toggled via slotchange), so an empty zone reserves no box. The default slot
-//    IS the scrollable body (slot-is-the-box). close is absolutely positioned
-//    top-right, above the header.
-const SHADOW_STYLE = `
-  :host { display: contents; }
-
-  dialog {
-    --_dur: ${ANIM_MS}ms;
-    --_r: var(--dialog-round, var(--dialog-radius, 10px));
-
-    position: fixed;
-    box-sizing: border-box;
-    padding: 0;
-    border: var(--dialog-outline, none);
-    max-width: calc(100vw - 2 * var(--dialog-margin, 32px));
-    max-height: calc(100dvh - 2 * var(--dialog-margin, 32px));
-    width: var(--dialog-width, 480px);
-    height: var(--dialog-height, fit-content);
-    overflow: visible;
-    color: var(--dialog-text, inherit);
-    background: var(--dialog-bg, #fff);
-    border-radius: var(--_r);
-    box-shadow: var(--dialog-shadow, inset 0 0 0 1px color-mix(in oklch, black 8%, transparent), 0 10px 38px color-mix(in oklch, black 28%, transparent));
-
-    flex-direction: column;
-  }
-
-  dialog[open] {
-    display: flex;
-  }
-
-  dialog:focus, dialog:focus-visible { outline: none; }
-
-  dialog::backdrop {
-    background: var(--dialog-overlay, color-mix(in oklch, black 40%, transparent));
-  }
-
-  :host { --_enter-from: scale(0.97); }
-  :host([position="left"]) { --_enter-from: translateX(-100%); }
-  :host([position="right"]) { --_enter-from: translateX(100%); }
-  :host([position="top"]) { --_enter-from: translateY(-100%); }
-  :host([position="bottom"]) { --_enter-from: translateY(100%); }
-
-  @media (prefers-reduced-motion: no-preference) {
-    dialog {
-      opacity: 0;
-      transform: var(--_enter-from);
-      transition:
-        opacity var(--_dur) ease,
-        transform var(--_dur) ease,
-        overlay var(--_dur) ease allow-discrete,
-        display var(--_dur) ease allow-discrete;
-    }
-    dialog[open] {
-      opacity: 1;
-      transform: none;
-    }
-    @starting-style {
-      dialog[open] { opacity: 0; transform: var(--_enter-from); }
-    }
-
-    dialog::backdrop {
-      background: transparent;
-      transition:
-        background var(--_dur) ease,
-        overlay var(--_dur) ease allow-discrete,
-        display var(--_dur) ease allow-discrete;
-    }
-    dialog[open]::backdrop { background: var(--dialog-overlay, color-mix(in oklch, black 40%, transparent)); }
-    @starting-style {
-      dialog[open]::backdrop { background: transparent; }
-    }
-  }
-
-  :host([position="left"]) dialog,
-  :host([position="right"]) dialog {
-    width: var(--dialog-width, 380px);
-    max-width: calc(100vw - var(--dialog-margin, 32px));
-    height: 100dvh;
-    max-height: 100dvh;
-    border-radius: 0;
-  }
-  :host([position="left"]) dialog { margin: 0 auto 0 0; }
-  :host([position="right"]) dialog { margin: 0 0 0 auto; }
-
-  :host([position="top"]) dialog,
-  :host([position="bottom"]) dialog {
-    width: 100vw;
-    max-width: 100vw;
-    height: var(--dialog-height, fit-content);
-    max-height: calc(100dvh - var(--dialog-margin, 32px));
-    border-radius: 0;
-  }
-  :host([position="top"]) dialog { margin: 0 auto auto auto; }
-  :host([position="bottom"]) dialog { margin: auto auto 0 auto; }
-
-  :host([position="fullscreen"]) dialog {
-    width: 100vw;
-    max-width: 100vw;
-    height: 100dvh;
-    max-height: 100dvh;
-    margin: 0;
-    border-radius: 0;
-  }
-
-  :host([round]) dialog { border-radius: var(--_r); }
-  :host([round="top"]) dialog { border-radius: var(--_r) var(--_r) 0 0; }
-  :host([round="bottom"]) dialog { border-radius: 0 0 var(--_r) var(--_r); }
-  :host([round="left"]) dialog { border-radius: var(--_r) 0 0 var(--_r); }
-  :host([round="right"]) dialog { border-radius: 0 var(--_r) var(--_r) 0; }
-
-  slot[name="header"] {
-    display: none;
-    flex: 0 0 auto;
-    padding: var(--dialog-header-padding, 18px 20px 8px);
-    overflow: clip;
-    overflow-wrap: anywhere;
-    font-size: 17px;
-    font-weight: 560;
-    line-height: 24px;
-  }
-  slot[name="header"].has-content { display: block; }
-  dialog.has-close slot[name="header"] { padding-inline-end: 52px; }
-
-  slot[part="body"] {
-    display: block;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto;
-    padding: var(--dialog-body-padding, 8px 20px 12px);
-  }
-  /* With a close button but no header, the body is the top zone, so it takes the
-     ✕ clearance instead of the header (which is display:none when empty). */
-  dialog.has-close slot[name="header"]:not(.has-content) ~ slot[part="body"] {
-    padding-inline-end: 52px;
-  }
-
-  slot[name="footer"] {
-    display: none;
-    flex: 0 0 auto;
-    padding: var(--dialog-footer-padding, 8px 20px 18px);
-  }
-  slot[name="footer"].has-content {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  slot[name="close"] { display: none; }
-  slot[name="close"].has-content {
-    display: block;
-    position: absolute;
-    inset-block-start: 10px;
-    inset-inline-end: 10px;
-    z-index: 1;
-  }
-`
-
 type DialogState = 'open' | 'closed'
 
 export class ADialogElement extends HTMLElementBase {
@@ -309,8 +119,8 @@ export class ADialogElement extends HTMLElementBase {
 
   private dialog: HTMLDialogElement
   private headerSlot: HTMLSlotElement
+  private bodySlot: HTMLSlotElement
   private footerSlot: HTMLSlotElement
-  private closeSlot: HTMLSlotElement
   // Counts `dialog.close()` calls WE initiate whose async `close` event is still
   // pending, and is decremented as each arrives. The native `close` event fires
   // from a queued task, so a synchronous guard can't span it, and a boolean
@@ -338,60 +148,45 @@ export class ADialogElement extends HTMLElementBase {
   // The document click listener wired for the `name`-trigger convenience, kept so
   // it can be torn down (and re-wired when `name` / controlled-ness changes).
   #triggerListener?: (e: Event) => void
+  #triggerDocument?: Document
+  #internals: ElementInternals
+  #headerObserver?: MutationObserver
 
   constructor() {
     super()
+    this.#internals = this.attachInternals()
     const shadow = this.attachShadow({ mode: 'open' })
 
-    const style = document.createElement('style')
-    style.textContent = SHADOW_STYLE
-
-    this.dialog = document.createElement('dialog')
+    this.dialog = this.doc.createElement('dialog')
     this.dialog.setAttribute('part', 'dialog')
     // Programmatically focusable so we can land initial focus on the container
     // itself (see #open) — not in the tab order otherwise.
     this.dialog.tabIndex = -1
 
-    this.closeSlot = document.createElement('slot')
-    this.closeSlot.name = 'close'
-    this.closeSlot.setAttribute('part', 'close')
+    const closeSlot = this.doc.createElement('slot')
+    closeSlot.name = 'close'
+    closeSlot.setAttribute('part', 'close')
 
-    this.headerSlot = document.createElement('slot')
+    this.headerSlot = this.doc.createElement('slot')
     this.headerSlot.name = 'header'
     this.headerSlot.setAttribute('part', 'header')
 
     // The default (unnamed) slot IS the scrollable body box (slot-is-the-box).
-    const bodySlot = document.createElement('slot')
-    bodySlot.setAttribute('part', 'body')
+    this.bodySlot = this.doc.createElement('slot')
+    this.bodySlot.setAttribute('part', 'body')
 
-    this.footerSlot = document.createElement('slot')
+    this.footerSlot = this.doc.createElement('slot')
     this.footerSlot.name = 'footer'
     this.footerSlot.setAttribute('part', 'footer')
 
-    // CSS can't express "slot has assigned nodes", so toggle a class per zone —
-    // an empty header / footer / close slot then reserves no box. The close slot
-    // also flags the dialog (`has-close`) so the header can reserve right-side
-    // clearance for the absolutely-positioned ✕ (a long title would otherwise
-    // slide under it).
-    for (const slot of [this.headerSlot, this.footerSlot, this.closeSlot]) {
-      slot.addEventListener('slotchange', () => {
-        const has = slot.assignedNodes().length > 0
-        slot.classList.toggle('has-content', has)
-        if (slot === this.closeSlot) this.dialog.classList.toggle('has-close', has)
-      })
-    }
-    // Mirror the header text into the shadow dialog's aria-label so screen
-    // readers announce the dialog by its title (IDREFs can't cross the shadow
-    // boundary to reference the slotted header). Same approach as a-input's
-    // label → control aria-label mirror; the dialog is shadow-internal, so this
-    // is not a host / light-DOM mutation.
-    this.headerSlot.addEventListener('slotchange', () => this.#syncAccessibleName())
+    this.headerSlot.addEventListener('slotchange', () => this.#syncHeader())
+    this.footerSlot.addEventListener('slotchange', () => this.#syncRegions())
 
     // Close slot is appended LAST so the ✕ is the LAST tab stop, not the first —
     // Tab from the container (see #open) reaches content controls first, the ✕
     // last. It's positioned top-right by CSS regardless of DOM order.
-    this.dialog.append(this.headerSlot, bodySlot, this.footerSlot, this.closeSlot)
-    shadow.append(style, this.dialog)
+    this.dialog.append(this.headerSlot, this.bodySlot, this.footerSlot, closeSlot)
+    shadow.append(this.dialog)
 
     // Esc → native `cancel` (cancelable). Always preventDefault so the UA never
     // auto-closes; route through the request flow so the contract + `persistent`
@@ -410,9 +205,11 @@ export class ADialogElement extends HTMLElementBase {
     this.dialog.addEventListener('pointerdown', (e) => {
       this.#pressedBackdrop = e.target === this.dialog
     })
+    this.dialog.addEventListener('pointercancel', () => { this.#pressedBackdrop = false })
     this.dialog.addEventListener('click', (e) => {
-      if (this.#persistent) return
-      if (this.#pressedBackdrop && e.target === this.dialog) this.requestClose()
+      const pressed = this.#pressedBackdrop
+      this.#pressedBackdrop = false
+      if (!this.#persistent && pressed && e.target === this.dialog) this.requestClose()
     })
 
     // A native close that bypassed our flow (`<form method="dialog">`, a consumer
@@ -420,10 +217,12 @@ export class ADialogElement extends HTMLElementBase {
     // the contract. Reconcile: controlled → re-assert `state` (the source of
     // truth — reopens if still `open`); uncontrolled → record the closed intent.
     this.dialog.addEventListener('close', () => {
+      // Queued closes must leave a newer open's pointer state intact.
       if (this.#programmaticCloses > 0) {
         this.#programmaticCloses--
         return
       }
+      this.#pressedBackdrop = false
       if (this.#controlled) this.#reflect(parseOpenState(this.getAttribute('state')))
       else this.#wantOpen = false
     })
@@ -431,11 +230,12 @@ export class ADialogElement extends HTMLElementBase {
     // The close button (an <a-button data-custom-event="closerequest"> slotted at
     // `close`) fires CLOSE_TRIGGER on activation; turn it into a close request.
     this.addEventListener(CLOSE_TRIGGER, (event) => {
-      if ((event.target as Element).closest('a-dialog') === this) this.requestClose()
+      if (event.composedPath().find(node => (node as Element).localName === 'a-dialog') === this) this.requestClose()
     })
   }
 
   connectedCallback() {
+    this.#syncHeader()
     if (this.#controlled) {
       this.#reflect(parseOpenState(this.getAttribute('state')))
     } else {
@@ -451,11 +251,13 @@ export class ADialogElement extends HTMLElementBase {
       if (this.#wantOpen) this.#open()
     }
     this.#syncTriggerListener()
-    this.#syncAccessibleName()
   }
 
   disconnectedCallback() {
     this.#teardownTriggerListener()
+    this.#headerObserver?.disconnect()
+    this.#headerObserver = undefined
+    this.#pressedBackdrop = false
     // Leaving the DOM while open would strand the top-layer entry; close quietly.
     // Count it as ours so the async `close` event doesn't clear `#wantOpen` — a
     // re-parent must restore the open state on reconnect. Close directly (not via
@@ -529,7 +331,7 @@ export class ADialogElement extends HTMLElementBase {
    *  false if a handler vetoed it. */
   #announce(next: DialogState): boolean {
     return this.dispatchEvent(
-      new CustomEvent('statechange', {
+      new this.view.CustomEvent('statechange', {
         cancelable: true,
         detail: { next, prev: this.#current },
       }),
@@ -557,7 +359,8 @@ export class ADialogElement extends HTMLElementBase {
     // screen reader announces the dialog + its name on open (WAI-ARIA's safe
     // default). Custom-element descendants need an explicit focus call: native
     // dialog autofocus does not enter their shadow controls consistently.
-    const autofocus = this.querySelector<HTMLElement>('[autofocus]')
+    const autofocus = Array.from(this.querySelectorAll<HTMLElement>('[autofocus]'))
+      .find(node => node.closest('a-dialog') === this)
     if (autofocus) autofocus.focus({ preventScroll: true })
     else this.dialog.focus()
   }
@@ -566,17 +369,45 @@ export class ADialogElement extends HTMLElementBase {
    *  ours so the listener doesn't reconcile it. (The disconnect teardown closes
    *  the native dialog directly, NOT through here, to preserve `#wantOpen`.) */
   #close() {
+    this.#pressedBackdrop = false
     this.#wantOpen = false
     if (!this.dialog.open) return
     this.#programmaticCloses++
     this.dialog.close()
   }
 
-  /** Publish the header text as the shadow dialog's accessible name (a-input's
-   *  label-mirror pattern). Shadow-internal — not a host / light-DOM write. */
-  #syncAccessibleName() {
-    const text = this.headerSlot
-      .assignedNodes()
+  #syncRegions(header = this.headerSlot.assignedNodes().length > 0) {
+    // Firefox can leave :has([slot=...]) styles stale after slot reassignment.
+    // Native states follow assigned nodes without rewriting attributes or parts.
+    for (const [state, present] of [
+      ['has-header', header],
+      ['has-footer', this.footerSlot.assignedNodes().length > 0],
+    ] as const) {
+      if (present) this.#internals.states.add(state)
+      else this.#internals.states.delete(state)
+    }
+  }
+
+  #syncHeader() {
+    // A detached slotchange must not restart observation after teardown.
+    if (!this.isConnected) return
+    const nodes = this.headerSlot.assignedNodes()
+    this.#syncRegions(nodes.length > 0)
+    this.#syncAccessibleName(nodes)
+    this.#headerObserver?.disconnect()
+    this.#headerObserver = undefined
+    if (!nodes.length) return
+    // Renderers edit text within an existing assigned node without slotchange.
+    // Read only the header; write its name only to the owned native dialog.
+    this.#headerObserver = new this.view.MutationObserver(() => this.#syncAccessibleName(nodes))
+    for (const node of nodes) {
+      this.#headerObserver.observe(node, { childList: true, characterData: true, subtree: true })
+    }
+  }
+
+  /** Keep the header-derived name on the owned native dialog. */
+  #syncAccessibleName(nodes: Node[]) {
+    const text = nodes
       .map((n) => n.textContent ?? '')
       .join(' ')
       .trim()
@@ -587,7 +418,7 @@ export class ADialogElement extends HTMLElementBase {
   // --- `name`-trigger convenience (uncontrolled only) ---
 
   #syncTriggerListener() {
-    const wanted = !this.#controlled && !!this.getAttribute('name')
+    const wanted = this.isConnected && !this.#controlled && !!this.getAttribute('name')
     if (wanted && !this.#triggerListener) this.#wireTriggerListener()
     else if (!wanted && this.#triggerListener) this.#teardownTriggerListener()
   }
@@ -597,16 +428,20 @@ export class ADialogElement extends HTMLElementBase {
       const name = this.getAttribute('name')
       if (!name) return
       const t = e.target
-      if (!(t instanceof Element)) return
-      if (t.closest(`[data-dialog-open="${CSS.escape(name)}"]`)) this.requestOpen()
-      else if (t.closest(`[data-dialog-close="${CSS.escape(name)}"]`)) this.requestClose()
+      if (!t || (t as Node).nodeType !== 1) return
+      const target = t as Element
+      if (target.closest(`[data-dialog-open="${this.view.CSS.escape(name)}"]`)) this.requestOpen()
+      else if (target.closest(`[data-dialog-close="${this.view.CSS.escape(name)}"]`)) this.requestClose()
     }
-    this.doc.addEventListener('click', this.#triggerListener)
+    // Adoption can change ownerDocument before disconnect cleanup runs.
+    this.#triggerDocument = this.doc
+    this.#triggerDocument.addEventListener('click', this.#triggerListener)
   }
 
   #teardownTriggerListener() {
     if (this.#triggerListener) {
-      this.doc.removeEventListener('click', this.#triggerListener)
+      this.#triggerDocument?.removeEventListener('click', this.#triggerListener)
+      this.#triggerDocument = undefined
       this.#triggerListener = undefined
     }
   }

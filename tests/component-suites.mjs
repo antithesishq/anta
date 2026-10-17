@@ -1,5 +1,6 @@
 export const componentSuites = {
   select: { tests: ['tests/select-projection.mjs', 'tests/select-csp.mjs'], slow: ['tests/select-package.mjs'] },
+  dialog: { tests: ['tests/dialog-csp.mjs'], slow: ['tests/dialog-package.mjs'] },
   menu: { tests: ['tests/menu-csp.mjs'], slow: ['tests/menu-package.mjs'] },
   'input-time': { tests: ['tests/input-time-csp.mjs'], slow: ['tests/input-time-package.mjs'] },
   copy: { tests: ['tests/copy-csp.mjs'], slow: ['tests/copy-package.mjs'] },

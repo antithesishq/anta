@@ -52,6 +52,10 @@ export function parseMdx(raw, { renderPropsTable, renderComponent, expressions =
   source = source.replace(/<Playground[\s\S]*?(?:\/>|<\/Playground>)/g, '')
   // Keep section headings and explicit anchors when unfolding disclosures.
   const anchors = []
+  source = source.replace(/^<(span|a) id="([a-z][a-z0-9-]*)"><\/\1>[ \t]*$/gm, (_, tag, id) => {
+    anchors.push(`<a id="${id}"></a>`)
+    return `\x00ANCHOR${anchors.length - 1}\x00`
+  })
   source = source.replace(/<Disclosure\s+title="([^"]+)"([^>]*)>/g, (_, title, attributes) => {
     if (/\sanchor=\{false\}/.test(attributes)) return ''
     const level = attributes.match(/\slevel=\{([2-6])\}/)?.[1] ?? '2'

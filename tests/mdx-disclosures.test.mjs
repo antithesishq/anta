@@ -25,6 +25,11 @@ test('explicit IDs use the site slug rules and do not match data attributes', ()
   assert.equal(parseMdx('<Disclosure title="Styles" level={2} data-id="canvas">\nText.\n</Disclosure>'), '## Styles\n\nText.')
 })
 
+test('renamed sections retain standalone anchor aliases in exported Markdown', () => {
+  const source = '<span id="value-and-changes"></span>\n\n## Managing the value\n\n<a id="filter"></a>\n\n## Filtering options\n\n```html\n<span id="example"></span>\n```'
+  assert.equal(parseMdx(source), '<a id="value-and-changes"></a>\n\n## Managing the value\n\n<a id="filter"></a>\n\n## Filtering options\n\n```html\n<span id="example"></span>\n```')
+})
+
 test('anchored disclosures default to level two and keep explicit levels and IDs', () => {
   for (const title of ['Styling', 'Web Component', 'Component props', 'Component tokens']) {
     assert.equal(parseMdx(`<Disclosure title="${title}">\nText.\n</Disclosure>`), `## ${title}\n\nText.`)

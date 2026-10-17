@@ -70,7 +70,8 @@ and verification before moving to the next component.
    scrolling, keyboard navigation, and focus ownership. Verify with Input.
 9. [x] [Dialog](src/elements/a-dialog.ts): existing shadow-native modal and
    four slots retained. Surface, optional regions, backdrop, and transitions
-   use external part rules; off-DOM host states follow assigned optional slots.
+   use external part rules; off-DOM host states follow header/footer assignment,
+   while host `:has()` selects close-control clearance.
    JSX owns boxless close/footer groups. Native focus,
    open/close semantics, and existing parts remain; verification is below.
    - [x] Document the consumer-shadow styling contract in Dialog's TSDoc:
@@ -106,8 +107,8 @@ merged into main at `aeea7c08`.
 - The owned native dialog retains header, body, footer, and close slots, with
   close last in tab order. Existing slot names, parts, props, imperative methods,
   header-derived accessible name, and cancelable state requests remain.
-  Off-DOM host states handle optional regions and close clearance without extra
-  part tokens or attributes.
+  Off-DOM host states handle header/footer visibility; host `:has()` selects
+  close-control clearance. Neither adds part tokens or attributes.
   JSX replaces two boxless spans with CSS-only `a-dialog-close` and
   `a-dialog-footer` groups carrying the same native slot attributes. Raw authors
   can keep existing slot composition or use these groups.
@@ -292,6 +293,30 @@ Close-slot simplification, October 17, 2026:
   content clearance. All six optional-region cases pass in Chrome
   `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`, in both import modes.
   All 29 shared fast Dialog checks and package lint pass.
+
+Close-clearance choice, October 17, 2026:
+
+- The consumer chose host `:has(> [slot="close"])` for close clearance and
+  accepted Firefox's rare slot-reassignment limitation. Removed `has-close`
+  tracking and the close-slot listener. Only `has-header` and `has-footer`
+  remain as off-DOM states for optional-region visibility. The close part stays
+  unconditionally positioned; its empty slot remains zero-sized.
+- Adding/removing close children retains exact clearance. Reassigning an existing
+  child into or out of `close` can leave Firefox padding stale, including missing
+  clearance. Docs, contributor guidance, and the fast regression record this
+  accepted layout limitation. The regression allows either clearance in Firefox
+  while requiring the reassigned close control to render and dismiss normally;
+  other engines require exact clearance.
+- All 29 shared fast Dialog checks and 30 focused source checks pass. Focused
+  source coverage uses both imports in Chrome `155.0.8059.84`, Firefox `155.0`,
+  and WebKit `26.6`; fast checks use Chromium. Actual CSP headers retain
+  `style-src-attr 'none'`.
+
+- All 12 focused installed-package cases, four Chrome for Testing 135 cases,
+  and both Chromium/WebKit production Dialog checks pass. The production build,
+  lint, types, scoped Dialog docs, and stale-author checks pass. The Firefox
+  reassignment diagnostic records `20px` clearance in both import modes, as
+  explicitly accepted; the close control still dismisses normally.
 
 Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 are not covered
 by the current engine runs. Playwright WebKit is engine evidence. Safari 17.4

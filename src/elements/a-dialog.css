@@ -166,7 +166,7 @@
     line-height: 24px;
   }
   a-dialog:state(has-header)::part(header) { display: block; }
-  a-dialog:state(has-close)::part(header) { padding-inline-end: 52px; }
+  a-dialog:has(> [slot="close"])::part(header) { padding-inline-end: 52px; }
 
   a-dialog::part(body) {
     display: block;
@@ -176,7 +176,7 @@
     padding: var(--dialog-body-padding, 8px 20px 12px);
   }
   /* Without a header, the body reserves clearance for the close control. */
-  a-dialog:state(has-close):not(:state(has-header))::part(body) {
+  a-dialog:has(> [slot="close"]):not(:state(has-header))::part(body) {
     padding-inline-end: 52px;
   }
 

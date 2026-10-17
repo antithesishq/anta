@@ -222,8 +222,10 @@ Run `pnpm test:dialog` for the source CSP matrix or `pnpm test:dialog:package`
 for an isolated installed tarball. The shared fast tier covers both import modes,
 raw modal behavior, controlled state, Escape/cancel and native close, focus return,
 React/Preact SSR/hydration, CSS loading, document listener cleanup, and optional
-regions following slot assignment through off-DOM states without extra attributes
-or part tokens.
+header/footer regions following slot assignment through off-DOM states without
+extra attributes or part tokens. Close clearance uses host `:has()`; Firefox may
+retain stale padding after changing an existing child into or out of the close
+slot. That clearance-only limitation is accepted.
 The slow tier adds expanded engines, pointer drags and cancellation, nested focus,
 scrolling, consumer overrides, reduced motion, reconnects, mixed builds,
 visual comparisons, and installed-package checks.

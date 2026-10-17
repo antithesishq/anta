@@ -121,7 +121,6 @@ export class ADialogElement extends HTMLElementBase {
   private headerSlot: HTMLSlotElement
   private bodySlot: HTMLSlotElement
   private footerSlot: HTMLSlotElement
-  private closeSlot: HTMLSlotElement
   // Counts `dialog.close()` calls WE initiate whose async `close` event is still
   // pending, and is decremented as each arrives. The native `close` event fires
   // from a queued task, so a synchronous guard can't span it, and a boolean
@@ -164,9 +163,9 @@ export class ADialogElement extends HTMLElementBase {
     // itself (see #open) — not in the tab order otherwise.
     this.dialog.tabIndex = -1
 
-    this.closeSlot = this.doc.createElement('slot')
-    this.closeSlot.name = 'close'
-    this.closeSlot.setAttribute('part', 'close')
+    const closeSlot = this.doc.createElement('slot')
+    closeSlot.name = 'close'
+    closeSlot.setAttribute('part', 'close')
 
     this.headerSlot = this.doc.createElement('slot')
     this.headerSlot.name = 'header'
@@ -181,14 +180,12 @@ export class ADialogElement extends HTMLElementBase {
     this.footerSlot.setAttribute('part', 'footer')
 
     this.headerSlot.addEventListener('slotchange', () => this.#syncHeader())
-    for (const slot of [this.footerSlot, this.closeSlot]) {
-      slot.addEventListener('slotchange', () => this.#syncRegions())
-    }
+    this.footerSlot.addEventListener('slotchange', () => this.#syncRegions())
 
     // Close slot is appended LAST so the ✕ is the LAST tab stop, not the first —
     // Tab from the container (see #open) reaches content controls first, the ✕
     // last. It's positioned top-right by CSS regardless of DOM order.
-    this.dialog.append(this.headerSlot, this.bodySlot, this.footerSlot, this.closeSlot)
+    this.dialog.append(this.headerSlot, this.bodySlot, this.footerSlot, closeSlot)
     shadow.append(this.dialog)
 
     // Esc → native `cancel` (cancelable). Always preventDefault so the UA never
@@ -385,7 +382,6 @@ export class ADialogElement extends HTMLElementBase {
     for (const [state, present] of [
       ['has-header', header],
       ['has-footer', this.footerSlot.assignedNodes().length > 0],
-      ['has-close', this.closeSlot.assignedNodes().length > 0],
     ] as const) {
       if (present) this.#internals.states.add(state)
       else this.#internals.states.delete(state)

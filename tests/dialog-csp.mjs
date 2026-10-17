@@ -103,7 +103,7 @@ before(async () => {
     @layer components {
       .layer-override::part(dialog){width:640px}
       .layer-override::part(body){padding:0}
-      .layer-override:state(has-close)::part(header){padding-inline-end:64px}
+      .layer-override:has(> [slot="close"])::part(header){padding-inline-end:64px}
     }`)
   if (!consumerRoot && process.env.ANTA_DIALOG_COMPARE_ORIGINAL === '1') {
     save(await build({stdin:{contents:`import '${source}/tokens.css';import '${source}/reset.css';import '${source}/elements/a-dialog';`,resolveDir},bundle:true,write:false,outfile:'original.js',format:'esm',target:'es2022',nodePaths,alias:{...jsxAlias,react:compat},plugins:[{
@@ -376,6 +376,14 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','none','block'])
     assert.equal((await metrics(page))[2].padding,'8px 20px 12px')
     assert.deepEqual(await page.locator('#dialog').evaluate(el=>[...el.shadowRoot.querySelectorAll('slot')].map(s=>s.getAttribute('part'))),['header','body','footer','close'])
+    // Firefox may retain old clearance after reassignment; the close control
+    // must still render and dismiss. Other engines retain exact clearance.
+    await page.locator('#dialog').evaluate(el=>{const c=document.createElement('button');c.id='reassigned-close';c.slot='footer';c.textContent='Close';c.dataset.dialogClose='example';el.append(c)});await frames(page)
+    await page.locator('#reassigned-close').evaluate(el=>el.slot='close');await frames(page)
+    const clearance=await page.locator('#dialog').evaluate(el=>getComputedStyle(el.shadowRoot.querySelector('[part=body]')).paddingInlineEnd)
+    if(engine===firefox){assert.ok(['20px','52px'].includes(clearance));t.diagnostic(`Accepted Firefox close-reassignment clearance: ${clearance}`)}
+    else assert.equal(clearance,'52px')
+    await page.locator('#reassigned-close').click();await closed(page)
   })
   test(`${name}: body scrolling and top-layer geometry escape clipping ancestors`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page,`<div class="clip">${raw('', '<h2 slot="header">Long dialog</h2><div class="long">Long body</div><button slot="footer">Footer</button>')}</div>`)

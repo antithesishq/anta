@@ -290,11 +290,13 @@ changing part names. Each state is present when its slot has assigned nodes:
 | --- | --- |
 | `a-dialog:state(has-header)` | `header` |
 | `a-dialog:state(has-footer)` | `footer` |
-| `a-dialog:state(has-close)` | `close` |
 
 The header, or the body when no header is present, reserves `52px` of inline-end
 padding for a close control. The example increases the header clearance to
-`64px` when `:state(has-close)` matches.
+`64px` when `:has(> [slot="close"])` matches. This selector reads the authored
+close-slot markup directly. Firefox can leave clearance stale when an existing
+child's `slot` attribute changes into or out of `close`; adding or removing a
+close child updates normally.
 
 **Scope the rule to a position (or a class).** A bare `a-dialog::part(dialog)`
 hits every dialog, drawers included, where a `width` override would collapse a
@@ -312,7 +314,7 @@ a-dialog.styled-dialog::part(dialog) {
 a-dialog.styled-dialog::part(dialog)::backdrop {
   background: color-mix(in oklch, black 60%, transparent);
 }
-a-dialog.styled-dialog:state(has-close)::part(header) {
+a-dialog.styled-dialog:has(> [slot="close"])::part(header) {
   padding-inline-end: 64px;
 }
 ```

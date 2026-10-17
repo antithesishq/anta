@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { execFileSync } from 'node:child_process'
 import { createRequire } from 'node:module'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { componentSuites } from './component-suites.mjs'
@@ -36,6 +36,28 @@ test('PR component checks select fast; only manual CI selects slow', () => {
   assert.equal(runner.env.COMPONENT_TEST_SELECTION, '${{ toJSON(steps.component-tests.outputs) }}')
 })
 
+test('a Select stylesheet-only change selects Select and Tooltip checks', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-select-css-ci-'))
+  const env = {...process.env, GIT_AUTHOR_NAME:'Test', GIT_AUTHOR_EMAIL:'test@example.com', GIT_COMMITTER_NAME:'Test', GIT_COMMITTER_EMAIL:'test@example.com'}
+  const git = (...args) => execFileSync('git', ['-c','commit.gpgsign=false','-c','core.hooksPath=/dev/null',...args], {cwd:directory,env,encoding:'utf8'})
+  try {
+    git('init','--quiet')
+    git('commit','--quiet','--allow-empty','-m','Baseline')
+    const base = git('rev-parse','HEAD').trim()
+    await mkdir(join(directory,'src/components'), {recursive:true})
+    await writeFile(join(directory,'src/components/select.css'),'a-select-chevron { color: red; }')
+    git('add','src/components/select.css')
+    git('commit','--quiet','-m','Change only Select CSS')
+    const output = join(directory,'selection')
+    const selector = workflow.jobs.build.steps.find(step => step.name === 'Select component tests')
+    execFileSync('bash',['-e','-c',selector.run],{cwd:directory,env:{...env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+    const selected = Object.fromEntries((await readFile(output,'utf8')).trim().split('\n').map(line => line.split('=')))
+    assert.equal(selected.select,'true')
+    assert.equal(selected.tooltip,'true')
+    assert.equal(selected.copy,'false')
+  } finally {await rm(directory,{recursive:true})}
+})
+
 test('manual Menu coverage retains baseline history and captures the visual matrix', async () => {
   const manual = parse(await readFile(new URL('../.github/workflows/component-tests.yml', import.meta.url), 'utf8'))
   const steps = manual.jobs.components.steps
@@ -43,5 +65,7 @@ test('manual Menu coverage retains baseline history and captures the visual matr
   assert.equal(steps.find(step => step.name === 'Run full component coverage').env.ANTA_MENU_COMPARE_ORIGINAL, '1')
   assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('menu'))
   assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('select'))
-  assert.equal(steps.find(step => step.name === 'Run full component coverage').env.ANTA_SELECT_COMPARE_ORIGINAL, '1')
+  assert.equal(steps.find(step => step.name === 'Run full component coverage').env.ANTA_SELECT_COMPARE_ORIGINAL, undefined)
+  assert.equal(manual.on.workflow_dispatch.inputs.select_compare_ref.default,'')
+  assert.equal(steps.find(step => step.name === 'Run full component coverage').env.ANTA_SELECT_COMPARE_REF, '${{ inputs.select_compare_ref }}')
 })

@@ -14,6 +14,7 @@ const requireRenderer = createRequire(requireSite.resolve('@astrojs/preact'))
 const { chromium, firefox, webkit } = requireSite('playwright')
 const engines = componentEngines([chromium, firefox, webkit])
 const consumer = process.env.ANTA_SELECT_CONSUMER_ROOT ? resolve(process.env.ANTA_SELECT_CONSUMER_ROOT) : undefined
+const compareRef = consumer ? undefined : process.env.ANTA_SELECT_COMPARE_REF
 const resolveDir = consumer ?? process.cwd(), base = consumer ? '@antadesign/anta' : resolve('src')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
 const assets = new Map(), renderers = new Map(), browsers = new Map()
@@ -44,6 +45,7 @@ before(async () => {
     const contents = mode === 'bundle' ? `import '${base}/bundle';${consumer ? `import '${base}/bundle.css'` : ''}` : `import '${base}/tokens.css';import '${base}/reset.css';${['select', 'select-faceted', 'input', 'menu', 'menu-item', 'menu-group', 'menu-separator', 'button', 'icon', 'checkbox', 'radio-group', 'tooltip', 'tag'].map(e => `import '${base}/elements/a-${e}'`).join(';')}`
     save(await compile({stdin: {contents, resolveDir}, outfile: `${mode}.js`, format: 'esm', alias: {react: consumer ? 'preact/compat' : requireSite.resolve('preact/compat')}}), mode)
   }
+  save(await compile({stdin:{contents:`import '${base}/tokens.css';import '${base}/reset.css';import '${base}/elements/a-input'`,resolveDir},outfile:'input-only.js',format:'esm'}),'input-only')
   for (const framework of ['React', 'Preact']) {
     const react = framework === 'React'
     const alias = {
@@ -55,8 +57,8 @@ before(async () => {
     const compiled = new Module(resolve(`tests/select-${framework}-server.cjs`))
     compiled._compile(result.outputFiles[0].text, compiled.id)
     renderers.set(framework, compiled.exports.render)
-    if (!consumer && process.env.ANTA_SELECT_COMPARE_ORIGINAL === '1') {
-      const original = execFileSync('git', ['show', '308adf7c:src/components/Select.tsx'], {encoding: 'utf8'})
+    if (compareRef) {
+      const original = execFileSync('git', ['show', `${compareRef}:src/components/Select.tsx`], {encoding: 'utf8'})
       const result = await compile({...serverOptions, plugins: [{name: 'original-select', setup(build) {
         build.onLoad({filter: /[/\\]Select\.tsx$/}, () => ({contents: original, loader: 'tsx', resolveDir: resolve('src/components')}))
       }}]})
@@ -74,6 +76,7 @@ before(async () => {
       window.customIndicator=()=>updateSelect({renderIndicator:state=>h(Icon,{shape:state.selected?'check':'minus'})});
       window.renderHooks=()=>{customIndicator();updateSelect({renderSummary:selected=>selected.map(o=>o.label).join(' / '),renderEmpty:({query})=>h('span',{'data-empty':''},'No '+query)})};
       window.faceted=()=>{configure(h,React.Fragment,React);commit(h(SelectFaceted,{label:'Filters',searchable:true,defaultValue:{owner:[false]},onValueChange:(value,attrs)=>reports.push({value,attrs}),facets:['owner','assignee'].map(key=>({key,label:key,kind:'multiple',filter:true,options,renderOption:(option,state)=>h('span',{'data-facet':key,'data-option':String(option.value),'data-selected':String(state.selected)},option.label)}))}))};
+      window.textFacet=()=>{configure(h,React.Fragment,React);commit(h(SelectFaceted,{label:'Filters',onValueChange:(value,attrs)=>reports.push({value,attrs}),facets:[{key:'title',label:'Title',kind:'text'}]}))};
     `, resolveDir}, outfile: `${framework}.js`, format: 'esm', jsx: 'automatic', jsxImportSource: '@antadesign/anta', alias, define: {'process.env.NODE_ENV': '"production"'}}), framework)
   }
   for (const theme of ['antune', 'antithesis']) save(await compile({stdin: {contents:`import '${base}/theme-${theme}.css'`,resolveDir},outfile:`${theme}.js`,format:'esm'}),theme)
@@ -111,9 +114,31 @@ const menu = page => page.locator('#trigger + a-menu')
 const search = page => menu(page).locator('[data-menu-search] input')
 const opened = (page, state = true) => menu(page).evaluate((el, state) => el.isOpen === state, state)
 
+for (const engine of engines) test.fast(`${engine.name()}: Input-only granular styles retain Select leading layout and status colors`, async t => {
+  const page = await pageFor(t,engine,'input-only','React')
+  await page.evaluate(() => import('/input-only.js'))
+  assert.equal(await page.evaluate(() => !!customElements.get('a-menu')),false)
+  const statuses = ['neutral','brand','info','success','warning','critical']
+  for (const status of statuses) for (const disabled of [false,true]) {
+    const metrics = await page.locator('#trigger').evaluate((host,{status,disabled}) => {
+      if (status === 'neutral') host.removeAttribute('status')
+      else host.setAttribute('status',status)
+      host.toggleAttribute('disabled',disabled)
+      const sample = host.ownerDocument.createElement('span')
+      sample.style.color = status === 'neutral' ? 'var(--text-3)' : `var(--text-2-${status})`
+      host.append(sample)
+      const expected = getComputedStyle(sample).color
+      sample.remove()
+      return {leading:getComputedStyle(host.querySelector('a-select-leading')).display,color:getComputedStyle(host.querySelector('a-select-chevron')).color,expected}
+    },{status,disabled})
+    assert.equal(metrics.leading,'contents')
+    assert.equal(metrics.color,metrics.expected,`${status}, disabled=${disabled}`)
+  }
+})
+
 for (const engine of engines) for (const mode of ['granular', 'bundle']) {
   const name = `${engine.name()} ${mode}`
-  if (!consumer && process.env.ANTA_SELECT_COMPARE_ORIGINAL === '1') test(`${name}: trigger appearance matches the original across sizes, statuses, rounding, and themes`, async t => {
+  if (compareRef) test(`${name}: trigger appearance matches ${compareRef} across sizes, statuses, rounding, and themes`, async t => {
     const output = resolve('tests/.test-output/select', engine.name(), mode)
     await mkdir(output, {recursive:true})
     const variants = [
@@ -137,7 +162,7 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
           await page.screenshot({path:resolve(output,`${index}-${original?'original':'current'}.png`)})
         } finally {await page.close()}
       }
-      await writeFile(resolve(output,`${index}.json`),JSON.stringify({variant,original:pair[0],current:pair[1]},null,2))
+      await writeFile(resolve(output,`${index}.json`),JSON.stringify({compareRef,variant,original:pair[0],current:pair[1]},null,2))
       assert.deepEqual(pair[1],pair[0],JSON.stringify(variant))
     }
   })
@@ -227,6 +252,21 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
       const child = page.locator('a-menu a-menu').first(); await child.locator('input').fill('Gamma')
       await child.locator('[data-option="gamma"]').click(); await page.waitForFunction(() => reports.length === 2)
       assert.deepEqual(await page.evaluate(() => reports[1].value), {owner:[false,'gamma'],assignee:[false]})
+    })
+    test(`${name} ${framework}: text-facet drafts commit on Enter and blur after typing`, {tier:mode==='granular'?'fast':'slow'}, async t => {
+      const page = await pageFor(t,engine,mode,framework); await hydrate(page,mode,framework)
+      await page.evaluate(() => textFacet()); await page.getByRole('button',{name:'Filters',exact:true}).click()
+      await page.waitForFunction(() => document.querySelector('a-menu a-menu')?.listening)
+      await page.getByRole('menuitem',{name:/^Title/}).focus(); await page.keyboard.press('ArrowRight')
+      await page.waitForFunction(() => document.querySelector('a-menu a-menu')?.isOpen)
+      const input = page.locator('a-menu a-menu input')
+      await input.fill('Draft title ')
+      assert.deepEqual(await page.evaluate(() => reports),[])
+      await input.press('Enter'); await page.waitForFunction(() => reports.length === 1)
+      assert.deepEqual(await page.evaluate(() => reports[0]),{value:{title:'Draft title '},attrs:{facet:'title',kind:'text',value:'Draft title '}})
+      await input.fill('Next title'); await page.locator('#outside').click()
+      await page.waitForFunction(() => reports.length === 2)
+      assert.equal(await page.evaluate(() => reports[1].value.title),'Next title')
     })
   }
 }

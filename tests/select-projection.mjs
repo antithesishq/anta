@@ -151,3 +151,23 @@ test.fast('SelectFaceted retains a filter query after native event dispatch comp
   const choices = rows(render()).filter(n => n.props.role === 'menuitemcheckbox')
   assert.deepEqual(choices.map(text), ['Beta'])
 })
+
+for (const commit of ['Enter','blur']) test.fast(`SelectFaceted retains deferred text drafts and commits on ${commit}`, () => {
+  const reports = []
+  const render = renderer(runtime.SelectFaceted, {
+    facets:[{key:'title',label:'Title',kind:'text'}],
+    onValueChange:(value,attrs) => reports.push({value,attrs}),
+  }, true)
+  const field = tree => nodes(tree).find(n => n.type === 'a-input' && n.props['aria-label'] === 'Title')
+  const event = {currentTarget:{value:'Draft title '}}
+  field(render()).props.oninput(event)
+  event.currentTarget = null
+  render.flush()
+  const draft = field(render())
+  assert.equal(draft.props.value,'Draft title ')
+  assert.deepEqual(reports,[])
+  if (commit === 'Enter') draft.props.onKeyDown({key:'Enter',preventDefault(){}})
+  else draft.props.onBlur({})
+  render.flush()
+  assert.deepEqual(reports,[{value:{title:'Draft title '},attrs:{facet:'title',kind:'text',value:'Draft title '}}])
+})

@@ -284,6 +284,7 @@
     --input-label: var(--text-3);
     --input-placeholder: var(--text-4);
     --input-adornment: var(--text-3);
+    --input-status-text: var(--text-3);
     --input-hint: var(--text-3);
 
     /* The host grid remains customizable independently of the field width. */
@@ -310,6 +311,9 @@
   ) {
     display: contents;
   }
+
+  a-input > a-input-leading > a-select-leading { display: contents; color: inherit; }
+  a-input > a-input-trailing > a-select-chevron { color: var(--input-status-text); }
 
   /* Named slots are light-DOM state, so the host derives their visibility and
      spacing with :has() instead of mirroring them into shadow-only classes. */
@@ -395,12 +399,13 @@
      `--input-tone-source` never reaches it); the bg tint + message color are the
      tone's role tokens, so both themes come for free. Status keeps the border
      visible at rest, including on tertiary; only `critical` drives validity. */
-  a-input[status="critical"] { --input-status-source: var(--anta-seed-critical); --input-bg: var(--bg-2-critical); --input-hint: var(--text-2-critical); }
-  a-input[status="warning"]  { --input-status-source: var(--anta-seed-warning);  --input-bg: var(--bg-2-warning);  --input-hint: var(--text-2-warning); }
-  a-input[status="success"]  { --input-status-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-hint: var(--text-2-success); }
-  a-input[status="info"]     { --input-status-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-hint: var(--text-2-info); }
-  a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
+  a-input[status="critical"] { --input-status-source: var(--anta-seed-critical); --input-bg: var(--bg-2-critical); --input-status-text: var(--text-2-critical); }
+  a-input[status="warning"]  { --input-status-source: var(--anta-seed-warning);  --input-bg: var(--bg-2-warning);  --input-status-text: var(--text-2-warning); }
+  a-input[status="success"]  { --input-status-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-status-text: var(--text-2-success); }
+  a-input[status="info"]     { --input-status-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-status-text: var(--text-2-info); }
+  a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-status-text: var(--text-2-brand); }
   a-input[status]:not([status="neutral"]) {
+    --input-hint: var(--input-status-text);
     --input-border-width: 1px;
     --input-rest-border: var(--input-border);
     --input-border: light-dark(

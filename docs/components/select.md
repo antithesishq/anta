@@ -865,8 +865,8 @@ the native button for alignment and other control styles. The trigger uses
 `:focus-visible` for its focus ring and ellipsizes long values. **The popover**
 takes Menu's `::part(menu)`.
 
-The default trigger's leading layout and status-chevron color use external CSS,
-including in server-rendered HTML under `style-src-attr 'none'`. Leading content
+The default trigger's leading layout and status-chevron color use Input's external
+CSS, including in server-rendered HTML under `style-src-attr 'none'`. Leading content
 uses a boxless `a-select-leading` inside Input's leading slot. Consumer `style`
 props, custom color or radius values, and markup returned by render hooks can
 still produce inline styles. A custom `renderIndicator` also uses MenuItem's

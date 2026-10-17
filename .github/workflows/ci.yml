@@ -64,7 +64,7 @@ jobs:
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             src/components/{Select,SelectFaceted,Input,Menu,MenuItem,MenuGroup,MenuSeparator,Button,Icon,Tooltip,Tag}.tsx \
-            'src/components/select-*' 'src/elements/a-select*' 'src/elements/a-input*' 'src/elements/a-menu*' \
+            'src/components/select-*' src/components/select.css 'src/elements/a-select*' 'src/elements/a-input*' 'src/elements/a-menu*' \
             'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-checkbox.*' 'src/elements/a-radio*' 'src/elements/a-tooltip.*' 'src/elements/a-tag.*' \
             src/elements/{index,focus,key-activation,shadow-aria}.ts \
             src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
@@ -195,7 +195,7 @@ jobs:
             src/elements/{index,key-activation,shadow-aria,input-focus-modality,input-trailing-actions}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'src/elements/a-steps.*' 'src/elements/a-select*' \
-            src/components/{Steps,select-parts}.css \
+            src/components/{Steps,select}.css \
             'tests/tooltip*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
             'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)

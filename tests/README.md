@@ -245,6 +245,9 @@ The server supplies actual CSP response headers, including
 server/client text is independent of the existing platform-specific isolate
 hint. Consumer styles, custom color/radius props, and MenuItem's custom-indicator
 layout wrapper retain their separate inline-style constraints.
-Set `ANTA_SELECT_COMPARE_ORIGINAL=1` to compare six trigger variants per import
-mode and browser against `308adf7c`. Paired screenshots and computed metrics go
-to `tests/.test-output/select` and are saved by the manual Component matrix.
+For a one-off appearance comparison, set `ANTA_SELECT_COMPARE_REF` to an
+available Git ref. This explicitly compares six trigger variants per import
+mode and browser to that ref, and can fail for intentional appearance changes.
+Regular fast, slow, and manual runs need no historical Select commit. Paired
+screenshots and metrics go to `tests/.test-output/select`. The manual Component
+matrix exposes the same opt-in through `select_compare_ref` and saves its artifacts.

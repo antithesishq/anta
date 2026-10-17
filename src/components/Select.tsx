@@ -700,19 +700,18 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // parent label — a submenu collapses into a `MenuGroup`, top-level options stay
   // ungrouped. DFS order is preserved; consecutive same-label leaves share a group.
   const renderFlat = (): React.ReactNode[] => {
-    const shown = visibleLeaves
     const out: React.ReactNode[] = []
-    for (let i = 0; i < shown.length; ) {
-      const label = shown[i].group
+    for (let i = 0; i < visibleLeaves.length; ) {
+      const label = visibleLeaves[i].group
       if (label === undefined) {
-        out.push(renderOptionRow(shown[i].opt, shown[i].disabled))
+        out.push(renderOptionRow(visibleLeaves[i].opt, visibleLeaves[i].disabled))
         i++
         continue
       }
       const rows: React.ReactNode[] = []
       const start = i
-      while (i < shown.length && shown[i].group === label) {
-        rows.push(renderOptionRow(shown[i].opt, shown[i].disabled))
+      while (i < visibleLeaves.length && visibleLeaves[i].group === label) {
+        rows.push(renderOptionRow(visibleLeaves[i].opt, visibleLeaves[i].disabled))
         i++
       }
       out.push(<MenuGroup key={`flat-${start}-${label}`} label={label}>{rows}</MenuGroup>)

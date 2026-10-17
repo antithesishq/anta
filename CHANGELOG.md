@@ -12,8 +12,8 @@ changes are not listed.
   Its shared stylesheet is named `components/select.css`; the previous
   `components/select-parts.css` import remains supported.
 
-- [SelectFaceted](/select-faceted/) keeps per-facet search working when React
-  defers the query update.
+- [SelectFaceted](/select-faceted/) keeps per-facet search and text drafts working
+  when React defers state updates.
 
 - [Calendar](/calendar/) centers unbounded year menus on the displayed year,
   including dates supplied through `value` and `defaultValue`.

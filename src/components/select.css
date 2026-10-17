@@ -83,13 +83,6 @@
     transform: rotate(180deg);
   }
 
-  a-input > a-input-leading > a-select-leading { display: contents; color: inherit; }
-  a-input[status="brand"] > a-input-trailing > a-select-chevron { color: var(--text-2-brand); }
-  a-input[status="info"] > a-input-trailing > a-select-chevron { color: var(--text-2-info); }
-  a-input[status="success"] > a-input-trailing > a-select-chevron { color: var(--text-2-success); }
-  a-input[status="warning"] > a-input-trailing > a-select-chevron { color: var(--text-2-warning); }
-  a-input[status="critical"] > a-input-trailing > a-select-chevron { color: var(--text-2-critical); }
-
   a-select-faceted-summary {
     display: block;
     max-width: 160px;

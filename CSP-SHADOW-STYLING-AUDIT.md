@@ -201,6 +201,26 @@ Review follow-up, October 16, 2026:
   Package build, lint, types, site CSS lint, scoped package docs, and stale-author
   checks pass. The original 66 screenshot pairs still match byte-for-byte.
 
+Selector fallback hardening, October 17, 2026:
+
+- Surface and backdrop fades are separately gated by `@supports selector(...)`
+  for their complete modal part selectors. Unsupported surface selectors retain
+  the native visible default; unsupported backdrop-state selectors retain the
+  static tint. Supported engines keep the existing transitions. No JS probe,
+  timer, runtime stylesheet, DOM change, or public API change is introduced.
+- Fast CSP regressions simulate rejection by replacing those selectors with an
+  unsupported pseudo-class in the served CSS, including feature queries. Both
+  import modes remain visible, editable, tinted, and dismissible through Escape
+  and close controls, with native focus restoration. All 12 cases pass in Chrome
+  `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`, and through an installed
+  package. All four cases also pass in Chrome for Testing `135.0.7049.114`.
+- All 139 source checks pass in the three current engines, including unchanged
+  sampled entry/exit motion and 66 byte-identical original/current screenshot
+  pairs. The production build and both Chromium/WebKit Dialog preview checks
+  pass. Package builds, CSS lint, scoped docs, and stale-author checks pass.
+  Feature queries detect unsupported syntax; they cannot detect an engine that
+  reports support but implements selector matching incorrectly.
+
 Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 are not covered
 by the current engine runs. Playwright WebKit is engine evidence. Safari 17.4
 lacks `@starting-style`; discrete display and overlay transitions vary by engine.

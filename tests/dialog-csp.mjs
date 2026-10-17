@@ -44,6 +44,14 @@ before(async () => {
     const contents = mode === 'bundle' ? `import '${base}/bundle'; ${consumerRoot ? `import '${base}/bundle.css';` : ''}` :
       `import '${base}/tokens.css'; import '${base}/reset.css'; ${['a-dialog','a-button','a-icon','a-input'].map(e => `import '${base}/elements/${e}';`).join('\n')}`
     save(await compile({stdin:{contents, resolveDir}, outfile:`${mode}.js`, format:'esm', alias:{react:compat}}), mode)
+    // Reject the actual selectors in served CSS, including their feature queries.
+    // Stubbing JS CSS.supports would not change how the stylesheet is evaluated.
+    for (const feature of ['modal', 'backdrop']) {
+      const selector = `a-dialog::part(dialog):modal${feature === 'backdrop' ? '::backdrop' : ''}`
+      const css = assets.get(`/${mode}.css`)
+      assert.ok(css.includes(selector))
+      assets.set(`/${mode}-${feature}-unsupported.css`, css.replaceAll(selector, selector.replace(':modal', ':anta-unsupported-modal')))
+    }
   }
   for (const framework of ['React', 'Preact']) {
     const react = framework === 'React'
@@ -108,7 +116,8 @@ before(async () => {
     res.setHeader('Content-Security-Policy',(comparison || url.searchParams.has('capture')) ? policy.replace("style-src 'self'", "style-src 'self' 'unsafe-inline'") : policy)
     res.setHeader('Content-Type',`${url.pathname.endsWith('.js')?'text/javascript':url.pathname.endsWith('.css')?'text/css':'text/html'}; charset=utf-8`)
     const props = url.searchParams.has('initial-open') ? {defaultOpen:true} : {}
-    res.end(assets.get(url.pathname) ?? `<!doctype html><link rel="stylesheet" href="/${comparison?'original':mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? renderers.get(url.searchParams.get('framework')??'React')(props) : ''}</main>`)
+    const sheet = comparison ? 'original' : `${mode}${url.searchParams.has('unsupported') ? `-${url.searchParams.get('unsupported')}-unsupported` : ''}`
+    res.end(assets.get(url.pathname) ?? `<!doctype html><link rel="stylesheet" href="/${sheet}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? renderers.get(url.searchParams.get('framework')??'React')(props) : ''}</main>`)
   })
   await new Promise(r=>server.listen(0,'127.0.0.1',r));origin=`http://127.0.0.1:${server.address().port}`
   for(const engine of engines) browsers.set(engine,await engine.launch({headless:true,...(engine===chromium?{
@@ -125,7 +134,7 @@ async function pageFor(t,engine,mode,query='') {
   return page
 }
 const register=(page,mode)=>page.evaluate(mode=>import(`/${mode}.js`),mode)
-const raw=(attributes='',content='<h2 slot="header">Edit project</h2><input id="field"><button id="last" slot="footer">Save</button><button slot="close" data-custom-event="closerequest">Close</button>')=>`<button id="opener" data-dialog-open="example">Open</button><a-dialog id="dialog" name="example" ${attributes}>${content}</a-dialog>`
+const raw=(attributes='',content='<h2 slot="header">Edit project</h2><input id="field"><button id="last" slot="footer">Save</button><button slot="close" data-dialog-close="example">Close</button>')=>`<button id="opener" data-dialog-open="example">Open</button><a-dialog id="dialog" name="example" ${attributes}>${content}</a-dialog>`
 const mount=(page,html=raw())=>page.locator('#mount').evaluate((n,html)=>{n.innerHTML=html},html)
 const native=(page,selector='#dialog')=>page.locator(selector).locator('dialog').first()
 const applied=(page,selector='#dialog')=>page.locator(selector).evaluate(el=>el.open)
@@ -231,6 +240,25 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     await page.locator('#dialog').evaluate(el=>el.close());await closed(page)
     await page.locator(`link[href="/${mode}.css"]`).evaluate(el=>el.disabled=true);await page.locator('#opener').click()
     await page.locator(`link[href="/${mode}.css"]`).evaluate(el=>el.disabled=false);await settled(page);await page.keyboard.press('Escape');await closed(page)
+  })
+  for (const feature of ['modal','backdrop']) test.fast(`${name}: unsupported ${feature} selectors keep the native modal visible and usable`,async t=>{
+    const page=await pageFor(t,engine,mode,`&unsupported=${feature}`)
+    await page.emulateMedia({reducedMotion:'no-preference'});await register(page,mode);await mount(page)
+    await page.locator('#opener').focus();await page.keyboard.press('Enter');await settled(page)
+    assert.equal(await native(page).evaluate(el=>{
+      const rect=el.getBoundingClientRect(),style=getComputedStyle(el)
+      return el.matches(':modal')&&style.opacity==='1'&&style.transform==='none'&&rect.width>0&&rect.height>0
+    }),true)
+    assert.equal(await native(page).evaluate(el=>{
+      const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d')
+      ctx.fillStyle=getComputedStyle(el,'::backdrop').backgroundColor;ctx.fillRect(0,0,1,1)
+      return ctx.getImageData(0,0,1,1).data[3]>0
+    }),true,'Unsupported backdrop motion keeps the static tint')
+    await page.locator('#field').fill('Editable fallback');assert.equal(await page.locator('#field').inputValue(),'Editable fallback')
+    await page.keyboard.press('Escape');await closed(page)
+    assert.equal(await page.locator('#opener').evaluate(el=>document.activeElement===el),true)
+    await page.keyboard.press('Enter');await settled(page)
+    await page.locator('[slot=close]').click();await closed(page)
   })
   test.fast(`${name}: document trigger listeners stay connected and release from their originating document on adoption`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)

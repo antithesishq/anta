@@ -137,6 +137,10 @@ changes are not listed.
 
 ### Fixed
 
+- [Dialog](/dialog/#styling) keeps its native visible appearance when modal part
+  selectors are unsupported. Backdrop fades also require selector support,
+  preserving static overlay styling otherwise.
+
 - [Dialog](/dialog/) updates its accessible name when header text changes in
   place, including React and Preact updates after hydration.
 

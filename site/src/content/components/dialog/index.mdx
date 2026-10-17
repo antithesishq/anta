@@ -402,6 +402,8 @@ all reachable. Keep visibility and motion overrides scoped to
 dialog. The native dialog controls closing independently of CSS transitions.
 Entry and exit effects follow the browser's existing `@starting-style`, display,
 and overlay-transition support; reduced motion disables Anta's transitions.
+Each fade requires support for its modal part selector. Without that support,
+the native dialog stays visible and the backdrop keeps its static styling.
 
 Defaults belong to `anta.components`, within the layer order
 `base, anta, components, utilities`. Put consumer overrides in `components`,

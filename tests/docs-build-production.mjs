@@ -48,6 +48,38 @@ async function productionPage(t, engine = chromium) {
 }
 
 for (const engine of engines) {
+  test(`${engine.name()}: Menu previews retain the first dropdown, pinned regions, and raw example`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/menu/')
+    const first = page.locator('.preview').filter({has: page.locator('a-menu')}).first()
+    const trigger = first.locator('a-button').first()
+    await trigger.scrollIntoViewIfNeeded()
+    await page.waitForFunction(() => [...document.querySelectorAll('.preview a-menu')].some(el => el.listening))
+    await trigger.focus()
+    await page.keyboard.press('ArrowDown')
+    const menu = first.locator('a-menu').first()
+    await page.waitForFunction(() => document.querySelector('.preview a-menu')?.isOpen)
+    assert.equal(await menu.locator('[part=menu]').evaluate(el => getComputedStyle(el).display), 'flex')
+    await first.locator('a-menu-item').filter({hasText: /^Edit/}).click()
+    assert.equal(await menu.evaluate(el => el.isOpen), false)
+    const pinned = page.locator('.preview').filter({has: page.locator('a-menu-header')}).first()
+    await pinned.locator('a-button').first().scrollIntoViewIfNeeded()
+    await page.waitForFunction(el => el.listening, await pinned.locator('a-menu').elementHandle())
+    await pinned.locator('a-button').first().click()
+    await pinned.locator('a-input input').fill('Design')
+    assert.equal(await pinned.locator('a-menu-header').evaluate(el => getComputedStyle(el).padding), '8px')
+    assert.equal(await pinned.locator('a-menu-footer').evaluate(el => getComputedStyle(el).padding), '8px')
+    await page.keyboard.press('Escape')
+    await page.locator('summary').filter({hasText: 'Web Component'}).click()
+    const raw = page.locator('details').filter({has: page.locator('summary').filter({hasText:'Web Component'})}).last().locator('.preview')
+    await raw.locator('a-button').scrollIntoViewIfNeeded()
+    await page.waitForFunction(el => el.listening, await raw.locator('a-menu').elementHandle())
+    await raw.locator('a-button').click()
+    await raw.locator('a-menu-item').filter({hasText:'Settings'}).click()
+    assert.equal(await raw.locator('a-menu').evaluate(el => el.isOpen), false)
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: InputTime previews edit and cancel clearing after hydration`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/input-time/')

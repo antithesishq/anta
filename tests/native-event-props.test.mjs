@@ -9,6 +9,7 @@ before(async () => {
   const result = await build({
     stdin: {
       contents: `export * from './src/jsx-runtime';
+        export { Menu } from './src/components/Menu';
         export { Input } from './src/components/Input';
         export { InputTime } from './src/components/InputTime';
         export { Banner } from './src/components/Banner';
@@ -290,4 +291,19 @@ test('worker copy props forward own request/result callbacks immediately, includ
       assert.equal(copied,true)
     } finally { if (shim) delete globalThis.window }
   }
+})
+
+for (const shim of [false, true]) test(`Menu worker subscriptions are immediate without hooks (window shim: ${shim})`, () => {
+  if (shim) globalThis.window = {}
+  try {
+    runtime.configure(h, undefined, {})
+    let state, active
+    const menu = runtime.Menu({onStateChange: (_, detail) => {state = detail}, onactivedescendant: e => {active = e.detail.id}})
+    menu.props.onstatechange(event({next:'open',prev:'closed'}))
+    menu.props.onactivedescendant(event({id:'option'}))
+    assert.deepEqual(state, {next:true,prev:false})
+    assert.equal(active,'option')
+    menu.props.onstatechange({target:'child',currentTarget:'menu',detail:{next:'closed',prev:'open'}})
+    assert.deepEqual(state, {next:true,prev:false})
+  } finally { if (shim) delete globalThis.window }
 })

@@ -1,4 +1,5 @@
 import { nativeStateChange, lengthStyle, roundStyle, roundAttr } from '../anta_helpers'
+import { useNativeEventProps } from '../native-event-props'
 import type { BaseProps } from '../general_types'
 
 export interface MenuProps extends BaseProps {
@@ -122,6 +123,7 @@ export const Menu = ({
   inset,
   open,
   onStateChange,
+  onactivedescendant,
   round,
   stopPropagation,
   role = 'menu',
@@ -130,6 +132,18 @@ export const Menu = ({
   children,
   ...rest
 }: MenuProps) => {
+  const events = useNativeEventProps({
+    onstatechange: onStateChange
+      ? (e: StateChangeEvent) => {
+          const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e)
+          if (isOwn && detail) onStateChange(event, {
+            next: detail.next === 'open',
+            prev: detail.prev === 'open',
+          })
+        }
+      : undefined,
+    onactivedescendant,
+  })
   return (
     <a-menu
       // 'bottom-start' is the implicit default — emit no DOM attribute.
@@ -141,27 +155,7 @@ export const Menu = ({
       autowidth={autoWidth ? '' : undefined}
       // Controlled lever — boolean prop → 'open'/'closed' enum; omit ⇒ uncontrolled.
       state={open === undefined ? undefined : open ? 'open' : 'closed'}
-      // All-lowercase `onstatechange` is the one event-prop spelling both React
-      // and Preact bind to a custom element's custom event (they lowercase
-      // whatever follows `on`, so `onStateChange` would listen for "StateChange").
-      onstatechange={
-        onStateChange
-          ? (e: StateChangeEvent) => {
-              const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e)
-              // Only the menu's own `statechange` (open/closed) counts. A stateful
-              // component slotted inside the menu — a `Calendar`, `Tabs`, … — could
-              // dispatch its *own* bubbling `statechange` that reaches this ancestor
-              // listener; `isOwn` (target === currentTarget) drops those, or they'd
-              // read as a spurious close. More robust than matching the open/closed
-              // vocabulary, which a nested `Expander` would also satisfy.
-              if (isOwn && detail)
-                onStateChange(event, {
-                  next: detail.next === 'open',
-                  prev: detail.prev === 'open',
-                })
-            }
-          : undefined
-      }
+      {...events}
       round={roundAttr(round)}
       // `true` → bare attribute (element defaults to `click`); a string / list is
       // passed through; omit ⇒ only the built-in menu-item containment applies.

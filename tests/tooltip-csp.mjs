@@ -310,10 +310,10 @@ for(const engine of engines) for(const order of [['granular','bundle'],['bundle'
     const page=await pageFor(t,engine,order[0],'',{knownShadowStyles:true});await register(page,order[0]);await register(page,order[1])
     await mount(page,'<div class="anchor" id="trigger" tabindex="0">Menu<a-tooltip id="outside">Outside</a-tooltip><a-menu><a-menu-item role="menuitem" tabindex="0">Item<a-tooltip id="inside">Inside</a-tooltip></a-menu-item></a-menu></div>')
     await page.locator('a-menu').evaluate(n=>n.show());await frames(page)
-    const baseline=await page.evaluate(()=>violations.length)
+    const baseline=await page.evaluate(()=>violations.length);assert.equal(baseline,0)
     await show(page,'#outside');assert.equal(await open(page,'#outside'),false)
     await show(page,'#inside');assert.equal(await open(page,'#inside'),true)
-    await frames(page);assert.equal(await page.evaluate(()=>violations.length),baseline,'Tooltip adds no violations to the known Menu shadow stylesheet blocker')
+    await frames(page);assert.equal(await page.evaluate(()=>violations.length),baseline,'Tooltip and Menu retain strict CSP')
   })
   test(`${engine.name()} ${order.join(' then ')}: Select and SelectFaceted hints keep Menu ownership`,async t=>{
     const page=await pageFor(t,engine,order[0],'',{knownShadowStyles:true});await register(page,order[0]);await register(page,order[1]);await page.evaluate(()=>import('/Preact.js'))

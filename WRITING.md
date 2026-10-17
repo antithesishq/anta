@@ -82,86 +82,89 @@ what to do next. State the fact, its consequence, and stop.
 
 ## Documentation pages
 
-Write each page around the reader's task. Keep component documentation focused
-on features, reasons to use them, and working demonstrations. Technical nuances
-belong in property descriptions or the raw HTML reference. Browser support and
-CSP guidance belong on Install and configure.
+Write purposeful, concise, precise, and helpful documentation that guides readers
+through their choices. Start with a short introduction to the component: what
+it does and where it is useful. For each feature, explain what it does, why
+someone would use it, and demonstrate it.
 
-### Lead with purpose and examples
+Put precise API contracts in TSDoc and raw markup in the reference. Give
+technical nuances their own sections when readers need a fuller explanation;
+prefer the relevant prop's TSDoc for details specific to that API. Shared setup,
+browser support, and CSP guidance live on the dedicated Install and configure
+page. Keep essential accessibility instructions discoverable.
 
-- Explain what the component or feature helps someone do, when to choose it,
-  and the result they can expect. Mention an alternative when it helps readers
-  make that choice. Do not invent a use case or recommendation to fill a section.
-- Introduce a feature with a short usage explanation and demonstrate it with
-  realistic content. Let the example show visible behavior instead of describing
-  every visual state in prose. Preserve useful previews and their matching
-  expandable code.
-- Use the documented API names when they help readers implement the example.
-  Keep the main explanation readable without knowing the component's internals.
-  Avoid repeating accepted values, defaults, and event signatures from the API
-  reference.
+### Explain features through use
 
-### Put details where readers need them
+- Introduce a feature in terms of a practical task and the result someone can
+  expect. Give enough guidance to help readers choose between relevant options.
+  Use realistic situations and the component's actual capabilities.
+- Follow the explanation with a working demonstration and matching expandable
+  code. Explain what the example teaches; let the demonstration show its visual
+  details and interaction states.
+- Name the props needed to use the feature. Keep prose understandable without
+  knowing the implementation, and use the API reference for the complete contract.
+- Preserve useful sections, feature coverage, examples, and reference material.
+  Improve their wording, organization, and placement. Concision comes from clear
+  explanations and avoiding repetition while retaining the information readers need.
+
+Use [Text](site/src/content/components/text/index.mdx),
+[Tooltip](site/src/content/components/tooltip/index.mdx),
+[Progress](site/src/content/components/progress/index.mdx), and
+[Button](site/src/content/components/button/index.mdx) as editorial examples.
+Follow the approach of the relevant sections rather than copying a whole page's
+structure onto every component.
+
+### Keep detail accessible
 
 | Information | Home |
 | --- | --- |
 | Purpose, feature choices, common tasks, and visible results | Main page guidance beside working examples. |
-| Accepted values, defaults, units, event payloads, and API-specific edge cases | Source TSDoc, rendered through `PropsTable` and the API reference. |
-| Required raw markup, authored ARIA, and low-level integration steps | Web Component or raw HTML reference. |
+| Accepted values, defaults, units, event payloads, and API-specific nuances | Source TSDoc, rendered through `PropsTable` and the API reference. |
+| Detailed usage, interaction, or integration explanations | A dedicated section when a prop description is insufficient. |
+| Required raw markup and authored ARIA | Web Component or raw HTML reference. |
 | Supported consumer selectors and customization recipes | Styling disclosure, with working previews and matching code. |
 | Shared imports, renderer setup, browser support, and CSP | Install and configure; link to the relevant section. |
-| Internal algorithms, incidental measurements, and implementation history with no consumer action | Source comments, development documentation, or the change history. |
 
-- Keep a number in main prose when it helps readers choose or configure behavior,
-  such as a line count or an application limit. Move default pixel dimensions,
-  opacity percentages, animation timings, and token mappings into the relevant
-  reference when they do not change that choice. Do not replace a useful value
-  with vague wording merely to remove a number.
-- Move a technical fact into TSDoc only when it explains the public contract or
-  helps a caller use the API. Do not turn property descriptions into a storage
-  place for implementation notes.
-- Keep required labels, keyboard access, focus behavior, and material limitations
-  discoverable near the example that needs them. Provide detailed interaction
-  reference where useful; shortening a page must not hide accessibility duties,
-  meaningful behavior differences, or steps required for a working example.
-- Centralize shared compatibility and CSP explanations. A component-specific
-  exception may need a brief, actionable note beside its example and a link to
-  the full guidance. Do not repeat the library-wide explanation on every page.
+Keep numbers when they help readers choose or configure behavior. Place exact
+visual measurements, timing defaults, and token mappings in the appropriate
+reference when they are needed. Keep TSDoc focused on the caller's contract;
+implementation notes belong with the source or development documentation.
 
-The Text page is an example of this split: its expansion guide explains why a
-reader would reveal or refold content; prop descriptions retain layout and
-interaction details. Apply the same principle to other page types according to
-their purpose. Installation guides and API references need precise technical
-instructions. Do not force every page into a component-page template or remove
-details solely to reach a word count.
+Explain required labels, keyboard access, focus behavior, and material limitations
+where readers need them to use an example correctly. Link to detailed guidance
+without hiding essential instructions. A component-specific setup or CSP exception
+may need a brief, actionable note beside its example and a link to the shared page.
 
-### Reusable evaluation prompt
+### Reusable content-writing prompt
 
-Use this prompt to audit pages before an editorial rewrite. Replace the page
+Use this instruction when writing or improving documentation. Replace the page
 list with the requested scope:
 
 ```text
-Evaluate Anta documentation pages: [pages or components]. Audit only; do not edit.
+Write or improve Anta documentation for [pages or components].
 
-Read AGENTS.md, site/AGENTS.md, src/AGENTS.md, and WRITING.md. Compare the pages
-with the Text page's feature-focused explanations. Inspect component source,
-TSDoc, examples, and generated prop descriptions to verify behavior.
+Follow AGENTS.md, site/AGENTS.md, src/AGENTS.md, and WRITING.md. Use Text,
+Tooltip, Progress, and Button as editorial examples. Verify explanations and
+examples against the component source and TSDoc.
 
-Assess whether readers can understand the purpose, choose relevant features,
-and use a working example. Identify prose that repeats the API reference or
-explains internal mechanics and measurements without helping a consumer act.
+Write purposeful, concise, precise, helpful prose with a little guidance.
+Start with a short introduction to the component in general. For each feature,
+explain what it does, why someone would use it, and demonstrate it with a
+working example and matching expandable code. Help readers choose appropriate
+features and understand the result they can expect.
 
-For each finding, cite its file and section, explain the reader impact, and
-recommend keeping, rewriting, moving, or removing the text. Name the exact
-destination for moved information. Keep required accessibility guidance,
-meaningful behavioral differences, defaults, limitations, and integration steps
-discoverable. Preserve useful previews, matching expandable code, and anchors.
-Do not invent behavior, change public APIs, or move irrelevant internals into
-TSDoc. Centralize shared browser/CSP guidance on Install and configure.
+Preserve useful structure, feature coverage, demonstrations, and details.
+Improve wording and organization rather than merely shortening the page.
+Put precise API contracts and prop-specific nuances in TSDoc. Give broader
+technical explanations their own sections where useful, and keep raw markup
+in the reference. Shared setup, browser support, and CSP guidance belong on
+Install and configure; link to that dedicated page.
 
-Return a concise assessment, a prioritized list of concrete findings, one
-representative before/after rewrite, and a scoped edit plan. Judge usefulness
-and accuracy rather than word count or the absence of numbers.
+Keep essential accessibility instructions, meaningful behavior differences,
+and material limitations discoverable. Retain numbers when they help readers
+act. Preserve anchors and keep previews and expandable code in sync. Maintain
+accurate API descriptions and defaults, and do not invent behavior or change
+the public API as part of a writing task.
 ```
 
 ## Components, APIs, and UI interactions

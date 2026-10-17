@@ -180,6 +180,9 @@ as you type. `true` uses the built-in matcher: a case-insensitive substring of t
 option's **value, label, or hint**. It's **whitespace-flexible** (a typed space
 matches any run of whitespace) and **bolds the matched substring** in the results.
 Pass a **function** `(option, query) => boolean` for custom matching (no highlight).
+Select evaluates the predicate once per option on each render, including when the
+query is empty. The option rows, empty state, and filtered **Select all** action
+use those same results.
 
 With `filter`, the trigger opens a dialog containing the search field and an
 options menu. This keeps the textbox outside the menu in the accessibility tree.
@@ -1061,6 +1064,14 @@ and its selected text through `::part(input-label)`. `::part(input)` targets
 the native button for alignment and other control styles. The trigger uses
 `:focus-visible` for its focus ring and ellipsizes long values. **The popover**
 takes Menu's `::part(menu)`.
+
+The default trigger's leading layout and status-chevron color use external CSS,
+including in server-rendered HTML under `style-src-attr 'none'`. Leading content
+uses a boxless `a-select-leading` inside Input's leading slot. Consumer `style`
+props, custom color or radius values, and markup returned by render hooks can
+still produce inline styles. A custom `renderIndicator` also uses MenuItem's
+existing inline layout wrapper. Use Input's parts to style its slots and target
+`a-select-chevron` to override the chevron color in your own stylesheet.
 
 ### Migrate field styles
 

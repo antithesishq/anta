@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, copy, expander, input, input-time, menu, progress, text, toaster, tooltip]
+        options: [all, banner, calendar, card, copy, expander, input, input-time, menu, progress, select, text, toaster, tooltip]
 permissions:
   contents: read
 jobs:
@@ -31,6 +31,7 @@ jobs:
         env:
           COMPONENT: ${{ inputs.component }}
           ANTA_MENU_COMPARE_ORIGINAL: '1'
+          ANTA_SELECT_COMPARE_ORIGINAL: '1'
         run: pnpm test:components --tier slow --component "$COMPONENT"
       - name: Save Expander visual matrix
         if: always()
@@ -86,5 +87,13 @@ jobs:
         with:
           name: menu-visual
           path: tests/.test-output/menu
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Select visual comparison
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: select-visual
+          path: tests/.test-output/select
           include-hidden-files: true
           if-no-files-found: ignore

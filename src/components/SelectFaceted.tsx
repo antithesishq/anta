@@ -388,7 +388,10 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           placeholder="Filter…"
           aria-label={`Filter ${facet.label}`}
           aria-autocomplete="list"
-          onInput={(e: any) => setQueries((s) => ({ ...s, [facet.key]: e.currentTarget.value }))}
+          onInput={(e: any) => {
+            const query = e.currentTarget.value
+            setQueries((s) => ({ ...s, [facet.key]: query }))
+          }}
         />
       </a-select-header>
     ) : null

@@ -7,6 +7,12 @@ changes are not listed.
 
 ### Fixed
 
+- [Select](/select/#styling) preserves its leading-content layout and validation
+  chevron color in server-rendered HTML under `style-src-attr 'none'`.
+
+- [SelectFaceted](/select-faceted/) keeps per-facet search working when React
+  defers the query update.
+
 - [Calendar](/calendar/) centers unbounded year menus on the displayed year,
   including dates supplied through `value` and `defaultValue`.
 

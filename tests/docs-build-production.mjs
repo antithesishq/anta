@@ -48,6 +48,20 @@ async function productionPage(t, engine = chromium) {
 }
 
 for (const engine of engines) {
+  test(`${engine.name()}: Select retains its first preview and matching expandable recipe`, async t => {
+    const {page, errors} = await productionPage(t, engine)
+    await page.goto('https://anta.test/select/')
+    const first = page.locator('.preview').filter({has:page.locator('a-input[button]')}).first()
+    const field = first.locator('a-input[button]').first()
+    await field.scrollIntoViewIfNeeded()
+    await page.waitForFunction(el => el.nextElementSibling?.listening, await field.elementHandle())
+    assert.ok((await first.locator('..').textContent()).includes('output_text'))
+    await field.locator('button').click()
+    await first.getByRole('menuitemradio', {name:/^stream/}).click()
+    await page.waitForFunction(el => el.value === 'stream', await field.elementHandle())
+    assert.equal(await first.locator('a-menu').first().evaluate(el => el.isOpen), false)
+    assert.deepEqual(errors, [])
+  })
   test(`${engine.name()}: Menu previews retain the first dropdown, pinned regions, and raw example`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/menu/')

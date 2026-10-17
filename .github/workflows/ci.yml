@@ -47,6 +47,7 @@ jobs:
           TEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -z "$TEST_BASE_SHA" ]; then
+            echo 'select=true' >> "$GITHUB_OUTPUT"
             echo 'menu=true' >> "$GITHUB_OUTPUT"
             echo 'copy=true' >> "$GITHUB_OUTPUT"
             echo 'calendar=true' >> "$GITHUB_OUTPUT"
@@ -60,6 +61,21 @@ jobs:
             echo 'toaster=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            src/components/{Select,SelectFaceted,Input,Menu,MenuItem,MenuGroup,MenuSeparator,Button,Icon,Tooltip,Tag}.tsx \
+            'src/components/select-*' 'src/elements/a-select*' 'src/elements/a-input*' 'src/elements/a-menu*' \
+            'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-checkbox.*' 'src/elements/a-radio*' 'src/elements/a-tooltip.*' 'src/elements/a-tag.*' \
+            src/elements/{index,focus,key-activation,shadow-aria}.ts \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/select-*' tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'select=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'select=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' 'src/elements/a-copy.*' \

@@ -42,4 +42,6 @@ test('manual Menu coverage retains baseline history and captures the visual matr
   assert.equal(steps.find(step => step.uses?.startsWith('actions/checkout@')).with['fetch-depth'], 0)
   assert.equal(steps.find(step => step.name === 'Run full component coverage').env.ANTA_MENU_COMPARE_ORIGINAL, '1')
   assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('menu'))
+  assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('select'))
+  assert.equal(steps.find(step => step.name === 'Run full component coverage').env.ANTA_SELECT_COMPARE_ORIGINAL, '1')
 })

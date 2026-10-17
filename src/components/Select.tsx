@@ -4,6 +4,7 @@
 import { useState } from '../jsx-runtime'
 import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
+import { prepareSelectOptions, type SelectNode } from './select-tree'
 import type { BaseProps, OptionPresentationProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
@@ -505,9 +506,6 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   } = props
 
   const multiple = selection === 'multiple'
-  // A validation status tints the chevron to match the field's border/hint.
-  const statusColor =
-    status && status !== 'neutral' ? `var(--text-2-${status})` : undefined
   // Multi-select always uses checkboxes; single-select's mark is the `indicator`
   // prop ('none' → no per-row mark, just the tint).
   const mark = multiple ? 'checkbox' : indicator ?? 'none'
@@ -524,31 +522,16 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   const [query, setQuery] = useState('')
   const popupLabel = `${label ?? (rest['aria-label'] as string | undefined) ?? 'Select'} options`
 
-  // Discriminate an `options` entry by shape: a `submenu` array → flyout branch, an
-  // `options` array → inline group, otherwise a leaf option.
-  const isSubmenu = (it: SelectItem<V>): it is SelectSubmenu<V> =>
-    typeof it === 'object' && Array.isArray((it as SelectSubmenu<V>).submenu)
-  const isGroup = (it: SelectItem<V>): it is SelectGroup<V> =>
-    typeof it === 'object' && Array.isArray((it as SelectGroup<V>).options)
-
-  // Flatten the tree to its leaf options once, carrying each leaf's *effective*
-  // disabled (cascaded from any group/submenu ancestor) and its immediate parent's
-  // label (the heading a filter query flattens it under). Everything value-shaped —
-  // `byValue`, the selection count, Select-all — reads this flat list; only
-  // rendering walks the tree.
-  interface Leaf { opt: SelectOption<V>; disabled: boolean; group?: string }
-  const collectLeaves = (items: SelectItem<V>[], group: string | undefined, disabled: boolean, out: Leaf[]) => {
-    for (const raw of items) {
-      if (typeof raw !== 'string' && isSubmenu(raw)) collectLeaves(raw.submenu, raw.label, disabled || !!raw.disabled, out)
-      else if (typeof raw !== 'string' && isGroup(raw)) collectLeaves(raw.options, raw.label, disabled || !!raw.disabled, out)
-      else {
-        const o = normalizeOpt(raw)
-        out.push({ opt: o, disabled: disabled || !!o.disabled, group })
-      }
-    }
-  }
-  const allLeaves: Leaf[] = []
-  collectLeaves(options, undefined, false, allLeaves)
+  const filtering = filter !== undefined && filter !== false
+  const q = query.trim()
+  const queryRe = filtering && typeof filter !== 'function' ? matchQueryRegex(q) : null
+  // Custom predicates also apply with an empty query. Prepare their results once
+  // so rendered rows, empty states, and Select-all use the same visible options.
+  const prune = typeof filter === 'function' || (filtering && !!q)
+  const matches = (o: SelectOption<V>) =>
+    typeof filter === 'function' ? filter(o, q) : matchesQuery(o, queryRe)
+  const { tree, allLeaves, visibleLeaves } = prepareSelectOptions(options, prune ? matches : undefined)
+  const flattening = filtering && !!q
   // A value is an option's identity across the whole tree — selection is global, so a
   // value repeated in two sections is one logical pick. Warn on duplicates (like
   // <Tabs> / RadioGroup, a bare console.warn that only fires on the bug): they collapse
@@ -564,26 +547,6 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     seenValues.add(key)
   }
   const byValue = new Map<V, SelectOption<V>>(allLeaves.map((l) => [l.opt.value, l.opt]))
-
-  // `filter`: which options the menu shows. The built-in matcher is a regex that's
-  // case-insensitive and treats each run of whitespace in the query as "one or more
-  // whitespace symbols" (so a typed space spans any gap); a function is a custom
-  // per-option predicate. `queryRe` is null for a function or an empty query — which
-  // is also the signal to skip match-highlighting.
-  const filtering = filter !== undefined && filter !== false
-  const q = query.trim()
-  const queryRe = filtering && typeof filter !== 'function' ? matchQueryRegex(q) : null
-  const matches = (o: SelectOption<V>) =>
-    typeof filter === 'function' ? filter(o, q) : matchesQuery(o, queryRe)
-  // Which leaves survive the filter. A custom filter *function* prunes on every
-  // render (even with an empty query), so a predicate that filters by a criterion —
-  // not the typed text — always applies. The built-in matcher only prunes once
-  // something is typed (empty query = show all; a text function matches '' → all).
-  const prune = typeof filter === 'function' || (filtering && !!q)
-  const visibleLeaves = prune ? allLeaves.filter((l) => matches(l.opt)) : allLeaves
-  // A typed query flattens the tree into grouped results; with no query we render
-  // the tree (inline groups + submenu flyouts). A function filter prunes in place.
-  const flattening = filtering && !!q
 
   // Collapse whatever selection shape we have into a lookup list. Values compare by
   // `===`, so this works for any primitive `V` without stringifying.
@@ -715,49 +678,29 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     )
   }
 
-  // Idle render: walk the tree. Groups render inline (`MenuGroup`), submenus as
-  // flyouts (`MenuItem submenu` + nested `Menu`). A function filter prunes leaves in
-  // place; a container with no surviving descendant is dropped so no empty flyout
-  // or heading shows.
-  const renderTree = (items: SelectItem<V>[], disabled: boolean): React.ReactNode[] => {
-    const out: React.ReactNode[] = []
-    items.forEach((raw, i) => {
-      if (typeof raw !== 'string' && isSubmenu(raw)) {
-        const dis = disabled || !!raw.disabled
-        const inner = renderTree(raw.submenu, dis)
-        if (inner.length)
-          out.push(
-            <MenuItem
-              key={`sub-${i}-${raw.label}`}
-              submenu
-              label={raw.label}
-              icon={raw.icon}
-              disabled={dis || undefined}
-              data-menu-open={multiple ? '' : undefined}
-            >
-              <Menu>{inner}</Menu>
-            </MenuItem>,
-          )
-        return
-      }
-      if (typeof raw !== 'string' && isGroup(raw)) {
-        const dis = disabled || !!raw.disabled
-        const inner = renderTree(raw.options, dis)
-        if (inner.length) out.push(<MenuGroup key={`grp-${i}-${raw.label}`} label={raw.label}>{inner}</MenuGroup>)
-        return
-      }
-      const o = normalizeOpt(raw)
-      if (typeof filter === 'function' && !matches(o)) return
-      out.push(renderOptionRow(o, disabled || !!o.disabled))
-    })
-    return out
-  }
+  const renderTree = (nodes: SelectNode<V>[]): React.ReactNode[] => nodes.map(node => {
+    if (node.kind === 'option') return renderOptionRow(node.opt, node.disabled)
+    const inner = renderTree(node.children)
+    if (node.kind === 'group') return <MenuGroup key={node.key} label={node.source.label}>{inner}</MenuGroup>
+    return (
+      <MenuItem
+        key={node.key}
+        submenu
+        label={node.source.label}
+        icon={node.source.icon}
+        disabled={node.disabled || undefined}
+        data-menu-open={multiple ? '' : undefined}
+      >
+        <Menu>{inner}</Menu>
+      </MenuItem>
+    )
+  })
 
   // Flattened render (a query is active): matching leaves grouped by their immediate
   // parent label — a submenu collapses into a `MenuGroup`, top-level options stay
   // ungrouped. DFS order is preserved; consecutive same-label leaves share a group.
   const renderFlat = (): React.ReactNode[] => {
-    const shown = allLeaves.filter((l) => matches(l.opt))
+    const shown = visibleLeaves
     const out: React.ReactNode[] = []
     for (let i = 0; i < shown.length; ) {
       const label = shown[i].group
@@ -792,7 +735,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         value={display}
         placeholder={placeholder}
         leading={triggerLeading != null ? (
-          <span aria-hidden="true" style={{ display: 'contents' }}>{triggerLeading}</span>
+          <a-select-leading aria-hidden="true">{triggerLeading}</a-select-leading>
         ) : undefined}
         disabled={disabled}
         size={size}
@@ -804,7 +747,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         aria-haspopup={filtering ? 'dialog' : 'menu'}
         aria-expanded={open ? 'true' : 'false'}
         trailing={
-          <a-select-chevron open={open ? '' : undefined} aria-hidden="true" style={statusColor ? { color: statusColor } : undefined}>
+          <a-select-chevron open={open ? '' : undefined} aria-hidden="true">
             <Icon shape="chevron-down" />
           </a-select-chevron>
         }
@@ -864,7 +807,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
           ? renderEmpty?.({ query: q })
           : flattening
             ? renderFlat()
-            : renderTree(options, false)}
+            : renderTree(tree)}
         {clearable && selectedValues.length > 0 && (
           // Pinned in the footer so it never scrolls away in a long / filtered list.
           <>

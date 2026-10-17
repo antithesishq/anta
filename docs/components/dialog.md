@@ -283,22 +283,18 @@ Defaults belong to `anta.components`, within the layer order
 Anta's defaults. Previously, outer part rules took precedence over the internal
 shadow stylesheet regardless of their layer.
 
-The slots also expose these supported state parts. Anta updates them as slot
-assignment changes. Each state part targets the same slot as its regular region
-part, so it adds no DOM elements.
-For DOM queries within the shadow root, use `[part~="close"]` rather than
-`[part="close"]` to match a part name alongside its state tokens.
+Optional regions expose CSS states on the host without adding attributes or
+changing part names. Each state is present when its slot has assigned nodes:
 
-| State part | When it applies |
+| State selector | Assigned slot |
 | --- | --- |
-| `::part(header-filled)` | The header slot has assigned nodes. |
-| `::part(footer-filled)` | The footer slot has assigned nodes. |
-| `::part(close-filled)` | The close slot has assigned nodes. |
-| `::part(header-close)` | The close slot has assigned nodes. Reserves header clearance for the close control. |
-| `::part(body-close)` | The close slot has assigned nodes and the header slot has none. Reserves body clearance for the close control. |
+| `a-dialog:state(has-header)` | `header` |
+| `a-dialog:state(has-footer)` | `footer` |
+| `a-dialog:state(has-close)` | `close` |
 
-The two clearance parts default to `padding-inline-end: 52px`. The example below
-uses `header-close` to increase it to `64px`.
+The header, or the body when no header is present, reserves `52px` of inline-end
+padding for a close control. The example increases the header clearance to
+`64px` when `:state(has-close)` matches.
 
 **Scope the rule to a position (or a class).** A bare `a-dialog::part(dialog)`
 hits every dialog, drawers included, where a `width` override would collapse a
@@ -316,7 +312,7 @@ a-dialog.styled-dialog::part(dialog) {
 a-dialog.styled-dialog::part(dialog)::backdrop {
   background: color-mix(in oklch, black 60%, transparent);
 }
-a-dialog.styled-dialog::part(header-close) {
+a-dialog.styled-dialog:state(has-close)::part(header) {
   padding-inline-end: 64px;
 }
 ```

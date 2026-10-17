@@ -103,7 +103,7 @@ before(async () => {
     @layer components {
       .layer-override::part(dialog){width:640px}
       .layer-override::part(body){padding:0}
-      .layer-override::part(header-close){padding-inline-end:64px}
+      .layer-override:state(has-close)::part(header){padding-inline-end:64px}
     }`)
   if (!consumerRoot && process.env.ANTA_DIALOG_COMPARE_ORIGINAL === '1') {
     save(await build({stdin:{contents:`import '${source}/tokens.css';import '${source}/reset.css';import '${source}/elements/a-dialog';`,resolveDir},bundle:true,write:false,outfile:'original.js',format:'esm',target:'es2022',nodePaths,alias:{...jsxAlias,react:compat},plugins:[{
@@ -168,7 +168,7 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     assert.equal(await native(page).evaluate(d=>d.matches(':modal')&&d.getRootNode().activeElement===d),true)
     assert.deepEqual(await page.locator('#dialog').evaluate(el=>({children:el.shadowRoot.children.length,sheets:el.shadowRoot.querySelectorAll('style,link').length,slots:[...el.shadowRoot.querySelectorAll('slot')].map(s=>s.name)})),{children:1,sheets:0,slots:['header','','footer','close']})
     assert.deepEqual(await page.locator('#dialog').evaluate(el=>[...el.shadowRoot.querySelectorAll('slot')].map(s=>[...s.part].sort())),[
-      ['header','header-close','header-filled'],['body'],['footer','footer-filled'],['close','close-filled'],
+      ['header'],['body'],['footer'],['close'],
     ])
     assert.equal(await native(page).getAttribute('aria-label'),'Edit project')
     await page.keyboard.press('Tab');assert.equal(await page.locator('#field').evaluate(el=>el===document.activeElement),true)
@@ -211,7 +211,7 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     assert.equal(await label(),'Detached edit')
     await page.locator('[slot=header]').evaluate(el=>el.textContent='');await frames(page);assert.equal(await label(),null)
     await page.locator('[slot=header]').evaluate(el=>el.remove());await frames(page);assert.equal(await label(),null)
-    assert.equal(await page.locator('#dialog').evaluate(el=>el.shadowRoot.querySelector('[name=header]').part.contains('header-filled')),false)
+    assert.equal((await metrics(page))[1].display,'none')
   })
   for(const framework of ['React','Preact'])test.fast(`${name} ${framework}: real SSR hydration preserves nodes and supports controlled updates and callback replacement`,async t=>{
     const page=await pageFor(t,engine,mode,`&ssr&framework=${framework}`);await register(page,mode)
@@ -357,16 +357,24 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     await page.locator('#dialog').evaluate(el=>el.close());await closed(page)
     assert.equal(await native(page).evaluate(el=>el.getAnimations().length),0)
   })
-  test(`${name}: optional regions and close clearance update without changing authored nodes`,async t=>{
+  test.fast(`${name}: optional regions and close clearance update without changing authored nodes`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page,raw('default-state="open"','<p>Only body</p>'));await settled(page)
     assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','none','none'])
     await page.locator('#dialog').evaluate(el=>{const c=document.createElement('button');c.slot='close';c.textContent='Close';el.append(c)})
-    await page.waitForFunction(()=>document.querySelector('#dialog').shadowRoot.querySelector('[part~=body]').part.contains('body-close'))
+    await page.waitForFunction(()=>getComputedStyle(document.querySelector('#dialog').shadowRoot.querySelector('[part=body]')).paddingInlineEnd==='52px')
     assert.equal((await metrics(page))[2].padding,'8px 52px 12px 20px')
     await page.locator('#dialog').evaluate(el=>{const h=document.createElement('h2');h.slot='header';h.textContent='Added title';el.prepend(h)})
     await page.waitForFunction(()=>document.querySelector('#dialog').shadowRoot.querySelector('dialog').getAttribute('aria-label')==='Added title')
     const m=await metrics(page);assert.equal(m[1].padding,'18px 52px 8px 20px');assert.equal(m[2].padding,'8px 20px 12px')
     await page.locator('#dialog > [slot=close]').evaluate(el=>el.remove());await frames(page);assert.equal((await metrics(page))[1].padding,'18px 20px 8px')
+    await page.locator('#dialog > [slot=header]').evaluate(el=>el.slot='footer');await frames(page)
+    assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','flex','none'])
+    await page.locator('#dialog > [slot=footer]').evaluate(el=>el.remove());await frames(page)
+    // Nested slot attributes are not assigned to this Dialog's optional regions.
+    await page.locator('#dialog > p').evaluate(el=>el.innerHTML='<span slot="header">Nested header</span><span slot="footer">Nested footer</span><span slot="close">Nested close</span>');await frames(page)
+    assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','none','none'])
+    assert.equal((await metrics(page))[2].padding,'8px 20px 12px')
+    assert.deepEqual(await page.locator('#dialog').evaluate(el=>[...el.shadowRoot.querySelectorAll('slot')].map(s=>s.getAttribute('part'))),['header','body','footer','close'])
   })
   test(`${name}: body scrolling and top-layer geometry escape clipping ancestors`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page,`<div class="clip">${raw('', '<h2 slot="header">Long dialog</h2><div class="long">Long body</div><button slot="footer">Footer</button>')}</div>`)

@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 16, 2026, including the Dialog refactor.
+Updated October 17, 2026, including the Dialog refactor.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -70,7 +70,8 @@ and verification before moving to the next component.
    scrolling, keyboard navigation, and focus ownership. Verify with Input.
 9. [x] [Dialog](src/elements/a-dialog.ts): existing shadow-native modal and
    four slots retained. Surface, optional regions, backdrop, and transitions
-   use external part rules. JSX owns boxless close/footer groups. Native focus,
+   use external part rules; off-DOM host states follow assigned optional slots.
+   JSX owns boxless close/footer groups. Native focus,
    open/close semantics, and existing parts remain; verification is below.
    - [x] Document the consumer-shadow styling contract in Dialog's TSDoc:
      load external Dialog CSS in that root because document styles cannot reach it.
@@ -105,7 +106,8 @@ merged into main at `aeea7c08`.
 - The owned native dialog retains header, body, footer, and close slots, with
   close last in tab order. Existing slot names, parts, props, imperative methods,
   header-derived accessible name, and cancelable state requests remain.
-  Additive part tokens expose populated optional regions and close clearance.
+  Off-DOM host states handle optional regions and close clearance without extra
+  part tokens or attributes.
   JSX replaces two boxless spans with CSS-only `a-dialog-close` and
   `a-dialog-footer` groups carrying the same native slot attributes. Raw authors
   can keep existing slot composition or use these groups.
@@ -250,6 +252,37 @@ Final review follow-up, October 17, 2026:
   The revised Zones modal also matches its previous Chromium screenshot and
   geometry byte-for-byte. Package build, production site build, lint, scoped
   package documentation, and stale-author checks pass.
+
+Slot-presence simplification, October 17, 2026:
+
+- Replaced the five region-state part tokens with three off-DOM host states:
+  `has-header`, `has-footer`, and `has-close`. Original part attributes remain
+  single-token values. This supersedes the public state-part and token-query
+  migration notes in the earlier follow-ups. Docs and the working clearance
+  example now use host `:state()` selectors before the original region parts.
+- CSS-only `:has(> [slot="…"])` handled insertion/removal, but Firefox 155 left
+  styles stale when an existing child's slot changed from header to footer.
+  A standalone probe reproduced the problem for direct part rules and inherited
+  host variables. `ElementInternals.states` follows native slot assignment
+  without rewriting authored attributes, part names, or light DOM.
+- The fast optional-region regression now covers insertion, removal, slot
+  reassignment, nested nonassigned slot attributes, computed clearance, and
+  unchanged part names. All 29 shared fast Dialog checks and 18 focused source
+  checks pass in Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`
+  (fast checks use Chromium). Six focused checks also pass in Chrome for Testing
+  `135.0.7049.114`. These use actual CSP response headers with
+  `style-src-attr 'none'` and both import modes.
+
+- All 30 focused installed-package checks pass in the three current engines,
+  including React/Preact hydration and layered clearance overrides. The production
+  build and both Chromium/WebKit Dialog preview checks pass. Lint, types, scoped
+  package documentation, and stale-author checks pass.
+- All six original-comparison cases pass, covering 11 variants in both import
+  modes and all three current engines. Geometry and sampled entry/exit animation
+  match the original; all 66 original/current PNG pairs are byte-identical.
+- [Mozilla compatibility data](https://github.com/mdn/browser-compat-data/blob/main/css/selectors/state.json)
+  lists `:state()` from Chrome 125, Firefox 126, and Safari 17.4, within the
+  existing minimum browser range. Exact shipping-browser gaps remain below.
 
 Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 are not covered
 by the current engine runs. Playwright WebKit is engine evidence. Safari 17.4

@@ -165,8 +165,8 @@
     font-weight: 560;
     line-height: 24px;
   }
-  a-dialog::part(header-filled) { display: block; }
-  a-dialog::part(header-close) { padding-inline-end: 52px; }
+  a-dialog:state(has-header)::part(header) { display: block; }
+  a-dialog:state(has-close)::part(header) { padding-inline-end: 52px; }
 
   a-dialog::part(body) {
     display: block;
@@ -176,7 +176,7 @@
     padding: var(--dialog-body-padding, 8px 20px 12px);
   }
   /* Without a header, the body reserves clearance for the close control. */
-  a-dialog::part(body-close) {
+  a-dialog:state(has-close):not(:state(has-header))::part(body) {
     padding-inline-end: 52px;
   }
 
@@ -185,7 +185,7 @@
     flex: 0 0 auto;
     padding: var(--dialog-footer-padding, 8px 20px 18px);
   }
-  a-dialog::part(footer-filled) {
+  a-dialog:state(has-footer)::part(footer) {
     display: flex;
     gap: 8px;
     justify-content: flex-end;
@@ -194,7 +194,7 @@
   }
 
   a-dialog::part(close) { display: none; }
-  a-dialog::part(close-filled) {
+  a-dialog:state(has-close)::part(close) {
     display: block;
     position: absolute;
     inset-block-start: 10px;

@@ -221,9 +221,11 @@ WebKit does not establish Safari 17.4 coverage.
 Run `pnpm test:dialog` for the source CSP matrix or `pnpm test:dialog:package`
 for an isolated installed tarball. The shared fast tier covers both import modes,
 raw modal behavior, controlled state, Escape/cancel and native close, focus return,
-React/Preact SSR/hydration, CSS loading, and document listener cleanup. The slow
-tier adds expanded engines, pointer drags and cancellation, nested focus, scrolling,
-optional regions, consumer overrides, reduced motion, reconnects, mixed builds,
+React/Preact SSR/hydration, CSS loading, document listener cleanup, and optional
+regions following slot assignment through off-DOM states without extra attributes
+or part tokens.
+The slow tier adds expanded engines, pointer drags and cancellation, nested focus,
+scrolling, consumer overrides, reduced motion, reconnects, mixed builds,
 visual comparisons, and installed-package checks.
 
 Header-name regressions include in-place text edits after hydration, replaced

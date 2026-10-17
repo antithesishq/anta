@@ -150,10 +150,12 @@ export class ADialogElement extends HTMLElementBase {
   // it can be torn down (and re-wired when `name` / controlled-ness changes).
   #triggerListener?: (e: Event) => void
   #triggerDocument?: Document
+  #internals: ElementInternals
   #headerObserver?: MutationObserver
 
   constructor() {
     super()
+    this.#internals = this.attachInternals()
     const shadow = this.attachShadow({ mode: 'open' })
 
     this.dialog = this.doc.createElement('dialog')
@@ -378,13 +380,16 @@ export class ADialogElement extends HTMLElementBase {
   }
 
   #syncRegions(header = this.headerSlot.assignedNodes().length > 0) {
-    const footer = this.footerSlot.assignedNodes().length > 0
-    const close = this.closeSlot.assignedNodes().length > 0
-    this.headerSlot.part.toggle('header-filled', header)
-    this.footerSlot.part.toggle('footer-filled', footer)
-    this.closeSlot.part.toggle('close-filled', close)
-    this.headerSlot.part.toggle('header-close', close)
-    this.bodySlot.part.toggle('body-close', close && !header)
+    // Firefox can leave :has([slot=...]) styles stale after slot reassignment.
+    // Native states follow assigned nodes without rewriting attributes or parts.
+    for (const [state, present] of [
+      ['has-header', header],
+      ['has-footer', this.footerSlot.assignedNodes().length > 0],
+      ['has-close', this.closeSlot.assignedNodes().length > 0],
+    ] as const) {
+      if (present) this.#internals.states.add(state)
+      else this.#internals.states.delete(state)
+    }
   }
 
   #syncHeader() {

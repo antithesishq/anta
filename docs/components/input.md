@@ -572,6 +572,10 @@ In button fields, `::part(input)` targets the native button, and
 `::part(input-label)` targets its value or placeholder text. `::part(label)`
 targets the separate visible field label.
 
+Input's field stylesheet also supplies the default Select trigger's boxless
+leading content and status-colored chevron. These field details remain available
+when a granular composition loads Input without Select's separate layout styles.
+
 ```css
 a-input::part(field) { border-radius: 999px; }
 a-input::part(input) { font-variant-numeric: tabular-nums; }

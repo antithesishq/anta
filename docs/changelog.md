@@ -7,6 +7,14 @@ changes are not listed.
 
 ### Fixed
 
+- [Select](/select/#styling) preserves its leading-content layout and validation
+  chevron color in server-rendered HTML under `style-src-attr 'none'`.
+  Its shared stylesheet is named `components/select.css`; the previous
+  `components/select-parts.css` import remains supported.
+
+- [SelectFaceted](/select-faceted/) keeps per-facet search and text drafts working
+  when React defers state updates.
+
 - [Calendar](/calendar/) centers unbounded year menus on the displayed year,
   including dates supplied through `value` and `defaultValue`.
 

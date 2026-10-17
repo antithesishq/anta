@@ -388,7 +388,10 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           placeholder="Filter…"
           aria-label={`Filter ${facet.label}`}
           aria-autocomplete="list"
-          onInput={(e: any) => setQueries((s) => ({ ...s, [facet.key]: e.currentTarget.value }))}
+          onInput={(e: any) => {
+            const query = e.currentTarget.value
+            setQueries((s) => ({ ...s, [facet.key]: query }))
+          }}
         />
       </a-select-header>
     ) : null
@@ -530,7 +533,10 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           value={draft}
           placeholder={facet.placeholder}
           aria-label={facet.label}
-          onInput={(e: any) => setDrafts((d) => ({ ...d, [facet.key]: e.currentTarget.value }))}
+          onInput={(e: any) => {
+            const draft = e.currentTarget.value
+            setDrafts((d) => ({ ...d, [facet.key]: draft }))
+          }}
           onKeyDown={(e: any) => {
             if (e.key === 'Enter') {
               e.preventDefault()

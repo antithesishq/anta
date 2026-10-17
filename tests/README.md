@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputTime, Menu, Progress, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputTime, Menu, Progress, Select, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -229,6 +229,28 @@ computed metrics go to `tests/.test-output/menu`. RTL comparisons explicitly
 record the original opposite-inset overflow and assert the corrected position.
 Playwright WebKit does not establish shipping Safari 17.4 coverage.
 
+## Select
+
+Run `pnpm test:select` for focused option-projection and CSP browser checks, or
+`pnpm test:select:package` for the browser cases through an installed tarball.
+The shared fast tier covers single-pass custom filtering, typed selection and
+bulk changes, worker projections, React/Preact hydration and controlled updates,
+keyboard filtering, and SelectFaceted's independent facet values and searches.
+The slow tier adds full-bundle hydration, nested option navigation, all browser
+engines, and installed-package checks. Existing Input accessibility and Menu
+trigger-replacement tests remain in their respective suites.
+
+The server supplies actual CSP response headers, including
+`style-src-attr 'none'`. Hydration fixtures use explicit option tooltips so their
+server/client text is independent of the existing platform-specific isolate
+hint. Consumer styles, custom color/radius props, and MenuItem's custom-indicator
+layout wrapper retain their separate inline-style constraints.
+For a one-off appearance comparison, set `ANTA_SELECT_COMPARE_REF` to an
+available Git ref. This explicitly compares six trigger variants per import
+mode and browser to that ref, and can fail for intentional appearance changes.
+Regular fast, slow, and manual runs need no historical Select commit. Paired
+screenshots and metrics go to `tests/.test-output/select`. The manual Component
+matrix exposes the same opt-in through `select_compare_ref` and saves its artifacts.
 ## Dialog
 
 Run `pnpm test:dialog` for the source CSP matrix or `pnpm test:dialog:package`

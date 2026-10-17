@@ -138,6 +138,13 @@ Review follow-up:
   Leaving the viewport still dismisses a menu whose trigger was listening.
   Overlapping replacements release the previous trigger listeners, cancel its
   observation work, and request a fresh initial entry for the new owner.
+  Root menus also share direct-child observation of their authored parents.
+  Responsive or selection-driven trigger replacement releases the old anchor,
+  refreshes keyboard/click bindings and popup relationships, and preserves open
+  state. Anchored popovers reposition; coordinate popovers retain their point.
+  The observer is released after the parent's last menu disconnects. Real React
+  and Preact cases cover stable nodes, changed component types, changed keys,
+  and default-field/custom-button switches.
 - Hide tolerates ancestors without the optional hover-hold method and clears
   a nonempty combobox cursor once. Empty descendants do not emit redundant null
   notifications during stack replacement or disconnect. Row guards are shared
@@ -150,11 +157,11 @@ Review follow-up:
 
 Verification:
 
-- All 153 source checks passed in Chrome `155.0.8059.84`, Firefox `155.0`, and
+- All 183 source checks passed in Chrome `155.0.8059.84`, Firefox `155.0`, and
   Playwright WebKit `26.6`, across granular and full-bundle imports. The isolated
-  installed-package suite passed all 147 checks in the same engines. It resolves
+  installed-package suite passed all 177 checks in the same engines. It resolves
   public npm exports without source aliases or workspace links.
-- All 51 installed-package checks passed in Chrome for Testing
+- All 61 installed-package checks passed in Chrome for Testing
   `135.0.7049.114`. One initial assertion sampled an unfinished transition after
   a fixed wall-clock delay under concurrent load; the harness now waits for the
   actual transition. No runtime animation workaround was added.
@@ -174,7 +181,7 @@ Verification:
   Another six comparison cases match the 42 paired exit-opacity/translation
   samples. Screenshots and metrics are in `tests/.test-output/menu`. Capture
   pages are separate from assertions collecting CSP violations.
-- All 108 batched fast checks across Menu, Input, Tooltip, Copy, and Calendar pass.
+- All 116 batched fast checks across Menu, Input, Tooltip, Copy, and Calendar pass.
   All 342 selected root regressions pass with serialized files, Chromium, and
   CI's existing search-debounce exclusion. Dedicated Menu source/package commands,
   shared tiers, CI change gates, and manual visual artifacts are registered.

@@ -77,6 +77,7 @@ interface MenuCoordination {
   stack: AMenuElement[]
   observe(menu: AMenuElement, anchor: HTMLElement): void
   unobserve(menu: AMenuElement, anchor: HTMLElement): void
+  watchParent(parent: Node, refresh: () => void): (() => void) | undefined
   bind(doc: Document, view: Window & typeof globalThis): void
   unbind(): void
   readonly mouseX: number | null
@@ -226,6 +227,29 @@ function createCoordination(doc: Document): MenuCoordination {
     openStack[0]?.requestClose(originEvent)
   }
 
+  // Root menus share a direct-child observer for their sibling triggers.
+  // Submenu anchors are their parents, so reparenting already reconnects them.
+  const parents = new Map<Node, { observer: MutationObserver; refresh: Set<() => void> }>()
+  function watchParent(parent: Node, refresh: () => void) {
+    const Observer = doc.defaultView?.MutationObserver
+    if (!Observer) return
+    let entry = parents.get(parent)
+    if (!entry) {
+      const callbacks = new Set<() => void>()
+      const observer = new Observer(() => { for (const callback of callbacks) callback() })
+      observer.observe(parent, { childList: true })
+      entry = { observer, refresh: callbacks }
+      parents.set(parent, entry)
+    }
+    const { observer, refresh: callbacks } = entry
+    callbacks.add(refresh)
+    return () => {
+      if (!callbacks.delete(refresh) || callbacks.size) return
+      observer.disconnect()
+      parents.delete(parent)
+    }
+  }
+
   const anchorToMenu = new Map<Element, AMenuElement>()
 
   const frames = new Map<Element, number>()
@@ -277,7 +301,7 @@ function createCoordination(doc: Document): MenuCoordination {
     if (!anchorToMenu.size) { observer?.disconnect(); observer = undefined }
   }
   return {
-    stack: openStack, observe, unobserve, bind: bindDocListeners, unbind: unbindDocListeners,
+    stack: openStack, observe, unobserve, watchParent, bind: bindDocListeners, unbind: unbindDocListeners,
     get mouseX() { return mouseX }, mouseInside,
   }
 }
@@ -345,6 +369,8 @@ export class AMenuElement extends HTMLElementBase {
   // layout shifts. Those movements do not all produce a DOM observer callback, so
   // this frame is active only while the menu is visible.
   #anchorTrackingFrame?: number
+  // Preserve anchoring mode while a sibling trigger is temporarily absent.
+  #anchorRelative = false
   #lastAnchorRect?: readonly number[]
   // Vertical-follow baseline captured on each full position(): the frozen
   // horizontal offset and the gap to the anchor's top. Tracking translates to hold
@@ -423,6 +449,7 @@ export class AMenuElement extends HTMLElementBase {
 
   #connectedDocument?: Document
   #observedAnchor?: HTMLElement
+  #unwatchTrigger?: () => void
   #stateFrame?: number
   #positionFrame?: number
   get #coordination(): MenuCoordination { return coordination(this.#connectedDocument ?? this.doc) }
@@ -446,10 +473,9 @@ export class AMenuElement extends HTMLElementBase {
     ensureMenuItemKeyListener(this.doc)
     this.#syncStopPropagation()
     this.#syncAccessibilityRegions()
-    const anchor = this.triggerAnchor
-    if (anchor) {
-      this.#observedAnchor = anchor
-      this.#coordination.observe(this, anchor)
+    this.#syncTriggerAnchor()
+    if (!this.isSubmenu && this.parentNode) {
+      this.#unwatchTrigger = this.#coordination.watchParent(this.parentNode, () => this.#syncTriggerAnchor())
     }
     this.#syncPopupAriaRelations()
     queueMicrotask(() => {
@@ -465,6 +491,8 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    this.#unwatchTrigger?.()
+    this.#unwatchTrigger = undefined
     const oldView = this.#connectedDocument?.defaultView
     if (this.#stateFrame !== undefined) oldView?.cancelAnimationFrame(this.#stateFrame)
     this.#stateFrame = undefined
@@ -479,6 +507,38 @@ export class AMenuElement extends HTMLElementBase {
     if (this.#observedAnchor) this.#coordination.unobserve(this, this.#observedAnchor)
     this.#observedAnchor = undefined
     this.#connectedDocument = undefined
+  }
+
+  /** Rebind only when the authored sibling node changes, after reconciliation.
+   *  Keep open state intact; focus remains with the application replacing it. */
+  #syncTriggerAnchor() {
+    if (!this.isConnected) return
+    const anchor = this.triggerAnchor ?? undefined
+    if (anchor === this.#observedAnchor) return
+    if (this.#observedAnchor) this.#coordination.unobserve(this, this.#observedAnchor)
+    this.teardownListeners()
+    this.listening = false
+    this.cancelOpenTimer()
+    this.cancelCloseTimer()
+    this.#pendingComboActivate = null
+    this.#observedAnchor = anchor
+    if (anchor) this.#coordination.observe(this, anchor)
+
+    if (this._shown) {
+      if (this.#searchField) this.startComboObserver()
+      else {
+        this.comboObserver?.disconnect()
+        this.comboObserver = undefined
+        if (this.activeItem) this.setActive(null)
+      }
+      if (this.#anchorRelative) {
+        if (anchor) {
+          this.position()
+          this.#startAnchorTracking()
+        } else this.#stopAnchorTracking()
+      }
+    }
+    this.#syncPopupAriaRelations()
   }
 
   attributeChangedCallback(name: string) {
@@ -1166,6 +1226,7 @@ export class AMenuElement extends HTMLElementBase {
       }
     }
     this.#stopAnchorTracking()
+    this.#anchorRelative = false
     if (this.surface.isConnected && this._shown) this.surface.hidePopover()
     this._shown = false
     this.#holdHoverClose = false
@@ -1199,7 +1260,8 @@ export class AMenuElement extends HTMLElementBase {
    *  opening point. */
   #startAnchorTracking(coord?: [number, number]) {
     this.#stopAnchorTracking()
-    if (coord || this.#isCoord) return
+    this.#anchorRelative = !coord && !this.#isCoord
+    if (!this.#anchorRelative) return
 
     const anchor = this.triggerAnchor
     if (!anchor) return

@@ -7,6 +7,11 @@ on outside-click, `Escape`, or scroll. Rows are dedicated **`MenuItem`s** (not
 buttons), with optional leading icons, trailing keyboard hints, separators,
 grouped sections, and nested submenus.
 
+The trigger can be replaced while Menu stays mounted, such as when a responsive
+layout switches controls. Keep Menu immediately after the replacement element.
+Menu reconnects its trigger listeners and popup relationships without resetting
+its open state.
+
 Open state is uncontrolled by default — pass **`onStateChange`** (event-first:
 `(event, { next, prev })`, or listen for the raw **`statechange`** event) to
 observe it, or pass **`open`** to control it, applying `detail.next` to `open`

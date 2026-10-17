@@ -139,6 +139,12 @@ changes are not listed.
 
 ### Fixed
 
+- [Menu triggers](/menu/) reconnect when rendering replaces the trigger without
+  remounting the menu, including responsive and selection-driven
+  [Select custom triggers](/select/#custom-trigger). Keyboard interaction and popup
+  relationships follow the replacement, and anchored popovers keep their open
+  state while repositioning.
+
 - [Menu](/menu/) stays within the viewport in RTL layouts. Menus in separate
   documents keep independent open stacks, and closing or removing a menu clears
   pending navigation and positioning work.

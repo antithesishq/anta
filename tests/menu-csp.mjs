@@ -49,6 +49,18 @@ before(async()=>{
       window.hydrateMenu=()=>{configure(React.createElement,React.Fragment,React,{hydratingEvents:true});${react?"root=hydrateRoot(document.querySelector('#mount'),app({open:false,...handlers('first')}),{onRecoverableError:e=>recoverableErrors.push(e.message)})":"hydrate(app({open:false,...handlers('first')}),document.querySelector('#mount'))"}};
       window.renderMenu=(props={},version='second')=>commit(app({...handlers(version),...props}));
       window.noHandlers=()=>commit(app({}));window.unmountMenu=()=>commit(null);
+      const EmptyTrigger=props=>h(Button,{...props,label:'Assign'});
+      const SelectedTrigger=props=>h(Button,{...props,label:'Alice'});
+      window.renderTriggerDemo=(kind,compact=true)=>{
+        configure(React.createElement,React.Fragment,React);
+        const renderTrigger=kind==='responsive'&&!compact?undefined:({selected,open})=>{
+          const props={id:'trigger','data-trigger-case':kind,'aria-haspopup':'menu','aria-expanded':String(open)};
+          if(kind==='types')return h(selected.length?SelectedTrigger:EmptyTrigger,props);
+          return h(Button,{...props,label:selected[0]?.label??'Assign',key:kind==='keyed'?(selected[0]?.value??'empty'):undefined});
+        };
+        commit(h(Select,{key:kind,id:'trigger','data-trigger-case':kind,placeholder:'Assign',options:['Alice'],renderTrigger,onValueChange:v=>reports.push(['chosen',v])}));
+      };
+
       window.compose=kind=>{configure(React.createElement,React.Fragment,React);const common={label:'Choose'};const choices=['Alpha','Beta'];let node;
         if(kind==='autocomplete')node=h(InputAutocomplete,{...common,suggestions:choices,onSelect:o=>reports.push(['chosen',o.value])});
         if(kind==='date')node=h(InputDate,{...common,defaultValue:'2026-10-15',clearable:true});
@@ -191,6 +203,48 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
       for(let i=0;i<10;i++)await page.keyboard.press('ArrowUp')
       const top=await page.locator('#menu').evaluate(el=>{const c=el.scrollEl,r=c.getBoundingClientRect(),item=el.querySelector('a-menu-item:state(active)').getBoundingClientRect();return {gap:item.top-r.top-c.clientTop,height:c.clientHeight,outer:window.scrollY}})
       assert.ok(top.gap>=(variant==='scroll-inset'?8:variant==='scroll-padding'?12:top.height*.05)-1,JSON.stringify(top));assert.equal(top.outer,0)
+    }
+  })
+  test.fast(`${name}: trigger rebinding releases a moved anchor and wires its replacement`,async t=>{
+    const page=await pageFor(t,engine,mode);await mount(page);await register(page,mode)
+    await page.locator('#trigger').evaluate(el=>{const replacement=el.cloneNode(true);el.replaceWith(replacement);el.id='oldTrigger';el.style.position='fixed';el.style.left='500px';el.style.top='40px';document.body.append(el)})
+    await settled(page);await page.locator('#oldTrigger').click();assert.equal(await page.locator('#menu').evaluate(el=>el.isOpen),false)
+    await page.locator('#trigger').focus();await page.keyboard.press('ArrowDown');await shown(page);assert.equal(await page.evaluate(()=>document.activeElement.id),'alpha');await page.keyboard.press('Escape');await shown(page,false)
+    await page.locator('#trigger').click();await shown(page);await page.locator('#alpha').click();await shown(page,false)
+    await page.locator('#menu').evaluate(el=>{el.setAttribute('coord','');el.open({coord:[350,320]})});await settled(page);const before=await metrics(page)
+    await page.locator('#trigger').evaluate(el=>el.replaceWith(el.cloneNode(true)));await settled(page);const after=await metrics(page)
+    assert.equal(after.x,before.x);assert.equal(after.y,before.y);await shown(page)
+  })
+  test.fast(`${name}: trigger rebinding discovers late siblings and preserves open geometry and Input relations`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page,`<a-menu id="menu" role="listbox" state="open">${row('alpha','Alpha','','option')}${row('beta','Beta','','option')}</a-menu>`);await shown(page)
+    await page.locator('#menu').evaluate(el=>el.insertAdjacentHTML('beforebegin','<a-input id="trigger" data-menu-search role="combobox"></a-input>'));await page.waitForFunction(()=>menu.listening);await settled(page)
+    await page.locator('#trigger').evaluate(el=>el.focus());await page.keyboard.press('ArrowDown');assert.equal(await page.locator('#alpha').evaluate(el=>el.active),true)
+    await page.locator('#trigger').evaluate(el=>{window.originalField=el;const next=el.cloneNode(true);el.replaceWith(next);document.querySelector('#mount').style.left='240px'})
+    await page.waitForFunction(()=>menu.listening&&document.querySelector('#trigger').shadowRoot.querySelector('input').ariaActiveDescendantElement===document.querySelector('#alpha'));await settled(page)
+    assert.equal(await page.evaluate(()=>originalField.shadowRoot.querySelector('input').ariaActiveDescendantElement),null)
+    assert.equal(await page.locator('#menu').evaluate(el=>el.isOpen),true);assert.ok(Math.abs((await metrics(page)).x-240)<=1)
+    await page.locator('#trigger').evaluate(el=>el.focus());await page.keyboard.press('ArrowDown');assert.equal(await page.locator('#beta').evaluate(el=>el.active),true)
+    await page.locator('#trigger').evaluate(el=>el.remove());await settled(page);await page.locator('#menu').evaluate(el=>el.insertAdjacentHTML('beforebegin','<button id="trigger">New trigger</button>'));await page.waitForFunction(()=>menu.listening);await settled(page)
+    assert.equal(await page.locator('#beta').evaluate(el=>el.active),false);assert.equal(await page.locator('#menu').evaluate(el=>el.isOpen),true)
+  })
+  test.fast(`${name}: trigger rebinding shares parent observation and releases it after the last menu`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.evaluate(()=>{window.parentWatches=0;window.parentWatchStarts=0;const Observer=MutationObserver;window.MutationObserver=class extends Observer{observingParent=false;observe(target,options){if(target===document.querySelector('#mount')&&options.childList&&!options.subtree&&!this.observingParent){this.observingParent=true;parentWatches++;parentWatchStarts++}super.observe(target,options)}disconnect(){if(this.observingParent){this.observingParent=false;parentWatches--}super.disconnect()}}})
+    await mount(page,raw()+`<button id="secondTrigger">Second</button><a-menu id="secondMenu">${row('secondItem')}</a-menu>`);await page.waitForFunction(()=>menu.listening&&secondMenu.listening)
+    assert.equal(await page.evaluate(()=>parentWatches),1);assert.equal(await page.evaluate(()=>parentWatchStarts),1)
+    await page.locator('#menu').evaluate(el=>el.remove());await settled(page);assert.equal(await page.evaluate(()=>parentWatches),1)
+    await page.locator('#secondMenu').evaluate(el=>el.remove());await settled(page);assert.equal(await page.evaluate(()=>parentWatches),0);assert.equal(await page.evaluate(()=>framesPending.size),0)
+  })
+  for(const framework of ['React','Preact'])test(`${name}: ${framework} trigger rebinding survives selection and responsive rendering`,{tier:mode==='granular'?'fast':'slow'},async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode);await page.evaluate(framework=>import(`/${framework}.js`),framework)
+    for(const kind of ['stable','types','keyed','responsive']){
+      await page.evaluate(kind=>{window.reports=[];renderTriggerDemo(kind,kind!=='responsive')},kind);await page.waitForFunction(kind=>document.querySelector('#trigger')?.getAttribute('data-trigger-case')===kind&&document.querySelector('a-menu')?.listening,kind)
+      await page.evaluate(()=>{window.originalMenu=document.querySelector('a-menu');window.originalTrigger=document.querySelector('#trigger')})
+      await page.locator('#trigger').click();await page.waitForFunction(()=>document.querySelector('a-menu').isOpen);await page.locator('a-menu-item').filter({hasText:'Alice'}).click();await page.waitForFunction(()=>reports.some(r=>r[0]==='chosen')&&!document.querySelector('a-menu').isOpen)
+      if(kind==='responsive'){await page.evaluate(()=>renderTriggerDemo('responsive',true));await page.waitForFunction(()=>document.querySelector('#trigger')?.localName==='a-button')}
+      await settled(page);assert.equal(await page.evaluate(()=>document.querySelector('a-menu')===originalMenu),true)
+      assert.equal(await page.evaluate(()=>document.querySelector('#trigger')===originalTrigger),kind==='stable')
+      await page.locator('#trigger').click();await page.waitForFunction(()=>document.querySelector('a-menu').isOpen);await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('a-menu').isOpen)
     }
   })
   test.fast(`${name}: controlled updates and cancelable requests never apply optimistically`,async t=>{

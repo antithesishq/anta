@@ -166,11 +166,9 @@ export const Calendar = ({
     if (focusSignal !== undefined) setFocusReq({ iso: cursorIso, n: focusSignal })
   }
 
-  // Years for the heading menu — spanning min..max, defaulting to today ±3 years
-  // when unbounded (a short list that fits without scrolling; a bound `min`/`max`
-  // widens or narrows it). Each year is a submenu of its twelve months.
-  const minYear = minD ? minD.year : today.year - 3
-  const maxYear = maxD ? maxD.year : today.year + 3
+  // Unbounded sides follow the displayed year; explicit bounds define the range.
+  const minYear = minD ? minD.year : Math.min(effectiveCursor.year - 3, maxD?.year ?? Infinity)
+  const maxYear = maxD ? maxD.year : Math.max(effectiveCursor.year + 3, minD?.year ?? -Infinity)
   const years: number[] = []
   for (let y = minYear; y <= maxYear; y++) years.push(y)
 
@@ -214,7 +212,7 @@ export const Calendar = ({
     // dot, matching the active-year marker) and disables months outside `min`…`max`.
     const monthItem = (y: number, i: number) => {
       const m = i + 1
-      const isCurrent = y === cursor.year && m === cursor.month
+      const isCurrent = y === effectiveCursor.year && m === effectiveCursor.month
       return (
         <MenuItem
           key={`${y}-${m}`}
@@ -234,13 +232,13 @@ export const Calendar = ({
     return years.length === 1
       ? monthNames.map((_, i) => monthItem(years[0], i))
       : years.map((y) => (
-          <MenuItem key={y} submenu label={String(y)} selected={y === cursor.year}>
-            {y === cursor.year && <span className="jump-dot" aria-hidden="true" />}
+          <MenuItem key={y} submenu label={String(y)} selected={y === effectiveCursor.year}>
+            {y === effectiveCursor.year && <span className="jump-dot" aria-hidden="true" />}
             <Menu>{monthNames.map((_, i) => monthItem(y, i))}</Menu>
           </MenuItem>
         ))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monthNames, cursor.year, cursor.month, minYear, maxYear, min, max, disabled])
+  }, [monthNames, effectiveCursor.year, effectiveCursor.month, minYear, maxYear, min, max, disabled])
 
   // The `<a-calendar>` element is the interaction authority: it dispatches
   // `statechange` (picks + reset/restore) and `change`. We forward both to the

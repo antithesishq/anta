@@ -193,8 +193,7 @@
     flex-wrap: wrap;
   }
 
-  a-dialog::part(close) { display: none; }
-  a-dialog:state(has-close)::part(close) {
+  a-dialog::part(close) {
     display: block;
     position: absolute;
     inset-block-start: 10px;

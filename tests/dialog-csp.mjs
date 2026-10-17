@@ -359,7 +359,8 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
   })
   test.fast(`${name}: optional regions and close clearance update without changing authored nodes`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page,raw('default-state="open"','<p>Only body</p>'));await settled(page)
-    assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','none','none'])
+    assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','none','block'])
+    const emptyClose=(await metrics(page)).at(-1);assert.deepEqual([emptyClose.width,emptyClose.height],[0,0])
     await page.locator('#dialog').evaluate(el=>{const c=document.createElement('button');c.slot='close';c.textContent='Close';el.append(c)})
     await page.waitForFunction(()=>getComputedStyle(document.querySelector('#dialog').shadowRoot.querySelector('[part=body]')).paddingInlineEnd==='52px')
     assert.equal((await metrics(page))[2].padding,'8px 52px 12px 20px')
@@ -368,11 +369,11 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     const m=await metrics(page);assert.equal(m[1].padding,'18px 52px 8px 20px');assert.equal(m[2].padding,'8px 20px 12px')
     await page.locator('#dialog > [slot=close]').evaluate(el=>el.remove());await frames(page);assert.equal((await metrics(page))[1].padding,'18px 20px 8px')
     await page.locator('#dialog > [slot=header]').evaluate(el=>el.slot='footer');await frames(page)
-    assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','flex','none'])
+    assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','flex','block'])
     await page.locator('#dialog > [slot=footer]').evaluate(el=>el.remove());await frames(page)
     // Nested slot attributes are not assigned to this Dialog's optional regions.
     await page.locator('#dialog > p').evaluate(el=>el.innerHTML='<span slot="header">Nested header</span><span slot="footer">Nested footer</span><span slot="close">Nested close</span>');await frames(page)
-    assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','none','none'])
+    assert.deepEqual((await metrics(page)).map(m=>m.display),['flex','none','block','none','block'])
     assert.equal((await metrics(page))[2].padding,'8px 20px 12px')
     assert.deepEqual(await page.locator('#dialog').evaluate(el=>[...el.shadowRoot.querySelectorAll('slot')].map(s=>s.getAttribute('part'))),['header','body','footer','close'])
   })

@@ -284,6 +284,15 @@ Slot-presence simplification, October 17, 2026:
   lists `:state()` from Chrome 125, Firefox 126, and Safari 17.4, within the
   existing minimum browser range. Exact shipping-browser gaps remain below.
 
+Close-slot simplification, October 17, 2026:
+
+- The close slot always uses its original `::part(close)` positioning rule.
+  An empty absolutely positioned slot is zero-sized and adds no layout space;
+  it does not need conditional display. `has-close` currently controls only
+  content clearance. All six optional-region cases pass in Chrome
+  `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`, in both import modes.
+  All 29 shared fast Dialog checks and package lint pass.
+
 Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 are not covered
 by the current engine runs. Playwright WebKit is engine evidence. Safari 17.4
 lacks `@starting-style`; discrete display and overlay transitions vary by engine.

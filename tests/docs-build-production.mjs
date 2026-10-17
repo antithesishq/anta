@@ -221,6 +221,21 @@ for (const engine of engines) {
     await input.fill('')
     await input.blur()
     await chip.waitFor({ state: 'detached' })
+    await page.locator('summary').filter({hasText:'Styling'}).click()
+    const styledTrigger = page.locator('.roomy-text-filter')
+    await styledTrigger.scrollIntoViewIfNeeded()
+    await styledTrigger.locator('xpath=ancestor::details[1]').evaluate(el => Promise.all(
+      el.getAnimations({subtree:true}).map(animation => animation.finished.catch(() => {})),
+    ))
+    await page.waitForFunction(el => el.nextElementSibling?.listening, await styledTrigger.elementHandle())
+    await styledTrigger.click()
+    const styledMenu = styledTrigger.locator('xpath=following-sibling::a-menu[1]')
+    await styledMenu.getByRole('menuitem',{name:/^Title contains/}).click()
+    const editor = styledMenu.locator('a-select-faceted-text')
+    await editor.locator('input').fill('Styled draft')
+    assert.equal(await editor.evaluate(el => getComputedStyle(el).padding),'8px')
+    assert.equal(await editor.getAttribute('style'),null)
+    assert.ok((await page.locator('#styling').locator('xpath=ancestor::details[1]').textContent()).includes('padding: 8px'))
     assert.deepEqual(errors, [])
   })
 

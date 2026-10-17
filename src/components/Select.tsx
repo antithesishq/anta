@@ -51,7 +51,8 @@ export interface SelectOption<V extends OptionValue = string> extends OptionPres
   /** Tooltip for this option's row — a string or any node. In a `multiple`
    *  select with `selectAll`, a row with no `tooltip` falls back to a default
    *  hint for the Alt/Option-click "select only this" accelerator; set `tooltip`
-   *  to override that, or `''` to suppress it. */
+   *  to override that, or `''` to suppress it. The default shortcut hint appears
+   *  after 700 ms of hovering over a row; moving to another row restarts the delay. */
   tooltip?: React.ReactNode
   /** Additional application data. Read it in `renderOption`. */
   [key: string]: unknown
@@ -234,10 +235,14 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  option's own `toneScope` wins.
    *  @defaultValue 'all' */
   toneScope?: ToneScope
-  /** Add a search field at the top of the menu that filters the options as you
-   *  type. `true` uses the built-in matcher — a case-insensitive substring of the
-   *  option's **value / label / hint**. Pass a **function** `(option, query) =>
-   *  boolean` for custom matching (called per option; return `true` to keep it). */
+  /** Add a search field that filters option values, labels, and hints.
+   *  `true` uses case-insensitive substring matching. A space in the trimmed
+   *  query matches a run of whitespace. Built-in row text highlights matches.
+   *  A custom `(option, query) => boolean` receives the trimmed query and returns
+   *  whether to keep the option, without automatic highlighting. It runs once
+   *  per option on each render, including for an empty query. Rows, empty content,
+   *  and filtered Select all use the same results. A query flattens groups and
+   *  submenus into grouped results. Closing the popup resets the query. */
   filter?: boolean | ((option: SelectOption<V>, query: string) => boolean)
   /** `multiple` only: shows a "Select all" row that toggles every enabled option,
    *  or only the visible options when a filter query is active. Its checkbox is
@@ -325,9 +330,11 @@ export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
         value?: V
         /** Initial selected option value for uncontrolled use. */
         defaultValue?: V
-        /** Fires after the selection changes, with the new value and a
-         *  `{ value, option }` snapshot. Select has no discrete element state, so
-         *  there is no cancelable `onStateChange` (see the Input event-model note). */
+        /** Reports the new value and a `{ value, option }` snapshot after a pick.
+         *  Clear reports `undefined` with `{ all: true, selected: false }`.
+         *  Narrow on `'all' in attrs` before reading `option`.
+         *  Update `value` to accept a controlled change. There is no cancelable
+         *  `onStateChange`; see the Input event-model note. */
         onValueChange?: (value: V, attrs: SelectChangeAttrs<V>) => void
       }
     | {
@@ -339,9 +346,10 @@ export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
         value?: V[]
         /** Initial values (option `value`s) for the uncontrolled case. */
         defaultValue?: V[]
-        /** Fires after any toggle, with the new value array and a `{ value, option,
-         *  selected }` snapshot of the row that changed (or `{ all: true }` for the
-         *  Select-all row). */
+        /** Reports the new value array and a `{ value, option, selected }` snapshot
+         *  after a row toggle. Select all and Clear report `{ all: true, selected }`
+         *  without a single option. Narrow on `'all' in attrs` before reading `option`.
+         *  Update `value` to accept a controlled change. */
         onValueChange?: (value: V[], attrs: SelectChangeAttrs<V>) => void
       }
   )

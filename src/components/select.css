@@ -83,6 +83,11 @@
     transform: rotate(180deg);
   }
 
+  a-select-faceted-text {
+    display: block;
+    padding: 4px;
+  }
+
   a-select-faceted-summary {
     display: block;
     max-width: 160px;

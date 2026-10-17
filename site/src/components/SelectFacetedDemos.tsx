@@ -2,6 +2,16 @@ import { useEffect, useState } from 'preact/hooks'
 import { SelectFaceted, Select, Input, Button, InputDate, Calendar, MenuItem, Tag } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
+export function SelectFacetedStylingDemo() {
+  useElements()
+  return (
+    <SelectFaceted
+      className="roomy-text-filter"
+      facets={[{ key: 'title', label: 'Title contains', kind: 'text' }]}
+    />
+  )
+}
+
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
 function useElements() {
   useEffect(() => {

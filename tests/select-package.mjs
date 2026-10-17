@@ -39,7 +39,7 @@ try {
   await run('npm', ['install', '--no-audit', '--no-fund'], workspace)
   const requireConsumer = createRequire(join(workspace, 'package.json'))
   for (const specifier of ['@antadesign/anta', '@antadesign/anta/jsx-runtime', '@antadesign/anta/bundle', '@antadesign/anta/bundle.css',
-    '@antadesign/anta/elements', '@antadesign/anta/elements/a-select', '@antadesign/anta/components/select.css', '@antadesign/anta/components/select-parts.css',
+    '@antadesign/anta/elements', '@antadesign/anta/elements/a-select', '@antadesign/anta/elements/a-select-faceted', '@antadesign/anta/components/select.css', '@antadesign/anta/components/select-parts.css',
     '@antadesign/anta/elements/a-button', '@antadesign/anta/elements/a-icon', '@antadesign/anta/elements/a-input']) {
     assert.ok(requireConsumer.resolve(specifier).startsWith(join(workspace, 'node_modules/@antadesign/anta/')), specifier)
   }

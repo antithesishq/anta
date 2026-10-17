@@ -48,6 +48,7 @@ jobs:
         run: |
           if [ -z "$TEST_BASE_SHA" ]; then
             echo 'dialog=true' >> "$GITHUB_OUTPUT"
+            echo 'menu=true' >> "$GITHUB_OUTPUT"
             echo 'copy=true' >> "$GITHUB_OUTPUT"
             echo 'calendar=true' >> "$GITHUB_OUTPUT"
             echo 'card=true' >> "$GITHUB_OUTPUT"
@@ -74,6 +75,20 @@ jobs:
             echo 'dialog=true' >> "$GITHUB_OUTPUT"
           else
             echo 'dialog=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' 'src/elements/a-copy.*' \
+            src/elements/{index,focus,key-activation,shadow-aria,copy-behavior}.ts \
+            src/components/{Menu,MenuItem,MenuItemCopy,Input,InputAutocomplete,InputDate,InputTime,Select,SelectFaceted,Breadcrumbs,Button,Tooltip}.tsx src/components/copy-props.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/menu-*' tests/native-event-props.test.mjs tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'menu=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'menu=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-copy.*' 'src/elements/a-button.*' 'src/elements/a-menu*' 'src/elements/a-icon*' \

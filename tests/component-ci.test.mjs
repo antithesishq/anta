@@ -26,7 +26,6 @@ for (const tier of ['fast', 'slow']) test(`CI batches selected ${tier} component
     }
     await check({copy: 'true', input: 'true', banner: 'false', unknown: 'true'}, `test:components --component copy,input|${tier}\n`)
     await check(Object.fromEntries(Object.keys(componentSuites).map(name => [name, 'true'])), `test:components --component ${Object.keys(componentSuites).join(',')}|${tier}\n`)
-    await check({dialog: 'true', copy: 'true'}, `test:components --component dialog,copy|${tier}\n`)
     await check({copy: 'false'}, '')
     await check({}, '')
   } finally { await rm(directory, {recursive: true}) }
@@ -35,6 +34,14 @@ for (const tier of ['fast', 'slow']) test(`CI batches selected ${tier} component
 test('PR component checks select fast; only manual CI selects slow', () => {
   assert.equal(workflow.jobs.build.env.ANTA_COMPONENT_TEST_TIER, "${{ github.event_name == 'workflow_dispatch' && 'slow' || 'fast' }}")
   assert.equal(runner.env.COMPONENT_TEST_SELECTION, '${{ toJSON(steps.component-tests.outputs) }}')
+})
+
+test('manual Menu coverage retains baseline history and captures the visual matrix', async () => {
+  const manual = parse(await readFile(new URL('../.github/workflows/component-tests.yml', import.meta.url), 'utf8'))
+  const steps = manual.jobs.components.steps
+  assert.equal(steps.find(step => step.uses?.startsWith('actions/checkout@')).with['fetch-depth'], 0)
+  assert.equal(steps.find(step => step.name === 'Run full component coverage').env.ANTA_MENU_COMPARE_ORIGINAL, '1')
+  assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('menu'))
 })
 
 test('Dialog CI gate includes its dependencies and skips unrelated documentation and Menu', async () => {

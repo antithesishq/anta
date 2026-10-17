@@ -5,6 +5,11 @@ changes are not listed.
 
 ## Unreleased
 
+### Fixed
+
+- [Calendar](/calendar/) centers unbounded year menus on the displayed year,
+  including dates supplied through `value` and `defaultValue`.
+
 ### Breaking
 
 - [Dialog styling](/dialog/#styling) follows Anta's cascade layers. Move part
@@ -78,6 +83,12 @@ changes are not listed.
   release their listeners on removal and document adoption. Off-DOM CSS states
   expose populated optional regions without changing their part names.
 
+- [Menu](/menu/#styling) default styles load from external CSS under strict CSP.
+  Existing popover structure, slots, parts, and interactions remain supported;
+  header and footer slots now expose styling parts. Move normal part overrides
+  from the `base` layer to unlayered CSS or a later layer such as `components`;
+  Menu defaults now participate in the document's `anta.components` layer.
+
 - [Copy feedback](/button/#copy-feedback) loads its default styles from external
   CSS under strict CSP while preserving existing copy inputs and compositions.
   Copying remains available while its stylesheet loads.
@@ -137,13 +148,18 @@ changes are not listed.
 
 ### Fixed
 
-- [Dialog](/dialog/#styling) keeps its native visible appearance when open-state
-  part selectors are unsupported, including non-modal opening of its inner
-  native dialog. Backdrop fades also require selector support,
-  preserving static overlay styling otherwise.
-
 - [Dialog](/dialog/) updates its accessible name when header text changes in
   place, including React and Preact updates after hydration.
+
+- [Menu triggers](/menu/) reconnect when rendering replaces the trigger without
+  remounting the menu, including responsive and selection-driven
+  [Select custom triggers](/select/#custom-trigger). Keyboard interaction and popup
+  relationships follow the replacement, and anchored popovers keep their open
+  state while repositioning.
+
+- [Menu](/menu/) stays within the viewport in RTL layouts. Menus in separate
+  documents keep independent open stacks, and closing or removing a menu clears
+  pending navigation and positioning work.
 
 - [InputTime touch editing](/input-time/#the-field) waits for a completed tap
   before focusing field padding. Canceled gestures no longer affect later

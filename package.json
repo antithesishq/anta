@@ -72,6 +72,8 @@
     "test": "node --test tests/*.test.mjs",
     "test:dialog": "node --test tests/dialog-csp.mjs",
     "test:dialog:package": "node tests/dialog-package.mjs",
+    "test:menu": "node --test tests/menu-csp.mjs",
+    "test:menu:package": "node tests/menu-package.mjs",
     "test:copy": "node --test tests/copy-csp.mjs",
     "test:copy:package": "node tests/copy-package.mjs",
     "test:components": "node tests/components.mjs",

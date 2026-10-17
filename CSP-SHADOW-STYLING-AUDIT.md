@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 17, 2026, including the Dialog refactor.
+Updated October 17, 2026, including Dialog and the merged Menu refactor.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -66,8 +66,9 @@ and verification before moving to the next component.
    contracts remain. JSX owns CSS-only slot groups; readonly and cancelable clear
    actions follow Input. Source, installed-package, minimum Chrome, original
    layout, and production checks pass; coverage limits are below.
-8. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
-   scrolling, keyboard navigation, and focus ownership. Verify with Input.
+8. [x] [Menu](src/elements/a-menu.ts): existing popover surface, header/footer,
+   scrolling, keyboard navigation, and focus ownership retained with external
+   defaults. Input coordination and compositions verified; see Menu verification.
 9. [x] [Dialog](src/elements/a-dialog.ts): existing shadow-native modal and
    four slots retained. Surface, optional regions, backdrop, and transitions
    use external part rules; off-DOM host states follow header/footer assignment,
@@ -85,12 +86,11 @@ and verification before moving to the next component.
 
 After their underlying elements are migrated, verify these compositions:
 
-- [ ] ButtonCopy and MenuItemCopy: Copy feedback verified; Menu retains its
-  existing blocked shadow stylesheet under strict CSP.
-- [ ] Breadcrumbs: collapsed Menu and Copy feedback.
+- [x] ButtonCopy and MenuItemCopy: Copy feedback and Menu.
+- [x] Breadcrumbs: collapsed Menu and Copy feedback.
 - [x] Steps: Tooltip hints, including clipped labels and hints.
-- [ ] InputDate and InputAutocomplete: Input and Menu.
-- [ ] Select and SelectFaceted: Input, Menu, and optional Tooltip.
+- [x] InputDate and InputAutocomplete: Input and Menu.
+- [x] Select and SelectFaceted: Input, Menu, and optional Tooltip.
 
 For each migration, verify appearance before JavaScript initializes,
 SSR/hydration, keyboard and pointer interaction, accessible names, nested
@@ -325,6 +325,119 @@ Motion remains progressive: engines without `:open` use static surfaces, without
 raising the browser baseline or promising identical exit animation in every
 engine. React 18, physical
 mobile keyboards, and assistive-technology interaction were not manually tested.
+
+### Menu verification
+
+Implemented October 16, 2026 on `codex/menu-external-css`, based on main at
+`aeea7c08`. Input #236, Tooltip #235, Toast/Toaster #239, InputTime #238, and
+Copy #240 are already merged in that baseline.
+
+- The existing manual popover, header/footer slots, scrolling body, and default
+  content slot remain. `menu` and `scroll` parts retain their names; `header`
+  and `footer` parts are additive. Default layout, chrome, masks, and transitions
+  live in `a-menu.css`. No shadow sheet is injected or adopted. JSX/raw authors
+  retain their host attributes, light DOM, names, and roles.
+- JS retains anchor measurement, placement and flipping, available-height limits,
+  tracking, focus, selection, and combobox coordination. Private measured-height
+  and fade properties have fallback values at their CSS use sites; default part
+  rules leave the runtime transform unset. Computed values are asserted under
+  CSP. Active-option scrolling touches only the owned scroll body.
+- Menu keeps its 100ms entry, 140ms exit, and width transitions, including the
+  existing reduced-motion policy. There are no named-keyframe lookups, duplicate
+  fallback effects, animation discovery, activation-time animation probes, or JS
+  completion gates. Missing/delayed CSS, interrupted closing/reopening, and
+  intermediate opacity are checked. Toast and Copy's minimum-Chrome keyframe
+  findings informed this choice; Menu needs no new Web Animation.
+- A document-owned symbol registry holds the open stack, pointer coordinates,
+  lazy observation, and delegated listeners. Teardown releases listeners and
+  observation and cancels pending positioning/observation frames. Every hide
+  path clears combobox cursors, observers, pending activation, and typeahead,
+  including forced stack replacement. Adoption clears the old document's work;
+  independent documents keep independent open menus. Row recognition works
+  across realms and independently compiled entries without redesigning MenuItem.
+- Menu callbacks use `useNativeEventProps` without wrapper DOM refs. Direct and
+  worker subscriptions remain immediate; browser hydration opts into the shared
+  helper. React and Preact generate their own SSR output, retain authored nodes,
+  and refresh callbacks through controlled updates.
+- The original RTL popover retained its opposite inset, rendering an x=100
+  anchor's menu at x=740 in an 800px viewport. External defaults clear the
+  unused right/bottom insets. All 12 placement options, coordinate menus,
+  viewport-edge flips, and vertical anchor following pass in both directions.
+  Placement names and keyboard semantics are unchanged.
+
+Review follow-up:
+
+- Initial offscreen observation preserves programmatic and controlled opens.
+  Leaving the viewport still dismisses a menu whose trigger was listening.
+  Overlapping replacements release the previous trigger listeners, cancel its
+  observation work, and request a fresh initial entry for the new owner.
+  Root menus also share direct-child observation of their authored parents.
+  Responsive or selection-driven trigger replacement releases the old anchor,
+  refreshes keyboard/click bindings and popup relationships, and preserves open
+  state. Anchored popovers reposition; coordinate popovers retain their point.
+  The observer is released after the parent's last menu disconnects. Real React
+  and Preact cases cover stable nodes, changed component types, changed keys,
+  and default-field/custom-button switches.
+- Hide tolerates ancestors without the optional hover-hold method and clears
+  a nonempty combobox cursor once. Empty descendants do not emit redundant null
+  notifications during stack replacement or disconnect. Row guards are shared
+  with MenuItem, and stack operations cache the document-owned stack locally.
+- Active rows respect the owned scrollport's computed padding, including
+  asymmetric lengths and percentages, without scrolling outer ancestors.
+- Structural region defaults use zero specificity. Normal part overrides in
+  `base` now lose to document-level `anta.components` defaults; the changelog and
+  Menu styling docs explain migration to unlayered CSS or a later layer.
+
+Verification:
+
+- All 183 source checks passed in Chrome `155.0.8059.84`, Firefox `155.0`, and
+  Playwright WebKit `26.6`, across granular and full-bundle imports. The isolated
+  installed-package suite passed all 177 checks in the same engines. It resolves
+  public npm exports without source aliases or workspace links.
+- All 61 installed-package checks passed in Chrome for Testing
+  `135.0.7049.114`. One initial assertion sampled an unfinished transition after
+  a fixed wall-clock delay under concurrent load; the harness now waits for the
+  actual transition. No runtime animation workaround was added.
+- Real HTTP response headers include `style-src-attr 'none'`. Standalone and
+  default composed cases report no CSP violations. Coverage includes raw HTML,
+  controlled acceptance/rejection, cancelation, pointer/touch/keyboard input,
+  typeahead, disabled-item navigation, nested menus, native descendants, focus,
+  Input active-option relationships, pinned scrolling regions, native dialogs,
+  clipping escape, overrides, lifecycle, and both independent import orders.
+  Chromium touch uses trusted input; other engines use pointer-event probes.
+- InputAutocomplete, InputDate, Select, SelectFaceted, Breadcrumbs, and
+  MenuItemCopy pass focused React/Preact checks in all three engines. Existing
+  InputTime/InputDate and Copy/MenuItemCopy checks pass all 12 selected cases
+  with Menu's former CSP exception removed. Copy retains feedback ownership.
+- All 42 original/current variant pairs match geometry, typography, appearance,
+  and transition declarations, except the explicit RTL position correction.
+  Another six comparison cases match the 42 paired exit-opacity/translation
+  samples. Screenshots and metrics are in `tests/.test-output/menu`. Capture
+  pages are separate from assertions collecting CSP violations.
+- All 116 batched fast checks across Menu, Input, Tooltip, Copy, and Calendar pass.
+  All 342 selected root regressions pass with serialized files, Chromium, and
+  CI's existing search-debounce exclusion. Dedicated Menu source/package commands,
+  shared tiers, CI change gates, and manual visual artifacts are registered.
+- Lint, Anta/sticker/Plot type checks, site CSS lint, documentation-author checks,
+  and tier/CI checks pass. The Node `24.15.0` production build and all
+  18 production checks pass, including the first dropdown, pinned regions, and
+  raw Menu example in Chromium and WebKit.
+- A final independently compiled adoption regression reproduced a private-field
+  receiver error while closing a popup inside another build's submenu. Hover
+  holds now run through the ancestor's own method. All 24 selected lifecycle,
+  hover, mixed-build, and adoption checks pass across the three current engines;
+  the final full matrices and minimum Chrome include the new case.
+- Production inspection found Astro consuming the pinned demo's literal `slot`
+  attributes as component slots and serializing `header`/`footer` object props.
+  A static JSX demo now retains those authored regions inside the same regular
+  Preview and matching folded code. The first preview is unchanged.
+
+Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not run.
+Playwright WebKit is engine evidence, not shipping Safari coverage. Older-browser
+entry/exit transitions remain progressive; no browser baseline increase is
+introduced. Application-generated inline style attributes, including custom
+inset/radius values, remain a separate CSP constraint. Manual assistive-technology,
+OS IME, and physical mobile-device testing were not performed.
 
 ### Copy verification
 
@@ -733,7 +846,7 @@ Verified October 14, 2026:
   85 selected checks. PR CI selects Tooltip core regressions; expanded browser,
   visual, and installed-package matrices stay in the slow tier.
 
-All 39 installed-package checks passed in Chrome for Testing `135.0.7049.114`.
+All 51 installed-package checks passed in Chrome for Testing `135.0.7049.114`.
 Exact Edge `135`, Firefox `136`, and Safari/iOS Safari `17.4` were not executed.
 Current Playwright WebKit provides engine evidence, not a shipping Safari run.
 Safari 17.4 lacks `@starting-style`; display/overlay transition support also
@@ -789,7 +902,7 @@ Verified October 14, 2026 on `codex/input-external-css`:
   expects native number buttons in Chrome 135 and still checks keyboard stepping,
   value handling, and the remaining native control behavior. No shadow fallback
   is included, and this decision does not change the package's browser baseline.
-  All 39 installed-package checks pass with that explicit expectation, and both
+  All 51 installed-package checks pass with that explicit expectation, and both
   original/current native-control comparisons pass in Chrome 135.
 - Native-decoration comparisons confirm Firefox's number spinner was present in
   the original and remains present. Current Chrome and WebKit suppress it.

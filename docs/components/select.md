@@ -542,6 +542,10 @@ the trigger. It logs a console warning when that happens. Add
 `aria-haspopup={filter ? 'dialog' : 'menu'}` and
 `aria-expanded={state.open}` to the element.
 
+The trigger can render a different element as selection or layout changes. You can
+also switch between the default field and a custom trigger. The mounted menu
+reconnects to the replacement element.
+
 `state` includes `open`, `value`, `selected`, `disabled`, and `icon`. `selected`
 is the resolved option list, so `selected.length` is the multi-select count. The
 default field props, including `label`, `size`, and `status`, do not apply to a

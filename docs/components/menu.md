@@ -7,6 +7,11 @@ on outside-click, `Escape`, or scroll. Rows are dedicated **`MenuItem`s** (not
 buttons), with optional leading icons, trailing keyboard hints, separators,
 grouped sections, and nested submenus.
 
+The trigger can be replaced while Menu stays mounted, such as when a responsive
+layout switches controls. Keep Menu immediately after the replacement element.
+Menu reconnects its trigger listeners and popup relationships without resetting
+its open state.
+
 Open state is uncontrolled by default — pass **`onStateChange`** (event-first:
 `(event, { next, prev })`, or listen for the raw **`statechange`** event) to
 observe it, or pass **`open`** to control it, applying `detail.next` to `open`
@@ -213,7 +218,7 @@ footer stays the menu's divider.
 <Button>Filter</Button>
 <Menu inset={8}>
   <a-menu-header slot="header" data-menu-open>
-    <Input size="small" placeholder="Filter…" />
+    <Input size="small" placeholder="Filter…" aria-label="Filter items" />
   </a-menu-header>
   <MenuItem label="Design" />
   <MenuItem label="Engineering" />
@@ -527,6 +532,12 @@ Put a focusable trigger immediately before `<a-menu>` and omit `state` for an
 uncontrolled menu. Its light-DOM `<a-menu-item>` rows need their own `tabindex`
 values.
 
+Default styles load from external `a-menu.css`, included by the element entry or
+full stylesheet. No shadow stylesheet is injected. Menu owns its popover,
+positioning, scrolling, and applied state; authored children and attributes stay
+with the application. For browser SSR hydration, enable `hydratingEvents` before
+mounting as described in [Browser hydration](../install-config.md#browser-hydration).
+
 ```html
 <a-button role="button" tabindex="0" aria-haspopup="menu">
   <a-button-label>Actions</a-button-label>
@@ -549,9 +560,23 @@ value. Each submenu subtracts its own `inset` to determine its item radius.
 Use `round` and `inset` to keep these radii connected. A direct CSS override of
 `::part(menu)` or a menu item's `border-radius` controls that surface independently.
 
-The popover surface lives in shadow DOM and is exposed as a **part** — style its
+The popover surface lives in shadow DOM. Style its
 chrome (background, frost, border, radius, shadow, padding, min-width) with
-`::part(menu)`. Menu items are light DOM, so style them (and their
+`::part(menu)`. Use `::part(scroll)` for the scrolling body and `::part(header)` /
+`::part(footer)` for the pinned slots. Keep `display` overrides scoped to
+`::part(menu):popover-open` so closed menus remain hidden. Position and available
+height follow the trigger and viewport; overrides of positioning, visibility,
+transforms, or transitions can change those behaviors.
+
+Menu defaults use the document's `anta.components` cascade layer. Use unlayered
+consumer rules or the later `anta.theme`, `components`, or `utilities` layers for
+overrides. When migrating from shadow-injected defaults, move normal `::part(...)`
+overrides out of the earlier `base` layer: Anta's document-level defaults take
+precedence over that layer. Header and footer tag rules can override the region
+padding within `anta.components` because the default region selectors have zero
+specificity.
+
+Menu items are light DOM, so style them (and their
 `a-icon` / `kbd` / `a-menu-item-label` children) directly. Match **both** item
 shapes — the `a-menu-item` custom element and the `a[data-anta-menu-item]` link —
 with `:is(a-menu-item, a[data-anta-menu-item])`, or a link row skips your item
@@ -565,7 +590,7 @@ a-menu.fancy::part(menu) {
   border-radius: 22px;
   min-width: 240px;
   padding: 8px;
-  background: light-dark(rgba(255,255,255,0.55), rgba(28,26,32,0.5));
+  background: light-dark(color-mix(in oklch, white 55%, transparent), color-mix(in oklch, rgb(28,26,32) 50%, transparent));
   backdrop-filter: blur(28px) saturate(180%);
 }
 /* Items are light DOM — style them directly. `:is()` catches both an

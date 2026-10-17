@@ -301,7 +301,7 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     for(const source of ['', 'section']){await page.locator('a-copy').evaluate((el,source)=>el.setAttribute('copy-node',source),source);await page.locator('#control').click();await page.waitForFunction(()=>!!window.rich);const [item]=await page.evaluate(()=>rich);assert.equal(item['text/plain'],'Content');assert.match(item['text/html'],/<p>Content<\/p>/);assert.doesNotMatch(item['text/html'],/<(?:a-copy|button)\b/);await page.evaluate(()=>delete window.rich)}
   })
   test(`${name}: MenuItemCopy remains usable in a menu; Copy adds no CSP violations`,async t=>{
-    const page=await pageFor(t,engine,mode,'',true);await register(page,mode);await page.evaluate(()=>import('/Preact.js'));await page.evaluate(()=>renderMenu());await page.locator('a-button').click();await page.waitForTimeout(80)
+    const page=await pageFor(t,engine,mode);await register(page,mode);await page.evaluate(()=>import('/Preact.js'));await page.evaluate(()=>renderMenu());await page.locator('a-button').click();await page.waitForTimeout(80)
     const baseline=await page.evaluate(()=>violations.length);await page.locator('a-menu-item').click();await shown(page);assert.deepEqual(await page.evaluate(()=>writes),['Menu value']);assert.equal(await page.evaluate(()=>violations.length),baseline)
     await page.locator('a-menu-item').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>writes.length===2);assert.equal(await feedback(page).evaluate(el=>el.matches(':popover-open')),true)
   })

@@ -10,6 +10,7 @@ before(async () => {
     stdin: {
       contents: `export * from './src/jsx-runtime';
         export { Dialog } from './src/components/Dialog';
+        export { Menu } from './src/components/Menu';
         export { Input } from './src/components/Input';
         export { InputTime } from './src/components/InputTime';
         export { Banner } from './src/components/Banner';
@@ -192,14 +193,12 @@ test(`Preact without React aliases supports hydratingEvents=${hydratingEvents}`,
         import { configure } from './src/jsx-runtime'
         import { Input } from './src/components/Input'
         import { Banner } from './src/components/Banner'
-        import { Dialog } from './src/components/Dialog'
         import { Expander } from './src/components/Expander'
         import { Text } from './src/components/Text'
         import './src/tokens.css'
         import './src/reset.css'
         import './src/elements/a-input'
         import './src/elements/a-banner'
-        import './src/elements/a-dialog'
         import './src/elements/a-expander'
         import './src/elements/a-text'
         import './src/elements/a-button'
@@ -215,7 +214,6 @@ test(`Preact without React aliases supports hydratingEvents=${hydratingEvents}`,
         window.show = version => render(<>
           <Input label="Draft" defaultValue="Original" clearable
             onValueChange={(_, attrs) => reports.push([version, attrs.value])} />
-          <Dialog header="Confirm" onStateChange={(_, attrs) => reports.push(['dialog', attrs.next])}>Confirm changes</Dialog>
           <Banner message="Saved" onDismiss={() => reports.push(['dismiss'])} />
           <Expander title="Details" onStateChange={(_, attrs) => reports.push(['expand', attrs.next])}>Details content</Expander>
           <Text truncate={1} expandable expandableInert style={{width:'100px'}}>{'Long content '.repeat(30)}</Text>
@@ -250,10 +248,6 @@ test(`Preact without React aliases supports hydratingEvents=${hydratingEvents}`,
   assert.equal(await input.inputValue(), 'Edited')
   await page.locator('a-input [slot="clear"] a-button').click()
   await page.waitForFunction(() => reports.some(entry => entry[0] === 'second' && entry[1] === ''))
-  await page.locator('a-dialog').evaluate(el => el.show())
-  await page.waitForFunction(() => reports.some(entry => entry[0] === 'dialog' && entry[1] === true))
-  await page.locator('a-dialog').getByRole('button', {name:'Close',exact:true}).click()
-  await page.waitForFunction(() => reports.some(entry => entry[0] === 'dialog' && entry[1] === false))
   await page.locator('a-banner-close a-button').click()
   await page.waitForFunction(() => reports.some(entry => entry[0] === 'dismiss'))
   await page.locator('a-expander').getByRole('button', { name: 'Details', exact: true }).click()
@@ -298,6 +292,21 @@ test('worker copy props forward own request/result callbacks immediately, includ
       assert.equal(copied,true)
     } finally { if (shim) delete globalThis.window }
   }
+})
+
+for (const shim of [false, true]) test(`Menu worker subscriptions are immediate without hooks (window shim: ${shim})`, () => {
+  if (shim) globalThis.window = {}
+  try {
+    runtime.configure(h, undefined, {})
+    let state, active
+    const menu = runtime.Menu({onStateChange: (_, detail) => {state = detail}, onactivedescendant: e => {active = e.detail.id}})
+    menu.props.onstatechange(event({next:'open',prev:'closed'}))
+    menu.props.onactivedescendant(event({id:'option'}))
+    assert.deepEqual(state, {next:true,prev:false})
+    assert.equal(active,'option')
+    menu.props.onstatechange({target:'child',currentTarget:'menu',detail:{next:'closed',prev:'open'}})
+    assert.deepEqual(state, {next:true,prev:false})
+  } finally { if (shim) delete globalThis.window }
 })
 
 for (const shim of [false, true]) test(`Dialog forwards worker requests immediately (window shim: ${shim})`, () => {

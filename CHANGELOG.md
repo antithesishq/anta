@@ -5,18 +5,18 @@ changes are not listed.
 
 ## Unreleased
 
-### Fixed
+### Added
 
-- [Select](/select/#styling) preserves its leading-content layout and validation
-  chevron color in server-rendered HTML under `style-src-attr 'none'`.
-  Its shared stylesheet is named `components/select.css`; the previous
-  `components/select-parts.css` import remains supported.
+- [Text's inert expansion mode](/text/#truncation-and-expansion):
+  `expandableInert` makes the folded, overflowing preview one expand target and
+  skips content interactions until expanded. Text that fits remains interactive.
 
-- [SelectFaceted](/select-faceted/) keeps per-facet search and text drafts working
-  when React defers state updates.
-
-- [Calendar](/calendar/) centers unbounded year menus on the displayed year,
-  including dates supplied through `value` and `defaultValue`.
+- [Input button fields](/input/#styling) expose `::part(input-label)` for their
+  value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
+- [Select's `dimActions` prop](/select/) controls its trigger adornments. They
+  dim at rest and brighten on hover or focus; pass `false` to keep them fully visible.
+- [Title typeface](/title/#typeface): `font` sets a title in `serif`,
+  `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Breaking
 
@@ -69,19 +69,6 @@ changes are not listed.
   `.my-select::part(field)`. Target the selected text with `.my-select::part(input-label)`
   instead of `a-button-label`. Existing raw `a-select-field`
   compositions retain their CSS, JSX types, and label and hint behavior.
-
-### Added
-
-- [Text's inert expansion mode](/text/#truncation-and-expansion):
-  `expandableInert` makes the folded, overflowing preview one expand target and
-  skips content interactions until expanded. Text that fits remains interactive.
-
-- [Input button fields](/input/#styling) expose `::part(input-label)` for their
-  value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
-- [Select's `dimActions` prop](/select/) controls its trigger adornments. They
-  dim at rest and brighten on hover or focus; pass `false` to keep them fully visible.
-- [Title typeface](/title/#typeface): `font` sets a title in `serif`,
-  `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
 
@@ -153,8 +140,18 @@ changes are not listed.
 - [Tabs sizing](/tabs/#size) in the Antithesis theme matches text buttons'
   horizontal padding: 10px, 12px, and 14px per side for small, medium, and large.
 
-
 ### Fixed
+
+- [Select](/select/#styling) preserves its leading-content layout and validation
+  chevron color in server-rendered HTML under `style-src-attr 'none'`.
+  Its shared stylesheet is named `components/select.css`; the previous
+  `components/select-parts.css` import remains supported.
+
+- [SelectFaceted](/select-faceted/) keeps per-facet search and text drafts working
+  when React defers state updates.
+
+- [Calendar](/calendar/) centers unbounded year menus on the displayed year,
+  including dates supplied through `value` and `defaultValue`.
 
 - [Dialog](/dialog/) updates its accessible name when header text changes in
   place, including React and Preact updates after hydration.

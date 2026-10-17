@@ -524,12 +524,13 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
 
   const filtering = filter !== undefined && filter !== false
   const q = query.trim()
-  const queryRe = filtering && typeof filter !== 'function' ? matchQueryRegex(q) : null
+  // Custom filters and empty queries skip built-in match highlighting.
+  const queryRegex = filtering && typeof filter !== 'function' ? matchQueryRegex(q) : null
   // Custom predicates also apply with an empty query. Prepare their results once
   // so rendered rows, empty states, and Select-all use the same visible options.
   const prune = typeof filter === 'function' || (filtering && !!q)
   const matches = (o: SelectOption<V>) =>
-    typeof filter === 'function' ? filter(o, q) : matchesQuery(o, queryRe)
+    typeof filter === 'function' ? filter(o, q) : matchesQuery(o, queryRegex)
   const { tree, allLeaves, visibleLeaves } = prepareSelectOptions(options, prune ? matches : undefined)
   const flattening = filtering && !!q
   // A value is an option's identity across the whole tree — selection is global, so a
@@ -656,8 +657,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         selectionIndicator={menuItemIndicator}
         {...ariaSelectable}
         indicator={customMark ?? undefined}
-        label={custom ? undefined : highlight(o.label ?? String(o.value), queryRe)}
-        hint={custom ? undefined : o.hint ? highlight(o.hint, queryRe) : o.hint}
+        label={custom ? undefined : highlight(o.label ?? String(o.value), queryRegex)}
+        hint={custom ? undefined : o.hint ? highlight(o.hint, queryRegex) : o.hint}
         icon={custom ? undefined : o.icon}
         tone={o.tone ?? tone}
         toneScope={o.toneScope ?? toneScope}

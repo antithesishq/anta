@@ -9,6 +9,8 @@ changes are not listed.
 
 - [Dialog styling](/dialog/#styling) follows Anta's cascade layers. Move part
   overrides from `base` to `components`, `utilities`, or unlayered CSS.
+  For shadow DOM queries, replace exact selectors such as `[part="close"]`
+  with `[part~="close"]` because regions now carry additional state tokens.
 
 - [Browser hydration](/install-config/#browser-hydration) requires
   `configure(h, Fragment, hooks, { hydratingEvents: true })` before mounting.
@@ -137,8 +139,9 @@ changes are not listed.
 
 ### Fixed
 
-- [Dialog](/dialog/#styling) keeps its native visible appearance when modal part
-  selectors are unsupported. Backdrop fades also require selector support,
+- [Dialog](/dialog/#styling) keeps its native visible appearance when open-state
+  part selectors are unsupported, including non-modal opening of its inner
+  native dialog. Backdrop fades also require selector support,
   preserving static overlay styling otherwise.
 
 - [Dialog](/dialog/) updates its accessible name when header text changes in

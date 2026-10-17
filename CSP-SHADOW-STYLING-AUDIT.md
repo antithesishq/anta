@@ -110,8 +110,9 @@ merged into main at `aeea7c08`.
   `a-dialog-footer` groups carrying the same native slot attributes. Raw authors
   can keep existing slot composition or use these groups.
 - Default surface, sizing, placement, scrolling, backdrop, and the existing 200ms
-  transitions live in `a-dialog.css`. Native `::part(dialog):modal` selects the
-  modal's open styling. The UA still hides the closed native dialog. Closing is
+  transitions live in `a-dialog.css`. Native `::part(dialog):open` selects open
+  surface styles; `:modal` retains modal layout and backdrop styling. The UA still
+  hides the closed native dialog. Closing is
   synchronous with respect to native open state and does not wait for CSS,
   transition events, or a timer. Missing/late CSS cannot strand an invisible
   modal. No shadow sheet, named keyframes, Web Animation, animation discovery,
@@ -221,11 +222,41 @@ Selector fallback hardening, October 17, 2026:
   Feature queries detect unsupported syntax; they cannot detect an engine that
   reports support but implements selector matching incorrectly.
 
+Final review follow-up, October 17, 2026:
+
+- Surface fades now require `::part(dialog):open`, covering native modal and
+  non-modal opening. Unsupported `:open` retains visible static surfaces and the
+  separate `:modal` layout rule. No new JS observer or public API is added.
+  Backdrop motion keeps its separate modal selector guard. This deliberately
+  skips surface fades in engines without `:open`, including older Safari;
+  [Mozilla compatibility data](https://github.com/mdn/browser-compat-data/blob/main/css/selectors/open.json)
+  records Safari support from 26.5. Exact shipping Safari remains untested.
+- New CSP cases exercise inner native `show()` with and without `:open` support,
+  native closing, and subsequent modal opening through Anta's public method.
+  The combined fallback matrix passes all 30 source and installed-package cases
+  in Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6`; all ten focused
+  cases also pass in Chrome for Testing `135.0.7049.114`.
+- Existing part names remain available through `::part()`. The changelog and
+  Styling docs explain token-aware shadow queries such as `[part~="close"]`
+  because region parts now contain state tokens.
+- Zones uses the actual Dialog `header`/`footer` props and matching expandable
+  code. A static TSX helper avoids MDX's nested-JSX-prop limitation, without
+  hydration. The raw example remains in Web Component. The overlay fallback is
+  shared on the backdrop itself; the late `[round]` radius rule is retained.
+- All 157 source checks pass in the three current engines. Original appearance
+  and sampled animation match in all 66 current-engine variants and 22 Chrome
+  135 variants; all 88 screenshot pairs are byte-identical. Both production
+  Dialog checks pass, including populated props and the default close control.
+  The revised Zones modal also matches its previous Chromium screenshot and
+  geometry byte-for-byte. Package build, production site build, lint, scoped
+  package documentation, and stale-author checks pass.
+
 Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 are not covered
 by the current engine runs. Playwright WebKit is engine evidence. Safari 17.4
 lacks `@starting-style`; discrete display and overlay transitions vary by engine.
-These are existing progressive motion limits, not a new browser baseline or a
-promise of identical native exit animation in every engine. React 18, physical
+Motion remains progressive: engines without `:open` use static surfaces, without
+raising the browser baseline or promising identical exit animation in every
+engine. React 18, physical
 mobile keyboards, and assistive-technology interaction were not manually tested.
 
 ### Copy verification

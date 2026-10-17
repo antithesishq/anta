@@ -13,21 +13,22 @@ when there are no actions. The footer lays its content out in a right-aligned
 row.
 
 ```tsx
-<a-button tabindex="0" data-dialog-open="zones">Open dialog</a-button>
-<a-dialog name="zones">
-  <Title slot="header" level={4}>Enable telemetry?</Title>
+<Button data-dialog-open="zones">Open dialog</Button>
+<Dialog
+  name="zones"
+  header={<Title level={4}>Enable telemetry?</Title>}
+  footer={
+    <>
+      <Button data-dialog-close="zones">Not now</Button>
+      <Button priority="primary" data-dialog-close="zones">Enable</Button>
+    </>
+  }
+>
   <Text>
     Anonymous usage data helps us find the bugs that matter. You can change
     this any time in settings.
   </Text>
-  <a-dialog-footer slot="footer">
-    <Button data-dialog-close="zones">Not now</Button>
-    <Button priority="primary" data-dialog-close="zones">Enable</Button>
-  </a-dialog-footer>
-  <a-button tabindex="0" slot="close" priority="tertiary" size="large" aria-label="Close" data-dialog-close="zones">
-    <Icon shape="x" />
-  </a-button>
-</a-dialog>
+</Dialog>
 ```
 
 ## Position
@@ -272,8 +273,9 @@ all reachable. Keep visibility and motion overrides scoped to
 dialog. The native dialog controls closing independently of CSS transitions.
 Entry and exit effects follow the browser's existing `@starting-style`, display,
 and overlay-transition support; reduced motion disables Anta's transitions.
-Each fade requires support for its modal part selector. Without that support,
-the native dialog stays visible and the backdrop keeps its static styling.
+Surface fades require `::part(dialog):open` support; otherwise the surface stays
+visible without fading. Backdrop fades separately require
+`::part(dialog):modal::backdrop`, keeping static styling when unavailable.
 
 Defaults belong to `anta.components`, within the layer order
 `base, anta, components, utilities`. Put consumer overrides in `components`,
@@ -284,6 +286,8 @@ shadow stylesheet regardless of their layer.
 The slots also expose these supported state parts. Anta updates them as slot
 assignment changes. Each state part targets the same slot as its regular region
 part, so it adds no DOM elements.
+For DOM queries within the shadow root, use `[part~="close"]` rather than
+`[part="close"]` to match a part name alongside its state tokens.
 
 | State part | When it applies |
 | --- | --- |

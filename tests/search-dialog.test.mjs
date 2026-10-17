@@ -408,7 +408,7 @@ test('aligns the input and results while only the dialog body scrolls', async t 
       input: bounds('#docs-search-input').width,
       inputLeft: bounds('#docs-search-input').left,
       body: document.querySelector('#docs-search-results').parentElement.getBoundingClientRect().width,
-      scroller: document.querySelector('a-dialog').shadowRoot.querySelector('[part="body"]').getBoundingClientRect().width,
+      scroller: document.querySelector('a-dialog').shadowRoot.querySelector('[part~="body"]').getBoundingClientRect().width,
       result: bounds('#docs-search-results > a').width,
       resultLeft: bounds('#docs-search-results > a').left,
     }
@@ -455,7 +455,7 @@ test('aligns the input and results while only the dialog body scrolls', async t 
   await page.waitForFunction(() => document.querySelectorAll('#docs-search-results > a').length === 40)
   const before = await input.boundingBox()
   const scroll = await page.evaluate(() => {
-    const body = document.querySelector('a-dialog').shadowRoot.querySelector('[part="body"]')
+    const body = document.querySelector('a-dialog').shadowRoot.querySelector('[part~="body"]')
     body.scrollTop = 300
     return { top: body.scrollTop, overflow: getComputedStyle(document.querySelector('#docs-search-results')).overflowY }
   })

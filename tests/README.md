@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Copy, Expander, Input, InputTime, Menu, Progress, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputTime, Menu, Progress, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -228,3 +228,39 @@ Set `ANTA_MENU_CHROMIUM_EXECUTABLE` for an exact browser executable,
 computed metrics go to `tests/.test-output/menu`. RTL comparisons explicitly
 record the original opposite-inset overflow and assert the corrected position.
 Playwright WebKit does not establish shipping Safari 17.4 coverage.
+
+## Dialog
+
+Run `pnpm test:dialog` for the source CSP matrix or `pnpm test:dialog:package`
+for an isolated installed tarball. The shared fast tier covers both import modes,
+raw modal behavior, controlled state, Escape/cancel and native close, focus return,
+React/Preact SSR/hydration, CSS loading, document listener cleanup, and optional
+header/footer regions following slot assignment through off-DOM states without
+extra attributes or part tokens. Close clearance uses host `:has()`; Firefox may
+retain stale padding after changing an existing child into or out of the close
+slot. That clearance-only limitation is accepted.
+The slow tier adds expanded engines, pointer drags and cancellation, nested focus,
+scrolling, consumer overrides, reduced motion, reconnects, mixed builds,
+visual comparisons, and installed-package checks.
+
+Header-name regressions include in-place text edits after hydration, replaced
+headers, disconnect/reconnect, and document adoption. Observation reads assigned
+header content only and stops on disconnection. The slow matrix also checks
+external CSS loaded inside a consumer shadow root.
+Core fallback cases replace open/modal selectors with an unsupported pseudo-class in
+the served CSS, including feature queries. They verify visible, editable modals,
+static backdrop tint, Escape and close-control dismissal, and focus restoration
+under strict CSP. Stubbing JavaScript `CSS.supports` does not exercise CSS queries.
+Native non-modal opening is checked with and without `:open` support. Surface
+motion requires `:open`; older engines retain visible static surfaces and their
+modal layout. The public Anta `show()` method continues to open a modal.
+
+Behavioral pages use real CSP response headers including `style-src-attr 'none'`.
+Set `ANTA_DIALOG_CHROMIUM_EXECUTABLE` for an exact Chrome executable or
+`ANTA_DIALOG_CONSUMER_ROOT` for an installed consumer. Set
+`ANTA_DIALOG_COMPARE_ORIGINAL=1` to compare the registered implementation at
+`aeea7c08`. Screenshots and metrics go to `tests/.test-output/dialog`.
+WebKit capture uses a separate page that permits the screenshot tool's stylesheet;
+behavior and computed-style checks retain strict CSP. Playwright WebKit does not
+establish shipping Safari 17.4 coverage. Existing native discrete exit support
+varies by engine; compare it with the original rather than asserting a new fallback.

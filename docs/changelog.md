@@ -12,6 +12,9 @@ changes are not listed.
 
 ### Breaking
 
+- [Dialog styling](/dialog/#styling) follows Anta's cascade layers. Move part
+  overrides from `base` to `components`, `utilities`, or unlayered CSS.
+
 - [Browser hydration](/install-config/#browser-hydration) requires
   `configure(h, Fragment, hooks, { hydratingEvents: true })` before mounting.
   Client-only apps and worker renderers forward event handlers immediately by
@@ -73,6 +76,12 @@ changes are not listed.
   `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
+
+- [Dialog](/dialog/) uses external default styles under strict CSP, including
+  its backdrop and optional regions. Native modal behavior and existing parts
+  remain; hydration uses the shared event configuration, and named triggers
+  release their listeners on removal and document adoption. Off-DOM CSS states
+  expose populated optional regions without changing their part names.
 
 - [Menu](/menu/#styling) default styles load from external CSS under strict CSP.
   Existing popover structure, slots, parts, and interactions remain supported;
@@ -138,6 +147,9 @@ changes are not listed.
 
 
 ### Fixed
+
+- [Dialog](/dialog/) updates its accessible name when header text changes in
+  place, including React and Preact updates after hydration.
 
 - [Menu triggers](/menu/) reconnect when rendering replaces the trigger without
   remounting the menu, including responsive and selection-driven

@@ -1,1 +1,1 @@
-import '../components/select-parts.css'
+import '../components/select.css'

@@ -9,6 +9,8 @@ changes are not listed.
 
 - [Select](/select/#styling) preserves its leading-content layout and validation
   chevron color in server-rendered HTML under `style-src-attr 'none'`.
+  Its shared stylesheet is named `components/select.css`; the previous
+  `components/select-parts.css` import remains supported.
 
 - [SelectFaceted](/select-faceted/) keeps per-facet search working when React
   defers the query update.

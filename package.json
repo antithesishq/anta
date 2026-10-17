@@ -45,6 +45,7 @@
     "./tokens.css": "./dist/tokens.css",
     "./reset.css": "./dist/reset.css",
     "./bundle.css": "./dist/bundle.css",
+    "./components/select-parts.css": "./dist/components/select.css",
     "./theme-antune.css": "./dist/theme-antune.css",
     "./theme-antithesis.css": "./dist/theme-antithesis.css",
     "./generate-icons.mjs": "./dist/generate-icons.mjs",

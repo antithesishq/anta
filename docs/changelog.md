@@ -142,6 +142,10 @@ changes are not listed.
 
 ### Fixed
 
+- [SelectFaceted text editors](/select-faceted/#styling) retain their padding in
+  server-rendered HTML under `style-src-attr 'none'`. The text editor's wrapper
+  is now the CSS-only `a-select-faceted-text` tag.
+
 - [Select](/select/#styling) preserves its leading-content layout and validation
   chevron color in server-rendered HTML under `style-src-attr 'none'`.
   Its shared stylesheet is named `components/select.css`; the previous

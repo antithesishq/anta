@@ -171,3 +171,87 @@ for (const commit of ['Enter','blur']) test.fast(`SelectFaceted retains deferred
   render.flush()
   assert.deepEqual(reports,[{value:{title:'Draft title '},attrs:{facet:'title',kind:'text',value:'Draft title '}}])
 })
+
+for (const browserShim of [false, true]) test.fast(`SelectFaceted keeps search semantics and facet queries independent in a worker renderer (window shim: ${browserShim})`, () => {
+  if (browserShim) globalThis.window = {}
+  try {
+    const option = { value: false, label: 'Off [test]', hint: 'Design\tteam', tooltip: '' }
+    const seen = []
+    const render = renderer(runtime.SelectFaceted, {
+      searchable: true,
+      facets: [
+        { key: 'owner', label: 'Owner', kind: 'multiple', selectAll: false, filter: true, options: [option, { value: 0, label: 'Zero', tooltip: '' }] },
+        { key: 'assignee', label: 'Assignee', kind: 'single', filter: true, options: [option, 'Other'] },
+        { key: 'status', label: 'Status', kind: 'single', filter: false, options: [option, 'Other'] },
+        { key: 'custom', label: 'Custom', kind: 'single', filter: (o, q) => { seen.push([o, q]); return q === '  Design team  ' }, options: [option] },
+      ],
+    })
+    const field = (tree, name) => nodes(tree).find(n => n.type === 'a-input' && n.props['aria-label'] === name)
+    let tree = render()
+    field(tree, 'Filter Owner').props.oninput({ currentTarget: { value: '0' } })
+    field(tree, 'Filter Assignee').props.oninput({ currentTarget: { value: '[test]' } })
+    tree = render()
+    assert.equal(field(tree, 'Filter Owner').props.value, '0')
+    assert.equal(field(tree, 'Filter Assignee').props.value, '[test]')
+    assert.equal(field(tree, 'Filter Status'), undefined)
+    assert.deepEqual(rows(tree).filter(n => n.props.role === 'menuitemcheckbox').map(text), ['Zero'])
+    field(tree, 'Filter all facets').props.oninput({ currentTarget: { value: '  Design team  ' } })
+    seen.length = 0
+    tree = render()
+    assert.equal(nodes(tree).filter(n => n.type === 'a-menu-group').length, 4)
+    assert.deepEqual(seen, [[option, '  Design team  ']])
+    field(tree, 'Filter all facets').props.oninput({ currentTarget: { value: 'false' } })
+    assert.equal(nodes(render()).filter(n => n.type === 'a-menu-group').length, 3)
+    field(render(), 'Filter all facets').props.oninput({ currentTarget: { value: '' } })
+    tree = render()
+    assert.equal(field(tree, 'Filter Owner').props.value, '0')
+    assert.equal(field(tree, 'Filter Assignee').props.value, '[test]')
+  } finally { if (browserShim) delete globalThis.window }
+})
+
+test.fast('SelectFaceted filtered bulk changes retain hidden, disabled, and independent typed values', () => {
+  const reports = []
+  const render = renderer(runtime.SelectFaceted, {
+    defaultValue: { owner: ['hidden'], assignee: [false] },
+    onValueChange: (value, attrs) => reports.push({ value, attrs }),
+    facets: [{ key: 'owner', label: 'Owner', kind: 'multiple', filter: true, options: [
+      { label: 'Group', options: [{ value: false, label: 'Match false', tooltip: '' }, { label: 'Submenu', submenu: [{ value: 0, label: 'Match zero', tooltip: '' }] }] },
+      { value: 'locked', label: 'Match locked', disabled: true }, 'hidden',
+    ] }],
+  })
+  const filter = nodes(render()).find(n => n.type === 'a-input')
+  const bulk = tree => rows(tree).find(n => text(n) === 'Select all')
+  filter.props.oninput({ currentTarget: { value: 'Match' } })
+  let tree = render()
+  assert.equal(rows(tree).find(n => text(n) === 'Match locked').props.disabled, '')
+  bulk(tree).props.onmenuselect({})
+  assert.deepEqual(reports.at(-1), { value: { owner: ['hidden', false, 0], assignee: [false] }, attrs: { facet: 'owner', kind: 'multiple', value: ['hidden', false, 0] } })
+  tree = render()
+  assert.equal(bulk(tree).props['aria-checked'], 'true')
+  bulk(tree).props.onmenuselect({})
+  assert.deepEqual(reports.at(-1).value, { owner: ['hidden'], assignee: [false] })
+})
+
+test.fast('SelectFaceted controlled text updates preserve active typing and synchronize external replacements and clearing', () => {
+  const reports = []
+  const render = renderer(runtime.SelectFaceted, {
+    value: { title: 'Applied', owner: false },
+    facets: [{ key: 'title', label: 'Title', kind: 'text' }],
+    onValueChange: (value, attrs) => reports.push({ value, attrs }),
+  })
+  const field = () => nodes(render()).find(n => n.type === 'a-input')
+  render()
+  field().props.oninput({ currentTarget: { value: 'Typing ' } })
+  render({ value: { title: 'Applied', owner: 0 } })
+  assert.equal(field().props.value, 'Typing ')
+  field().props.onKeyDown({ key: 'Enter', preventDefault() {} })
+  assert.deepEqual(reports.at(-1).value, { title: 'Typing ', owner: 0 })
+  assert.equal(field().props.value, 'Typing ')
+  render({ value: { title: 'External', owner: 0 } })
+  assert.equal(field().props.value, 'External')
+  render({ value: {} })
+  assert.equal(field().props.value, '')
+  const count = reports.length
+  field().props.onBlur({})
+  assert.equal(reports.length, count)
+})

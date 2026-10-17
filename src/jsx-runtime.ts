@@ -228,6 +228,7 @@ export interface AntaIntrinsicElements {
   'a-select-footer': BaseAttributes
   'a-select-chevron': BaseAttributes & { open?: boolean | '' }
   'a-select-faceted-summary': BaseAttributes
+  'a-select-faceted-text': BaseAttributes
   'a-menu-group': AMenuGroupAttributes
   'a-menu-group-label': BaseAttributes
   'a-tabs': ATabsAttributes

@@ -208,7 +208,8 @@ const index = options.findIndex((option) => option.value === phase)
 ## Orientation
 
 Horizontal steps scroll when needed. Vertical steps place the active panel before
-the next step.
+the next step. This layout uses external CSS and needs no inline style attributes
+under a strict [Content Security Policy](../install-config.md#content-security-policy).
 
 ```tsx
 <Steps

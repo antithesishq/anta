@@ -29,6 +29,10 @@ changes are not listed.
 
 ### Breaking
 
+- [Icon](/icon/) and [Loader](/loader/) imports load styles without registering
+  custom element classes. If an integration requires a defined tag, call the
+  existing `register_a_icon()` or `register_a_loader()` export explicitly.
+
 - [Calendar selection](/input-date/#calendar) leaves authored input attributes
   unchanged during uncontrolled picks, reset, and restoration. Its `.value`
   getter now returns `null` when empty; InputDate retains its empty text value
@@ -139,8 +143,9 @@ changes are not listed.
   radius values remain supported, and native `details[data-anta][round]` uses the
   same default.
 
-- [Select's shared stylesheet](/select/#styling) is named `components/select.css`.
-  The previous `components/select-parts.css` import remains supported.
+- [Select's shared stylesheet](/select/#styling) is named `components/Select.css`.
+  The previous `components/select.css` and `components/select-parts.css` imports
+  remain supported.
 
 - [Tabs rounding](/tabs/#styling): a custom `round` radius applies to the tabs
   and sliding indicator as well as the primary track.
@@ -250,6 +255,9 @@ changes are not listed.
 
 #### Menu
 
+- [Custom selection indicators](/select/#custom-indicators) use external layout
+  styles, preserving alignment and row activation under a strict CSP.
+
 - [Trigger replacement](/menu/) preserves keyboard interaction, popup
   relationships, and open state, including [Select custom triggers](/select/#custom-trigger).
   Anchored popovers reposition to follow their replacement.
@@ -309,6 +317,11 @@ changes are not listed.
   The keyboard tab stop and active tab panel follow the retained selection.
 - [Per-option tones](/tabs/#tone) color the selected indicator without recoloring
   the track. An explicit neutral option resets the indicator on a toned strip.
+
+#### Steps
+
+- [Vertical panels](/steps/#orientation) follow the selected step using external
+  CSS, including when a Content Security Policy blocks inline style attributes.
 
 #### Text
 

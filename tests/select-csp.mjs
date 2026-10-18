@@ -25,8 +25,9 @@ const fixture = `
   const h=React.createElement;
   // App-authored tooltips keep SSR text independent of the platform isolate hint.
   const options=[{value:1,label:'Alpha',hint:'Design',team:'Studio',tooltip:''}, {label:'People',options:[{value:false,label:'Beta',hint:'Engineering',tooltip:''}, {label:'More',submenu:[{value:'gamma',label:'Gamma',tooltip:''}, {value:'locked',label:'Locked',disabled:true}]}]}];
-  const app=(props={})=>h(Select, {id:'trigger',label:h('strong',null,'Team'),hint:h('em',null,'Choose teams'),leading:'Team:',status:'critical',selection:'multiple',defaultValue:[1],options,filter:true,clearable:true,
-    renderOption:(option,state)=>h('span',{'data-option':String(option.value),'data-selected':String(state.selected)},option.label,option.team?h('small',null,' '+option.team):null),...props});
+  const app=({customIndicator=false,...props}={})=>h(Select, {id:'trigger',label:h('strong',null,'Team'),hint:h('em',null,'Choose teams'),leading:'Team:',status:'critical',selection:'multiple',defaultValue:[1],options,filter:true,clearable:true,
+    renderIndicator:customIndicator?state=>h(Icon,{shape:state.selected?'check':'minus'}):undefined,
+    renderOption:customIndicator?undefined:(option,state)=>h('span',{'data-option':String(option.value),'data-selected':String(state.selected)},option.label,option.team?h('small',null,' '+option.team):null),...props});
   const facetOptions=[...options,{value:0,label:'Zero',tooltip:''}];
   // Lowercase onclick requests a native listener on React custom tags.
   const facetedApp=(props={})=>h(SelectFaceted, {id:'facet-trigger',label:'Filters',searchable:true,value:{owner:[false],title:'Applied'},facets:[
@@ -107,6 +108,7 @@ before(async () => {
     res.setHeader('Content-Security-Policy', original ? policy.replace("style-src 'self'; style-src-attr 'none'", "style-src 'self' 'unsafe-inline'") : policy)
     res.setHeader('Content-Type', `${url.pathname.endsWith('.js') ? 'text/javascript' : url.pathname.endsWith('.css') ? 'text/css' : 'text/html'}; charset=utf-8`)
     const props = url.searchParams.has('size') ? {size:url.searchParams.get('size'),status:url.searchParams.get('status'),round:url.searchParams.has('round')} : {}
+    if (url.searchParams.has('custom-indicator')) props.customIndicator=true
     if (url.searchParams.has('single-empty')) Object.assign(props,{selection:'single',value:null,defaultValue:1,filter:false,renderOption:undefined})
     res.end(assets.get(url.pathname) ?? `<!doctype html><html class="${url.searchParams.has('dark') ? 'dark' : ''}"><link rel="stylesheet" href="/${mode}.css">${url.searchParams.has('theme') ? `<link rel="stylesheet" href="/${url.searchParams.get('theme')}.css">` : ''}<link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${renderers.get(framework + (original ? '-original' : ''))(props,url.searchParams.has('faceted'))}</main><button id="outside">Outside</button>`)
   })
@@ -115,11 +117,11 @@ before(async () => {
   console.log('Select browser coverage:', JSON.stringify([...browsers].map(([engine, browser]) => ({engine: engine.name(), version: browser.version()}))))
 })
 after(async () => { await Promise.all([...browsers.values()].map(b => b.close())); if (server) await new Promise(r => server.close(r)) })
-async function pageFor(t, engine, mode, framework, faceted = false, singleEmpty = false) {
+async function pageFor(t, engine, mode, framework, faceted = false, singleEmpty = false, customIndicator = false) {
   const page = await browsers.get(engine).newPage()
   page.setDefaultTimeout(7000)
   const errors = []; page.on('pageerror', e => errors.push(e.message))
-  const response = await page.goto(`${origin}/?mode=${mode}&framework=${framework}${faceted ? '&faceted' : ''}${singleEmpty ? '&single-empty' : ''}`)
+  const response = await page.goto(`${origin}/?mode=${mode}&framework=${framework}${faceted ? '&faceted' : ''}${singleEmpty ? '&single-empty' : ''}${customIndicator ? '&custom-indicator' : ''}`)
   assert.equal(response.headers()['content-security-policy'], policy)
   t.after(async () => { try { assert.deepEqual(errors, []); assert.deepEqual(await page.evaluate(() => window.fatalErrors ?? []), []); assert.deepEqual(await page.evaluate(() => violations), []) } finally { await page.close() } })
   return page
@@ -224,6 +226,38 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
     }
   })
   for (const framework of ['React', 'Preact']) {
+    test.fast(`${name} ${framework}: custom indicators retain external layout and row activation through SSR hydration`, async t => {
+      const page=await pageFor(t,engine,mode,framework,false,false,true)
+      assert.ok(await menu(page).locator('[data-indicator]').count()>0)
+      assert.equal(await page.locator('#mount [style]').count(),0)
+      await page.evaluate(()=>window.serverIndicator=document.querySelector('[data-indicator]'))
+      await hydrate(page,mode,framework,{customIndicator:true})
+      assert.equal(await page.evaluate(()=>serverIndicator===document.querySelector('[data-indicator]')),true)
+      await page.locator('#trigger button').click()
+      const row=menu(page).locator('a-menu-item').filter({hasText:'Beta'})
+      const indicator=row.locator('[data-indicator]')
+      const metrics=await indicator.evaluate(node=>{
+        const style=getComputedStyle(node), label=node.parentElement.querySelector('a-menu-item-label')
+        const box=node.getBoundingClientRect(), labelBox=label.getBoundingClientRect()
+        return {display:style.display,flex:style.flex,align:style.alignItems,minHeight:style.minHeight,lineHeight:style.lineHeight,pointerEvents:style.pointerEvents,
+          alignment:Math.abs((box.top+box.bottom-labelBox.top-labelBox.bottom)/2)<1,hidden:node.getAttribute('aria-hidden')}
+      })
+      assert.deepEqual(metrics,{display:'flex',flex:'0 0 auto',align:'center',minHeight:metrics.lineHeight,lineHeight:metrics.lineHeight,pointerEvents:'none',alignment:true,hidden:'true'})
+      const position=await indicator.evaluate(node=>{
+        const box=node.getBoundingClientRect(), row=node.parentElement.getBoundingClientRect()
+        return {x:box.x+box.width/2-row.x,y:box.y+box.height/2-row.y}
+      })
+      await row.click({position})
+      await page.waitForFunction(()=>reports.length===1)
+      assert.deepEqual(await page.evaluate(()=>reports[0].value),[1,false])
+      await indicator.locator('a-icon[shape="check"]').waitFor()
+      await row.focus();await page.keyboard.press('Enter')
+      await page.waitForFunction(()=>reports.length===2)
+      assert.deepEqual(await page.evaluate(()=>reports[1].value),[1])
+      await indicator.locator('a-icon[shape="minus"]').waitFor()
+      assert.equal(await menu(page).locator('[data-indicator][style]').count(),0)
+      assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+    })
     test(`${name} ${framework}: hydration, controlled updates, filtering, custom rows, and typed keyboard selection`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
       const page = await pageFor(t, engine, mode, framework); await hydrate(page, mode, framework)
       await page.locator('#trigger button').focus(); await page.keyboard.press('ArrowDown')

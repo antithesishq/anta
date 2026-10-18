@@ -369,11 +369,18 @@ framework-agnostic and does not track a current month, `min`, or `max`.
 
 Calendar uses `value` for controlled selection and `defaultvalue` for an
 uncontrolled initial/reset date. Reading `.value` returns the applied ISO date
-or `null` when empty. Assigning a string supplies controlled input. Remove `value`, or assign `null` or
-`undefined` to `.value`, to release control and retain the date. Uncontrolled
+or `null` when empty. Assigning a string supplies controlled input. Remove
+`value`, or assign `null` or `undefined` to `.value`, to release control and
+retain the date. Uncontrolled
 picks, reset, and restoration never rewrite these input attributes. InputDate
 controls its nested Calendar through the same value input and accepts picks
 through `statechange`. An empty `value=""` keeps an empty Calendar controlled.
+Reading `.defaultValue` returns the authored reset date, or `null` when unset.
+
+For Preact JSX ownership, use `<Calendar>`. Direct `<a-calendar value={...}>`
+bindings follow Preact's native value handling: setting `undefined` can retain
+the old input, and omitting the prop can write `value=""`. To release a raw
+instance, remove its `value` attribute or assign `null` to `.value`.
 
 The JSX wrapper renders the controls above the grid as siblings of
 `<a-calendar>`. The previous/next arrows are `<Button>`s. The month/year picker

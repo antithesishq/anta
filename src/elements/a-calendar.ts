@@ -63,10 +63,10 @@ export class ACalendarElement extends HTMLElementBase {
     }
     this.addEventListener('click', this.onClick)
     this.addEventListener('keydown', this.onKeydown)
+    upgradeValueProperties(this)
   }
 
   connectedCallback() {
-    upgradeValueProperties(this)
     if (!this.seeded) {
       this.selectedIso = this.#controlled
         ? this.currentIso()
@@ -224,7 +224,7 @@ export class ACalendarElement extends HTMLElementBase {
     if (!controlled) this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
-  /** Applied ISO date, or `null` when empty. Non-null assignments supply controlled input. */
+  /** Applied ISO date, or `null` when empty. String assignments supply controlled input. */
   get value(): string | null {
     return this.currentIso()
   }
@@ -234,8 +234,9 @@ export class ACalendarElement extends HTMLElementBase {
     else this.setAttribute('value', value)
   }
 
-  get defaultValue(): string {
-    return this.getAttribute('defaultvalue') ?? ''
+  /** Authored initial/reset date, or `null` when no default is supplied. */
+  get defaultValue(): string | null {
+    return this.getAttribute('defaultvalue')
   }
 
   set defaultValue(value: string | null | undefined) {

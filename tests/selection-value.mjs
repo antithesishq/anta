@@ -143,6 +143,7 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),'')
     assert.equal(await current(page),kind==='Calendar'?null:'')
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(initial),null)
+    if(kind==='Calendar')assert.deepEqual(await page.locator('a-calendar').evaluate(el=>{const before=el.defaultValue;el.defaultValue=el.defaultValue;return {before,after:el.getAttribute('defaultvalue')}}),{before:null,after:null})
     await inputs(page,kind,{value:null})
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),null)
     assert.equal(await current(page),kind==='Calendar'?null:'')
@@ -155,10 +156,15 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),null)
     await noAliases(page,kind)
   })
-  test(`${name}: accepts authored inputs before registration`,async t=>{
+  test(`${name}: accepts authored inputs before registration`,{tier:kind==='Calendar'&&mode==='granular'?'fast':'slow'},async t=>{
     const page=await pageFor(t,engine,mode,kind,undefined,false)
     await inputs(page,kind,{value:b,defaultValue:a})
+    if(kind==='Calendar')await page.locator('a-calendar').evaluate((el,{a,b})=>{window.detachedCalendar=el.cloneNode(true);detachedCalendar.removeAttribute('id');detachedCalendar.value=b;detachedCalendar.defaultValue=a},{a,b})
     await page.evaluate(mode=>import(`/${mode}.js`),mode);await settled(page)
+    if(kind==='Calendar'){
+      assert.deepEqual(await page.evaluate(()=>{customElements.upgrade(detachedCalendar);return {own:Object.hasOwn(detachedCalendar,'value')||Object.hasOwn(detachedCalendar,'defaultValue'),value:detachedCalendar.value,input:detachedCalendar.getAttribute('value'),initial:detachedCalendar.getAttribute('defaultvalue')}}),{own:false,value:b,input:b,initial:a})
+      assert.equal(await page.evaluate(a=>{detachedCalendar.value=a;document.querySelector('form').append(detachedCalendar);const value=detachedCalendar.value;detachedCalendar.remove();return value},a),a)
+    }
     assert.equal(await current(page),b)
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),b)
     if(kind!=='Calendar')assert.deepEqual(await page.locator('a-radio-group,a-tabs').evaluate(el=>({readOnly:Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el),'value').set===undefined,defaultProperty:'defaultValue' in el})),{readOnly:true,defaultProperty:false})

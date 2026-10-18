@@ -132,11 +132,30 @@ public import modes with actual HTTP CSP headers. React and Preact render real
 SSR markup and hydrate without replacing the selected element. Another 119
 Calendar/InputDate and Slider source checks pass, including the previous-date
 regression. All 358 root tests pass with CI's existing browser/debounce filters.
-The final shared fast batch passes 43 checks; all 20 CI/tier checks pass. Package
+The final shared fast batch passes 44 checks; all 20 CI/tier checks pass. Package
 JS, minified CSS, bundle, declarations, lint, types, site CSS lint, scoped docs,
 and the Node `24.15.0` production build pass. All 30 production checks pass
 in Chromium and WebKit, including Calendar, RadioGroup, and Tabs interaction
 with unchanged authored input attributes.
+
+### Value-input review follow-up
+
+Calendar's unset `defaultValue` getter returns `null`; a read/write round trip
+preserves the absent reset input. Calendar and Slider replay own input
+properties at the end of construction, so detached `customElements.upgrade()`
+exposes their accessors before connection. Connected and detached regressions
+pass in all three current engines. Runtime Slider `null` follows uncontrolled
+defaults and range presentation consistently; it does not represent controlled
+numeric emptiness.
+
+The three saved granular consumer fixtures pass through the installed package:
+Preact basic, Next.js, and Preact composed. Their controlled Tabs correctly use
+`state`. Raw Preact Calendar value-prop release remains a renderer limitation:
+explicit `undefined` can retain the old date, and omitting the prop can write a
+controlled empty string. The wrapper's HTML attribute projection avoids that
+path; case-sensitive XML attribute maps require a different projection.
+Controlled Slider reset remains silent, disconnection cancels without a commit,
+and static accessibility-label resolution still runs on each paint.
 
 ### Slider verification
 

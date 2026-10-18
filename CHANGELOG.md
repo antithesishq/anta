@@ -151,6 +151,9 @@ changes are not listed.
 
 #### Calendar
 
+- [Initial/reset inputs](/input-date/#calendar) keep an unset `.defaultValue` as
+  `null` when read and written back. Pre-upgrade property inputs are replayed
+  during construction, including detached elements.
 - [Unbounded year menus](/input-date/#calendar) center on the displayed year, including
   dates supplied through `value` and `defaultValue`.
 - [Controlled selection](/input-date/#calendar) keeps form values in sync in
@@ -268,7 +271,9 @@ changes are not listed.
   pointer movement, thumbs, value bubbles, and markers with the rail.
 - [Numeric bounds](/slider/#managing-the-value) contain small decimal values.
 - [Value inputs](/slider/#managing-the-value) replay properties assigned before
-  registration. Restoring uncontrolled ranges clears stale thumb identity requests.
+  registration, including detached upgrades. Runtime `value={null}` follows
+  uncontrolled defaults consistently. Restoring uncontrolled ranges clears stale
+  thumb identity requests.
 
 #### RadioGroup and Tabs
 

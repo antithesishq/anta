@@ -226,10 +226,10 @@ export class ASliderElement extends HTMLElementBase {
       this.#endpointLabels.push(endpoint)
     }
     shadow.append(this.#header, this.#control, this.#markers, this.#extras)
+    upgradeValueProperties(this)
   }
 
   connectedCallback() {
-    upgradeValueProperties(this)
     for (const type of ['pointerdown', 'keydown', 'pointermove']) this.addEventListener(type, this.#orderDefaultAction, true)
     if (!this.#seeded) {
       this.#applyValue(this.#initialValue())

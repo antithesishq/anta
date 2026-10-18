@@ -30,6 +30,11 @@ for (const shim of [false,true]) test.fast(`Slider projects ownership and serial
     assert.equal(scalar.props.role,'slider')
     assert.equal(scalar.props.tabIndex,0)
     assert.equal(runtime.Slider({defaultValue:25}).props.defaultvalue,'25')
+    const nullish=runtime.Slider({value:null,defaultValue:[20,70]})
+    assert.equal(nullish.props.VALUE,undefined)
+    assert.equal(nullish.props.defaultvalue,'20 70')
+    assert.equal(nullish.props.role,'group')
+    assert.equal(nullish.props.tabIndex,-1)
     assert.equal(runtime.Slider({}).props.VALUE,undefined)
   } finally {if(shim) delete globalThis.window}
 })

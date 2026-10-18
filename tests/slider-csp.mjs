@@ -227,8 +227,10 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
   })
   test.fast(`${name}: replays pre-registration properties without shadowing value accessors`,async t=>{
     const page=await pageFor(t,engine,mode,undefined,false,false)
-    await page.locator('#slider').evaluate(s=>{s.value=30;s.defaultValue=40})
+    await page.locator('#slider').evaluate(s=>{s.value=30;s.defaultValue=40;window.detachedSlider=s.cloneNode(true);detachedSlider.removeAttribute('id');detachedSlider.value=[20,60];detachedSlider.defaultValue=[0,100]})
     await page.evaluate(mode=>import(`/${mode}.js`),mode)
+    assert.deepEqual(await page.evaluate(()=>{customElements.upgrade(detachedSlider);return {own:Object.hasOwn(detachedSlider,'value')||Object.hasOwn(detachedSlider,'defaultValue'),input:detachedSlider.getAttribute('value'),initial:detachedSlider.getAttribute('defaultvalue')}}),{own:false,input:'20 60',initial:'0 100'})
+    assert.deepEqual(await page.evaluate(()=>{detachedSlider.value=[25,75];document.querySelector('form').append(detachedSlider);const value=detachedSlider.value;detachedSlider.remove();return value}),[25,75])
     assert.equal(await value(page),30)
     assert.deepEqual(await page.locator('#slider').evaluate(s=>({own:Object.hasOwn(s,'value'),input:s.getAttribute('value'),initial:s.getAttribute('defaultvalue')})),{own:false,input:'30',initial:'40'})
     await page.locator('#slider').evaluate(s=>{s.value=[20,60]})

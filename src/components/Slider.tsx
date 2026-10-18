@@ -28,6 +28,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   label?: React.ReactNode
   /** Controlled numeric value. A pair selects a range, ordered low to high.
    * Omit or pass `undefined` for uncontrolled use; `0` stays controlled.
+   * Runtime `null` is treated as omission; it is not a controlled empty value.
    * Takes precedence over `defaultValue`, including on form reset. Values are
    * clamped to the bounds and rounded to a step measured from `min`.
    * Releasing control retains the last applied value. There is no empty numeric state. */
@@ -195,7 +196,7 @@ export const Slider = <T extends SliderValue = number>({
   const ariaLabel =
     (typeof explicitAriaLabel === 'string' ? explicitAriaLabel : undefined) ??
     (typeof label === 'string' || typeof label === 'number' ? String(label) : undefined)
-  const controlled = value !== undefined
+  const controlled = value != null
   const range = Array.isArray(controlled ? value : defaultValue)
   const serializeValue = (input: T | undefined): string | undefined =>
     Array.isArray(input) ? `${input[0]} ${input[1]}` : typeof input === 'number' ? String(input) : undefined

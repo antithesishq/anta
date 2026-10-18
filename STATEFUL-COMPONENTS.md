@@ -187,6 +187,8 @@ Calendar and Slider's consumer `value` / `defaultValue` assignments reflect only
 wrappers use `valueAttributes` to render the ordinary HTML attribute directly.
 Its uppercase spelling in renderer props avoids React property assignment and
 Preact live-value special cases; HTML attribute names are case-insensitive.
+Custom renderers must apply these as HTML attributes, normalizing their names;
+the projection does not work unchanged in case-sensitive XML attribute maps.
 Replay their pre-upgrade property assignments through `upgradeValueProperties`.
 RadioGroup and Tabs wrappers project directly to `state` / `default-state` and
 never pass their read-only `value` property as a JSX attribute. Neither pair has
@@ -195,7 +197,15 @@ input aliases.
 The applied value getter is separate from the authored initial/reset value.
 Calendar, RadioGroup, and Tabs return `null` when nothing is selected. Writing an
 empty uncontrolled Calendar's value back therefore leaves it uncontrolled.
-InputDate retains its text-field empty value (`''`).
+InputDate retains its text-field empty value (`''`). Calendar's
+`defaultValue` getter returns `null` when the reset input is absent, preserving
+absence when read back into its setter.
+
+Raw Preact `<a-calendar value={...}>` bindings cannot reliably release ownership:
+explicit `undefined` can retain the old input, while omission can write an empty
+string. Use the Calendar wrapper for declarative ownership, or remove `value` /
+assign `.value = null` on a raw instance. Do not describe this raw-renderer
+limitation as resolved by the wrapper projection.
 
 Uncontrolled interaction, reset, and restoration update internal state and form
 submission without writing host attributes. Removing the controlled input

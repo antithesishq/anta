@@ -155,9 +155,13 @@ The maximized surface also uses `overflow: auto`; override
 `::part(content)` to change its overflow separately from the normal Panel.
 
 The `::part(placeholder)` region reserves the normal content size while the
-surface is maximized. Its measured width and height belong to Panel. Keep its
-layout rules intact when customizing its appearance. Use
-`::part(content)::backdrop` to style the native popover backdrop. By default,
+surface is maximized. Panel measures its width and height, but your `::part()`
+rules can override those dimensions. Changing layout properties such as `width`,
+`height`, `padding`, `border`, or `box-sizing` can change the reserved space and
+move neighboring content. To preserve that space, customize `background` or
+`outline` and leave layout properties unchanged.
+
+Use `::part(content)::backdrop` to style the native popover backdrop. By default,
 the backdrop is transparent and ignores pointer events.
 
 Defaults live in external CSS and follow Anta's cascade layers. Put normal

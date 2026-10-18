@@ -173,7 +173,10 @@ Implemented October 18, 2026 on `codex/panel-csp`, from
   `maximized` state. Default rules and the backdrop live in `a-panel.css` under
   `anta.components`; there is no injected or adopted stylesheet. Runtime width
   and height remain on the owned placeholder. Authored host attributes and
-  light-DOM content remain unchanged.
+  light-DOM content remain unchanged. Custom states are required by the browser
+  baseline; the optional state-API guards and synthetic missing-states test
+  were removed in review. Consumer placeholder layout overrides can change its
+  reserved space, as documented in Panel's styling reference.
 - JSX retains controlled and uncontrolled inputs, boolean request payloads, and
   cancellation. It uses the shared native-event helper so React and Preact
   hydration retain callbacks without replacing the host or input. As documented
@@ -211,6 +214,10 @@ Implemented October 18, 2026 on `codex/panel-csp`, from
   All 32 existing production checks and both added Panel demo checks pass.
   The Panel demo accepts hydrated requests and preserves input and document
   layout through maximization/restoration in Chrome and WebKit.
+
+- After removing the optional custom-state guards and synthetic missing-states
+  case, all 43 focused CSP/hydration checks passed in the three current engines.
+  All 23 remaining Panel regressions passed in Chrome, with lint and types clean.
 
 Exact Edge 135, Firefox 136, and Safari/iOS Safari 17.4 were not executed.
 Playwright WebKit provides engine evidence, not a shipping Safari run.

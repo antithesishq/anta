@@ -13,15 +13,22 @@ attributes and stylesheets.
 
 ## Results on October 18, 2026
 
-The local reference matrix passed 40 tests, the installed-package matrix passed
-37 tests, the root regression suite passed 365 tests, and the site production
+The local reference matrix passed 46 tests, the installed-package matrix passed
+43 tests, the root regression suite passed 366 tests, and the site production
 browser suite passed 32 tests. Lint, Anta and stickers
 type checks, the stickers production build, site CSS lint, and the site production
-build passed.
+build passed. Plot’s build, type check, and isolated package verification also passed.
 
 The browser engines were Chromium 153.0.8010.12, Firefox 155.0, and WebKit 26.6
 with Node v24.10.0. The installed consumer used React/React DOM
 19.3.0, Preact 10.29.8, and Lottie 5.13.0.
+
+The worker regression uses a real Lottie worker and verifies asynchronous SVG
+insertion, initial seeking and delay, replacement, and reconnect. The animated
+artwork part leaves Lottie's CSSOM dimensions and transform intact. Keyboard
+focus assertions load shipped Anta tokens. SSR bundles use temporary files with
+distinct framework/mode names and Node's public loader. Fast setup builds only
+granular renderer cases and the two artwork payloads it uses.
 
 The before and after PNGs have these identical SHA-256 digests:
 
@@ -34,8 +41,8 @@ The before and after PNGs have these identical SHA-256 digests:
 | webkit | static | `55be0fe5fb0feacec2331dcc938c1219c54af0733b8be1269d55a7beebde6c53` |
 | webkit | animated | `65ccedba15e1d69a0ecb7f5e7068afd1b71b9af089b4ad40f857377dfbda58dd` |
 
-The installed stickers tarball had SHA-1 `47cc78d99c2d1c426ad5eedcb6fd405f90536941`
-and the Anta tarball had SHA-1 `3882028ce6a8982d9b4ce17329374bbc71324375`.
+The installed stickers tarball had SHA-1 `ccc697a768bad4387691e7df58028d85acd6d5d5`
+and the Anta tarball had SHA-1 `6672ac417dd1810099f09755c7a84d3e50d4a33e`.
 The local package report also records SHA-512 integrity and the dependency tree,
 with Lottie owned only by stickers.
 
@@ -46,7 +53,7 @@ Use built workspace packages from `pnpm install --frozen-lockfile` or the root
 
 ```sh
 pnpm test:stickers
-ANTA_STICKERS_COMPARE_REF=codex/slider-refactor pnpm test:stickers
+ANTA_STICKERS_COMPARE_REF=aa014ae37fe99b91a422fa6827a9267d7f50ea3b pnpm test:stickers
 pnpm test:stickers:package
 pnpm run lint
 pnpm run typecheck
@@ -68,6 +75,10 @@ The same-origin HTTP fixture sends this enforced response header:
 ```text
 Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'; base-uri 'none'
 ```
+
+The worker case adds `worker-src blob:` to permit Lottie's generated worker;
+style directives remain unchanged. Initialization applies playback settings only
+after metadata is ready, and numeric `paused={0}` seeks to frame zero.
 
 The matrix covers Chromium, Firefox, and WebKit. It checks default dimensions,
 external sizing, independent host dimensions and centering, exposed parts,

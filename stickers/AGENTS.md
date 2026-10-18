@@ -62,8 +62,10 @@ pnpm publish --no-git-checks
 Keep sticker layout in external CSS through `container` and `artwork` parts.
 Do not inject shadow stylesheets or remove SVG shadow isolation. Keep the
 container square and independent of consumer host dimensions. Lottie owns its
-SVG CSSOM writes; verify CSP with response headers and computed styles, rather
-than rejecting the presence of every generated `style` attribute.
+SVG dimensions and transform; use the container part for whole-sticker transforms.
+Wait for player readiness before initial seek/delay, and expose artwork for both
+synchronous and worker initialization. Ignore callbacks from replaced players.
+Verify CSP with response headers and computed styles, rather than rejecting the presence of every generated `style` attribute.
 
 Bundled static SVGs must use presentation attributes instead of inline styles.
 After editing artwork, regenerate modules with `pnpm run stickers`. The `size`

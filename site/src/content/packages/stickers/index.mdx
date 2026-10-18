@@ -107,11 +107,17 @@ sticker size too:
 .sticker-grid :is(a-sticker, a-sticker-animated) { --sticker-size: 96px; }
 ```
 
+Both element entries load external CSS. Preserve those imports in your bundler
+and load the resulting stylesheet before displaying stickers. Without that
+stylesheet, static SVGs use their intrinsic dimensions.
+
 ## Animation control
 
 `paused`, `delay`, `playOnce`, and `replayOnClick` only apply to
 `Sticker{Name}Animated`.
-They map to observed element attributes:
+They map to observed element attributes. Playback settings apply after the
+player is ready, including asynchronous Lottie worker initialization. A numeric
+`paused={0}` seeks to the first frame; boolean `paused` holds the current frame.
 
 ```tsx
 <StickerCodingAnimated />                  // autoplay, looping
@@ -235,8 +241,9 @@ Bundled static artwork uses SVG presentation attributes without inline styles.
 Lottie 5.13.0 writes SVG styles through CSSOM and updates presentation attributes;
 these writes work under the tested policy, including playback and seeking.
 The resulting SVG can contain `style` attributes even though CSP permits the
-CSSOM writes. Review custom SVGs and Lottie data separately, including fonts,
-images, and expressions.
+CSSOM writes. If you enable Lottie's web worker, allow its blob worker through
+`worker-src blob:`; style directives can stay strict. Review custom SVGs and
+Lottie data separately, including fonts, images, and expressions.
 
 <Disclosure title="Styling">
 
@@ -246,7 +253,9 @@ its own default, so an ancestor's value does not replace it. Host `width` and
 size and stays centered.
 
 Both elements expose `container` for the artwork box and `artwork` for the root
-SVG. The SVG's internal paths remain isolated from document selectors.
+SVG. The SVG's internal paths remain isolated from document selectors. Apply
+rotation and other whole-sticker transforms to `container` so Lottie can retain ownership
+of the animated root SVG's dimensions and transform.
 
 ```css
 .coding-sticker {
@@ -255,7 +264,7 @@ SVG. The SVG's internal paths remain isolated from document selectors.
   height: 120px;
 }
 
-.coding-sticker::part(artwork) {
+.coding-sticker::part(container) {
   transform: rotate(-5deg);
 }
 ```

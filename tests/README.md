@@ -345,5 +345,9 @@ SSR, hydration, and the blocked SSR `size` style are covered.
 all 49 static poses and animated frames at 0.5 seconds with a Git reference.
 The reference renders without CSP; the current gallery renders with strict CSP.
 Screenshots, Lottie style inventories, and tarball metadata remain in
-`tests/.test-output/stickers/`. The fast tier runs core layout, playback, and
-hydration checks; package and gallery comparisons belong to the slow tier.
+`tests/.test-output/stickers/`. The fast tier builds granular entries and only
+the artwork used by its layout, playback, worker, and hydration checks. Full entries, CSS-export checks, all-artwork
+galleries, and reference comparisons belong to the slow tier. Both tiers use the
+shipped Anta tokens for keyboard focus and public Node loading APIs for SSR.
+The worker case keeps strict style CSP and adds `worker-src blob:` for Lottie’s
+worker. Package checks always use installed artifacts for the current implementation.

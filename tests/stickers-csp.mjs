@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { before, after } from 'node:test'
-import { componentTest as test, componentEngines } from './component-tier.mjs'
+import { componentTest as test, componentEngines, componentTier } from './component-tier.mjs'
 import { createServer } from 'node:http'
-import { createRequire, Module } from 'node:module'
+import { createRequire } from 'node:module'
 import { readFile, readdir, mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { build } from 'esbuild'
@@ -20,7 +20,11 @@ const nodePaths = [resolve(resolveDir, 'node_modules'), ...(consumer ? [] : [res
 const preact = consumer ? 'preact/compat' : requireSite.resolve('preact/compat')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'; base-uri 'none'"
 const assets = new Map(), browsers = new Map(), renderers = new Map()
-const compareRef = process.env.ANTA_STICKERS_COMPARE_REF
+const modes = componentTier === 'fast' ? ['granular'] : ['granular', 'full']
+const compareRef = componentTier === 'slow' && !consumer ? process.env.ANTA_STICKERS_COMPARE_REF : undefined
+const loadRenderer = createRequire(import.meta.url)
+const rendererFiles = []
+let rendererDirectory
 const output = resolve('tests/.test-output/stickers')
 let server, origin
 const granularImports = `import {StickerWait} from '@antadesign/stickers/wait'; import {StickerClapAnimated} from '@antadesign/stickers/clap-animated';`
@@ -42,15 +46,17 @@ async function bundle(contents, name, alias = {}, platform = 'browser') {
 }
 before(async () => {
   await mkdir(output,{recursive:true})
-  for (const mode of ['full','granular','static']) {
+  rendererDirectory = await mkdtemp(resolve(tmpdir(), 'anta-stickers-ssr-'))
+  for (const mode of [...modes,'static','worker']) {
     const entries = mode === 'full' ? `import '@antadesign/stickers/elements';` :
       `import '@antadesign/stickers/elements/a-sticker'; ${mode === 'static' ? '' : "import '@antadesign/stickers/elements/a-sticker-animated';"}`
-    const result = await bundle(entries,mode,{react:preact})
+    const worker = mode === 'worker' ? `import lottie from 'lottie-web'; lottie.useWebWorker(true);` : ''
+    const result = await bundle(`import '@antadesign/anta/tokens.css'; ${entries} ${worker}`,mode,{react:preact,...(consumer ? {} : {'lottie-web':resolve('stickers/node_modules/lottie-web')})})
     if (mode === 'static') assert.ok(!Object.keys(result.metafile.inputs).some(p => p.includes('lottie-web')), 'Static entry excludes Lottie')
   }
   // Exercise the export map for separately linked CSS as well as the JS entries.
-  await bundle(`import '@antadesign/stickers/elements/a-sticker.css'; import '@antadesign/stickers/elements/a-sticker-animated.css'`, 'css-only')
-  const names = (await readdir('stickers/src/assets')).sort()
+  if (componentTier === 'slow') await bundle(`import '@antadesign/stickers/elements/a-sticker.css'; import '@antadesign/stickers/elements/a-sticker-animated.css'`, 'css-only')
+  const names = componentTier === 'fast' ? ['clap','wait'] : (await readdir('stickers/src/assets')).sort()
   await bundle(names.map(name => `import {svg as s${name.replaceAll('-','_')}} from '@antadesign/stickers/${name}'; import {animationJson as a_${name.replaceAll('-','_')}} from '@antadesign/stickers/${name}-animated';`).join('\n')+
     `window.artwork = {${names.map(n=>`'${n}': {svg:s${n.replaceAll('-','_')},animation:a_${n.replaceAll('-','_')}}`).join(',')}}`, 'artwork',{react:preact})
   if (compareRef) {
@@ -68,7 +74,7 @@ before(async () => {
       }).join('\n'))
     } finally { await rm(referenceDir,{recursive:true}) }
   }
-  for (const framework of ['React','Preact']) for (const mode of ['full','granular']) {
+  for (const framework of ['React','Preact']) for (const mode of modes) {
     const imports = mode === 'full' ? `import {StickerWait,StickerClapAnimated} from '@antadesign/stickers';` : granularImports
     const react = framework === 'React'
     const alias = react ? consumer ? {} : {react:resolve('node_modules/react'),'react-dom/client':requirePlot.resolve('react-dom/client'),'react-dom/server':requirePlot.resolve('react-dom/server')} :
@@ -80,15 +86,16 @@ before(async () => {
         ${react ? "if(hydrating) root=hydrateRoot(target,app(props),{onRecoverableError:e=>window.hydrationErrors.push(e.message)}); else {root??=createRoot(target);root.render(app(props))}" : 'if(hydrating) hydrate(app(props),target); else render(app(props),target)'}
       };`,`${framework}-${mode}`,alias)
     const result = await bundle(`import React from 'react'; ${imports} ${factory} ${react ? "import {renderToString} from 'react-dom/server'" : "import renderToString from 'preact-render-to-string'"}; exports.render = props=>renderToString(app(props));`,`${framework}-${mode}-ssr`,alias,'node')
-    const compiled = new Module(resolve(`tests/stickers-${framework}.cjs`))
-    compiled._compile(result.outputFiles[0].text,compiled.id)
-    renderers.set(`${framework}-${mode}`,compiled.exports.render)
+    const filename = resolve(rendererDirectory, `${framework}-${mode}.cjs`)
+    await writeFile(filename,result.outputFiles[0].text)
+    rendererFiles.push(filename)
+    renderers.set(`${framework}-${mode}`,loadRenderer(filename).render)
   }
   assets.set('/boot.js',`window.violations=[];window.violationDetails=[];document.addEventListener('securitypolicyviolation',e=>{window.violations.push(e.effectiveDirective);window.violationDetails.push({directive:e.effectiveDirective,source:e.sourceFile,line:e.lineNumber,sample:e.sample,blocked:e.blockedURI})});`)
-  assets.set('/fixture.css',`:root{--focus-ring:#345}body{margin:16px;font:16px sans-serif}main{display:flex;flex-wrap:wrap;gap:12px} .custom{--sticker-size:96px} .host{width:320px;height:280px} .small{--sticker-size:64px} a-sticker::part(artwork){color:rgb(255,0,0)} svg,path{fill:lime!important} .parts::part(container){width:80px;height:80px} .parts::part(artwork){transform:rotate(10deg)}`)
+  assets.set('/fixture.css',`body{margin:16px;font:16px sans-serif}main{display:flex;flex-wrap:wrap;gap:12px} .custom{--sticker-size:96px} .host{width:320px;height:280px} .small{--sticker-size:64px} a-sticker::part(artwork){color:rgb(255,0,0)} svg,path{fill:lime!important} .parts::part(container){width:80px;height:80px} .parts::part(artwork){transform:rotate(10deg)}`)
   server=createServer((req,res)=>{
     const url=new URL(req.url,'http://localhost')
-    if (!url.searchParams.has('reference')) res.setHeader('Content-Security-Policy',policy)
+    if (!url.searchParams.has('reference')) res.setHeader('Content-Security-Policy',url.searchParams.get('mode') === 'worker' ? `${policy}; worker-src blob:` : policy)
     res.setHeader('Content-Type',req.url.endsWith('.js')?'text/javascript':req.url.endsWith('.css')?'text/css':'text/html')
     const ssr=url.searchParams.get('ssr'), size=url.searchParams.has('size')?{size:96}: {className:'custom'}
     res.end(assets.get(url.pathname)??`<!doctype html><link rel="stylesheet" href="/${url.searchParams.get('mode')??'granular'}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main>${ssr?renderers.get(`${ssr}-${url.searchParams.get('mode')??'granular'}`)(size):''}</main>`)
@@ -97,12 +104,17 @@ before(async () => {
   for(const engine of engines) browsers.set(engine,await engine.launch({headless:true,...(engine===chromium?{channel:process.env.CAPTURE_TEST_BROWSER_CHANNEL??undefined}:{})}))
   await writeFile(`${output}/browsers.json`,JSON.stringify({node:process.version,engines:Object.fromEntries([...browsers].map(([engine,browser])=>[engine.name(),browser.version()]))},null,2))
 })
-after(async()=>{await Promise.all([...browsers.values()].map(b=>b.close()));if(server) await new Promise(r=>server.close(r))})
+after(async()=>{
+  await Promise.all([...browsers.values()].map(b=>b.close()))
+  if(server) await new Promise(r=>server.close(r))
+  for(const filename of rendererFiles) delete loadRenderer.cache[filename]
+  if(rendererDirectory) await rm(rendererDirectory,{recursive:true,force:true})
+})
 async function pageFor(t,engine,mode='granular',query='',expected=[]) {
   const page=await browsers.get(engine).newPage({viewport:{width:1200,height:800}})
   const errors=[];page.on('pageerror',e=>errors.push(e.message))
   const response=await page.goto(`${origin}/?mode=${mode}${query}`)
-  assert.equal(response.headers()['content-security-policy'],policy)
+  assert.equal(response.headers()['content-security-policy'],mode === 'worker' ? `${policy}; worker-src blob:` : policy)
   await page.evaluate(async mode=>{await import('/artwork.js');await import(`/${mode}.js`)},mode)
   t.after(async()=>{try{assert.deepEqual(errors,[]);assert.deepEqual(await page.evaluate(()=>window.violations),expected,JSON.stringify(await page.evaluate(()=>window.violationDetails)))}finally{await page.close()}})
   return page
@@ -178,6 +190,64 @@ for(const engine of engines){
       assert.equal((await metrics(page)).part,'artwork')
     })
   }
+  test.fast(`${engine.name()}: animated parts preserve Lottie root dimensions and transform`,async t=>{
+    const page=await pageFor(t,engine)
+    await raw(page,'clap',true,{class:'custom',paused:'0.5'})
+    const actual=await page.locator('#subject').evaluate(el=>{
+      const svg=el.shadowRoot.querySelector('svg')
+      svg.style.width='50%'
+      svg.style.height='75%'
+      svg.style.transform='translate(7px, 9px)'
+      return {width:svg.getBoundingClientRect().width,height:svg.getBoundingClientRect().height,transform:getComputedStyle(svg).transform}
+    })
+    assert.deepEqual(actual,{width:48,height:72,transform:'matrix(1, 0, 0, 1, 7, 9)'})
+  })
+  test.fast(`${engine.name()}: worker initialization exposes parts and applies seek, delay, replacement, and reconnect`,async t=>{
+    const page=await pageFor(t,engine,'worker')
+    let workers=0
+    page.on('worker',()=>workers++)
+    const immediate=await page.evaluate(()=>{
+      const el=document.createElement('a-sticker-animated')
+      el.id='subject';el.className='custom'
+      el.setAttribute('paused','0.5')
+      el.setAttribute('animation',window.artwork.clap.animation)
+      document.querySelector('main').append(el)
+      return {loaded:el.player.isLoaded,svg:!!el.shadowRoot.querySelector('svg')}
+    })
+    assert.deepEqual(immediate,{loaded:false,svg:false})
+    await page.waitForFunction(()=>{
+      const el=document.querySelector('#subject'),p=el.player
+      return p.isLoaded&&p.isPaused&&p.currentFrame===p.frameRate*.5&&el.shadowRoot.querySelector('svg')?.part.contains('artwork')
+    })
+    assert.equal(workers,1,'Lottie uses a real Worker')
+    const m=await metrics(page)
+    assert.equal(m.svg.width,96);assert.equal(m.svg.height,96);assert.equal(m.display,'block')
+    await page.locator('#subject').evaluate(el=>{
+      el.setAttribute('delay','0.2');el.removeAttribute('paused')
+      el.setAttribute('animation',window.artwork.clap.animation)
+      el.player.addEventListener('DOMLoaded',()=>window.delayStart=performance.now())
+      el.player.addEventListener('enterFrame',()=>{if(el.player.currentFrame>0&&window.firstFrameAt==null)window.firstFrameAt=performance.now()})
+    })
+    await page.waitForFunction(()=>window.firstFrameAt!=null)
+    assert.ok(await page.evaluate(()=>window.firstFrameAt-window.delayStart>=180))
+    await page.locator('#subject').evaluate(el=>{
+      el.setAttribute('paused','1.25')
+      el.setAttribute('animation',window.artwork.wait.animation)
+      window.replacedPlayer=el.player
+      el.setAttribute('animation',window.artwork.clap.animation)
+      window.detachedPlayer=el.player
+      el.remove()
+      document.querySelector('main').append(el)
+    })
+    await page.waitForFunction(()=>{
+      const el=document.querySelector('#subject'),p=el.player
+      return p.isLoaded&&p.isPaused&&p.currentFrame===p.frameRate*1.25&&el.shadowRoot.querySelector('svg')?.part.contains('artwork')
+    })
+    assert.equal(await page.locator('#subject').evaluate(el=>el.player!==window.replacedPlayer&&el.player!==window.detachedPlayer),true)
+    assert.equal(await page.locator('#subject').evaluate(el=>el.container.querySelectorAll('svg').length),1)
+    await page.locator('#subject').evaluate(el=>{el.removeAttribute('delay');el.removeAttribute('paused')})
+    await page.waitForFunction(()=>!document.querySelector('#subject').player.isPaused)
+  })
   test.fast(`${engine.name()}: playback, seek, delay, completion, replay, disconnect, and reconnect`,async t=>{
     const page=await pageFor(t,engine)
     await raw(page,'clap',true)
@@ -188,6 +258,8 @@ for(const engine of engines){
     assert.equal(await page.locator('#subject').evaluate(el=>el.player.currentFrame),frame)
     await page.locator('#subject').evaluate(el=>el.setAttribute('paused','0.5'))
     assert.equal(await page.locator('#subject').evaluate(el=>el.player.currentFrame),await page.locator('#subject').evaluate(el=>.5*el.player.frameRate))
+    await page.locator('#subject').evaluate(el=>el.setAttribute('paused','0'))
+    assert.equal(await page.locator('#subject').evaluate(el=>el.player.currentFrame),0)
     await page.locator('#subject').evaluate(el=>el.setAttribute('paused','9999'))
     assert.equal(await page.locator('#subject').evaluate(el=>el.player.currentFrame),await page.locator('#subject').evaluate(el=>el.player.totalFrames-1))
     const delayedFrame = await page.locator('#subject').evaluate(async el=>{

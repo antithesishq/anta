@@ -21,13 +21,11 @@
   }
 
   a-sticker-animated::part(container) {
-    width: var(--sticker-size, 256px);
-    height: var(--sticker-size, 256px);
+    width: var(--sticker-size);
+    height: var(--sticker-size);
   }
 
   a-sticker-animated::part(artwork) {
     display: block;
-    width: 100%;
-    height: 100%;
   }
 }

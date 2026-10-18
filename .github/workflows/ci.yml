@@ -213,6 +213,8 @@ jobs:
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             stickers src/{jsx-runtime,anta_helpers,general_types}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            .github/workflows/component-tests.yml \
             'tests/stickers*' 'tests/component*.mjs' .github/workflows/ci.yml \
             tests/consumers/templates/nextjs/package.json package.json pnpm-lock.yaml \
             pnpm-workspace.yaml site/package.json plot/package.json)

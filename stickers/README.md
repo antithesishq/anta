@@ -9,7 +9,7 @@ that don't use stickers never install the animation runtime. Stickers uses the
 compatible `@antadesign/anta` already installed by your app and pulls
 `lottie-web` transitively.
 
-📖 **Full documentation, the complete sticker gallery, and live demos: [anta.design/components/sticker](https://anta.design/stickers/)**
+📖 **Full documentation, the complete sticker gallery, and live demos: [Stickers documentation](https://anta.design/stickers/)**
 
 ## Installation
 
@@ -38,8 +38,14 @@ The element registration must run on the UI thread of a real browser (it needs `
 
 The elements retain shadow DOM for SVG isolation and load their styles from
 external CSS through their element entries. Both expose `container` (the square
-artwork box) and `artwork` (the root SVG) parts. Resizing the host alone keeps the
-artwork at its configured size, centered inside the host.
+artwork box) and `artwork` (the root SVG) parts. Apply whole-sticker transforms
+to `::part(container)`; Lottie owns the animated SVG dimensions and transform.
+Resizing the host alone keeps the artwork at its configured size, centered
+inside the host.
+
+Preserve the element CSS imports in your bundler and load their stylesheet
+before displaying stickers. Without it, static artwork uses intrinsic SVG
+dimensions.
 
 With `style-src 'self'; style-src-attr 'none'`, omit `size` and set
 `--sticker-size` on the host in a same-origin stylesheet:
@@ -61,9 +67,12 @@ Setting the variable only on an ancestor does not override the host's default.
 The bundled static SVGs contain no style attributes or stylesheets. Lottie
 5.13.0's SVG renderer writes styles through CSSOM and updates SVG presentation
 attributes. These writes work under the tested policy, including playback,
-pause, and seek. Generated SVGs still contain `style` attributes from those
-CSSOM writes. Custom SVGs, Lottie assets, fonts, images, and expressions need
-their own CSP review. This does not certify arbitrary animation data.
+pause, and seek. Worker initialization applies parts and playback settings once
+the player is ready. If you enable Lottie's web worker, allow its blob worker
+through `worker-src blob:`; style directives can stay strict. Numeric `paused={0}`
+seeks to the first frame. Generated SVGs still contain `style` attributes from
+those CSSOM writes. Custom SVGs, Lottie assets, fonts, images, and expressions
+need their own CSP review. This does not certify arbitrary animation data.
 
 For granular registration, import `@antadesign/stickers/elements/a-sticker` and,
 when needed, `@antadesign/stickers/elements/a-sticker-animated`. The static entry
@@ -73,4 +82,4 @@ application links styles separately.
 ## See also
 
 - [`@antadesign/anta`](https://www.npmjs.com/package/@antadesign/anta) — the core design system.
-- [anta.design/components/sticker](https://anta.design/stickers/) — props, sizing, animation control, and bringing your own stickers.
+- [Stickers documentation](https://anta.design/stickers/) — props, sizing, animation control, and bringing your own stickers.

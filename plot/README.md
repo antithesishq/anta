@@ -4,12 +4,12 @@ Canvas charts for React, Preact, and browser custom elements. Create scatter, li
 bar, area, rectangle, and rule series, or draw custom marks. `Plot` handles sizing,
 rendering, tooltips, zooming, and panning.
 
-## Install
+## Install and configure
 
 Install the package and its peer dependencies:
 
 ```sh
-npm install @antadesign/plot
+npm install --save-exact @antadesign/plot @antadesign/anta react react-dom
 ```
 
 The package requires Anta `^0.3.30`, React `^19.0.0`, and a bundler that supports
@@ -41,6 +41,12 @@ export function Chart() {
 Set `plotArgs.height` or give the parent a height. The plot fills the available
 space unless you provide explicit dimensions. Replace `plotArgs` to update the
 chart. Pass `onError` to handle rendering and configuration failures.
+
+Registration installs Plot's structural styles and imports CSS for its Anta
+controls. Preserve those imports and load the dependency stylesheet before
+showing the chart. For SSR, keep element
+registration in a browser entry or a client mount effect. Load the theme through
+your application's CSS entry. Next.js charts need a client component boundary.
 
 `Plot` uses Anta's configured renderer and hooks. Custom JSX runtimes can supply
 hooks through Anta's `configure()` API.

@@ -12,8 +12,8 @@
   }
 
   a-sticker::part(container) {
-    width: var(--sticker-size, 256px);
-    height: var(--sticker-size, 256px);
+    width: var(--sticker-size);
+    height: var(--sticker-size);
   }
 
   a-sticker::part(artwork) {

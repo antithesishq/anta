@@ -141,7 +141,8 @@ const ELEMENT_REFERENCE_PROPERTIES: Partial<Record<ShadowAriaAttribute, keyof El
   'aria-owns': 'ariaOwnsElements',
 }
 
-function referencedElements(host: Element, value: string): Element[] {
+/** @internal Resolve authored ID references in the host tree. */
+export function referencedElements(host: Element, value: string): Element[] {
   const root = host.getRootNode() as Document | ShadowRoot
   if (!('getElementById' in root)) return []
   return value

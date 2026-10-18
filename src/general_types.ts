@@ -805,9 +805,13 @@ export interface AInputAttributes extends BaseAttributes {
 /** Attributes for the `<a-slider>` custom element. For the typed JSX wrapper,
  * display formatting, and marker layout use `Slider` from `@antadesign/anta`. */
 export interface ASliderAttributes extends BaseAttributes {
-  /** Controlled value. Range attributes use two space-separated numbers. */
+  /** Controlled numeric input. A range uses two space-separated numbers. */
+  state?: number | string
+  /** Uncontrolled initial value and reset baseline. */
+  'default-state'?: number | string
+  /** Legacy controlled input, used when `state` is absent. */
   value?: number | string
-  /** Initial uncontrolled value and form-reset baseline. Range attributes use two space-separated numbers. */
+  /** Legacy default input, used when `default-state` is absent. */
   defaultvalue?: number | string
   /** Lowest permitted value. Defaults to 0. */
   min?: number | string

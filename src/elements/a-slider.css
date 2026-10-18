@@ -189,6 +189,185 @@
     }
   }
 
+
+  a-slider {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    outline: none;
+  }
+  a-slider::part(header) {
+    display: flex;
+    align-items: baseline;
+    gap: 1px;
+    min-width: 0;
+  }
+  a-slider::part(label) {
+    display: block;
+    min-width: 0;
+    color: var(--slider-label);
+    font-family: var(--sans-serif);
+    font-size: var(--slider-label-size);
+    font-weight: 500;
+    line-height: var(--slider-label-line-height);
+  }
+  a-slider::part(inline-value),
+  a-slider::part(end-value) {
+    color: var(--slider-value);
+    font-family: var(--sans-serif);
+    font-size: var(--slider-value-size);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--slider-value-line-height);
+  }
+  a-slider::part(value-affix) { color: var(--slider-value-affix); }
+  a-slider::part(value-separator),
+  a-slider::part(inline-value) { display: none; }
+  a-slider::part(inline-value) { margin-inline-start: 0.5ch; }
+  a-slider::part(end-value) {
+    display: block;
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+    padding-inline-start: 1ch;
+  }
+  a-slider[value-display="inline"]::part(value-separator),
+  a-slider[value-display="inline"]::part(inline-value) { display: block; }
+  a-slider[value-display="inline"]::part(end-value),
+  a-slider[value-display="thumb"]::part(end-value),
+  a-slider[value-display="none"]::part(end-value) { display: none; }
+  a-slider::part(control) {
+    position: relative;
+    block-size: var(--anta-slider-control-size);
+    border-radius: 4px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+  a-slider[track-click="jump"]::part(control) { cursor: pointer; }
+  a-slider:state(dragging)::part(control) { cursor: grabbing; }
+  a-slider:state(dragging):state(thumb-1-active)::part(thumb-1),
+  a-slider:state(dragging):state(thumb-2-active)::part(thumb-2) { background: var(--slider-thumb-active); }
+  a-slider:focus-visible:not(:state(pointer-focus))::part(control) {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 0;
+  }
+  a-slider::part(rail-area) {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline: calc(var(--anta-slider-thumb-size) / 2);
+    block-size: var(--anta-slider-track-size);
+    transform: translateY(-50%);
+  }
+  a-slider::part(track),
+  a-slider::part(fill) {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--slider-track-radius);
+    transition: background-color 75ms ease-out;
+  }
+  a-slider::part(track) {
+    inset-inline: calc(var(--slider-track-inset) - var(--anta-slider-thumb-size) / 2);
+    background: var(--slider-track);
+  }
+  a-slider::part(fill) {
+    inset-inline-start: calc(var(--_fill-start, 0%) + var(--_fill-start-edge, 0px));
+    inset-inline-end: auto;
+    inline-size: calc(var(--_fill-end, 0%) - var(--_fill-start, 0%) + var(--_fill-end-edge, 0px) - var(--_fill-start-edge, 0px));
+    background: var(--slider-fill);
+  }
+  a-slider::part(thumb) {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: var(--_percent, 0%);
+    box-sizing: border-box;
+    inline-size: var(--anta-slider-thumb-size);
+    block-size: var(--anta-slider-thumb-size);
+    border: var(--anta-slider-thumb-border-width) solid var(--slider-thumb-border);
+    border-radius: var(--slider-thumb-radius);
+    background: var(--slider-thumb);
+    transition: background-color 75ms ease-out, border-color 75ms ease-out;
+    transform: translate(-50%, -50%);
+  }
+  a-slider:state(thumb-1-active)::part(thumb-1),
+  a-slider:state(thumb-2-active)::part(thumb-2) { z-index: 1; }
+  a-slider::part(thumb):focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
+    z-index: 2;
+  }
+  a-slider::part(thumb-value) {
+    display: none;
+    position: absolute;
+    inset-inline-start: var(--_percent, 0%);
+    inset-block-start: 50%;
+    min-inline-size: max-content;
+    color: var(--slider-value);
+    font-family: var(--sans-serif);
+    font-size: var(--slider-value-size);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--slider-value-line-height);
+    padding-inline: 6px;
+    background: var(--bg-2);
+    border: 1px solid var(--border-3);
+    border-radius: 4px;
+    text-align: center;
+    transform: translate(-50%, calc(
+      -50% - var(--anta-slider-control-size) / 2 - 1px - var(--slider-value-line-height) / 2
+    ));
+  }
+  a-slider[value-display="thumb"]::part(thumb-value) { display: block; }
+
+  a-slider::part(markers) {
+    display: block;
+    position: relative;
+    min-block-size: var(--slider-marker-line-height);
+  }
+  a-slider > [slot="markers"] {
+    position: absolute;
+    inset-inline-start: var(--slider-marker-position);
+    max-inline-size: min(12rem, 50vw);
+    color: var(--slider-marker);
+    font-family: var(--sans-serif);
+    font-size: var(--slider-marker-size);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--slider-marker-line-height);
+    text-align: center;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  a-slider > [slot="markers"][data-slider-marker-start] { text-align: start; transform: translateX(0); }
+  a-slider > [slot="markers"][data-slider-marker-end] { text-align: end; transform: translateX(-100%); }
+  a-slider::part(extras) { display: block; }
+  a-slider[disabled]::part(control),
+  a-slider:disabled::part(control) { cursor: not-allowed; }
+  @media (forced-colors: active) {
+    a-slider::part(track) { background: Canvas; border: 1px solid CanvasText; }
+    a-slider::part(fill) { background: Highlight; }
+    a-slider::part(thumb) { background: Canvas; border-color: CanvasText; }
+    a-slider:focus-visible::part(control) { outline: 2px solid Highlight; }
+    a-slider::part(thumb):focus-visible { outline: 2px solid Highlight; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    a-slider::part(track),
+    a-slider::part(fill),
+    a-slider::part(thumb) { transition: none; }
+  }
+  a-slider:defined > [slot="label"] { display: contents; }
+  a-slider:not(:state(has-header))::part(header),
+  a-slider:not(:state(has-markers))::part(markers),
+  a-slider:not(:state(has-extras))::part(extras),
+  a-slider:not(:state(has-fill))::part(fill-start),
+  a-slider:not(:state(has-fill-end))::part(fill-end),
+  a-slider:not(:state(range))::part(thumb-2),
+  a-slider:not(:state(has-thumb-value))::part(thumb-value-1),
+  a-slider:not(:state(has-thumb-value-end))::part(thumb-value-2) { display: none; }
+  a-slider:dir(rtl)::part(thumb) { transform: translate(50%, -50%); }
+  a-slider:dir(rtl)::part(thumb-value) {
+    transform: translate(50%, calc(-50% - var(--anta-slider-control-size) / 2 - 1px - var(--slider-value-line-height) / 2));
+  }
+  a-slider:dir(rtl) > [slot="markers"] { transform: translateX(50%); }
+  a-slider:dir(rtl) > [slot="markers"][data-slider-marker-start] { transform: translateX(0); }
+  a-slider:dir(rtl) > [slot="markers"][data-slider-marker-end] { transform: translateX(100%); }
+
   /* Native ranges retain their native form and keyboard semantics. Chromium
      lacks a filled-track pseudo-element, so the clipped thumb shadow paints it. */
   input[data-anta][type="range"] {
@@ -505,6 +684,18 @@
   a-slider:not(:defined) > :not([slot]) {
     grid-column: 1 / -1;
     grid-row: 3;
+  }
+  a-slider[default-state]:not([state]):not([value]):not(:defined)::after {
+    content: attr(value-prefix) attr(default-state) attr(value-suffix);
+  }
+  a-slider[state]:not(:defined)::after {
+    content: attr(value-prefix) attr(state) attr(value-suffix);
+  }
+  a-slider[value-display="inline"][default-state]:not([state]):not([value]):not(:defined)::after {
+    content: ': ' attr(value-prefix) attr(default-state) attr(value-suffix);
+  }
+  a-slider[value-display="inline"][state]:not(:defined)::after {
+    content: ': ' attr(value-prefix) attr(state) attr(value-suffix);
   }
   a-slider:defined { opacity: 1; transition: opacity 280ms ease-out 40ms; }
   @media (prefers-reduced-motion: reduce) {

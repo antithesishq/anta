@@ -343,7 +343,7 @@ test('Antithesis sliders follow the rail tone while preserving explicit neutral 
       const slider = id => {
         const root = document.getElementById(id).shadowRoot
         return {
-          fill: getComputedStyle(root.querySelector('[part="fill"]')).backgroundColor,
+          fill: getComputedStyle(root.querySelector('[part~="fill"]')).backgroundColor,
           thumb: getComputedStyle(root.querySelector('[part~="thumb"]')).borderTopColor,
         }
       }

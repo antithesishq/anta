@@ -167,6 +167,19 @@ This is the convention for new and migrated APIs. Single Select supports the
 nullable selection contract. Calendar, InputDate, and RadioGroup need separate
 migrations; their current public types remain authoritative until then.
 
+## Numeric Slider inputs
+
+Slider's JSX API uses `value` and `defaultValue`. Its wrapper passes them through
+`state` and `default-state`, keeping the declared input separate from the
+element's live `value` result. A controlled request leaves the applied numeric
+value unchanged until the application accepts it. `0` remains controlled.
+
+Slider retains its `input` / `change` notifications and `onValueChange` /
+`onValueCommit` callbacks. Their snapshots report requested numeric values;
+submission and the live getter report the applied value. The component reference
+defines their ordering and reset behavior. Legacy raw `value` / `defaultvalue`
+attribute inputs remain supported.
+
 ## Wrapper props (React / Preact)
 
 One vocabulary all the way up: `state` attribute → `statechange` event →

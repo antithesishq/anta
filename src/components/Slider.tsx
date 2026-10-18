@@ -1,5 +1,6 @@
+import { useNativeEventProps } from '../native-event-props'
 import type { BaseProps, DOMEventHandlers } from '../general_types'
-import { neutralToneAttr, toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
+import { unwrapNativeEvent, neutralToneAttr, toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
 
 /** A text marker displayed below the slider rail. Markers are labels only; they
  * do not add dots or ticks to the rail. */
@@ -25,18 +26,26 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   /** Visible field label, shown above the rail. A string supplies the slider's
    * accessible name; give a rich label an explicit `aria-label`. */
   label?: React.ReactNode
-  /** Controlled value. A pair of numbers selects a range. Update it from `onValueChange`. */
+  /** Controlled numeric value. A pair selects a range, ordered low to high.
+   * Omit or pass `undefined` for uncontrolled use; `0` stays controlled.
+   * Takes precedence over `defaultValue`, including on form reset. Values are
+   * clamped to the bounds and rounded to a step measured from `min`.
+   * There is no empty numeric state. */
   value?: number | SliderRangeValue
-  /** Initial uncontrolled value.
-   * @defaultValue 0 */
+  /** Initial uncontrolled value and form-reset baseline. Changes while pristine
+   * update the value; after interaction they affect the next reset. Without a
+   * default, scalar reset uses `min` and range reset uses `[min, max]`.
+   * @defaultValue min */
   defaultValue?: number | SliderRangeValue
-  /** Lowest permitted value.
+  /** Lowest permitted value and step origin. Nonfinite values use 0.
    * @defaultValue 0 */
   min?: number
-  /** Highest permitted value.
+  /** Highest permitted value. A lower bound than `min` collapses the range to
+   * `min`. Nonfinite values use 100.
    * @defaultValue 100 */
   max?: number
-  /** Smallest keyboard and drag increment.
+  /** Smallest keyboard and drag increment. Nonpositive and nonfinite values
+   * use 1. Page keys move by at least one step, or one tenth of the range.
    * @defaultValue 1 */
   step?: number
   /** Form field name. A range submits two values under this name. */
@@ -86,9 +95,17 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   trackClick?: 'drag-only' | 'jump'
   /** Fill the rail outside the selected value or range. */
   inverted?: boolean
-  /** Fires on every keyboard or pointer value change. */
+  /** Reports each distinct requested value during a drag and each keyboard step.
+   * `onInput` runs first. The snapshot contains the requested value and effective
+   * constraints; the element's `value` remains the applied value. Controlled
+   * sliders accept by updating `value` and reject by leaving it unchanged.
+   * Events are notifications; `preventDefault()` does not veto a value request. */
   onValueChange?: (event: any, attrs: SliderChangeAttrs<SliderValue>) => void
-  /** Fires after a drag ends and after each keyboard value change. */
+  /** Reports the final requested value after a drag, cancellation, or capture loss,
+   * and after each keyboard step. `onChange` runs first. A drag ending at its
+   * starting value is silent. Controlled requests can commit without being accepted.
+   * Uncontrolled form reset emits both callbacks when it changes the value;
+   * state restoration and application updates are silent. */
   onValueCommit?: (event: any, attrs: SliderChangeAttrs<SliderValue>) => void
 }
 
@@ -103,22 +120,18 @@ type TypedSliderProps<T extends SliderValue> = Omit<
 }
 
 const number = (value: number | undefined, fallback: number) => Number.isFinite(value) ? value! : fallback
-const isStringish = (node: React.ReactNode) => typeof node === 'string' || typeof node === 'number'
 
 const bounds = (min: number | undefined, max: number | undefined) => {
   const low = number(min, 0)
   return { min: low, max: Math.max(low, number(max, 100)) }
 }
 
-const attrsOf = <T extends SliderValue>(event: any): SliderChangeAttrs<T> => {
-  const element = event?.target ?? {}
-  return {
-    value: element.value as T,
-    min: Number(element.getAttribute?.('min') ?? 0),
-    max: Number(element.getAttribute?.('max') ?? 100),
-    step: Number(element.getAttribute?.('step') ?? 1),
-    name: element.getAttribute?.('name') ?? undefined,
-  }
+const attrsOf = <T extends SliderValue>(event: any): SliderChangeAttrs<T> | undefined => {
+  const native = unwrapNativeEvent<CustomEvent<SliderChangeAttrs<T>>>(event)
+  if (native.target && native.currentTarget && native.target !== native.currentTarget) return
+  const attrs = native.detail
+  if (!attrs || typeof attrs.min !== 'number' || typeof attrs.max !== 'number' || typeof attrs.step !== 'number') return
+  return { ...attrs, value: Array.isArray(attrs.value) ? [...attrs.value] as T : attrs.value }
 }
 
 /**
@@ -179,7 +192,8 @@ export const Slider = <T extends SliderValue = number>({
   const ariaLabel =
     (typeof explicitAriaLabel === 'string' ? explicitAriaLabel : undefined) ??
     (typeof label === 'string' || typeof label === 'number' ? String(label) : undefined)
-  const range = Array.isArray(value) || Array.isArray(defaultValue)
+  const controlled = value !== undefined
+  const range = Array.isArray(controlled ? value : defaultValue)
   const serializeValue = (input: T | undefined): string | number | undefined =>
     Array.isArray(input) ? `${input[0]} ${input[1]}` : typeof input === 'number' ? input : undefined
   const resolvedValueDisplay = valueDisplay === 'inline' && label == null ? 'end' : valueDisplay
@@ -201,21 +215,23 @@ export const Slider = <T extends SliderValue = number>({
     ? (event: any) => {
         const attrs = attrsOf<T>(event)
         onInput?.(event)
-        onValueChange?.(event, attrs)
+        if (attrs) onValueChange?.(event, attrs)
       }
     : undefined
   const handleChange = onChange || onValueCommit
     ? (event: any) => {
         const attrs = attrsOf<T>(event)
         onChange?.(event)
-        onValueCommit?.(event, attrs)
+        if (attrs) onValueCommit?.(event, attrs)
       }
     : undefined
 
+  const events = useNativeEventProps({ oninput: handleInput, onchange: handleChange })
+
   return (
     <a-slider
-      value={serializeValue(value)}
-      defaultvalue={serializeValue(defaultValue)}
+      state={serializeValue(value)}
+      default-state={!controlled ? serializeValue(defaultValue) : undefined}
       min={min}
       max={max}
       step={step}
@@ -236,18 +252,12 @@ export const Slider = <T extends SliderValue = number>({
       role={range ? 'group' : 'slider'}
       aria-label={ariaLabel}
       tabIndex={disabled || range ? -1 : (tabIndex ?? 0)}
-      oninput={handleInput}
-      onchange={handleChange}
+      {...events}
       class={className}
       style={computedStyle}
       {...rest}
     >
-      {label != null &&
-        (isStringish(label) ? (
-          <span slot="label">{label}</span>
-        ) : (
-          <span slot="label" style={{ display: 'contents' }}>{label}</span>
-        ))}
+      {label != null && <span slot="label">{label}</span>}
       {markers?.map((marker, index) => {
         const alignment = markerAlignment(marker)
         return (

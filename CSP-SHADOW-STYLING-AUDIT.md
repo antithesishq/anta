@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 17, 2026, including Dialog and the merged Menu refactor.
+Updated October 18, 2026, including Slider.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -77,8 +77,11 @@ and verification before moving to the next component.
    open/close semantics, and existing parts remain; verification is below.
    - [x] Document the consumer-shadow styling contract in Dialog's TSDoc:
      load external Dialog CSS in that root because document styles cannot reach it.
-10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
-    markers, affixes, dragging, and focus states.
+10. [x] [Slider](src/elements/a-slider.ts): existing shadow control, rail, and
+    physical thumbs retained. Default rules use external parts and off-DOM
+    presentation states. Numeric input and live result ownership are separate;
+    source, package, minimum Chrome, original appearance, and production checks
+    are recorded below.
 11. [x] [Copy feedback](src/elements/a-copy.ts): retains its shadow manual
     popover, `feedback` part, icon, and label. Defaults and motion endpoints are
     external; positioning, measurement, and one reusable Web Animation stay on
@@ -98,6 +101,76 @@ composition, and consumer CSS overrides. Check full and granular imports under
 an actual CSP response header. Custom values serialized into `style` attributes
 remain a separate constraint; completing the stylesheet checklist does not make
 every dynamic JSX prop compatible with `style-src-attr 'none'`.
+
+### Slider verification
+
+Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
+`8480701d` after InputAutocomplete PR #247.
+
+- The existing element class, shadow hierarchy, slots, styling hooks, range
+  serialization, form entries, physical-thumb identity, and motion remain.
+  Two hidden owned labels supply range endpoint names through live references.
+  New parts expose the rail container, distinct value regions, separator, and
+  affixes. Presentation states select hidden regions, dragging, pointer focus,
+  and the most recently active physical thumb. All default styles are external;
+  runtime coordinates stay on owned shadow nodes. Rich JSX labels use external
+  CSS for their boxless layout. No injected or adopted stylesheet remains.
+- JSX keeps `value` / `defaultValue` and the event-first numeric callbacks,
+  projecting input through `state` / `default-state`. Legacy raw `value` and
+  `defaultvalue` attributes remain aliases. Property setters keep input off-DOM.
+  Controlled requests never self-apply, including on form reset. The live getter
+  and submission report applied values; callback snapshots report requested
+  values, including rejected commits. Existing uncontrolled reset notifications
+  and silent restoration remain. Snapshots carry effective constraints and name
+  without wrapper DOM reads; shared native-event forwarding handles hydration.
+- Consumer handlers can cancel keyboard and pointer defaults. Disabling or
+  disconnecting ends gesture ownership, another pointer cannot replace the
+  session, and external updates rebase relative dragging. Live ARIA references
+  retain changing label text and crossing focus; scalar disabled state is
+  exposed through ElementInternals. RTL pointer geometry follows logical rail
+  placement, and small decimal values stay within their bounds.
+- All 69 source checks pass in Chrome `155.0.8059.84`, Firefox `155.0`, and
+  Playwright WebKit `26.6`: 60 browser cases, three worker projections, and six
+  original comparisons. All 60 browser cases also pass through an isolated npm
+  tarball installation, resolving public exports without Anta source aliases or
+  workspace links. React/React DOM `19.3.0` and Preact `10.29.8` generate real
+  SSR output and retain authored nodes through hydration.
+- All 20 installed-package cases pass in Chrome for Testing `135.0.7049.114`.
+  Seven original variants match geometry and appearance through both imports in
+  all three current engines and Chrome 135. All 56 original/current PNG pairs
+  are byte-identical. The optional comparison uses `ANTA_SLIDER_COMPARE_REF`;
+  screenshots and metrics live under `tests/.test-output/slider`.
+- Behavioral pages use actual HTTP CSP headers, including
+  `style-src-attr 'none'`, with no component violations. Coverage includes
+  controlled acceptance/rejection, forms, callback ordering, constraints,
+  pointer cancellation, fieldset disablement, multiple pointers, live names,
+  RTL, missing/late CSS, both independent import orders, disconnect/reconnect,
+  adoption, and external CSS in a consumer's closed shadow root. Screenshot
+  comparison pages separately permit the original shadow stylesheet and the
+  capture tool's synchronization styles.
+- All 13 existing Slider pointer/form/accessibility regressions and 60 batched
+  fast checks for Slider, Input, and Calendar/InputDate pass. The production site
+  builds under Node `24.15.0`, and both Chromium/WebKit Slider production checks
+  pass, including accepting/rejecting requests, application reset, native form
+  reset, styling, and raw markup. Only Slider and changelog package docs were
+  regenerated. The full root run passed 355 of 356 checks with CI's existing
+  Chromium/debounce filters. Its remaining theme test used an exact part-attribute
+  query; after changing that query to token matching, all 25 selected theme,
+  tier, and CI checks passed. The rendering assertions remain unchanged.
+  All 26 production checks also passed, followed by two additional Chrome/WebKit
+  checks confirming pre-registration label/rail dimensions and initial values.
+  Final name review added authored `aria-labelledby` precedence and live referenced
+  text; all 63 current source checks were rerun successfully after that change.
+  Expanded engines, original visuals, and installation remain in
+  the slow tier; PR gates select core source checks.
+
+Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 were not run.
+Playwright WebKit is engine evidence. Trusted touch is covered by the existing
+Chromium suite; multiple-pointer lifecycle checks are synthetic. Physical touch
+devices, operating-system restoration, and manual assistive technology were not
+exercised. Dynamic SSR marker positions, custom colors, lengths, radii, and
+application styles retain their separate inline-style CSP constraint. Slider
+remains horizontal; no orientation, readonly, or nullable-value API was added.
 
 ### Dialog verification
 

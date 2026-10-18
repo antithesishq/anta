@@ -26,6 +26,12 @@ changes are not listed.
 
 ### Breaking
 
+- [Slider controlled values](/slider/#managing-the-value) change only when the
+  application updates `value`, including on form reset. Callbacks report requested
+  values; read the element's `value` for its applied result. Property assignment
+  no longer rewrites authored `value` or `defaultvalue` attributes; raw HTML can
+  use `state` and `default-state`, with legacy attributes still supported.
+
 - [Browser support](/install/#browser-support) requires Chrome/Edge 135+ and
   Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints use live
   ARIA element references without a copied-text fallback.
@@ -39,9 +45,9 @@ changes are not listed.
   hooks object as a whole. Pass your runtime's hooks rather than selecting a few;
   missing hooks report an error instead of using another renderer's hooks.
 
-- Normal part overrides for [Dialog](/dialog/#styling) and
-  [Menu](/menu/#styling) follow Anta's document cascade layers. Move overrides
-  from `base` to `components`, `utilities`, or unlayered CSS.
+- Normal part overrides for [Dialog](/dialog/#styling), [Menu](/menu/#styling),
+  and [Slider](/slider/#styling) follow Anta's document cascade layers. Move
+  overrides from `base` to `components`, `utilities`, or unlayered CSS.
 
 - [Select single selection](/select/#managing-the-value) uses `null` for a
   controlled empty value, and Clear reports `null` instead of `undefined`. Use
@@ -96,8 +102,9 @@ changes are not listed.
 
 - Default styles for [Input](/input/#styling), [InputTime](/input-time/#styling),
   [Menu](/menu/#styling), [Dialog](/dialog/#styling), [Tooltip](/tooltip/#styling),
-  [Copy feedback](/button/#copy-feedback), [Toaster](/toaster/#styling), and
-  [Expander](/expander/#styling) load from external CSS under strict CSP.
+  [Copy feedback](/button/#copy-feedback), [Toaster](/toaster/#styling),
+  [Expander](/expander/#styling), and [Slider](/slider/#styling) load from external
+  CSS under strict CSP.
 
 - [Input's native decorations](/input/#styling) may remain visible in some
   browsers, including number steppers in Chrome 135 and raw HTML search controls.
@@ -244,6 +251,15 @@ changes are not listed.
   `style-src-attr 'none'`.
 - [Searches and text drafts](/select-faceted/) keep working when React defers
   state updates.
+
+#### Slider
+
+- [Dragging](/slider/#relative-dragging) honors consumer cancellation and ends
+  when disabled or disconnected. Parent updates remain applied during a drag.
+- [Accessible names](/slider/#range-values) follow live label text, and scalar
+  disabled state is exposed to accessibility tools.
+- [Inherited RTL](/slider/#relative-dragging) aligns pointer movement with the rail.
+- [Numeric bounds](/slider/#managing-the-value) contain small decimal values.
 
 #### Tabs
 

@@ -204,6 +204,9 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     await page.locator('#panel').evaluate(el=>el.shadowRoot.querySelector('slot').addEventListener('beforetoggle',e=>e.preventDefault(),{once:true}))
     await request(page);assert.equal(await maximized(page),false)
     assert.deepEqual(await metrics(page),before)
+    // Reconnecting must not retry an abandoned opening.
+    await page.locator('#panel').evaluate(el=>{const parent=el.parentNode,next=el.nextSibling;el.remove();parent.insertBefore(el,next);return new Promise(r=>requestAnimationFrame(()=>r()))})
+    assert.equal(await maximized(page),false,'A canceled opening stays abandoned after reconnect')
     await request(page);assert.equal(await maximized(page),true)
     await page.evaluate(()=>{
       const failed=document.createElement('a-panel');failed.id='failed'

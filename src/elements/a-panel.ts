@@ -117,12 +117,12 @@ export class APanelElement extends HTMLElementBase {
       try {
         this.#surface.showPopover()
       } catch (error) {
-        this.#restoreSurface()
+        this.#abandonOpening()
         throw error
       }
       // Canceling native beforetoggle leaves the surface closed.
       if (this.#current !== 'maximized') {
-        this.#restoreSurface()
+        this.#abandonOpening()
         return
       }
       this.#internals.states.add('maximized')
@@ -130,6 +130,12 @@ export class APanelElement extends HTMLElementBase {
     } else {
       this.#restoreSurface()
     }
+  }
+
+  // An uncontrolled Panel must not retry a failed opening on reconnect.
+  #abandonOpening() {
+    if (!this.hasAttribute('state')) this.#wanted = 'normal'
+    this.#restoreSurface()
   }
 
   #restoreSurface(restoreFocus = true) {

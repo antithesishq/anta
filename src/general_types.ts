@@ -806,12 +806,8 @@ export interface AInputAttributes extends BaseAttributes {
  * display formatting, and marker layout use `Slider` from `@antadesign/anta`. */
 export interface ASliderAttributes extends BaseAttributes {
   /** Controlled numeric input. A range uses two space-separated numbers. */
-  state?: number | string
-  /** Uncontrolled initial value and reset baseline. */
-  'default-state'?: number | string
-  /** Legacy controlled input, used when `state` is absent. */
   value?: number | string
-  /** Legacy default input, used when `default-state` is absent. */
+  /** Uncontrolled initial value and reset baseline. */
   defaultvalue?: number | string
   /** Lowest permitted value. Defaults to 0. */
   min?: number | string

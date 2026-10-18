@@ -17,19 +17,20 @@ for (const shim of [false,true]) test.fast(`Slider projects ownership and serial
     runtime.configure((type,props,...children)=>({type,props,children}))
     const log = [], value = [25,75]
     const tree = runtime.Slider({value,defaultValue:[0,100],min:20,max:80,step:5,name:'price',onInput:e=>{log.push('input');e.nativeEvent.detail.value[0]=999},onValueChange:(e,attrs)=>log.push(attrs),onChange:()=>log.push('change'),onValueCommit:(e,attrs)=>log.push(attrs)})
-    assert.equal(tree.props.state,'25 75')
-    assert.equal(tree.props['default-state'],undefined)
-    assert.equal(tree.props.value,undefined)
+    assert.equal(tree.props.value,'25 75')
+    assert.equal(tree.props.defaultvalue,undefined)
+    assert.equal('state' in tree.props,false)
+    assert.equal('default-state' in tree.props,false)
     const detail={value:[30,75],min:20,max:80,step:5,name:'price'}
     tree.props.oninput({nativeEvent:{detail:structuredClone(detail)}})
     tree.props.onchange({nativeEvent:{detail:structuredClone(detail)}})
     assert.deepEqual(log,['input',detail,'change',detail])
     const scalar=runtime.Slider({value:0,defaultValue:[20,70]})
-    assert.equal(scalar.props.state,0)
+    assert.equal(scalar.props.value,'0')
     assert.equal(scalar.props.role,'slider')
     assert.equal(scalar.props.tabIndex,0)
-    assert.equal(runtime.Slider({defaultValue:25}).props['default-state'],25)
-    assert.equal(runtime.Slider({}).props.state,undefined)
+    assert.equal(runtime.Slider({defaultValue:25}).props.defaultvalue,'25')
+    assert.equal('value' in runtime.Slider({}).props,false)
   } finally {if(shim) delete globalThis.window}
 })
 test.fast('Nested input events do not become Slider value requests',()=>{

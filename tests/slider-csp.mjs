@@ -73,7 +73,7 @@ before(async () => {
     const props=url.searchParams.has('controlled')?{value:0,defaultValue:70}:{defaultValue:35}
     res.setHeader('Content-Security-Policy',url.searchParams.has('compare')?policy.replace("style-src 'self'","style-src 'self' 'unsafe-inline'"):policy)
     res.setHeader('Content-Type',`${url.pathname.endsWith('.js')?'text/javascript':url.pathname.endsWith('.css')?'text/css':'text/html'}; charset=utf-8`)
-    res.end(assets.get(url.pathname)??`<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><form id="form"><input id="before" aria-label="Before"><main id="mount">${url.searchParams.has('raw')?'<a-slider id="slider" default-state="35" tabindex="0" aria-label="Volume" name="volume"><span slot="label">Volume</span></a-slider>':renderers.get(framework)(props)}</main><input id="after" aria-label="After"></form>`)
+    res.end(assets.get(url.pathname)??`<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><form id="form"><input id="before" aria-label="Before"><main id="mount">${url.searchParams.has('raw')?'<a-slider id="slider" defaultvalue="35" tabindex="0" aria-label="Volume" name="volume"><span slot="label">Volume</span></a-slider>':renderers.get(framework)(props)}</main><input id="after" aria-label="After"></form>`)
   })
   await new Promise(r=>server.listen(0,'127.0.0.1',r));origin=`http://127.0.0.1:${server.address().port}`
   for (const engine of engines) browsers.set(engine,await engine.launch({headless:true,...(engine===chromium?{channel:process.env.ANTA_SLIDER_CHROMIUM_EXECUTABLE?undefined:process.env.CAPTURE_TEST_BROWSER_CHANNEL||undefined,executablePath:process.env.ANTA_SLIDER_CHROMIUM_EXECUTABLE||undefined}:{})}))
@@ -106,7 +106,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.deepEqual(initial,{styles:0,control:'relative',height:28})
     const result=await page.evaluate(()=>{
       const s=document.querySelector('#slider'),form=document.querySelector('form')
-      s.setAttribute('default-state','70 20');s.setAttribute('value-prefix','$');s.setAttribute('value-suffix','%');s.setAttribute('value-display','thumb');s.className='consumer'
+      s.setAttribute('defaultvalue','70 20');s.setAttribute('value-prefix','$');s.setAttribute('value-suffix','%');s.setAttribute('value-display','thumb');s.className='consumer'
       const m=document.createElement('span');m.slot='markers';m.className='marker';m.textContent='Middle';s.append(m)
       return {value:s.value,submission:new FormData(form).getAll('volume'),text:s.shadowRoot.querySelector('[part~=end-value]').textContent,thumb:getComputedStyle(s.shadowRoot.querySelector('[part~=thumb]')).borderRadius}
     })
@@ -119,8 +119,8 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.deepEqual(await value(page),[70,100])
     assert.match(await page.getByRole('slider').first().getAttribute('part'),/thumb-1/)
     const numeric=await page.evaluate(()=>{
-      const s=document.querySelector('#slider');s.setAttribute('min','0.00000000000015');s.setAttribute('max','0.00000000000025');s.setAttribute('step','0.00000000000001');s.setAttribute('state','0.0000000000002');const small=s.value
-      s.setAttribute('min','20');s.setAttribute('max','10');s.setAttribute('step','-5');s.setAttribute('state','NaN');return {small,reversed:s.value}
+      const s=document.querySelector('#slider');s.setAttribute('min','0.00000000000015');s.setAttribute('max','0.00000000000025');s.setAttribute('step','0.00000000000001');s.setAttribute('value','0.0000000000002');const small=s.value
+      s.setAttribute('min','20');s.setAttribute('max','10');s.setAttribute('step','-5');s.setAttribute('value','NaN');return {small,reversed:s.value}
     })
     assert.deepEqual(numeric,{small:2e-13,reversed:20})
   })
@@ -143,23 +143,54 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.equal(await value(page),50);assert.deepEqual(await page.evaluate(()=>reports),[])
     await update(page,{value:0,min:0,max:100,step:1});assert.equal(await value(page),0)
     assert.deepEqual(await page.evaluate(()=>reports),[])
+    assert.equal(await page.locator('#slider').getAttribute('value'),'0')
+    await update(page,{value:undefined,defaultValue:70})
+    assert.equal(await page.locator('#slider').getAttribute('value'),null)
+    assert.equal(await value(page),0)
+    await page.keyboard.press('ArrowRight');await settled(page)
+    assert.equal(await value(page),1)
+    assert.equal(await page.locator('#slider').getAttribute('value'),null)
+    await update(page,{defaultValue:80});assert.equal(await value(page),1)
+    await page.evaluate(()=>{reports=[];document.querySelector('form').reset()});await settled(page)
+    assert.equal(await value(page),80)
+    assert.deepEqual(await page.evaluate(()=>reports.map(r=>r.kind)),['input','value','change','commit'])
+    await update(page,{value:80})
+    assert.equal(await value(page),80)
+    assert.equal(await page.locator('#slider').getAttribute('value'),'80')
+    await update(page,{value:0})
+    assert.equal(await value(page),0)
+    assert.equal(await page.locator('#slider').getAttribute('value'),'0')
+    await page.evaluate(()=>{reports=[];accept=false})
     await update(page,{onInput:undefined,onValueChange:undefined,onChange:undefined,onValueCommit:undefined})
     await page.keyboard.press('ArrowRight');await settled(page)
     assert.deepEqual(await page.evaluate(()=>reports),[]);assert.equal(await value(page),0)
   })
-  test.fast(`${name}: uncontrolled reset and restore keep their notifications and legacy aliases`,async t=>{
+  test.fast(`${name}: authored inputs own control and uncontrolled operations never rewrite attributes`,async t=>{
     const page=await pageFor(t,engine,mode)
     const result=await page.evaluate(()=>{
       const s=document.querySelector('#slider'),form=document.querySelector('form'),events=[]
       for(const type of ['input','change'])s.addEventListener(type,e=>events.push([type,e.detail.value]))
+      const observer=new MutationObserver(()=>{});observer.observe(s,{attributes:true})
+      const key=()=>s.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}))
+      key();const interactive=s.value
       s.formStateRestoreCallback('50');const restored=s.value
-      s.setAttribute('default-state','20');const dirty=s.value;form.reset();const reset=s.value
-      s.removeAttribute('default-state');s.setAttribute('defaultvalue','30');s.setAttribute('value','40');s.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));const rejected=s.value
-      s.setAttribute('state','60');const preferred=s.value
-      const attrs=s.outerHTML;s.value=65;const assigned=s.value
-      return {restored,dirty,reset,rejected,preferred,assigned,unmodified:attrs===s.outerHTML,events}
+      form.reset();const reset=s.value
+      const mutations=observer.takeRecords().map(r=>r.attributeName)
+      s.formStateRestoreCallback('50');s.defaultValue=20;const dirty=s.value
+      form.reset();const newDefault=s.value
+      s.value=40;key();const rejected=s.value
+      s.value=65;const assigned={value:s.value,attribute:s.getAttribute('value')}
+      s.value=undefined;const released=s.value
+      s.defaultValue=30;const retained=s.value
+      observer.takeRecords();key();const resumed={value:s.value,submission:new FormData(form).get('volume'),attribute:s.getAttribute('value')}
+      form.reset();const finalReset=s.value
+      const resumedMutations=observer.takeRecords().map(r=>r.attributeName)
+      s.value=0;key();const zero=s.value
+      s.value=null;const nullRelease=s.value
+      observer.disconnect()
+      return {interactive,restored,reset,mutations,dirty,newDefault,rejected,assigned,released,retained,resumed,finalReset,resumedMutations,zero,nullRelease,defaultAttribute:s.getAttribute('defaultvalue'),events}
     })
-    assert.deepEqual(result,{restored:50,dirty:50,reset:20,rejected:40,preferred:60,assigned:65,unmodified:true,events:[['input',20],['change',20],['input',41],['change',41]]})
+    assert.deepEqual(result,{interactive:36,restored:50,reset:35,mutations:[],dirty:50,newDefault:20,rejected:40,assigned:{value:65,attribute:'65'},released:65,retained:65,resumed:{value:66,submission:'66',attribute:null},finalReset:30,resumedMutations:[],zero:0,nullRelease:0,defaultAttribute:'30',events:[['input',36],['change',36],['input',35],['change',35],['input',20],['change',20],['input',41],['change',41],['input',66],['change',66],['input',30],['change',30],['input',1],['change',1]]})
   })
   test.fast(`${name}: consumer cancellation and disabled, external-update, and disconnect drag cleanup`,async t=>{
     const page=await pageFor(t,engine,mode)
@@ -167,14 +198,17 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await s.evaluate(s=>s.addEventListener('pointerdown',e=>e.preventDefault(),{once:true}))
     await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+25,y);await page.mouse.up()
     assert.equal(await value(page),35)
+    const authored=await s.evaluate(s=>s.getAttributeNames().map(name=>[name,s.getAttribute(name)]))
     await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+25,y)
+    assert.ok((await value(page))>35)
+    assert.deepEqual(await s.evaluate(s=>s.getAttributeNames().map(name=>[name,s.getAttribute(name)])),authored)
     await s.evaluate(s=>s.setAttribute('disabled',''));const disabled=await value(page)
     await page.mouse.move(x+50,y);await page.mouse.up();assert.equal(await value(page),disabled)
     assert.equal(await s.evaluate(s=>s.matches(':state(dragging)')),false)
     assert.equal(await s.evaluate(s=>s.internals.ariaDisabled),'true')
     await s.evaluate(s=>s.removeAttribute('disabled'))
     await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+20,y)
-    await s.evaluate(s=>{s.setAttribute('state','80');s.addEventListener('input',e=>s.setAttribute('state',String(e.detail.value)))})
+    await s.evaluate(s=>{s.setAttribute('value','80');s.addEventListener('input',e=>s.setAttribute('value',String(e.detail.value)))})
     await page.mouse.move(x+25,y);assert.ok((await value(page))>=80)
     await s.evaluate(s=>{const parent=s.parentNode;s.remove();parent.append(s)})
     const detached=await value(page);await page.mouse.move(x-50,y);await page.mouse.up()
@@ -219,7 +253,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
   })
   test(`${name}: names follow live labels and crossing retains focus and physical identity`,async t=>{
     const page=await pageFor(t,engine,mode)
-    await page.locator('#slider').evaluate(s=>{s.removeAttribute('aria-label');s.setAttribute('default-state','20 70')})
+    await page.locator('#slider').evaluate(s=>{s.removeAttribute('aria-label');s.setAttribute('defaultvalue','20 70')})
     const thumb=page.locator('#slider [part~=thumb-1]')
     const name=()=>thumb.evaluate(el=>el.ariaLabelledByElements.map(label=>label.textContent).join(' '))
     assert.equal(await name(),'Volume minimum')

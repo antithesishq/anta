@@ -45,7 +45,8 @@ function SliderOwnershipDemo() {
 ```
 
 `0` is a controlled numeric value. Omitting `value` or passing `undefined` selects
-uncontrolled use. A numeric slider has no empty value.
+uncontrolled use. Releasing control retains the last applied number until
+interaction or reset changes it. A numeric slider has no empty value.
 
 `onValueChange` reports requested values while dragging. `onValueCommit` reports
 the final request when the gesture ends, including cancellation or capture loss,
@@ -215,29 +216,30 @@ thumb in every theme. The native range uses the same rule for `thumb-tone`.
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the filled rail. Pass a named tone or a literal CSS color for a one-off custom tone. The unfilled rail stays neutral. |
 | `trackClick?` | 'drag-only' \| 'jump' | 'drag-only' | Controls what happens when the rail is pressed. `drag-only` starts dragging from the current value. `jump` first moves to the pressed position. |
 | `trackSize?` | number \| string | 2 | Thickness of both rail segments. Numbers use pixels; strings are CSS lengths. Keep it no larger than the thumb diameter. |
-| `value?` | number \| SliderRangeValue | — | Controlled numeric value. A pair selects a range, ordered low to high. Omit or pass `undefined` for uncontrolled use; `0` stays controlled. Takes precedence over `defaultValue`, including on form reset. Values are clamped to the bounds and rounded to a step measured from `min`. There is no empty numeric state. |
+| `value?` | number \| SliderRangeValue | — | Controlled numeric value. A pair selects a range, ordered low to high. Omit or pass `undefined` for uncontrolled use; `0` stays controlled. Takes precedence over `defaultValue`, including on form reset. Values are clamped to the bounds and rounded to a step measured from `min`. Releasing control retains the last applied value. There is no empty numeric state. |
 | `valueDisplay?` | 'end' \| 'inline' \| 'thumb' \| 'none' | 'end' | Where the live value appears. `end` puts it at the right edge of the label row. `inline` renders `Label: value`. `thumb` keeps it above the thumb. |
 | `valuePrefix?` | string | — | Text inserted before the live numeric value, such as `$`. |
 | `valueSuffix?` | string | — | Text inserted after the live numeric value, such as `%` or `°C`. |
 
 ## Web Component
 
-Use `<a-slider>` with `state` for a controlled value or `default-state` for an
-uncontrolled initial value. `value` reads the applied number or sorted pair.
-`input` and `change` events carry snapshots in `event.detail`; accept a controlled
-request by setting `state` from `event.detail.value`. Application updates are
-silent. See [Install and configure](../install-config.md) for imports and hydration setup.
+Use `<a-slider>` with `value` for a controlled value or `defaultvalue` for an
+uncontrolled initial value. Reading the `value` property returns the applied
+number or sorted pair. `input` and `change` events carry request snapshots in
+`event.detail`; accept a controlled request by assigning `event.detail.value` to
+the `value` property. Application updates are silent. See
+[Install and configure](../install-config.md) for imports and hydration setup.
 
-The legacy `value` and `defaultvalue` attributes remain supported. `state` takes
-precedence over `value`, and `default-state` takes precedence over `defaultvalue`.
-Assigning the `value` or `defaultValue` property updates off-DOM input state
-without rewriting authored attributes. To relinquish controlled ownership, use
-an attribute input and remove it.
+Setting the `value` property reflects the controlled `value` attribute. Removing
+that attribute, or assigning `null` or `undefined` to the property, releases
+control and retains the last applied number. Assigning `defaultValue` reflects
+`defaultvalue`. Uncontrolled interaction, reset, and restoration never rewrite
+these attributes. The applied value stays in internal state and form submission.
 
 Add `tabindex="0"` to a scalar slider, and supply its accessible name. The element
 provides the default slider or group role through `ElementInternals`.
 
-For a range, separate the two numbers with a space in `state` or `default-state`.
+For a range, separate the two numbers with a space in `value` or `defaultvalue`.
 Use `role="group"` and give the range an accessible name. Each thumb receives
 its own slider role and keyboard focus. The element's `value` property and
 change events expose a two-number array. If you set `name`, form submission
@@ -249,7 +251,7 @@ includes both values in low-to-high order. Read them with `FormData.getAll(name)
   tabindex="0"
   aria-label="Volume"
   name="volume"
-  default-state="50"
+  defaultvalue="50"
   track-size="4px"
   thumb-fill
   thumb-size="20px"
@@ -260,7 +262,7 @@ includes both values in low-to-high order. Read them with `FormData.getAll(name)
 ```
 
 ```html
-<a-slider role="group" aria-label="Selected interval" name="interval" default-state="20 70" inverted>
+<a-slider role="group" aria-label="Selected interval" name="interval" defaultvalue="20 70" inverted>
   <span slot="label">Selected interval</span>
 </a-slider>
 ```

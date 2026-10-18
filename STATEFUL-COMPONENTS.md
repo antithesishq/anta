@@ -169,16 +169,23 @@ migrations; their current public types remain authoritative until then.
 
 ## Numeric Slider inputs
 
-Slider's JSX API uses `value` and `defaultValue`. Its wrapper passes them through
-`state` and `default-state`, keeping the declared input separate from the
-element's live `value` result. A controlled request leaves the applied numeric
-value unchanged until the application accepts it. `0` remains controlled.
+Slider's JSX API uses `value` and `defaultValue`, projected through `value` and
+`defaultvalue` attributes. The presence of `value` means controlled, including
+`0`. Consumer assignments to the `value` and `defaultValue` properties reflect
+only those input attributes, including removal on `null` or `undefined`. This
+keeps React 19 property updates and raw attributes on the same input channel.
+Reading the `value` property returns the applied number or sorted pair.
+
+Uncontrolled interaction, reset, and restoration update internal state and form
+submission without writing host attributes. Removing `value` releases control
+and retains the last applied value; a changed default affects the next reset.
+A controlled request leaves the applied value unchanged until the application
+accepts it. Controlled form reset retains that value.
 
 Slider retains its `input` / `change` notifications and `onValueChange` /
 `onValueCommit` callbacks. Their snapshots report requested numeric values;
 submission and the live getter report the applied value. The component reference
-defines their ordering and reset behavior. Legacy raw `value` / `defaultvalue`
-attribute inputs remain supported.
+defines their ordering and reset behavior.
 
 ## Wrapper props (React / Preact)
 

@@ -116,8 +116,10 @@ Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
   runtime coordinates stay on owned shadow nodes. Rich JSX labels use external
   CSS for their boxless layout. No injected or adopted stylesheet remains.
 - JSX keeps `value` / `defaultValue` and the event-first numeric callbacks,
-  projecting input through `state` / `default-state`. Legacy raw `value` and
-  `defaultvalue` attributes remain aliases. Property setters keep input off-DOM.
+  projecting input through `value` / `defaultvalue`. Consumer property setters
+  reflect these input attributes, including nullish removal. Uncontrolled
+  interaction, reset, and restoration never rewrite them. Removing `value`
+  releases control and retains the applied number.
   Controlled requests never self-apply, including on form reset. The live getter
   and submission report applied values; callback snapshots report requested
   values, including rejected commits. Existing uncontrolled reset notifications
@@ -129,9 +131,9 @@ Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
   retain changing label text and crossing focus; scalar disabled state is
   exposed through ElementInternals. RTL pointer geometry follows logical rail
   placement, and small decimal values stay within their bounds.
-- All 69 source checks pass in Chrome `155.0.8059.84`, Firefox `155.0`, and
-  Playwright WebKit `26.6`: 60 browser cases, three worker projections, and six
-  original comparisons. All 60 browser cases also pass through an isolated npm
+- All 63 source checks pass in Chrome `155.0.8059.84`, Firefox `155.0`, and
+  Playwright WebKit `26.6`: 60 browser cases and three worker projections.
+  Six original comparisons also passed during the styling refactor. All 60 browser cases also pass through an isolated npm
   tarball installation, resolving public exports without Anta source aliases or
   workspace links. React/React DOM `19.3.0` and Preact `10.29.8` generate real
   SSR output and retain authored nodes through hydration.
@@ -142,7 +144,8 @@ Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
   screenshots and metrics live under `tests/.test-output/slider`.
 - Behavioral pages use actual HTTP CSP headers, including
   `style-src-attr 'none'`, with no component violations. Coverage includes
-  controlled acceptance/rejection, forms, callback ordering, constraints,
+  controlled acceptance/rejection and release, same-value acquisition, unchanged
+  uncontrolled host attributes, forms, callback ordering, constraints,
   pointer cancellation, fieldset disablement, multiple pointers, live names,
   RTL, missing/late CSS, both independent import orders, disconnect/reconnect,
   adoption, and external CSS in a consumer's closed shadow root. Screenshot

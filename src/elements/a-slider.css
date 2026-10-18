@@ -685,18 +685,6 @@
     grid-column: 1 / -1;
     grid-row: 3;
   }
-  a-slider[default-state]:not([state]):not([value]):not(:defined)::after {
-    content: attr(value-prefix) attr(default-state) attr(value-suffix);
-  }
-  a-slider[state]:not(:defined)::after {
-    content: attr(value-prefix) attr(state) attr(value-suffix);
-  }
-  a-slider[value-display="inline"][default-state]:not([state]):not([value]):not(:defined)::after {
-    content: ': ' attr(value-prefix) attr(default-state) attr(value-suffix);
-  }
-  a-slider[value-display="inline"][state]:not(:defined)::after {
-    content: ': ' attr(value-prefix) attr(state) attr(value-suffix);
-  }
   a-slider:defined { opacity: 1; transition: opacity 280ms ease-out 40ms; }
   @media (prefers-reduced-motion: reduce) {
     a-slider,

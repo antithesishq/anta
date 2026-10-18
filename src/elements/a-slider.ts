@@ -32,16 +32,16 @@ const sameSliderValue = (left: SliderValue, right: SliderValue) =>
  * subsequent horizontal movement changes the value. Set `track-click="jump"`
  * for the conventional position-based track click.
  *
- * `state` is the controlled input; `default-state` seeds uncontrolled state.
- * Legacy `value` / `defaultvalue` attributes remain aliases. The `value` property
- * reads the applied result. Input/change event details contain numeric request
- * snapshots, including rejected controlled requests. Defaults require external
+ * The `value` attribute is the controlled input; `defaultvalue` seeds uncontrolled
+ * state. Consumer property assignments reflect these inputs; interaction never
+ * rewrites them. Reading the `value` property returns the applied result.
+ * Input/change event details contain numeric request snapshots, including rejected controlled requests. Defaults require external
  * Slider CSS in the same document or consumer shadow root as the host.
  */
 export class ASliderElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
-    'state', 'default-state', 'value', 'defaultvalue', 'min', 'max', 'step', 'disabled', 'track-click',
+    'value', 'defaultvalue', 'min', 'max', 'step', 'disabled', 'track-click',
     'value-display', 'value-prefix', 'value-suffix', 'inverted', 'name', 'aria-label', 'aria-labelledby', 'aria-describedby', 'aria-description',
   ]
 
@@ -74,9 +74,6 @@ export class ASliderElement extends HTMLElementBase {
   #lastActiveThumb = 0
   #seeded = false
   #dirty = false
-  // Property inputs stay off-DOM; JSX uses the separate state attributes.
-  #propertyValue?: SliderValue
-  #propertyDefault?: SliderValue
   // Match an accepted range request to the physical thumb that produced it.
   #pendingRequest?: { value: SliderValue; reversed: boolean }
   #eventRoot?: Document | ShadowRoot
@@ -94,18 +91,19 @@ export class ASliderElement extends HTMLElementBase {
     return Array.isArray(this.#value) ? [...this.#value] as [number, number] : this.#value
   }
 
-  set value(value: SliderValue | string) {
-    this.#propertyValue = parseSliderValue(serializeSliderValue(value), this.#fallbackValue())
-    this.#syncInput()
+  set value(value: SliderValue | string | null | undefined) {
+    // Preact clears a removed property with an empty string.
+    if (value == null || value === '') this.removeAttribute('value')
+    else this.setAttribute('value', serializeSliderValue(value))
   }
 
   get defaultValue(): SliderValue {
-    return this.#propertyDefault ?? parseSliderValue(this.getAttribute('default-state') ?? this.getAttribute('defaultvalue'), this.#fallbackValue())
+    return parseSliderValue(this.getAttribute('defaultvalue'), this.#fallbackValue())
   }
 
-  set defaultValue(value: SliderValue | string) {
-    this.#propertyDefault = parseSliderValue(serializeSliderValue(value), this.#fallbackValue())
-    if (!this.#controlled && !this.#dirty) this.#syncInput()
+  set defaultValue(value: SliderValue | string | null | undefined) {
+    if (value == null) this.removeAttribute('defaultvalue')
+    else this.setAttribute('defaultvalue', serializeSliderValue(value))
   }
 
   constructor() {
@@ -247,13 +245,15 @@ export class ASliderElement extends HTMLElementBase {
     this.disconnectedCallback()
   }
 
-  attributeChangedCallback(name: string) {
+  attributeChangedCallback(name: string, previous: string | null, next: string | null) {
     if (!this.#seeded) return
-    if (name === 'state' || name === 'value') {
-      this.#propertyValue = undefined
-      this.#syncInput()
-    } else if (name === 'default-state' || name === 'defaultvalue') {
-      this.#propertyDefault = undefined
+    if (name === 'value') {
+      if (next === null && previous !== null) {
+        this.#dirty = true
+        this.#pendingRequest = undefined
+        this.#rebaseDrag()
+      } else this.#syncInput()
+    } else if (name === 'defaultvalue') {
       if (!this.#controlled && !this.#dirty) this.#syncInput()
     } else if (name === 'min' || name === 'max' || name === 'step') {
       if (this.#controlled) this.#syncInput()
@@ -319,18 +319,17 @@ export class ASliderElement extends HTMLElementBase {
   }
 
   get #controlled() {
-    return this.#propertyValue !== undefined || this.hasAttribute('state') || this.hasAttribute('value')
+    return this.hasAttribute('value')
   }
 
   #fallbackValue(): SliderValue {
     const range = Array.isArray(this.#value) ||
-      Array.isArray(parseSliderValue(this.getAttribute('state') ?? this.getAttribute('value'), this.#min))
+      Array.isArray(parseSliderValue(this.getAttribute('value'), this.#min))
     return range ? [this.#min, this.#max] : this.#min
   }
 
   #initialValue() {
-    if (this.#propertyValue !== undefined) return this.#propertyValue
-    if (this.#controlled) return parseSliderValue(this.getAttribute('state') ?? this.getAttribute('value'), this.#fallbackValue())
+    if (this.#controlled) return parseSliderValue(this.getAttribute('value'), this.#fallbackValue())
     return this.defaultValue
   }
 

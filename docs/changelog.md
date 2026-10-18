@@ -28,9 +28,9 @@ changes are not listed.
 
 - [Slider controlled values](/slider/#managing-the-value) change only when the
   application updates `value`, including on form reset. Callbacks report requested
-  values; read the element's `value` for its applied result. Property assignment
-  no longer rewrites authored `value` or `defaultvalue` attributes; raw HTML can
-  use `state` and `default-state`, with legacy attributes still supported.
+  values; read the element's `value` for its applied result. Uncontrolled
+  interaction, reset, and restoration no longer rewrite input attributes. Remove
+  `value` to release control while retaining the applied number.
 
 - [Browser support](/install/#browser-support) requires Chrome/Edge 135+ and
   Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints use live

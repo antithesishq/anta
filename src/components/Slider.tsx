@@ -30,7 +30,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
    * Omit or pass `undefined` for uncontrolled use; `0` stays controlled.
    * Takes precedence over `defaultValue`, including on form reset. Values are
    * clamped to the bounds and rounded to a step measured from `min`.
-   * There is no empty numeric state. */
+   * Releasing control retains the last applied value. There is no empty numeric state. */
   value?: number | SliderRangeValue
   /** Initial uncontrolled value and form-reset baseline. Changes while pristine
    * update the value; after interaction they affect the next reset. Without a
@@ -194,8 +194,8 @@ export const Slider = <T extends SliderValue = number>({
     (typeof label === 'string' || typeof label === 'number' ? String(label) : undefined)
   const controlled = value !== undefined
   const range = Array.isArray(controlled ? value : defaultValue)
-  const serializeValue = (input: T | undefined): string | number | undefined =>
-    Array.isArray(input) ? `${input[0]} ${input[1]}` : typeof input === 'number' ? input : undefined
+  const serializeValue = (input: T | undefined): string | undefined =>
+    Array.isArray(input) ? `${input[0]} ${input[1]}` : typeof input === 'number' ? String(input) : undefined
   const resolvedValueDisplay = valueDisplay === 'inline' && label == null ? 'end' : valueDisplay
   const markerPosition = (marker: SliderMarker) => {
     if (marker.value <= min) return '0%'
@@ -230,8 +230,10 @@ export const Slider = <T extends SliderValue = number>({
 
   return (
     <a-slider
-      state={serializeValue(value)}
-      default-state={!controlled ? serializeValue(defaultValue) : undefined}
+      // Omit uncontrolled value entirely: Preact skips an explicit undefined
+      // value, and compares supplied values against the numeric live getter.
+      {...(controlled ? { value: serializeValue(value) } : {})}
+      defaultvalue={!controlled ? serializeValue(defaultValue) : undefined}
       min={min}
       max={max}
       step={step}

@@ -181,8 +181,8 @@ test('Slider parses a space-separated range and exposes a sorted array value', a
     return { initial, controlled: { value: slider.value, attribute: slider.getAttribute('value') } }
   })
   assert.deepEqual(result, {
-    initial: { value: [20, 70], attribute: '35' },
-    controlled: { value: [15, 85], attribute: null },
+    initial: { value: [20, 70], attribute: '70 20' },
+    controlled: { value: [15, 85], attribute: '85 15' },
   })
 })
 
@@ -304,9 +304,9 @@ test('Range slider submits both values and resets to its default range', async t
     form.append(slider)
     slider.setAttribute('name', 'price')
     slider.defaultValue = [20, 70]
-    slider.setAttribute('state', '35 85')
+    slider.setAttribute('value', '35 85')
     const submitted = new FormData(form).getAll('price')
-    slider.removeAttribute('state')
+    slider.removeAttribute('value')
     slider.formStateRestoreCallback('40 90')
     form.reset()
     const reset = slider.value

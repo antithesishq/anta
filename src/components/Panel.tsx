@@ -1,5 +1,5 @@
 import { useNativeEventProps } from '../native-event-props'
-import { nativeStateChange } from '../anta_helpers'
+import { nativeStateChange, type StateChangeEvent } from '../anta_helpers'
 import type { BaseProps, DOMEventHandlers, PanelState } from '../general_types'
 
 export interface PanelProps extends BaseProps, DOMEventHandlers {
@@ -14,7 +14,6 @@ export interface PanelProps extends BaseProps, DOMEventHandlers {
 }
 
 type StateChangeDetail = { next: PanelState; prev: PanelState }
-type StateChangeEvent = CustomEvent<StateChangeDetail> | { nativeEvent: CustomEvent<StateChangeDetail> }
 
 /** A scroll container that fills its parent and can maximize to the viewport.
  * Percentage height requires a parent with a defined height.
@@ -22,7 +21,7 @@ type StateChangeEvent = CustomEvent<StateChangeDetail> | { nativeEvent: CustomEv
  * there through a stylesheet link so its part rules can reach Panel. */
 export const Panel = ({ maximized, defaultMaximized, onStateChange, className, children, ...rest }: PanelProps) => {
   const events = useNativeEventProps({
-    onstatechange: onStateChange ? (event: StateChangeEvent) => {
+    onstatechange: onStateChange ? (event: StateChangeEvent<StateChangeDetail>) => {
       const { event: native, detail, isOwn } = nativeStateChange<StateChangeDetail>(event)
       if (isOwn && detail) onStateChange(native, {
         next: detail.next === 'maximized',

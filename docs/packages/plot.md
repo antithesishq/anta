@@ -4,155 +4,6 @@ A canvas-based plotting library for React, Preact, and plain JavaScript.
 Compose plots using built-in and custom [series](#series), with configurable [axes](#axes), [scales](#scales), and [styles](#styling).
 Explore your data through [tooltip](#tooltips), [selection](#selection-callbacks), and [zoom](#zoom-and-pan) interactions.
 
-<a id="install"></a>
-
-## Install and configure
-
-Plot is a separate package. Install it alongside Anta and your renderer:
-
-```sh
-npm install @antadesign/plot @antadesign/anta react react-dom
-```
-
-Plot requires Anta `^0.3.30`, React `^19.0.0`, and a bundler that supports ES
-modules and CSS imports. Preact applications use `preact/compat` aliases for
-React and React DOM. See Anta's [renderer setup](../install-config.md#preact-with-compat) for configuration.
-
-Load `@antadesign/plot/plot.css` once in your browser entry. The shared Plot
-stylesheet is required for JSX `Plot`, low-level
-`PlotSurface`, and standalone `<a-plot>`, including the `/browser` and `/auto`
-entries. Element registration loads the supporting Anta element styles.
-
-Anta's `tokens.css` is optional. Selection rectangles, tooltips, and menus use
-fallback colors when tokens are absent. When using Anta's theme colors, put
-tokens before the Plot stylesheet. Omit the tokens import if your application
-already loads Anta's full bundle:
-
-```ts
-import '@antadesign/anta/tokens.css'
-import '@antadesign/plot/plot.css'
-```
-
-Anta's `reset.css` and themes are also optional application-wide choices.
-
-### JSX plots
-
-Import the component, register its surface and tooltip elements in the browser,
-and load the Plot stylesheet:
-
-```tsx
-import { Plot, line } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot-surface'
-import '@antadesign/anta/elements/a-tooltip'
-import '@antadesign/plot/plot.css'
-
-const plotArgs = {
-  height: 300,
-  series: [line({ data: [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
-}
-
-export function Chart() {
-  return <Plot plotArgs={plotArgs} />
-}
-```
-
-`Plot` uses Anta's configured JSX factory and hooks. Importing the root package
-does not register browser elements or load CSS. For server rendering, keep
-registration and stylesheet imports in your application's browser entry.
-Before hydrating, configure Anta with your renderer's hooks and
-`{ hydratingEvents: true }` as described in [SSR and hydration](../install-config.md#browser-hydration).
-
-By default, `Plot` fills its parent. Give the parent a height or set
-`plotArgs.height`, as above. Replace `plotArgs` to update the chart.
-`Plot` owns canvas rendering, interactions, tooltips, and cleanup.
-
-### Browser elements
-
-Register `<a-plot>` and assign its configuration through the `plotArgs` property:
-
-```ts
-import { scatter, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-import '@antadesign/plot/plot.css'
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = {
-  height: 300,
-  series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
-}
-document.body.append(plot)
-```
-
-The registration import includes the surface and tooltip elements. To register
-programmatically, import and await `definePlotElement()` from
-`@antadesign/plot/browser`. Both paths require the shared stylesheet.
-
-### Low-level surfaces
-
-Use `PlotSurface` when your application owns drawing and supplies the surface's
-presentation and input handlers:
-
-```tsx
-import { PlotSurface } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot-surface'
-import '@antadesign/plot/plot.css'
-
-export function Surface() {
-  return <PlotSurface className="custom-surface" />
-}
-```
-
-Give the surface a height in your application's external stylesheet:
-
-```css
-.custom-surface {
-  width: 100%;
-  height: 300px;
-}
-```
-
-The wrapper measures its host and forwards input. Controllers and drawing
-lifecycle helpers remain internal. With a worker renderer and a DOM bridge that
-transfers the surface's canvases, `Plot` can run in the worker while the surface
-and browser registration stay in the UI thread.
-
-### Styles and content security policy
-
-Load an optional Anta theme after the base styles, for example
-`import '@antadesign/anta/theme-antune.css'`. Plot inherits the application's
-font and theme. Put broad application resets in `@layer base` so they do not
-unintentionally override the component rules in `anta.components`.
-
-For a strict content security policy (CSP), configure your bundler to extract
-Plot and Anta CSS imports into external stylesheets served from an allowed
-origin. For same-origin stylesheets, Plot supports:
-
-```text
-style-src 'self'; style-src-elem 'self'; style-src-attr 'none'
-```
-
-A stylesheet link to the published `dist/plot.css` asset also works alongside
-your application bundle. Load it in each destination document before adopting
-a plot there.
-
-Development CSS loaders that inject `<style>` elements are blocked by this
-policy. Configure CSS extraction or serve emitted CSS through stylesheet links.
-If your development server requires injected styles, its development CSP must
-explicitly permit that loader.
-
-Runtime dimensions, capture visibility, coordinates, cursor, and canvas filters
-use direct CSSOM updates. JSX `Plot` applies dimension and `style` props after
-commit, including after hydration, so its SSR markup has no inline styles.
-Use an external CSS class to reserve space before hydration and prevent layout
-shifts. Low-level `PlotSurface` style props and custom tooltip HTML still follow
-your renderer's normal serialization rules. Use external CSS for them under
-`style-src-attr 'none'`.
-
-Worker rendering requires `worker-src` to allow the worker script's origin.
-Use `worker-src 'self'` for same-origin worker scripts. If your renderer creates
-blob workers, also allow `blob:`, for example `worker-src 'self' blob:`. Plot
-does not create your renderer worker or its DOM bridge.
-
 ## Series types
 
 Select a series type below to see its options and examples.
@@ -477,6 +328,155 @@ plot.plotArgs = {
 }
 document.body.append(plot)
 ```
+
+## Install and configure
+
+<a id="install"></a>
+
+Plot is a separate package. Install it alongside Anta and your renderer:
+
+```sh
+npm install @antadesign/plot @antadesign/anta react react-dom
+```
+
+Plot requires Anta `^0.3.30`, React `^19.0.0`, and a bundler that supports ES
+modules and CSS imports. Preact applications use `preact/compat` aliases for
+React and React DOM. See Anta's [renderer setup](../install-config.md#preact-with-compat) for configuration.
+
+Load `@antadesign/plot/plot.css` once in your browser entry. The shared Plot
+stylesheet is required for JSX `Plot`, low-level
+`PlotSurface`, and standalone `<a-plot>`, including the `/browser` and `/auto`
+entries. Element registration loads the supporting Anta element styles.
+
+Anta's `tokens.css` is optional. Selection rectangles, tooltips, and menus use
+fallback colors when tokens are absent. When using Anta's theme colors, put
+tokens before the Plot stylesheet. Omit the tokens import if your application
+already loads Anta's full bundle:
+
+```ts
+import '@antadesign/anta/tokens.css'
+import '@antadesign/plot/plot.css'
+```
+
+Anta's `reset.css` and themes are also optional application-wide choices.
+
+### JSX plots
+
+Import the component, register its surface and tooltip elements in the browser,
+and load the Plot stylesheet:
+
+```tsx
+import { Plot, line } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/anta/elements/a-tooltip'
+import '@antadesign/plot/plot.css'
+
+const plotArgs = {
+  height: 300,
+  series: [line({ data: [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
+}
+
+export function Chart() {
+  return <Plot plotArgs={plotArgs} />
+}
+```
+
+`Plot` uses Anta's configured JSX factory and hooks. Importing the root package
+does not register browser elements or load CSS. For server rendering, keep
+registration and stylesheet imports in your application's browser entry.
+Before hydrating, configure Anta with your renderer's hooks and
+`{ hydratingEvents: true }` as described in [SSR and hydration](../install-config.md#browser-hydration).
+
+By default, `Plot` fills its parent. Give the parent a height or set
+`plotArgs.height`, as above. Replace `plotArgs` to update the chart.
+`Plot` owns canvas rendering, interactions, tooltips, and cleanup.
+
+### Browser elements
+
+Register `<a-plot>` and assign its configuration through the `plotArgs` property:
+
+```ts
+import { scatter, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = {
+  height: 300,
+  series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
+}
+document.body.append(plot)
+```
+
+The registration import includes the surface and tooltip elements. To register
+programmatically, import and await `definePlotElement()` from
+`@antadesign/plot/browser`. Both paths require the shared stylesheet.
+
+### Low-level surfaces
+
+Use `PlotSurface` when your application owns drawing and supplies the surface's
+presentation and input handlers:
+
+```tsx
+import { PlotSurface } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/plot/plot.css'
+
+export function Surface() {
+  return <PlotSurface className="custom-surface" />
+}
+```
+
+Give the surface a height in your application's external stylesheet:
+
+```css
+.custom-surface {
+  width: 100%;
+  height: 300px;
+}
+```
+
+The wrapper measures its host and forwards input. Controllers and drawing
+lifecycle helpers remain internal. With a worker renderer and a DOM bridge that
+transfers the surface's canvases, `Plot` can run in the worker while the surface
+and browser registration stay in the UI thread.
+
+### Styles and content security policy
+
+Load an optional Anta theme after the base styles, for example
+`import '@antadesign/anta/theme-antune.css'`. Plot inherits the application's
+font and theme. Put broad application resets in `@layer base` so they do not
+unintentionally override the component rules in `anta.components`.
+
+For a strict content security policy (CSP), configure your bundler to extract
+Plot and Anta CSS imports into external stylesheets served from an allowed
+origin. For same-origin stylesheets, Plot supports:
+
+```text
+style-src 'self'; style-src-elem 'self'; style-src-attr 'none'
+```
+
+A stylesheet link to the published `dist/plot.css` asset also works alongside
+your application bundle. Load it in each destination document before adopting
+a plot there.
+
+Development CSS loaders that inject `<style>` elements are blocked by this
+policy. Configure CSS extraction or serve emitted CSS through stylesheet links.
+If your development server requires injected styles, its development CSP must
+explicitly permit that loader.
+
+Runtime dimensions, capture visibility, coordinates, cursor, and canvas filters
+use direct CSSOM updates. JSX `Plot` applies dimension and `style` props after
+commit, including after hydration, so its SSR markup has no inline styles.
+Use an external CSS class to reserve space before hydration and prevent layout
+shifts. Low-level `PlotSurface` style props and custom tooltip HTML still follow
+your renderer's normal serialization rules. Use external CSS for them under
+`style-src-attr 'none'`.
+
+Worker rendering requires `worker-src` to allow the worker script's origin.
+Use `worker-src 'self'` for same-origin worker scripts. If your renderer creates
+blob workers, also allow `blob:`, for example `worker-src 'self' blob:`. Plot
+does not create your renderer worker or its DOM bridge.
 
 ## Plot arguments
 

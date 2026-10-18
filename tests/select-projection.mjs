@@ -256,14 +256,14 @@ test.fast('SelectFaceted controlled text updates preserve active typing and sync
   assert.equal(reports.length, count)
 })
 
-for (const value of ['alpha', 0, false]) test.fast(`Select single Clear reports undefined for ${typeof value} values`, () => {
+for (const value of ['alpha', '', 0, false]) test.fast(`Select single Clear reports null for ${JSON.stringify(value)} (${typeof value})`, () => {
   const reports = []
   const render = renderer(runtime.Select, {
     options: [{value, label:'Chosen'}], defaultValue:value, clearable:true,
     onValueChange:(value,attrs) => reports.push({value,attrs}),
   })
   row(render(), 'Clear').props.onmenuselect({})
-  assert.deepEqual(reports, [{value:undefined,attrs:{all:true,selected:false}}])
+  assert.deepEqual(reports, [{value:null,attrs:{all:true,selected:false}}])
   assert.equal(nodes(render()).find(n => n.type==='a-input').props.value, '')
 })
 
@@ -302,4 +302,63 @@ test.fast('SelectFaceted empty built-in queries retain every option and custom f
   tree=render()
   assert.ok(field(tree,'Filter Custom'))
   assert.equal(nodes(tree).filter(n=>n.type==='a-menu-group').length,0)
+})
+
+
+test.fast('Select null resets remain controlled and preserve subsequent typed updates', () => {
+  const reports = [], triggerValues = []
+  const options = [
+    {value:'alpha',label:'Alpha'}, {value:'beta',label:'Beta'},
+    {value:'',label:'Empty string'}, {value:0,label:'Zero'}, {value:false,label:'Off'},
+  ]
+  const render = renderer(runtime.Select, {
+    options, value:null, defaultValue:'alpha', clearable:true,
+    onValueChange:(value,attrs)=>reports.push({value,attrs}),
+    renderTrigger:state=>{triggerValues.push(state.value);return h('button',{},'Choose')},
+  })
+  let tree=render()
+  assert.equal(triggerValues.at(-1),null)
+  assert.deepEqual(reports,[])
+  row(tree,'Beta').props.onmenuselect({})
+  assert.equal(reports.at(-1).value,'beta')
+  tree=render()
+  assert.equal(triggerValues.at(-1),null)
+  assert.equal(row(tree,'Clear'),undefined)
+  tree=render({value:'beta'})
+  assert.equal(triggerValues.at(-1),'beta')
+  const count=reports.length
+  tree=render({value:null})
+  assert.equal(reports.length,count)
+  assert.equal(triggerValues.at(-1),null)
+  row(tree,'Alpha').props.onmenuselect({})
+  tree=render()
+  assert.equal(triggerValues.at(-1),null)
+  for (const value of ['',0,false]) {
+    tree=render({value})
+    assert.equal(triggerValues.at(-1),value)
+    assert.ok(row(tree,'Clear'))
+    row(tree,'Clear').props.onmenuselect({})
+    assert.equal(reports.at(-1).value,null)
+    tree=render()
+    assert.equal(triggerValues.at(-1),value)
+    const count=reports.length
+    tree=render({value:null})
+    assert.equal(reports.length,count)
+    assert.equal(triggerValues.at(-1),null)
+  }
+  assert.ok(runtime.optionsWithSelection(options,null).every(option=>option.selected===false))
+})
+
+test.fast('Select undefined stays uncontrolled and defaults initialize only once', () => {
+  const values=[]
+  const render=renderer(runtime.Select,{
+    options:['alpha','beta'], value:undefined, defaultValue:'alpha',
+    renderTrigger:state=>{values.push(state.value);return h('button',{},'Choose')},
+  })
+  row(render(),'beta').props.onmenuselect({})
+  render({defaultValue:'alpha'})
+  assert.equal(values.at(-1),'beta')
+  const empty=renderer(runtime.Select,{options:[],renderTrigger:state=>{values.push(state.value);return h('button',{},'Choose')}})
+  empty();assert.equal(values.at(-1),null)
+  empty({selection:'multiple',value:[]});assert.deepEqual(values.at(-1),[])
 })

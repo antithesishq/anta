@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import ts from 'typescript'
 import { componentTest as test } from './component-tier.mjs'
 
-test.fast('Select callbacks account for clearing without widening ordinary picks or multiple arrays', () => {
+test.fast('Select uses one nullable single-selection contract and array-valued multiple selection', () => {
   const config = ts.readConfigFile('src/tsconfig.json', ts.sys.readFile)
   const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, resolve('src'))
   const consumer = process.env.ANTA_SELECT_CONSUMER_ROOT

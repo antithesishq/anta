@@ -20,11 +20,11 @@ changes are not listed.
 
 ### Breaking
 
-- [Select clearing](/select/#change-details) is reflected in single-select callback
-  types: handlers must accept `undefined` when `clearable` is enabled or dynamic.
-  Reusable `SelectProps<V>` handlers also accept `undefined`; use
-  `SelectProps<V, false>` when clearing is always disabled. Ordinary component
-  calls without clearing and multiple-select array callbacks retain their types.
+- [Select single selection](/select/#managing-the-value) uses `null` for a controlled
+  empty value, and Clear now reports `null` instead of `undefined`. Use
+  `V | null` for single-select state and callbacks; reset with `value={null}`.
+  Omitted or `undefined` values remain uncontrolled, and multiple selection
+  continues to use arrays with `[]` for an empty selection.
 
 - [SelectFaceted text-editor styling](/select-faceted/#styling) now targets the
   CSS-only `a-select-faceted-text` wrapper. Replace selectors such as

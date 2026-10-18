@@ -118,7 +118,7 @@ function Demo() {
                   indicator={facet.kind === 'single' ? 'check' : undefined}
                   options={facet.options}
                   renderOption={facet.renderOption}
-                  value={value[facet.key]}
+                  value={value[facet.key] ?? (facet.kind === 'single' ? null : [])}
                   onValueChange={(v) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
                   aria-label={facet.label}

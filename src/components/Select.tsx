@@ -122,9 +122,9 @@ export interface EmptyState {
 export interface TriggerState<V extends OptionValue = string> {
   /** Whether the menu is open — use it for `aria-expanded` and a chevron. */
   open: boolean
-  /** The current selection: a single value (single), an array (`multiple`), or
-   *  `undefined` when nothing is chosen. */
-  value: V | V[] | undefined
+  /** The current selection: a value or `null` in single mode, an array in
+   *  multiple mode. An empty array means no multiple selection. */
+  value: V | V[] | null
   /** The resolved option objects for the current selection (empty when none).
    *  `selected.length` is the multi-select count. */
   selected: SelectOption<V>[]
@@ -254,7 +254,7 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  @defaultValue Select all */
   selectAllLabel?: string
   /** Add a "Clear" row pinned in the menu **footer** that empties the selection
-   *  (single → none, multiple → `[]`). Shown only while something is selected, so
+   *  (single → `null`, multiple → `[]`). Shown only while something is selected, so
    *  it never scrolls away in a long or filtered list. */
   clearable?: boolean
   /** Label for the `clearable` footer row.
@@ -315,12 +315,9 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
 
 /**
  * `<Select>` props. `selection` discriminates the value shape: single mode
- * (`value: V`) or `multiple` (`value: V[]`).
- * @typeParam Clearable Whether a single-select callback may receive `undefined`.
- * Set this to `false` for reusable props that never enable clearing. Component
- * calls infer a non-nullable callback when `clearable` is omitted or false.
+ * (`value: V | null`) or `multiple` (`value: V[]`).
  */
-export type SelectProps<V extends OptionValue = string, Clearable extends boolean = boolean> = SelectCommonProps<V> &
+export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
   (
     | {
         /** Selection mode. `'single'` (the default) keeps `value` a single value and
@@ -328,27 +325,25 @@ export type SelectProps<V extends OptionValue = string, Clearable extends boolea
          *  array value.
          *  @defaultValue single */
         selection?: 'single'
-        /** Add a pinned Clear footer that empties the selection. Shown only
-         *  while something is selected. Clearing reports `undefined` in single mode. */
-        clearable?: Clearable
-        /** Controlled value: the selected option's `value`. Update it through
-         *  `onValueChange`. Leave it undefined for uncontrolled use. */
-        value?: V
-        /** Initial selected option value for uncontrolled use. */
-        defaultValue?: V
+        /** Controlled option value. Use `null` for an empty selection; clearing
+         *  to `null` keeps the Select controlled. Omit or pass `undefined` for
+         *  uncontrolled use. Empty strings, `0`, and `false` remain option values. */
+        value?: V | null
+        /** Initial option value for uncontrolled use. `null` starts empty. */
+        defaultValue?: V | null
         /** Reports the new value and a `{ value, option }` snapshot after a pick.
-         *  Clear reports `undefined` with `{ all: true, selected: false }`.
+         *  Clear reports `null` with `{ all: true, selected: false }`.
          *  Narrow on `'all' in attrs` before reading `option`.
          *  Update `value` to accept a controlled change. There is no cancelable
          *  `onStateChange`; see the Input event-model note. */
-        onValueChange?: (value: Clearable extends false ? V : V | undefined, attrs: SelectChangeAttrs<V>) => void
+        onValueChange?: (value: V | null, attrs: SelectChangeAttrs<V>) => void
       }
     | {
         /** Multi-select: checkboxes on every row, the menu stays open while
          *  toggling, the field shows an "N selected" count, and `value` is an array. */
         selection: 'multiple'
-        /** Controlled values — the `value`s of the selected options (see the
-         *  single-select `value` note). */
+        /** Controlled option values. Use `[]` for an empty selection. Omit or
+         *  pass `undefined` for uncontrolled use. */
         value?: V[]
         /** Initial values (option `value`s) for the uncontrolled case. */
         defaultValue?: V[]
@@ -401,8 +396,8 @@ export type SelectedItem<V extends OptionValue = string> =
  *
  * A pure function of `(options, values)` — it needs no `Select` instance and reads
  * nothing off the change event, so it behaves identically in controlled and
- * uncontrolled code. Pass the current `value` (a string, an array, or `undefined`)
- * and render a grouped summary, drive section indicators, or diff picks.
+ * uncontrolled code. Pass the current `value` (an option value, an array,
+ * `null`, or `undefined`) and render a grouped summary, drive section indicators, or diff picks.
  *
  * A value that appears under more than one section marks the leaf in *every* place it
  * occurs (selection is value-keyed), mirroring how the menu itself renders it.
@@ -416,7 +411,7 @@ export type SelectedItem<V extends OptionValue = string> =
  */
 export function optionsWithSelection<V extends OptionValue = string>(
   options: SelectItem<V>[],
-  values: V | V[] | undefined,
+  values: V | V[] | null | undefined,
 ): SelectedItem<V>[] {
   const set = new Set<V>(values == null ? [] : Array.isArray(values) ? values : [values])
 
@@ -456,8 +451,8 @@ export function optionsWithSelection<V extends OptionValue = string>(
 /**
  * `<Select>` lets people choose one or more options from a dropdown. It uses a
  * `<Input button>` as its trigger and a `<Menu>` for its options. `selection` sets behavior:
- * `'single'` (default; `value` is a string, menu closes on pick) or `'multiple'`
- * (checkboxes, `value` is a string array, menu stays open while toggling, the
+ * `'single'` (default; an option value or `null`, menu closes on pick) or `'multiple'`
+ * (checkboxes, an option-value array, menu stays open while toggling, the
  * field shows an "N selected" count). For single-select, `indicator` picks the
  * per-row mark: `'none'` (tint only, default), `'check'` (trailing checkmark), or
  * `'radio'` (leading radio).
@@ -478,9 +473,7 @@ export function optionsWithSelection<V extends OptionValue = string>(
  * />
  * ```
  */
-export function Select<V extends OptionValue = string>(props: SelectProps<V, false>): React.ReactElement
-export function Select<V extends OptionValue = string>(props: SelectProps<V>): React.ReactElement
-export function Select<V extends OptionValue = string>(props: SelectProps<V, false> | SelectProps<V>) {
+export const Select = <V extends OptionValue = string>(props: SelectProps<V>) => {
   // External API is a discriminated union (value typed by `selection`); internally
   // we treat it loosely — `multiple` branches at runtime.
   const {
@@ -531,7 +524,7 @@ export function Select<V extends OptionValue = string>(props: SelectProps<V, fal
   const controlled = value !== undefined
   // Uncontrolled selection lives here (component state re-render is allowed where
   // element DOM mutation isn't). `open` drives the chevron + aria-expanded.
-  const [internal, setInternal] = useState<V | V[] | undefined>(defaultValue)
+  const [internal, setInternal] = useState<V | V[] | null>(defaultValue ?? (multiple ? [] : null))
   const currentRaw = controlled ? value : internal
   const [open, setOpen] = useState(false)
   // Filter query (reset when the menu closes — see the Menu's onStateChange).
@@ -637,11 +630,10 @@ export function Select<V extends OptionValue = string>(props: SelectProps<V, fal
     if (!controlled) setInternal(next)
     emit?.(next, { all: true, selected: !allSelected })
   }
-  // Footer "Clear": empty the selection (single → undefined, multiple → []). Single
-  // must clear to `undefined`, not '': `selectedValues` treats '' as a present pick,
-  // which would keep the footer's Clear row visible with nothing to clear.
+  // Empty selections stay controlled: null for single, [] for multiple.
+  // An empty string remains a valid option value.
   const clear = () => {
-    const next = multiple ? [] : undefined
+    const next = multiple ? [] : null
     if (!controlled) setInternal(next)
     emit?.(next, { all: true, selected: false })
   }

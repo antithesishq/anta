@@ -47,7 +47,8 @@ function DurationEditor({ value, onChange }: { value?: DurationValue; onChange: 
         aria-label="Duration comparison"
         options={DURATION_COMPARISONS}
         value={comparison}
-        onValueChange={(next: string) => {
+        onValueChange={(next) => {
+          if (next === null) return
           setDraftComparison(next)
           if (value?.min.trim()) onChange({ min: value.min, comparison: next })
         }}
@@ -157,7 +158,7 @@ export function SelectFacetedBasicDemo() {
                   indicator={facet.kind === 'single' ? 'check' : undefined}
                   options={facet.options}
                   renderOption={facet.renderOption}
-                  value={value[facet.key] as any}
+                  value={(value[facet.key] ?? (facet.kind === 'single' ? null : [])) as any}
                   onValueChange={(v: any) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
                   aria-label={facet.label}

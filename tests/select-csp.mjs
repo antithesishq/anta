@@ -79,7 +79,7 @@ before(async () => {
       let root, props={}; window.reports=[];window.recoverableErrors=[];window.fatalErrors=[];
       const handlers={onValueChange:(value,attrs)=>reports.push({value,attrs})};
       const commit=node=>{${react ? "root??=createRoot(document.querySelector('#mount'));root.render(node)" : "render(node,document.querySelector('#mount'))"}};
-      window.hydrateSelect=()=>{configure(h,React.Fragment,React,{hydratingEvents:true});${react ? "root=hydrateRoot(document.querySelector('#mount'),app(handlers),{onRecoverableError:e=>recoverableErrors.push(e.message),onUncaughtError:e=>fatalErrors.push(e.message)})" : "hydrate(app(handlers),document.querySelector('#mount'))"}};
+      window.hydrateSelect=(initial={})=>{props={...initial};configure(h,React.Fragment,React,{hydratingEvents:true});${react ? "root=hydrateRoot(document.querySelector('#mount'),app({...handlers,...props}),{onRecoverableError:e=>recoverableErrors.push(e.message),onUncaughtError:e=>fatalErrors.push(e.message)})" : "hydrate(app({...handlers,...props}),document.querySelector('#mount'))"}};
       window.updateSelect=updates=>{props={...props,...updates};commit(app({...handlers,...props}))};
       window.customIndicator=()=>updateSelect({renderIndicator:state=>h(Icon,{shape:state.selected?'check':'minus'})});
       window.renderHooks=()=>{customIndicator();updateSelect({renderSummary:selected=>selected.map(o=>o.label).join(' / '),renderEmpty:({query})=>h('span',{'data-empty':''},'No '+query)})};
@@ -107,6 +107,7 @@ before(async () => {
     res.setHeader('Content-Security-Policy', original ? policy.replace("style-src 'self'; style-src-attr 'none'", "style-src 'self' 'unsafe-inline'") : policy)
     res.setHeader('Content-Type', `${url.pathname.endsWith('.js') ? 'text/javascript' : url.pathname.endsWith('.css') ? 'text/css' : 'text/html'}; charset=utf-8`)
     const props = url.searchParams.has('size') ? {size:url.searchParams.get('size'),status:url.searchParams.get('status'),round:url.searchParams.has('round')} : {}
+    if (url.searchParams.has('single-empty')) Object.assign(props,{selection:'single',value:null,defaultValue:1,filter:false,renderOption:undefined})
     res.end(assets.get(url.pathname) ?? `<!doctype html><html class="${url.searchParams.has('dark') ? 'dark' : ''}"><link rel="stylesheet" href="/${mode}.css">${url.searchParams.has('theme') ? `<link rel="stylesheet" href="/${url.searchParams.get('theme')}.css">` : ''}<link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${renderers.get(framework + (original ? '-original' : ''))(props,url.searchParams.has('faceted'))}</main><button id="outside">Outside</button>`)
   })
   await new Promise(r => server.listen(0, '127.0.0.1', r)); origin = `http://127.0.0.1:${server.address().port}`
@@ -114,17 +115,17 @@ before(async () => {
   console.log('Select browser coverage:', JSON.stringify([...browsers].map(([engine, browser]) => ({engine: engine.name(), version: browser.version()}))))
 })
 after(async () => { await Promise.all([...browsers.values()].map(b => b.close())); if (server) await new Promise(r => server.close(r)) })
-async function pageFor(t, engine, mode, framework, faceted = false) {
+async function pageFor(t, engine, mode, framework, faceted = false, singleEmpty = false) {
   const page = await browsers.get(engine).newPage()
   page.setDefaultTimeout(7000)
   const errors = []; page.on('pageerror', e => errors.push(e.message))
-  const response = await page.goto(`${origin}/?mode=${mode}&framework=${framework}${faceted ? '&faceted' : ''}`)
+  const response = await page.goto(`${origin}/?mode=${mode}&framework=${framework}${faceted ? '&faceted' : ''}${singleEmpty ? '&single-empty' : ''}`)
   assert.equal(response.headers()['content-security-policy'], policy)
   t.after(async () => { try { assert.deepEqual(errors, []); assert.deepEqual(await page.evaluate(() => window.fatalErrors ?? []), []); assert.deepEqual(await page.evaluate(() => violations), []) } finally { await page.close() } })
   return page
 }
-async function hydrate(page, mode, framework) {
-  await page.evaluate(async ({mode, framework}) => {await import(`/${mode}.js`);await import(`/${framework}.js`);window.originalTrigger=document.querySelector('#trigger');window.originalMenu=originalTrigger.nextElementSibling;hydrateSelect()}, {mode, framework})
+async function hydrate(page, mode, framework, initial = {}) {
+  await page.evaluate(async ({mode, framework, initial}) => {await import(`/${mode}.js`);await import(`/${framework}.js`);window.originalTrigger=document.querySelector('#trigger');window.originalMenu=originalTrigger.nextElementSibling;hydrateSelect(initial)}, {mode, framework, initial})
   await page.waitForFunction(() => document.querySelector('#trigger + a-menu')?.listening)
   // Wait for the hydration helper's event-prop commit in both renderers.
   await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))
@@ -275,6 +276,40 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
       assert.equal(await menu(page).locator('b').textContent(), 'Engineering')
       assert.equal(await menu(page).locator('a-menu-group-label').textContent(), 'People')
       await page.locator('#outside').click(); await page.waitForFunction(() => !originalMenu.isOpen)
+    })
+    test(`${name} ${framework}: null single selection survives SSR, rejected picks, Clear, and external updates`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
+      const page=await pageFor(t,engine,mode,framework,false,true)
+      assert.equal(await page.locator('#trigger').getAttribute('value'),'')
+      await hydrate(page,mode,framework,{selection:'single',value:null,defaultValue:1,filter:false,renderOption:undefined})
+      const field=page.locator('#trigger')
+      assert.equal(await field.evaluate(el=>el.value),'')
+      assert.deepEqual(await page.evaluate(()=>reports),[])
+      assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+      await page.evaluate(()=>updateSelect({value:1}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Alpha')
+      await page.evaluate(()=>updateSelect({value:null}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='')
+      assert.deepEqual(await page.evaluate(()=>reports),[])
+      await page.locator('#trigger button').click()
+      await menu(page).getByRole('menuitemradio',{name:/^Beta/}).click()
+      await page.waitForFunction(()=>reports.length===1)
+      assert.equal(await page.evaluate(()=>reports[0].value),false)
+      assert.equal(await field.evaluate(el=>el.value),'')
+      await page.evaluate(()=>updateSelect({value:false}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Beta')
+      await page.locator('#trigger button').click()
+      await menu(page).getByRole('menuitem',{name:'Clear',exact:true}).click()
+      await page.waitForFunction(()=>reports.length===2)
+      assert.deepEqual(await page.evaluate(()=>reports[1]),{value:null,attrs:{all:true,selected:false}})
+      assert.equal(await field.evaluate(el=>el.value),'Beta')
+      await page.evaluate(()=>updateSelect({value:null}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='')
+      await page.evaluate(()=>updateSelect({options:[{value:0,label:'Zero'},{value:'',label:'Empty string'}],value:0}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Zero')
+      await page.evaluate(()=>updateSelect({value:''}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Empty string')
+      assert.equal(await page.evaluate(()=>reports.length),2)
+      assert.deepEqual(await page.evaluate(()=>({trigger:document.querySelector('#trigger')===originalTrigger,menu:originalTrigger.nextElementSibling===originalMenu,errors:recoverableErrors})),{trigger:true,menu:true,errors:[]})
     })
     test(`${name} ${framework}: SelectFaceted text layout survives CSP and controlled drafts hydrate in place`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
       const page = await pageFor(t,engine,mode,framework,true)

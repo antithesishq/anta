@@ -88,7 +88,7 @@ selection. Disabled options are also skipped during keyboard navigation.
 ```tsx folded
 // The same tree drives both modes — selection is global, so `selection` is the
 // only difference between the two selects below.
-const [one, setOne] = useState('stream')
+const [one, setOne] = useState<string | null>('stream')
 const [many, setMany] = useState(['stream', 'tag.env'])
 const fields = [
   'output_text',                                         // a plain option
@@ -139,8 +139,8 @@ group headings. They can find a match without opening each submenu.
 
 ```tsx folded
 const options = ['output_text', 'stream', 'container', 'vtime', 'custom']
-const [check, setCheck] = useState('stream')
-const [radio, setRadio] = useState('stream')
+const [check, setCheck] = useState<string | null>('stream')
+const [radio, setRadio] = useState<string | null>('stream')
 const [many, setMany] = useState(['stream', 'container'])
 
 <Select label="Checkmark · brand tone" indicator="check" tone="brand"
@@ -212,7 +212,7 @@ const options = [
   { value: 'condition', hint: 'Passing or failing' },
   { value: 'fault', hint: 'Injected fault type and name' },
 ]
-const [one, setOne] = useState('stream')
+const [one, setOne] = useState<string | null>('stream')
 const [many, setMany] = useState(['stream'])
 
 <Select label="Single · filter" filter indicator="check"
@@ -264,22 +264,30 @@ select outside the popup to dismiss it. Closing the popup resets the query.
 </Preview>
 
 ```tsx folded
-const [field, setField] = useState('stream')
+const [field, setField] = useState<string | null>('stream')
 
 <Select
   label="Field"
   options={['output_text', 'stream', 'container', 'vtime', 'custom']}
+  placeholder="Select a field…"
   value={field}
-  onValueChange={(v) => setField(v)}
+  onValueChange={setField}
+  clearable
 />
+<Button label="Reset selection" size="small" priority="tertiary"
+  onClick={() => setField(null)} />
 ```
 
 </Col>
 <Col>
 
 Pass `value` and update it in `onValueChange` when your application manages the
-selection. For a Select that manages its own selection, omit `value` and pass
-`defaultValue` to choose an initial option.
+selection. Set it to `null` to clear a single selection while keeping control.
+The example's **Reset selection** button does this from application state.
+
+For a Select that manages its own selection, omit `value` or pass `undefined`.
+Use `defaultValue` to choose an initial option. Clear reports `null` for single
+selection and `[]` for multiple selection.
 
 Single selection uses one option value. Multiple selection uses an array of
 values. Keep each option's value unique across groups and submenus.
@@ -703,7 +711,7 @@ to the replacement element.
 
 ```tsx folded
 const [options, setOptions] = useState(['bug', 'feature', 'chore', 'docs'])
-const [value, setValue] = useState()
+const [value, setValue] = useState<string | null>(null)
 const [loading, setLoading] = useState(false) // application fetch state
 
 <Select
@@ -761,10 +769,13 @@ the keyboard. Validate the query before offering to create an option.
 | One option | `value` and the resolved `option`; multiple selection also includes `selected`. |
 | Select all or Clear | `all: true` and `selected`, with no single `option`. |
 
-Clear reports `undefined` in single mode and an empty array in multiple mode.
-Handle that empty value when `clearable` is enabled, including when its value is
-a dynamic boolean. Reusable `SelectProps<V>` callbacks account for clearing;
-use `SelectProps<V, false>` when those props never enable it.
+Single-selection callbacks receive `V | null`; multiple-selection callbacks
+receive `V[]`. Clear reports `null` or `[]` respectively. These types are the
+same whether or not `clearable` shows the Clear action.
+
+`value={null}` keeps a single Select controlled and empty. Omit `value` or use
+`undefined` for uncontrolled mode. Updating a controlled value, including a
+reset to `null`, does not itself call `onValueChange`.
 
 Check `'all' in attrs` before reading `attrs.option`, including in single mode
 when `clearable` is enabled. A controlled Select accepts a change when you update

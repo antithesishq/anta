@@ -38,7 +38,7 @@ selection. Disabled options are also skipped during keyboard navigation.
 ```tsx
 // The same tree drives both modes — selection is global, so `selection` is the
 // only difference between the two selects below.
-const [one, setOne] = useState('stream')
+const [one, setOne] = useState<string | null>('stream')
 const [many, setMany] = useState(['stream', 'tag.env'])
 const fields = [
   'output_text',                                         // a plain option
@@ -76,8 +76,8 @@ group headings. They can find a match without opening each submenu.
 
 ```tsx
 const options = ['output_text', 'stream', 'container', 'vtime', 'custom']
-const [check, setCheck] = useState('stream')
-const [radio, setRadio] = useState('stream')
+const [check, setCheck] = useState<string | null>('stream')
+const [radio, setRadio] = useState<string | null>('stream')
 const [many, setMany] = useState(['stream', 'container'])
 
 <Select label="Checkmark · brand tone" indicator="check" tone="brand"
@@ -136,7 +136,7 @@ const options = [
   { value: 'condition', hint: 'Passing or failing' },
   { value: 'fault', hint: 'Injected fault type and name' },
 ]
-const [one, setOne] = useState('stream')
+const [one, setOne] = useState<string | null>('stream')
 const [many, setMany] = useState(['stream'])
 
 <Select label="Single · filter" filter indicator="check"
@@ -175,19 +175,27 @@ select outside the popup to dismiss it. Closing the popup resets the query.
 ## Managing the value
 
 ```tsx
-const [field, setField] = useState('stream')
+const [field, setField] = useState<string | null>('stream')
 
 <Select
   label="Field"
   options={['output_text', 'stream', 'container', 'vtime', 'custom']}
+  placeholder="Select a field…"
   value={field}
-  onValueChange={(v) => setField(v)}
+  onValueChange={setField}
+  clearable
 />
+<Button label="Reset selection" size="small" priority="tertiary"
+  onClick={() => setField(null)} />
 ```
 
 Pass `value` and update it in `onValueChange` when your application manages the
-selection. For a Select that manages its own selection, omit `value` and pass
-`defaultValue` to choose an initial option.
+selection. Set it to `null` to clear a single selection while keeping control.
+The example's **Reset selection** button does this from application state.
+
+For a Select that manages its own selection, omit `value` or pass `undefined`.
+Use `defaultValue` to choose an initial option. Clear reports `null` for single
+selection and `[]` for multiple selection.
 
 Single selection uses one option value. Multiple selection uses an array of
 values. Keep each option's value unique across groups and submenus.
@@ -515,7 +523,7 @@ to the replacement element.
 
 ```tsx
 const [options, setOptions] = useState(['bug', 'feature', 'chore', 'docs'])
-const [value, setValue] = useState()
+const [value, setValue] = useState<string | null>(null)
 const [loading, setLoading] = useState(false) // application fetch state
 
 <Select
@@ -559,9 +567,9 @@ the keyboard. Validate the query before offering to create an option.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `options` | SelectItem[] | — | The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and submenus nest and mix with plain options. Selection stays global (one `value`, leaf options only); a filter query flattens the tree into grouped results. `Select` infers its value type `V` from these options: `{ value: 365 }` makes `onValueChange` report `number`. A mix of value types widens `V` to the union. Each leaf `value` is the option's identity and must be **unique across the whole tree** (selection is value-keyed, so a value repeated in two sections is one logical pick: both rows toggle together, the trigger resolves to the last). Values that stringify alike (`365` and `"365"`) also collide as row keys; dev builds `console.warn` on either. |
-| `clearable?` | boolean \| Clearable | — | Add a "Clear" row pinned in the menu **footer** that empties the selection (single → none, multiple → `[]`). Shown only while something is selected, so it never scrolls away in a long or filtered list. |
+| `clearable?` | boolean | — | Add a "Clear" row pinned in the menu **footer** that empties the selection (single → `null`, multiple → `[]`). Shown only while something is selected, so it never scrolls away in a long or filtered list. |
 | `clearLabel?` | string | Clear | Label for the `clearable` footer row. |
-| `defaultValue?` | V \| V[] | — | Initial selected option value for uncontrolled use. |
+| `defaultValue?` | V \| null \| V[] | — | Initial option value for uncontrolled use. `null` starts empty. |
 | `dimActions?` | boolean | true | Dim the default trigger's leading content and chevron at rest. They brighten on hover or focus. Ignored by `renderTrigger`. |
 | `disabled?` | boolean | — | Disable the whole select. |
 | `filter?` | boolean \| (option, query) => boolean | — | Add a search field that filters option values, labels, and hints. `true` uses case-insensitive substring matching. A space in the trimmed query matches a run of whitespace. Built-in row text highlights matches. A custom `(option, query) => boolean` receives the trimmed query and returns whether to keep the option, without automatic highlighting. It runs once per option on each render, including for an empty query. Rows, empty content, and filtered Select all use the same results. A query flattens groups and submenus into grouped results. Closing the popup resets the query. |
@@ -571,7 +579,7 @@ the keyboard. Validate the query before offering to create an option.
 | `label?` | string | — | Visible field label and accessible name for the default trigger. If omitted, provide `aria-label` or `aria-labelledby` that identifies the field. Leading content and the chevron are hidden from assistive technologies and do not label the trigger. |
 | `leading?` | ReactNode | — | Content before the default trigger's value, such as a key prefix before the value. It replaces the icon derived from `icon`. Include an `<Icon>` in this content when both are needed. Hidden from assistive technologies. Include any meaningful prefix in `label` or `aria-label`. Ignored by `renderTrigger`. |
 | `offset?` | number | 4 | Gap in pixels between the trigger and the options menu. |
-| `onValueChange?` | (value, attrs) => void | — | Reports the new value and a `{ value, option }` snapshot after a pick. Clear reports `undefined` with `{ all: true, selected: false }`. Narrow on `'all' in attrs` before reading `option`. Update `value` to accept a controlled change. There is no cancelable `onStateChange`; see the Input event-model note. |
+| `onValueChange?` | (value, attrs) => void | — | Reports the new value and a `{ value, option }` snapshot after a pick. Clear reports `null` with `{ all: true, selected: false }`. Narrow on `'all' in attrs` before reading `option`. Update `value` to accept a controlled change. There is no cancelable `onStateChange`; see the Input event-model note. |
 | `placeholder?` | string | — | Text shown when nothing is selected. |
 | `placement?` | 'left' \| 'right' \| 'bottom' \| 'top' \| 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' | bottom-start | Preferred placement of the options menu relative to the trigger. The menu auto-flips vertically and clamps horizontally when needed. |
 | `renderEmpty?` | (state) => ReactNode | — | Render content in the menu body when the (filtered) option list is empty — a "no results" message, a loading indicator (gated on your own external loading state), or a "create from the query" row. Receives an `EmptyState` (`query`, trimmed). There is no built-in empty message: when omitted, an empty list renders nothing. Whatever you return goes where the option rows would — a plain node is inert; return a `MenuItem` (e.g. a "Create" row) to make it focusable and selectable. |
@@ -588,7 +596,7 @@ the keyboard. Validate the query before offering to create an option.
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set. Each status has a default; pass a shape to override, or `false` to drop it. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone. An option's own `tone` wins. A named tone or a custom CSS color. Most visible with tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` / `'checkbox'` it also tones the indicator. |
 | `toneScope?` | 'all' \| 'selected' | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
-| `value?` | V \| V[] | — | Controlled value: the selected option's `value`. Update it through `onValueChange`. Leave it undefined for uncontrolled use. |
+| `value?` | V \| null \| V[] | — | Controlled option value. Use `null` for an empty selection; clearing to `null` keeps the Select controlled. Omit or pass `undefined` for uncontrolled use. Empty strings, `0`, and `false` remain option values. |
 | `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected: A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies to the multi-count case only: `All` stays `All`, a single pick stays its own label, and an empty selection stays the `placeholder`. The list flows into the default trigger's value, so it ellipsizes at the field's width when long (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
 
 ### Change details
@@ -600,10 +608,13 @@ the keyboard. Validate the query before offering to create an option.
 | One option | `value` and the resolved `option`; multiple selection also includes `selected`. |
 | Select all or Clear | `all: true` and `selected`, with no single `option`. |
 
-Clear reports `undefined` in single mode and an empty array in multiple mode.
-Handle that empty value when `clearable` is enabled, including when its value is
-a dynamic boolean. Reusable `SelectProps<V>` callbacks account for clearing;
-use `SelectProps<V, false>` when those props never enable it.
+Single-selection callbacks receive `V | null`; multiple-selection callbacks
+receive `V[]`. Clear reports `null` or `[]` respectively. These types are the
+same whether or not `clearable` shows the Clear action.
+
+`value={null}` keeps a single Select controlled and empty. Omit `value` or use
+`undefined` for uncontrolled mode. Updating a controlled value, including a
+reset to `null`, does not itself call `onValueChange`.
 
 Check `'all' in attrs` before reading `attrs.option`, including in single mode
 when `clearable` is enabled. A controlled Select accepts a change when you update

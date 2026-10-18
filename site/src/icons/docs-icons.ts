@@ -21,6 +21,7 @@ export const ICON_SHAPES = [
   'dialog',
   'footprints',
   'github-logo',
+  'grid-lines-offset',
   'inspection-panel',
   'layout-freeform',
   'loader-docs',
@@ -60,6 +61,7 @@ declare module '@antadesign/anta' {
     'dialog': true
     'footprints': true
     'github-logo': true
+    'grid-lines-offset': true
     'inspection-panel': true
     'layout-freeform': true
     'loader-docs': true

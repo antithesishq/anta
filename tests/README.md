@@ -57,6 +57,13 @@ checks, browser overrides, and appearance comparisons.
 The Capture, Slider pointer, and Panel regressions are also included in `pnpm test`.
 Consumer fixtures and the Button harness run separately on request.
 
+## CI bounds and follow-ups
+
+New runs cancel older runs for the same PR. Manual CI runs remain independent.
+The workflow bounds jobs, installation, and browser test steps so a stalled
+check cannot hold a runner indefinitely. See [CI](../.github/workflows/ci.yml)
+for the current limits and [testing follow-ups](FOLLOWUPS.md) for remaining work.
+
 ## Temporary CI exclusions
 
 CI sets `ANTA_TEST_WEBKIT=0` and filters the search debounce case through

@@ -56,6 +56,7 @@ jobs:
             echo 'copy=true' >> "$GITHUB_OUTPUT"
             echo 'calendar=true' >> "$GITHUB_OUTPUT"
             echo 'card=true' >> "$GITHUB_OUTPUT"
+            echo 'stickers=true' >> "$GITHUB_OUTPUT"
             echo 'text=true' >> "$GITHUB_OUTPUT"
             echo 'progress=true' >> "$GITHUB_OUTPUT"
             echo 'expander=true' >> "$GITHUB_OUTPUT"
@@ -209,6 +210,16 @@ jobs:
             echo 'text=true' >> "$GITHUB_OUTPUT"
           else
             echo 'text=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            stickers src/{jsx-runtime,anta_helpers,general_types}.ts \
+            'tests/stickers*' 'tests/component*.mjs' .github/workflows/ci.yml \
+            tests/consumers/templates/nextjs/package.json package.json pnpm-lock.yaml \
+            pnpm-workspace.yaml site/package.json plot/package.json)
+          if [ -n "$changed" ]; then
+            echo 'stickers=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'stickers=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-progress*' src/components/Progress.tsx \

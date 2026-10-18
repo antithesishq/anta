@@ -111,7 +111,9 @@
     "test:selection": "node --test tests/selection-projection.mjs tests/selection-value.mjs",
     "test:selection:package": "node tests/selection-package.mjs",
     "test:slider": "node --test tests/slider-projection.mjs tests/slider-csp.mjs",
-    "test:slider:package": "node tests/slider-package.mjs"
+    "test:slider:package": "node tests/slider-package.mjs",
+    "test:stickers": "node --test tests/stickers-csp.mjs",
+    "test:stickers:package": "node tests/stickers-package.mjs"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

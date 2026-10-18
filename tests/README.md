@@ -332,3 +332,18 @@ source matrix runs Chrome, Firefox, and WebKit; the shared fast tier runs core
 checks in Chrome. `pnpm test:selection:package` runs the matrix through an
 isolated installed tarball. Calendar/InputDate's existing round-trip and form
 regressions remain in `pnpm test:calendar`.
+
+### Stickers CSP
+
+Run `pnpm test:stickers` for static and animated stickers in Chromium, Firefox,
+and WebKit with enforced CSP response headers. Run
+`pnpm test:stickers:package` to repeat the matrix with installed Anta and stickers
+tarballs in an isolated React/Preact consumer. Both full and granular entries,
+SSR, hydration, and the blocked SSR `size` style are covered.
+
+`ANTA_STICKERS_COMPARE_REF=codex/slider-refactor pnpm test:stickers` compares
+all 49 static poses and animated frames at 0.5 seconds with a Git reference.
+The reference renders without CSP; the current gallery renders with strict CSP.
+Screenshots, Lottie style inventories, and tarball metadata remain in
+`tests/.test-output/stickers/`. The fast tier runs core layout, playback, and
+hydration checks; package and gallery comparisons belong to the slow tier.

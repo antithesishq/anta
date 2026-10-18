@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "packageManager": "pnpm@8.13.1",
   "exports": {
@@ -17,6 +18,7 @@
       "types": "./dist/elements/index.d.ts",
       "default": "./dist/elements/index.js"
     },
+    "./elements/*.css": "./dist/elements/*.css",
     "./elements/*": {
       "types": "./dist/elements/*.d.ts",
       "default": "./dist/elements/*.js"

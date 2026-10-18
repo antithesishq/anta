@@ -56,3 +56,21 @@ See [`../RELEASING.md`](../RELEASING.md) for the mandatory package order and com
 npm version patch   # bump first (immutable versions)
 pnpm publish --no-git-checks
 ```
+
+## Styling and CSP
+
+Keep sticker layout in external CSS through `container` and `artwork` parts.
+Do not inject shadow stylesheets or remove SVG shadow isolation. Keep the
+container square and independent of consumer host dimensions. Lottie owns its
+SVG CSSOM writes; verify CSP with response headers and computed styles, rather
+than rejecting the presence of every generated `style` attribute.
+
+Bundled static SVGs must use presentation attributes instead of inline styles.
+After editing artwork, regenerate modules with `pnpm run stickers`. The `size`
+prop intentionally remains an inline style API; document its SSR limitation
+under `style-src-attr 'none'` and recommend external host CSS there.
+
+Run `pnpm test:stickers` for the browser matrix and
+`pnpm test:stickers:package` for installed tarballs with React and Preact.
+Sticker release notes belong in `stickers/CHANGELOG.md`, outside Anta's root
+changelog.

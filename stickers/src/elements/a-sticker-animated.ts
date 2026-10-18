@@ -23,9 +23,7 @@ import './a-sticker-animated.css'
  *  - `replay-on-click` — present with `play-once`: clicking or pressing
  *    Enter/Space restarts the animation from its first frame.
  *
- * The shadow container is sized from `--sticker-size` (set by the JSX
- * wrapper's `size` prop or the consumer), with a 256px fallback — see
- * `<a-sticker>` for why sizing lives on the shadow node, not the host.
+ * External CSS sizes the owned `container` and `artwork` parts.
  *
  * The static counterpart is `<a-sticker>`.
  */
@@ -51,16 +49,9 @@ export class AStickerAnimatedElement extends HTMLElementBase {
     super()
     const shadow = this.attachShadow({ mode: 'open' })
 
-    const style = document.createElement('style')
-    style.textContent = `
-      :host { display: inline-grid; place-items: center; }
-      div { width: var(--sticker-size, 256px); height: var(--sticker-size, 256px); }
-      div > svg { display: block; width: 100%; height: 100%; }
-    `
-
     this.container = document.createElement('div')
-
-    shadow.append(style, this.container)
+    this.container.part.add('container')
+    shadow.append(this.container)
   }
 
   connectedCallback() {
@@ -98,6 +89,8 @@ export class AStickerAnimatedElement extends HTMLElementBase {
       autoplay: false,
       animationData: this._animation,
     })
+
+    this.container.querySelector(':scope > svg')?.part.add('artwork')
 
     this.player.addEventListener('complete', () => {
       if (this.hasAttribute('play-once')) {

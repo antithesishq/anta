@@ -1,13 +1,12 @@
 # Tabs
 
-A tablist for switching between views. The strip is data-driven: pass an
-`options` array (like [RadioGroup](./radio.md)), each entry a unique `value` plus a
-`label` (or `children`) and optional `icon` / `iconTrailing`. That alone is a
-selectable strip that emits the chosen value; add matching `<TabPanel>` children
-(see [Panels](#panels)) to show and hide the content too.
+Use Tabs to switch between related views, such as account and security settings.
+Pass an `options` array with a unique `value` and a label for each tab. Add
+matching `TabPanel` children to display the selected view, or render that
+content yourself.
 
-Each option can also set `className`, `style`, and `data-*` attributes on its
-individual `<a-tab>`.
+Options also accept icons, custom content, `className`, `style`, and `data-*`
+attributes. See [Panels](#panels) for content layout.
 
 ## Priority
 
@@ -44,9 +43,8 @@ custom color); columns are priorities.
 **Per-tab tone.** A `tone` on an individual option overrides the strip's tone for that one
 tab: it colors the label and icons in every mode, and the indicator when it's the active tab.
 The track background and border keep the strip's tone when selection changes.
-A named tone colors the sliding indicator too; a custom literal color tones the label
-everywhere but the indicator only under `noslide` (the single shared sliding element can't
-read a descendant's color).
+Named tones also color the sliding indicator. For a custom CSS color on an
+individual option, pass `noslide` to color its indicator too.
 
 ```tsx
 <Tabs
@@ -123,10 +121,9 @@ instead of `label`, like a [Tag](./tag.md) counter.
 When the tabs don't fit, their labels truncate with an ellipsis; the strip never
 widens the page. To scroll or wrap labels instead, see [Styling](#styling).
 
-Set an option's **`tooltip`** and a clipped tab reveals its full label on hover; tabs
-that fit show nothing. It renders as a `truncatedOnly` [Tooltip](./tooltip.md#show-only-when-truncated)
-anchored to the tab, so it shows only when the label ellipsizes. Hover the truncated
-tabs above to see it.
+Set an option's `tooltip` to reveal its full label when truncated. Tabs whose
+labels fit do not show a tooltip. See
+[Show only when truncated](./tooltip.md#show-only-when-truncated).
 
 ```tsx
 <Tabs
@@ -170,7 +167,9 @@ include forms, charts, or other components.
 Panels are optional. To render the selected content yourself, listen to
 `onStateChange` or `onValueChange`.
 
-### JSX vs DOM
+<a id="jsx-vs-dom"></a>
+
+### Panel layout
 
 `Tabs` renders the strip followed by its panels as siblings, without a wrapper.
 `className`, `id`, `style`, and extra props apply to the strip. Keep the strip
@@ -194,38 +193,42 @@ layout region, control `value` and render that content yourself.
 
 ### Hiding an inactive panel
 
-A `<TabPanel>` stays mounted while inactive (its DOM, form values, and scroll
-survive tab switches); `hideMode` picks how it hides:
+Inactive panels stay mounted, preserving form values and scroll position.
+Choose how they hide with `hideMode`:
 
-- **`display`** (default): `display:none`; leaves the tab order + a11y tree.
-- **`visibility`**: `visibility:hidden`, keeping its layout box (to avoid reflow
-  or to measure a hidden panel).
+- `display` (default) removes the inactive panel from layout, keyboard navigation,
+  and the accessibility tree.
+- `visibility` keeps its layout space while hiding its content.
 
 ```tsx
-<TabPanel value="b" hideMode="visibility"><Chart /></TabPanel>
+<TabPanel value="activity" hideMode="visibility"><ActivityChart /></TabPanel>
 ```
 
-To **not render** an inactive panel at all (unmount it to reset its state or defer an
-expensive subtree, or mount it lazily on first open), drive selection with a
-controlled `value` and render the panels yourself. `Tabs` passes panels straight
-through, so you decide what's mounted:
+To reset a panel's state when leaving it, control selection and render only the
+active panel:
 
 ```tsx
-const [tab, setTab] = useState('a')
+const [tab, setTab] = useState('summary')
 
-// Unmount inactive — only the open panel exists:
-<Tabs value={tab} onStateChange={(_e, { next }) => next && setTab(next)} options={…}>
-  {tab === 'a' && <TabPanel value="a"><Expensive /></TabPanel>}
-  {tab === 'b' && <TabPanel value="b"><Form /></TabPanel>}
+<Tabs
+  label="Report"
+  value={tab}
+  onStateChange={(_event, { next }) => { if (next !== null) setTab(next) }}
+  options={[
+    { value: 'summary', label: 'Summary' },
+    { value: 'activity', label: 'Activity' },
+  ]}
+>
+  {tab === 'summary' && <TabPanel value="summary"><Summary /></TabPanel>}
+  {tab === 'activity' && <TabPanel value="activity"><ActivityChart /></TabPanel>}
 </Tabs>
-
-// Lazy — mount on first open, keep after (track a "seen" set in state):
-{seen.has('b') && <TabPanel value="b"><Heavy /></TabPanel>}
 ```
 
-The same controlled pattern places the strip and panels in **different layout
-regions**: render `<Tabs options={…} value onStateChange>` in one place and your
-content wherever you like, switching on the value yourself.
+For expensive panels, track which values have been opened and mount each panel
+on its first visit. Keep it mounted afterward to preserve its state.
+
+The same controlled pattern lets you place the strip and selected content in
+separate layout regions. Render the content according to the current `value`.
 
 ## Controlled vs. uncontrolled
 
@@ -255,7 +258,7 @@ const [tab, setTab] = useState('overview')
 
 <Tabs
   value={tab}
-  onStateChange={(e, { next }) => setTab(next)}
+  onStateChange={(_event, { next }) => { if (next !== null) setTab(next) }}
   options={[
     { value: 'overview', label: 'Overview' },
     { value: 'activity', label: 'Activity' },
@@ -263,7 +266,9 @@ const [tab, setTab] = useState('overview')
 />
 ```
 
-## Keyboard & accessibility
+<a id="keyboard-accessibility"></a>
+
+## Keyboard and accessibility
 
 The selected tab is in the page's tab order. Once focus enters the strip, the
 arrow keys move between enabled tabs (wrapping at the ends), `Home` /
@@ -271,19 +276,16 @@ arrow keys move between enabled tabs (wrapping at the ends), `Home` /
 arrow / `Home` / `End` navigation activates as it moves (selection follows focus).
 Disabled tabs are skipped and dropped from the tab order.
 
-Pass `label` for the tablist's accessible name. Each `<TabPanel>` names its tab as
-its accessible label (`aria-labelledby`), set off-DOM so nothing writes the panel's
-attributes. Static panel content remains readable without making the panel a tab
-stop. Set `tabIndex={0}` when you want a text-only panel itself to receive focus;
-when the panel starts with a focusable control, Tab reaches that control directly.
+Pass `label` to name the tablist for screen readers. Each `TabPanel` uses its
+corresponding tab as its accessible label. Set `tabIndex={0}` when a text-only
+panel should receive keyboard focus. When the panel starts with a focusable
+control, Tab reaches that control directly.
 
 ## Routing
 
-`Tabs` reports the picked value and leaves navigation to the app, so a strip can
-switch routes as readily as panels. Treat each `value` as a path: control `value`
-from the current location and navigate in `onStateChange` (the pick fires *on click*;
-`onValueChange` waits for `value` to change, which for a route happens only after
-you've already navigated). Skip the `<TabPanel>`s, since the router renders the view.
+To use Tabs for routes, control `value` from the current path and navigate in
+`onStateChange`. It reports the requested destination before the route changes.
+The router renders the content, so omit `TabPanel` children.
 
 ```tsx
 <Tabs
@@ -311,16 +313,20 @@ Three callbacks, in firing order:
 | `onChange(e)` | **after** selection applies | — | native `change` event |
 | `onValueChange(e, { value })` | **after** selection applies | — | `{ value }` |
 
-Use **`onStateChange`** when you control `value`: it fires on the user's pick before
-anything applies, so it's your chance to set the new `value`. Applying it (or the
-element self-applying, uncontrolled) then fires **`onChange`** / **`onValueChange`**,
-so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
-**`onBlur`** report focus entering and leaving the strip (wired to `focusin` /
-`focusout`, since focus lands on a tab).
+Use `onStateChange` to accept or cancel a requested selection. Use `onChange` or
+`onValueChange` to respond after selection changes. `onFocus` and `onBlur`
+report focus entering and leaving the strip.
 
 ```tsx
-// Uncontrolled: the strip owns selection, so onValueChange fires on each pick.
-<Tabs defaultValue="a" onValueChange={(_e, { value }) => route(value)}>…</Tabs>
+<Tabs
+  label="Report"
+  defaultValue="summary"
+  onValueChange={(_event, { value }) => saveLastView(value)}
+  options={[
+    { value: 'summary', label: 'Summary' },
+    { value: 'activity', label: 'Activity' },
+  ]}
+/>
 ```
 
 ## Tabs props
@@ -415,12 +421,11 @@ tabs.addEventListener('change', () => {
 Reach for the props first: **`tone`**, **`size`**, **`priority`**. The focus ring is
 the global `--focus-ring` (see [Colors](../colors.md#focus-ring)).
 
-For anything else the strip is light-DOM: `<a-tabs>` the tablist, each `<a-tab>` a
-tab (its text wrapped in `<a-tab-label>`), `<a-tabpanel>` a panel, and the moving
-indicator is `<a-tabs>`'s `::before`. Target them with ordinary CSS (an un-layered rule
-beats `@layer anta` without `!important`) and reach for real properties
-(`border-radius`, `padding`, `background`, …), **not** the internal `--*` output tokens.
-The demo classes (`.square-tabs`, `.glow-tabs`, …) are hooks. Replace them with selectors you own.
+Use ordinary CSS to style the strip (`a-tabs`), tabs (`a-tab`), labels
+(`a-tab-label`), and panels (`a-tabpanel`). The strip's `::before` paints the
+moving indicator. Unlayered consumer rules override Anta's defaults. Use
+properties such as `border-radius`, `padding`, and `background`.
+Replace the example classes with your own selectors.
 
 **Roomier track.** The strip hugs its tabs by default (0 padding), so it's exactly a
 same-size button tall. For a gap around the selected pill (the classic "well" look), add
@@ -495,10 +500,9 @@ shares the strip width:
 .wrap-tabs a-tab-label { white-space: normal; text-overflow: clip; overflow: visible; text-align: center; }
 ```
 
-**Disable the slide.** By default the selected-tab indicator slides between tabs (a
-single rectangle, via CSS anchor positioning). Pass `noslide` to paint it on each tab
-instead, so the highlight snaps with no movement. It's also the automatic fallback
-where anchor positioning isn't supported.
+Pass `noslide` to make the selected-tab highlight change without sliding.
+The highlight also changes without sliding when the browser lacks CSS anchor
+positioning support.
 
 ```tsx
 <Tabs noslide defaultValue="a">…</Tabs>

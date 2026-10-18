@@ -1,9 +1,8 @@
 # Radio
 
-A single-select control. `RadioGroup` is the whole component — you pass it an
-`options` array and it renders one radio per entry, owning selection, keyboard
-navigation, and the form value. There's no separate `Radio` component: options
-are data, not markup.
+Use RadioGroup when someone needs to choose one option from a visible set,
+such as a plan or contact method. Pass the choices through `options` and add
+a group label to explain the decision.
 
 ## Options, label, and hint
 
@@ -20,12 +19,11 @@ are data, not markup.
 />
 ```
 
-Each entry needs a unique `value` (its identity and submitted value) and a
-`label`, plus an optional `hint` — secondary copy rendered under that option,
-styled like `Input`'s hint.
+Give each option a unique `value` and a `label`. Add an option `hint` when a
+choice needs explanation. The selected option's value is submitted with the form.
 
-The group's own `label` and `hint` form a header **above** the options: the
-`label` first, the `hint` (an instruction for the whole set) directly under it.
+Use the group's `label` to name the whole set and its `hint` for instructions
+that apply to every option.
 
 Each option can also set `className`, `style`, and `data-*`.
 `RadioGroup` forwards them to that option's `<a-radio>` so you can add
@@ -161,25 +159,15 @@ enabled one), the arrow keys (`↑`/`↓`/`←`/`→`) move the selection betwee
 options (wrapping at the ends), and `Space` / `Enter` select the focused option.
 Follows the [WAI-ARIA radio-group pattern](https://www.w3.org/WAI/ARIA/apg/patterns/radio/).
 
-Under the hood the split is deliberate. The `<a-radio-group>` web component
-**never mutates the DOM** — it coordinates entirely off-DOM: selection is set as a
-property on each `<a-radio>` (which reflects it into `:state(selected)` +
-`aria-checked` via its own `ElementInternals`), the form value goes through
-`ElementInternals`, and focus is tracked with `aria-activedescendant`. Each
-option's light-DOM label and hint also become its accessible name and description
-through direct element references, without generated IDs. The
-**roving `tabindex`** — which option Tab lands on — is the one piece rendered
-declaratively, by the `RadioGroup` wrapper, from the current value. That's why
-selection is owned by the element but the wrapper holds the value: it needs it to
-place the tab stop. (Hand-assembling raw `<a-radio-group>` / `<a-radio>` works
-too; make the group the tab stop with `tabindex="0"` and it falls back to
-`aria-activedescendant` for keyboard nav.)
+Each option's label names it for screen readers, and its hint supplies a
+description. Give the group a `label` or `aria-label` so the choice itself also
+has an accessible name.
 
 ## Forms
 
-`<a-radio-group>` is a form-associated custom element. Give it a `name` and the
-selected option's `value` is submitted with the form like a native radio group;
-form reset restores the `defaultValue` selection.
+Add `name` to submit the selected option's value with a form. An uncontrolled
+group returns to `defaultValue` on form reset. For a controlled group, handle
+the reset request in `onStateChange` and update `value` as needed.
 
 ```tsx
 <form>
@@ -193,7 +181,7 @@ form reset restores the `defaultValue` selection.
 
 ## Controlled vs. uncontrolled
 
-**Uncontrolled** — pass `defaultValue` and let the group own selection:
+Pass `defaultValue` when the group can manage its own selection:
 
 ```tsx
 <RadioGroup name="plan" defaultValue="pro" options={[
@@ -203,9 +191,9 @@ form reset restores the `defaultValue` selection.
 ]} />
 ```
 
-**Controlled** — pass `value` + `onStateChange` and own it yourself. The group
-fires *before* applying, so you accept by updating `value` and reject by doing
-nothing (or `event.preventDefault()` to veto in uncontrolled mode):
+Pass `value` with `onStateChange` when the application controls selection.
+Update `value` to accept a requested choice, or leave it unchanged to reject it.
+For an uncontrolled group, call `event.preventDefault()` to cancel a user pick:
 
 ```tsx
 const [plan, setPlan] = useState('pro')
@@ -213,7 +201,7 @@ const [plan, setPlan] = useState('pro')
 <RadioGroup
   name="plan"
   value={plan}
-  onStateChange={(e, { next }) => setPlan(next)}
+  onStateChange={(_event, { next }) => { if (next !== null) setPlan(next) }}
   options={[
     { value: 'free', label: 'Free' },
     { value: 'pro', label: 'Pro' },
@@ -237,20 +225,20 @@ Three callbacks, in firing order:
 | `onChange(e)` | **after** selection applies | — | native `change` event |
 | `onValueChange(e, attrs)` | **after** selection applies | — | `{ value, name }` |
 
-Reach for **`onStateChange`** to intercept/veto or to filter on `reason` (reset vs
-restore vs user); for the everyday "react to the new value", use **`onValueChange`**.
-`onChange` is the plain native hook. **`onFocus` / `onBlur`** report focus entering
-and leaving the *group* (wired to `focusin` / `focusout`, since focus lands on an
-individual option).
-
-The group has `onStateChange` because its selection is a **discrete** state (one
-of a fixed set) the element self-applies — so a transition can be vetoed before it
-lands, and it carries `reason`. Value-based composites without a self-applying
-element — `Input`, and the composed `Select` — skip it and expose only
-`onValueChange`; the `onValueChange` shape is the same across all of them.
+Use `onStateChange` to control or cancel a selection request. Its `reason`
+distinguishes a user pick from form reset or restoration. Use `onValueChange`
+to save or react to an applied selection. `onChange` exposes the native event.
+`onFocus` and `onBlur` report focus entering and leaving the group.
 
 ```tsx
-<RadioGroup onValueChange={(_e, { value }) => save(value)} options={…} />
+<RadioGroup
+  label="Contact method"
+  onValueChange={(_event, { value }) => save(value)}
+  options={[
+    { value: 'email', label: 'Email' },
+    { value: 'sms', label: 'SMS' },
+  ]}
+/>
 ```
 
 ## RadioGroup props
@@ -286,7 +274,8 @@ User picks update internal state without rewriting authored attributes.
 Accept a controlled pick through `statechange` by setting `state` to
 `event.detail.next`. An empty string is a valid option value.
 
-The group owns selection and the single tab stop. Put options in `<a-radio-list>`.
+Put options in `<a-radio-list>` and add `tabindex="0"` to the group for
+keyboard access. The raw group manages focus among its options.
 
 ```html
 <a-radio-group role="radiogroup" tabindex="0" name="plan" default-state="pro">

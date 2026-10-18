@@ -290,6 +290,8 @@ The sidebar nests catalog parents through `getNavigationTree()` and
 `SidebarNavItem.astro`. Children appear while their parent or a descendant is
 current. The persisted sidebar synchronizes branch visibility and active links
 on `astro:page-load`; keep cold loads and ClientRouter navigation consistent.
+Reset prose-list margins on nested navigation items so their row spacing
+matches the top-level links.
 
 Use `nav: false` to omit a page from navigation and `export: false` to omit it from Markdown exports. These flags are independent. Optional `path` overrides the generated URL. The shared schema rejects unknown metadata and the catalog rejects duplicate URLs, sources, export paths, and missing or cyclic parents.
 

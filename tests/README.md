@@ -51,9 +51,12 @@ Run `pnpm --filter @antadesign/plot test:csp` for HTTP CSP, React/Preact
 hydration, public entries, interactions, worker ownership, and document adoption.
 `pnpm --filter @antadesign/plot test:csp:package` installs local Plot and Anta
 npm tarballs in an isolated directory and repeats the matrix through package
-exports. The shared runner selects Plot with `--component plot`.
+exports. Slow checks execute JSX, surface, and standalone code copied from the
+packaged Plot documentation. Fast checks include the site prose stylesheet and
+capture visibility before Plot CSS loads. The shared runner selects Plot with
+`--component plot`.
 
-Set `PLOT_COMPARE_REF=<ref>` to compare JSX and standalone plots against a Git
+Set `ANTA_PLOT_COMPARE_REF=<ref>` to compare JSX and standalone plots against a Git
 revision in light and dark themes. PNGs, pixel counts, geometry, and viewport
 results go to `tests/.test-output/plot`. Baseline pages permit inline styles;
 current pages use strict HTTP CSP. Explicit SSR dimensions and consumer `style`

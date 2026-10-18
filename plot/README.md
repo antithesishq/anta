@@ -4,17 +4,24 @@ Canvas charts for React, Preact, and browser custom elements. Create scatter, li
 bar, area, rectangle, and rule series, or draw custom marks. `Plot` handles sizing,
 rendering, tooltips, zooming, and panning.
 
-## Install
+## Install and configure
 
 Install the package and its peer dependencies:
 
 ```sh
-npm install @antadesign/plot
+npm install @antadesign/plot @antadesign/anta react react-dom
 ```
 
 The package requires Anta `^0.3.30`, React `^19.0.0`, and a bundler that supports
 ES modules and CSS imports. Preact applications can use their React compatibility
-aliases. The root component imports shown below require `0.1.3` or later.
+aliases. Register elements in your browser entry and load
+`@antadesign/plot/plot.css` and `@antadesign/anta/tokens.css` once per document.
+Anta's reset and themes are optional. Before hydrating, configure Anta with your
+renderer hooks and `{ hydratingEvents: true }`; see the
+[renderer and hydration setup](https://anta.design/install/).
+
+Plot is a separate package. Anta's root bundle does not include its components,
+elements, or stylesheet.
 
 ## Use in React
 
@@ -25,7 +32,7 @@ import { Plot, scatter } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot-surface'
 import '@antadesign/plot/plot.css'
 import '@antadesign/anta/elements/a-tooltip'
-import '@antadesign/anta/theme-antune.css'
+import '@antadesign/anta/tokens.css'
 
 const series = [
   scatter({
@@ -54,7 +61,7 @@ Register `<a-plot>` and assign its configuration through the `plotArgs` property
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
 import '@antadesign/plot/plot.css'
-import '@antadesign/anta/theme-antune.css'
+import '@antadesign/anta/tokens.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 plot.plotArgs = {
@@ -72,6 +79,14 @@ document.body.append(plot)
 The registration import includes the surface and tooltip elements. To register
 programmatically, import and await `definePlotElement()` from
 `@antadesign/plot/browser` instead.
+
+## Use a low-level surface
+
+Import `PlotSurface` from `@antadesign/plot`, register
+`@antadesign/plot/elements/a-plot-surface` in the browser, and load the same Plot
+and Anta stylesheets. Give its parent a height or apply a CSS class with explicit
+dimensions. Your application owns drawing and provides presentation and input
+handlers. Use `Plot` when you need the complete chart lifecycle.
 
 ## Customize a chart
 
@@ -127,7 +142,9 @@ serialize as style attributes and are blocked by `style-src-attr 'none'`. For
 strict server rendering, size the plot through an external CSS class and omit
 those props during SSR. Client-rendered dimensions use CSSOM updates. Custom
 tooltip content and application styles must follow the same policy.
-External workers need an allowed `worker-src`; blob workers need `blob:` as well.
+Put broad application resets in `@layer base` so they do not override component
+layout unintentionally. External workers need an allowed `worker-src`. Blob
+workers need `blob:` as well.
 See [the CSP audit and browser validation](CSP.md) for the tested boundaries.
 
 ## Size scatter marks with the viewport

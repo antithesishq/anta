@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { build } from 'esbuild'
-import { componentTest as test, componentEngines } from '../../tests/component-tier.mjs'
+import { componentTest as test, componentEngines, componentTier } from '../../tests/component-tier.mjs'
 
 const repo = fileURLToPath(new URL('../..', import.meta.url))
 const requireSite = createRequire(new URL('../../site/package.json', import.meta.url))
@@ -18,7 +18,7 @@ const engines = componentEngines([chromium, firefox, webkit])
 const consumer = process.env.PLOT_CONSUMER_ROOT
 const resolveDir = consumer ?? resolve(repo, 'plot')
 const requireConsumer = createRequire(join(resolveDir, 'package.json'))
-const compareRef = process.env.PLOT_COMPARE_REF
+const compareRef = process.env.ANTA_PLOT_COMPARE_REF
 const output = resolve(repo, 'tests/.test-output/plot')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-elem 'self'; style-src-attr 'none'; worker-src 'self'; object-src 'none'"
 // Playwright's WebKit screenshot path briefly inserts exactly `body {}` to sync animations.
@@ -39,6 +39,7 @@ function aliasFor(renderer) {
         react: dirname(requireConsumer.resolve('react/package.json')),
         'react-dom': dirname((consumer ? requireConsumer : requirePlot).resolve('react-dom/package.json')),
     } : {
+        'react/jsx-runtime': consumer ? requireConsumer.resolve('preact/jsx-runtime') : requireSite.resolve('preact/jsx-runtime'),
         react: consumer ? requireConsumer.resolve('preact/compat') : requireSite.resolve('preact/compat'),
         'react-dom/client': consumer ? requireConsumer.resolve('preact/compat/client') : requireSite.resolve('preact/compat/client'),
         'react-dom/server': consumer ? requireConsumer.resolve('preact/compat/server') : requireSite.resolve('preact/compat/server'),
@@ -46,7 +47,7 @@ function aliasFor(renderer) {
 }
 async function compile(contents, name, renderer = 'react', baseline = false, platform = 'browser') {
     const result = await build({
-        absWorkingDir: resolveDir, stdin: { contents, resolveDir, loader: 'jsx' },
+        absWorkingDir: resolveDir, stdin: { contents, resolveDir, loader: 'tsx' },
         bundle: true, write: false, metafile: true, format: platform === 'node' ? 'cjs' : 'esm', platform,
         outfile: `${name}.js`, target: 'es2022', jsx: 'automatic', jsxImportSource: 'react',
         define: { 'process.env.NODE_ENV': '"production"' },
@@ -74,8 +75,25 @@ async function compile(contents, name, renderer = 'react', baseline = false, pla
     return result
 }
 before(async () => {
+    const documentation = await readFile(consumer
+        ? resolve(consumer, 'node_modules/@antadesign/anta/docs/packages/plot.md')
+        : resolve(repo, 'docs/packages/plot.md'), 'utf8')
+    const snippets = [...documentation.matchAll(/^```(?:ts|tsx)[^\n]*\n([\s\S]*?)^```/gm)].map(match => match[1])
+    const registered = snippets.filter(code => /import ['"]@antadesign\/plot\/elements/.test(code))
+    assert.ok(registered.length > 20, 'check all copyable standalone examples')
+    for (const code of registered) assert.match(code, /import ['"]@antadesign\/plot\/plot.css['"]/, 'registration examples load Plot CSS')
+    const jsxExample = snippets.find(code => code.includes('export function Chart()'))
+    const surfaceExample = snippets.find(code => code.includes('export function Surface()'))
+    const browserExample = snippets.find(code => code.includes("import { scatter, type APlotElement } from '@antadesign/plot/browser'") && code.includes('document.body.append(plot)'))
+    const overviewExample = snippets.find(code => code.includes('function overviewExample()'))
+    const surfaceCSS = documentation.match(/```css\n(\.custom-surface[\s\S]*?)```/)[1]
+    assert.ok(jsxExample && surfaceExample && browserExample && overviewExample)
     for (const renderer of ['react', 'preact']) {
-        for (const [entry, registration] of Object.entries(registrations)) {
+        const entries = componentTier === 'fast'
+            ? renderer === 'react' ? ['surface', 'granular'] : ['surface']
+            : Object.keys(registrations)
+        for (const entry of entries) {
+            const registration = registrations[entry]
             await compile(`${registration}; import '@antadesign/plot/plot.css'; import '@antadesign/anta/tokens.css'; ${fixture}`, `${renderer}-${entry}`, renderer)
         }
         const ssr = await compile(`import React from 'react';import {renderToString} from 'react-dom/server';import {Plot} from '@antadesign/plot';export const render=props=>renderToString(React.createElement(Plot,{plotArgs:{series:[]},...props}));`, `ssr-${renderer}`, renderer, false, 'node')
@@ -87,8 +105,20 @@ before(async () => {
         assert.doesNotMatch(markup.get(renderer), /style=/, 'default SSR emits no style attributes')
         assert.match(module.exports.render({ plotArgs: { series: [], width: 420, height: 260 } }), /style=/, 'SSR pins still serialize inline: documented limitation')
         assert.match(module.exports.render({ style: { height: 123 } }), /style=/, 'consumer SSR styles still serialize inline')
+        if (componentTier === 'slow') {
+            for (const [kind, code, component] of [['jsx', jsxExample, 'Chart'], ['surface', surfaceExample, 'Surface']]) {
+                const name = `${renderer}-docs-${kind}`
+                await compile(`import React from 'react'; import {createRoot} from 'react-dom/client'; ${code}; createRoot(document.querySelector('#app')).render(React.createElement(${component}));`, name, renderer)
+                if (kind === 'surface') assets.set(`/${name}.css`, assets.get(`/${name}.css`) + surfaceCSS)
+            }
+            if (renderer === 'react') for (const [kind, code] of [['browser', browserExample], ['overview', overviewExample]]) {
+                await compile(code, `${renderer}-docs-${kind}`, renderer)
+            }
+        }
         if (compareRef && !consumer) await compile(`${registrations.granular}; import '@antadesign/anta/tokens.css'; ${fixture}`, `${renderer}-original`, renderer, true)
     }
+    await compile(`${registrations.surface}; ${fixture}`, 'react-unstyled')
+    assets.set('/site.css', await readFile(resolve(repo, 'site/src/styles/base.css'), 'utf8'))
     assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,blocked:e.blockedURI}));`)
     assets.set('/fixture.css', style)
     assets.set('/worker.js', `let canvases;onmessage=({data})=>{if(data.canvas){canvases=data;const ctx=data.canvas.getContext('2d');const hi=data.highlight.getContext('2d');data.canvas.width=900;data.highlight.width=900;ctx.fillRect(0,0,20,20);hi.fillRect(0,0,10,10)}postMessage([canvases.canvas.width,canvases.highlight.width]);}`)
@@ -99,7 +129,7 @@ before(async () => {
         if (assets.has(url.pathname)) return res.end(assets.get(url.pathname))
         const name = url.pathname.slice(1) || 'react-surface'
         const renderer = name.split('-')[0]
-        res.end(`<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/fixture.css"><link rel="stylesheet" href="/${name}.css"><script src="/boot.js"></script><div id="app">${url.searchParams.get('kind') === 'hydrate' ? markup.get(renderer) : url.searchParams.has('ssr') ? markup.get(`${renderer}-${url.searchParams.get('ssr')}`) : ''}</div><script type="module" src="/${name}.js"></script>`)
+        res.end(`<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/fixture.css">${url.searchParams.has('site') ? '<link rel="stylesheet" href="/site.css">' : ''}<link rel="stylesheet" href="/${name}.css"><script src="/boot.js"></script><div id="app">${url.searchParams.get('kind') === 'hydrate' ? markup.get(renderer) : url.searchParams.has('ssr') ? markup.get(`${renderer}-${url.searchParams.get('ssr')}`) : ''}</div><script type="module" src="/${name}.js"></script>`)
     })
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
     origin = `http://127.0.0.1:${server.address().port}`
@@ -110,20 +140,20 @@ after(async () => {
     await Promise.all([...browsers.values()].map(browser => browser.close()))
     if (server) await new Promise(resolve => server.close(resolve))
 })
-async function pageFor(t, engine, renderer = 'react', entry = 'surface', kind = 'jsx', { baseline = false, audit = true, screenshot = false } = {}) {
+async function pageFor(t, engine, renderer = 'react', entry = 'surface', kind = 'jsx', { baseline = false, audit = true, screenshot = false, site = false } = {}) {
     const context = await browsers.get(engine.name()).newContext({ viewport: { width: 900, height: 700 }, reducedMotion: 'reduce' })
     const page = await context.newPage()
     page.setDefaultTimeout(10000)
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
     t.after(async () => { try { assert.deepEqual(errors, []); if (audit && !page.isClosed()) assert.deepEqual(await page.evaluate(() => violations), []) } finally { await context.close() } })
-    const response = await page.goto(`${origin}/${renderer}-${baseline ? 'original' : entry}?kind=${kind}${screenshot ? '&screenshot' : ''}`)
+    const response = await page.goto(`${origin}/${renderer}-${baseline ? 'original' : entry}?kind=${kind}${screenshot ? '&screenshot' : ''}${site ? '&site' : ''}`)
     if (!baseline) assert.equal(response.headers()['content-security-policy'], screenshot ? screenshotPolicy : policy)
     await page.waitForFunction(() => typeof mount === 'function')
     await page.evaluate(() => mount())
     await page.waitForFunction(kind => {
         const surface = document.querySelector('a-plot-surface')
-        return kind === 'surface' ? surface?.measurement.width === 600 : surface?.canvas.getBoundingClientRect().width === 600 && !surface.capture.hidden
+        return kind === 'surface' ? surface?.canvas.isConnected : surface?.canvas.getBoundingClientRect().width === 600 && surface.capture.style.display !== 'none'
     }, kind)
     await page.waitForTimeout(100)
     return page
@@ -163,6 +193,53 @@ for (const engine of engines) {
         await page.waitForFunction(() => violations.length === 2)
         assert.deepEqual(await page.evaluate(() => violations.map(e => e.directive).sort()), ['style-src-attr', 'style-src-elem'])
     })
+    test.fast(`${name}: site prose styles preserve tooltip dividers and empty tooltip visibility`, async t => {
+        for (const [entry, kind] of [['surface', 'jsx'], ['granular', 'standalone']]) {
+            const page = await pageFor(t, engine, 'react', entry, kind, {site: true})
+            if (kind === 'jsx') assert.equal(await page.locator('a-tooltip').evaluate(el => getComputedStyle(el).display), 'none')
+            await hover(page)
+            assert.deepEqual(await page.locator('a-tooltip hr').evaluate(el => {
+                const css = getComputedStyle(el); return [css.marginTop, css.marginBottom, css.borderTopWidth]
+            }), ['5px', '4px', '1px'])
+            assert.equal(await page.evaluate(() => {
+                const hr = document.createElement('hr'); document.body.append(hr)
+                return getComputedStyle(hr).marginBottom === `${parseFloat(getComputedStyle(hr).fontSize) * 1.5}px`
+            }), true)
+            await page.mouse.move(850, 650)
+            if (kind === 'jsx') await page.waitForFunction(() => getComputedStyle(document.querySelector('a-tooltip')).display === 'none')
+        }
+    })
+    test.fast(`${name}: capture stays hidden before presentation without the Plot stylesheet`, async t => {
+        const page = await pageFor(t, engine, 'react', 'unstyled', 'surface')
+        assert.equal(await page.locator('a-capture').evaluate(el => getComputedStyle(el).display), 'none')
+        assert.deepEqual(await page.evaluate(() => {
+            const s = document.querySelector('a-plot-surface')
+            s.setAttribute('presentation', JSON.stringify({width:600,height:300,inner:{left:40,top:40,right:560,bottom:260},menu:{enabled:false,zoom_in:false,zoom_out:false,reset:false}}))
+            const shown = getComputedStyle(s.capture).display
+            s.removeAttribute('presentation')
+            const hidden = getComputedStyle(s.capture).display
+            let moves = 0; s.addEventListener('plotmove', () => moves++)
+            s.capture.dispatchEvent(new MouseEvent('mousemove', {bubbles:true,clientX:100,clientY:100}))
+            return [shown, hidden, moves]
+        }), ['block', 'none', 0])
+    })
+    for (const [renderer, kind] of [['react', 'jsx'], ['preact', 'jsx'], ['react', 'surface'], ['preact', 'surface'], ['react', 'browser'], ['react', 'overview']]) {
+        test(`${name} ${renderer} ${kind}: copy the packaged Plot documentation without repairing imports`, async t => {
+            const context = await browsers.get(name).newContext()
+            t.after(() => context.close())
+            const page = await context.newPage()
+            const errors = []; page.on('pageerror', e => errors.push(e.message))
+            await page.goto(`${origin}/${renderer}-docs-${kind}`)
+            await page.waitForFunction(kind => {
+                const surface = document.querySelector('a-plot-surface')
+                return kind === 'surface' ? surface?.measurement.height === 300 : surface?.canvas.width > 0 && surface.capture.style.display !== 'none'
+            }, kind)
+            assert.equal(await page.locator('a-plot-surface > canvas').first().evaluate(el => getComputedStyle(el).position), 'absolute')
+            assert.equal(await page.locator('a-plot-surface').first().evaluate(el => el.getBoundingClientRect().height > 0), true)
+            assert.deepEqual(await page.evaluate(() => violations), [])
+            assert.deepEqual(errors, [])
+        })
+    }
     test.fast(`${name}: parsed SSR dimensions and consumer styles are blocked separately from client CSSOM updates`, async t => {
         for (const renderer of ['react', 'preact']) for (const ssr of ['pins', 'style']) {
             const page = await browsers.get(engine.name()).newPage()
@@ -242,6 +319,24 @@ for (const engine of engines) {
         await page.waitForFunction(() => document.querySelector('a-plot').getBoundingClientRect().height === 260)
         await page.evaluate(() => update({ width: undefined, height: undefined }))
         await page.waitForFunction(() => document.querySelector('a-plot').getBoundingClientRect().height === 300)
+    })
+    test.fast(`${name}: canvas ownership rejects retries and main drawing preserves DPR`, async t => {
+        const page = await pageFor(t, engine, 'react', 'surface', 'surface')
+        assert.deepEqual(await page.evaluate(() => {
+            const rejects = fn => { try { fn(); return false } catch { return true } }
+            const main = document.createElement('a-plot-surface')
+            main.prepareCanvas(200, 100, 2)
+            const partial = document.createElement('a-plot-surface')
+            partial.highlight.getContext('2d')
+            const worker = document.createElement('a-plot-surface')
+            worker.transferCanvases()
+            return {
+                backing: [main.canvas.width, main.canvas.height], css: [main.canvas.style.width, main.canvas.style.height],
+                mainTransfer: rejects(() => main.transferCanvases()),
+                partial: rejects(() => partial.transferCanvases()), partialRetry: rejects(() => partial.transferCanvases()),
+                secondTransfer: rejects(() => worker.transferCanvases()), mainAfterTransfer: rejects(() => worker.prepareCanvas(200, 100, 1)),
+            }
+        }), {backing:[400,200],css:['200px','100px'],mainTransfer:true,partial:true,partialRetry:true,secondTransfer:true,mainAfterTransfer:true})
     })
     test.fast(`${name}: PlotSurface geometry, canvas ownership, real worker, reconnect and document adoption`, async t => {
         const page = await pageFor(t, engine, 'react', 'surface', 'surface')

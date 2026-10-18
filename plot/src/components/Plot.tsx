@@ -230,7 +230,7 @@ export function Plot<Content = React.ReactNode>({
             )}
 
             <Tooltip {...TOOLTIP_OPTIONS} className={tooltip.hidden ? 'plot-tooltip-hidden' : undefined}>
-                <div hidden={tooltip.hidden}>{tooltip.body}</div>
+                <div>{tooltip.body}</div>
             </Tooltip>
         </div>
     )

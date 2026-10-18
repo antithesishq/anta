@@ -47,7 +47,7 @@ jobs:
           COMPONENT: ${{ inputs.component }}
           ANTA_MENU_COMPARE_ORIGINAL: '1'
           ANTA_SELECT_COMPARE_REF: ${{ inputs.select_compare_ref }}
-          PLOT_COMPARE_REF: ${{ inputs.plot_compare_ref }}
+          ANTA_PLOT_COMPARE_REF: ${{ inputs.plot_compare_ref }}
           ANTA_SLIDER_COMPARE_REF: ${{ inputs.slider_compare_ref }}
         run: pnpm test:components --tier slow --component "$COMPONENT"
       - name: Save Expander visual matrix

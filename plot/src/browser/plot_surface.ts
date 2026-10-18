@@ -77,7 +77,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.highlight.className = 'plot-highlight'
             this.capture = doc.createElement('a-capture')
             this.capture.className = 'plot-capture'
-            this.capture.hidden = true
+            this.capture.style.display = 'none'
             this.#rectangle = doc.createElement('div')
             this.#rectangle.className = 'plot-zoom-rectangle'
             this.#rectangle.hidden = true
@@ -119,7 +119,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             } else if (name === 'presentation') {
                 try {
                     if (value === null) {
-                        this.capture.hidden = true
+                        this.capture.style.display = 'none'
                         this.#clearRectangle()
                         this.#regions = null
                         this.#capturePolicy = undefined
@@ -433,7 +433,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
 
             const normalized = (event: MouseEvent): PlotSurfaceMouseInput | null => {
                 if (event.composedPath().includes(this.#menu)) return null
-                if (this.capture.hidden) return null
+                if (this.capture.style.display === 'none') return null
 
                 const rect = this.capture.getBoundingClientRect()
                 const inner = this.#regions?.plot ?? this.#captureBounds
@@ -492,7 +492,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
         }
 
         present({ width, height, inner, regions, capture_policy, filter, menu }: PlotSurfacePresentation): void {
-            this.capture.hidden = false
+            this.capture.style.display = ''
             this.#regions = regions ?? { plot: inner, x: null, y: null }
             for (const canvas of [this.canvas, this.highlight]) {
                 canvas.style.width = `${width}px`

@@ -67,8 +67,7 @@
         display: none !important;
     }
 
-    [data-plot-root] > a-tooltip.plot-tooltip-hidden,
-    [data-plot-root] > a-tooltip > [hidden] {
+    [data-plot-root] > a-tooltip.plot-tooltip-hidden {
         display: none !important;
     }
 

@@ -21,8 +21,9 @@ stylesheet link.
 Plot creates no style elements, constructed stylesheets, or stylesheet rules at
 runtime. It does not assign `cssText`, parse HTML, or call `setAttribute('style',
 ...)`. Dynamic geometry uses individual CSSOM properties or `setProperty()`.
-Those properties still serialize into the DOM's style attribute. The browser
-checks distinguish these writes from parsed inline attributes rather than
+Those properties still serialize into the DOM's style attribute. Lifecycle
+capture visibility also uses direct CSSOM updates, so an unpresented capture
+stays hidden while the shared stylesheet loads. The browser checks distinguish these writes from parsed inline attributes rather than
 requiring the style attribute to be absent.
 
 The shared stylesheet reserves Anta's cascade layers. Application CSS can override
@@ -69,7 +70,7 @@ pnpm --filter @antadesign/plot check:package
 pnpm --filter @antadesign/plot test:browser
 pnpm --filter @antadesign/plot test:csp
 pnpm --filter @antadesign/plot test:csp:package
-PLOT_COMPARE_REF=codex/slider-refactor pnpm --filter @antadesign/plot test:csp
+ANTA_PLOT_COMPARE_REF=aa014ae37fe99b91a422fa6827a9267d7f50ea3b pnpm --filter @antadesign/plot test:csp
 ```
 
 The CSP suite covers React and Preact hydration, low-level PlotSurface, every
@@ -81,16 +82,22 @@ DPR changes, error recovery, and renderer lifecycle boundaries.
 
 The package runner installs local npm tarballs of Plot and Anta in a temporary
 consumer. It resolves every supported export and checks the bundled inputs for
-package provenance before repeating the CSP matrix. It does not use workspace
+package provenance before repeating the CSP matrix. It also compiles and runs
+JSX, low-level surface, standalone, and overview examples extracted from the
+installed Markdown documentation without repairing their imports. It does not use workspace
 links or source aliases. Tarballs are packed with scripts disabled from the
 already built output.
+
+The comparison command uses the immutable commit before the external-CSS change.
+Comparison tests require a repository checkout with that commit in its history.
 
 The fast tier runs core Chromium regressions. The slow tier adds Firefox,
 WebKit, all standalone entries, and isolated package installation. These engines
 do not establish compatibility with every historical browser version.
-`PLOT_COMPARE_REF` adds light/dark screenshots, pixel comparisons, exact geometry,
+`ANTA_PLOT_COMPARE_REF` adds light/dark screenshots, pixel comparisons, exact geometry,
 and viewport interaction comparisons against the chosen Git revision. Baseline
-pages allow their original injected styles. Current pages retain strict CSP. Screenshot pages allow a hash for the exact
+pages allow their original injected styles. Current pages retain strict CSP.
+Screenshot pages allow a hash for the exact
 `body {}` rule that Playwright's WebKit screenshot code inserts to synchronize
 animations. Functional pages use the unmodified policy above.
 Artifacts are saved under `tests/.test-output/plot/`.

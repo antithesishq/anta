@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputTime, Menu, Progress, Select, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputAutocomplete, InputTime, Menu, Progress, Select, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -286,3 +286,20 @@ WebKit capture uses a separate page that permits the screenshot tool's styleshee
 behavior and computed-style checks retain strict CSP. Playwright WebKit does not
 establish shipping Safari 17.4 coverage. Existing native discrete exit support
 varies by engine; compare it with the original rather than asserting a new fallback.
+
+## InputAutocomplete
+
+Run `pnpm test:input-autocomplete` for worker projections, public types, and the
+React/Preact browser suite, or `pnpm test:input-autocomplete:package` for types
+and browser checks against an isolated installed tarball. The shared runner
+selects core checks with `--tier fast --component input-autocomplete`.
+Expanded engines, full-bundle hydration, and installation stay in the slow tier.
+
+The suite uses actual CSP response headers with `style-src-attr 'none'` and
+both element import modes. It covers callback composition and cancellation,
+controlled empty text, parent resets, rejected and accepted suggestion choices,
+clear and form reset, changing results, disabled rows, IME keyboard probes,
+pointer focus, naming, and active-option relationships. It reuses Input's native
+field and Menu's existing navigation; ordinary Input value-rejection and
+implicit-submit behavior are outside this refactor. Synthetic composition keys
+provide engine evidence, not an operating-system IME or assistive-technology run.

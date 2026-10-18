@@ -13,6 +13,7 @@ before(async () => {
         export { Menu } from './src/components/Menu';
         export { Input } from './src/components/Input';
         export { InputTime } from './src/components/InputTime';
+        export { InputDate } from './src/components/InputDate';
         export { Banner } from './src/components/Banner';
         export { Expander } from './src/components/Expander';
         export { Text } from './src/components/Text';
@@ -68,6 +69,32 @@ test('worker Input projection forwards edits and clear callbacks without lifecyc
   assert.deepEqual(value, { value: 'Updated', name: 'draft', empty: false, valid: true, validationMessage: '' })
   field.props.onclearclick({ preventDefault: () => { canceled = true } })
   assert.equal(canceled, true)
+})
+
+test('worker InputDate time commits accept raw and renderer-wrapped change events only', () => {
+  runtime.configure(h, Symbol.for('fragment'), {
+    useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}],
+    useMemo: factory => factory(),
+  })
+  const nodes = tree => Array.isArray(tree) ? tree.flatMap(nodes) : tree && typeof tree === 'object'
+    ? [tree, ...nodes(tree.props?.children)] : []
+  for (const wrapped of [false, true]) {
+    const changes = []
+    const tree = runtime.InputDate({time:true,value:'2026-06-15T09:00',locale:'en-US',onValueChange:value=>changes.push(value)})
+    const time = nodes(tree).find(node=>node.type==='a-input-time').props
+    const target = {value:'11:30'}
+    const event = type => {
+      const native = {type,target,currentTarget:target}
+      return wrapped ? {...native,nativeEvent:native} : native
+    }
+    time.oninput(event('input'))
+    assert.deepEqual(changes, [])
+    time.onchange(event('change'))
+    assert.deepEqual(changes, ['2026-06-15T11:30'])
+    target.value = ''
+    time.onchange(event('change'))
+    assert.deepEqual(changes, ['2026-06-15T11:30', '2026-06-15'])
+  }
 })
 
 test('worker Banner and Expander expose their callbacks in the first projection', () => {

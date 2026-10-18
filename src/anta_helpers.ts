@@ -88,10 +88,15 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
  */
 export type StateChangeEvent<D> = CustomEvent<D> | { nativeEvent: CustomEvent<D> }
 
+/** @internal Return the raw event from native or renderer-wrapped callbacks. */
+export function unwrapNativeEvent<E extends object>(event: E | { nativeEvent: E }): E {
+  return ('nativeEvent' in event ? event.nativeEvent : event) as E
+}
+
 export function nativeStateChange<D>(
   e: StateChangeEvent<D>,
 ): { event: CustomEvent<D>; detail?: D; isOwn: boolean } {
-  const event = ('nativeEvent' in e ? e.nativeEvent : e) as CustomEvent<D>
+  const event = unwrapNativeEvent(e)
   return { event, detail: event?.detail, isOwn: !event || event.target === event.currentTarget }
 }
 
@@ -118,6 +123,13 @@ export function lineClamp(truncate: boolean | number | undefined): number | unde
 }
 
 const NAVIGATION_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'])
+
+/** Leave candidate navigation and confirmation with the input method, including
+ * browsers that report the final composing key only through legacy code 229. */
+export function isComposingKey(event: Pick<KeyboardEvent, 'isComposing' | 'keyCode'> | { nativeEvent: Pick<KeyboardEvent, 'isComposing' | 'keyCode'> }): boolean {
+  const native = unwrapNativeEvent(event)
+  return native.isComposing || native.keyCode === 229
+}
 
 /** Leave modified navigation to the browser, OS, or text field. Shift+Tab remains focus navigation. */
 export function isModifiedNavigationKey(event: Pick<KeyboardEvent, 'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>): boolean {

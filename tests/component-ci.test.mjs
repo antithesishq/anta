@@ -93,3 +93,30 @@ test('Dialog CI gate includes its dependencies and skips unrelated documentation
     }
   } finally {await rm(directory,{recursive:true})}
 })
+
+test('Autocomplete CI gate selects its source and test dependencies without unrelated component edits', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-autocomplete-gate-'))
+  const git = args => execFileSync('git',args,{cwd:directory,encoding:'utf8'})
+  try {
+    git(['init','-b','fixture']);git(['config','user.name','Fixture']);git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection = workflow.jobs.build.steps.find(step=>step.id==='component-tests').run
+    for (const [path,wanted] of [
+      ['src/components/InputAutocomplete.tsx',true],['src/components/select-options.tsx',true],
+      ['src/components/Input.tsx',true],['src/elements/a-menu.ts',true],
+      ['src/anta_helpers.ts',true],['src/elements/input-trailing-actions.ts',true],
+      ['tests/input-autocomplete-csp.mjs',true],['tests/input-autocomplete-types.fixture.tsx',true],
+      ['src/components/Calendar.tsx',false],['docs/components/input-autocomplete.md',false],
+    ]) {
+      const base = git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true})
+      await writeFile(join(directory,path),'fixture')
+      git(['add',path]);git(['commit','-m',path])
+      const output = join(directory,'outputs');await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'),new RegExp(`^input-autocomplete=${wanted}$`,'m'),path)
+    }
+    const manual = parse(await readFile(new URL('../.github/workflows/component-tests.yml', import.meta.url),'utf8'))
+    assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('input-autocomplete'))
+  } finally {await rm(directory,{recursive:true})}
+})

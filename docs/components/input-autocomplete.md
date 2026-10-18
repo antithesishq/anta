@@ -1,47 +1,135 @@
 # InputAutocomplete
 
-`InputAutocomplete` is a text field with a suggestion list. Its value remains a
-free-form string: text that is not in the list stays in the field, and selecting
-a suggestion fills the field. Use [Select](./select.md) with `filter` when the
-value must be one of the options.
+`InputAutocomplete` offers suggestions while people enter text. Use it for
+package names, search queries, or other fields where common entries help but
+people can also enter their own value. Choosing a suggestion fills the field
+with its value. Use [Select](./select.md) when an option's identity is the value.
 
-InputAutocomplete uses an [Input](./input.md) for the field and a [Menu](./menu.md)
-for suggestions. **`onValueChange`** reports field text. `onSelect` runs only
-after someone chooses a suggestion. Use `value` to control it, or `defaultValue`
-for uncontrolled use.
+Give the field a visible `label`. If you omit it, provide `aria-label` or
+`aria-labelledby`. A placeholder alone does not name the field.
 
 ## Free text is the point
 
-The value is always the text in the field. That's what separates this from a
-[Select](./select.md): a Select constrains the value to one of its options, so a Select
-with `filter` already covers "search a fixed list". `InputAutocomplete` is for when
-the list only *suggests* and the user may commit something you didn't list.
+The field keeps whatever someone types, including text absent from the list.
+`onValueChange` reports that text as it changes. Use `onSelect` when the
+application also needs to know that someone chose a suggestion.
 
-The keyboard follows that intent. No suggestion is highlighted as you type, so
-Enter commits the typed text and closes the list. ↓ highlights
-the first suggestion (then ↑/↓ move through them), and
-Enter on a highlighted row picks it. Esc or an outside click
-closes the list; clicking the field to place the caret keeps it open.
+```tsx
+const frameworks = ['React', 'Preact', 'Solid', 'Svelte', 'Vue', 'Angular', 'Qwik', 'Lit', 'Astro']
+const [value, setValue] = useState('')
 
-The focused field is associated directly with the suggestion popup and its
-active option through ARIA element reflection. These relationships do not
-require generated popup or option IDs, so separate application roots cannot
-collide. Explicit ARIA relationships authored on a raw Anta Input take
-precedence.
+<InputAutocomplete
+  label="Framework"
+  placeholder="Type to search…"
+  clearable
+  suggestions={frameworks}
+  value={value}
+  onValueChange={setValue}
+/>
+<div>Value: <code>{value || '(empty)'}</code></div>
+```
+
+## Suggestions
+
+Use strings for a simple list, or option objects to show a readable `label`, a
+supporting `hint`, or an `icon`. Choosing a row fills the field with its `value`,
+so the **Anta** suggestion here fills in `@antadesign/anta`. Disabled suggestions
+remain visible and are skipped during keyboard navigation.
+
+```tsx
+<InputAutocomplete
+  label="Package"
+  hint="Choose a package name or enter another."
+  suggestions={[
+    { value: '@antadesign/anta', label: 'Anta', hint: 'UI components', icon: 'cube' },
+    { value: '@antadesign/plot', label: 'Plot', hint: 'Canvas charts', icon: 'workflow' },
+    { value: '@antadesign/stickers', label: 'Stickers', hint: 'Illustrations', icon: 'asterisk' },
+    { value: '@antadesign/archived', label: 'Archived', hint: 'Unavailable', disabled: true },
+  ]}
+/>
+```
+
+## Managing the value
+
+Pass `value` and update it through `onValueChange` when another part of your
+application needs the text. Reset controlled text with `''`. For a field that
+keeps its own text, use `defaultValue`; a form reset restores that default without
+opening an unfocused field's suggestions or moving focus.
+
+```tsx
+const [value, setValue] = useState('React')
+
+<InputAutocomplete label="Framework" suggestions={frameworks}
+  value={value} onValueChange={setValue} clearable />
+<Button label="Reset text" onClick={() => setValue('')} />
+```
 
 ## Filtering
 
-`filter` decides how suggestions match the text:
+The built-in filter matches the value, label, and hint without case sensitivity,
+and highlights matching label and hint text. Use a function when your
+application needs a different rule, such as matching word prefixes. It receives
+the original field text, including whitespace; decide whether to trim it in
+your matcher.
 
-- **`true`** (default): built-in case-insensitive substring match on each option's
-  `value` / `label` / `hint`.
-- **a function** `(option, query) => boolean`: a custom matcher, called for each option.
-- **`false`**: show `suggestions` as-is, doing no local filtering. Use this when you
-  fetch or filter results yourself (async / remote) and feed the current set through
-  `suggestions`.
+```tsx
+<InputAutocomplete
+  label="Framework prefix"
+  suggestions={frameworks}
+  filter={(option, query) => option.value.toLowerCase().startsWith(query.trim().toLowerCase())}
+/>
+```
 
-Suggestions are bare strings or `SelectOption`s, the same option shape
-[Select](./select.md) uses: `value`, `label`, `hint`, `icon`, `tone`, `disabled`.
+### Application-provided results
+
+Pass `filter={false}` when your application already selects or ranks the
+suggestions. This preserves their order and skips local highlighting. The
+example supplies matching projects in reverse order; fetched results use the
+same pattern.
+
+```tsx
+const projects = ['Billing service', 'Billing dashboard', 'Build tools', 'Customer portal']
+const [value, setValue] = useState('')
+const results = projects.filter(name => name.toLowerCase().includes(value.toLowerCase())).reverse()
+
+<InputAutocomplete
+  label="Project"
+  hint="Results use the application's order. You can also enter a new project."
+  suggestions={results}
+  filter={false}
+  value={value}
+  onValueChange={setValue}
+/>
+```
+
+Replace `suggestions` as results arrive. New results update an open list; they
+do not reopen it after Escape or focus loss. Your application owns loading,
+request cancellation, and discarding responses for older queries.
+
+## Keyboard interaction
+
+Typing leaves every suggestion inactive, so Enter keeps the typed text and
+closes the list. Arrow Down highlights the first enabled suggestion; Arrow Up
+and Arrow Down move through the list. Enter on an active suggestion fills the
+field. Editing again clears that active suggestion. Input-method composition
+keeps its own candidate navigation and confirmation keys.
+
+Escape closes the list and keeps focus in the field. Tab closes it and moves
+to the next control. Selecting a suggestion or clicking the list's padding keeps
+focus in the field. Clicking within an open field leaves the list open while
+placing the caret. The field exposes combobox semantics, the popup is a listbox,
+and the active suggestion is associated directly with the focused input.
+
+## Events
+
+Use `onValueChange` for application text state. `onInput`, `onFocus`, `onBlur`,
+and `onKeyDown` also receive their field events. An input event reports an edit
+that already happened; `preventDefault()` does not reject the text.
+
+A consumer `onKeyDown` can prevent the wrapper's plain-Enter dismissal.
+Menu handles active suggestions and navigation earlier in document capture.
+Those actions cannot be canceled from the field callback, and Escape is
+consumed before it reaches the field. See the callback reference for ordering.
 
 ## Component props
 
@@ -49,41 +137,43 @@ Suggestions are bare strings or `SelectOption`s, the same option shape
 |------|------|---------|-------------|
 | `suggestions` | string \| SelectOption[] | — | The suggestions: bare strings or `SelectOption`s (`value` / `label` / `hint` / `icon` / `tone` / `disabled`). A flat list; picking one fills the field. |
 | `clearable?` | boolean | — | Show a clear button while the field has text. |
-| `defaultValue?` | string | — | Initial value for uncontrolled use. |
+| `defaultValue?` | string | — | Initial uncontrolled text and the value restored by a form reset. Resetting an unfocused field does not open suggestions or move focus. |
 | `disabled?` | boolean | — | Disable the field. |
-| `filter?` | boolean \| (option, query) => boolean | true | How suggestions match the text. `true` uses the built-in case-insensitive substring match on `value` / `label` / `hint`; a function `(option, query) => boolean` uses a custom matcher; `false` shows `suggestions` unchanged for application-provided async or remote filtering. |
+| `filter?` | boolean \| (option, query) => boolean | true | How suggestions match the text. `true` uses the built-in case-insensitive substring match on `value` / `label` / `hint`; a function `(option, query) => boolean` receives the original field text, including whitespace, once per option on each render, including when empty. Custom matching has no automatic highlighting. `false` shows `suggestions` unchanged for application-provided async or remote filtering, without automatic highlighting. Replacing results updates an open list but does not reopen a dismissed list. |
 | `hint?` | ReactNode | — | Hint under the field. |
 | `label?` | ReactNode | — | Field label. |
 | `leading?` | ReactNode | — | Leading adornment inside the field. |
 | `name?` | string | — | Form field name. |
-| `onSelect?` | (option) => void | — | Fires only when a suggestion is chosen, with that option. |
-| `onValueChange?` | (value) => void | — | Fires as the text changes (typing, picking a suggestion, or clearing) with the new field text. |
+| `onBlur?` | (event) => void | — | Observe focus loss. The suggestion list closes without changing the text. |
+| `onFocus?` | (event) => void | — | Observe focus before the suggestion list opens. |
+| `onInput?` | (event) => void | — | Observe editing before `onValueChange`. The input event reports text that has already changed; `preventDefault()` does not reject that text. |
+| `onKeyDown?` | (event) => void | — | Observe keys before the wrapper's plain-Enter dismissal. `preventDefault()` keeps that dismissal from running. Menu handles navigation and active-option activation earlier, in document capture; this callback cannot veto those actions. Composing keys remain with the input method. |
+| `onSelect?` | (option) => void | — | Fires after `onValueChange` when a suggestion is chosen, with the normalized option. This reports the choice even if a controlled parent rejects the value. Typing and clearing do not call it. |
+| `onValueChange?` | (value) => void | — | Reports text changes from typing, picking a suggestion, clearing, or form reset. |
 | `placeholder?` | string | — | Placeholder text. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. |
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | — | Validation status. |
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Status icon override, or `false` to drop it. |
 | `tone?` | string | — | Custom accent color — a named tone or any CSS color. |
 | `trailing?` | ReactNode | — | Trailing adornment inside the field. |
-| `value?` | string | — | Controlled value: the field's text, a **free** string not constrained to a suggestion. Leave undefined for uncontrolled. |
+| `value?` | string | — | The controlled field text. Any string is valid, including `''` for an empty field. Omit or pass `undefined` for uncontrolled use. Parent updates do not call `onValueChange`. |
 
 ## Web Component
 
-`InputAutocomplete` combines an input with a Menu. Reproducing its filtering,
-selection, focus, and popup coordination without the React or Preact wrapper is
-a substantial amount of code.
+`InputAutocomplete` composes [Input](./input.md) and [Menu](./menu.md). It has no
+`a-input-autocomplete` element or registration entry. Raw authors own the text,
+filtering, popup state, and equivalent ARIA declarations. See
+[Install and configure](../install-config.md) for imports, renderer setup, and CSP guidance.
 
 ### Native HTML input with autocomplete
 
-For browser-native suggestions, pair a native input with a `<datalist>`. It
-keeps free-form entry and lets the browser filter and fill matching options,
-while `data-anta` supplies the field appearance.
-
-The browser renders the suggestions popup. Use `InputAutocomplete` for custom
-option content, popup styling, or consistent behavior across browsers.
+For browser-native suggestions, pair a native input with a `datalist`. The
+browser supplies the popup and keeps free-form entry. Use InputAutocomplete
+when you need Anta's suggestion rows and popup styling.
 
 ```html
-<input data-anta type="text" list="people" placeholder="Search people">
-
+<label for="autocomplete-people">Person</label>
+<input id="autocomplete-people" data-anta type="text" list="people" placeholder="Search people">
 <datalist id="people">
   <option value="Maya Chen">
   <option value="Noah Williams">
@@ -94,11 +184,21 @@ option content, popup styling, or consistent behavior across browsers.
 
 ## Styling
 
-**The field** is styled through Input's props (`size`, `status`, `tone`, `round`,
-`leading` / `trailing`) and its `::part`s; set its width with `style` / `className`
-(forwarded to the field). **The suggestion popover** takes Menu's `::part(menu)`.
+Use Input's `size`, `status`, `tone`, and adornment props to configure the field.
+`className` and `style` apply to its `a-input`. Target Input's parts for field
+styles and the adjacent Menu's `::part(menu)` for the suggestion popup. Option
+objects accept `className`, `style`, and application data attributes on their
+rows.
+
+The `package-field` class below belongs to this example. Replace it with your
+own selector.
 
 ```tsx
-// Give the field a width; tint it with a custom tone.
-<InputAutocomplete tone="info" style={{ width: '260px' }} suggestions={frameworks} />
+<InputAutocomplete className="package-field" label="Package" suggestions={packages} tone="info" />
+```
+
+```css
+.package-field { width: 260px; }
+.package-field::part(field) { border-radius: 12px; }
+.package-field + a-menu::part(menu) { border-radius: 12px; }
 ```

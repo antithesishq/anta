@@ -3,6 +3,7 @@ import {
   SYNC_POPUP_ARIA,
   anchorRect,
   isPopupAriaReceiver,
+  isComposingKey,
   isModifiedNavigationKey,
   setMenuPresence,
   type PopupAriaReceiver,
@@ -443,6 +444,10 @@ export class AMenuElement extends HTMLElementBase {
 
     // Single delegated click for activation + the close contract.
     this.surface.addEventListener('click', this.onSurfaceClick)
+    // Combobox popup padding must retain field focus just like its option rows.
+    this.surface.addEventListener('mousedown', (e) => {
+      if (e.button === 0 && this.#comboAnchor) e.preventDefault()
+    })
 
     shadow.append(this.surface)
   }
@@ -890,6 +895,11 @@ export class AMenuElement extends HTMLElementBase {
     )
   }
 
+  #clearComboCursor() {
+    this.#pendingComboActivate = null
+    if (this.activeItem) this.setActive(null)
+  }
+
   /** Re-seat the cursor on the first option — but only once the filter has input.
    *  An empty filter (e.g. right after opening) shows NO active row, so the first
    *  ArrowDown is what steps onto the list; typing then keeps the top match active.
@@ -897,12 +907,13 @@ export class AMenuElement extends HTMLElementBase {
    *  the seat target — the cursor lands on the first real option — but they stay
    *  arrow-reachable. */
   private resetActive() {
-    const q = (this.#searchField as { value?: string } | null)?.value
-    if (!q || !q.trim()) return this.setActive(null)
     // Combobox-anchor (free-text autocomplete): never auto-seat a match, so Enter
     // commits the typed text — the user arrows down to highlight a suggestion
     // first. (The slotted-filter case below still seats the top match.)
-    if (this.#comboAnchor) return this.setActive(null)
+    if (this.#comboAnchor) return this.#clearComboCursor()
+    this.#pendingComboActivate = null
+    const q = (this.#searchField as { value?: string } | null)?.value
+    if (!q || !q.trim()) return this.setActive(null)
     const items = this.focusableItems()
     this.setActive(items.find((it) => !it.hasAttribute('data-menu-skip-active')) ?? items[0] ?? null)
   }
@@ -914,6 +925,7 @@ export class AMenuElement extends HTMLElementBase {
    *  instead. Any other key falls through to the input (typing). */
   private handleComboKey(e: KeyboardEvent): boolean {
     const items = this.focusableItems()
+    if (this.activeItem && !items.includes(this.activeItem)) this.#clearComboCursor()
     const idx = this.activeItem ? items.indexOf(this.activeItem) : -1
     switch (e.key) {
       case 'ArrowDown':
@@ -960,10 +972,14 @@ export class AMenuElement extends HTMLElementBase {
   /** Combobox keyup: activate the item a filter-field Enter armed. Paired with the
    *  keydown pre-request in `handleComboKey` so lazy content resolves in the gap. */
   handleKeyUp(e: KeyboardEvent) {
+    if (isComposingKey(e)) {
+      this.#pendingComboActivate = null
+      return
+    }
     if (e.key !== 'Enter') return
     const el = this.#pendingComboActivate
     this.#pendingComboActivate = null
-    el?.click()
+    if (el && this.focusableItems().includes(el as AMenuItemElement)) el.click()
   }
 
   /* ============================ open / close ============================ */
@@ -1131,15 +1147,16 @@ export class AMenuElement extends HTMLElementBase {
     }
   }
 
-  /** While a filter field is open, the visible option list changes as the user
-   *  types (the consumer re-renders the matches); re-seat the cursor on the first
-   *  match. `childList` only — an item toggling its own `selected` (multi-select)
-   *  mutates deep in its subtree, not this menu's direct children, so it won't
-   *  spuriously reset the cursor. */
+  /** Reconcile changed results while filtering. Slotted filters observe direct
+   * children only; autocomplete also observes row content and disabled changes. */
   private startComboObserver() {
     this.comboObserver?.disconnect()
-    this.comboObserver = new this.view.MutationObserver(() => {
+    this.comboObserver = new this.view.MutationObserver((records) => {
       if (!this._shown || !this.#searchField) return
+      if (this.#comboAnchor && !records.some(record =>
+        record.type !== 'attributes' ||
+        (isMenuItemEl(record.target) && record.target.parentElement === this),
+      )) return
       this.resetActive()
       // The filtered list changed the menu's height — re-anchor to the trigger,
       // keeping the side chosen at open (`reanchor`). Matters when flipped ABOVE:
@@ -1148,7 +1165,10 @@ export class AMenuElement extends HTMLElementBase {
       // it must NOT flip back under the field once it's short enough to fit.
       this.position(undefined, false, true)
     })
-    this.comboObserver.observe(this, { childList: true })
+    this.comboObserver.observe(this, {
+      childList: true,
+      ...(this.#comboAnchor ? { characterData: true, attributes: true, subtree: true, attributeFilter: ['disabled'] } : {}),
+    })
   }
 
   /** Apply CLOSE without notifying this menu's owner. Notify nested menus so
@@ -1203,8 +1223,7 @@ export class AMenuElement extends HTMLElementBase {
   _doHide() {
     this.comboObserver?.disconnect()
     this.comboObserver = undefined
-    this.#pendingComboActivate = null
-    if (this.activeItem) this.setActive(null)
+    this.#clearComboCursor()
     this._flippedTop = null
     this._flippedSide = null
     clearTimeout(this.typeTimer)
@@ -1621,6 +1640,10 @@ export class AMenuElement extends HTMLElementBase {
    *  (synthesizes a click → routed through onSurfaceClick). Combobox Enter (focus
    *  in the filter field) is handled here via handleComboKey / handleKeyUp. */
   handleKey(e: KeyboardEvent) {
+    if (isComposingKey(e)) {
+      this.#pendingComboActivate = null
+      return
+    }
     if (isModifiedNavigationKey(e)) return
     const active = this.doc.activeElement as HTMLElement | null
 
@@ -1806,11 +1829,15 @@ export class AMenuElement extends HTMLElementBase {
       // Combobox-anchor (autocomplete): the editable anchor IS the filter field.
       // Wire NO click-toggle — clicking to place the caret or typing must not
       // close the list. The reactive wrapper owns open state via controlled
-      // `state`; Esc / outside-click / picking a suggestion still close. No
-      // listeners to remove, but honor the teardown contract every branch keeps:
-      // reset `listening` so a later setupListeners() (guarded by `if
-      // (this.listening) return`) can re-wire if the anchor leaves combobox mode.
-      this.teardown = () => { this.listening = false }
+      // `state`; Esc / outside-click / picking a suggestion still close.
+      // Editing invalidates an explicitly chosen cursor even when remote results
+      // retain their row nodes. The next Enter must keep the new free text.
+      const onInput = () => this.#clearComboCursor()
+      anchor.addEventListener('input', onInput)
+      this.teardown = () => {
+        anchor.removeEventListener('input', onInput)
+        this.listening = false
+      }
       this.listening = true
       return
     } else {

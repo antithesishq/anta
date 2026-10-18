@@ -1,4 +1,5 @@
 export const componentSuites = {
+  'input-autocomplete': { tests: ['tests/input-autocomplete-types.mjs', 'tests/input-autocomplete-projection.mjs', 'tests/input-autocomplete-csp.mjs'], slow: ['tests/input-autocomplete-package.mjs'] },
   select: { tests: ['tests/select-types.mjs', 'tests/select-projection.mjs', 'tests/select-csp.mjs'], slow: ['tests/select-package.mjs'] },
   dialog: { tests: ['tests/dialog-csp.mjs'], slow: ['tests/dialog-package.mjs'] },
   menu: { tests: ['tests/menu-csp.mjs'], slow: ['tests/menu-package.mjs'] },

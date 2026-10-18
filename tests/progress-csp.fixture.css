@@ -1,5 +1,7 @@
 body { margin: 0; }
 #mount { width: 400px; }
+#mount.motion { width: 1600px; container-type: inline-size; }
+#mount.motion > a-progress { width: 1200px; }
 a-progress.override::before { background: #123456; }
 a-progress.override > a-progress-label { letter-spacing: 1px; }
 a-progress.pixel, progress.pixel { background: #fff; }

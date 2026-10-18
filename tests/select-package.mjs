@@ -39,13 +39,13 @@ try {
   await run('npm', ['install', '--no-audit', '--no-fund'], workspace)
   const requireConsumer = createRequire(join(workspace, 'package.json'))
   for (const specifier of ['@antadesign/anta', '@antadesign/anta/jsx-runtime', '@antadesign/anta/bundle', '@antadesign/anta/bundle.css',
-    '@antadesign/anta/elements', '@antadesign/anta/elements/a-select', '@antadesign/anta/components/select.css', '@antadesign/anta/components/select-parts.css',
+    '@antadesign/anta/elements', '@antadesign/anta/elements/a-select', '@antadesign/anta/elements/a-select-faceted', '@antadesign/anta/components/select.css', '@antadesign/anta/components/select-parts.css',
     '@antadesign/anta/elements/a-button', '@antadesign/anta/elements/a-icon', '@antadesign/anta/elements/a-input']) {
     assert.ok(requireConsumer.resolve(specifier).startsWith(join(workspace, 'node_modules/@antadesign/anta/')), specifier)
   }
   assert.equal(requireConsumer.resolve('@antadesign/anta/components/select-parts.css'), requireConsumer.resolve('@antadesign/anta/components/select.css'))
   console.log('Checking Select through installed package exports with React and Preact SSR…')
-  await run(process.execPath, ['--test', 'tests/select-csp.mjs'], root, {
+  await run(process.execPath, ['--test', 'tests/select-types.mjs', 'tests/select-csp.mjs'], root, {
     ...process.env, ANTA_SELECT_CONSUMER_ROOT: workspace,
   })
 } finally {

@@ -20,6 +20,16 @@ facet also opens a dialog containing its search field and options menu. Text and
 custom facets use dialogs for their editable content. An unfiltered option facet
 keeps the menu popup pattern.
 
+Global search matches options across all `single` and `multiple` facets, including
+facets with `filter: false`. A facet's `filter` controls its own search field.
+Each field keeps its query independently. Built-in matching searches `value`,
+`label`, and `hint` without case sensitivity; whitespace in a query matches a
+run of whitespace. A custom `filter` receives the original query, including
+leading and trailing spaces, in both search locations.
+It also runs for an empty per-facet query. A whitespace-only global query keeps
+the facet list visible instead of opening global results. Select's custom
+filter receives a trimmed query; account for this difference when sharing predicates.
+
 Pass `placement` to control where the root facet menu opens relative to its
 trigger. It uses the same values as `Menu` and still flips or clamps when space
 is limited. `offset` sets the gap in pixels between the trigger and the menu:
@@ -108,7 +118,7 @@ function Demo() {
                   indicator={facet.kind === 'single' ? 'check' : undefined}
                   options={facet.options}
                   renderOption={facet.renderOption}
-                  value={value[facet.key]}
+                  value={value[facet.key] ?? (facet.kind === 'single' ? null : [])}
                   onValueChange={(v) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
                   aria-label={facet.label}
@@ -510,3 +520,33 @@ It can store a value of type `V`, including an object such as a date range.
 | `kind` | `'custom'` | Discriminant. |
 | `render` | `(ctx) => ReactNode` | Renders the editor. `ctx.value` is the current `V`; `ctx.onChange(next)` sets it, and `undefined` clears the facet. `ctx.close()` closes the menu. |
 | `summary` | `(value: V) => ReactNode` | The chip on the facet's row while a value is set. |
+
+## Styling
+
+`size` and `priority` style the default trigger. `tone` and `toneScope` style
+option rows. `className`, `style`, and extra attributes apply to the default
+Button; a custom `renderTrigger` owns its own styling and attributes.
+
+SelectFaceted uses external styles for its fixed layout, including the text
+editor's padding. Consumer `style` props, option styles, render-hook styles,
+and custom color or radius props can still produce inline style attributes.
+Server-rendered inline styles are blocked by `style-src-attr 'none'`.
+
+The text editor uses a CSS-only `a-select-faceted-text` region in its Menu.
+If you targeted the former `div[data-menu-open]` wrapper, replace that part of
+your selector with `a-select-faceted-text`. Its padding now comes from CSS,
+so selectors that require an inline `style` attribute no longer apply.
+Use your trigger's class and the adjacent Menu to scope its padding. The class
+in this example belongs to the demo; replace it with your own selector. Open
+**Title contains** to see the larger inset.
+
+```tsx
+<SelectFaceted
+  className="roomy-text-filter"
+  facets={[{ key: 'title', label: 'Title contains', kind: 'text' }]}
+/>
+```
+
+```css
+.roomy-text-filter + a-menu a-select-faceted-text { padding: 8px; }
+```

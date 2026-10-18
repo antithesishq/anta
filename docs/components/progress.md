@@ -120,6 +120,8 @@ Use `children` when task details need more than a plain label and hint. Pass
 
 ## Web Component
 
+<a id="web-component"></a>
+
 ```html
 <a-progress value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">

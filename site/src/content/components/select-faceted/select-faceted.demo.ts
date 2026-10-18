@@ -30,6 +30,7 @@ function DurationEditor({ value, onChange }) {
         size="small" aria-label="Duration comparison" options={comparisons}
         value={comparison}
         onValueChange={(next) => {
+          if (next === null) return
           setDraftComparison(next)
           if (value?.min.trim()) onChange({ min: value.min, comparison: next })
         }}

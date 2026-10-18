@@ -5,20 +5,32 @@ changes are not listed.
 
 ## Unreleased
 
-### Fixed
+### Added
 
-- [Select](/select/#styling) preserves its leading-content layout and validation
-  chevron color in server-rendered HTML under `style-src-attr 'none'`.
-  Its shared stylesheet is named `components/select.css`; the previous
-  `components/select-parts.css` import remains supported.
+- [Text's inert expansion mode](/text/#truncation-and-expansion):
+  `expandableInert` makes the folded, overflowing preview one expand target and
+  skips content interactions until expanded. Text that fits remains interactive.
 
-- [SelectFaceted](/select-faceted/) keeps per-facet search and text drafts working
-  when React defers state updates.
-
-- [Calendar](/calendar/) centers unbounded year menus on the displayed year,
-  including dates supplied through `value` and `defaultValue`.
+- [Input button fields](/input/#styling) expose `::part(input-label)` for their
+  value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
+- [Select's `dimActions` prop](/select/) controls its trigger adornments. They
+  dim at rest and brighten on hover or focus; pass `false` to keep them fully visible.
+- [Title typeface](/title/#typeface): `font` sets a title in `serif`,
+  `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Breaking
+
+- [Select single selection](/select/#managing-the-value) uses `null` for a controlled
+  empty value, and Clear now reports `null` instead of `undefined`. Use
+  `V | null` for single-select state and callbacks; reset with `value={null}`.
+  Omitted or `undefined` values remain uncontrolled, and multiple selection
+  continues to use arrays with `[]` for an empty selection.
+
+- [SelectFaceted text-editor styling](/select-faceted/#styling) now targets the
+  CSS-only `a-select-faceted-text` wrapper. Replace selectors such as
+  `a-menu div[data-menu-open] > a-input` with
+  `a-menu a-select-faceted-text > a-input`. The wrapper no longer has an inline
+  `style` attribute, so move attribute-dependent selectors to the region tag.
 
 - [Dialog styling](/dialog/#styling) follows Anta's cascade layers. Move part
   overrides from `base` to `components`, `utilities`, or unlayered CSS.
@@ -69,19 +81,6 @@ changes are not listed.
   `.my-select::part(field)`. Target the selected text with `.my-select::part(input-label)`
   instead of `a-button-label`. Existing raw `a-select-field`
   compositions retain their CSS, JSX types, and label and hint behavior.
-
-### Added
-
-- [Text's inert expansion mode](/text/#truncation-and-expansion):
-  `expandableInert` makes the folded, overflowing preview one expand target and
-  skips content interactions until expanded. Text that fits remains interactive.
-
-- [Input button fields](/input/#styling) expose `::part(input-label)` for their
-  value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
-- [Select's `dimActions` prop](/select/) controls its trigger adornments. They
-  dim at rest and brighten on hover or focus; pass `false` to keep them fully visible.
-- [Title typeface](/title/#typeface): `font` sets a title in `serif`,
-  `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
 
@@ -153,8 +152,21 @@ changes are not listed.
 - [Tabs sizing](/tabs/#size) in the Antithesis theme matches text buttons'
   horizontal padding: 10px, 12px, and 14px per side for small, medium, and large.
 
-
 ### Fixed
+
+- [SelectFaceted text editors](/select-faceted/#styling) retain their padding in
+  server-rendered HTML under `style-src-attr 'none'` through external CSS.
+
+- [Select](/select/#styling) preserves its leading-content layout and validation
+  chevron color in server-rendered HTML under `style-src-attr 'none'`.
+  Its shared stylesheet is named `components/select.css`; the previous
+  `components/select-parts.css` import remains supported.
+
+- [SelectFaceted](/select-faceted/) keeps per-facet search and text drafts working
+  when React defers state updates.
+
+- [Calendar](/calendar/) centers unbounded year menus on the displayed year,
+  including dates supplied through `value` and `defaultValue`.
 
 - [Dialog](/dialog/) updates its accessible name when header text changes in
   place, including React and Preact updates after hydration.

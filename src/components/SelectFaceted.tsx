@@ -32,9 +32,13 @@ interface FacetBase {
   icon?: IconShape
 }
 
-/** A per-facet option-list filter (like `Select`'s `filter`): `true` uses the
- *  built-in case-insensitive substring match on an option's value / label /
- *  hint; a function `(option, query) => boolean` does custom matching. */
+/** Filter the options within a facet. `true` uses case-insensitive substring
+ *  matching on the option's value, label, and hint, with trimmed, flexible
+ *  whitespace. A custom `(option, query) => boolean` receives the original query,
+ *  including leading and trailing whitespace, in both per-facet and global
+ *  search. Custom predicates also run for an empty per-facet query. A whitespace-only
+ *  global query does not activate global results. `false` hides the facet's search
+ *  field; global search still matches its options with the built-in matcher. */
 export type FacetFilter = boolean | ((option: SelectOption<OptionValue>, query: string) => boolean)
 
 /** Pick **one** option. Value: the chosen option's `value` (or `undefined` when
@@ -242,11 +246,13 @@ const leavesOf = (items: SelectItem<OptionValue>[]): SelectOption<OptionValue>[]
 const isEmpty = (v: unknown): boolean =>
   v == null || v === '' || (Array.isArray(v) && v.length === 0)
 
-/** The built-in `(option, query) => boolean` matcher, over the shared
- *  `matchQueryRegex` + `matchesQuery`. Builds the regex per call — cheap, and it
- *  keeps the per-option predicate signature the facet filters expect. */
-const defaultMatch = (o: SelectOption<OptionValue>, query: string): boolean =>
-  matchesQuery(o, matchQueryRegex(query))
+const prepareMatch = (query: string) => {
+  const queryRe = matchQueryRegex(query)
+  return (option: SelectOption<OptionValue>) => matchesQuery(option, queryRe)
+}
+
+const matcherFor = (filter: FacetFilter | undefined, query: string, preparedMatch?: ReturnType<typeof prepareMatch>) =>
+  typeof filter === 'function' ? (option: SelectOption<OptionValue>) => filter(option, query) : preparedMatch ?? prepareMatch(query)
 
 /**
  * `<SelectFaceted>` filters a result set by categories called facets. Its
@@ -368,10 +374,11 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // Leaves of an options facet, narrowed by its filter query when `filter` is on.
   const visibleLeavesOf = (facet: SelectFacetSingle | SelectFacetMultiple): SelectOption<OptionValue>[] => {
     const leaves = leavesByKey.get(facet.key) ?? []
-    if (!facet.filter) return leaves
+    const filter = facet.filter
+    if (!filter) return leaves
     const q = queries[facet.key] ?? ''
-    const match = typeof facet.filter === 'function' ? facet.filter : defaultMatch
-    return leaves.filter((o) => match(o, q))
+    if (typeof filter !== 'function' && !q.trim()) return leaves
+    return leaves.filter(matcherFor(filter, q))
   }
 
   // A `slot="header"` filter field for an options facet (only when `filter` is set).
@@ -501,11 +508,12 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // facets. A facet uses its `filter` function when provided, otherwise the
   // built-in substring match.
   const renderFlatResults = () => {
+    const match = prepareMatch(rootQuery)
     const groups = facets
       .filter((f): f is SelectFacetSingle | SelectFacetMultiple => f.kind === 'single' || f.kind === 'multiple')
       .map((facet) => {
-        const match = typeof facet.filter === 'function' ? facet.filter : defaultMatch
-        return { facet, matched: (leavesByKey.get(facet.key) ?? []).filter((o) => match(o, rootQuery)) }
+        const matched = (leavesByKey.get(facet.key) ?? []).filter(matcherFor(facet.filter, rootQuery, match))
+        return { facet, matched }
       })
       .filter((g) => g.matched.length > 0)
     return groups.map(({ facet, matched }) => (
@@ -527,7 +535,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     return (
       // `data-menu-open` keeps the menu open through typing; the value commits on
       // Enter / blur, not per keystroke.
-      <div data-menu-open="" style={{ padding: '4px' }}>
+      <a-select-faceted-text data-menu-open="">
         <Input
           size="small"
           value={draft}
@@ -545,7 +553,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           }}
           onBlur={apply}
         />
-      </div>
+      </a-select-faceted-text>
     )
   }
 

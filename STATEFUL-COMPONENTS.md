@@ -126,6 +126,47 @@ We own the `a-*` tag namespace and the house style is bare attributes (`tone`,
 `priority`, `level`). So the attribute is bare `state`; only the *values* are
 borrowed from Radix's `data-state`.
 
+## Controlled ownership and empty values
+
+A wrapper is uncontrolled only when its controlling prop is omitted or
+`undefined`. An explicit value keeps the application in control, including an
+explicit empty value. Determine ownership with `value !== undefined` (or the
+equivalent for `checked` or `open`), never a truthiness check.
+
+Use the empty value appropriate to the control:
+
+| Control kind | Controlled empty value |
+| --- | --- |
+| Optional scalar selection | `null` |
+| Multiple selection | `[]` |
+| Facet-value record | `{}` |
+| Text field | `''` |
+| Checked or open state | `false` |
+
+`null` represents an absent scalar selection, rather than relinquishing control.
+Empty strings, `0`, and `false` remain valid option values. Controls with a required
+numeric or enumerated state need a valid value; do not invent an empty state.
+
+`defaultValue` initializes uncontrolled state and never overrides a controlled
+value. A user clearing a selection reports its documented empty value. The
+callback type includes that value regardless of whether a Clear action is shown.
+Application updates, including resets, do not themselves request another value
+change. Preserve documented form reset/restore notifications and the cancelable
+state-event model separately.
+
+JSX owns the control attributes. Translate a controlled empty value into the
+underlying element's explicit empty representation; do not omit its control
+attribute and accidentally make it uncontrolled. Keep this projection declarative
+and worker-compatible.
+
+For a migrated control, test an initially empty controlled value, parent-driven
+reset without a callback, a rejected pick after reset, and a subsequent accepted
+update. Cover uncontrolled defaults, valid falsy values, and SSR/hydration.
+
+This is the convention for new and migrated APIs. Single Select supports the
+nullable selection contract. Calendar, InputDate, and RadioGroup need separate
+migrations; their current public types remain authoritative until then.
+
 ## Wrapper props (React / Preact)
 
 One vocabulary all the way up: `state` attribute → `statechange` event →

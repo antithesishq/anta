@@ -17,7 +17,7 @@ The local reference matrix passed 46 tests, the installed-package matrix passed
 43 tests, the root regression suite passed 366 tests, and the site production
 browser suite passed 32 tests. Lint, Anta and stickers
 type checks, the stickers production build, site CSS lint, and the site production
-build passed. Plot’s build, type check, and isolated package verification also passed.
+build passed.
 
 The browser engines were Chromium 153.0.8010.12, Firefox 155.0, and WebKit 26.6
 with Node v24.10.0. The installed consumer used React/React DOM

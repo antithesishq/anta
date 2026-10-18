@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 18, 2026, including Slider.
+Updated October 18, 2026, including Slider and Panel.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -30,7 +30,11 @@ Completed work:
   and entry while retaining browser-owned rendering and semantics. No shadow
   root, registration, indicator child, or fallback slot.
 
-Panel stays outside this refactor and retains its current implementation.
+- [x] [Panel](src/elements/a-panel.ts): existing shadow content slot and manual
+  popover retained. External `content` and `placeholder` parts style normal and
+  maximized layout and the native backdrop. Measured dimensions stay on the
+  owned placeholder, with visibility selected by `:state(maximized)`.
+  See Panel verification below.
 
 The following is the proposed order. Each item includes research, implementation,
 and verification before moving to the next component.
@@ -156,6 +160,60 @@ controlled empty string. The wrapper's HTML attribute projection avoids that
 path; case-sensitive XML attribute maps require a different projection.
 Controlled Slider reset remains silent, disconnection cancels without a commit,
 and static accessibility-label resolution still runs on each paint.
+
+### Panel verification
+
+Implemented October 18, 2026 on `codex/panel-csp`, from
+`codex/slider-refactor` at `aa014ae37fe99b91a422fa6827a9267d7f50ea3b`.
+
+- Panel retains its shadow DOM, existing `content` part, native manual popover,
+  focus scope, and placeholder. The additive `placeholder` part uses the existing
+  `maximized` state. Default rules and the backdrop live in `a-panel.css` under
+  `anta.components`; there is no injected or adopted stylesheet. Runtime width
+  and height remain on the owned placeholder. Authored host attributes and
+  light-DOM content remain unchanged.
+- JSX retains controlled and uncontrolled inputs, boolean request payloads, and
+  cancellation. It uses the shared native-event helper so React and Preact
+  hydration retain callbacks without replacing the host or input. As documented
+  for other hydrated components, configure `hydratingEvents` before mounting.
+- Consumer part overrides follow document layers. Move normal overrides from
+  `base` to `components`, `utilities`, or unlayered CSS. Applications placing
+  Panel inside their own shadow root must load its external CSS in that root.
+
+- All 91 source checks passed in Chrome `155.0.8059.84`, Firefox `155.0`, and
+  Playwright WebKit `26.6`. All 85 installed-package checks passed in Chromium
+  `153.0.8010.12`, Firefox, and WebKit. Another 29 installed-package checks passed
+  in current Chrome, and all 29 passed in Chrome for Testing `135.0.7049.114`.
+  Both public import modes use real HTTP CSP headers, including
+  `style-src-attr 'none'`, with no policy violations. Installation uses
+  `npm pack --ignore-scripts` and isolated `npm install`; compiled inputs assert
+  installed exports with no Anta source aliases. React `19.3.0` and Preact
+  `10.29.8` render real server markup and hydrate in normal and maximized states.
+- All 108 pairs of normal, maximized, and restored screenshots and computed
+  metrics match `aa014ae3` exactly across six layouts, both import modes, and
+  the three current engines. Visual comparisons collapse native input selection
+  consistently. Artifacts are in `tests/.test-output/panel`; the manual matrix
+  uploads them. WebKit screenshots use a separate permissive capture context
+  for Playwright's synchronization sheet. Behavioral and geometry checks keep
+  the strict policy.
+- Native popover state, backdrop styling, focus entry/trapping/restoration,
+  scrolling, controlled requests and vetoes, nested panels, reconnect, repeated
+  cycles, bounded/flex/grid/RTL/classic-scrollbar layouts, forced colors,
+  independent import orders, and consumer-shadow stylesheet loading pass.
+  Consumer part overrides and cascade-layer precedence pass in all engines.
+- All 360 selected root regressions passed using CI's existing browser/debounce
+  filters. Panel's 24 existing regressions passed in each current engine.
+  All 22 CI/tier checks passed. Package JS, minified CSS, bundle, declarations,
+  lint and type checks, sticker/Plot types, site CSS lint, scoped package docs,
+  documentation-marker checks, and the Node `24.15.0` production build pass.
+  All 32 existing production checks and both added Panel demo checks pass.
+  The Panel demo accepts hydrated requests and preserves input and document
+  layout through maximization/restoration in Chrome and WebKit.
+
+Exact Edge 135, Firefox 136, and Safari/iOS Safari 17.4 were not executed.
+Playwright WebKit provides engine evidence, not a shipping Safari run.
+Application `style` props and custom values serialized as HTML style attributes
+remain subject to the policy's inline-style restrictions.
 
 ### Slider verification
 

@@ -70,6 +70,19 @@ env -u NODE_OPTIONS -u ANTA_TEST_WEBKIT node --test --test-name-pattern='^webkit
 
 ## Panel
 
+Run `pnpm test:panel` for the source CSP matrix and `pnpm test:panel:package`
+for the installed tarball. Fast component checks cover layout, focus, ownership,
+requests, nesting, reconnect, and React/Preact SSR hydration in both import modes.
+The slow tier adds all three engines, consumer parts/backdrop and cascade
+layers, repeated bounded/flex/grid/RTL/scrollbar layouts, and comparisons against
+`aa014ae37fe99b91a422fa6827a9267d7f50ea3b`. Screenshots and computed metrics
+are saved in `tests/.test-output/panel` and uploaded by the Component matrix.
+WebKit captures use a separate permissive page for Playwright's screenshot
+stylesheet; behavioral and geometry assertions retain strict HTTP CSP headers.
+Use `ANTA_PANEL_CHROMIUM_EXECUTABLE` for a specific Chrome executable.
+Installation checks assert public export resolution without source aliases.
+
+
 Run `CAPTURE_TEST_BROWSER_CHANNEL=chrome node --test tests/panel.test.mjs` to
 check viewport promotion, state requests, keyboard controls, nested ownership,
 reconnection, and preservation of content, focus, selection, and scroll position.

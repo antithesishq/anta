@@ -51,7 +51,8 @@ changes are not listed.
   missing hooks report an error instead of using another renderer's hooks.
 
 - Normal part overrides for [Dialog](/dialog/#styling), [Menu](/menu/#styling),
-  and [Slider](/slider/#styling) follow Anta's document cascade layers. Move
+  [Slider](/slider/#styling), and [Panel](/panel/#styling) follow Anta's document cascade
+  layers. Move
   overrides from `base` to `components`, `utilities`, or unlayered CSS.
 
 - [Select single selection](/select/#managing-the-value) uses `null` for a
@@ -141,6 +142,10 @@ changes are not listed.
   horizontal padding: 10px, 12px, and 14px per side for small, medium, and large.
 
 ### Fixed
+
+- [Panel](/panel/#styling) renders its normal and maximized surfaces under a
+  CSP that allows external styles and blocks inline styles. Its placeholder
+  exposes a styling part, and React hydration retains state-change callbacks.
 
 #### Banner
 

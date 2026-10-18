@@ -669,6 +669,11 @@ Server-rendered `<style>` blocks also need CSP permission. They follow
 policy. A nonce on a `<style>` element does not authorize HTML `style`
 attributes. See [CSP rules for stylesheet elements](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-elem).
 
-Anta does not yet support strict CSP across every component. Some components
-still inject shadow `<style>` elements. Loading a theme does not unblock those styles, and
-nested components retain their own CSP requirements.
+Anta's component defaults, including Panel's maximized surface and backdrop,
+use external stylesheets. Load the UI entry or bundle CSS as described in
+[Installation](#installation). Custom props and application styles can
+still require inline-style permission as described here.
+
+When placing an Anta component inside an application-owned shadow root, load
+its external CSS in that root through a stylesheet link. Document styles do
+not cross that boundary.

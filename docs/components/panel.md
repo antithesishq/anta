@@ -154,6 +154,20 @@ maximized scrolling surface. In normal mode, the content slot uses `display: con
 The maximized surface also uses `overflow: auto`; override
 `::part(content)` to change its overflow separately from the normal Panel.
 
+The `::part(placeholder)` region reserves the normal content size while the
+surface is maximized. Its measured width and height belong to Panel. Keep its
+layout rules intact when customizing its appearance. Use
+`::part(content)::backdrop` to style the native popover backdrop. By default,
+the backdrop is transparent and ignores pointer events.
+
+Defaults live in external CSS and follow Anta's cascade layers. Put normal
+part overrides in `components`, `utilities`, or unlayered CSS. A `base` layer
+rule no longer overrides these defaults. See [Content Security Policy](../install-config.md#content-security-policy)
+for stylesheet loading and inline-style constraints.
+
+Inside another shadow root, load `@antadesign/anta/elements/a-panel.css` in
+that root through a stylesheet link. Document styles cannot reach Panel there.
+
 Enter a note, then select **Maximize panel** and **Restore panel**. The input
 keeps its value. The `panel-demo` classes supply this example's appearance;
 replace them with your own selectors.

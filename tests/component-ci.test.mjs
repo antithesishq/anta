@@ -121,6 +121,33 @@ test('Autocomplete CI gate selects its source and test dependencies without unre
   } finally {await rm(directory,{recursive:true})}
 })
 
+test('Panel CI gate selects its source and test dependencies without unrelated component edits', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-panel-gate-'))
+  const git = args => execFileSync('git',args,{cwd:directory,encoding:'utf8'})
+  try {
+    git(['init','-b','fixture']);git(['config','user.name','Fixture']);git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection = workflow.jobs.build.steps.find(step=>step.id==='component-tests').run
+    for (const [path,wanted] of [
+      ['src/components/Panel.tsx',true],['src/elements/a-panel.css',true],
+      ['src/elements/a-panel.ts',true],['src/elements/panel-focus.ts',true],
+      ['src/anta_helpers.ts',true],['src/native-event-props.ts',true],
+      ['tests/panel-csp.mjs',true],['tests/panel-package.mjs',true],
+      ['src/components/Calendar.tsx',false],['docs/components/panel.md',false],
+    ]) {
+      const base = git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true})
+      await writeFile(join(directory,path),'fixture')
+      git(['add',path]);git(['commit','-m',path])
+      const output = join(directory,'outputs');await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'),new RegExp(`^panel=${wanted}$`,'m'),path)
+    }
+    const manual = parse(await readFile(new URL('../.github/workflows/component-tests.yml', import.meta.url),'utf8'))
+    assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('panel'))
+  } finally {await rm(directory,{recursive:true})}
+})
+
 test('Slider CI gate selects its source and test dependencies without unrelated component edits', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'anta-slider-gate-'))
   const git = args => execFileSync('git',args,{cwd:directory,encoding:'utf8'})

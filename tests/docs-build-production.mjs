@@ -48,6 +48,31 @@ async function productionPage(t, engine = chromium) {
 }
 
 for (const engine of engines) {
+  test(`${engine.name()}: Panel preview retains hydrated requests, layout and input across maximization`, async t => {
+    const {page,errors}=await productionPage(t,engine)
+    await page.goto('https://anta.test/panel/')
+    const island=page.locator('astro-island[component-url*="PanelControlledDemo"]')
+    await page.waitForFunction(el=>!el.hasAttribute('ssr'),await island.elementHandle())
+    const panel=island.locator('a-panel'),input=island.locator('a-input input')
+    await input.fill('Retained production draft')
+    const bounds=()=>panel.evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x+scrollX,y:r.y+scrollY,width:r.width,height:r.height}})
+    const before=await bounds()
+    await island.getByRole('button',{name:'Maximize panel',exact:true}).click()
+    await page.waitForFunction(el=>el.matches(':state(maximized)'),await panel.elementHandle())
+    const size=page.viewportSize()
+    assert.deepEqual(await panel.evaluate(el=>{
+      const surface=el.shadowRoot.querySelector('slot'),r=surface.getBoundingClientRect()
+      return [r.x,r.y,r.width,r.height,getComputedStyle(surface).overflow]
+    }),[0,0,size.width,size.height,'auto'])
+    // A native request exercises the hydrated statechange listener, rather than
+    // the demo button's separate click callback.
+    await panel.evaluate(el=>el.requestRestore())
+    await page.waitForFunction(el=>!el.matches(':state(maximized)'),await panel.elementHandle())
+    assert.deepEqual(await bounds(),before)
+    assert.equal(await input.inputValue(),'Retained production draft')
+    assert.equal(await panel.evaluate(el=>el.shadowRoot.querySelectorAll('style,link').length),0)
+    assert.deepEqual(errors,[])
+  })
   test(`${engine.name()}: selection previews keep uncontrolled values off authored attributes`, async t => {
     const {page,errors}=await productionPage(t,engine)
     await page.goto('https://anta.test/input-date/')

@@ -3,35 +3,6 @@ import type { PanelState } from '../general_types'
 import { activeFocus, PanelFocusScope } from './panel-focus'
 import './a-panel.css'
 
-const SHADOW_STYLE = `
-  slot:not([popover]) { display: contents; }
-  slot:popover-open {
-    display: block;
-    position: fixed;
-    inset: 0;
-    width: auto;
-    height: auto;
-    max-width: none;
-    max-height: none;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    box-sizing: border-box;
-    overflow: auto;
-    overscroll-behavior: contain;
-    color: inherit;
-    background: inherit;
-  }
-  slot::backdrop { background: transparent; pointer-events: none; }
-  .placeholder { display: none; }
-  .placeholder.active {
-    display: block;
-    flex: 0 0 auto;
-    max-width: 100%;
-    pointer-events: none;
-  }
-`
-
 const parseState = (value: string | null): PanelState => value === 'maximized' ? 'maximized' : 'normal'
 
 /** A persistent container whose slotted surface can occupy the viewport. */
@@ -51,15 +22,13 @@ export class APanelElement extends HTMLElementBase {
     this.#internals = this.attachInternals()
     const shadow = this.attachShadow({ mode: 'open' })
     const doc = this.ownerDocument
-    const style = doc.createElement('style')
-    style.textContent = SHADOW_STYLE
     this.#surface = doc.createElement('slot')
     this.#surface.setAttribute('part', 'content')
     this.#focus = new PanelFocusScope(this.#surface)
     this.#placeholder = doc.createElement('div')
-    this.#placeholder.className = 'placeholder'
+    this.#placeholder.setAttribute('part', 'placeholder')
     this.#placeholder.setAttribute('aria-hidden', 'true')
-    shadow.append(style, this.#placeholder, this.#surface)
+    shadow.append(this.#placeholder, this.#surface)
 
     // Native toggle events are queued. Reconcile against the latest intent,
     // including a controlled surface hidden directly through the browser API.
@@ -142,7 +111,6 @@ export class APanelElement extends HTMLElementBase {
         ? parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom) + borderHeight : 0) - scrollbarHeight
       this.#placeholder.style.width = `${Math.max(0, width || 0)}px`
       this.#placeholder.style.height = `${Math.max(0, height || 0)}px`
-      this.#placeholder.classList.add('active')
       this.#surface.tabIndex = -1
       this.#surface.setAttribute('popover', 'manual')
       this.#focus.activate(focused)
@@ -159,7 +127,6 @@ export class APanelElement extends HTMLElementBase {
     if (this.#current === 'maximized') this.#surface.hidePopover()
     this.#surface.removeAttribute('popover')
     this.#surface.removeAttribute('tabindex')
-    this.#placeholder.classList.remove('active')
     this.#internals.states?.delete('maximized')
     if (restoreFocus) returnFocus()
   }

@@ -14,6 +14,7 @@ import { h } from 'preact'
 import PostHog from '../components/posthog.astro'
 import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
 import { getNavigationGroups, getNavigationTree } from '../../lib/content/catalog.mjs'
+import { addDocReviewMarker } from '../../lib/doc-review-heading.mjs'
 import SidebarSearch from '../components/SidebarSearch'
 import SidebarNavItem from '../components/SidebarNavItem.astro'
 import SearchDialog from '../components/SearchDialog.tsx'
@@ -34,6 +35,8 @@ interface Props {
 
 const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
 const author = Astro.props.author ?? Astro.props.frontmatter?.author
+const content = await Astro.slots.render('default')
+const pageContent = author ? content : addDocReviewMarker(content)
 const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
 const hideToc = Astro.props.hideToc ?? Astro.props.frontmatter?.hideToc ?? false
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
@@ -324,13 +327,7 @@ if (hasStructuredBreadcrumbs && title) {
             data-toc-pending
           />
         )}
-        {!author && (
-          <span class="doc-review-marker" tabindex="0" aria-label="Documentation has not yet been reviewed by a human" data-no-search>
-            ✦
-            <a-tooltip follow placement="top">Documentation has not yet been reviewed by a human.</a-tooltip>
-          </span>
-        )}
-        <slot />
+        <Fragment set:html={pageContent} />
       </main>
       {!hideToc && (
         <aside class="toc-rail">
@@ -339,17 +336,6 @@ if (hasStructuredBreadcrumbs && title) {
       )}
     </div>
     <div class="backdrop" aria-hidden="true"></div>
-
-    <script>
-      document.addEventListener('astro:page-load', () => {
-        const main = document.querySelector('#main-content[data-doc-review="pending"]')
-        const heading = main?.querySelector('h1')
-        const marker = main?.querySelector('.doc-review-marker')
-        if (heading && marker) {
-          heading.append(marker)
-        }
-      })
-    </script>
 
     <script>
       import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'

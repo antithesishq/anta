@@ -258,7 +258,9 @@ We only register workers for languages the playground actually uses. Adding JSON
 
 Page review status comes from the optional `author` frontmatter field. Leave it
 absent until a human has reviewed the complete page; the layout then shows a
-warning-tone ✦ beside the title. `WRITING.md` defines the matching TSDoc
+warning-tone ✦ as inline title text, with the whole heading as its tooltip
+target. Render the marker with the initial HTML; moving it after page load
+causes layout shifts. `WRITING.md` defines the matching TSDoc
 `@author` convention and the safe `pnpm docs-fix` command. Never add an author
 field on behalf of a human reviewer.
 After a human reviews a page, `pnpm docs-review <page.mdx>` adds its author

@@ -168,16 +168,12 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
 }
 
 .doc-review-marker {
-  display: inline-flex;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  margin-inline-start: 0.35em;
   color: var(--text-1-warning);
-  cursor: help;
-  vertical-align: baseline;
 }
-.doc-review-marker:focus-visible {
+[data-doc-review-heading] {
+  cursor: help;
+}
+[data-doc-review-heading]:focus-visible {
   outline: 2px solid var(--text-1-warning);
   outline-offset: 3px;
   border-radius: 2px;

@@ -79,6 +79,46 @@ async function productionPage(t, engine = chromium) {
 }
 
 for (const engine of engines) {
+  test(`${engine.name()}: review stars render before scripts without moving the page title`, { timeout: 30_000 }, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    let release
+    const gate = new Promise(resolve => { release = resolve })
+    t.after(() => release())
+    await page.route('https://anta.test/**/*.js', async route => { await gate; await route.fallback() })
+    await page.goto('https://anta.test/plot/rect/', { waitUntil: 'commit' })
+    const heading = page.locator('main h1')
+    const marker = heading.locator('.doc-review-marker')
+    await marker.waitFor()
+    await page.waitForFunction(() => [...document.querySelectorAll('link[rel=stylesheet]')].every(link => link.sheet))
+    // WebKit's fonts.ready can wait for the scripts deliberately held by this test.
+    await page.evaluate(() => Promise.all(['main h1', 'main > p'].map(selector => {
+      const element = document.querySelector(selector)
+      const style = getComputedStyle(element)
+      return document.fonts.load(`${style.fontWeight} ${style.fontSize} ${style.fontFamily}`, element.textContent)
+    })))
+    assert.equal(await marker.textContent(), '✦')
+    assert.equal(await marker.evaluate(element => getComputedStyle(element).display), 'inline')
+    assert.equal(await heading.locator(':scope > a-tooltip').count(), 1)
+    assert.equal(await heading.getAttribute('aria-description'), 'Documentation has not yet been reviewed by a human.')
+    const before = { heading: await heading.boundingBox(), paragraph: await page.locator('main > p').first().boundingBox() }
+    release()
+    await page.waitForFunction(() => Boolean(customElements.get('a-tooltip')))
+    assert.deepEqual({ heading: await heading.boundingBox(), paragraph: await page.locator('main > p').first().boundingBox() }, before)
+    await heading.hover({ position: { x: 4, y: 12 } })
+    await page.waitForFunction(() => document.querySelector('h1 > a-tooltip')?.shadowRoot?.querySelector(':popover-open'))
+    await page.keyboard.press('Escape')
+    await heading.focus()
+    await page.waitForFunction(() => document.querySelector('h1 > a-tooltip')?.shadowRoot?.querySelector(':popover-open'))
+    await page.keyboard.press('Escape')
+    await page.goto('https://anta.test/')
+    assert.equal(await page.locator('main h1 .doc-review-marker').count(), 0)
+    await page.locator('.sidebar a[href="/plot/"]').click()
+    await page.waitForURL('https://anta.test/plot/')
+    await page.locator('main h1 .doc-review-marker').waitFor()
+    assert.equal(await page.locator('main h1 > a-tooltip').count(), 1)
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: Plot navigation expands, persists, and follows page history`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/button/')

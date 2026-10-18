@@ -6,8 +6,7 @@
 // (no `Children`/Fragment scan or component-identity matching), which keeps it compatible
 // across React / Preact / custom runtimes and static SSR.
 import { useNativeEventProps } from "../native-event-props"
-import { useState } from "../jsx-runtime"
-import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel, useSelectionMirror } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
 import { Tooltip } from "./Tooltip"
@@ -192,16 +191,7 @@ export const Tabs = ({
   ...rest
 }: TabsProps) => {
   const controlled = value !== undefined
-  // Uncontrolled selection lives here (re-renders declaratively) — the wrapper needs
-  // the value only to render the strip's roving `tabindex`. Panels read the value
-  // straight from `<a-tabs>`, so they don't depend on this mirror.
-  const [internalValue, setInternalValue] = useState<string | undefined>(value ?? defaultValue)
-  const [lastValue, setLastValue] = useState(value)
-  if (value !== lastValue) {
-    setLastValue(value)
-    if (controlled) setInternalValue(value)
-  }
-  const currentValue = controlled ? value : internalValue
+  const [currentValue, setInternalValue] = useSelectionMirror(value, defaultValue)
 
   const tabs = options ?? []
 

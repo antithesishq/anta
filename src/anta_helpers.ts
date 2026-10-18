@@ -16,6 +16,19 @@ export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
 }
 
+/** @internal Mirror selection for declarative rendering, retaining the latest
+ * controlled value when ownership is released. Update the mirror only for
+ * accepted uncontrolled changes. */
+export function useSelectionMirror(value: string | undefined, defaultValue?: string) {
+  const [internalValue, setInternalValue] = useState<string | undefined>(value ?? defaultValue)
+  const [lastValue, setLastValue] = useState(value)
+  if (value !== lastValue) {
+    setLastValue(value)
+    if (value !== undefined) setInternalValue(value)
+  }
+  return [value !== undefined ? value : internalValue, setInternalValue] as const
+}
+
 /**
  * Select the safe presentation attributes from a data-rendered option. Option
  * objects often carry application data, so wrappers must never spread them onto

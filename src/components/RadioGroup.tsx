@@ -2,8 +2,8 @@
 // not a hard `react` import — so a custom runtime resolves them, not whatever
 // `react` maps to. See AGENTS.md (stateless-wrapper exception for RadioGroup).
 import { useNativeEventProps } from "../native-event-props"
-import { useId, useState } from "../jsx-runtime"
-import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle } from "../anta_helpers"
+import { useId } from "../jsx-runtime"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, useSelectionMirror } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps, ToneScope } from "../general_types"
 
 /** The element's `statechange` payload. `next`/`prev` are values (`null` = nothing
@@ -151,15 +151,7 @@ export const RadioGroup = ({
   ...rest
 }: RadioGroupProps) => {
   const controlled = value !== undefined
-  // Mirror the element's applied selection to render roving tabindex. Retain
-  // the latest controlled value when the consumer releases ownership.
-  const [internalValue, setInternalValue] = useState<string | undefined>(value ?? defaultValue)
-  const [lastValue, setLastValue] = useState(value)
-  if (value !== lastValue) {
-    setLastValue(value)
-    if (controlled) setInternalValue(value)
-  }
-  const currentValue = controlled ? value : internalValue
+  const [currentValue, setInternalValue] = useSelectionMirror(value, defaultValue)
 
   // Values are an option's identity — duplicates make selection ambiguous. Warn
   // (only ever fires on the bug itself), matching a-input's bare console.warn.
@@ -217,7 +209,7 @@ export const RadioGroup = ({
       // Controlled → drive the element's `state`. Uncontrolled → seed `default-state`
       // and let the ELEMENT own selection (it self-applies on pick, off-DOM via each
       // radio's `selected` property) — so a radio works even unhydrated (static docs
-      // preview) or hand-assembled. Either way the wrapper's `useState` mirror (kept
+      // preview) or hand-assembled. Either way the wrapper's selection mirror (kept
       // current via `onstatechange`) is what feeds the roving `tabindex` below.
       state={controlled ? value : undefined}
       default-state={!controlled ? defaultValue : undefined}

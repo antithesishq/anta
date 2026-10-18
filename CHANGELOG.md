@@ -26,13 +26,15 @@ changes are not listed.
 
 ### Breaking
 
-- [Calendar](/input-date/#calendar), [RadioGroup](/radio/), and [Tabs](/tabs/)
-  use `value` / `defaultvalue` as their sole selection attributes. Replace raw
-  `state` / `default-state` selection inputs. Their `.value` properties now accept
-  controlled input; remove `value` to release control while retaining selection.
-  Uncontrolled picks, reset, and restoration leave authored attributes unchanged.
-  An empty Calendar now returns `null` from `.value`, matching the other selection
-  elements. InputDate retains its empty text value (`''`).
+- [RadioGroup](/radio/) and [Tabs](/tabs/) use `value` / `defaultvalue` selection
+  attributes; replace raw `state` / `default-state` inputs. Their `.value`
+  properties now accept controlled input; remove `value` to release control while
+  retaining selection.
+
+- [Calendar selection](/input-date/#calendar) leaves authored input attributes
+  unchanged during uncontrolled picks, reset, and restoration. Its `.value`
+  getter now returns `null` when empty; InputDate retains its empty text value
+  (`''`).
 
 - [Slider controlled values](/slider/#managing-the-value) change only when the
   application updates `value`, including on form reset. Callbacks report requested

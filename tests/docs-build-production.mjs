@@ -234,6 +234,12 @@ for (const engine of engines) {
     await input.fill('')
     await input.blur()
     await chip.waitFor({ state: 'detached' })
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: SelectFaceted Styling preview applies its documented CSS without inline styles`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/select-faceted/')
     await page.locator('summary').filter({hasText:'Styling'}).click()
     const styledTrigger = page.locator('.roomy-text-filter')
     await styledTrigger.scrollIntoViewIfNeeded()

@@ -88,7 +88,9 @@ Breadcrumbs, Steps, InputDate, Select, and SelectFaceted. These entries do not
 load the nested elements used by a composed wrapper. The barrel imports their
 CSS directly, preserving the full bundle's stylesheet order. Routing the barrel
 through CSS-only JS entries changes Astro's stylesheet ownership in the
-production site build. Keep existing `components/*.css` paths compatible.
+production site build. Name composed layout stylesheets after their primary JSX
+component, such as `Steps.css` and `Select.css`. Keep existing `components/*.css` paths compatible
+through package export aliases when renaming them.
 
 `react` is a **peer dependency** — consumers provide it (or alias it to `preact/compat`).
 

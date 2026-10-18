@@ -139,8 +139,9 @@ changes are not listed.
   radius values remain supported, and native `details[data-anta][round]` uses the
   same default.
 
-- [Select's shared stylesheet](/select/#styling) is named `components/select.css`.
-  The previous `components/select-parts.css` import remains supported.
+- [Select's shared stylesheet](/select/#styling) is named `components/Select.css`.
+  The previous `components/select.css` and `components/select-parts.css` imports
+  remain supported.
 
 - [Tabs rounding](/tabs/#styling): a custom `round` radius applies to the tabs
   and sliding indicator as well as the primary track.

@@ -48,8 +48,8 @@ const composedStyles = {
   'a-breadcrumbs': ['Breadcrumbs.css', /a-breadcrumbs/],
   'a-steps': ['Steps.css', /a-steps/],
   'a-input-date': ['InputDate.css', /a-input-date-time-container/],
-  'a-select': ['select.css', /a-select-field/],
-  'a-select-faceted': ['select.css', /a-select-faceted-summary/],
+  'a-select': ['Select.css', /a-select-field/],
+  'a-select-faceted': ['Select.css', /a-select-faceted-summary/],
 }
 
 for (const [entry, [stylesheet, selector]] of Object.entries(composedStyles)) {
@@ -68,15 +68,16 @@ test('Select and SelectFaceted share one layout stylesheet', async () => {
     '@antadesign/anta/elements/a-select-faceted',
   ])
   const cssInputs = Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css'))
-  assert.deepEqual(cssInputs, ['dist/components/select.css'])
+  assert.deepEqual(cssInputs, ['dist/components/Select.css'])
 })
 
 test('the previous Select stylesheet import resolves to the canonical stylesheet without duplication', async () => {
   const result = await bundleImports([
+    '@antadesign/anta/components/Select.css',
     '@antadesign/anta/components/select.css',
     '@antadesign/anta/components/select-parts.css',
   ])
-  assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')), ['dist/components/select.css'])
+  assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')), ['dist/components/Select.css'])
   assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, /a-select-field/)
 })
 
@@ -86,8 +87,8 @@ test('the elements barrel retains every composed layout stylesheet', async () =>
   assert.deepEqual(layouts.sort(), [
     'dist/components/Breadcrumbs.css',
     'dist/components/InputDate.css',
+    'dist/components/Select.css',
     'dist/components/Steps.css',
-    'dist/components/select.css',
   ])
 })
 

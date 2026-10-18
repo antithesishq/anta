@@ -251,6 +251,9 @@ const prepareMatch = (query: string) => {
   return (option: SelectOption<OptionValue>) => matchesQuery(option, queryRe)
 }
 
+const matcherFor = (filter: FacetFilter | undefined, query: string, preparedMatch?: ReturnType<typeof prepareMatch>) =>
+  typeof filter === 'function' ? (option: SelectOption<OptionValue>) => filter(option, query) : preparedMatch ?? prepareMatch(query)
+
 /**
  * `<SelectFaceted>` filters a result set by categories called facets. Its
  * trigger opens a facet menu, and each facet opens a control for its value.
@@ -375,7 +378,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     if (!filter) return leaves
     const q = queries[facet.key] ?? ''
     if (typeof filter !== 'function' && !q.trim()) return leaves
-    return leaves.filter(typeof filter === 'function' ? (o) => filter(o, q) : prepareMatch(q))
+    return leaves.filter(matcherFor(filter, q))
   }
 
   // A `slot="header"` filter field for an options facet (only when `filter` is set).
@@ -509,10 +512,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     const groups = facets
       .filter((f): f is SelectFacetSingle | SelectFacetMultiple => f.kind === 'single' || f.kind === 'multiple')
       .map((facet) => {
-        const filter = facet.filter
-        const matched = (leavesByKey.get(facet.key) ?? []).filter(
-          typeof filter === 'function' ? (o) => filter(o, rootQuery) : match,
-        )
+        const matched = (leavesByKey.get(facet.key) ?? []).filter(matcherFor(facet.filter, rootQuery, match))
         return { facet, matched }
       })
       .filter((g) => g.matched.length > 0)

@@ -104,13 +104,12 @@ before(async () => {
 })
 after(async () => { await Promise.all([...browsers.values()].map(b=>b.close())); if(server) await new Promise(r=>server.close(r)) })
 async function pageFor(t,engine,mode='granular',query='',options={}) {
-  const {knownShadowStyles=false,...context} = options
-  const page=await browsers.get(engine).newPage({viewport:{width:900,height:500},reducedMotion:'reduce',...context})
+  const page=await browsers.get(engine).newPage({viewport:{width:900,height:500},reducedMotion:'reduce',...options})
   page.setDefaultTimeout(8000)
   const errors=[]; page.on('pageerror',e=>errors.push(e.message))
   const response=await page.goto(`${origin}/?mode=${mode}${query}`)
   assert.equal(response.headers()['content-security-policy'],policy)
-  t.after(async()=>{try {assert.deepEqual(errors,[]);if(!knownShadowStyles) assert.deepEqual(await page.evaluate(()=>window.violations),[])} finally {await page.close()} })
+  t.after(async()=>{try {assert.deepEqual(errors,[]);assert.deepEqual(await page.evaluate(()=>window.violations),[])} finally {await page.close()} })
   return page
 }
 const register=(page,mode='granular')=>page.evaluate(mode=>import(`/${mode}.js`),mode)
@@ -357,7 +356,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
 }
 for(const engine of engines) for(const order of [['granular','bundle'],['bundle','granular']]) {
   test.fast(`${engine.name()} ${order.join(' then ')}: Menu presence survives independent builds`,async t=>{
-    const page=await pageFor(t,engine,order[0],'',{knownShadowStyles:true});await register(page,order[0]);await register(page,order[1])
+    const page=await pageFor(t,engine,order[0]);await register(page,order[0]);await register(page,order[1])
     await mount(page,'<div class="anchor" id="trigger" tabindex="0">Menu<a-tooltip id="outside">Outside</a-tooltip><a-menu><a-menu-item role="menuitem" tabindex="0">Item<a-tooltip id="inside">Inside</a-tooltip></a-menu-item></a-menu></div>')
     await page.locator('a-menu').evaluate(n=>n.show());await frames(page)
     const baseline=await page.evaluate(()=>violations.length);assert.equal(baseline,0)
@@ -366,7 +365,7 @@ for(const engine of engines) for(const order of [['granular','bundle'],['bundle'
     await frames(page);assert.equal(await page.evaluate(()=>violations.length),baseline,'Tooltip and Menu retain strict CSP')
   })
   test(`${engine.name()} ${order.join(' then ')}: Select and SelectFaceted hints keep Menu ownership`,async t=>{
-    const page=await pageFor(t,engine,order[0],'',{knownShadowStyles:true});await register(page,order[0]);await register(page,order[1]);await page.evaluate(()=>import('/Preact.js'))
+    const page=await pageFor(t,engine,order[0]);await register(page,order[0]);await register(page,order[1]);await page.evaluate(()=>import('/Preact.js'))
     for(const name of ['select','faceted']) {
       await page.evaluate(name=>renderComposition(name),name);await frames(page)
       await page.locator('a-menu').first().evaluate(n=>n.show());await frames(page)
@@ -378,7 +377,7 @@ for(const engine of engines) for(const order of [['granular','bundle'],['bundle'
 
 for(const engine of engines) for(const order of [['anchor','bundle'],['bundle','anchor']]) {
   test.fast(`${engine.name()} ${order.join(' then ')}: separately compiled Input and Menu retain native ARIA relations`,async t=>{
-    const page=await pageFor(t,engine,'granular','',{knownShadowStyles:true})
+    const page=await pageFor(t,engine,'granular')
     await register(page,order[0]);await register(page,order[1])
     await mount(page,'<a-input button aria-label="Choices"><span slot="input-label">Choose</span><a-tooltip id="outside">Trigger help</a-tooltip></a-input><a-menu><a-menu-item role="menuitem" tabindex="0">Alpha<a-tooltip id="inside">Alpha help</a-tooltip></a-menu-item></a-menu>')
     await page.locator('a-menu').evaluate(n=>n.show());await frames(page)

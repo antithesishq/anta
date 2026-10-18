@@ -151,9 +151,10 @@ changes are not listed.
 
 #### Calendar
 
-- [Initial/reset inputs](/input-date/#calendar) keep an unset `.defaultValue` as
-  `null` when read and written back. Pre-upgrade property inputs are replayed
-  during construction, including detached elements.
+- [Default values](/input-date/#calendar) return `null` when `.defaultValue` is
+  unset, so writing it back preserves the absence of a default.
+- [Property inputs](/input-date/#calendar) assigned before registration take
+  effect when the element upgrades, including while detached.
 - [Unbounded year menus](/input-date/#calendar) center on the displayed year, including
   dates supplied through `value` and `defaultValue`.
 - [Controlled selection](/input-date/#calendar) keeps form values in sync in
@@ -204,9 +205,10 @@ changes are not listed.
 
 #### InputAutocomplete
 
-- [Controlled text](/input-autocomplete/#managing-the-value) is retained when
-  `value` is removed or becomes `undefined`, including an empty string. Editing
-  resumes from that text; `defaultValue` remains the form-reset target.
+- [Value ownership](/input-autocomplete/#managing-the-value) retains the latest
+  text, including `''`, when `value` is omitted or becomes `undefined`.
+  Uncontrolled editing resumes from that text; form reset still restores
+  `defaultValue`.
 - [Field callbacks](/input-autocomplete/#events) run alongside text updates and
   popup handling. Form reset restores the supplied default text without opening
   suggestions or moving focus from another control.
@@ -273,15 +275,18 @@ changes are not listed.
 - [Inherited RTL](/slider/#relative-dragging), including CSS `direction`, aligns
   pointer movement, thumbs, value bubbles, and markers with the rail.
 - [Numeric bounds](/slider/#managing-the-value) contain small decimal values.
-- [Value inputs](/slider/#managing-the-value) replay properties assigned before
-  registration, including detached upgrades. Runtime `value={null}` follows
-  uncontrolled defaults consistently. Restoring uncontrolled ranges clears stale
-  thumb identity requests.
+- [Property inputs](/slider/#managing-the-value) assigned before registration
+  take effect when the element upgrades, including while detached. A runtime
+  `value={null}` uses uncontrolled defaults and the matching scalar or range
+  presentation.
+- [Restored ranges](/slider/#range-values) keep each thumb on its restored
+  endpoint when the application takes control.
 
 #### RadioGroup and Tabs
 
 - [RadioGroup](/radio/) and [Tabs](/tabs/) retain the latest applied selection
-  when `state` is removed, including the active tab panel.
+  when the JSX `value` prop is omitted or the raw `state` attribute is removed.
+  The keyboard tab stop and active tab panel follow the retained selection.
 - [Per-option tones](/tabs/#tone) color the selected indicator without recoloring
   the track. An explicit neutral option resets the indicator on a toned strip.
 

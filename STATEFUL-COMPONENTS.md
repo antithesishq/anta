@@ -169,28 +169,40 @@ nullable-API migrations; their current public types remain authoritative until t
 
 ## Value inputs for selection and Slider
 
-Calendar, RadioGroup, Tabs, and Slider use JSX `value` / `defaultValue`, projected
-through the sole `value` / `defaultvalue` attribute inputs. The presence of
-`value` means controlled. Empty-string options remain valid for RadioGroup and
-Tabs; an empty Calendar date stays controlled, and Slider's `0` stays controlled.
-Consumer assignments to the `value` and `defaultValue` properties reflect
-only those input attributes, including removal on `null` or `undefined`. This
-keeps consumer property updates and raw attributes on the same input channel.
-Wrappers use the shared `valueAttributes` projection to render the ordinary HTML
-attribute directly. Its uppercase spelling in renderer props avoids React
-property assignment and Preact live-value special cases; HTML attribute names
-are case-insensitive. No separate `state` input or compatibility alias exists.
+Calendar, RadioGroup, Tabs, and Slider use JSX `value` / `defaultValue` props.
+Their web-component input attributes follow their existing public contracts:
+
+| Component | Controlled input | Uncontrolled default | Applied value |
+| --- | --- | --- | --- |
+| Calendar | `value` | `defaultvalue` | `.value` (get/set) |
+| Slider | `value` | `defaultvalue` | `.value` (get/set) |
+| RadioGroup, Tabs | `state` | `default-state` | `.value` (read-only) |
+
+Presence of the controlled input attribute defines ownership. Empty-string
+options remain valid for RadioGroup and Tabs; an empty Calendar date stays
+controlled through `value=""`, and Slider's `0` stays controlled.
+
+Calendar and Slider's consumer `value` / `defaultValue` assignments reflect only
+`value` / `defaultvalue`, including removal on `null` or `undefined`. Their
+wrappers use `valueAttributes` to render the ordinary HTML attribute directly.
+Its uppercase spelling in renderer props avoids React property assignment and
+Preact live-value special cases; HTML attribute names are case-insensitive.
+Replay their pre-upgrade property assignments through `upgradeValueProperties`.
+RadioGroup and Tabs wrappers project directly to `state` / `default-state` and
+never pass their read-only `value` property as a JSX attribute. Neither pair has
+input aliases.
+
 The applied value getter is separate from the authored initial/reset value.
-Reading `value` returns the applied selection, number, or sorted numeric pair.
-Calendar, RadioGroup, and Tabs return `null` when nothing is selected. A Calendar
-read/write round trip while empty therefore leaves it uncontrolled. InputDate
-retains its text-field empty value (`''`).
+Calendar, RadioGroup, and Tabs return `null` when nothing is selected. Writing an
+empty uncontrolled Calendar's value back therefore leaves it uncontrolled.
+InputDate retains its text-field empty value (`''`).
 
 Uncontrolled interaction, reset, and restoration update internal state and form
-submission without writing host attributes. Removing `value` releases control
-and retains the last applied value. A default supplies the initial/reset value.
-A controlled request leaves the applied value unchanged until the application
-accepts it. Controlled form reset retains that value.
+submission without writing host attributes. Removing the controlled input
+attribute releases control and retains the last applied value. A default
+supplies the initial/reset value. A controlled request leaves the applied value
+unchanged until the application accepts it. Controlled form reset retains that
+value.
 
 Slider retains its `input` / `change` notifications and `onValueChange` /
 `onValueCommit` callbacks. Their snapshots report requested numeric values;

@@ -673,7 +673,7 @@ test('raw Anta tabs without explicit roles keep their clicks', async t => {
   const page = await pageFor(t)
   await mount(page, { 'pointer-capture': '' })
   await page.evaluate(() => {
-    surface.innerHTML = '<a-tabs defaultvalue="first"><a-tab value="first">First</a-tab><a-tab value="second">Second</a-tab></a-tabs>'
+    surface.innerHTML = '<a-tabs default-state="first"><a-tab value="first">First</a-tab><a-tab value="second">Second</a-tab></a-tabs>'
   })
   await page.locator('a-tab[value="second"]').click()
   assert.deepEqual(await page.evaluate(() => log), [])

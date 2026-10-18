@@ -56,7 +56,7 @@ before(async () => {
           <Switch id="switch-neutral-on" tone="neutral" defaultChecked>Neutral on</Switch>
           <Switch id="switch-brand-on" tone="brand" defaultChecked>Brand on</Switch>
           <Switch id="switch-brand" tone="brand">Explicit brand</Switch>
-          <a-radio-group id="radio-scope" tone="success" tone-scope="selected" value="a">
+          <a-radio-group id="radio-scope" tone="success" tone-scope="selected" state="a">
             <a-radio id="radio-inherit" value="a"><a-radio-label>Inherited scope</a-radio-label></a-radio>
             <a-radio id="radio-all" value="b" tone-scope="all"><a-radio-label>All scope</a-radio-label></a-radio>
           </a-radio-group>

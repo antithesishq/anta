@@ -1212,11 +1212,11 @@ export interface ARadioAttributes extends BaseAttributes {
  */
 export interface ARadioGroupAttributes extends BaseAttributes {
   /** Controlled selected value (the chosen radio's `value`). Present → controlled:
-   *  the element reflects changes to this attribute and a pick only dispatches
-   *  `statechange`. Absent → uncontrolled (seed with `defaultvalue`). */
-  value?: string
+   *  a pick only requests a change through `statechange`. Absent → uncontrolled
+   *  (seed with `default-state`). */
+  state?: string
   /** Uncontrolled initial selected value — read once on connect / form-reset. */
-  defaultvalue?: string
+  'default-state'?: string
   /** Form field name — the group submits `name=value`. */
   name?: string
   /** Mark tone cascaded to children that don't set their own, or any literal CSS
@@ -1317,10 +1317,10 @@ export interface ATabAttributes extends BaseAttributes {
 export interface ATabsAttributes extends BaseAttributes {
   /** Controlled selected value (the active tab's `value`). Present → controlled: the
    *  element reflects changes to this attribute and a pick only dispatches
-   *  `statechange`. Absent → uncontrolled (seed with `defaultvalue`). */
-  value?: string
+   *  `statechange`. Absent → uncontrolled (seed with `default-state`). */
+  state?: string
   /** Uncontrolled initial selected value — read once on connect. */
-  defaultvalue?: string
+  'default-state'?: string
   /** Visual priority. `primary` (default) is the raised pill on a recessed track; `secondary`
    *  keeps that sizing but drops the track (selected = subtle active background fill, no
    *  border); `tertiary` is a bottom-underline under the selected tab only (no track, no rest

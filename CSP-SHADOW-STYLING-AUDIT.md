@@ -104,22 +104,26 @@ every dynamic JSX prop compatible with `style-src-attr 'none'`.
 
 ### Selection input follow-up
 
-Calendar, RadioGroup, and Tabs now use only `value` / `defaultvalue` selection
-inputs. Their `value` getters report applied selection and consumer setters
-reflect the controlled input; uncontrolled interaction, reset, and restoration
-never write host inputs. Removing `value` retains the latest applied selection.
+Calendar and Slider use `value` / `defaultvalue` inputs and consumer-reflecting
+property setters. RadioGroup and Tabs retain their shipped `state` /
+`default-state` attributes and read-only `.value` properties. JSX `value` /
+`defaultValue` props keep their public names and project to each element's own
+input attributes. Uncontrolled interaction, reset, and restoration never write
+host inputs. Removing the controlled input retains the latest applied selection.
 Calendar returns `null` when empty, so reading and writing back an empty
 uncontrolled value does not acquire control. InputDate retains its text-field
 empty string. Calendar's old-date InputDate regression remains covered.
-RadioGroup and Tabs retain empty-string options, roving focus, native selection events, and panels.
+RadioGroup and Tabs retain empty-string options, roving focus, native selection
+events, and panels.
 
-Wrappers, including Slider, use a shared serializable attribute projection.
+Calendar and Slider wrappers use the shared `valueAttributes` projection.
 The renderer prop `VALUE` produces the ordinary lowercase HTML `value`
 attribute, bypassing property assignment and Preact's live-value special cases.
-This keeps removal distinct from selecting an empty-string option. It introduces
-no additional HTML attribute or input alias. Pre-upgrade consumer property
-assignments are replayed through the reflecting setters. Native listener props
-use the shared hydration helper.
+RadioGroup and Tabs wrappers use ordinary `state` / `default-state` attributes.
+Neither input pair has aliases. Calendar and Slider replay pre-upgrade consumer
+property assignments through their setters; RadioGroup and Tabs accept their
+state attributes before registration. Native listener props use the shared
+hydration helper.
 
 Verification covers 74 source checks (72 browser cases and two worker
 projections) and the same 72 browser cases through an isolated installed npm
@@ -132,7 +136,7 @@ The final shared fast batch passes 43 checks; all 20 CI/tier checks pass. Packag
 JS, minified CSS, bundle, declarations, lint, types, site CSS lint, scoped docs,
 and the Node `24.15.0` production build pass. All 30 production checks pass
 in Chromium and WebKit, including Calendar, RadioGroup, and Tabs interaction
-with unchanged authored value inputs.
+with unchanged authored input attributes.
 
 ### Slider verification
 

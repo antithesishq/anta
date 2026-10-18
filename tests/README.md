@@ -324,8 +324,10 @@ provide engine evidence, not an operating-system IME or assistive-technology run
 ## Selection value inputs
 
 Run `pnpm test:selection` for Calendar, RadioGroup, and Tabs value ownership,
-React/Preact SSR hydration, control release, empty-string options, property
-assignments before registration, and unchanged uncontrolled attributes. The
+React/Preact SSR hydration, control release, empty-string options, authored
+inputs before registration, and unchanged uncontrolled attributes. Calendar
+uses value attributes and reflecting properties; RadioGroup and Tabs retain
+state attributes with read-only value properties. The
 source matrix runs Chrome, Firefox, and WebKit; the shared fast tier runs core
 checks in Chrome. `pnpm test:selection:package` runs the matrix through an
 isolated installed tarball. Calendar/InputDate's existing round-trip and form

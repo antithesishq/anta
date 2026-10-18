@@ -3,7 +3,7 @@
 // `react` maps to. See AGENTS.md (stateless-wrapper exception for RadioGroup).
 import { useNativeEventProps } from "../native-event-props"
 import { useId, useState } from "../jsx-runtime"
-import { valueAttributes, nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle } from "../anta_helpers"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps, ToneScope } from "../general_types"
 
 /** The element's `statechange` payload. `next`/`prev` are values (`null` = nothing
@@ -214,12 +214,13 @@ export const RadioGroup = ({
       aria-labelledby={label ? labelId : undefined}
       aria-describedby={hint ? hintId : undefined}
       {...rest}
-      // Controlled → drive the element's `value`. Uncontrolled → seed `defaultvalue`
+      // Controlled → drive the element's `state`. Uncontrolled → seed `default-state`
       // and let the ELEMENT own selection (it self-applies on pick, off-DOM via each
       // radio's `selected` property) — so a radio works even unhydrated (static docs
       // preview) or hand-assembled. Either way the wrapper's `useState` mirror (kept
       // current via `onstatechange`) is what feeds the roving `tabindex` below.
-      {...valueAttributes(value, defaultValue)}
+      state={controlled ? value : undefined}
+      default-state={!controlled ? defaultValue : undefined}
       name={name}
       status={status && status !== "neutral" ? status : undefined}
       tone={neutralToneAttr(tone)}

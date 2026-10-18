@@ -17,16 +17,18 @@ for(const shim of [false,true])test.fast(`Selection value projection works witho
     for(const [name,tag] of [['Calendar','a-calendar'],['RadioGroup','a-radio-group'],['Tabs','a-tabs']]) {
       const requests=[]
       const controlled=find(runtime[name]({value:'',options:[],locale:'en-US',onStateChange:(e,d)=>requests.push(d)}),tag)
-      assert.equal(controlled.props.VALUE,'')
-      assert.equal(controlled.props.defaultvalue,undefined)
-      assert.equal('state' in controlled.props,false)
-      assert.equal('default-state' in controlled.props,false)
+      const calendar=name==='Calendar',input=calendar?'VALUE':'state',initial=calendar?'defaultvalue':'default-state'
+      assert.equal(controlled.props[input],'')
+      assert.equal(controlled.props[initial],undefined)
+      assert.equal((calendar?'state':'VALUE') in controlled.props,false)
+      assert.equal((calendar?'default-state':'defaultvalue') in controlled.props,false)
+      assert.equal('value' in controlled.props,false)
       const detail={next:'b',prev:'',reason:'user'}
       controlled.props.onstatechange({nativeEvent:{detail}})
       assert.deepEqual(requests,[detail])
       const uncontrolled=find(runtime[name]({defaultValue:'2026-10-08',options:[],locale:'en-US'}),tag)
-      assert.equal(uncontrolled.props.VALUE,undefined)
-      assert.equal(uncontrolled.props.defaultvalue,'2026-10-08')
+      assert.equal(uncontrolled.props[input],undefined)
+      assert.equal(uncontrolled.props[initial],'2026-10-08')
     }
   } finally {if(shim)delete globalThis.window}
 })

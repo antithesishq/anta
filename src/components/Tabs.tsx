@@ -7,7 +7,7 @@
 // across React / Preact / custom runtimes and static SSR.
 import { useNativeEventProps } from "../native-event-props"
 import { useState } from "../jsx-runtime"
-import { valueAttributes, nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
 import { Tooltip } from "./Tooltip"
@@ -245,12 +245,13 @@ export const Tabs = ({
       aria-label={label}
       aria-orientation={vertical ? "vertical" : undefined}
       aria-disabled={disabled ? "true" : undefined}
-      // Controlled → drive the element's `value`. Uncontrolled → seed `defaultvalue`
+      // Controlled → drive the element's `state`. Uncontrolled → seed `default-state`
       // and let the ELEMENT own selection (off-DOM via each tab's `selected` property)
       // — so the strip works even unhydrated or hand-assembled. Either way the panels
       // read the value from here, and the wrapper's mirror (kept current via
       // `onstatechange`) feeds the roving `tabindex`.
-      {...valueAttributes(value, defaultValue)}
+      state={controlled ? value : undefined}
+      default-state={!controlled ? defaultValue : undefined}
       priority={priority && priority !== "primary" ? priority : undefined}
       tone={neutralToneAttr(tone)}
       size={size && size !== "medium" ? size : undefined}

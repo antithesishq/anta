@@ -93,7 +93,7 @@ async function expectNativeShortcuts(page, locator, { calendar = false } = {}) {
 
 for (const orientation of ['horizontal', 'vertical']) {
   test(`${orientation} Tabs preserve modified navigation and still handle plain arrows`, async t => {
-    const page = await pageFor(t, `<a-tabs orientation="${orientation}" defaultvalue="one">
+    const page = await pageFor(t, `<a-tabs orientation="${orientation}" default-state="one">
       <a-tab value="one" tabindex="0">One</a-tab><a-tab value="two" tabindex="-1">Two</a-tab>
     </a-tabs>`)
     await expectNativeShortcuts(page, page.locator('a-tab').first())
@@ -103,7 +103,7 @@ for (const orientation of ['horizontal', 'vertical']) {
 }
 
 test('RadioGroup and Slider preserve modified navigation and still respond to plain arrows', async t => {
-  const page = await pageFor(t, `<a-radio-group defaultvalue="one">
+  const page = await pageFor(t, `<a-radio-group default-state="one">
     <a-radio value="one" tabindex="0">One</a-radio><a-radio value="two" tabindex="-1">Two</a-radio>
     </a-radio-group><a-slider defaultvalue="35" tabindex="0"></a-slider>`)
   await expectNativeShortcuts(page, page.locator('a-radio').first())

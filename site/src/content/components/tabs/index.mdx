@@ -527,13 +527,12 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-Use `value` for controlled selection or `defaultvalue` for the initial
-uncontrolled selection. Reading `.value` returns the applied selection;
-assigning it supplies controlled input. Remove `value`, or assign `null` or
-`undefined` to `.value`, to release control and retain the applied selection.
+Use `state` for controlled selection or `default-state` for the initial
+uncontrolled selection. The read-only `.value` property returns the applied
+selection. Remove `state` to release control and retain that selection.
 User picks update internal state without rewriting authored attributes.
-Accept a controlled pick through `statechange` by applying `event.detail.next`.
-An empty string is a valid option value.
+Accept a controlled pick through `statechange` by setting `state` to
+`event.detail.next`. An empty string is a valid option value.
 
 Keep the tab strip and panels as siblings under one parent. Panels read the active
 value from `<a-tabs>`. Give the selected tab `tabindex="0"` and the others
@@ -546,7 +545,7 @@ Add `fill` to make horizontal tabs share the available width equally.
 
 <Preview align="stretch">
   <div style={{ display: 'grid', gap: '12px', width: '320px' }}>
-    <a-tabs role="tablist" defaultvalue="account" fill>
+    <a-tabs role="tablist" default-state="account" fill>
       <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
       <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
     </a-tabs>
@@ -557,7 +556,7 @@ Add `fill` to make horizontal tabs share the available width equally.
 
 ```html
 <div>
-  <a-tabs role="tablist" defaultvalue="account" fill>
+  <a-tabs role="tablist" default-state="account" fill>
     <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
     <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
   </a-tabs>

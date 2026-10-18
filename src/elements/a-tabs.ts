@@ -1,7 +1,6 @@
 import { HTMLElementBase, isModifiedNavigationKey } from "../anta_helpers";
 import { ATabElement } from "./a-tab";
 import "./a-tabs.css";
-import { upgradeValueProperties } from "./value-input";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // <a-tabs> — the tablist + single-select coordinator (sibling of <a-radio-group>).
@@ -9,7 +8,6 @@ import { upgradeValueProperties } from "./value-input";
 // restylable with ordinary CSS and the whole thing is usable hand-assembled.
 //
 // THE INVARIANT: interaction never rewrites host attributes or child DOM.
-// Only consumer value/defaultValue assignments reflect their input attributes.
 // Selection and focus coordination stay off-DOM:
 //
 //   • Selection — it sets each tab's `selected` *property* (not attribute). The tab
@@ -31,13 +29,13 @@ import { upgradeValueProperties } from "./value-input";
 // nothing.
 //
 // State follows the shared contract (STATEFUL-COMPONENTS.md): controlled when the
-// `value` attribute is present (the wrapper always drives it this way), otherwise
-// uncontrolled via an in-memory value seeded from `defaultvalue` (the raw path). A
+// `state` attribute is present (the wrapper always drives it this way), otherwise
+// uncontrolled via an in-memory value seeded from `default-state` (the raw path). A
 // pick dispatches a cancelable `statechange` BEFORE applying; controlled callers
-// re-assert `value`, uncontrolled callers can veto with `preventDefault()`.
+// re-assert `state`, uncontrolled callers can veto with `preventDefault()`.
 // ─────────────────────────────────────────────────────────────────────────────
 export class ATabsElement extends HTMLElementBase {
-  static observedAttributes = ["value", "disabled", "orientation", "noslide"];
+  static observedAttributes = ["state", "disabled", "orientation", "noslide"];
 
   private internals?: ElementInternals;
   private uncontrolledValue: string | null = null;
@@ -59,23 +57,9 @@ export class ATabsElement extends HTMLElementBase {
   // Microtasks run after the adopting task's upgrades, so deferring is enough.
   private childrenReady = false;
 
-  /** Applied tab value, or `null` when empty. Assigning supplies controlled input. */
+  /** Applied tab value, or `null` when empty. Read-only; supply selection through `state`. */
   get value(): string | null {
     return this.#currentValue;
-  }
-
-  set value(value: string | null | undefined) {
-    if (value == null) this.removeAttribute("value");
-    else this.setAttribute("value", value);
-  }
-
-  get defaultValue(): string | null {
-    return this.getAttribute("defaultvalue");
-  }
-
-  set defaultValue(value: string | null | undefined) {
-    if (value == null) this.removeAttribute("defaultvalue");
-    else this.setAttribute("defaultvalue", value);
   }
 
   constructor() {
@@ -84,12 +68,11 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   connectedCallback() {
-    upgradeValueProperties(this);
     // Seed the uncontrolled value only on the FIRST connect: a user's selection must
-    // survive DOM moves / re-parents rather than snapping back to `defaultvalue`.
+    // survive DOM moves / re-parents rather than snapping back to `default-state`.
     // The listeners use stable arrow-fn refs, so re-adding on reconnect is a no-op.
     if (!this.seeded) {
-      this.uncontrolledValue = this.getAttribute("value") ?? this.defaultValue;
+      this.uncontrolledValue = this.getAttribute("state") ?? this.getAttribute("default-state");
       this.seeded = true;
     }
     this.addEventListener("click", this.onClick);
@@ -132,9 +115,9 @@ export class ATabsElement extends HTMLElementBase {
     if (name === "noslide" && this.isConnected) this.#syncResizeObserver();
     const previous = oldValue ?? this.uncontrolledValue;
     // Retain the latest applied selection when the consumer releases control.
-    if (name === "value") this.uncontrolledValue = newValue ?? oldValue;
+    if (name === "state") this.uncontrolledValue = newValue ?? oldValue;
     this.sync();
-    if (name === "value" && this.alive && this.#currentValue !== previous) this.emitChange();
+    if (name === "state" && this.alive && this.#currentValue !== previous) this.emitChange();
   }
 
   formDisabledCallback(disabled: boolean) {
@@ -143,10 +126,10 @@ export class ATabsElement extends HTMLElementBase {
     this.sync();
   }
 
-  // Controlled when `value` is present; otherwise the in-memory uncontrolled value.
+  // Controlled when `state` is present; otherwise the in-memory uncontrolled value.
   get #currentValue() {
-    return this.hasAttribute("value")
-      ? this.getAttribute("value")
+    return this.hasAttribute("state")
+      ? this.getAttribute("state")
       : this.uncontrolledValue;
   }
 
@@ -256,7 +239,7 @@ export class ATabsElement extends HTMLElementBase {
     const prev = this.#currentValue;
     if (next === prev) return;
     const ok = this.emitStateChange(next, prev);
-    if (this.hasAttribute("value")) return;
+    if (this.hasAttribute("state")) return;
     if (ok) {
       this.uncontrolledValue = next;
       this.sync();

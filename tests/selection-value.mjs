@@ -17,6 +17,8 @@ const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-s
 const assets = new Map(), renderers = new Map(), browsers = new Map()
 const kinds = ['Calendar', 'RadioGroup', 'Tabs']
 const tagOf = kind => ({Calendar:'a-calendar',RadioGroup:'a-radio-group',Tabs:'a-tabs'})[kind]
+const inputOf=kind=>kind==='Calendar'?'value':'state'
+const initialOf=kind=>kind==='Calendar'?'defaultvalue':'default-state'
 const valuesOf = kind => kind === 'Calendar' ? ['2026-10-08','2026-10-07'] : ['a','b']
 let server, origin
 async function compile(options) {
@@ -68,7 +70,7 @@ before(async()=>{
     res.setHeader('Content-Type',`${url.pathname.endsWith('.js')?'text/javascript':url.pathname.endsWith('.css')?'text/css':'text/html'}; charset=utf-8`)
     const [a]=valuesOf(kind),tag=tagOf(kind)
     const children=kind==='Calendar'?['2026-10-08','2026-10-07'].map(v=>`<button type="button" data-part="day-cell" data-date="${v}">${v}</button>`).join(''):['a','b',''].map(v=>`<${kind==='Tabs'?'a-tab':'a-radio'} value="${v}" tabindex="0">${v||'Empty'}</${kind==='Tabs'?'a-tab':'a-radio'}>`).join('')
-    const html=url.searchParams.has('raw')?`<${tag} id="subject" name="choice" defaultvalue="${a}">${children}</${tag}>`:renderers.get(framework)(kind,{value:a})
+    const html=url.searchParams.has('raw')?`<${tag} id="subject" name="choice" ${initialOf(kind)}="${a}">${children}</${tag}>`:renderers.get(framework)(kind,{value:a})
     res.end(assets.get(url.pathname)??`<!doctype html><link rel="stylesheet" href="/${mode}.css"><script src="/boot.js"></script><form><main id="mount">${html}</main></form>`)
   })
   await new Promise(r=>server.listen(0,'127.0.0.1',r));origin=`http://127.0.0.1:${server.address().port}`
@@ -97,20 +99,31 @@ async function pick(page,kind,value) {
   await settled(page)
 }
 async function update(page,props){await page.evaluate(props=>updateSelection(props),props);await settled(page)}
+async function inputs(page,kind,updates){
+  await page.locator('a-calendar,a-radio-group,a-tabs').evaluate((el,{kind,updates})=>{
+    for(const [name,value] of Object.entries(updates)){
+      if(kind==='Calendar')el[name]=value
+      else {const attr=name==='value'?'state':'default-state';if(value==null)el.removeAttribute(attr);else el.setAttribute(attr,value)}
+    }
+  },{kind,updates})
+}
+async function noAliases(page,kind){
+  for(const attr of kind==='Calendar'?['state','default-state']:['value','defaultvalue'])assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(attr),null)
+}
 for(const engine of engines)for(const mode of ['granular','bundle'])for(const kind of kinds) {
-  const name=`${engine.name()} ${mode} ${kind}`,[a,b]=valuesOf(kind)
-  test.fast(`${name}: properties own control and uncontrolled picks keep authored attributes`,async t=>{
+  const name=`${engine.name()} ${mode} ${kind}`,[a,b]=valuesOf(kind),input=inputOf(kind),initial=initialOf(kind)
+  test.fast(`${name}: authored inputs own control and uncontrolled picks keep authored attributes`,async t=>{
     const page=await pageFor(t,engine,mode,kind)
     const authored=await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>el.outerHTML)
     await pick(page,kind,b);assert.equal(await current(page),b)
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>el.outerHTML),authored)
-    await page.locator('a-calendar,a-radio-group,a-tabs').evaluate((el,a)=>{el.value=a},a)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),a)
+    await inputs(page,kind,{value:a})
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),a)
     await pick(page,kind,b);assert.equal(await current(page),a)
-    await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>el.addEventListener('statechange',e=>{if(!e.detail.reason||e.detail.reason==='user')el.value=e.detail.next}))
+    await page.locator('a-calendar,a-radio-group,a-tabs').evaluate((el,kind)=>el.addEventListener('statechange',e=>{if(!e.detail.reason||e.detail.reason==='user'){if(kind==='Calendar')el.value=e.detail.next;else if(e.detail.next==null)el.removeAttribute('state');else el.setAttribute('state',e.detail.next)}}),kind)
     await pick(page,kind,b);assert.equal(await current(page),b)
     await pick(page,kind,a);assert.equal(await current(page),a)
-    await page.locator('a-calendar,a-radio-group,a-tabs').evaluate((el,b)=>{el.value=undefined;el.defaultValue=b},b)
+    await inputs(page,kind,{value:undefined,defaultValue:b})
     assert.equal(await current(page),a)
     // Replace the raw element to remove its accepting controller listener.
     await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>{const clone=el.cloneNode(true);el.replaceWith(clone)})
@@ -126,12 +139,12 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
       assert.equal(await current(page),a)
       assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>el.outerHTML),before)
     }
-    await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>{el.value='';el.defaultValue=null})
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),'')
+    await inputs(page,kind,{value:'',defaultValue:null})
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),'')
     assert.equal(await current(page),kind==='Calendar'?null:'')
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('defaultvalue'),null)
-    await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>{el.value=null})
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),null)
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(initial),null)
+    await inputs(page,kind,{value:null})
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),null)
     assert.equal(await current(page),kind==='Calendar'?null:'')
     if(kind==='Calendar') {
       await page.locator('a-calendar').evaluate(el=>{el.value=el.value})
@@ -139,17 +152,18 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
       assert.equal(await current(page),null)
     }
     await pick(page,kind,b);assert.equal(await current(page),b)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),null)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('state'),null)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('default-state'),null)
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),null)
+    await noAliases(page,kind)
   })
-  test(`${name}: replays consumer properties assigned before registration`,async t=>{
+  test(`${name}: accepts authored inputs before registration`,async t=>{
     const page=await pageFor(t,engine,mode,kind,undefined,false)
-    await page.locator('a-calendar,a-radio-group,a-tabs').evaluate((el,{a,b})=>{el.value=b;el.defaultValue=a},{a,b})
+    await inputs(page,kind,{value:b,defaultValue:a})
     await page.evaluate(mode=>import(`/${mode}.js`),mode);await settled(page)
     assert.equal(await current(page),b)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),b)
-    await page.locator('a-calendar,a-radio-group,a-tabs').evaluate((el,a)=>{el.value=a},a)
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),b)
+    if(kind!=='Calendar')assert.deepEqual(await page.locator('a-radio-group,a-tabs').evaluate(el=>({readOnly:Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el),'value').set===undefined,defaultProperty:'defaultValue' in el})),{readOnly:true,defaultProperty:false})
+    await noAliases(page,kind)
+    await inputs(page,kind,{value:a})
     assert.equal(await current(page),a)
   })
   for(const framework of ['React','Preact'])test(`${name} ${framework}: hydrates, round-trips, rejects, and releases value ownership`,{tier:mode==='granular'?'fast':'slow'},async t=>{
@@ -162,12 +176,12 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
     await page.evaluate(()=>{reports=[];accept=false})
     await update(page,{value:undefined,defaultValue:b})
     assert.equal(await current(page),a)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),null)
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),null)
     await pick(page,kind,b);assert.equal(await current(page),b)
     await update(page,{defaultValue:a});assert.equal(await current(page),b)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),null)
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),null)
     await update(page,{value:b})
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),b)
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),b)
     await pick(page,kind,a);assert.equal(await current(page),b)
     if(kind!=='Tabs') {
       await page.evaluate(()=>document.querySelector('form').reset());await settled(page)
@@ -178,15 +192,14 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
     await update(page,{value:undefined});assert.equal(await current(page),b)
     await update(page,{value:''})
     assert.equal(await current(page),kind==='Calendar'?null:'')
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),'')
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),'')
     if(kind!=='Calendar')assert.equal(await page.locator(`#subject ${kind==='Tabs'?'a-tab':'a-radio'}:state(selected)`).getAttribute('value'),'')
     await update(page,{value:undefined});assert.equal(await current(page),kind==='Calendar'?null:'')
     await pick(page,kind,a);assert.equal(await current(page),a)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),null)
+    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute(input),null)
     const focused=await page.locator(kind==='Calendar'?'#subject [data-date="2026-10-08"]':`#subject ${kind==='Tabs'?'a-tab':'a-radio'}[value="a"]`).getAttribute('tabindex')
     assert.equal(focused,'0')
     if(kind==='Tabs')assert.deepEqual(await page.locator('a-tabpanel:state(active)').allTextContents(),['Panel A'])
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('state'),null)
-    assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('default-state'),null)
+    await noAliases(page,kind)
   })
 }

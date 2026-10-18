@@ -26,11 +26,6 @@ changes are not listed.
 
 ### Breaking
 
-- [RadioGroup](/radio/) and [Tabs](/tabs/) use `value` / `defaultvalue` selection
-  attributes; replace raw `state` / `default-state` inputs. Their `.value`
-  properties now accept controlled input; remove `value` to release control while
-  retaining selection.
-
 - [Calendar selection](/input-date/#calendar) leaves authored input attributes
   unchanged during uncontrolled picks, reset, and restoration. Its `.value`
   getter now returns `null` when empty; InputDate retains its empty text value
@@ -275,8 +270,10 @@ changes are not listed.
 - [Value inputs](/slider/#managing-the-value) replay properties assigned before
   registration. Restoring uncontrolled ranges clears stale thumb identity requests.
 
-#### Tabs
+#### RadioGroup and Tabs
 
+- [RadioGroup](/radio/) and [Tabs](/tabs/) retain the latest applied selection
+  when `state` is removed, including the active tab panel.
 - [Per-option tones](/tabs/#tone) color the selected indicator without recoloring
   the track. An explicit neutral option resets the indicator on a toned strip.
 

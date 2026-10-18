@@ -5,8 +5,13 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   docs-review:
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -20,8 +25,10 @@ jobs:
           cache: pnpm
       # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
+        timeout-minutes: 10
         run: pnpm install --frozen-lockfile
       - name: Check documentation authors
+        timeout-minutes: 5
         env:
           DOCS_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_REVIEWED: ${{ contains(github.event.pull_request.labels.*.name, 'review-docs') }}
@@ -33,6 +40,7 @@ jobs:
           fi
 
   build:
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 45 || 30 }}
     runs-on: ubuntu-latest
     env:
       ANTA_TEST_WEBKIT: '0'
@@ -333,10 +341,12 @@ jobs:
           cache: pnpm
       # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
+        timeout-minutes: 10
         run: pnpm install --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run typecheck
       - name: Run tests
+        timeout-minutes: 5
         run: pnpm test
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
@@ -344,6 +354,7 @@ jobs:
           NODE_OPTIONS: >-
             --test-skip-pattern="^debounces typing, keeps previous matches, and shows activity only in the input$"
       - name: Test selected components
+        timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 25 || 10 }}
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
           COMPONENT_TEST_SELECTION: ${{ toJSON(steps.component-tests.outputs) }}
@@ -371,8 +382,10 @@ jobs:
       - name: Typecheck search worker
         run: pnpm --filter anta-site run typecheck:worker
       - name: Build site
+        timeout-minutes: 10
         run: pnpm --filter anta-site build
       - name: Test production site
+        timeout-minutes: 5
         run: pnpm --filter anta-site test:production
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome

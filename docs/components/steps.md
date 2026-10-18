@@ -297,7 +297,7 @@ import '@antadesign/anta/elements/a-tabpanel'
 ```html
 <div>
   <a-steps>
-    <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" default-state="setup" data-steps fill noslide>
+    <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" defaultvalue="setup" data-steps fill noslide>
       <a-tab role="tab" value="build" tabindex="0" tone="success">
         <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>

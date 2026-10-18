@@ -80,9 +80,6 @@ const READONLY_ALLOWLIST = {
   AMenuElement: ['isControlled', 'isSubmenu', 'triggerAnchor', 'isOpen'],
   ATextElement: ['isTruncated'],
   ABoxElement: ['measurement', 'context', 'isTruncated'],
-  ARadioGroupElement: ['value'],
-  ACalendarElement: ['value'],
-  ATabsElement: ['value'],
   ACheckboxElement: ['checked', 'indeterminate'],
   ASwitchElement: ['checked'],
   // `open` mirrors the native <dialog>.open read; the write channel is the

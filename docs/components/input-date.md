@@ -262,9 +262,13 @@ value through `ElementInternals` and emits `statechange` / `change` on selection
 and `navigate` when keyboard navigation leaves the displayed month. It is
 framework-agnostic and does not track a current month, `min`, or `max`.
 
-JSX passes controlled selection through `state` and seeds uncontrolled selection
-with `default-state`. The element's `value` property is read-only. Raw HTML can
-still use the `value` and `defaultvalue` attributes.
+Calendar uses `value` for controlled selection and `defaultvalue` for an
+uncontrolled initial/reset date. Reading `.value` returns the applied date;
+assigning it supplies controlled input. Remove `value`, or assign `null` or
+`undefined` to `.value`, to release control and retain the date. Uncontrolled
+picks, reset, and restoration never rewrite these input attributes. InputDate
+controls its nested Calendar through the same value input and accepts picks
+through `statechange`. An empty `value=""` keeps an empty Calendar controlled.
 
 The JSX wrapper renders the controls above the grid as siblings of
 `<a-calendar>`. The previous/next arrows are `<Button>`s. The month/year picker

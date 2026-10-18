@@ -102,6 +102,36 @@ an actual CSP response header. Custom values serialized into `style` attributes
 remain a separate constraint; completing the stylesheet checklist does not make
 every dynamic JSX prop compatible with `style-src-attr 'none'`.
 
+### Selection input follow-up
+
+Calendar, RadioGroup, and Tabs now use only `value` / `defaultvalue` selection
+inputs. Their `value` getters report applied selection and consumer setters
+reflect the controlled input; uncontrolled interaction, reset, and restoration
+never write host inputs. Removing `value` retains the latest applied selection.
+Calendar's old-date InputDate regression remains covered. RadioGroup and Tabs
+retain empty-string options, roving focus, native selection events, and panels.
+
+Wrappers, including Slider, use a shared serializable attribute projection.
+The renderer prop `VALUE` produces the ordinary lowercase HTML `value`
+attribute, bypassing property assignment and Preact's live-value special cases.
+This keeps removal distinct from selecting an empty-string option. It introduces
+no additional HTML attribute or input alias. Pre-upgrade consumer property
+assignments are replayed through the reflecting setters. Native listener props
+use the shared hydration helper.
+
+Verification covers 74 source checks (72 browser cases and two worker
+projections) and the same 72 browser cases through an isolated installed npm
+tarball. Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6` pass both
+public import modes with actual HTTP CSP headers. React and Preact render real
+SSR markup and hydrate without replacing the selected element. Another 89
+Calendar/InputDate and Slider source checks pass, including the previous-date
+regression. All 358 root tests pass with CI's existing browser/debounce filters.
+The final shared fast batch passes 33 checks; all 20 CI/tier checks pass. Package
+JS, minified CSS, bundle, declarations, lint, types, site CSS lint, scoped docs,
+and the Node `24.15.0` production build pass. All 30 production checks pass
+in Chromium and WebKit, including Calendar, RadioGroup, and Tabs interaction
+with unchanged authored value inputs.
+
 ### Slider verification
 
 Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
@@ -156,10 +186,9 @@ Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
   builds under Node `24.15.0`, and both Chromium/WebKit Slider production checks
   pass, including accepting/rejecting requests, application reset, native form
   reset, styling, and raw markup. Only Slider and changelog package docs were
-  regenerated. The full root run passed 355 of 356 checks with CI's existing
-  Chromium/debounce filters. Its remaining theme test used an exact part-attribute
-  query; after changing that query to token matching, all 25 selected theme,
-  tier, and CI checks passed. The rendering assertions remain unchanged.
+  regenerated. The root suite now passes all 358 checks with CI's existing
+  Chromium/debounce filters. Theme tests match part tokens, preserving the
+  original rendering assertions.
   All 26 production checks also passed, followed by two additional Chrome/WebKit
   checks confirming pre-registration label/rail dimensions and initial values.
   Final name review added authored `aria-labelledby` precedence and live referenced

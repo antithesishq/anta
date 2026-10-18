@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputAutocomplete, InputTime, Menu, Progress, Select, Slider, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputAutocomplete, InputTime, Menu, Progress, Select, Selection (Calendar/RadioGroup/Tabs), Slider, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -320,3 +320,13 @@ pointer focus, naming, and active-option relationships. It reuses Input's native
 field and Menu's existing navigation; ordinary Input value-rejection and
 implicit-submit behavior are outside this refactor. Synthetic composition keys
 provide engine evidence, not an operating-system IME or assistive-technology run.
+
+## Selection value inputs
+
+Run `pnpm test:selection` for Calendar, RadioGroup, and Tabs value ownership,
+React/Preact SSR hydration, control release, empty-string options, property
+assignments before registration, and unchanged uncontrolled attributes. The
+source matrix runs Chrome, Firefox, and WebKit; the shared fast tier runs core
+checks in Chrome. `pnpm test:selection:package` runs the matrix through an
+isolated installed tarball. Calendar/InputDate's existing round-trip and form
+regressions remain in `pnpm test:calendar`.

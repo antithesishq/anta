@@ -48,6 +48,31 @@ async function productionPage(t, engine = chromium) {
 }
 
 for (const engine of engines) {
+  test(`${engine.name()}: selection previews keep uncontrolled values off authored attributes`, async t => {
+    const {page,errors}=await productionPage(t,engine)
+    await page.goto('https://anta.test/input-date/')
+    const calendar=page.locator('a-calendar[defaultvalue="2026-06-28"]').first()
+    await calendar.locator('[data-date="2026-06-27"]').click()
+    await page.waitForFunction(el=>el.value==='2026-06-27',await calendar.elementHandle())
+    assert.equal(await calendar.getAttribute('value'),null)
+    assert.equal(await calendar.getAttribute('defaultvalue'),'2026-06-28')
+    await page.goto('https://anta.test/radio/')
+    await page.locator('details.disclosure').filter({has:page.locator('#web-component')}).locator(':scope > summary').click()
+    const radio=page.locator('a-radio-group[tabindex="0"][defaultvalue="pro"]')
+    await radio.locator('a-radio[value="starter"]').click()
+    assert.equal(await radio.evaluate(el=>el.value),'starter')
+    assert.equal(await radio.getAttribute('value'),null)
+    assert.equal(await radio.getAttribute('defaultvalue'),'pro')
+    await page.goto('https://anta.test/tabs/')
+    await page.locator('details.disclosure').filter({has:page.locator('#web-component')}).locator(':scope > summary').click()
+    const tabs=page.locator('a-tabs[defaultvalue="account"]').last()
+    await tabs.locator('a-tab[value="security"]').click()
+    assert.equal(await tabs.evaluate(el=>el.value),'security')
+    assert.equal(await tabs.getAttribute('value'),null)
+    assert.equal(await tabs.getAttribute('defaultvalue'),'account')
+    assert.equal(await tabs.locator('..').locator('a-tabpanel[value="security"]').evaluate(el=>el.matches(':state(active)')),true)
+    assert.deepEqual(errors,[])
+  })
   test(`${engine.name()}: Slider SSR reserves its label and rail before registration`, async t => {
     const {page, errors}=await productionPage(t,engine)
     let release

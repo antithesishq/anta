@@ -1,6 +1,7 @@
 import { HTMLElementBase, isModifiedNavigationKey } from "../anta_helpers";
 import { ARadioElement } from "./a-radio";
 import "./a-radio-group.css";
+import { upgradeValueProperties } from "./value-input";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // <a-radio-group> — the single-select coordinator.
@@ -9,9 +10,9 @@ import "./a-radio-group.css";
 // <a-radio> options, and an optional <a-radio-hint> are plain children laid out
 // by a-radio-group.css, so the arrangement is restylable with ordinary CSS.
 //
-// THE INVARIANT: this element NEVER mutates the DOM. It writes nothing to its own
-// host attributes and nothing to its child <a-radio>s. Everything it coordinates
-// is expressed off-DOM:
+// THE INVARIANT: interaction never rewrites host attributes or child DOM.
+// Only consumer value/defaultValue assignments reflect their input attributes.
+// Selection and focus coordination stay off-DOM:
 //
 //   • Selection — it sets each radio's `selected` *property* (not attribute). The
 //     radio reflects that into `:state(selected)` + `aria-checked` via its OWN
@@ -35,14 +36,14 @@ import "./a-radio-group.css";
 // the DOM (it renders `tabindex`/`role` declaratively); the element is not.
 //
 // State follows the shared contract (STATEFUL-COMPONENTS.md): controlled when the
-// `state` attribute is present (the wrapper always drives it this way), otherwise
-// uncontrolled via an in-memory value seeded from `default-state` (the raw path).
+// `value` attribute is present (the wrapper always drives it this way), otherwise
+// uncontrolled via an in-memory value seeded from `defaultvalue` (the raw path).
 // A pick dispatches a cancelable `statechange` BEFORE applying; controlled callers
-// re-assert `state`, uncontrolled callers can veto with `preventDefault()`.
+// re-assert `value`, uncontrolled callers can veto with `preventDefault()`.
 // ─────────────────────────────────────────────────────────────────────────────
 export class ARadioGroupElement extends HTMLElementBase {
   static formAssociated = true;
-  static observedAttributes = ["state", "disabled"];
+  static observedAttributes = ["value", "disabled"];
 
   private internals?: ElementInternals;
   private uncontrolledValue: string | null = null;
@@ -56,9 +57,23 @@ export class ARadioGroupElement extends HTMLElementBase {
   // upgrades the parent first, and an eager sync() clobbers the children.
   private childrenReady = false;
 
-  /** The selected option's value, or `null` when nothing is selected. */
+  /** Applied option value, or `null` when empty. Assigning supplies controlled input. */
   get value(): string | null {
     return this.#currentValue;
+  }
+
+  set value(value: string | null | undefined) {
+    if (value == null) this.removeAttribute("value");
+    else this.setAttribute("value", value);
+  }
+
+  get defaultValue(): string | null {
+    return this.getAttribute("defaultvalue");
+  }
+
+  set defaultValue(value: string | null | undefined) {
+    if (value == null) this.removeAttribute("defaultvalue");
+    else this.setAttribute("defaultvalue", value);
   }
 
   constructor() {
@@ -67,12 +82,13 @@ export class ARadioGroupElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    upgradeValueProperties(this);
     // Seed the uncontrolled value only on the FIRST connect (see a-checkbox): a
     // user's selection must survive DOM moves / re-parents rather than snapping
-    // back to `default-state`. `formResetCallback` re-seeds on purpose. The
+    // back to `defaultvalue`. `formResetCallback` re-seeds on purpose. The
     // listeners use stable arrow-fn refs, so re-adding on reconnect is a no-op.
     if (!this.seeded) {
-      this.uncontrolledValue = this.getAttribute("default-state");
+      this.uncontrolledValue = this.getAttribute("value") ?? this.defaultValue;
       this.seeded = true;
     }
     this.addEventListener("click", this.onClick);
@@ -111,10 +127,11 @@ export class ARadioGroupElement extends HTMLElementBase {
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+    const previous = oldValue ?? this.uncontrolledValue;
+    // Retain the latest applied selection when the consumer releases control.
+    if (name === "value") this.uncontrolledValue = newValue ?? oldValue;
     this.sync();
-    // Controlled apply: a changed `state` is the consumer's accepted value — fire
-    // `change` on the real transition (the post-apply counterpart to statechange).
-    if (name === "state" && this.alive && newValue !== oldValue) this.emitChange();
+    if (name === "value" && this.alive && this.#currentValue !== previous) this.emitChange();
   }
 
   formDisabledCallback(disabled: boolean) {
@@ -124,10 +141,10 @@ export class ARadioGroupElement extends HTMLElementBase {
   }
 
   formResetCallback() {
-    // Rewind to `default-state`. Uncontrolled self-applies via sync() below; the
+    // Rewind to `defaultvalue`. Uncontrolled self-applies via sync() below; the
     // `reason: "reset"` statechange lets a controller (the RadioGroup wrapper's
     // mirror, or the app) follow without mistaking it for a user pick.
-    const next = this.getAttribute("default-state");
+    const next = this.getAttribute("defaultvalue");
     this.emitStateChange(next, this.#currentValue, "reset", false);
     this.uncontrolledValue = next;
     this.sync();
@@ -142,10 +159,10 @@ export class ARadioGroupElement extends HTMLElementBase {
     this.sync();
   }
 
-  // Controlled when `state` is present; otherwise the in-memory uncontrolled value.
+  // Controlled when `value` is present; otherwise the in-memory uncontrolled value.
   get #currentValue() {
-    return this.hasAttribute("state")
-      ? this.getAttribute("state")
+    return this.hasAttribute("value")
+      ? this.getAttribute("value")
       : this.uncontrolledValue;
   }
 
@@ -193,7 +210,7 @@ export class ARadioGroupElement extends HTMLElementBase {
     const prev = this.#currentValue;
     if (next === prev) return;
     const ok = this.emitStateChange(next, prev, "user", true);
-    if (this.hasAttribute("state")) return;
+    if (this.hasAttribute("value")) return;
     if (ok) {
       this.uncontrolledValue = next;
       this.sync();
@@ -202,7 +219,7 @@ export class ARadioGroupElement extends HTMLElementBase {
   }
 
   // Native `change`, fired *after* a selection applies (user pick or a controlled
-  // `state` update) — the post-apply counterpart to the cancelable, pre-apply
+  // `value` update) — the post-apply counterpart to the cancelable, pre-apply
   // `statechange`. Bubbles like a native radio group.
   private emitChange() {
     this.dispatchEvent(new Event("change", { bubbles: true }));

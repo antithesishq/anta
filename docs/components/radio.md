@@ -279,10 +279,18 @@ element — `Input`, and the composed `Select` — skip it and expose only
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
+Use `value` for controlled selection or `defaultvalue` for the initial
+uncontrolled selection. Reading `.value` returns the applied selection;
+assigning it supplies controlled input. Remove `value`, or assign `null` or
+`undefined` to `.value`, to release control and retain the applied selection.
+User picks update internal state without rewriting authored attributes.
+Accept a controlled pick through `statechange` by applying `event.detail.next`.
+An empty string is a valid option value.
+
 The group owns selection and the single tab stop. Put options in `<a-radio-list>`.
 
 ```html
-<a-radio-group role="radiogroup" tabindex="0" name="plan" default-state="pro">
+<a-radio-group role="radiogroup" tabindex="0" name="plan" defaultvalue="pro">
   <a-radio-group-label>Plan</a-radio-group-label>
   <a-radio-list>
     <a-radio role="radio" value="starter"><a-radio-label>Starter</a-radio-label></a-radio>

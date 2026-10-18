@@ -165,20 +165,27 @@ update. Cover uncontrolled defaults, valid falsy values, and SSR/hydration.
 
 This is the convention for new and migrated APIs. Single Select supports the
 nullable selection contract. Calendar, InputDate, and RadioGroup need separate
-migrations; their current public types remain authoritative until then.
+nullable-API migrations; their current public types remain authoritative until then.
 
-## Numeric Slider inputs
+## Value inputs for selection and Slider
 
-Slider's JSX API uses `value` and `defaultValue`, projected through `value` and
-`defaultvalue` attributes. The presence of `value` means controlled, including
-`0`. Consumer assignments to the `value` and `defaultValue` properties reflect
+Calendar, RadioGroup, Tabs, and Slider use JSX `value` / `defaultValue`, projected
+through the sole `value` / `defaultvalue` attribute inputs. The presence of
+`value` means controlled. Empty-string options remain valid for RadioGroup and
+Tabs; an empty Calendar date stays controlled, and Slider's `0` stays controlled.
+Consumer assignments to the `value` and `defaultValue` properties reflect
 only those input attributes, including removal on `null` or `undefined`. This
-keeps React 19 property updates and raw attributes on the same input channel.
-Reading the `value` property returns the applied number or sorted pair.
+keeps consumer property updates and raw attributes on the same input channel.
+Wrappers use the shared `valueAttributes` projection to render the ordinary HTML
+attribute directly. Its uppercase spelling in renderer props avoids React
+property assignment and Preact live-value special cases; HTML attribute names
+are case-insensitive. No separate `state` input or compatibility alias exists.
+The applied value getter is separate from the authored initial/reset value.
+Reading `value` returns the applied selection, number, or sorted numeric pair.
 
 Uncontrolled interaction, reset, and restoration update internal state and form
 submission without writing host attributes. Removing `value` releases control
-and retains the last applied value; a changed default affects the next reset.
+and retains the last applied value. A default supplies the initial/reset value.
 A controlled request leaves the applied value unchanged until the application
 accepts it. Controlled form reset retains that value.
 

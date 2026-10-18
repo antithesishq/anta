@@ -1,4 +1,5 @@
 export const componentSuites = {
+  selection: { tests: ['tests/selection-projection.mjs', 'tests/selection-value.mjs'], slow: ['tests/selection-package.mjs'] },
   slider: { tests: ['tests/slider-projection.mjs', 'tests/slider-csp.mjs'], slow: ['tests/slider-package.mjs'] },
   'input-autocomplete': { tests: ['tests/input-autocomplete-types.mjs', 'tests/input-autocomplete-projection.mjs', 'tests/input-autocomplete-csp.mjs'], slow: ['tests/input-autocomplete-package.mjs'] },
   select: { tests: ['tests/select-types.mjs', 'tests/select-projection.mjs', 'tests/select-csp.mjs'], slow: ['tests/select-package.mjs'] },

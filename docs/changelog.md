@@ -26,6 +26,12 @@ changes are not listed.
 
 ### Breaking
 
+- [Calendar](/input-date/#calendar), [RadioGroup](/radio/), and [Tabs](/tabs/)
+  use `value` / `defaultvalue` as their sole selection attributes. Replace raw
+  `state` / `default-state` selection inputs. Their `.value` properties now accept
+  controlled input; remove `value` to release control while retaining selection.
+  Uncontrolled picks, reset, and restoration leave authored attributes unchanged.
+
 - [Slider controlled values](/slider/#managing-the-value) change only when the
   application updates `value`, including on form reset. Callbacks report requested
   values; read the element's `value` for its applied result. Uncontrolled

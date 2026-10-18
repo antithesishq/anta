@@ -5,8 +5,9 @@
 // hide themselves — Tabs never reads or toggles them, so there's no child introspection
 // (no `Children`/Fragment scan or component-identity matching), which keeps it compatible
 // across React / Preact / custom runtimes and static SSR.
+import { useNativeEventProps } from "../native-event-props"
 import { useState } from "../jsx-runtime"
-import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { valueAttributes, nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
 import { Tooltip } from "./Tooltip"
@@ -194,7 +195,12 @@ export const Tabs = ({
   // Uncontrolled selection lives here (re-renders declaratively) — the wrapper needs
   // the value only to render the strip's roving `tabindex`. Panels read the value
   // straight from `<a-tabs>`, so they don't depend on this mirror.
-  const [internalValue, setInternalValue] = useState<string | undefined>(defaultValue)
+  const [internalValue, setInternalValue] = useState<string | undefined>(value ?? defaultValue)
+  const [lastValue, setLastValue] = useState(value)
+  if (value !== lastValue) {
+    setLastValue(value)
+    if (controlled) setInternalValue(value)
+  }
   const currentValue = controlled ? value : internalValue
 
   const tabs = options ?? []
@@ -225,6 +231,8 @@ export const Tabs = ({
         }
       : undefined
 
+  const events = useNativeEventProps({ onstatechange, onchange, onfocusin: onFocus, onfocusout: onBlur })
+
   const vertical = orientation === "vertical"
   const focusValue =
     currentValue != null && tabs.some((tab) => tab.value === currentValue)
@@ -237,13 +245,12 @@ export const Tabs = ({
       aria-label={label}
       aria-orientation={vertical ? "vertical" : undefined}
       aria-disabled={disabled ? "true" : undefined}
-      // Controlled → drive the element's `state`. Uncontrolled → seed `default-state`
+      // Controlled → drive the element's `value`. Uncontrolled → seed `defaultvalue`
       // and let the ELEMENT own selection (off-DOM via each tab's `selected` property)
       // — so the strip works even unhydrated or hand-assembled. Either way the panels
       // read the value from here, and the wrapper's mirror (kept current via
       // `onstatechange`) feeds the roving `tabindex`.
-      state={controlled ? value : undefined}
-      default-state={!controlled ? defaultValue : undefined}
+      {...valueAttributes(value, defaultValue)}
       priority={priority && priority !== "primary" ? priority : undefined}
       tone={neutralToneAttr(tone)}
       size={size && size !== "medium" ? size : undefined}
@@ -252,11 +259,8 @@ export const Tabs = ({
       noslide={noslide ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
-      onstatechange={onstatechange}
-      onchange={onchange}
+      {...events}
       // Focus lands on a tab, not the tablist — report via bubbling focusin/focusout.
-      onfocusin={onFocus}
-      onfocusout={onBlur}
       class={className}
       id={id}
       style={roundStyle(round, "--tabs-round", toneStyle(tone, "--tabs-tone-source", style))}

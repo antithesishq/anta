@@ -895,6 +895,11 @@ export class AMenuElement extends HTMLElementBase {
     )
   }
 
+  #clearComboCursor() {
+    this.#pendingComboActivate = null
+    if (this.activeItem) this.setActive(null)
+  }
+
   /** Re-seat the cursor on the first option — but only once the filter has input.
    *  An empty filter (e.g. right after opening) shows NO active row, so the first
    *  ArrowDown is what steps onto the list; typing then keeps the top match active.
@@ -902,12 +907,13 @@ export class AMenuElement extends HTMLElementBase {
    *  the seat target — the cursor lands on the first real option — but they stay
    *  arrow-reachable. */
   private resetActive() {
-    const q = (this.#searchField as { value?: string } | null)?.value
-    if (!q || !q.trim()) return this.setActive(null)
     // Combobox-anchor (free-text autocomplete): never auto-seat a match, so Enter
     // commits the typed text — the user arrows down to highlight a suggestion
     // first. (The slotted-filter case below still seats the top match.)
-    if (this.#comboAnchor) return this.setActive(null)
+    if (this.#comboAnchor) return this.#clearComboCursor()
+    this.#pendingComboActivate = null
+    const q = (this.#searchField as { value?: string } | null)?.value
+    if (!q || !q.trim()) return this.setActive(null)
     const items = this.focusableItems()
     this.setActive(items.find((it) => !it.hasAttribute('data-menu-skip-active')) ?? items[0] ?? null)
   }
@@ -919,7 +925,7 @@ export class AMenuElement extends HTMLElementBase {
    *  instead. Any other key falls through to the input (typing). */
   private handleComboKey(e: KeyboardEvent): boolean {
     const items = this.focusableItems()
-    if (this.activeItem && !items.includes(this.activeItem)) this.setActive(null)
+    if (this.activeItem && !items.includes(this.activeItem)) this.#clearComboCursor()
     const idx = this.activeItem ? items.indexOf(this.activeItem) : -1
     switch (e.key) {
       case 'ArrowDown':
@@ -1151,7 +1157,6 @@ export class AMenuElement extends HTMLElementBase {
         record.type !== 'attributes' ||
         (isMenuItemEl(record.target) && record.target.parentElement === this),
       )) return
-      this.#pendingComboActivate = null
       this.resetActive()
       // The filtered list changed the menu's height — re-anchor to the trigger,
       // keeping the side chosen at open (`reanchor`). Matters when flipped ABOVE:
@@ -1218,8 +1223,7 @@ export class AMenuElement extends HTMLElementBase {
   _doHide() {
     this.comboObserver?.disconnect()
     this.comboObserver = undefined
-    this.#pendingComboActivate = null
-    if (this.activeItem) this.setActive(null)
+    this.#clearComboCursor()
     this._flippedTop = null
     this._flippedSide = null
     clearTimeout(this.typeTimer)
@@ -1828,10 +1832,7 @@ export class AMenuElement extends HTMLElementBase {
       // `state`; Esc / outside-click / picking a suggestion still close.
       // Editing invalidates an explicitly chosen cursor even when remote results
       // retain their row nodes. The next Enter must keep the new free text.
-      const onInput = () => {
-        this.#pendingComboActivate = null
-        if (this.activeItem) this.setActive(null)
-      }
+      const onInput = () => this.#clearComboCursor()
       anchor.addEventListener('input', onInput)
       this.teardown = () => {
         anchor.removeEventListener('input', onInput)

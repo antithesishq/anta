@@ -65,7 +65,7 @@ for (const browserShim of [false, true]) test.fast(`Autocomplete forwards worker
     render.flush();tree = render()
     assert.equal(field(tree).value, 'Al')
     assert.deepEqual(reports, ['focus', 'input', 'Al'])
-    for (const extra of [{cancel:true}, {isComposing:true}, {nativeEvent:{isComposing:true}}, {keyCode:229}, {defaultPrevented:true}]) {
+    for (const extra of [{cancel:true}, {isComposing:true}, {nativeEvent:{isComposing:true}}, {keyCode:229}, {nativeEvent:{isComposing:false,keyCode:229}}, {defaultPrevented:true}]) {
       field(tree).onKeyDown({key:'Enter', ...extra, preventDefault() {this.defaultPrevented = true}})
       render.flush();tree = render()
       assert.equal(menu(tree).state, 'open')

@@ -230,6 +230,8 @@ changes are not listed.
   open stacks independent between documents. Closing or removing a menu clears
   pending navigation and positioning work.
 - [Custom rounding](/menu/#styling) applies to the container in every theme.
+- [Combobox cursor events](/menu/) report a cleared autocomplete cursor once,
+  including when an edit also updates the suggestion rows.
 
 #### Select
 

@@ -244,6 +244,23 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.equal(await field(page).inputValue(),'x')
     assert.equal(await page.evaluate(()=>reports.some(e=>e.kind==='pick')),false)
   })
+  test.fast(`${name}: typing and later result updates report one cursor clear`,async t=>{
+    const page=await pageFor(t,engine,mode,'Preact')
+    await update(page,{filter:false});await field(page).focus();await shown(page)
+    await page.keyboard.press('ArrowDown')
+    await page.evaluate(()=>{
+      window.cursorReports=[]
+      document.querySelector('a-menu').addEventListener('activedescendant',e=>cursorReports.push(e.detail.id))
+    })
+    await field(page).press('x');await settled(page)
+    assert.equal(await active(page),null)
+    await update(page,{suggestions:['Remote result']})
+    assert.deepEqual(await page.evaluate(()=>cursorReports),[null])
+    assert.equal(await field(page).evaluate(el=>el.ariaControlsElements[0]===document.querySelector('a-menu')),true)
+    await page.keyboard.press('Enter');await shown(page,false)
+    assert.equal(await field(page).inputValue(),'x')
+    assert.equal(await page.evaluate(()=>reports.some(e=>e.kind==='pick')),false)
+  })
   test.fast(`${name}: result replacement invalidates active and armed rows, including newly disabled rows`,async t=>{
     const page=await pageFor(t,engine,mode,'Preact')
     await update(page,{filter:false});await field(page).focus();await shown(page)

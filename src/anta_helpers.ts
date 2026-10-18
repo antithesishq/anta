@@ -88,10 +88,15 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
  */
 export type StateChangeEvent<D> = CustomEvent<D> | { nativeEvent: CustomEvent<D> }
 
+/** @internal Return the raw event from native or renderer-wrapped callbacks. */
+export function unwrapNativeEvent<E extends object>(event: E | { nativeEvent: E }): E {
+  return ('nativeEvent' in event ? event.nativeEvent : event) as E
+}
+
 export function nativeStateChange<D>(
   e: StateChangeEvent<D>,
 ): { event: CustomEvent<D>; detail?: D; isOwn: boolean } {
-  const event = ('nativeEvent' in e ? e.nativeEvent : e) as CustomEvent<D>
+  const event = unwrapNativeEvent(e)
   return { event, detail: event?.detail, isOwn: !event || event.target === event.currentTarget }
 }
 
@@ -122,7 +127,7 @@ const NAVIGATION_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDow
 /** Leave candidate navigation and confirmation with the input method, including
  * browsers that report the final composing key only through legacy code 229. */
 export function isComposingKey(event: Pick<KeyboardEvent, 'isComposing' | 'keyCode'> | { nativeEvent: Pick<KeyboardEvent, 'isComposing' | 'keyCode'> }): boolean {
-  const native = 'nativeEvent' in event ? event.nativeEvent : event
+  const native = unwrapNativeEvent(event)
   return native.isComposing || native.keyCode === 229
 }
 

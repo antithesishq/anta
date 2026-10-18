@@ -444,6 +444,10 @@ export class AMenuElement extends HTMLElementBase {
 
     // Single delegated click for activation + the close contract.
     this.surface.addEventListener('click', this.onSurfaceClick)
+    // Combobox popup padding must retain field focus just like its option rows.
+    this.surface.addEventListener('mousedown', (e) => {
+      if (e.button === 0 && this.#comboAnchor) e.preventDefault()
+    })
 
     shadow.append(this.surface)
   }
@@ -1141,8 +1145,12 @@ export class AMenuElement extends HTMLElementBase {
    * children only; autocomplete also observes row content and disabled changes. */
   private startComboObserver() {
     this.comboObserver?.disconnect()
-    this.comboObserver = new this.view.MutationObserver(() => {
+    this.comboObserver = new this.view.MutationObserver((records) => {
       if (!this._shown || !this.#searchField) return
+      if (this.#comboAnchor && !records.some(record =>
+        record.type !== 'attributes' ||
+        (isMenuItemEl(record.target) && record.target.parentElement === this),
+      )) return
       this.#pendingComboActivate = null
       this.resetActive()
       // The filtered list changed the menu's height — re-anchor to the trigger,
@@ -1154,7 +1162,7 @@ export class AMenuElement extends HTMLElementBase {
     })
     this.comboObserver.observe(this, {
       childList: true,
-      ...(this.#comboAnchor ? { attributes: true, subtree: true, attributeFilter: ['disabled'] } : {}),
+      ...(this.#comboAnchor ? { characterData: true, attributes: true, subtree: true, attributeFilter: ['disabled'] } : {}),
     })
   }
 

@@ -53,7 +53,8 @@ remain visible and are skipped during keyboard navigation.
 
 Pass `value` and update it through `onValueChange` when another part of your
 application needs the text. Reset controlled text with `''`. For a field that
-keeps its own text, use `defaultValue`; a form reset restores that default.
+keeps its own text, use `defaultValue`; a form reset restores that default without
+opening an unfocused field's suggestions or moving focus.
 
 ```tsx
 const [value, setValue] = useState('React')
@@ -89,7 +90,7 @@ same pattern.
 ```tsx
 const projects = ['Billing service', 'Billing dashboard', 'Build tools', 'Customer portal']
 const [value, setValue] = useState('')
-const results = projects.filter(name => name.toLowerCase().includes(value.toLowerCase())).slice().reverse()
+const results = projects.filter(name => name.toLowerCase().includes(value.toLowerCase())).reverse()
 
 <InputAutocomplete
   label="Project"
@@ -114,10 +115,10 @@ field. Editing again clears that active suggestion. Input-method composition
 keeps its own candidate navigation and confirmation keys.
 
 Escape closes the list and keeps focus in the field. Tab closes it and moves
-to the next control. A mouse selection keeps focus in the field, and clicking
-within an open field leaves the list open while placing the caret. The field
-exposes combobox semantics, the popup is a listbox, and the active suggestion is
-associated directly with the focused input.
+to the next control. Selecting a suggestion or clicking the list's padding keeps
+focus in the field. Clicking within an open field leaves the list open while
+placing the caret. The field exposes combobox semantics, the popup is a listbox,
+and the active suggestion is associated directly with the focused input.
 
 ## Events
 
@@ -136,7 +137,7 @@ consumed before it reaches the field. See the callback reference for ordering.
 |------|------|---------|-------------|
 | `suggestions` | string \| SelectOption[] | — | The suggestions: bare strings or `SelectOption`s (`value` / `label` / `hint` / `icon` / `tone` / `disabled`). A flat list; picking one fills the field. |
 | `clearable?` | boolean | — | Show a clear button while the field has text. |
-| `defaultValue?` | string | — | Initial uncontrolled text and the value restored by a form reset. |
+| `defaultValue?` | string | — | Initial uncontrolled text and the value restored by a form reset. Resetting an unfocused field does not open suggestions or move focus. |
 | `disabled?` | boolean | — | Disable the field. |
 | `filter?` | boolean \| (option, query) => boolean | true | How suggestions match the text. `true` uses the built-in case-insensitive substring match on `value` / `label` / `hint`; a function `(option, query) => boolean` receives the original field text, including whitespace, once per option on each render, including when empty. Custom matching has no automatic highlighting. `false` shows `suggestions` unchanged for application-provided async or remote filtering, without automatic highlighting. Replacing results updates an open list but does not reopen a dismissed list. |
 | `hint?` | ReactNode | — | Hint under the field. |

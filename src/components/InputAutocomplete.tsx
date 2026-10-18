@@ -16,7 +16,8 @@ export interface InputAutocompleteProps extends Omit<BaseProps, 'children'>, Omi
    * field. Omit or pass `undefined` for uncontrolled use. Parent updates do not
    * call `onValueChange`. */
   value?: string
-  /** Initial uncontrolled text and the value restored by a form reset. */
+  /** Initial uncontrolled text and the value restored by a form reset. Resetting
+   * an unfocused field does not open suggestions or move focus. */
   defaultValue?: string
   /** Reports text changes from typing, picking a suggestion, clearing, or form
    * reset. */
@@ -110,9 +111,10 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
   const controlled = value !== undefined
   const [internal, setInternal] = useState<string>(defaultValue ?? '')
   const text = controlled ? value : internal
-  // `open` is the intent; `menuOpen` also requires something to show, so an empty
-  // (no-match) query never floats a blank popover. The Menu is controlled by it.
-  const [open, setOpen] = useState(false)
+  // Keep focus and open intent together so queued input/reset events use the
+  // latest focus state. Empty results still suppress the actual popup.
+  const [{ open }, setPopup] = useState({ open: false, focused: false })
+  const setOpen = (next: boolean) => setPopup(prev => ({ ...prev, open: next }))
   const options = useMemo(() => suggestions.map(normalizeOpt), [suggestions])
   const custom = typeof filter === 'function'
   const queryRe = filter !== false && !custom ? matchQueryRegex(text) : null
@@ -150,17 +152,17 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
         aria-autocomplete="list"
         onFocus={(e: any) => {
           onFocus?.(e)
-          setOpen(true)
+          setPopup({ open: true, focused: true })
         }}
         onBlur={(e: any) => {
           onBlur?.(e)
-          setOpen(false)
+          setPopup({ open: false, focused: false })
         }}
         onInput={(e: any) => {
           const next = e.currentTarget.value
           onInput?.(e)
           setText(next)
-          setOpen(true)
+          setPopup(prev => ({ ...prev, open: prev.focused }))
         }}
         onKeyDown={(e: any) => {
           onKeyDown?.(e)
@@ -193,9 +195,8 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
               tone={opt.tone}
               disabled={opt.disabled}
               value={opt.value}
-              // Keep focus in the field on a mouse pick: preventing the row's
-              // mousedown default stops it taking focus (it's tabIndex=0), so the
-              // click still selects but focus never leaves the input.
+              // A negative tabindex still permits pointer focus. Keep focus in
+              // the field while the click selects the suggestion.
               onMouseDown={(e: any) => e.preventDefault()}
               onSelect={() => pick(opt)}
               className={optionClassName}

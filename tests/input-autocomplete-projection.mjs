@@ -106,6 +106,27 @@ test.fast('Autocomplete preserves raw custom queries, option identity, and prese
   assert.deepEqual(seen.map(([,q])=>q), ['',''])
 })
 
+test.fast('Autocomplete keeps reset notifications separate from focus through deferred worker updates', () => {
+  const reports = [], render = renderer({suggestions:['Alpha'],filter:false,onValueChange:v=>reports.push(v)},true)
+  let tree = render()
+  field(tree).oninput({currentTarget:{value:''}})
+  render.flush();tree = render()
+  assert.equal(menu(tree).state, 'closed')
+  field(tree).onFocus({})
+  field(tree).oninput({currentTarget:{value:'Al'}})
+  render.flush();tree = render()
+  assert.equal(menu(tree).state, 'open')
+  assert.equal(field(tree).value, 'Al')
+  field(tree).onBlur({})
+  const reset = {currentTarget:{value:''}}
+  field(tree).oninput(reset)
+  reset.currentTarget = null
+  render.flush();tree = render()
+  assert.equal(menu(tree).state, 'closed')
+  assert.equal(field(tree).value, '')
+  assert.deepEqual(reports, ['', 'Al', ''])
+})
+
 test.fast('Autocomplete retains text ownership through external clearing, rejected picks, and accepted updates', () => {
   const reports = [], render = renderer({suggestions:['Alpha',''],value:'',defaultValue:'Seed',onValueChange:v=>reports.push(v)})
   let tree = render()

@@ -68,7 +68,7 @@ export function InputAutocompletePrefixDemo() {
 export function InputAutocompleteResultsDemo() {
   useElements()
   const [value, setValue] = useState('')
-  const results = PROJECTS.filter(name => name.toLowerCase().includes(value.toLowerCase())).slice().reverse()
+  const results = PROJECTS.filter(name => name.toLowerCase().includes(value.toLowerCase())).reverse()
   return (
     <InputAutocomplete
       label="Project"

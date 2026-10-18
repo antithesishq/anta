@@ -177,7 +177,55 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       assert.equal(await field(page).inputValue(),'Seed')
       assert.equal(await page.evaluate(()=>reports.filter(e=>e.kind==='value').at(-1).value),'Seed')
     })
+    test(`${name} ${framework}: resetting an unfocused field restores text without opening or moving focus`,core,async t=>{
+      const page=await pageFor(t,engine,mode,framework)
+      await page.evaluate(()=>{
+        const reset=document.createElement('button');reset.type='reset';reset.id='reset';reset.textContent='Reset form'
+        document.querySelector('form').prepend(reset)
+      })
+      for (const defaultValue of ['', 'Alpha']) {
+        await update(page,{defaultValue})
+        await field(page).fill('Beta');await shown(page)
+        await page.locator('#reset').click();await settled(page)
+        assert.equal(await field(page).inputValue(),defaultValue)
+        assert.equal(await page.evaluate(()=>document.querySelector('a-menu').isOpen),false)
+        // Some browsers leave focus on the body when a button is clicked.
+        assert.notEqual(await page.evaluate(()=>document.activeElement.id),'field')
+        assert.equal(await page.evaluate(()=>reports.filter(e=>e.kind==='value').at(-1).value),defaultValue)
+      }
+    })
+    test(`${name} ${framework}: in-place result label and hint edits invalidate active and armed choices`,core,async t=>{
+      const page=await pageFor(t,engine,mode,framework)
+      await update(page,{filter:false,suggestions:[{value:'same',label:'Old label',hint:'Old hint'}]})
+      await field(page).focus();await shown(page);await page.keyboard.press('ArrowDown')
+      await page.evaluate(()=>window.keptRow=document.querySelector('a-menu-item'))
+      await update(page,{suggestions:[{value:'same',label:'New label',hint:'Old hint'}]})
+      assert.equal(await page.evaluate(()=>keptRow===document.querySelector('a-menu-item')),true)
+      assert.equal(await active(page),null)
+      await page.keyboard.press('ArrowDown');await page.keyboard.down('Enter')
+      await update(page,{suggestions:[{value:'same',label:'New label',hint:'New hint'}]})
+      assert.equal(await active(page),null)
+      await page.keyboard.up('Enter');await settled(page)
+      assert.equal(await page.locator('a-menu-item').textContent(),'New labelNew hint')
+      assert.equal(await page.evaluate(()=>reports.some(e=>e.kind==='pick')),false)
+      await shown(page)
+    })
   }
+  test.fast(`${name}: nested disabled controls and unchanged renders preserve an armed choice`,async t=>{
+    const page=await pageFor(t,engine,mode,'Preact')
+    await update(page,{filter:false});await field(page).focus();await shown(page)
+    await page.evaluate(()=>{
+      const button=document.createElement('button');button.textContent='Copy'
+      document.querySelector('a-menu-item').append(button)
+    })
+    await settled(page);await page.keyboard.press('ArrowDown');await page.keyboard.down('Enter')
+    await update(page,{})
+    await page.evaluate(()=>document.querySelector('a-menu-item button').disabled=true);await settled(page)
+    assert.match(await active(page),/Alpha/)
+    await page.keyboard.up('Enter');await shown(page,false)
+    assert.equal(await field(page).inputValue(),'Alpha')
+    assert.equal(await page.evaluate(()=>reports.filter(e=>e.kind==='pick').length),1)
+  })
   test.fast(`${name}: IME owns candidate keys and typing clears a retained remote cursor`,async t=>{
     const page=await pageFor(t,engine,mode,'Preact')
     await update(page,{filter:false});await field(page).focus();await shown(page)
@@ -218,6 +266,13 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.equal(await page.locator('a-menu-item.person[data-person=alpha] b').textContent(),'Al')
     assert.equal(await field(page).evaluate(el=>getComputedStyle(el.getRootNode().host.shadowRoot.querySelector('[part=field]')).borderRadius),'13px')
     assert.equal(await page.locator('a-menu').evaluate(el=>getComputedStyle(el.shadowRoot.querySelector('[part=menu]')).borderRadius),'11px')
+    const surface=await page.locator('a-menu').evaluate(el=>{
+      const r=el.shadowRoot.querySelector('[part=menu]').getBoundingClientRect()
+      return {x:r.x+r.width/2,y:r.y+1}
+    })
+    await page.mouse.click(surface.x,surface.y);await settled(page)
+    assert.equal(await page.evaluate(()=>document.querySelector('a-menu').isOpen),true)
+    assert.equal(await field(page).evaluate(el=>el.getRootNode().activeElement===el),true)
     assert.deepEqual(await field(page).evaluate(el=>({role:el.getAttribute('role'),name:el.ariaLabelledByElements.map(n=>n.textContent).join(''),popup:el.ariaControlsElements[0].getAttribute('role'),expanded:el.getAttribute('aria-expanded'),hostRole:el.getRootNode().host.hasAttribute('role')})),{role:'combobox',name:'City',popup:'listbox',expanded:'true',hostRole:false})
     await page.keyboard.press('Control+ArrowDown');assert.equal(await active(page),null)
     await page.keyboard.press('ArrowDown');assert.match(await active(page),/Alpha/)
@@ -241,5 +296,19 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.equal(await field(page).inputValue(),'Alpha')
     assert.equal(await field(page).evaluate(el=>el.getRootNode().activeElement===el),true)
     assert.equal(await page.evaluate(()=>reports.filter(e=>e.kind==='pick').length),1)
+  })
+  test(`${name}: a long suggestion list stays scrollable without dismissing or blurring the field`,async t=>{
+    const page=await pageFor(t,engine,mode,'Preact')
+    await update(page,{filter:false,suggestions:Array.from({length:80},(_,i)=>`Result ${i}`)})
+    await field(page).focus();await shown(page)
+    const scroll=page.locator('a-menu').locator('[part=scroll]')
+    const box=await scroll.boundingBox()
+    assert.ok(box)
+    await page.mouse.move(box.x+box.width/2,box.y+box.height/2)
+    await page.mouse.wheel(0,240)
+    await page.waitForFunction(()=>document.querySelector('a-menu').shadowRoot.querySelector('[part=scroll]').scrollTop>0)
+    assert.equal(await page.evaluate(()=>document.querySelector('a-menu').isOpen),true)
+    assert.equal(await field(page).evaluate(el=>el.getRootNode().activeElement===el),true)
+    await page.keyboard.press('Escape');await shown(page,false)
   })
 }

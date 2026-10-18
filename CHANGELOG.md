@@ -191,11 +191,15 @@ changes are not listed.
 #### InputAutocomplete
 
 - [Field callbacks](/input-autocomplete/#events) run alongside text updates and
-  popup handling. Form reset restores the supplied default text.
+  popup handling. Form reset restores the supplied default text without opening
+  suggestions or moving focus from another control.
 - [Suggestion interaction](/input-autocomplete/#keyboard-interaction) leaves
   composition keys with the input method and keeps rows out of Tab order.
-  Editing or result changes clear stale active suggestions, and results stay
-  dismissed after focus leaves.
+  Editing or result changes, including label and hint edits, clear stale active
+  suggestions.
+- [Popup interaction](/input-autocomplete/#keyboard-interaction) keeps field focus
+  on padding clicks and preserves keyboard selection when a nested control's
+  disabled state changes. Results stay dismissed after focus leaves.
 
 #### InputDate
 

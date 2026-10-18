@@ -1,0 +1,10 @@
+.stack {
+  display: grid;
+  gap: 10px;
+  width: 260px;
+}
+
+.value {
+  font-size: 13px;
+  color: var(--text-3);
+}

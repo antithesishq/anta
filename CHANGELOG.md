@@ -154,6 +154,15 @@ changes are not listed.
 
 ### Fixed
 
+- [InputAutocomplete field events](/input-autocomplete/#events) preserve consumer
+  callbacks alongside text updates and popup behavior. Form reset restores the
+  supplied default text.
+
+- [InputAutocomplete suggestions](/input-autocomplete/#keyboard-interaction)
+  leave composition keys with the input method, clear stale active suggestions
+  after editing or result changes, and keep suggestion rows out of Tab order.
+  Results stay dismissed after focus leaves.
+
 - [SelectFaceted text editors](/select-faceted/#styling) retain their padding in
   server-rendered HTML under `style-src-attr 'none'` through external CSS.
 

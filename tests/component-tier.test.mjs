@@ -29,7 +29,7 @@ for (const tier of ['fast', 'slow']) {
   })
 }
 
-for (const component of ['banner', 'toaster', 'dialog', 'menu', 'select']) test(`Component runner keeps ${component} installation in the slow tier`, () => {
+for (const component of ['banner', 'toaster', 'dialog', 'menu', 'select', 'input-autocomplete']) test(`Component runner keeps ${component} installation in the slow tier`, () => {
   const run = tier => spawnSync(process.execPath, ['tests/components.mjs', '--tier', tier, '--component', component, '--list'], {encoding: 'utf8'})
   const fast = run('fast'), slow = run('slow')
   assert.equal(fast.status, 0, fast.stderr)

@@ -119,6 +119,13 @@ export function lineClamp(truncate: boolean | number | undefined): number | unde
 
 const NAVIGATION_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'])
 
+/** Leave candidate navigation and confirmation with the input method, including
+ * browsers that report the final composing key only through legacy code 229. */
+export function isComposingKey(event: Pick<KeyboardEvent, 'isComposing' | 'keyCode'> | { nativeEvent: Pick<KeyboardEvent, 'isComposing' | 'keyCode'> }): boolean {
+  const native = 'nativeEvent' in event ? event.nativeEvent : event
+  return native.isComposing || native.keyCode === 229
+}
+
 /** Leave modified navigation to the browser, OS, or text field. Shift+Tab remains focus navigation. */
 export function isModifiedNavigationKey(event: Pick<KeyboardEvent, 'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>): boolean {
   return NAVIGATION_KEYS.has(event.key)

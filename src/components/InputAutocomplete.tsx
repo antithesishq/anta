@@ -1,18 +1,6 @@
-// InputAutocomplete — a free-text field with a suggestion list. The value is the
-// typed string; suggestions only assist and needn't be taken. This is the whole
-// reason it's separate from `Select`: a value CONSTRAINED to an option is
-// `Select` with `filter` (search); this is for free text with hints.
-//
-// The wrapper renders an Input and a Menu of suggestions. `data-menu-search`
-// on the Input enables combobox keyboard behavior: typing updates the query,
-// arrow keys move the active option, and Enter selects it. There is no
-// `a-input-autocomplete` element.
-//
-// Hooks come from the jsx-runtime indirection (configurable via `configure()`),
-// not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo } from '../jsx-runtime'
-import { optionPresentationAttrs } from '../anta_helpers'
-import type { BaseProps } from '../general_types'
+import { isComposingKey, optionPresentationAttrs } from '../anta_helpers'
+import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectOption } from './Select'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
@@ -20,24 +8,30 @@ import { Input } from './Input'
 import { Menu } from './Menu'
 import { MenuItem } from './MenuItem'
 
-export interface InputAutocompleteProps extends Omit<BaseProps, 'children'> {
+export interface InputAutocompleteProps extends Omit<BaseProps, 'children'>, Omit<DOMEventHandlers, 'onSelect'> {
   /** The suggestions: bare strings or `SelectOption`s (`value` / `label` / `hint` /
    *  `icon` / `tone` / `disabled`). A flat list; picking one fills the field. */
   suggestions: (string | SelectOption)[]
-  /** Controlled value: the field's text, a **free** string not constrained to a
-   *  suggestion. Leave undefined for uncontrolled. */
+  /** The controlled field text. Any string is valid, including `''` for an empty
+   * field. Omit or pass `undefined` for uncontrolled use. Parent updates do not
+   * call `onValueChange`. */
   value?: string
-  /** Initial value for uncontrolled use. */
+  /** Initial uncontrolled text and the value restored by a form reset. */
   defaultValue?: string
-  /** Fires as the text changes (typing, picking a suggestion, or clearing) with
-   *  the new field text. */
+  /** Reports text changes from typing, picking a suggestion, clearing, or form
+   * reset. */
   onValueChange?: (value: string) => void
-  /** Fires only when a suggestion is chosen, with that option. */
+  /** Fires after `onValueChange` when a suggestion is chosen, with the normalized
+   * option. This reports the choice even if a controlled parent rejects the value.
+   * Typing and clearing do not call it. */
   onSelect?: (option: SelectOption) => void
   /** How suggestions match the text. `true` uses the built-in case-insensitive
    *  substring match on `value` / `label` / `hint`; a function `(option, query) =>
-   *  boolean` uses a custom matcher; `false` shows `suggestions` unchanged for
-   *  application-provided async or remote filtering.
+   *  boolean` receives the original field text, including whitespace, once per
+   *  option on each render, including when empty. Custom matching has no automatic
+   *  highlighting. `false` shows `suggestions` unchanged for application-provided
+   *  async or remote filtering, without automatic highlighting. Replacing results
+   *  updates an open list but does not reopen a dismissed list.
    *  @defaultValue true */
   filter?: boolean | ((option: SelectOption, query: string) => boolean)
   /** Placeholder text. */
@@ -65,6 +59,18 @@ export interface InputAutocompleteProps extends Omit<BaseProps, 'children'> {
   leading?: React.ReactNode
   /** Trailing adornment inside the field. */
   trailing?: React.ReactNode
+  /** Observe focus before the suggestion list opens. */
+  onFocus?: (event: any) => void
+  /** Observe focus loss. The suggestion list closes without changing the text. */
+  onBlur?: (event: any) => void
+  /** Observe editing before `onValueChange`. The input event reports text that
+   * has already changed; `preventDefault()` does not reject that text. */
+  onInput?: (event: any) => void
+  /** Observe keys before the wrapper's plain-Enter dismissal. `preventDefault()`
+   * keeps that dismissal from running. Menu handles navigation and active-option
+   * activation earlier, in document capture; this callback cannot veto those
+   * actions. Composing keys remain with the input method. */
+  onKeyDown?: (event: any) => void
 }
 
 /**
@@ -93,23 +99,21 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
     defaultValue,
     onValueChange,
     onSelect,
+    onFocus,
+    onBlur,
+    onInput,
+    onKeyDown,
     filter = true,
     ...rest
   } = props
 
   const controlled = value !== undefined
-  // Uncontrolled text lives here (component state re-render is allowed where
-  // element DOM mutation isn't).
   const [internal, setInternal] = useState<string>(defaultValue ?? '')
   const text = controlled ? value : internal
   // `open` is the intent; `menuOpen` also requires something to show, so an empty
   // (no-match) query never floats a blank popover. The Menu is controlled by it.
   const [open, setOpen] = useState(false)
   const options = useMemo(() => suggestions.map(normalizeOpt), [suggestions])
-  // Matching mirrors Select's search: a custom function prunes on every render;
-  // the built-in matcher (shared `matchQueryRegex`) prunes only once something is
-  // typed (empty query = show all). `queryRe` is null for a function / empty query
-  // — which is also the signal to skip match-highlighting.
   const custom = typeof filter === 'function'
   const queryRe = filter !== false && !custom ? matchQueryRegex(text) : null
   const visible = custom
@@ -133,6 +137,7 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
       <Input
         {...rest}
         value={text}
+        defaultValue={defaultValue}
         // `data-menu-search` makes the menu treat THIS anchor as its combobox
         // field (see a-menu's #comboAnchor). The ARIA combobox contract: the field
         // is the `combobox` controlling a `listbox` (the Menu below), with the
@@ -143,19 +148,25 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
         aria-haspopup="listbox"
         aria-expanded={menuOpen ? 'true' : 'false'}
         aria-autocomplete="list"
-        onFocus={() => setOpen(true)}
+        onFocus={(e: any) => {
+          onFocus?.(e)
+          setOpen(true)
+        }}
+        onBlur={(e: any) => {
+          onBlur?.(e)
+          setOpen(false)
+        }}
         onInput={(e: any) => {
-          setText(e.currentTarget.value)
+          const next = e.currentTarget.value
+          onInput?.(e)
+          setText(next)
           setOpen(true)
         }}
         onKeyDown={(e: any) => {
-          // An active suggestion is armed by a-menu during keydown and clicked on
-          // keyup. It prevents the keydown so this controlled menu stays mounted
-          // long enough for that click to reach the row and call `pick`. A plain
-          // Enter is not prevented: free text is already the value, so close it.
-          // This uses the synchronous DOM event because the menu cursor can move
-          // again before a reactive update after a fast ArrowDown + Enter.
-          if (e.key === 'Enter' && !e.defaultPrevented) setOpen(false)
+          onKeyDown?.(e)
+          // Menu arms active suggestions on keydown and clicks on keyup. Its
+          // prevented event keeps this list open through that activation.
+          if (e.key === 'Enter' && !e.defaultPrevented && !isComposingKey(e)) setOpen(false)
         }}
       />
       {/* Anchors to the field (its previous sibling). Controlled by `menuOpen`;
@@ -175,6 +186,7 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
               key={`${opt.value}-${i}`}
               {...optionAttrs}
               role="option"
+              tabIndex={-1}
               icon={opt.icon}
               label={highlight(opt.label ?? opt.value, queryRe)}
               hint={opt.hint ? highlight(opt.hint, queryRe) : opt.hint}

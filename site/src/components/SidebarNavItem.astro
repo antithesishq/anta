@@ -1,0 +1,64 @@
+---
+import { Icon, type IconProps } from '@antadesign/anta'
+import ThemeSwitcher from './ThemeSwitcher.tsx'
+
+interface NavigationItem {
+  path: string
+  label: string
+  nav: { icon: IconProps['shape'] }
+  children: NavigationItem[]
+}
+interface Props {
+  page: NavigationItem
+  currentPath: string
+  nested?: boolean
+}
+
+const { page, currentPath, nested = false } = Astro.props
+const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/'
+const isActive = (item: NavigationItem): boolean =>
+  normalizePath(item.path) === currentPath || item.children.some(isActive)
+const current = normalizePath(page.path) === currentPath
+const active = isActive(page)
+const hasChildren = page.children.length > 0
+---
+
+<li class:list={[{ 'theming-nav-item': page.path === '/theming/' }]} data-nav-branch={hasChildren ? '' : undefined}>
+  <a href={page.path} aria-current={current ? 'page' : undefined} data-active-parent={active && !current ? '' : undefined}>
+    {!nested && <Icon shape={page.nav.icon} size={18} />}{page.label}
+  </a>
+  {page.path === '/theming/' && (
+    <div class="theming-switcher"><ThemeSwitcher client:load /></div>
+  )}
+  {hasChildren && (
+    <ul class="nav-children" aria-label={`${page.label} documentation`} hidden={!active}>
+      {page.children.map(child => <Astro.self page={child} currentPath={currentPath} nested />)}
+    </ul>
+  )}
+</li>
+
+<style>
+  .theming-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5ch;
+    min-width: 0;
+  }
+  .theming-nav-item > a {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+  .theming-switcher {
+    flex: 1;
+    min-width: 0;
+  }
+  .theming-switcher :global(.theming-select::part(field)) {
+    background: transparent;
+  }
+  .nav-children {
+    list-style: none;
+    margin: 2px 0 8px 8px;
+    padding: 0 0 0 20px;
+    border-inline-start: 1px solid var(--border-4);
+  }
+</style>

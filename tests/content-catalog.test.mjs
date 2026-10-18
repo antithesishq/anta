@@ -7,6 +7,7 @@ import {
   COLLECTIONS,
   getExportGroups,
   getNavigationGroups,
+  getNavigationTree,
   readPageCatalog,
   validatePageCatalog,
 } from '../site/lib/content/catalog.mjs'
@@ -86,9 +87,9 @@ const existingSidebar = [
 test('the content catalog preserves existing sidebar groups, links, icons, and labels', async () => {
   const catalog = await readPageCatalog()
   const groups = getNavigationGroups(catalog)
-  assert.deepEqual(groups.flatMap(group => group.pages.map(page => [page.path, page.nav.icon, page.label])), existingSidebar)
+  assert.deepEqual(groups.flatMap(group => getNavigationTree(group.pages).map(page => [page.path, page.nav.icon, page.label])), existingSidebar)
   assert.deepEqual(groups.filter(group => group.title).map(group => group.title), ['Components', 'Packages'])
-  assert.deepEqual(groups.map(group => group.pages.length), [2, 3, 4, 8, 8, 6, 6, 3, 3])
+  assert.deepEqual(groups.map(group => getNavigationTree(group.pages).length), [2, 3, 4, 8, 8, 6, 6, 3, 3])
   assert.equal(catalog.find(page => page.path === '/input-date/').breadcrumbLabel, 'InputDate')
   assert.equal(catalog.find(page => page.path === '/changelog/dev/').breadcrumbLabel, 'Changelog')
   assert.equal(catalog.find(page => page.path === '/table/').kind, 'package')
@@ -117,6 +118,24 @@ test('nested package pages derive public routes, export paths, and parent-first 
   assert.deepEqual(getNavigationGroups(catalog).find(group => group.id === 'packages').pages.map(page => page.title), [
     'Plot', 'Interactions', 'Dragging', 'Compatibility',
   ])
+  const tree = getNavigationTree(getNavigationGroups(catalog).find(group => group.id === 'packages').pages)
+  assert.equal(tree.length, 1)
+  assert.equal(tree[0].title, 'Plot')
+  assert.deepEqual(tree[0].children.map(page => page.title), ['Interactions', 'Compatibility'])
+  assert.equal(tree[0].children[0].children[0].title, 'Dragging')
+})
+
+test('Plot series share a navigation parent and have independent Markdown exports', async () => {
+  const catalog = await readPageCatalog()
+  const pages = getNavigationGroups(catalog).find(group => group.id === 'packages').pages
+  const plot = getNavigationTree(pages).find(page => page.path === '/plot/')
+  assert.deepEqual(plot.children.map(page => page.id), ['scatter', 'line', 'bar', 'area', 'rect', 'rule', 'custom'])
+  for (const page of plot.children) {
+    assert.equal(page.parentKey, 'plotDocs:index')
+    assert.equal(page.path, `/plot/${page.id}/`)
+    assert.equal(page.exportPath, `packages/plot/${page.id}.md`)
+    assert.equal(page.includeInExports, true)
+  }
 })
 
 test('invalid parent chains fail before routes and navigation can be generated', async t => {

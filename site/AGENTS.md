@@ -286,6 +286,11 @@ For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop
 
 Package docs use separate `plotDocs`, `tableDocs`, and `stickersDocs` collections. Put the package landing page in `src/content/packages/{package}/index.mdx`; `getting-started.mdx` or `getting-started/index.mdx` creates `/{package}/getting-started/`. Package navigation derives its group from the collection. Subpages default to the package landing page as their parent; set `parent` to an entry ID for deeper breadcrumbs. Keep each demo beside its page, preferably in its own directory.
 
+The sidebar nests catalog parents through `getNavigationTree()` and
+`SidebarNavItem.astro`. Children appear while their parent or a descendant is
+current. The persisted sidebar synchronizes branch visibility and active links
+on `astro:page-load`; keep cold loads and ClientRouter navigation consistent.
+
 Use `nav: false` to omit a page from navigation and `export: false` to omit it from Markdown exports. These flags are independent. Optional `path` overrides the generated URL. The shared schema rejects unknown metadata and the catalog rejects duplicate URLs, sources, export paths, and missing or cyclic parents.
 
 Standalone guides stay in `src/pages/`. Register their navigation and export metadata in `lib/content/standalone.mjs`; MDX titles come from their frontmatter. `scripts/check-llms-index.mjs` runs during preparation, validates the catalog, and checks that standalone MDX pages are registered. Collection entries are discovered automatically.

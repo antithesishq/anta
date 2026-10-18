@@ -78,6 +78,10 @@ export class ASliderElement extends HTMLElementBase {
   // Match an accepted range request to the physical thumb that produced it.
   #pendingRequest?: { value: SliderValue; reversed: boolean }
   #endpointLabels: HTMLSpanElement[] = []
+  #accessibilityDirty = true
+  #accessibilityState?: { range: boolean; reversed: boolean; disabled: boolean }
+  #accessibilityReferences: { id: string; element: Element }[] = []
+  #accessibilityUnresolved = false
   #drag?: { pointerId: number; startX: number; clientX: number; startValue: number; startPublicValue: SliderValue; thumb: number; requested?: SliderValue; lastInput?: SliderValue }
 
   #onPointerDown = (event: PointerEvent) => {
@@ -204,7 +208,10 @@ export class ASliderElement extends HTMLElementBase {
     for (const slot of [this.#label, this.#markers, this.#extras]) {
       slot.addEventListener('slotchange', () => {
         this.#syncSlotVisibility()
-        if (slot === this.#label) this.#paintAccessibility()
+        if (slot === this.#label) {
+          this.#accessibilityDirty = true
+          this.#paintAccessibility()
+        }
       })
     }
     for (const [index, thumb] of [this.#thumb, this.#thumbEnd].entries()) {
@@ -230,6 +237,7 @@ export class ASliderElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    this.#accessibilityDirty = true
     for (const type of ['pointerdown', 'keydown', 'pointermove']) this.addEventListener(type, this.#orderDefaultAction, true)
     if (!this.#seeded) {
       this.#applyValue(this.#initialValue())
@@ -256,6 +264,7 @@ export class ASliderElement extends HTMLElementBase {
 
   attributeChangedCallback(name: string, previous: string | null, next: string | null) {
     if (!this.#seeded) return
+    if (name.startsWith('aria-')) this.#accessibilityDirty = true
     if (name === 'value') {
       if (next === null && previous !== null) {
         this.#dirty = true
@@ -464,18 +473,46 @@ export class ASliderElement extends HTMLElementBase {
 
   #paintAccessibility() {
     const range = Array.isArray(this.#value)
-    const referenced = referencedElements(this, this.getAttribute('aria-labelledby') ?? '')
-    const labels = referenced.length ? referenced : this.#label.assignedElements({ flatten: true })
-    const explicit = referenced.length ? null : this.getAttribute('aria-label')
+    const disabled = this.#isDisabled
+    const previous = this.#accessibilityState
+    // Replaced or renamed ID targets must refresh on the next paint, as before.
+    const root = this.getRootNode()
+    const referencesChanged = this.#accessibilityReferences.some(({ id, element }) => element.id !== id || element.getRootNode() !== root)
+    if (this.#accessibilityDirty || this.#accessibilityUnresolved || referencesChanged || !previous || previous.range !== range || previous.disabled !== disabled || (range && previous.reversed !== this.#orderReversed)) {
+      this.#syncAccessibility(range, disabled)
+      this.#accessibilityDirty = false
+      this.#accessibilityState = { range, reversed: this.#orderReversed, disabled }
+    }
     const internals = this.internals
     if (internals) {
-      internals.role = range ? 'group' : 'slider'
-      internals.ariaLabelledByElements = explicit == null && !this.hasAttribute('aria-labelledby') ? labels : []
-      internals.ariaDisabled = this.#isDisabled ? 'true' : null
       internals.ariaValueMin = range ? null : String(this.#min)
       internals.ariaValueMax = range ? null : String(this.#max)
       internals.ariaValueNow = range ? null : String(this.#value)
       internals.ariaValueText = range ? null : this.#formatValue(this.#value as number)
+    }
+    if (!range) return
+    for (const [index, thumb] of [this.#thumb, this.#thumbEnd].entries()) {
+      thumb.ariaValueMin = String(this.#min)
+      thumb.ariaValueMax = String(this.#max)
+      thumb.ariaValueNow = String(this.#physicalValues[index])
+      thumb.ariaValueText = this.#formatValue(this.#physicalValues[index])
+    }
+  }
+
+  #syncAccessibility(range: boolean, disabled: boolean) {
+    // Reflected element references follow label text edits without rebinding on value changes.
+    const referenced = referencedElements(this, this.getAttribute('aria-labelledby') ?? '')
+    const labels = referenced.length ? referenced : this.#label.assignedElements({ flatten: true })
+    const explicit = referenced.length ? null : this.getAttribute('aria-label')
+    const descriptions = range ? referencedElements(this, this.getAttribute('aria-describedby') ?? '') : []
+    this.#accessibilityReferences = [...referenced, ...descriptions].map(element => ({ id: element.id, element }))
+    const ids = [this.getAttribute('aria-labelledby'), range ? this.getAttribute('aria-describedby') : null].flatMap(value => value?.match(/\S+/g) ?? [])
+    this.#accessibilityUnresolved = ids.length !== this.#accessibilityReferences.length
+    const internals = this.internals
+    if (internals) {
+      internals.role = range ? 'group' : 'slider'
+      internals.ariaLabelledByElements = explicit == null && !this.hasAttribute('aria-labelledby') ? labels : []
+      internals.ariaDisabled = disabled ? 'true' : null
     }
 
     for (const [index, thumb] of [this.#thumb, this.#thumbEnd].entries()) {
@@ -490,15 +527,11 @@ export class ASliderElement extends HTMLElementBase {
       const endpointLabel = this.#endpointLabels[index]
       endpointLabel.textContent = explicit != null ? `${explicit} ${endpoint}` : labels.length ? endpoint : `${endpoint[0].toUpperCase()}${endpoint.slice(1)} value`
       thumb.role = 'slider'
-      thumb.tabIndex = this.#isDisabled ? -1 : 0
+      thumb.tabIndex = disabled ? -1 : 0
       thumb.ariaLabelledByElements = explicit != null ? [endpointLabel] : [...labels, endpointLabel]
-      thumb.ariaDescribedByElements = referencedElements(this, this.getAttribute('aria-describedby') ?? '')
+      thumb.ariaDescribedByElements = descriptions
       thumb.ariaDescription = this.getAttribute('aria-description')
-      thumb.ariaValueMin = String(this.#min)
-      thumb.ariaValueMax = String(this.#max)
-      thumb.ariaValueNow = String(this.#physicalValues[index])
-      thumb.ariaValueText = this.#formatValue(this.#physicalValues[index])
-      thumb.ariaDisabled = this.#isDisabled ? 'true' : null
+      thumb.ariaDisabled = disabled ? 'true' : null
     }
   }
 

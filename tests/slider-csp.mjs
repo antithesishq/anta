@@ -347,6 +347,65 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await page.locator('#slider').focus();await page.keyboard.press('ArrowRight')
     assert.ok((await value(page))<25)
   })
+  test.fast(`${name}: value changes update numeric ARIA without resolving labels again`,async t=>{
+    const page=await pageFor(t,engine,mode)
+    const result=await page.locator('#slider').evaluate(s=>{
+      const label=document.createElement('span');label.id='slider-name';label.textContent='Price';s.before(label)
+      const description=document.createElement('span');description.id='slider-hint';description.textContent='Choose a budget';s.before(description)
+      s.setAttribute('aria-labelledby',label.id);s.setAttribute('aria-describedby',description.id)
+      s.value=[20,70]
+      const root=s.getRootNode(),lookup=root.getElementById
+      const slot=s.shadowRoot.querySelector('slot[name=label]'),assigned=slot.assignedElements
+      let resolutions=0,assignments=0
+      root.getElementById=function(id){if(id===label.id||id===description.id)resolutions++;return lookup.call(this,id)}
+      slot.assignedElements=function(...args){assignments++;return assigned.apply(this,args)}
+      try {
+        for(let n=21;n<=30;n++)s.value=[n,70]
+        s.setAttribute('min','10');s.setAttribute('max','90');s.setAttribute('value-prefix','$')
+        const thumbs=[...s.shadowRoot.querySelectorAll('[part~=thumb]')]
+        const repeated={resolutions,assignments}
+        const numbers=thumbs.map(t=>[t.ariaValueMin,t.ariaValueMax,t.ariaValueNow,t.ariaValueText])
+        label.textContent='Budget';description.textContent='Updated hint'
+        const live=thumbs.map(t=>({name:t.ariaLabelledByElements.map(n=>n.textContent).join(' '),description:t.ariaDescribedByElements.map(n=>n.textContent).join(' ')}))
+        const replacement=label.cloneNode();replacement.textContent='New label';label.replaceWith(replacement)
+        description.id='old-hint'
+        const hint=document.createElement('span');hint.id='slider-hint';hint.textContent='New hint';s.before(hint)
+        s.value=[31,71]
+        const replaced=thumbs.map(t=>({name:t.ariaLabelledByElements.map(n=>n.textContent).join(' '),description:t.ariaDescribedByElements.map(n=>n.textContent).join(' ')}))
+        s.removeAttribute('aria-labelledby');s.setAttribute('aria-label','Explicit');s.setAttribute('aria-description','Details')
+        const explicit=thumbs.map(t=>[t.ariaLabelledByElements.map(n=>n.textContent).join(' '),t.ariaDescription])
+        s.setAttribute('disabled','')
+        const disabled=thumbs.map(t=>[t.tabIndex,t.ariaDisabled])
+        s.removeAttribute('disabled')
+        const enabled=thumbs.map(t=>[t.tabIndex,t.ariaDisabled])
+        s.value=40
+        const scalar=thumbs.map(t=>[t.getAttribute('role'),t.ariaValueNow,t.tabIndex,t.ariaLabelledByElements.length,t.ariaDescribedByElements.length])
+        s.value=[25,75]
+        const range=thumbs.map(t=>[t.role,t.ariaValueNow,t.tabIndex,t.ariaLabelledByElements.map(n=>n.textContent).join(' ')])
+        return {repeated,numbers,live,replaced,explicit,disabled,enabled,scalar,range}
+      } finally {root.getElementById=lookup;slot.assignedElements=assigned}
+    })
+    assert.deepEqual(result,{
+      repeated:{resolutions:0,assignments:0},numbers:[['10','90','30','$30'],['10','90','70','$70']],
+      live:[{name:'Budget minimum',description:'Updated hint'},{name:'Budget maximum',description:'Updated hint'}],
+      replaced:[{name:'New label minimum',description:'New hint'},{name:'New label maximum',description:'New hint'}],
+      explicit:[['Explicit minimum','Details'],['Explicit maximum','Details']],
+      disabled:[[-1,'true'],[-1,'true']],enabled:[[0,null],[0,null]],
+      scalar:[[null,null,-1,0,0],[null,null,-1,0,0]],range:[['slider','25',0,'Explicit minimum'],['slider','75',0,'Explicit maximum']],
+    })
+    await page.locator('#slider').evaluate(s=>{
+      s.removeAttribute('aria-label');s.removeAttribute('aria-describedby');s.removeAttribute('aria-description')
+      const label=document.createElement('span');label.slot='label';label.textContent='Replacement';s.querySelector('[slot=label]').replaceWith(label)
+    })
+    await settled(page)
+    assert.equal(await page.locator('#slider [part~=thumb-1]').evaluate(t=>t.ariaLabelledByElements.map(n=>n.textContent).join(' ')),'Replacement minimum')
+    await page.locator('#slider').evaluate(s=>{
+      s.setAttribute('aria-labelledby','late-label')
+      const label=document.createElement('span');label.id='late-label';label.textContent='Late label';s.before(label)
+      s.value=[30,80]
+    })
+    assert.equal(await page.locator('#slider [part~=thumb-1]').evaluate(t=>t.ariaLabelledByElements.map(n=>n.textContent).join(' ')),'Late label minimum')
+  })
   test(`${name}: names follow live labels and crossing retains focus and physical identity`,async t=>{
     const page=await pageFor(t,engine,mode)
     await page.locator('#slider').evaluate(s=>{s.removeAttribute('aria-label');s.setAttribute('defaultvalue','20 70')})

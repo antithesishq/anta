@@ -156,7 +156,7 @@ consumed before it reaches the field. See the callback reference for ordering.
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Status icon override, or `false` to drop it. |
 | `tone?` | string | — | Custom accent color — a named tone or any CSS color. |
 | `trailing?` | ReactNode | — | Trailing adornment inside the field. |
-| `value?` | string | — | The controlled field text. Any string is valid, including `''` for an empty field. Omit or pass `undefined` for uncontrolled use. Parent updates do not call `onValueChange`. |
+| `value?` | string | — | The controlled field text. Any string is valid, including `''` for an empty field. Omit or pass `undefined` for uncontrolled use. Parent updates do not call `onValueChange`. Releasing control retains the latest controlled text. |
 
 ## Web Component
 

@@ -1,5 +1,5 @@
 import { useState, useMemo } from '../jsx-runtime'
-import { isComposingKey, optionPresentationAttrs } from '../anta_helpers'
+import { isComposingKey, optionPresentationAttrs, useSelectionMirror } from '../anta_helpers'
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectOption } from './Select'
@@ -14,7 +14,7 @@ export interface InputAutocompleteProps extends Omit<BaseProps, 'children'>, Omi
   suggestions: (string | SelectOption)[]
   /** The controlled field text. Any string is valid, including `''` for an empty
    * field. Omit or pass `undefined` for uncontrolled use. Parent updates do not
-   * call `onValueChange`. */
+   * call `onValueChange`. Releasing control retains the latest controlled text. */
   value?: string
   /** Initial uncontrolled text and the value restored by a form reset. Resetting
    * an unfocused field does not open suggestions or move focus. */
@@ -109,8 +109,8 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
   } = props
 
   const controlled = value !== undefined
-  const [internal, setInternal] = useState<string>(defaultValue ?? '')
-  const text = controlled ? value : internal
+  const [mirroredText, setInternal] = useSelectionMirror(value, defaultValue ?? '')
+  const text = mirroredText ?? ''
   // Keep focus and open intent together so queued input/reset events use the
   // latest focus state. Empty results still suppress the actual popup.
   const [{ open }, setPopup] = useState({ open: false, focused: false })

@@ -204,6 +204,9 @@ changes are not listed.
 
 #### InputAutocomplete
 
+- [Controlled text](/input-autocomplete/#managing-the-value) is retained when
+  `value` is removed or becomes `undefined`, including an empty string. Editing
+  resumes from that text; `defaultValue` remains the form-reset target.
 - [Field callbacks](/input-autocomplete/#events) run alongside text updates and
   popup handling. Form reset restores the supplied default text without opening
   suggestions or moving focus from another control.

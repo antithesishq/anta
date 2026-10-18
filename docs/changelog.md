@@ -266,6 +266,11 @@ changes are not listed.
   if native popover opening fails or is canceled.
 - [React hydration](/panel/#controlled) retains state-change callbacks.
 
+#### Progress
+
+- [Loading stripes](/progress/) keep their blurred edges outside the track
+  throughout each loop, preventing edge flicker at different widths.
+
 #### Select
 
 - [Field layout and validation](/select/#styling) preserve leading content and

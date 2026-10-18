@@ -94,8 +94,9 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(0px - var(--progress-loading-x-period));
-    width: calc(100% + var(--progress-loading-x-period));
+    /* Keep the blurred edges outside the track through the complete loop. */
+    left: calc(-2 * var(--progress-loading-x-period));
+    width: calc(100% + 3 * var(--progress-loading-x-period));
     pointer-events: none;
     background: var(--progress-loading-fill);
     filter: blur(var(--progress-loading-blur));

@@ -55,8 +55,12 @@
         position: absolute;
         pointer-events: none;
         box-sizing: border-box;
-        border: 1px solid var(--border-3-brand);
-        background: color-mix(in oklch, var(--text-1-brand) 12%, transparent);
+        border: 1px solid var(--border-3-brand, #7460d7);
+        background: color-mix(in oklch, var(--text-1-brand, #7460d7) 12%, transparent);
+    }
+
+    a-plot-surface a-menu-item:focus-visible {
+        outline: 1px solid var(--focus-ring, #7460d7);
     }
 
     a-plot-surface > .plot-highlight {

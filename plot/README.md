@@ -15,8 +15,16 @@ npm install @antadesign/plot @antadesign/anta react react-dom
 The package requires Anta `^0.3.30`, React `^19.0.0`, and a bundler that supports
 ES modules and CSS imports. Preact applications can use their React compatibility
 aliases. Register elements in your browser entry and load
-`@antadesign/plot/plot.css` and `@antadesign/anta/tokens.css` once per document.
-Anta's reset and themes are optional. Before hydrating, configure Anta with your
+`@antadesign/plot/plot.css` once per document. Anta's `tokens.css` is optional:
+Plot uses fallback colors when tokens are absent, including for selection
+rectangles, tooltips, and menus. Import it to use Anta's theme colors unless your
+application already loads Anta's full bundle:
+
+```ts
+import '@antadesign/anta/tokens.css'
+```
+
+Anta's reset and themes are also optional. Before hydrating, configure Anta with your
 renderer hooks and `{ hydratingEvents: true }`; see the
 [renderer and hydration setup](https://anta.design/install/).
 
@@ -25,14 +33,13 @@ elements, or stylesheet.
 
 ## Use in React
 
-Import the component, register its browser elements, and load the stylesheets:
+Import the component, register its browser elements, and load the Plot stylesheet:
 
 ```tsx
 import { Plot, scatter } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot-surface'
 import '@antadesign/plot/plot.css'
 import '@antadesign/anta/elements/a-tooltip'
-import '@antadesign/anta/tokens.css'
 
 const series = [
   scatter({
@@ -61,7 +68,6 @@ Register `<a-plot>` and assign its configuration through the `plotArgs` property
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
 import '@antadesign/plot/plot.css'
-import '@antadesign/anta/tokens.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 plot.plotArgs = {
@@ -83,8 +89,8 @@ programmatically, import and await `definePlotElement()` from
 ## Use a low-level surface
 
 Import `PlotSurface` from `@antadesign/plot`, register
-`@antadesign/plot/elements/a-plot-surface` in the browser, and load the same Plot
-and Anta stylesheets. Give its parent a height or apply a CSS class with explicit
+`@antadesign/plot/elements/a-plot-surface` in the browser, and load the Plot
+stylesheet. Give its parent a height or apply a CSS class with explicit
 dimensions. Your application owns drawing and provides presentation and input
 handlers. Use `Plot` when you need the complete chart lifecycle.
 

@@ -5,7 +5,8 @@ Load `@antadesign/plot/plot.css` once in each browser document. JSX `Plot`,
 JavaScript entries keep Plot's CSS separate. An application bundler must extract
 CSS imports into a stylesheet loaded from an allowed origin. To load CSS from HTML,
 serve `dist/plot.css` alongside your application bundle and use an external
-stylesheet link.
+stylesheet link. Anta's `tokens.css` is optional; Plot uses fallback colors when
+tokens are absent.
 
 ## Styling audit
 

@@ -96,6 +96,7 @@ before(async () => {
             const registration = registrations[entry]
             await compile(`${registration}; import '@antadesign/plot/plot.css'; import '@antadesign/anta/tokens.css'; ${fixture}`, `${renderer}-${entry}`, renderer)
         }
+        await compile(`${registrations.surface}; import '@antadesign/plot/plot.css'; ${fixture}`, `${renderer}-tokenless`, renderer)
         const ssr = await compile(`import React from 'react';import {renderToString} from 'react-dom/server';import {Plot} from '@antadesign/plot';export const render=props=>renderToString(React.createElement(Plot,{plotArgs:{series:[]},...props}));`, `ssr-${renderer}`, renderer, false, 'node')
         const module = new Module(resolve(repo, `plot/tests/ssr-${renderer}.cjs`))
         module._compile(ssr.outputFiles[0].text, module.id)
@@ -118,6 +119,7 @@ before(async () => {
         if (compareRef && !consumer) await compile(`${registrations.granular}; import '@antadesign/anta/tokens.css'; ${fixture}`, `${renderer}-original`, renderer, true)
     }
     await compile(`${registrations.surface}; ${fixture}`, 'react-unstyled')
+    await compile(`${registrations.granular}; import '@antadesign/plot/plot.css'; ${fixture}`, 'react-tokenless-browser')
     assets.set('/site.css', await readFile(resolve(repo, 'site/src/styles/base.css'), 'utf8'))
     assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,blocked:e.blockedURI}));`)
     assets.set('/fixture.css', style)
@@ -180,6 +182,65 @@ async function hover(page) {
 }
 for (const engine of engines) {
     const name = engine.name()
+    test.fast(`${name}: optional Anta tokens preserve selection, tooltip, and keyboard menu colors`, async t => {
+        for (const [renderer, entry, kind] of [['react', 'tokenless', 'jsx'], ['preact', 'tokenless', 'jsx'], ['react', 'tokenless-browser', 'standalone']]) {
+            const page = await pageFor(t, engine, renderer, entry, kind)
+            for (const scheme of ['light', 'dark']) {
+                await page.evaluate(scheme => {
+                    document.body.style.colorScheme = scheme
+                    document.body.style.backgroundColor = 'Canvas'
+                    document.body.style.color = 'CanvasText'
+                }, scheme)
+                assert.equal(await page.locator('a-plot-surface').evaluate(el => getComputedStyle(el).getPropertyValue('--text-1-brand')), '')
+                assert.deepEqual(await page.locator('.plot-zoom-rectangle').evaluate(el => {
+                    const css = getComputedStyle(el)
+                    const probe = document.createElement('div')
+                    probe.style.backgroundColor = 'color-mix(in oklch, #7460d7 12%, transparent)'
+                    document.body.append(probe)
+                    const fill = getComputedStyle(probe).backgroundColor
+                    probe.remove()
+                    return [css.borderColor, css.borderWidth, css.backgroundColor === fill]
+                }), ['rgb(116, 96, 215)', '1px', true])
+                await hover(page)
+                assert.equal(await page.locator('a-tooltip').evaluate(el => {
+                    const css = getComputedStyle(el.shadowRoot.querySelector('[part=bubble]'))
+                    return css.backgroundColor !== 'rgba(0, 0, 0, 0)' && css.color !== css.backgroundColor && css.boxShadow !== 'none'
+                }), true, 'tooltip has a contrasting background, text, and shadow without tokens')
+                await page.mouse.move(850, 650)
+                await page.locator('[role=group]').focus()
+                await page.keyboard.press('Shift+F10')
+                await page.waitForFunction(() => document.querySelector('a-menu')?.isOpen)
+                assert.deepEqual(await page.evaluate(() => {
+                    const menu = document.querySelector('a-menu')
+                    const css = getComputedStyle(menu.shadowRoot.querySelector('[part=menu]'))
+                    const focused = getComputedStyle(document.activeElement)
+                    return [css.backgroundColor !== 'rgba(0, 0, 0, 0)' && css.color !== css.backgroundColor, focused.outlineStyle, focused.outlineWidth, focused.outlineColor]
+                }), [true, 'solid', '1px', 'rgb(116, 96, 215)'])
+                await page.keyboard.press('Escape')
+            }
+            // Ancestor tokens still take precedence over the fixed fallback values.
+            await page.locator('#app').evaluate(el => {
+                el.style.setProperty('--border-3-brand', 'rgb(10, 20, 30)')
+                el.style.setProperty('--text-1-brand', 'rgb(40, 50, 60)')
+                el.style.setProperty('--focus-ring', 'rgb(70, 80, 90)')
+            })
+            assert.equal(await page.locator('.plot-zoom-rectangle').evaluate(el => getComputedStyle(el).borderColor), 'rgb(10, 20, 30)')
+            assert.equal(await page.locator('.plot-zoom-rectangle').evaluate(el => {
+                const css = getComputedStyle(el)
+                const probe = document.createElement('div')
+                probe.style.backgroundColor = 'color-mix(in oklch, rgb(40, 50, 60) 12%, transparent)'
+                document.body.append(probe)
+                const fill = getComputedStyle(probe).backgroundColor
+                probe.remove()
+                return css.backgroundColor === fill
+            }), true)
+            await page.locator('[role=group]').focus()
+            await page.keyboard.press('Shift+F10')
+            await page.waitForFunction(() => document.querySelector('a-menu')?.isOpen)
+            assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineColor), 'rgb(70, 80, 90)')
+            await page.keyboard.press('Escape')
+        }
+    })
     test.fast(`${name}: HTTP CSP rejects parsed attributes and style elements, permits direct CSSOM geometry`, async t => {
         const page = await pageFor(t, engine, 'react', 'surface', 'surface', { audit: false })
         assert.deepEqual(await page.evaluate(() => {

@@ -16,8 +16,6 @@ Verify these opportunities against the current source before starting work.
 
 - Declare the optional PostHog token through typed environment variables and
   omit analytics when it is unset.
-- Evaluate the official RSS helper for changelog serialization. Preserve the
-  changelog parser and stable release links.
 - Evaluate standard sitemap-index output in place of the renaming postprocessor.
   Preserve the existing sitemap URL through a redirect if it changes.
 - Use a responsive Astro asset for the Table preview image, preserving the

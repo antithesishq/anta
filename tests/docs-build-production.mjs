@@ -47,6 +47,52 @@ async function productionPage(t, engine = chromium) {
   return { page, errors }
 }
 
+test('changelog feed preserves dated releases, HTML notes and working release links', async t => {
+  const { page } = await productionPage(t)
+  const [feed, html, changelog] = await Promise.all([
+    readFile(new URL('changelog.rss', dist), 'utf8'),
+    readFile(new URL('changelog/dev/index.html', dist), 'utf8'),
+    readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf8'),
+  ])
+  const result = await page.evaluate(({ feed, html }) => {
+    const xml = new DOMParser().parseFromString(feed, 'application/xml')
+    const releases = new DOMParser().parseFromString(html, 'text/html')
+    const text = (element, selector) => element.querySelector(selector)?.textContent
+    const channel = xml.querySelector('channel')
+    return {
+      parseError: xml.querySelector('parsererror')?.textContent ?? null,
+      title: text(channel, 'title'),
+      link: text(channel, 'link'),
+      language: text(channel, 'language'),
+      self: xml.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'link')[0]?.getAttribute('href'),
+      buildDate: text(channel, 'lastBuildDate'),
+      items: [...xml.querySelectorAll('item')].map(item => {
+        const link = new URL(text(item, 'link'))
+        return {
+          title: text(item, 'title'),
+          date: text(item, 'pubDate'),
+          validLink: link.origin === 'https://anta.design' && link.pathname === '/changelog/dev/'
+            && !!releases.getElementById(decodeURIComponent(link.hash.slice(1))),
+          validGuid: text(item, 'guid') === link.href && item.querySelector('guid')?.getAttribute('isPermaLink') === 'true',
+          hasNotes: !!new DOMParser().parseFromString(text(item, 'description'), 'text/html').querySelector('li'),
+        }
+      }),
+    }
+  }, { feed, html })
+  assert.equal(result.parseError, null)
+  assert.equal(result.title, 'Anta changelog')
+  assert.equal(result.link, 'https://anta.design/changelog/')
+  assert.equal(result.language, 'en')
+  assert.equal(result.self, 'https://anta.design/changelog.rss')
+  assert.equal(result.buildDate, result.items[0].date)
+  const versions = [...changelog.matchAll(/^## (\S+) — [A-Z][a-z]+ \d{1,2}, \d{4}$/gm)].map(match => `Anta ${match[1]}`)
+  assert.deepEqual(result.items.map(item => item.title), versions)
+  for (const item of result.items) {
+    assert.ok(Number.isFinite(Date.parse(item.date)), item.title)
+    assert.ok(item.validLink && item.validGuid && item.hasNotes, item.title)
+  }
+})
+
 for (const engine of engines) {
   test(`${engine.name()}: Panel preview retains hydrated requests, layout and input across maximization`, async t => {
     const {page,errors}=await productionPage(t,engine)

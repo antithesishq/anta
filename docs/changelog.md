@@ -7,6 +7,9 @@ changes are not listed.
 
 ### Added
 
+- [Panel's layout placeholder](/panel/#styling) exposes `::part(placeholder)`
+  for styling the reserved region while maximized.
+
 - [Text's inert expansion mode](/text/#truncation-and-expansion):
   `expandableInert` makes the folded, overflowing preview one expand target and
   skips content interactions until expanded. Text that fits remains interactive.
@@ -50,9 +53,14 @@ changes are not listed.
   hooks object as a whole. Pass your runtime's hooks rather than selecting a few;
   missing hooks report an error instead of using another renderer's hooks.
 
+- [Panel inside an application shadow root](/panel/#styling) now requires a
+  stylesheet link to `@antadesign/anta/elements/a-panel.css` inside that root
+  for its maximized layout. Document styles cannot reach its internal parts.
+
 - Normal part overrides for [Dialog](/dialog/#styling), [Menu](/menu/#styling),
-  and [Slider](/slider/#styling) follow Anta's document cascade layers. Move
-  overrides from `base` to `components`, `utilities`, or unlayered CSS.
+  [Slider](/slider/#styling), and [Panel](/panel/#styling) follow Anta's document
+  cascade layers. Move overrides from `base` to `components`, `utilities`, or
+  unlayered CSS.
 
 - [Select single selection](/select/#managing-the-value) uses `null` for a
   controlled empty value, and Clear reports `null` instead of `undefined`. Use
@@ -108,8 +116,8 @@ changes are not listed.
 - Default styles for [Input](/input/#styling), [InputTime](/input-time/#styling),
   [Menu](/menu/#styling), [Dialog](/dialog/#styling), [Tooltip](/tooltip/#styling),
   [Copy feedback](/button/#copy-feedback), [Toaster](/toaster/#styling),
-  [Expander](/expander/#styling), and [Slider](/slider/#styling) load from external
-  CSS under strict CSP.
+  [Expander](/expander/#styling), [Slider](/slider/#styling), and
+  [Panel](/panel/#styling) load from external CSS under strict CSP.
 
 - [Input's native decorations](/input/#styling) may remain visible in some
   browsers, including number steppers in Chrome 135 and raw HTML search controls.
@@ -251,6 +259,12 @@ changes are not listed.
 - [Custom rounding](/menu/#styling) applies to the container in every theme.
 - [Combobox cursor events](/menu/) report a cleared autocomplete cursor once,
   including when an edit also updates the suggestion rows.
+
+#### Panel
+
+- [Maximization](/panel/#styling) restores normal layout and focus handling
+  if native popover opening fails or is canceled.
+- [React hydration](/panel/#controlled) retains state-change callbacks.
 
 #### Select
 

@@ -228,6 +228,11 @@ imports with `import '@antadesign/anta/elements'`. Keep the shared tokens and
 optional reset. Registration is idempotent and guarded when `customElements`
 is unavailable. CSS imports need a bundler that handles stylesheets.
 
+CSS-only components such as Title, Tag, Progress, Icon, and Loader render
+without custom element registration. Their entries load styles. Icon and Loader
+retain `register_a_icon()` and `register_a_loader()` for integrations that
+explicitly require a defined tag.
+
 Static imports register classes before the app's first client render or
 hydration. Server-rendered HTML can paint before the browser loads JavaScript;
 load its CSS with the initial document, as in the Next.js setup below.

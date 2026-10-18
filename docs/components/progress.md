@@ -157,7 +157,7 @@ Server-rendered JSX values use inline style attributes. A CSP with
 `style-src-attr 'none'` blocks these variables; attribute rendering then requires
 numeric CSS `attr()` support. Native `<progress data-anta>` uses browser-owned
 values without inline CSS variables across supported browsers. See
-[Content Security Policy](/install-config/#content-security-policy).
+[Content Security Policy](../install-config.md#content-security-policy).
 
 ### Native HTML progress
 

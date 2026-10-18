@@ -315,47 +315,37 @@ tabs above to see it.
 </Col>
 <Col>
 
-Add a `<TabPanel value="…">` child for each option; each panel shows itself when
-its value is active. The panel names its tab as its accessible label
-(`aria-labelledby`, off-DOM). Panel content is arbitrary React, so it renders normally.
+Add a `TabPanel` child with a matching `value` for each option. The selected
+panel is visible and uses its tab as its accessible label. Panel content can
+include forms, charts, or other components.
 
-Panels are **optional**. Without panels, `Tabs` renders the strip. Listen to
-`onStateChange` / `onValueChange` and render the content yourself.
+Panels are optional. To render the selected content yourself, listen to
+`onStateChange` or `onValueChange`.
 
 </Col>
 </Columns>
 
 <Disclosure title="JSX vs DOM" level={3}>
 
-The strip renders from the `options` array; each `<TabPanel>` renders a
-self-managing `<a-tabpanel>`. `Tabs` **never reads or toggles the panels**: there's
-no child introspection, so it renders the same in static SSR and works with any
-renderer. There is **no wrapper element**: the JSX becomes the strip followed by the
-panels as flat **siblings**, and `className` / `id` / `style` / `...rest` land on the
-strip. Arranging them is up to you (see below):
+`Tabs` renders the strip followed by its panels as siblings, without a wrapper.
+`className`, `id`, `style`, and extra props apply to the strip. Keep the strip
+and its panels under the same parent so they can coordinate selection and
+accessible labels.
+
+The resulting structure is:
 
 ```html
-<a-tabs role="tablist">
+<a-tabs role="tablist" aria-label="Settings" default-state="account">
   <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
-  …
+  <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
 </a-tabs>
-<a-tabpanel role="tabpanel" value="account">…</a-tabpanel>   <!-- active: shown -->
-<a-tabpanel role="tabpanel" value="security">…</a-tabpanel>  <!-- inactive: display:none -->
+<a-tabpanel role="tabpanel" value="account">Account settings</a-tabpanel>
+<a-tabpanel role="tabpanel" value="security">Security settings</a-tabpanel>
 ```
 
-A horizontal strip stacks above its panels in normal flow with no extra markup; for a
-vertical strip beside its panels, wrap `<Tabs>` in your own flex row. The panels find
-the strip as a sibling under the same parent (`a-tabpanel` → `:scope > a-tabs`), so
-keep them together; to split them into separate layout regions, drive a
-controlled `value` and render the panels yourself.
-
-Each `<a-tabpanel>` sits **beside** `<a-tabs>` (its sibling, never inside it, so a
-panel never lands in the primary track). It reads the active value from `<a-tabs>`
-and shows/hides **itself** via its own off-DOM `:state(active)`; nothing writes
-`hidden` / `inert` on it. The panel↔tab link is off-DOM too
-(`internals.ariaLabelledByElements`), so no `id` wiring is needed. No web component
-writes the light DOM, only your JSX does, which keeps a worker-thread reactive engine
-in sync.
+A horizontal strip and its panels stack in normal flow. For a vertical strip
+beside its panels, wrap `Tabs` in a flex row. To place content in a separate
+layout region, control `value` and render that content yourself.
 
 </Disclosure>
 

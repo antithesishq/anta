@@ -29,6 +29,10 @@ changes are not listed.
 
 ### Breaking
 
+- [Icon](/icon/) and [Loader](/loader/) imports load styles without registering
+  custom element classes. If an integration requires a defined tag, call the
+  existing `register_a_icon()` or `register_a_loader()` export explicitly.
+
 - [Calendar selection](/input-date/#calendar) leaves authored input attributes
   unchanged during uncontrolled picks, reset, and restoration. Its `.value`
   getter now returns `null` when empty; InputDate retains its empty text value

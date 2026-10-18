@@ -134,22 +134,19 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
 }
 
 /**
- * `<Tabs>` — a tablist with optional panels. The strip renders from the `options`
- * array; panels are `<TabPanel>` children that manage their own visibility.
+ * Tab strip with optional panels. Give each option a unique `value` and match
+ * it to a `TabPanel` to display content for the selected tab.
  *
- * The strip (`<a-tabs>`) and the panels render as flat siblings — there is no wrapper
- * element, so `className` / `id` / `style` / `...rest` land on the strip. Laying the
- * strip out relative to its panels is the consumer's job: a horizontal strip stacks
- * above the panels in normal flow; for a vertical strip beside them, wrap `<Tabs>` in
- * your own flex container. Any non-`TabPanel` children render verbatim as siblings too.
+ * The strip and panels render as siblings. `className`, `id`, `style`, and extra
+ * props apply to the strip. Keep the strip and panels under the same parent.
+ * Horizontal tabs stack in normal flow. Use a flex container to place a
+ * vertical strip beside its panels. Other children also render as siblings.
  *
- * `<a-tabs>` owns selection off-DOM (it sets each tab's `selected` property and the
- * roving `aria-activedescendant` via `ElementInternals`, writing no attribute to any
- * tab); this wrapper mirrors the value only to render the strip's roving `tabindex`,
- * and the panels read it straight from `<a-tabs>`. Controlled (`value` + `onStateChange`)
- * or uncontrolled (`defaultValue`).
+ * Pass `value` with `onStateChange` for controlled selection, or `defaultValue`
+ * for an initial uncontrolled selection. Panels are optional when the
+ * application renders the selected content itself.
  *
- * Requires `@antadesign/anta/elements` (client-side only).
+ * See [Install and configure](https://anta.design/install/) for runtime setup.
  *
  * @example
  * ```tsx

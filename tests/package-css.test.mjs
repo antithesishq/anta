@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
+import { runInNewContext } from 'node:vm'
 import { build } from 'esbuild'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -105,3 +106,41 @@ test('Title and Tag element entries include only their CSS and no registration c
   assert.match(css, /a-title/)
   assert.match(css, /a-tag/)
 })
+
+for (const [name, expectedStyles] of Object.entries({
+  icon: ['a-icon.css', 'a-icon.shapes.css', 'a-loader.css'],
+  loader: ['a-loader.css'],
+})) {
+  test(`${name} style imports emit no JavaScript or JSX runtime dependency`, async () => {
+    const result = await bundleImports([`@antadesign/anta/elements/a-${name}`])
+    const inputs = Object.keys(result.metafile.inputs)
+    assert.deepEqual(inputs.filter(path => path.endsWith('.css')).sort(),
+      expectedStyles.map(file => `dist/elements/${file}`).sort())
+    assert.ok(!inputs.some(path => /react|jsx-runtime|anta_helpers/.test(path)))
+    assert.equal(result.outputFiles.find(file => file.path.endsWith('.js')).text.trim(), '')
+  })
+
+  test(`${name} keeps opt-in, idempotent registration and its class export`, async () => {
+    const className = name === 'icon' ? 'AIconElement' : 'ALoaderElement'
+    const result = await bundleSource(`
+      import { ${className}, register_a_${name} } from '@antadesign/anta/elements/a-${name}'
+      globalThis.compatibility = { Element: ${className}, register: register_a_${name} }
+    `)
+    const registrations = new Map()
+    let defineCount = 0
+    const context = {
+      HTMLElement: class {},
+      customElements: {
+        get: tag => registrations.get(tag),
+        define: (tag, element) => { defineCount++; registrations.set(tag, element) },
+      },
+    }
+    runInNewContext(result.outputFiles.find(file => file.path.endsWith('.js')).text, context)
+    assert.equal(registrations.size, 0)
+    context.compatibility.register()
+    context.compatibility.register()
+    assert.equal(defineCount, 1)
+    assert.equal(registrations.get(`a-${name}`), context.compatibility.Element)
+    assert.ok(new context.compatibility.Element() instanceof context.HTMLElement)
+  })
+}

@@ -82,15 +82,20 @@ Share visual tokens, variants, and animations; keep form-specific layout and
 browser-native selectors separate within the file. A native HTML variant does
 not need its own TypeScript entry.
 
-CSS-only tags and composed layouts have `.ts` entries that import only their
-stylesheet and never register a custom element. This includes Card, Progress, Title, Tag,
-Breadcrumbs, Steps, InputDate, Select, and SelectFaceted. These entries do not
-load the nested elements used by a composed wrapper. The barrel imports their
-CSS directly, preserving the full bundle's stylesheet order. Routing the barrel
-through CSS-only JS entries changes Astro's stylesheet ownership in the
-production site build. Name composed layout stylesheets after their primary JSX
-component, such as `Steps.css` and `Select.css`. Keep existing `components/*.css` paths compatible
-through package export aliases when renaming them.
+CSS-only tags and composed layouts have `.ts` style entries that do not
+register a custom element automatically. These include Card, Progress, Title,
+Tag, Icon, Loader, Breadcrumbs, Steps, InputDate, Select, and SelectFaceted.
+They do not load nested browser elements used by a composed wrapper. Icon and
+Loader retain class and explicit registration exports for compatibility. Their
+base class in `element-base.ts` must stay free of JSX runtime dependencies so
+bundlers can remove unused compatibility exports.
+
+The barrel imports the other CSS-only entries' CSS directly to preserve the
+full bundle's stylesheet order. Routing those imports through JS entries changes
+Astro's stylesheet ownership in the production site build. Name composed layout
+stylesheets after their primary JSX component, such as `Steps.css` and
+`Select.css`. Keep existing `components/*.css` paths compatible through package
+export aliases when renaming them.
 
 `react` is a **peer dependency** — consumers provide it (or alias it to `preact/compat`).
 

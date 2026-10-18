@@ -418,7 +418,7 @@ independently. Reconnection starts a fresh duration or resumes a pending exit.
 
 Keep stores empty during server rendering. React uses the empty server snapshot;
 Preact compatibility hooks can read the live snapshot. Configure browser event
-hydration before mounting, as described in [Browser hydration](/install-config/#browser-hydration).
+hydration before mounting, as described in [Browser hydration](/install/#browser-hydration).
 Use one JSX entry for a region and its default `Toaster.manager`; independent
 full and granular builds have separate module-local default stores. Pass the
 same `createToaster()` store explicitly when coordinating across those entries.

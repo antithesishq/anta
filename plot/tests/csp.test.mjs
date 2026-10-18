@@ -94,7 +94,7 @@ before(async () => {
             : Object.keys(registrations)
         for (const entry of entries) {
             const registration = registrations[entry]
-            await compile(`${registration}; import '@antadesign/plot/plot.css'; import '@antadesign/anta/tokens.css'; ${fixture}`, `${renderer}-${entry}`, renderer)
+            await compile(`import '@antadesign/anta/tokens.css'; ${registration}; import '@antadesign/plot/plot.css'; ${fixture}`, `${renderer}-${entry}`, renderer)
         }
         await compile(`${registrations.surface}; import '@antadesign/plot/plot.css'; ${fixture}`, `${renderer}-tokenless`, renderer)
         const ssr = await compile(`import React from 'react';import {renderToString} from 'react-dom/server';import {Plot} from '@antadesign/plot';export const render=props=>renderToString(React.createElement(Plot,{plotArgs:{series:[]},...props}));`, `ssr-${renderer}`, renderer, false, 'node')
@@ -116,7 +116,7 @@ before(async () => {
                 await compile(code, `${renderer}-docs-${kind}`, renderer)
             }
         }
-        if (compareRef && !consumer) await compile(`${registrations.granular}; import '@antadesign/anta/tokens.css'; ${fixture}`, `${renderer}-original`, renderer, true)
+        if (compareRef && !consumer) await compile(`import '@antadesign/anta/tokens.css'; ${registrations.granular}; ${fixture}`, `${renderer}-original`, renderer, true)
     }
     await compile(`${registrations.surface}; ${fixture}`, 'react-unstyled')
     await compile(`${registrations.granular}; import '@antadesign/plot/plot.css'; ${fixture}`, 'react-tokenless-browser')

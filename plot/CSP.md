@@ -58,9 +58,13 @@ Low-level `PlotSurface` style props, custom tooltip markup, and other
 application-owned HTML follow the renderer's normal serialization rules. Use
 external CSS for their server-rendered presentation under `style-src-attr 'none'`.
 
-Development CSS loaders that inject style elements need a different policy or
-an extraction configuration. External workers need an allowed `worker-src`;
-applications using blob workers must also allow `blob:`. The worker test uses
+Development CSS loaders that inject style elements are blocked by this policy.
+Configure CSS extraction or serve emitted CSS through stylesheet links. If a
+development server requires injected styles, its development CSP must explicitly
+permit that loader. Worker rendering requires `worker-src` to allow the worker
+script's origin, such as `worker-src 'self'` for same-origin scripts. Applications
+using blob workers must also allow `blob:`, for example `worker-src 'self' blob:`.
+The worker test uses
 an external script and transfers both OffscreenCanvases to it. Plot does not
 create the application's renderer worker or its DOM bridge.
 

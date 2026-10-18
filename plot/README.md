@@ -17,14 +17,25 @@ ES modules and CSS imports. Preact applications can use their React compatibilit
 aliases. Register elements in your browser entry and load
 `@antadesign/plot/plot.css` once per document. Anta's `tokens.css` is optional:
 Plot uses fallback colors when tokens are absent, including for selection
-rectangles, tooltips, and menus. Import it to use Anta's theme colors unless your
-application already loads Anta's full bundle:
+rectangles, tooltips, and menus. When using Anta's theme colors, put tokens before
+the Plot stylesheet. Omit the tokens import if your application already loads
+Anta's full bundle:
 
 ```ts
 import '@antadesign/anta/tokens.css'
+import '@antadesign/plot/plot.css'
 ```
 
-Anta's reset and themes are also optional. Before hydrating, configure Anta with your
+Anta's reset and themes are also optional. For strict CSP, configure your bundler
+to extract Plot and Anta CSS into external files. Development loaders that inject
+`<style>` elements need extraction or a development policy that explicitly permits
+the loader. Worker rendering requires `worker-src` to allow the worker script's
+origin, such as `worker-src 'self'` for same-origin scripts. If your renderer
+creates blob workers, also allow `blob:`, for example `worker-src 'self' blob:`.
+See [Load styles under a strict content security policy](#load-styles-under-a-strict-content-security-policy)
+for the full setup.
+
+Before hydrating, configure Anta with your
 renderer hooks and `{ hydratingEvents: true }`; see the
 [renderer and hydration setup](https://anta.design/install/).
 
@@ -130,8 +141,11 @@ including `/browser` and `/auto`, keep Plot's stylesheet separate.
 
 ## Load styles under a strict content security policy
 
-Extract CSS imports into an external stylesheet served from an allowed origin.
-Development loaders that inject `<style>` elements require a separate policy.
+Extract Plot and Anta CSS imports into external stylesheets served from an
+allowed origin. Development loaders that inject `<style>` elements are blocked
+by the policy below. Configure CSS extraction or serve emitted CSS through
+stylesheet links. If your development server requires injected styles, its
+development CSP must explicitly permit that loader.
 To load CSS from HTML, serve the published `dist/plot.css` asset alongside your
 application bundle and use `<link rel="stylesheet" href="/plot.css">`.
 Load the stylesheet in each document, including a destination document before
@@ -150,8 +164,10 @@ hydration and prevent layout shifts. Low-level `PlotSurface` style props and
 custom tooltip markup follow your renderer's normal serialization rules; use
 external CSS for them under `style-src-attr 'none'`.
 Put broad application resets in `@layer base` so they do not override component
-layout unintentionally. External workers need an allowed `worker-src`. Blob
-workers need `blob:` as well.
+layout unintentionally. Worker rendering requires `worker-src` to allow the
+worker script's origin. Use `worker-src 'self'` for same-origin scripts, or
+`worker-src 'self' blob:` if your renderer also creates blob workers. Plot does
+not create your renderer worker or its DOM bridge.
 See [the CSP audit and browser validation](CSP.md) for the tested boundaries.
 
 ## Size scatter marks with the viewport

@@ -22,12 +22,15 @@ Load `@antadesign/plot/plot.css` once in your browser entry. The shared Plot
 stylesheet is required for JSX `Plot`, low-level
 `PlotSurface`, and standalone `<a-plot>`, including the `/browser` and `/auto`
 entries. Element registration loads the supporting Anta element styles.
+
 Anta's `tokens.css` is optional. Selection rectangles, tooltips, and menus use
-fallback colors when tokens are absent. Import it to use Anta's theme colors
-unless your application already loads Anta's full bundle:
+fallback colors when tokens are absent. When using Anta's theme colors, put
+tokens before the Plot stylesheet. Omit the tokens import if your application
+already loads Anta's full bundle:
 
 ```ts
 import '@antadesign/anta/tokens.css'
+import '@antadesign/plot/plot.css'
 ```
 
 Anta's `reset.css` and themes are also optional application-wide choices.
@@ -120,10 +123,22 @@ Load an optional Anta theme after the base styles, for example
 font and theme. Put broad application resets in `@layer base` so they do not
 unintentionally override the component rules in `anta.components`.
 
-For a strict content security policy (CSP), extract CSS imports into external
-stylesheets served from an allowed origin. A stylesheet link to the published
-`dist/plot.css` asset works alongside your application bundle. Load it in each
-destination document before adopting a plot there.
+For a strict content security policy (CSP), configure your bundler to extract
+Plot and Anta CSS imports into external stylesheets served from an allowed
+origin. For same-origin stylesheets, Plot supports:
+
+```text
+style-src 'self'; style-src-elem 'self'; style-src-attr 'none'
+```
+
+A stylesheet link to the published `dist/plot.css` asset also works alongside
+your application bundle. Load it in each destination document before adopting
+a plot there.
+
+Development CSS loaders that inject `<style>` elements are blocked by this
+policy. Configure CSS extraction or serve emitted CSS through stylesheet links.
+If your development server requires injected styles, its development CSP must
+explicitly permit that loader.
 
 Runtime dimensions, capture visibility, coordinates, cursor, and canvas filters
 use direct CSSOM updates. JSX `Plot` applies dimension and `style` props after
@@ -133,8 +148,10 @@ shifts. Low-level `PlotSurface` style props and custom tooltip HTML still follow
 your renderer's normal serialization rules. Use external CSS for them under
 `style-src-attr 'none'`.
 
-Consumer tooltip content and CSS loaders must follow the same policy. External
-workers need an allowed `worker-src`. Blob workers also need `blob:`.
+Worker rendering requires `worker-src` to allow the worker script's origin.
+Use `worker-src 'self'` for same-origin worker scripts. If your renderer creates
+blob workers, also allow `blob:`, for example `worker-src 'self' blob:`. Plot
+does not create your renderer worker or its DOM bridge.
 
 ## Series types
 

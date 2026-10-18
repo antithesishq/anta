@@ -8,6 +8,7 @@ export const ICON_SHAPES = [
   'card',
   'chart-area',
   'chart-column-big',
+  'chart-network',
   'chart-pie',
   'chart-scatter',
   'chart-spline',
@@ -45,6 +46,7 @@ declare module '@antadesign/anta' {
     'card': true
     'chart-area': true
     'chart-column-big': true
+    'chart-network': true
     'chart-pie': true
     'chart-scatter': true
     'chart-spline': true

@@ -79,7 +79,7 @@ const existingSidebar = [
   ["/box/", "square-dashed", "Box"],
   ["/capture/", "vector-square", "Capture"],
   ["/panel/", "inspection-panel", "Panel"],
-  ["/plot/", "chart-spline", "Plot"],
+  ["/plot/", "chart-network", "Plot"],
   ["/table/", "table-2", "Table"],
   ["/stickers/", "sticker", "Stickers"],
 ]

@@ -268,8 +268,9 @@ changes are not listed.
 
 #### Progress
 
-- [Loading stripes](/progress/) keep their blurred edges outside the track
-  throughout each loop, preventing edge flicker at different widths.
+- [Loading stripes](/progress/) match their travel distance to the bar's width
+  during playback and resizing. Their blurred edges stay outside the track,
+  preventing jumps and edge flicker when the animation repeats.
 
 #### Select
 

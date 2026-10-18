@@ -96,12 +96,10 @@ Default is `256`. Stickers are always square.
 <StickerVacationAnimated size={64} />  // 64×64
 ```
 
-Internally, `size` is applied as the `--sticker-size` CSS custom
-property on the rendered `<a-sticker>` / `<a-sticker-animated>`. The
-base CSS rule reads it as
-`width: var(--sticker-size, 256px); height: var(--sticker-size, 256px)`.
-That means consumer CSS on the host can drive
-sticker size too:
+`size` sets the `--sticker-size` CSS custom property inline on the rendered
+`<a-sticker>` or `<a-sticker-animated>`. External CSS reads it to size the host
+and the square `::part(container)` artwork box. You can also set the property
+on the host through your own stylesheet:
 
 ```css
 .sticker-grid :is(a-sticker, a-sticker-animated) { --sticker-size: 96px; }

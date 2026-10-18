@@ -76,3 +76,6 @@ Run `pnpm test:stickers` for the browser matrix and
 `pnpm test:stickers:package` for installed tarballs with React and Preact.
 Sticker release notes belong in `stickers/CHANGELOG.md`, outside Anta's root
 changelog.
+
+The package changelog ships to npm without link rewriting. Use absolute
+`https://anta.design/` URLs there so links work outside the documentation site.

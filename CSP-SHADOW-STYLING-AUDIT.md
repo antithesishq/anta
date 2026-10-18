@@ -155,7 +155,9 @@ explicit `undefined` can retain the old date, and omitting the prop can write a
 controlled empty string. The wrapper's HTML attribute projection avoids that
 path; case-sensitive XML attribute maps require a different projection.
 Controlled Slider reset remains silent, disconnection cancels without a commit,
-and static accessibility-label resolution still runs on each paint.
+and inherited direction is still read during pointer movement. Label/reference
+setup refreshes on ARIA inputs, label-slot assignment, scalar/range mode,
+disabled state, and thumb crossing; numeric ARIA values update on each paint.
 
 ### Slider verification
 

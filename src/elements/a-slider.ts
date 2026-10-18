@@ -2,6 +2,7 @@ import { finiteNumber, HTMLElementBase, isModifiedNavigationKey } from '../anta_
 import './a-slider.css'
 import type { SliderChangeAttrs } from '../components/Slider'
 import { referencedElements } from './shadow-aria'
+import { upgradeValueProperties } from './value-input'
 
 const precisionOf = (value: number) => {
   const exponent = value.toString().match(/(?:\.(\d+))?(?:e([+-]?\d+))?$/i)
@@ -76,9 +77,8 @@ export class ASliderElement extends HTMLElementBase {
   #dirty = false
   // Match an accepted range request to the physical thumb that produced it.
   #pendingRequest?: { value: SliderValue; reversed: boolean }
-  #eventRoot?: Document | ShadowRoot
   #endpointLabels: HTMLSpanElement[] = []
-  #drag?: { pointerId: number; startX: number; clientX: number; startValue: number; startPublicValue: SliderValue; thumb: number; requested?: SliderValue }
+  #drag?: { pointerId: number; startX: number; clientX: number; startValue: number; startPublicValue: SliderValue; thumb: number; requested?: SliderValue; lastInput?: SliderValue }
 
   #onPointerDown = (event: PointerEvent) => {
     if (event.composedPath().includes(this.#control)) this.#beginDrag(event)
@@ -86,6 +86,13 @@ export class ASliderElement extends HTMLElementBase {
   #onPointerMove = (event: PointerEvent) => this.#moveDrag(event)
   #onPointerEnd = (event: PointerEvent) => this.#finishDrag(event)
   #onKeyDown = (event: KeyboardEvent) => this.#handleKeydown(event)
+  // Run the default action after consumer listeners on this host, including
+  // listeners added after connection. Ancestors may stop propagation.
+  #orderDefaultAction = (event: Event) => {
+    const handler = event.type === 'keydown' ? this.#onKeyDown : event.type === 'pointerdown' ? this.#onPointerDown : this.#onPointerMove
+    this.removeEventListener(event.type, handler as EventListener)
+    this.addEventListener(event.type, handler as EventListener)
+  }
 
   get value(): SliderValue {
     return Array.isArray(this.#value) ? [...this.#value] as [number, number] : this.#value
@@ -207,6 +214,7 @@ export class ASliderElement extends HTMLElementBase {
         this.#paint()
       })
     }
+    this.#control.addEventListener('pointerup', this.#onPointerEnd)
     this.#control.addEventListener('pointercancel', this.#onPointerEnd)
     this.#control.addEventListener('lostpointercapture', this.#onPointerEnd)
     this.addEventListener('blur', () => { delete this.#control.dataset.pointerFocus; this.#paintStates() })
@@ -221,9 +229,8 @@ export class ASliderElement extends HTMLElementBase {
   }
 
   connectedCallback() {
-    this.#eventRoot = this.getRootNode() as Document | ShadowRoot
-    this.#eventRoot.addEventListener('pointerdown', this.#onPointerDown as EventListener)
-    this.#eventRoot.addEventListener('keydown', this.#onKeyDown as EventListener)
+    upgradeValueProperties(this)
+    for (const type of ['pointerdown', 'keydown', 'pointermove']) this.addEventListener(type, this.#orderDefaultAction, true)
     if (!this.#seeded) {
       this.#applyValue(this.#initialValue())
       this.#seeded = true
@@ -234,9 +241,11 @@ export class ASliderElement extends HTMLElementBase {
 
   disconnectedCallback() {
     this.#endDrag(false)
-    this.#eventRoot?.removeEventListener('pointerdown', this.#onPointerDown as EventListener)
-    this.#eventRoot?.removeEventListener('keydown', this.#onKeyDown as EventListener)
-    this.#eventRoot = undefined
+    for (const type of ['pointerdown', 'keydown', 'pointermove']) this.removeEventListener(type, this.#orderDefaultAction, true)
+    this.removeEventListener('pointerdown', this.#onPointerDown as EventListener)
+    this.removeEventListener('keydown', this.#onKeyDown as EventListener)
+    this.removeEventListener('pointermove', this.#onPointerMove as EventListener)
+    this.#pendingRequest = undefined
     delete this.#control.dataset.pointerFocus
     this.#paintStates()
   }
@@ -279,6 +288,7 @@ export class ASliderElement extends HTMLElementBase {
 
   formResetCallback() {
     this.#endDrag(false)
+    this.#pendingRequest = undefined
     if (this.#controlled) return
     const previous = this.#value
     this.#applyValue(this.defaultValue)
@@ -291,6 +301,7 @@ export class ASliderElement extends HTMLElementBase {
     if (typeof state !== 'string') return
     if (this.#controlled) return
     this.#endDrag(false)
+    this.#pendingRequest = undefined
     this.#applyValue(parseSliderValue(state, this.#fallbackValue()))
     this.#dirty = true
     this.#paint()
@@ -534,9 +545,9 @@ export class ASliderElement extends HTMLElementBase {
     const requested: SliderValue = Array.isArray(this.#value)
       ? reversed ? [physical[1], physical[0]] : physical
       : next
-    if (sameSliderValue(this.#drag?.requested ?? this.#value, requested)) return false
-    if (this.#drag) this.#drag.requested = requested
-    this.#pendingRequest = { value: requested, reversed }
+    if (sameSliderValue(this.#drag?.lastInput ?? this.#value, requested)) return false
+    if (this.#drag) this.#drag.requested = this.#drag.lastInput = requested
+    this.#pendingRequest = this.#controlled ? { value: requested, reversed } : undefined
     if (!this.#controlled) {
       this.#orderReversed = reversed
       this.#applyValue(requested)
@@ -557,7 +568,7 @@ export class ASliderElement extends HTMLElementBase {
     if (!drag) return
     drag.startX = drag.clientX
     drag.startValue = Array.isArray(value) ? value[this.#orderReversed ? 1 - drag.thumb : drag.thumb] : value
-    drag.requested = undefined
+    drag.lastInput = undefined
   }
 
   #valueAt(clientX: number) {
@@ -590,8 +601,6 @@ export class ASliderElement extends HTMLElementBase {
     const startValue = Array.isArray(this.#value) ? this.#physicalValues[thumb] : this.#value
     this.#drag = { pointerId: event.pointerId, startX: event.clientX, clientX: event.clientX, startValue, startPublicValue: this.value, thumb }
     try { this.#control.setPointerCapture(event.pointerId) } catch { this.#drag = undefined; return }
-    this.#eventRoot?.addEventListener('pointermove', this.#onPointerMove as EventListener)
-    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) this.#eventRoot?.addEventListener(type, this.#onPointerEnd as EventListener)
     this.#control.dataset.dragging = ''
     this.#control.dataset.pointerFocus = ''
     this.#lastActiveThumb = thumb
@@ -635,8 +644,6 @@ export class ASliderElement extends HTMLElementBase {
     const drag = this.#drag
     if (!drag) return
     this.#drag = undefined
-    this.#eventRoot?.removeEventListener('pointermove', this.#onPointerMove as EventListener)
-    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) this.#eventRoot?.removeEventListener(type, this.#onPointerEnd as EventListener)
     delete this.#control.dataset.dragging
     delete [this.#thumb, this.#thumbEnd][drag.thumb].dataset.active
     if (this.#control.hasPointerCapture(drag.pointerId)) this.#control.releasePointerCapture(drag.pointerId)

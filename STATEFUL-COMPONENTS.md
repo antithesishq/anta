@@ -182,6 +182,9 @@ property assignment and Preact live-value special cases; HTML attribute names
 are case-insensitive. No separate `state` input or compatibility alias exists.
 The applied value getter is separate from the authored initial/reset value.
 Reading `value` returns the applied selection, number, or sorted numeric pair.
+Calendar, RadioGroup, and Tabs return `null` when nothing is selected. A Calendar
+read/write round trip while empty therefore leaves it uncontrolled. InputDate
+retains its text-field empty value (`''`).
 
 Uncontrolled interaction, reset, and restoration update internal state and form
 submission without writing host attributes. Removing `value` releases control

@@ -251,6 +251,7 @@
     outline-offset: 0;
   }
   a-slider::part(rail-area) {
+    display: grid;
     position: absolute;
     inset-block-start: 50%;
     inset-inline: calc(var(--anta-slider-thumb-size) / 2);
@@ -278,6 +279,7 @@
     position: absolute;
     inset-block-start: 50%;
     inset-inline-start: var(--_percent, 0%);
+    margin-inline-start: calc(var(--anta-slider-thumb-size) / -2);
     box-sizing: border-box;
     inline-size: var(--anta-slider-thumb-size);
     block-size: var(--anta-slider-thumb-size);
@@ -285,7 +287,7 @@
     border-radius: var(--slider-thumb-radius);
     background: var(--slider-thumb);
     transition: background-color 75ms ease-out, border-color 75ms ease-out;
-    transform: translate(-50%, -50%);
+    transform: translateY(-50%);
   }
   a-slider:state(thumb-1-active)::part(thumb-1),
   a-slider:state(thumb-2-active)::part(thumb-2) { z-index: 1; }
@@ -298,6 +300,8 @@
     display: none;
     position: absolute;
     inset-inline-start: var(--_percent, 0%);
+    inset-inline-end: calc(100% - var(--_percent, 0%));
+    justify-self: center;
     inset-block-start: 50%;
     min-inline-size: max-content;
     color: var(--slider-value);
@@ -310,7 +314,7 @@
     border: 1px solid var(--border-3);
     border-radius: 4px;
     text-align: center;
-    transform: translate(-50%, calc(
+    transform: translateY(calc(
       -50% - var(--anta-slider-control-size) / 2 - 1px - var(--slider-value-line-height) / 2
     ));
   }
@@ -324,6 +328,8 @@
   a-slider > [slot="markers"] {
     position: absolute;
     inset-inline-start: var(--slider-marker-position);
+    inset-inline-end: calc(100% - var(--slider-marker-position));
+    justify-self: center;
     max-inline-size: min(12rem, 50vw);
     color: var(--slider-marker);
     font-family: var(--sans-serif);
@@ -331,11 +337,10 @@
     font-variant-numeric: tabular-nums;
     line-height: var(--slider-marker-line-height);
     text-align: center;
-    transform: translateX(-50%);
     white-space: nowrap;
   }
-  a-slider > [slot="markers"][data-slider-marker-start] { text-align: start; transform: translateX(0); }
-  a-slider > [slot="markers"][data-slider-marker-end] { text-align: end; transform: translateX(-100%); }
+  a-slider > [slot="markers"][data-slider-marker-start] { text-align: start; justify-self: start; }
+  a-slider > [slot="markers"][data-slider-marker-end] { text-align: end; justify-self: end; }
   a-slider::part(extras) { display: block; }
   a-slider[disabled]::part(control),
   a-slider:disabled::part(control) { cursor: not-allowed; }
@@ -360,13 +365,6 @@
   a-slider:not(:state(range))::part(thumb-2),
   a-slider:not(:state(has-thumb-value))::part(thumb-value-1),
   a-slider:not(:state(has-thumb-value-end))::part(thumb-value-2) { display: none; }
-  a-slider:dir(rtl)::part(thumb) { transform: translate(50%, -50%); }
-  a-slider:dir(rtl)::part(thumb-value) {
-    transform: translate(50%, calc(-50% - var(--anta-slider-control-size) / 2 - 1px - var(--slider-value-line-height) / 2));
-  }
-  a-slider:dir(rtl) > [slot="markers"] { transform: translateX(50%); }
-  a-slider:dir(rtl) > [slot="markers"][data-slider-marker-start] { transform: translateX(0); }
-  a-slider:dir(rtl) > [slot="markers"][data-slider-marker-end] { transform: translateX(100%); }
 
   /* Native ranges retain their native form and keyboard semantics. Chromium
      lacks a filled-track pseudo-element, so the clipped thumb shadow paints it. */
@@ -668,7 +666,9 @@
     grid-column: 1 / -1;
     grid-row: 3;
     position: relative;
-    inset-inline-start: var(--slider-marker-position);
+    inset-inline-start: calc(var(--slider-marker-position) - 50%);
+    inset-inline-end: auto;
+    justify-self: center;
     max-inline-size: min(12rem, 50vw);
     color: var(--slider-marker, var(--text-4));
     font-family: var(--sans-serif);
@@ -676,11 +676,10 @@
     font-variant-numeric: tabular-nums;
     line-height: var(--slider-marker-line-height);
     text-align: center;
-    transform: translateX(-50%);
     white-space: nowrap;
   }
-  a-slider:not(:defined) > [slot="markers"][data-slider-marker-start] { text-align: start; transform: translateX(0); }
-  a-slider:not(:defined) > [slot="markers"][data-slider-marker-end] { text-align: end; transform: translateX(-100%); }
+  a-slider:not(:defined) > [slot="markers"][data-slider-marker-start] { text-align: start; justify-self: start; inset-inline-start: 0; }
+  a-slider:not(:defined) > [slot="markers"][data-slider-marker-end] { text-align: end; justify-self: end; inset-inline-start: 0; }
   a-slider:not(:defined) > :not([slot]) {
     grid-column: 1 / -1;
     grid-row: 3;

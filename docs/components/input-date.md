@@ -263,8 +263,8 @@ and `navigate` when keyboard navigation leaves the displayed month. It is
 framework-agnostic and does not track a current month, `min`, or `max`.
 
 Calendar uses `value` for controlled selection and `defaultvalue` for an
-uncontrolled initial/reset date. Reading `.value` returns the applied date;
-assigning it supplies controlled input. Remove `value`, or assign `null` or
+uncontrolled initial/reset date. Reading `.value` returns the applied ISO date
+or `null` when empty. Assigning a string supplies controlled input. Remove `value`, or assign `null` or
 `undefined` to `.value`, to release control and retain the date. Uncontrolled
 picks, reset, and restoration never rewrite these input attributes. InputDate
 controls its nested Calendar through the same value input and accepts picks

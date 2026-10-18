@@ -132,7 +132,7 @@ for (const engine of engines) {
         assert.equal((await snapshot(page)).legacy, null)
         await page.evaluate(() => window.setValue(''))
         await page.waitForFunction(() => document.querySelector('a-calendar').getAttribute('value') === '')
-        assert.deepEqual(await snapshot(page), { value: '', state: '', legacy: null, form: null, selected: null, filled: false })
+        assert.deepEqual(await snapshot(page), { value: null, state: '', legacy: null, form: null, selected: null, filled: false })
       })
     }
 

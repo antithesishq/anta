@@ -108,8 +108,10 @@ Calendar, RadioGroup, and Tabs now use only `value` / `defaultvalue` selection
 inputs. Their `value` getters report applied selection and consumer setters
 reflect the controlled input; uncontrolled interaction, reset, and restoration
 never write host inputs. Removing `value` retains the latest applied selection.
-Calendar's old-date InputDate regression remains covered. RadioGroup and Tabs
-retain empty-string options, roving focus, native selection events, and panels.
+Calendar returns `null` when empty, so reading and writing back an empty
+uncontrolled value does not acquire control. InputDate retains its text-field
+empty string. Calendar's old-date InputDate regression remains covered.
+RadioGroup and Tabs retain empty-string options, roving focus, native selection events, and panels.
 
 Wrappers, including Slider, use a shared serializable attribute projection.
 The renderer prop `VALUE` produces the ordinary lowercase HTML `value`
@@ -123,10 +125,10 @@ Verification covers 74 source checks (72 browser cases and two worker
 projections) and the same 72 browser cases through an isolated installed npm
 tarball. Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6` pass both
 public import modes with actual HTTP CSP headers. React and Preact render real
-SSR markup and hydrate without replacing the selected element. Another 89
+SSR markup and hydrate without replacing the selected element. Another 119
 Calendar/InputDate and Slider source checks pass, including the previous-date
 regression. All 358 root tests pass with CI's existing browser/debounce filters.
-The final shared fast batch passes 33 checks; all 20 CI/tier checks pass. Package
+The final shared fast batch passes 43 checks; all 20 CI/tier checks pass. Package
 JS, minified CSS, bundle, declarations, lint, types, site CSS lint, scoped docs,
 and the Node `24.15.0` production build pass. All 30 production checks pass
 in Chromium and WebKit, including Calendar, RadioGroup, and Tabs interaction
@@ -157,20 +159,27 @@ Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
   without wrapper DOM reads; shared native-event forwarding handles hydration.
 - Consumer handlers can cancel keyboard and pointer defaults. Disabling or
   disconnecting ends gesture ownership, another pointer cannot replace the
-  session, and external updates rebase relative dragging. Live ARIA references
-  retain changing label text and crossing focus; scalar disabled state is
-  exposed through ElementInternals. RTL pointer geometry follows logical rail
-  placement, and small decimal values stay within their bounds.
-- All 63 source checks pass in Chrome `155.0.8059.84`, Firefox `155.0`, and
-  Playwright WebKit `26.6`: 60 browser cases and three worker projections.
-  Six original comparisons also passed during the styling refactor. All 60 browser cases also pass through an isolated npm
-  tarball installation, resolving public exports without Anta source aliases or
+  session, and external updates rebase relative dragging without losing the
+  requested commit. Host listeners preserve interaction inside ancestor
+  propagation boundaries. Pre-registration property inputs replay after upgrade,
+  and reset/restoration clear pending thumb identity requests. Live ARIA
+  references retain changing label text and crossing focus; scalar disabled state is
+  exposed through ElementInternals. RTL pointer geometry, thumb/bubble centering,
+  and markers follow logical placement, including CSS-only direction changes
+  before and after registration. Small decimal values stay within their bounds.
+- All 93 source checks pass in Chrome `155.0.8059.84`, Firefox `155.0`, and
+  Playwright WebKit `26.6`: 90 browser cases and three worker projections.
+  Six original comparisons also pass. All 90 browser cases pass through an
+  isolated npm tarball installation, resolving public exports without Anta source aliases or
   workspace links. React/React DOM `19.3.0` and Preact `10.29.8` generate real
   SSR output and retain authored nodes through hydration.
-- All 20 installed-package cases pass in Chrome for Testing `135.0.7049.114`.
-  Seven original variants match geometry and appearance through both imports in
-  all three current engines and Chrome 135. All 56 original/current PNG pairs
-  are byte-identical. The optional comparison uses `ANTA_SLIDER_COMPARE_REF`;
+- All 30 installed-package cases pass in Chrome for Testing `135.0.7049.114`.
+  Seven original variants match dimensions and styles through both imports in
+  all three current engines and Chrome 135. Bubble centering differs by less
+  than 0.22 CSS pixels after replacing direction-dependent transforms with
+  logical alignment. All other region positions match within 0.01 pixels. Of
+  the 56 original/current PNG pairs, 48 are byte-identical; only bubble variants
+  differ. The optional comparison uses `ANTA_SLIDER_COMPARE_REF`;
   screenshots and metrics live under `tests/.test-output/slider`.
 - Behavioral pages use actual HTTP CSP headers, including
   `style-src-attr 'none'`, with no component violations. Coverage includes
@@ -192,7 +201,10 @@ Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
   All 26 production checks also passed, followed by two additional Chrome/WebKit
   checks confirming pre-registration label/rail dimensions and initial values.
   Final name review added authored `aria-labelledby` precedence and live referenced
-  text; all 63 current source checks were rerun successfully after that change.
+  text. The review follow-up adds clamped-owner and constraint-rebase commits,
+  propagation boundaries, pre-registration properties, CSS-only direction, and
+  stale uncontrolled crossing requests. Controlled reset and silent disconnect
+  behavior remain unchanged.
   Expanded engines, original visuals, and installation remain in
   the slow tier; PR gates select core source checks.
 

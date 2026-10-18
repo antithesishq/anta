@@ -224,9 +224,9 @@ export class ACalendarElement extends HTMLElementBase {
     if (!controlled) this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
-  /** Applied date as an ISO string (`''` when empty). Assigning supplies controlled input. */
-  get value(): string {
-    return this.currentIso() ?? ''
+  /** Applied ISO date, or `null` when empty. Non-null assignments supply controlled input. */
+  get value(): string | null {
+    return this.currentIso()
   }
 
   set value(value: string | null | undefined) {

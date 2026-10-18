@@ -128,11 +128,16 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
     }
     await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>{el.value='';el.defaultValue=null})
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),'')
-    assert.equal(await current(page),'')
+    assert.equal(await current(page),kind==='Calendar'?null:'')
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('defaultvalue'),null)
     await page.locator('a-calendar,a-radio-group,a-tabs').evaluate(el=>{el.value=null})
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),null)
-    assert.equal(await current(page),'')
+    assert.equal(await current(page),kind==='Calendar'?null:'')
+    if(kind==='Calendar') {
+      await page.locator('a-calendar').evaluate(el=>{el.value=el.value})
+      assert.equal(await page.locator('a-calendar').getAttribute('value'),null)
+      assert.equal(await current(page),null)
+    }
     await pick(page,kind,b);assert.equal(await current(page),b)
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),null)
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('state'),null)
@@ -172,10 +177,10 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
     }
     await update(page,{value:undefined});assert.equal(await current(page),b)
     await update(page,{value:''})
-    assert.equal(await current(page),'')
+    assert.equal(await current(page),kind==='Calendar'?null:'')
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),'')
     if(kind!=='Calendar')assert.equal(await page.locator(`#subject ${kind==='Tabs'?'a-tab':'a-radio'}:state(selected)`).getAttribute('value'),'')
-    await update(page,{value:undefined});assert.equal(await current(page),'')
+    await update(page,{value:undefined});assert.equal(await current(page),kind==='Calendar'?null:'')
     await pick(page,kind,a);assert.equal(await current(page),a)
     assert.equal(await page.locator('a-calendar,a-radio-group,a-tabs').getAttribute('value'),null)
     const focused=await page.locator(kind==='Calendar'?'#subject [data-date="2026-10-08"]':`#subject ${kind==='Tabs'?'a-tab':'a-radio'}[value="a"]`).getAttribute('tabindex')

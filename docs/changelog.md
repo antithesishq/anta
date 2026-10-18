@@ -31,6 +31,8 @@ changes are not listed.
   `state` / `default-state` selection inputs. Their `.value` properties now accept
   controlled input; remove `value` to release control while retaining selection.
   Uncontrolled picks, reset, and restoration leave authored attributes unchanged.
+  An empty Calendar now returns `null` from `.value`, matching the other selection
+  elements. InputDate retains its empty text value (`''`).
 
 - [Slider controlled values](/slider/#managing-the-value) change only when the
   application updates `value`, including on form reset. Callbacks report requested
@@ -155,8 +157,7 @@ changes are not listed.
 - [Unbounded year menus](/input-date/#calendar) center on the displayed year, including
   dates supplied through `value` and `defaultValue`.
 - [Controlled selection](/input-date/#calendar) keeps form values in sync in
-  React and Preact, including selecting a previous date again. The element accepts
-  selection through `state` and exposes `value` as read-only.
+  React and Preact, including selecting a previous date again.
 
 #### Copy feedback
 
@@ -261,11 +262,16 @@ changes are not listed.
 #### Slider
 
 - [Dragging](/slider/#relative-dragging) honors consumer cancellation and ends
-  when disabled or disconnected. Parent updates remain applied during a drag.
+  when disabled or disconnected. Parent updates remain applied during a drag,
+  and rebasing preserves the final commit. Ancestor propagation boundaries no
+  longer disable pointer or keyboard input.
 - [Accessible names](/slider/#range-values) follow live label text, and scalar
   disabled state is exposed to accessibility tools.
-- [Inherited RTL](/slider/#relative-dragging) aligns pointer movement with the rail.
+- [Inherited RTL](/slider/#relative-dragging), including CSS `direction`, aligns
+  pointer movement, thumbs, value bubbles, and markers with the rail.
 - [Numeric bounds](/slider/#managing-the-value) contain small decimal values.
+- [Value inputs](/slider/#managing-the-value) replay properties assigned before
+  registration. Restoring uncontrolled ranges clears stale thumb identity requests.
 
 #### Tabs
 

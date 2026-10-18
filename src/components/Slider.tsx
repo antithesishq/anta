@@ -165,6 +165,9 @@ export const Slider = <T extends SliderValue = number>({
   onChange,
   onValueChange,
   onValueCommit,
+  onKeyDown,
+  onPointerDown,
+  onPointerMove,
   className,
   style,
   children,
@@ -226,7 +229,7 @@ export const Slider = <T extends SliderValue = number>({
       }
     : undefined
 
-  const events = useNativeEventProps({ oninput: handleInput, onchange: handleChange })
+  const events = useNativeEventProps({ oninput: handleInput, onchange: handleChange, onkeydown: onKeyDown, onpointerdown: onPointerDown, onpointermove: onPointerMove })
 
   return (
     <a-slider

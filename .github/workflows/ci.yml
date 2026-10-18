@@ -72,6 +72,7 @@ jobs:
             docs/packages/plot.md 'site/src/content/packages/plot/**' site/src/styles/base.css \
             src/components/{Tooltip,Menu,MenuItem}.tsx 'src/elements/a-box*' 'src/elements/a-capture*' \
             'src/elements/a-tooltip*' 'src/elements/a-menu*' src/box-types.ts src/capture-types.ts \
+            src/elements/{capture-input,focus,copy-behavior,key-activation}.ts src/box-observation.ts \
             src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             tests/consumers/templates/nextjs/package.json scripts/build-bundle.mjs \

@@ -29,6 +29,7 @@ try {
   const packed = JSON.parse(await run('npm', ['pack', '--ignore-scripts', '--json', '--pack-destination', workspace], root, process.env, true))
   assert.equal(packed.length, 1)
   const plotPacked = JSON.parse(await run('npm', ['pack', '--ignore-scripts', '--json', '--pack-destination', workspace], join(root, 'plot'), process.env, true))
+  assert.equal(plotPacked.length, 1, 'npm pack produces one Plot tarball')
   const dependencies = {
     '@antadesign/plot': `file:./${plotPacked[0].filename}`,
     '@antadesign/anta': `file:./${packed[0].filename}`,

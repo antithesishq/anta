@@ -2,4 +2,5 @@
 
 ## Unreleased
 
-- Load `@antadesign/plot/plot.css` for [JSX plots, surfaces, and standalone charts](/plot/#styling) to replace injected stylesheets under strict CSP. Runtime geometry still uses CSSOM, and `style-src-attr 'none'` requires external CSS for server-rendered dimensions and consumer styles.
+- **Breaking:** Load `@antadesign/plot/plot.css` for [JSX plots, surfaces, and standalone charts](https://anta.design/plot/#styling). Every chart host requires this stylesheet, replacing per-instance injected styles.
+- JSX `Plot` applies dimension and `style` props after commit through CSSOM, so they work under strict CSP after hydration. Use external CSS to reserve space before hydration.

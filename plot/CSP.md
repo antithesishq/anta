@@ -23,8 +23,9 @@ runtime. It does not assign `cssText`, parse HTML, or call `setAttribute('style'
 ...)`. Dynamic geometry uses individual CSSOM properties or `setProperty()`.
 Those properties still serialize into the DOM's style attribute. Lifecycle
 capture visibility also uses direct CSSOM updates, so an unpresented capture
-stays hidden while the shared stylesheet loads. The browser checks distinguish these writes from parsed inline attributes rather than
-requiring the style attribute to be absent.
+stays hidden while the shared stylesheet loads. The browser checks distinguish
+these writes from parsed inline attributes rather than requiring the style
+attribute to be absent.
 
 The shared stylesheet reserves Anta's cascade layers. Application CSS can override
 host defaults. PlotSurface inherits the application font, feature settings, and
@@ -46,12 +47,15 @@ permission, or evaluation permission is required by the Plot fixtures. A negativ
 control verifies that the browser rejects an injected style element and a parsed
 style attribute while accepting direct CSSOM property updates.
 
-React and Preact serialize explicit `plotArgs.width` / `height` and consumer
-`style` props into inline attributes during server rendering. Those attributes
-are blocked by `style-src-attr 'none'`. For strict SSR, omit dimension and `style`
-props during server rendering and size the plot with an external class. Default
-SSR markup emits no style attributes. Client-rendered dimension updates use
-CSSOM. Custom tooltip content and application styles must meet the same policy.
+JSX `Plot` defers accepted `plotArgs.width` / `height` and consumer `style` props
+until commit. React and Preact apply those properties through CSSOM after
+hydration, so explicit dimensions work with `style-src-attr 'none'` without
+serialized inline styles. Before hydration, external CSS sizes the wrapper. Use
+a class to reserve space when the initial dimensions matter for page layout.
+
+Low-level `PlotSurface` style props, custom tooltip markup, and other
+application-owned HTML follow the renderer's normal serialization rules. Use
+external CSS for their server-rendered presentation under `style-src-attr 'none'`.
 
 Development CSS loaders that inject style elements need a different policy or
 an extraction configuration. External workers need an allowed `worker-src`;

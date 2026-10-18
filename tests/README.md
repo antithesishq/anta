@@ -59,8 +59,9 @@ capture visibility before Plot CSS loads. The shared runner selects Plot with
 Set `ANTA_PLOT_COMPARE_REF=<ref>` to compare JSX and standalone plots against a Git
 revision in light and dark themes. PNGs, pixel counts, geometry, and viewport
 results go to `tests/.test-output/plot`. Baseline pages permit inline styles;
-current pages use strict HTTP CSP. Explicit SSR dimensions and consumer `style`
-props have separate negative checks because parsed style attributes are blocked.
+current pages use strict HTTP CSP. SSR dimensions and consumer `style` props
+have hydration checks that verify CSSOM updates after commit without parsed
+inline attributes.
 
 ## Calendar and InputDate
 

@@ -147,9 +147,9 @@ export function Plot<Content = React.ReactNode>({
     }, [plotArgs, onError, revision])
 
     const host = retained.current.host
-    // Initial markup uses the supplied pins; subsequent renders follow the accepted template.
-    const width = view === null ? plotArgs.width : view.width
-    const height = view === null ? plotArgs.height : view.height
+    // Apply styles after commit so hydration sets CSSOM properties instead of parsing inline attributes.
+    const width = view?.width
+    const height = view?.height
 
     const onContextChange = (event: PlotSurfaceEventMap['contextchange']) => {
         if (host === null) return
@@ -200,7 +200,7 @@ export function Plot<Content = React.ReactNode>({
             {...rest}
             className={className}
             data-plot-root=""
-            style={{
+            style={view === null ? undefined : {
                 ...style,
                 ...(width === undefined ? {} : { width }),
                 ...(height === undefined ? {} : { height }),

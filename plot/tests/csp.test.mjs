@@ -101,10 +101,10 @@ before(async () => {
         module._compile(ssr.outputFiles[0].text, module.id)
         markup.set(renderer, module.exports.render())
         markup.set(`${renderer}-pins`, module.exports.render({ plotArgs: { series: [], width: 420, height: 260 } }))
-        markup.set(`${renderer}-style`, module.exports.render({ style: { height: 123 } }))
+        markup.set(`${renderer}-style`, module.exports.render({ style: { width: 420, height: 260, backgroundColor: 'rgb(1, 2, 3)' } }))
         assert.doesNotMatch(markup.get(renderer), /style=/, 'default SSR emits no style attributes')
-        assert.match(module.exports.render({ plotArgs: { series: [], width: 420, height: 260 } }), /style=/, 'SSR pins still serialize inline: documented limitation')
-        assert.match(module.exports.render({ style: { height: 123 } }), /style=/, 'consumer SSR styles still serialize inline')
+        assert.doesNotMatch(markup.get(`${renderer}-pins`), /style=/, 'SSR pins wait for commit')
+        assert.doesNotMatch(markup.get(`${renderer}-style`), /style=/, 'consumer styles wait for commit')
         if (componentTier === 'slow') {
             for (const [kind, code, component] of [['jsx', jsxExample, 'Chart'], ['surface', surfaceExample, 'Surface']]) {
                 const name = `${renderer}-docs-${kind}`
@@ -129,7 +129,7 @@ before(async () => {
         if (assets.has(url.pathname)) return res.end(assets.get(url.pathname))
         const name = url.pathname.slice(1) || 'react-surface'
         const renderer = name.split('-')[0]
-        res.end(`<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/fixture.css">${url.searchParams.has('site') ? '<link rel="stylesheet" href="/site.css">' : ''}<link rel="stylesheet" href="/${name}.css"><script src="/boot.js"></script><div id="app">${url.searchParams.get('kind') === 'hydrate' ? markup.get(renderer) : url.searchParams.has('ssr') ? markup.get(`${renderer}-${url.searchParams.get('ssr')}`) : ''}</div><script type="module" src="/${name}.js"></script>`)
+        res.end(`<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/fixture.css">${url.searchParams.has('site') ? '<link rel="stylesheet" href="/site.css">' : ''}<link rel="stylesheet" href="/${name}.css"><script src="/boot.js"></script><div id="app">${url.searchParams.has('ssr') ? markup.get(`${renderer}-${url.searchParams.get('ssr')}`) : url.searchParams.get('kind') === 'hydrate' ? markup.get(renderer) : ''}</div><script type="module" src="/${name}.js"></script>`)
     })
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
     origin = `http://127.0.0.1:${server.address().port}`
@@ -240,15 +240,22 @@ for (const engine of engines) {
             assert.deepEqual(errors, [])
         })
     }
-    test.fast(`${name}: parsed SSR dimensions and consumer styles are blocked separately from client CSSOM updates`, async t => {
+    test.fast(`${name}: hydrates pinned and consumer dimensions without parsed style attributes`, async t => {
         for (const renderer of ['react', 'preact']) for (const ssr of ['pins', 'style']) {
-            const page = await browsers.get(engine.name()).newPage()
-            try {
-                await page.goto(`${origin}/${renderer}-surface?ssr=${ssr}`)
-                await page.waitForFunction(() => typeof mount === 'function' && violations.length > 0)
-                assert.deepEqual(await page.locator('#app > div').evaluate(el => [getComputedStyle(el).width, getComputedStyle(el).height]), ['600px', '300px'])
-                assert.deepEqual(await page.evaluate(() => violations.map(e => e.directive)), ['style-src-attr'])
-            } finally { await page.close() }
+            const context = await browsers.get(name).newContext()
+            t.after(() => context.close())
+            const page = await context.newPage()
+            const errors = []; page.on('pageerror', e => errors.push(e.message))
+            await page.goto(`${origin}/${renderer}-surface?kind=hydrate&ssr=${ssr}`)
+            await page.waitForFunction(() => typeof mount === 'function')
+            assert.equal(await page.locator('#app > div').getAttribute('style'), null, 'SSR relies on external CSS')
+            await page.evaluate(() => mount())
+            await page.waitForFunction(() => document.querySelector('canvas')?.width === 420 && document.querySelector('canvas')?.height === 260)
+            assert.deepEqual(await page.locator('#app > div').evaluate(el => [el.getBoundingClientRect().width, el.getBoundingClientRect().height]), [420, 260])
+            if (ssr === 'style') assert.equal(await page.locator('#app > div').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(1, 2, 3)')
+            assert.deepEqual(await page.evaluate(() => violations), [])
+            assert.deepEqual(await page.evaluate(() => stats.errors), [])
+            assert.deepEqual(errors, [])
         }
     })
     for (const renderer of ['react', 'preact']) {
@@ -360,6 +367,7 @@ for (const engine of engines) {
             return { capture: [r.x, r.y, r.width, r.height], sizes, backing, same: surface.canvas === canvas && surface.highlight === highlight, ownershipRetained }
         })
         assert.deepEqual(result, { capture: [50, 20, 510, 230], sizes: [900, 900], backing: [900, 900], same: true, ownershipRetained: true })
+        const attached = page.waitForEvent('frameattached')
         await page.evaluate(() => {
             window.oldSurface = document.querySelector('a-plot-surface')
             window.oldCanvas = oldSurface.canvas
@@ -367,7 +375,7 @@ for (const engine of engines) {
             oldSurface.addEventListener('measurechange', () => adoptedMeasures++)
             const frame = document.createElement('iframe'); frame.src = '/react-surface?kind=empty'; document.body.append(frame)
         })
-        const frame = page.frames().find(f => f !== page.mainFrame())
+        const frame = await attached
         await frame.waitForFunction(() => typeof mount === 'function')
         await page.evaluate(() => {
             const doc = document.querySelector('iframe').contentDocument

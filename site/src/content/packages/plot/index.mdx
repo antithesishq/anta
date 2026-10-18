@@ -148,12 +148,15 @@ stylesheets served from an allowed origin. A stylesheet link to the published
 destination document before adopting a plot there.
 
 Runtime dimensions, capture visibility, coordinates, cursor, and canvas filters
-use direct CSSOM updates. Server-rendered dimension and `style` props serialize
-as inline attributes. With `style-src-attr 'none'`, omit those props during SSR
-and size the plot through external CSS. Consumer tooltip content and CSS loaders
-must follow the same policy. External workers need an allowed `worker-src`;
-blob workers also need `blob:`.
+use direct CSSOM updates. JSX `Plot` applies dimension and `style` props after
+commit, including after hydration, so its SSR markup has no inline styles.
+Use an external CSS class to reserve space before hydration and prevent layout
+shifts. Low-level `PlotSurface` style props and custom tooltip HTML still follow
+your renderer's normal serialization rules. Use external CSS for them under
+`style-src-attr 'none'`.
 
+Consumer tooltip content and CSS loaders must follow the same policy. External
+workers need an allowed `worker-src`. Blob workers also need `blob:`.
 
 ## Series types
 
@@ -5018,8 +5021,9 @@ For a strict content security policy (CSP), extract the imports into external
 CSS allowed by `style-src`. Plot does not inject style elements. Runtime sizes,
 coordinates, cursor, and canvas filters use direct CSSOM updates. These remain
 visible in `style` attributes but do not parse style attribute strings.
-Server-rendered dimension and `style` props do produce parsed inline attributes;
-with `style-src-attr 'none'`, omit them during SSR and size with external CSS.
+JSX `Plot` applies dimension and `style` props after commit through CSSOM. Use
+external CSS to reserve its size before hydration. Low-level `PlotSurface` style
+props and custom tooltip markup still follow the renderer's serialization rules.
 Consumer tooltip content and CSS loaders must also comply with the policy.
 Worker scripts need an allowed `worker-src`; blob workers also need `blob:`.
 

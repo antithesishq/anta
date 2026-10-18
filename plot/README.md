@@ -137,11 +137,12 @@ coordinates, cursor, and canvas filters use direct CSSOM property updates.
 These updates still appear in the DOM's `style` attribute. Plot does not parse
 style attributes or inject style elements.
 
-Server-rendered explicit `plotArgs.width` / `height` and consumer `style` props
-serialize as style attributes and are blocked by `style-src-attr 'none'`. For
-strict server rendering, size the plot through an external CSS class and omit
-those props during SSR. Client-rendered dimensions use CSSOM updates. Custom
-tooltip content and application styles must follow the same policy.
+JSX `Plot` applies `plotArgs.width` / `height` and consumer `style` props after
+commit through CSSOM, including after hydration. Its SSR markup relies on the
+external stylesheet. Use an external CSS class to reserve a specific size before
+hydration and prevent layout shifts. Low-level `PlotSurface` style props and
+custom tooltip markup follow your renderer's normal serialization rules; use
+external CSS for them under `style-src-attr 'none'`.
 Put broad application resets in `@layer base` so they do not override component
 layout unintentionally. External workers need an allowed `worker-src`. Blob
 workers need `blob:` as well.

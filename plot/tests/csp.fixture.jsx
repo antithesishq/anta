@@ -5,7 +5,9 @@ import { Plot, PlotSurface, scatter } from '@antadesign/plot'
 
 configure(React.createElement, React.Fragment, React, { hydratingEvents: true })
 const container = document.querySelector('#app')
-const kind = new URLSearchParams(location.search).get('kind') ?? 'jsx'
+const query = new URLSearchParams(location.search)
+const kind = query.get('kind') ?? 'jsx'
+const consumerStyle = query.get('ssr') === 'style' ? { width: 420, height: 260, backgroundColor: 'rgb(1, 2, 3)' } : undefined
 let root, node
 window.stats = { selected: 0, reports: [], errors: [], transfers: 0, measures: 0 }
 const originalTransfer = HTMLCanvasElement.prototype.transferControlToOffscreen
@@ -23,6 +25,7 @@ const customTip = () => {
     return React.createElement('strong', null, 'Custom point')
 }
 window.args = {
+    ...(query.get('ssr') === 'pins' ? { width: 420, height: 260 } : {}),
     series: [scatter({ data, tooltip: true }), scatter({ data, tooltip: customTip, on_select: () => stats.selected++ })],
     axis: { x: { min: 0, max: 10 }, y: { min: 0, max: 10 } },
     zoom_pan: true,
@@ -32,7 +35,7 @@ window.args = {
 window.update = (patch = {}) => {
     window.args = { ...window.args, ...patch }
     if (kind === 'standalone') node.plotArgs = args
-    else root.render(React.createElement(Plot, { plotArgs: args, onError: e => stats.errors.push(e.phase) }))
+    else root.render(React.createElement(Plot, { plotArgs: args, style: consumerStyle, onError: e => stats.errors.push(e.phase) }))
 }
 window.mount = () => {
     if (kind === 'standalone') {
@@ -44,7 +47,7 @@ window.mount = () => {
         root = createRoot(container)
         root.render(React.createElement(PlotSurface, { onMeasureChange: () => stats.measures++ }))
     } else if (kind === 'hydrate') {
-        root = hydrateRoot(container, React.createElement(Plot, { plotArgs: args, onError: e => stats.errors.push(e.phase) }), {
+        root = hydrateRoot(container, React.createElement(Plot, { plotArgs: args, style: consumerStyle, onError: e => stats.errors.push(e.phase) }), {
             onRecoverableError: e => stats.errors.push(e.message),
         })
     } else {

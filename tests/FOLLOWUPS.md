@@ -18,8 +18,6 @@ on work that remains after the historical test-cost review.
 
 ## Review low-value assertions
 
-- Review the native span CSSOM probe in [Avatar CSP tests](avatar-csp.test.mjs).
-  Retain the cases that exercise actual Avatar rendering under CSP.
 - Review default palette and radius literals in [theme tests](themes.test.mjs).
   Preserve explicit overrides, theme switching, and packaged font behavior.
 - Review source-shape assertions in [comparison tests](comparison.test.mjs) and

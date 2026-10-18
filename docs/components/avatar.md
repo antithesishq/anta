@@ -301,6 +301,11 @@ Reach for the props first: **`size`** sets the dimensions and **`generator`** th
 generated look. Everything else is `--avatar-*` custom properties on the host and
 `::part()` on the shadow content.
 
+Numeric `size`, custom `round`, and literal `badge` colors serialize inline styles
+during server rendering. If your policy uses `style-src-attr 'none'`, omit those
+customization props and set the values through a class and an allowed stylesheet.
+See [Content Security Policy](../install-config.md#content-security-policy).
+
 The container is a rounded square by default; `round` makes it a circle and takes
 a length for a custom radius, so reach for the prop before the custom property.
 The badge is sized and placed with `--avatar-badge-ratio` (its size as a fraction

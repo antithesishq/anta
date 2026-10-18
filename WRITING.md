@@ -307,6 +307,9 @@ inspect those sections and the PR diff before approval.
   Include breaking changes, migrations, public APIs, and behavior-changing fixes.
   Omit internal architecture, exact implementation steps, exhaustive
   prop/part/token lists, and minor visual tuning.
+  Consolidate overlapping Unreleased entries before adding another. Group long
+  Fixed sections by component, record each behavior once, and put shared migration
+  guidance in one entry instead of repeating compatibility notes for each component.
 
 ## Editing existing text
 

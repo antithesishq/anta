@@ -251,6 +251,9 @@ changes are not listed.
 
 #### Menu
 
+- [Custom selection indicators](/select/#custom-indicators) use external layout
+  styles, preserving alignment and row activation under a strict CSP.
+
 - [Trigger replacement](/menu/) preserves keyboard interaction, popup
   relationships, and open state, including [Select custom triggers](/select/#custom-trigger).
   Anchored popovers reposition to follow their replacement.

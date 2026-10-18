@@ -304,6 +304,11 @@ changes are not listed.
 - [Per-option tones](/tabs/#tone) color the selected indicator without recoloring
   the track. An explicit neutral option resets the indicator on a toned strip.
 
+#### Steps
+
+- [Vertical panels](/steps/#orientation) follow the selected step using external
+  CSS, including when a Content Security Policy blocks inline style attributes.
+
 #### Text
 
 - [Keyboard order](/text/#truncation-and-expansion) places expansion controls

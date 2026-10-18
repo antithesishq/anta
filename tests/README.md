@@ -157,7 +157,9 @@ The suite uses actual CSP response headers, including `style-src-attr 'none'`.
 It covers first rendering, SSR/hydration, pointer/keyboard/touch interaction,
 interactive content, placement, handoff, truncation, lifecycle cleanup,
 consumer overrides, reduced motion, and both independent build load orders.
-Text and Steps compose under that policy. Select and SelectFaceted retain
+Text and Steps compose under that policy. Vertical Steps also cover external
+panel placement through React and Preact SSR/hydration, pointer and keyboard
+selection, controlled updates, RTL, and empty panels. Select and SelectFaceted retain
 Input/Menu's known blocked shadow styles; those cases record the existing
 violations separately and check that showing Tooltip adds none.
 

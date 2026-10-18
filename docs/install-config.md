@@ -652,12 +652,30 @@ Anta's tokens, component stylesheets, and optional themes work when your
 its `style-src` fallback. External CSS and named theme values do not require
 inline style attributes.
 
-Some JSX props produce inline CSS custom properties for custom colors, lengths,
-and dynamic values. The `style` prop also produces inline styles.
-Server rendering serializes these values into HTML
-`style` attributes, which `style-src-attr 'none'` blocks. Put these
-visual customizations in classes and an allowed stylesheet when inline attributes
-are forbidden. Check each component's reference for dynamic-value requirements.
+Custom color props such as `tone="#6750a4"`, explicit lengths such as
+`round={12}` or Icon's `size={24}`, and some dynamic value props produce inline
+CSS custom properties. The `style` prop also produces inline styles.
+Server rendering serializes these values into HTML `style` attributes, which
+`style-src-attr 'none'` blocks. Named tones, preset sizes, and boolean `round`
+use external CSS without these attributes.
+
+When inline attributes are forbidden, omit the customization prop and apply
+its value through `className` and an allowed stylesheet. For example, replace
+`<Icon shape="check" size={24} />` with:
+
+```tsx
+<Icon shape="check" className="confirmation-icon" />
+```
+
+```css
+.confirmation-icon {
+  --icon-size: 24px;
+}
+```
+
+Define runtime values in an application-managed stylesheet permitted by your
+policy when they cannot be expressed with predefined classes. Check each
+component's reference for its styling surface and dynamic-value requirements.
 Client-side assignments to individual CSS properties can behave
 differently; do not rely on hydration to repair blocked server-rendered styles.
 See [CSP rules for style attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).

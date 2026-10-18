@@ -16,6 +16,19 @@ export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
 }
 
+/** @internal Mirror selection for declarative rendering, retaining the latest
+ * controlled value when ownership is released. Update the mirror only for
+ * accepted uncontrolled changes. */
+export function useSelectionMirror(value: string | undefined, defaultValue?: string) {
+  const [internalValue, setInternalValue] = useState<string | undefined>(value ?? defaultValue)
+  const [lastValue, setLastValue] = useState(value)
+  if (value !== lastValue) {
+    setLastValue(value)
+    if (value !== undefined) setInternalValue(value)
+  }
+  return [value !== undefined ? value : internalValue, setInternalValue] as const
+}
+
 /**
  * Select the safe presentation attributes from a data-rendered option. Option
  * objects often carry application data, so wrappers must never spread them onto
@@ -506,3 +519,14 @@ export class SelectableChildElement extends HTMLElementBase {
     applyAccessibilityRelations(this.internals, labels, descriptions)
   }
 }
+
+/** @internal Project value inputs through HTML attributes in every renderer.
+ * HTML attribute names are case-insensitive. `VALUE` avoids React's property
+ * assignment and Preact's special live-value comparison/removal, while producing
+ * the ordinary `value` attribute in the DOM and parsed SSR HTML. In particular,
+ * an empty-string option stays distinct from removing controlled ownership.
+ * Keep this projection serializable for server and worker renderers. */
+export const valueAttributes = (value: string | undefined, defaultValue?: string) => ({
+  VALUE: value,
+  defaultvalue: value === undefined ? defaultValue : undefined,
+})

@@ -29,7 +29,7 @@ for (const tier of ['fast', 'slow']) {
   })
 }
 
-for (const component of ['banner', 'toaster', 'dialog', 'menu', 'select', 'input-autocomplete']) test(`Component runner keeps ${component} installation in the slow tier`, () => {
+for (const component of ['banner', 'toaster', 'dialog', 'menu', 'select', 'input-autocomplete', 'slider']) test(`Component runner keeps ${component} installation in the slow tier`, () => {
   const run = tier => spawnSync(process.execPath, ['tests/components.mjs', '--tier', tier, '--component', component, '--list'], {encoding: 'utf8'})
   const fast = run('fast'), slow = run('slow')
   assert.equal(fast.status, 0, fast.stderr)
@@ -45,4 +45,12 @@ test('Component runner rejects invalid selectors instead of passing with no test
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /Use --(tier|component)/)
   }
+})
+
+test('Selection runner keeps installed-package coverage in the slow tier',()=>{
+  const run=tier=>spawnSync(process.execPath,['tests/components.mjs','--tier',tier,'--component','selection','--list'],{encoding:'utf8'})
+  const fast=run('fast'),slow=run('slow')
+  assert.equal(fast.status,0,fast.stderr);assert.equal(slow.status,0,slow.stderr)
+  assert.match(fast.stdout,/selection-value\.mjs/);assert.match(fast.stdout,/selection-projection\.mjs/)
+  assert.doesNotMatch(fast.stdout,/selection-package/);assert.match(slow.stdout,/selection-package\.mjs/)
 })

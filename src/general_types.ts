@@ -805,9 +805,9 @@ export interface AInputAttributes extends BaseAttributes {
 /** Attributes for the `<a-slider>` custom element. For the typed JSX wrapper,
  * display formatting, and marker layout use `Slider` from `@antadesign/anta`. */
 export interface ASliderAttributes extends BaseAttributes {
-  /** Controlled value. Range attributes use two space-separated numbers. */
+  /** Controlled numeric input. A range uses two space-separated numbers. */
   value?: number | string
-  /** Initial uncontrolled value and form-reset baseline. Range attributes use two space-separated numbers. */
+  /** Uncontrolled initial value and reset baseline. */
   defaultvalue?: number | string
   /** Lowest permitted value. Defaults to 0. */
   min?: number | string
@@ -921,8 +921,8 @@ export interface AInputTimeAttributes extends BaseAttributes {
  * wrapper. It does **not** build or mutate its own contents: whoever renders into
  * it (the `Calendar` JSX wrapper, or a vanilla consumer using the exported
  * `buildMonth` engine) fills it with day cells and *re-renders on its events* —
- * the `<a-radio-group>` model. Controlled by the presence of `state` (a pick only
- * requests a change); uncontrolled with `default-state` (a pick self-applies).
+ * the `<a-radio-group>` model. Controlled by the presence of `value` (a pick only
+ * requests a change); uncontrolled with `defaultvalue` (a pick self-applies).
  * For the typed, batteries-included wrapper use `Calendar` from `@antadesign/anta`.
  *
  * `:state(filled)` is the styling hook for "has a selection".
@@ -930,12 +930,8 @@ export interface AInputTimeAttributes extends BaseAttributes {
 export interface ACalendarAttributes extends BaseAttributes {
   /** Controlled selected date — ISO `YYYY-MM-DD`. Present → controlled (a pick
    *  only requests a change). Mirrored to the owning form via `ElementInternals`. */
-  state?: string
-  /** Uncontrolled initial date / reset baseline — ISO `YYYY-MM-DD`. */
-  'default-state'?: string
-  /** Legacy controlled attribute for raw HTML. Use `state` in JSX. */
   value?: string
-  /** Legacy uncontrolled initial date / reset baseline for raw HTML. */
+  /** Uncontrolled initial date / reset baseline — ISO `YYYY-MM-DD`. */
   defaultvalue?: string
   /** Form field name — the selected ISO date submits under this key. */
   name?: string
@@ -1208,8 +1204,7 @@ export interface ARadioAttributes extends BaseAttributes {
  * optional `<a-radio-hint>`. All plain light-DOM children, laid out by
  * `a-radio-group.css`, so the arrangement is restylable with ordinary CSS
  * (`a-radio-group a-radio-list { … }`). The group
- * coordinates **off-DOM only** — it never writes the DOM: selection via each
- * radio's `selected` property, focus via `internals.ariaActiveDescendantElement`,
+ * coordinates selection off-DOM through each radio's `selected` property, focus via `internals.ariaActiveDescendantElement`,
  * the form value via `setFormValue`. Roving `tabindex` (the JSX path) is rendered
  * by the `RadioGroup` wrapper, not the element. The `RadioGroup` wrapper composes
  * the label/list/hint from `label` / `hint`; hand-authors write them directly.
@@ -1217,8 +1212,8 @@ export interface ARadioAttributes extends BaseAttributes {
  */
 export interface ARadioGroupAttributes extends BaseAttributes {
   /** Controlled selected value (the chosen radio's `value`). Present → controlled:
-   *  the element reflects changes to this attribute and a pick only dispatches
-   *  `statechange`. Absent → uncontrolled (seed with `default-state`). */
+   *  a pick only requests a change through `statechange`. Absent → uncontrolled
+   *  (seed with `default-state`). */
   state?: string
   /** Uncontrolled initial selected value — read once on connect / form-reset. */
   'default-state'?: string
@@ -1314,8 +1309,8 @@ export interface ATabAttributes extends BaseAttributes {
  * `a-tabs.css`, so the strip is restylable with ordinary CSS and usable hand-assembled.
  * Unlike `<a-radio-group>` it is NOT form-associated (a tablist submits nothing), and
  * the panels live outside it (siblings the `Tabs` wrapper shows/hides). The element
- * coordinates **off-DOM only** — selection via each tab's `selected` property, focus via
- * `internals.ariaActiveDescendantElement`, scroll via `scrollIntoView`. Roving
+ * coordinates selection **off-DOM** — selection via each tab's `selected` property, focus via
+ * `internals.ariaActiveDescendantElement`, scroll within the strip's own scrollport. Roving
  * `tabindex` (the JSX path) is rendered by the `Tabs` wrapper, not the element. For the
  * typed JSX wrapper use `Tabs` from `@antadesign/anta`.
  */

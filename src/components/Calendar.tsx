@@ -1,7 +1,8 @@
 import cn from "clsx"
+import { useNativeEventProps } from "../native-event-props"
 import { Temporal } from "temporal-polyfill"
 import { useMemo, useState } from "../jsx-runtime"
-import { nativeStateChange } from "../anta_helpers"
+import { valueAttributes, nativeStateChange } from "../anta_helpers"
 import { Button } from "./Button"
 import { Menu } from "./Menu"
 import { MenuItem } from "./MenuItem"
@@ -282,6 +283,8 @@ export const Calendar = ({
     disabled ||
     (maxD != null && Temporal.PlainDate.compare(cursor.with({ day: 1 }).add({ months: 1 }), maxD) > 0)
 
+  const events = useNativeEventProps({ onstatechange: onElementStateChange, onchange: onElementChange, onnavigate: onNavigate })
+
   return (
     <div
       className={cn("anta-calendar", className)}
@@ -333,13 +336,10 @@ export const Calendar = ({
         role="group"
         aria-label={ariaLabel ?? month.heading}
         name={name}
-        state={controlled ? value : undefined}
-        default-state={!controlled ? defaultValue : undefined}
+        {...valueAttributes(value, defaultValue)}
         disabled={disabled ? "" : undefined}
         data-focus={focusReq ? `${focusReq.iso}#${focusReq.n}` : undefined}
-        onstatechange={onElementStateChange}
-        onchange={onElementChange}
-        onnavigate={onNavigate}
+        {...events}
       >
         {/* A flat 7-column grid: seven weekday headers (decorative — each day
             button names its own weekday), then the day cells as direct children. */}

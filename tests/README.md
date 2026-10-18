@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputAutocomplete, InputTime, Menu, Progress, Select, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputAutocomplete, InputTime, Menu, Progress, Select, Selection (Calendar/RadioGroup/Tabs), Slider, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -83,6 +83,23 @@ suite in those engines after installing them with the site's Playwright CLI.
 Run `CAPTURE_TEST_BROWSER_CHANNEL=chrome node --test tests/slider-input.test.mjs`
 to check release outside the control, missed releases, lost pointer capture,
 button combinations, cancellation, and touch dragging. `pnpm test` includes this suite.
+
+Run `pnpm test:slider` for worker projections and the CSP source matrix, or
+`pnpm test:slider:package` for the installed tarball. Slider's shared fast tier
+covers both imports, default layout, numeric/form contracts, controlled
+React/Preact hydration, callbacks, and drag cleanup. The slow tier adds Firefox
+and WebKit, full-bundle hydration, RTL, live names, adoption, consumer shadow
+roots, and package installation. The existing root pointer suite remains in
+`pnpm test`.
+
+CSP comes from actual HTTP response headers with `style-src-attr 'none'`.
+`ANTA_SLIDER_CONSUMER_ROOT` selects an isolated installed consumer.
+`ANTA_SLIDER_CHROMIUM_EXECUTABLE` selects an exact Chromium executable.
+`ANTA_SLIDER_COMPARE_REF` opts into original appearance comparisons and PNG/metric
+artifacts under `tests/.test-output/slider`. Current
+engines do not establish exact minimum-browser, physical-touch-device, or manual
+assistive-technology coverage. Dynamic SSR inline styles retain their separate
+CSP constraint.
 
 ## Capture input
 
@@ -303,3 +320,15 @@ pointer focus, naming, and active-option relationships. It reuses Input's native
 field and Menu's existing navigation; ordinary Input value-rejection and
 implicit-submit behavior are outside this refactor. Synthetic composition keys
 provide engine evidence, not an operating-system IME or assistive-technology run.
+
+## Selection value inputs
+
+Run `pnpm test:selection` for Calendar, RadioGroup, and Tabs value ownership,
+React/Preact SSR hydration, control release, empty-string options, authored
+inputs before registration, and unchanged uncontrolled attributes. Calendar
+uses value attributes and reflecting properties; RadioGroup and Tabs retain
+state attributes with read-only value properties. The
+source matrix runs Chrome, Firefox, and WebKit; the shared fast tier runs core
+checks in Chrome. `pnpm test:selection:package` runs the matrix through an
+isolated installed tarball. Calendar/InputDate's existing round-trip and form
+regressions remain in `pnpm test:calendar`.

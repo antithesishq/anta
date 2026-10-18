@@ -8,7 +8,7 @@ constraints that may have changed.
 
 ## Current refactor checklist
 
-Updated October 17, 2026, including Dialog and the merged Menu refactor.
+Updated October 18, 2026, including Slider.
 
 Move default styling into external CSS and use declarative light DOM where it
 simplifies initial rendering. Decide the DOM structure and ownership separately
@@ -77,8 +77,11 @@ and verification before moving to the next component.
    open/close semantics, and existing parts remain; verification is below.
    - [x] Document the consumer-shadow styling contract in Dialog's TSDoc:
      load external Dialog CSS in that root because document styles cannot reach it.
-10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
-    markers, affixes, dragging, and focus states.
+10. [x] [Slider](src/elements/a-slider.ts): existing shadow control, rail, and
+    physical thumbs retained. Default rules use external parts and off-DOM
+    presentation states. Numeric input and live result ownership are separate;
+    source, package, minimum Chrome, original appearance, and production checks
+    are recorded below.
 11. [x] [Copy feedback](src/elements/a-copy.ts): retains its shadow manual
     popover, `feedback` part, icon, and label. Defaults and motion endpoints are
     external; positioning, measurement, and one reusable Web Animation stay on
@@ -98,6 +101,145 @@ composition, and consumer CSS overrides. Check full and granular imports under
 an actual CSP response header. Custom values serialized into `style` attributes
 remain a separate constraint; completing the stylesheet checklist does not make
 every dynamic JSX prop compatible with `style-src-attr 'none'`.
+
+### Selection input follow-up
+
+Calendar and Slider use `value` / `defaultvalue` inputs and consumer-reflecting
+property setters. RadioGroup and Tabs retain their shipped `state` /
+`default-state` attributes and read-only `.value` properties. JSX `value` /
+`defaultValue` props keep their public names and project to each element's own
+input attributes. Uncontrolled interaction, reset, and restoration never write
+host inputs. Removing the controlled input retains the latest applied selection.
+Calendar returns `null` when empty, so reading and writing back an empty
+uncontrolled value does not acquire control. InputDate retains its text-field
+empty string. Calendar's old-date InputDate regression remains covered.
+RadioGroup and Tabs retain empty-string options, roving focus, native selection
+events, and panels.
+
+Calendar and Slider wrappers use the shared `valueAttributes` projection.
+The renderer prop `VALUE` produces the ordinary lowercase HTML `value`
+attribute, bypassing property assignment and Preact's live-value special cases.
+RadioGroup and Tabs wrappers use ordinary `state` / `default-state` attributes.
+Neither input pair has aliases. Calendar and Slider replay pre-upgrade consumer
+property assignments through their setters; RadioGroup and Tabs accept their
+state attributes before registration. Native listener props use the shared
+hydration helper.
+
+Verification covers 74 source checks (72 browser cases and two worker
+projections) and the same 72 browser cases through an isolated installed npm
+tarball. Chrome `155.0.8059.84`, Firefox `155.0`, and WebKit `26.6` pass both
+public import modes with actual HTTP CSP headers. React and Preact render real
+SSR markup and hydrate without replacing the selected element. Another 119
+Calendar/InputDate and Slider source checks pass, including the previous-date
+regression. All 358 root tests pass with CI's existing browser/debounce filters.
+The final shared fast batch passes 44 checks; all 20 CI/tier checks pass. Package
+JS, minified CSS, bundle, declarations, lint, types, site CSS lint, scoped docs,
+and the Node `24.15.0` production build pass. All 30 production checks pass
+in Chromium and WebKit, including Calendar, RadioGroup, and Tabs interaction
+with unchanged authored input attributes.
+
+### Value-input review follow-up
+
+Calendar's unset `defaultValue` getter returns `null`; a read/write round trip
+preserves the absent reset input. Calendar and Slider replay own input
+properties at the end of construction, so detached `customElements.upgrade()`
+exposes their accessors before connection. Connected and detached regressions
+pass in all three current engines. Runtime Slider `null` follows uncontrolled
+defaults and range presentation consistently; it does not represent controlled
+numeric emptiness.
+
+The three saved granular consumer fixtures pass through the installed package:
+Preact basic, Next.js, and Preact composed. Their controlled Tabs correctly use
+`state`. Raw Preact Calendar value-prop release remains a renderer limitation:
+explicit `undefined` can retain the old date, and omitting the prop can write a
+controlled empty string. The wrapper's HTML attribute projection avoids that
+path; case-sensitive XML attribute maps require a different projection.
+Controlled Slider reset remains silent, disconnection cancels without a commit,
+and inherited direction is still read during pointer movement. Label/reference
+setup refreshes on ARIA inputs, label-slot assignment, scalar/range mode,
+disabled state, and thumb crossing; numeric ARIA values update on each paint.
+
+### Slider verification
+
+Implemented October 18, 2026 on `codex/slider-refactor`, based on merged main at
+`8480701d` after InputAutocomplete PR #247.
+
+- The existing element class, shadow hierarchy, slots, styling hooks, range
+  serialization, form entries, physical-thumb identity, and motion remain.
+  Two hidden owned labels supply range endpoint names through live references.
+  New parts expose the rail container, distinct value regions, separator, and
+  affixes. Presentation states select hidden regions, dragging, pointer focus,
+  and the most recently active physical thumb. All default styles are external;
+  runtime coordinates stay on owned shadow nodes. Rich JSX labels use external
+  CSS for their boxless layout. No injected or adopted stylesheet remains.
+- JSX keeps `value` / `defaultValue` and the event-first numeric callbacks,
+  projecting input through `value` / `defaultvalue`. Consumer property setters
+  reflect these input attributes, including nullish removal. Uncontrolled
+  interaction, reset, and restoration never rewrite them. Removing `value`
+  releases control and retains the applied number.
+  Controlled requests never self-apply, including on form reset. The live getter
+  and submission report applied values; callback snapshots report requested
+  values, including rejected commits. Existing uncontrolled reset notifications
+  and silent restoration remain. Snapshots carry effective constraints and name
+  without wrapper DOM reads; shared native-event forwarding handles hydration.
+- Consumer handlers can cancel keyboard and pointer defaults. Disabling or
+  disconnecting ends gesture ownership, another pointer cannot replace the
+  session, and external updates rebase relative dragging without losing the
+  requested commit. Host listeners preserve interaction inside ancestor
+  propagation boundaries. Pre-registration property inputs replay after upgrade,
+  and reset/restoration clear pending thumb identity requests. Live ARIA
+  references retain changing label text and crossing focus; scalar disabled state is
+  exposed through ElementInternals. RTL pointer geometry, thumb/bubble centering,
+  and markers follow logical placement, including CSS-only direction changes
+  before and after registration. Small decimal values stay within their bounds.
+- All 93 source checks pass in Chrome `155.0.8059.84`, Firefox `155.0`, and
+  Playwright WebKit `26.6`: 90 browser cases and three worker projections.
+  Six original comparisons also pass. All 90 browser cases pass through an
+  isolated npm tarball installation, resolving public exports without Anta source aliases or
+  workspace links. React/React DOM `19.3.0` and Preact `10.29.8` generate real
+  SSR output and retain authored nodes through hydration.
+- All 30 installed-package cases pass in Chrome for Testing `135.0.7049.114`.
+  Seven original variants match dimensions and styles through both imports in
+  all three current engines and Chrome 135. Bubble centering differs by less
+  than 0.22 CSS pixels after replacing direction-dependent transforms with
+  logical alignment. All other region positions match within 0.01 pixels. Of
+  the 56 original/current PNG pairs, 48 are byte-identical; only bubble variants
+  differ. The optional comparison uses `ANTA_SLIDER_COMPARE_REF`;
+  screenshots and metrics live under `tests/.test-output/slider`.
+- Behavioral pages use actual HTTP CSP headers, including
+  `style-src-attr 'none'`, with no component violations. Coverage includes
+  controlled acceptance/rejection and release, same-value acquisition, unchanged
+  uncontrolled host attributes, forms, callback ordering, constraints,
+  pointer cancellation, fieldset disablement, multiple pointers, live names,
+  RTL, missing/late CSS, both independent import orders, disconnect/reconnect,
+  adoption, and external CSS in a consumer's closed shadow root. Screenshot
+  comparison pages separately permit the original shadow stylesheet and the
+  capture tool's synchronization styles.
+- All 13 existing Slider pointer/form/accessibility regressions and 60 batched
+  fast checks for Slider, Input, and Calendar/InputDate pass. The production site
+  builds under Node `24.15.0`, and both Chromium/WebKit Slider production checks
+  pass, including accepting/rejecting requests, application reset, native form
+  reset, styling, and raw markup. Only Slider and changelog package docs were
+  regenerated. The root suite now passes all 358 checks with CI's existing
+  Chromium/debounce filters. Theme tests match part tokens, preserving the
+  original rendering assertions.
+  All 26 production checks also passed, followed by two additional Chrome/WebKit
+  checks confirming pre-registration label/rail dimensions and initial values.
+  Final name review added authored `aria-labelledby` precedence and live referenced
+  text. The review follow-up adds clamped-owner and constraint-rebase commits,
+  propagation boundaries, pre-registration properties, CSS-only direction, and
+  stale uncontrolled crossing requests. Controlled reset and silent disconnect
+  behavior remain unchanged.
+  Expanded engines, original visuals, and installation remain in
+  the slow tier; PR gates select core source checks.
+
+Exact Edge 135, Firefox 136, and shipping Safari/iOS Safari 17.4 were not run.
+Playwright WebKit is engine evidence. Trusted touch is covered by the existing
+Chromium suite; multiple-pointer lifecycle checks are synthetic. Physical touch
+devices, operating-system restoration, and manual assistive technology were not
+exercised. Dynamic SSR marker positions, custom colors, lengths, radii, and
+application styles retain their separate inline-style CSP constraint. Slider
+remains horizontal; no orientation, readonly, or nullable-value API was added.
 
 ### Dialog verification
 

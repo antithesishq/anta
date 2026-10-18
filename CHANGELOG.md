@@ -26,6 +26,17 @@ changes are not listed.
 
 ### Breaking
 
+- [Calendar selection](/input-date/#calendar) leaves authored input attributes
+  unchanged during uncontrolled picks, reset, and restoration. Its `.value`
+  getter now returns `null` when empty; InputDate retains its empty text value
+  (`''`).
+
+- [Slider controlled values](/slider/#managing-the-value) change only when the
+  application updates `value`, including on form reset. Callbacks report requested
+  values; read the element's `value` for its applied result. Uncontrolled
+  interaction, reset, and restoration no longer rewrite input attributes. Remove
+  `value` to release control while retaining the applied number.
+
 - [Browser support](/install/#browser-support) requires Chrome/Edge 135+ and
   Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints use live
   ARIA element references without a copied-text fallback.
@@ -39,9 +50,9 @@ changes are not listed.
   hooks object as a whole. Pass your runtime's hooks rather than selecting a few;
   missing hooks report an error instead of using another renderer's hooks.
 
-- Normal part overrides for [Dialog](/dialog/#styling) and
-  [Menu](/menu/#styling) follow Anta's document cascade layers. Move overrides
-  from `base` to `components`, `utilities`, or unlayered CSS.
+- Normal part overrides for [Dialog](/dialog/#styling), [Menu](/menu/#styling),
+  and [Slider](/slider/#styling) follow Anta's document cascade layers. Move
+  overrides from `base` to `components`, `utilities`, or unlayered CSS.
 
 - [Select single selection](/select/#managing-the-value) uses `null` for a
   controlled empty value, and Clear reports `null` instead of `undefined`. Use
@@ -96,8 +107,9 @@ changes are not listed.
 
 - Default styles for [Input](/input/#styling), [InputTime](/input-time/#styling),
   [Menu](/menu/#styling), [Dialog](/dialog/#styling), [Tooltip](/tooltip/#styling),
-  [Copy feedback](/button/#copy-feedback), [Toaster](/toaster/#styling), and
-  [Expander](/expander/#styling) load from external CSS under strict CSP.
+  [Copy feedback](/button/#copy-feedback), [Toaster](/toaster/#styling),
+  [Expander](/expander/#styling), and [Slider](/slider/#styling) load from external
+  CSS under strict CSP.
 
 - [Input's native decorations](/input/#styling) may remain visible in some
   browsers, including number steppers in Chrome 135 and raw HTML search controls.
@@ -139,11 +151,14 @@ changes are not listed.
 
 #### Calendar
 
+- [Default values](/input-date/#calendar) return `null` when `.defaultValue` is
+  unset, so writing it back preserves the absence of a default.
+- [Property inputs](/input-date/#calendar) assigned before registration take
+  effect when the element upgrades, including while detached.
 - [Unbounded year menus](/input-date/#calendar) center on the displayed year, including
   dates supplied through `value` and `defaultValue`.
 - [Controlled selection](/input-date/#calendar) keeps form values in sync in
-  React and Preact, including selecting a previous date again. The element accepts
-  selection through `state` and exposes `value` as read-only.
+  React and Preact, including selecting a previous date again.
 
 #### Copy feedback
 
@@ -190,6 +205,10 @@ changes are not listed.
 
 #### InputAutocomplete
 
+- [Value ownership](/input-autocomplete/#managing-the-value) retains the latest
+  text, including `''`, when `value` is omitted or becomes `undefined`.
+  Uncontrolled editing resumes from that text; form reset still restores
+  `defaultValue`.
 - [Field callbacks](/input-autocomplete/#events) run alongside text updates and
   popup handling. Form reset restores the supplied default text without opening
   suggestions or moving focus from another control.
@@ -245,8 +264,29 @@ changes are not listed.
 - [Searches and text drafts](/select-faceted/) keep working when React defers
   state updates.
 
-#### Tabs
+#### Slider
 
+- [Dragging](/slider/#relative-dragging) honors consumer cancellation and ends
+  when disabled or disconnected. Parent updates remain applied during a drag,
+  and rebasing preserves the final commit. Ancestor propagation boundaries no
+  longer disable pointer or keyboard input.
+- [Accessible names](/slider/#range-values) follow live label text, and scalar
+  disabled state is exposed to accessibility tools.
+- [Inherited RTL](/slider/#relative-dragging), including CSS `direction`, aligns
+  pointer movement, thumbs, value bubbles, and markers with the rail.
+- [Numeric bounds](/slider/#managing-the-value) contain small decimal values.
+- [Property inputs](/slider/#managing-the-value) assigned before registration
+  take effect when the element upgrades, including while detached. A runtime
+  `value={null}` uses uncontrolled defaults and the matching scalar or range
+  presentation.
+- [Restored ranges](/slider/#range-values) keep each thumb on its restored
+  endpoint when the application takes control.
+
+#### RadioGroup and Tabs
+
+- [RadioGroup](/radio/) and [Tabs](/tabs/) retain the latest applied selection
+  when the JSX `value` prop is omitted or the raw `state` attribute is removed.
+  The keyboard tab stop and active tab panel follow the retained selection.
 - [Per-option tones](/tabs/#tone) color the selected indicator without recoloring
   the track. An explicit neutral option resets the indicator on a toned strip.
 

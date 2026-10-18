@@ -7,9 +7,8 @@ import "./a-tabs.css";
 // Its <a-tab> children are plain light DOM, laid out by a-tabs.css, so the strip is
 // restylable with ordinary CSS and the whole thing is usable hand-assembled.
 //
-// THE INVARIANT: this element NEVER mutates the DOM. It writes nothing to its own
-// host attributes and nothing to its child <a-tab>s. Everything it coordinates is
-// expressed off-DOM:
+// THE INVARIANT: interaction never rewrites host attributes or child DOM.
+// Selection and focus coordination stay off-DOM:
 //
 //   • Selection — it sets each tab's `selected` *property* (not attribute). The tab
 //     reflects that into `:state(selected)` + `aria-selected` via its OWN
@@ -58,7 +57,7 @@ export class ATabsElement extends HTMLElementBase {
   // Microtasks run after the adopting task's upgrades, so deferring is enough.
   private childrenReady = false;
 
-  /** The selected tab's value, or `null` when nothing is selected. */
+  /** Applied tab value, or `null` when empty. Read-only; supply selection through `state`. */
   get value(): string | null {
     return this.#currentValue;
   }
@@ -73,7 +72,7 @@ export class ATabsElement extends HTMLElementBase {
     // survive DOM moves / re-parents rather than snapping back to `default-state`.
     // The listeners use stable arrow-fn refs, so re-adding on reconnect is a no-op.
     if (!this.seeded) {
-      this.uncontrolledValue = this.getAttribute("default-state");
+      this.uncontrolledValue = this.getAttribute("state") ?? this.getAttribute("default-state");
       this.seeded = true;
     }
     this.addEventListener("click", this.onClick);
@@ -114,10 +113,11 @@ export class ATabsElement extends HTMLElementBase {
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     if (name === "noslide" && this.isConnected) this.#syncResizeObserver();
+    const previous = oldValue ?? this.uncontrolledValue;
+    // Retain the latest applied selection when the consumer releases control.
+    if (name === "state") this.uncontrolledValue = newValue ?? oldValue;
     this.sync();
-    // Controlled apply: a changed `state` is the consumer's accepted value — fire
-    // `change` on the real transition (the post-apply counterpart to statechange).
-    if (name === "state" && this.alive && newValue !== oldValue) this.emitChange();
+    if (name === "state" && this.alive && this.#currentValue !== previous) this.emitChange();
   }
 
   formDisabledCallback(disabled: boolean) {
@@ -248,7 +248,7 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   // Native `change`, fired *after* a selection applies (user pick or a controlled
-  // `state` update) — the post-apply counterpart to the cancelable `statechange`.
+  // `value` update) — the post-apply counterpart to the cancelable `statechange`.
   private emitChange() {
     this.dispatchEvent(new Event("change", { bubbles: true }));
   }

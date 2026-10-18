@@ -80,11 +80,10 @@ const READONLY_ALLOWLIST = {
   AMenuElement: ['isControlled', 'isSubmenu', 'triggerAnchor', 'isOpen'],
   ATextElement: ['isTruncated'],
   ABoxElement: ['measurement', 'context', 'isTruncated'],
-  ARadioGroupElement: ['value'],
-  ACalendarElement: ['value'],
-  ATabsElement: ['value'],
   ACheckboxElement: ['checked', 'indeterminate'],
   ASwitchElement: ['checked'],
+  ARadioGroupElement: ['value'], // Selection input is `state`.
+  ATabsElement: ['value'], // Selection input is `state`.
   // `open` mirrors the native <dialog>.open read; the write channel is the
   // `state` attribute / showModal(), and nothing passes `open` as a JSX prop
   // (ADialogAttributes uses `state`), so React 19 never assigns it.

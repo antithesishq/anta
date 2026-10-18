@@ -107,7 +107,11 @@
     "test:toaster:package": "node tests/toaster-package.mjs",
     "test:text": "node --test tests/text-csp.mjs",
     "test:input-time": "node --test tests/input-time-csp.mjs",
-    "test:input-time:package": "node tests/input-time-package.mjs"
+    "test:input-time:package": "node tests/input-time-package.mjs",
+    "test:selection": "node --test tests/selection-projection.mjs tests/selection-value.mjs",
+    "test:selection:package": "node tests/selection-package.mjs",
+    "test:slider": "node --test tests/slider-projection.mjs tests/slider-csp.mjs",
+    "test:slider:package": "node tests/slider-package.mjs"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

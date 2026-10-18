@@ -120,3 +120,59 @@ test('Autocomplete CI gate selects its source and test dependencies without unre
     assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('input-autocomplete'))
   } finally {await rm(directory,{recursive:true})}
 })
+
+test('Slider CI gate selects its source and test dependencies without unrelated component edits', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-slider-gate-'))
+  const git = args => execFileSync('git',args,{cwd:directory,encoding:'utf8'})
+  try {
+    git(['init','-b','fixture']);git(['config','user.name','Fixture']);git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection = workflow.jobs.build.steps.find(step=>step.id==='component-tests').run
+    for (const [path,wanted] of [
+      ['src/components/Slider.tsx',true],['src/elements/a-slider.css',true],
+      ['src/elements/a-slider.ts',true],['src/elements/shadow-aria.ts',true],
+      ['src/anta_helpers.ts',true],['src/native-event-props.ts',true],
+      ['tests/slider-csp.mjs',true],['tests/slider-projection.mjs',true],
+      ['src/components/Calendar.tsx',false],['docs/components/slider.md',false],
+    ]) {
+      const base = git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true})
+      await writeFile(join(directory,path),'fixture')
+      git(['add',path]);git(['commit','-m',path])
+      const output = join(directory,'outputs');await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'),new RegExp(`^slider=${wanted}$`,'m'),path)
+    }
+    const manual = parse(await readFile(new URL('../.github/workflows/component-tests.yml', import.meta.url),'utf8'))
+    assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('slider'))
+    assert.equal(manual.on.workflow_dispatch.inputs.slider_compare_ref.default,'')
+    assert.equal(manual.jobs.components.steps.find(step=>step.name==='Run full component coverage').env.ANTA_SLIDER_COMPARE_REF,'${{ inputs.slider_compare_ref }}')
+  } finally {await rm(directory,{recursive:true})}
+})
+
+test('Selection CI gate covers Calendar, InputDate, RadioGroup, Tabs, and shared value inputs', async () => {
+  const directory=await mkdtemp(join(tmpdir(),'anta-selection-gate-'))
+  const git=args=>execFileSync('git',args,{cwd:directory,encoding:'utf8'})
+  try {
+    git(['init','-b','fixture']);git(['config','user.name','Fixture']);git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection=workflow.jobs.build.steps.find(step=>step.id==='component-tests').run
+    for(const [path,wanted] of [
+      ['src/components/Calendar.tsx',true],['src/components/InputDate.tsx',true],
+      ['src/components/RadioGroup.tsx',true],['src/components/Tabs.tsx',true],
+      ['src/components/Steps.tsx',true],['src/elements/a-tabpanel.ts',true],
+      ['src/elements/value-input.ts',true],
+      ['tests/selection-value.mjs',true],['tests/selection-projection.mjs',true],
+      ['src/components/Slider.tsx',false],['docs/components/tabs.md',false],
+    ]) {
+      const base=git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true});await writeFile(join(directory,path),'fixture')
+      git(['add',path]);git(['commit','-m',path])
+      const output=join(directory,'outputs');await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'),new RegExp(`^selection=${wanted}$`,'m'),path)
+    }
+    const manual=parse(await readFile(new URL('../.github/workflows/component-tests.yml',import.meta.url),'utf8'))
+    assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('selection'))
+  } finally {await rm(directory,{recursive:true})}
+})

@@ -5,8 +5,8 @@
 // hide themselves — Tabs never reads or toggles them, so there's no child introspection
 // (no `Children`/Fragment scan or component-identity matching), which keeps it compatible
 // across React / Preact / custom runtimes and static SSR.
-import { useState } from "../jsx-runtime"
-import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { useNativeEventProps } from "../native-event-props"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel, useSelectionMirror } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
 import { Tooltip } from "./Tooltip"
@@ -191,11 +191,7 @@ export const Tabs = ({
   ...rest
 }: TabsProps) => {
   const controlled = value !== undefined
-  // Uncontrolled selection lives here (re-renders declaratively) — the wrapper needs
-  // the value only to render the strip's roving `tabindex`. Panels read the value
-  // straight from `<a-tabs>`, so they don't depend on this mirror.
-  const [internalValue, setInternalValue] = useState<string | undefined>(defaultValue)
-  const currentValue = controlled ? value : internalValue
+  const [currentValue, setInternalValue] = useSelectionMirror(value, defaultValue)
 
   const tabs = options ?? []
 
@@ -225,6 +221,8 @@ export const Tabs = ({
         }
       : undefined
 
+  const events = useNativeEventProps({ onstatechange, onchange, onfocusin: onFocus, onfocusout: onBlur })
+
   const vertical = orientation === "vertical"
   const focusValue =
     currentValue != null && tabs.some((tab) => tab.value === currentValue)
@@ -252,11 +250,8 @@ export const Tabs = ({
       noslide={noslide ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
-      onstatechange={onstatechange}
-      onchange={onchange}
+      {...events}
       // Focus lands on a tab, not the tablist — report via bubbling focusin/focusout.
-      onfocusin={onFocus}
-      onfocusout={onBlur}
       class={className}
       id={id}
       style={roundStyle(round, "--tabs-round", toneStyle(tone, "--tabs-tone-source", style))}

@@ -14,15 +14,19 @@ import Col from '../../../components/Col.astro'
 import Playground from '../../../components/PlaygroundEmbed.astro'
 import sliderDemoCode from './slider.demo.ts'
 import SliderEditableValueDemo from '../../../components/SliderEditableValueDemo'
+import SliderOwnershipDemo from '../../../components/SliderOwnershipDemo.astro'
 import SliderRangeDemo from '../../../components/SliderRangeDemo.astro'
-import { Slider } from '@antadesign/anta'
+import { Button, Slider } from '@antadesign/anta'
 
 # Slider
 
-**`Slider`** selects one number or an interval between two numbers. Pass a number
-for one thumb or a two-number tuple for two thumbs. Its label sits above the
-rail, and the value appears at the right side of the label row by default. Use
-`value` with `onValueChange` to control it, or `defaultValue` for uncontrolled use.
+`Slider` selects a number or an interval within a numeric range. Use it for
+settings such as volume, playback speed, or price limits when dragging helps
+people choose a value. Use a separate numeric input when precise text entry is
+also useful.
+
+Give every slider a visible `label` or an accessible name. A string label supplies
+the name; pair a rich label with `aria-label` or `aria-labelledby`.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -36,6 +40,83 @@ rail, and the value appears at the right side of the label row by default. Use
 />
 
 </Disclosure>
+
+## Managing the value
+
+Pass `defaultValue` for an uncontrolled slider, or use `value` with
+`onValueChange` when the application owns the number. A controlled slider changes
+only when you update `value`. Turn off **Accept changes** in this example to see
+requests without applying them. **Reset to 35%** changes the application value
+without requesting another change.
+
+<SliderOwnershipDemo />
+
+```tsx folded title="Accept or reject a requested value"
+import { useState } from 'preact/hooks'
+import { Button, Checkbox, Slider } from '@antadesign/anta'
+
+function SliderOwnershipDemo() {
+  const [value, setValue] = useState(35)
+  const [accept, setAccept] = useState(true)
+  const [requested, setRequested] = useState(35)
+
+  return (
+    <>
+      <Checkbox label="Accept changes" checked={accept} onStateChange={(_, { next }) => setAccept(next === true)} />
+      <Slider
+        label="Volume"
+        value={value}
+        valueSuffix="%"
+        onValueChange={(_, { value: next }) => {
+          setRequested(next)
+          if (accept) setValue(next)
+        }}
+      />
+      <Button onClick={() => setValue(35)}>Reset to 35%</Button>
+      <p>Applied: {value}%. Requested: {requested}%.</p>
+    </>
+  )
+}
+```
+
+`0` is a controlled numeric value. Omitting `value` or passing `undefined` selects
+uncontrolled use. Releasing control retains the last applied number until
+interaction or reset changes it. A numeric slider has no empty value.
+
+`onValueChange` reports requested values while dragging. `onValueCommit` reports
+the final request when the gesture ends, including cancellation or capture loss,
+and after each keyboard step. Its value can differ from the applied value when
+the application rejects a controlled request. `onInput` runs before
+`onValueChange`; `onChange` runs before `onValueCommit`. Cancel a keyboard or
+pointer default in `onKeyDown` or `onPointerDown`; the value notifications are
+noncancelable. See the prop reference for callback snapshots and reset behavior.
+
+## Forms
+
+Pass `name` to include the applied number in form submission. A range submits two
+entries under the same name; read them with `FormData.getAll(name)`. Disabled
+sliders submit nothing.
+
+Form reset restores an uncontrolled slider's `defaultValue`. Without one, it
+restores `min`, or `[min, max]` for a range. A changed uncontrolled reset emits
+both value callbacks. Controlled reset retains the application's value, and
+restoration does not overwrite a controlled value. Restoration of an uncontrolled
+value is silent.
+
+<Preview direction="column" align="stretch" background="var(--bg-2)">
+  <form>
+    <Slider label="Brightness" name="brightness" defaultValue={60} valueSuffix="%" />
+    <Button type="reset">Reset brightness</Button>
+  </form>
+</Preview>
+
+```tsx folded
+<form>
+  <Slider label="Brightness" name="brightness" defaultValue={60} valueSuffix="%" />
+  <Button type="reset">Reset brightness</Button>
+</form>
+```
+
 
 ## Relative dragging
 
@@ -52,7 +133,13 @@ dragging, as a native range input does.
 Releasing the pointer or losing pointer capture ends the drag. Moving back over
 the slider without pressing leaves its value unchanged.
 
-Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum and maximum. <kbd>PageUp</kbd> and <kbd>PageDown</kbd> move by one tenth of the range.
+Slider is horizontal. In inherited RTL, its minimum is at the right edge and
+horizontal pointer and arrow movement follow that direction. Up and Down still
+increase and decrease the value. Vertical orientation and readonly mode are not
+part of its API. The control reserves touch gestures for dragging.
+
+Arrow keys change by `step`. <kbd>Home</kbd> selects the minimum; <kbd>End</kbd> selects the nearest allowed
+step to the maximum. <kbd>PageUp</kbd> and <kbd>PageDown</kbd> move by one tenth of the range.
 
 </Col>
 <Col>
@@ -84,7 +171,7 @@ cross.
 
 `onValueChange` receives a number for a single-value slider and an ordered
 `[number, number]` tuple for a range slider. `onValueCommit` uses the same shape.
-Without `defaultValue`, a form reset selects the full `[min, max]` range.
+For an uncontrolled range without `defaultValue`, form reset selects `[min, max]`.
 
 </Col>
 <Col>
@@ -161,9 +248,9 @@ thumb movement and keyboard controls stay the same.
 </Preview>
 
 ```tsx folded
-<Slider label="Volume" defaultValue={48} valueSuffix="%" />
-<Slider label="Volume" defaultValue={48} valueDisplay="inline" valueSuffix="%" />
-<Slider label="Volume" defaultValue={48} valueDisplay="thumb" valueSuffix="%" />
+<Slider label="End" defaultValue={48} valueSuffix="%" />
+<Slider label="Inline" defaultValue={48} valueDisplay="inline" valueSuffix="%" />
+<Slider label="Thumb" defaultValue={48} valueDisplay="thumb" valueSuffix="%" />
 ```
 
 </Col>
@@ -231,6 +318,7 @@ thumb in every theme. The native range uses the same rule for `thumb-tone`.
   max={2}
   step={0.25}
   defaultValue={1}
+  valueSuffix="×"
   markers={[
     { value: 0.5, label: '0.5×' },
     { value: 1, label: 'Normal' },
@@ -250,7 +338,21 @@ thumb in every theme. The native range uses the same rule for `thumb-tone`.
 
 <Disclosure title="Web Component">
 
-Use `<a-slider>` when you are not using React or Preact. Add its `role` and accessible name yourself, then register it from `@antadesign/anta/elements`.
+Use `<a-slider>` with `value` for a controlled value or `defaultvalue` for an
+uncontrolled initial value. Reading the `value` property returns the applied
+number or sorted pair. `input` and `change` events carry request snapshots in
+`event.detail`; accept a controlled request by assigning `event.detail.value` to
+the `value` property. Application updates are silent. See
+[Install and configure](/install/) for imports and hydration setup.
+
+Setting the `value` property reflects the controlled `value` attribute. Removing
+that attribute, or assigning `null` or `undefined` to the property, releases
+control and retains the last applied number. Assigning `defaultValue` reflects
+`defaultvalue`. Uncontrolled interaction, reset, and restoration never rewrite
+these attributes. The applied value stays in internal state and form submission.
+
+Add `tabindex="0"` to a scalar slider, and supply its accessible name. The element
+provides the default slider or group role through `ElementInternals`.
 
 For a range, separate the two numbers with a space in `value` or `defaultvalue`.
 Use `role="group"` and give the range an accessible name. Each thumb receives
@@ -373,10 +475,34 @@ as `Slider`. In raw HTML, `round` needs a CSS length such as `"4px"`; JSX
 
 ## Styling
 
+<Disclosure title="Styling" anchor={false}>
+
 <Columns reverse>
 <Col>
 
-`Slider` renders an `<a-slider>` with a circular thumb. `tone` and `thumbTone` accept named or custom CSS colors; custom values use the public `--slider-tone-source` and `--slider-thumb-tone-source` knobs. Use `round` to shape the rail and thumb together. Target its shadow parts to change their presentation without taking on the interaction code: `::part(thumb)` customizes the thumb’s surface and stroke. The element exposes `header`, `label`, `value`, `control`, `track`, `fill`, `thumb`, `thumb-value`, `markers`, and `extras`.
+`Slider` renders an `<a-slider>` with a circular thumb. `tone` and `thumbTone` accept named or custom CSS colors; custom values use the public `--slider-tone-source` and `--slider-thumb-tone-source` knobs. Use `round` to shape the rail and thumb together. Target its shadow parts to change their presentation without taking on the interaction code: `::part(thumb)` customizes the thumb’s surface and stroke. Existing parts remain available: `header`, `label`, `value`, `control`, `track`,
+`fill`, `thumb`, `thumb-value`, `markers`, and `extras`. `thumb-1` and `thumb-2`
+identify physical thumbs and retain their identity when crossing. Additional parts
+include `rail-area`, `inline-value`, `end-value`, `value-separator`, `value-affix`,
+`fill-start`, `fill-end`, `thumb-value-1`, and `thumb-value-2`.
+
+Defaults load from external CSS, including styles for these shadow parts. Place
+consumer overrides in `components`, `utilities`, or unlayered CSS; earlier `base`
+rules lose to Anta defaults. Load Slider CSS in the same root as the host when
+rendering inside a consumer shadow root. Existing part names may have additional
+tokens, so use `[part~="thumb"]` for shadow queries.
+
+Public host states describe applied presentation: `range`, `dragging`,
+`pointer-focus`, `thumb-1-active`, and `thumb-2-active`. The active-thumb states
+identify the most recently focused or pressed physical thumb. Region states
+`has-header`, `has-markers`, `has-extras`, `has-fill`, `has-fill-end`,
+`has-thumb-value`, and `has-thumb-value-end` indicate visible regions, including
+coincident range bubbles.
+
+Custom colors, radius, sizing, marker positions, and application `style` props can
+serialize inline style attributes during SSR. Under `style-src-attr 'none'`, use
+external consumer CSS for those values; see [CSP guidance](/install/#content-security-policy).
+Default external styling does not remove that separate inline-style constraint.
 
 </Col>
 <Col>
@@ -497,3 +623,5 @@ function SliderEditableValueDemo() {
 }
 .editable-slider > a-slider { grid-column: 1 / -1; }
 ```
+
+</Disclosure>

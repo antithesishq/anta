@@ -527,6 +527,13 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
+Use `state` for controlled selection or `default-state` for the initial
+uncontrolled selection. The read-only `.value` property returns the applied
+selection. Remove `state` to release control and retain that selection.
+User picks update internal state without rewriting authored attributes.
+Accept a controlled pick through `statechange` by setting `state` to
+`event.detail.next`. An empty string is a valid option value.
+
 Keep the tab strip and panels as siblings under one parent. Panels read the active
 value from `<a-tabs>`. Give the selected tab `tabindex="0"` and the others
 `tabindex="-1"`; `<a-tabs>` moves focus and selection with the arrow keys, while

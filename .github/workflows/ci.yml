@@ -47,6 +47,8 @@ jobs:
           TEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -z "$TEST_BASE_SHA" ]; then
+            echo 'selection=true' >> "$GITHUB_OUTPUT"
+            echo 'slider=true' >> "$GITHUB_OUTPUT"
             echo 'input-autocomplete=true' >> "$GITHUB_OUTPUT"
             echo 'select=true' >> "$GITHUB_OUTPUT"
             echo 'dialog=true' >> "$GITHUB_OUTPUT"
@@ -63,6 +65,35 @@ jobs:
             echo 'toaster=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            src/components/{Calendar,InputDate,RadioGroup,Tabs,TabPanel,Steps,Input,InputTime,Button,Menu,MenuItem,Tooltip,Icon}.tsx \
+            'src/elements/a-calendar.*' 'src/elements/a-radio*' 'src/elements/a-tab*' \
+            'src/elements/a-input*' 'src/elements/a-menu*' 'src/elements/a-button.*' \
+            'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/elements/{value-input,index,key-activation,shadow-aria,focus,input-focus-modality,input-trailing-actions}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            tests/selection-{projection,value,package}.mjs tests/calendar-controlled.mjs \
+            tests/consumers/templates/nextjs/package.json scripts/build-bundle.mjs \
+            'tests/component*.mjs' .github/workflows/ci.yml package.json pnpm-lock.yaml \
+            pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'selection=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'selection=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            src/components/Slider.tsx 'src/elements/a-slider.*' src/elements/shadow-aria.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/slider-*' tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'slider=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'slider=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             src/components/{InputAutocomplete,Input,Menu,MenuItem,Button,Icon,Select}.tsx src/components/select-options.tsx \
@@ -144,7 +175,7 @@ jobs:
             'src/elements/a-button.*' 'src/elements/a-menu*' \
             'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
             src/{calendar-core,jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index}.ts \
-            src/elements/{index,key-activation,shadow-aria,focus,copy-behavior,input-focus-modality,input-trailing-actions}.ts \
+            src/elements/{value-input,index,key-activation,shadow-aria,focus,copy-behavior,input-focus-modality,input-trailing-actions}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             tests/calendar-controlled.mjs .github/workflows/ci.yml \
             'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)

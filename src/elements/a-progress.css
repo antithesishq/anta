@@ -1,6 +1,13 @@
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
+/* Resolve container units on the pseudo-element before compositing keyframes. */
+@property --_progress-loading-distance {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 @layer anta.components {
   :where(a-progress, progress[data-anta]) {
     --progress-bg: var(--bg-4);
@@ -90,12 +97,15 @@
   }
   a-progress:not([value])::before,
   progress[data-anta]:not([value])::before {
+    --_progress-loading-distance: var(--progress-loading-x-period);
+
     content: '';
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(0px - var(--progress-loading-x-period));
-    width: calc(100% + var(--progress-loading-x-period));
+    /* Keep the blurred edges outside the track through the complete loop. */
+    left: calc(-2 * var(--progress-loading-x-period));
+    width: calc(100% + 3 * var(--progress-loading-x-period));
     pointer-events: none;
     background: var(--progress-loading-fill);
     filter: blur(var(--progress-loading-blur));
@@ -111,7 +121,7 @@
     }
   }
   @keyframes progress-loading-slide {
-    to { transform: translateX(var(--progress-loading-x-period)); }
+    to { transform: translateX(var(--_progress-loading-distance)); }
   }
 
   :where(a-progress, progress[data-anta])[size="small"] {

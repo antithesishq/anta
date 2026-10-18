@@ -218,6 +218,13 @@ Implemented October 18, 2026 on `codex/panel-csp`, from
 - After removing the optional custom-state guards and synthetic missing-states
   case, all 43 focused CSP/hydration checks passed in the three current engines.
   All 23 remaining Panel regressions passed in Chrome, with lint and types clean.
+- Native opening exceptions and canceled `beforetoggle` events now restore the
+  normal surface and release the attempted focus scope. Original errors remain
+  observable, retry works, and earlier Panel focus scopes resume. All six new
+  source cases and the same six installed-package cases pass in the three
+  current engines and both import modes. All 15 fast Panel checks, 23 existing
+  Panel regressions, and 22 CI/tier checks pass, with lint and types clean. The
+  CI gate now selects Panel for loaded primitive and composition dependencies.
 
 Exact Edge 135, Firefox 136, and Safari/iOS Safari 17.4 were not executed.
 Playwright WebKit provides engine evidence, not a shipping Safari run.

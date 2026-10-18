@@ -133,6 +133,14 @@ test('Panel CI gate selects its source and test dependencies without unrelated c
       ['src/elements/a-panel.ts',true],['src/elements/panel-focus.ts',true],
       ['src/anta_helpers.ts',true],['src/native-event-props.ts',true],
       ['tests/panel-csp.mjs',true],['tests/panel-package.mjs',true],
+      ['src/elements/a-button.ts',true],['src/elements/a-icon.css',true],
+      ['src/elements/a-icon.shapes.css',true],['src/elements/a-input.ts',true],
+      ['src/elements/a-menu.css',true],['src/elements/a-menu-item.ts',true],
+      ['src/elements/a-dialog.ts',true],['src/elements/a-box.ts',true],
+      ['src/elements/a-capture.ts',true],['src/elements/capture-input.ts',true],
+      ['src/elements/shadow-aria.ts',true],['src/elements/input-focus-modality.ts',true],
+      ['src/elements/input-trailing-actions.ts',true],['src/elements/copy-behavior.ts',true],
+      ['src/input-events.ts',true],['tests/panel.fixture.tsx',true],
       ['src/components/Calendar.tsx',false],['docs/components/panel.md',false],
     ]) {
       const base = git(['rev-parse','HEAD']).trim()

@@ -114,7 +114,17 @@ export class APanelElement extends HTMLElementBase {
       this.#surface.tabIndex = -1
       this.#surface.setAttribute('popover', 'manual')
       this.#focus.activate(focused)
-      this.#surface.showPopover()
+      try {
+        this.#surface.showPopover()
+      } catch (error) {
+        this.#restoreSurface()
+        throw error
+      }
+      // Canceling native beforetoggle leaves the surface closed.
+      if (this.#current !== 'maximized') {
+        this.#restoreSurface()
+        return
+      }
       this.#internals.states.add('maximized')
       this.#focus.focusInside(focused)
     } else {

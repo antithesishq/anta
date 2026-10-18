@@ -181,6 +181,45 @@ for(const engine of engines)for(const mode of ['granular','bundle']) {
     assert.equal(await maximized(page),true)
     await request(page,'requestRestore');assert.equal(await maximized(page),false)
   })
+  test.fast(`${name}: opening failures restore layout, content, and the previous focus scope`,async t=>{
+    const page=await pageFor(t,engine,mode);await mount(page);await register(page,mode)
+    const before=await metrics(page)
+    await page.locator('#draft').fill('Retained after failure')
+    await page.evaluate(()=>{window.authored=document.querySelector('#panel').outerHTML;window.field=document.querySelector('#draft')})
+    const fail=selector=>page.locator(selector).evaluate(el=>{
+      const slot=el.shadowRoot.querySelector('slot'),open=slot.showPopover
+      const failure=new DOMException('Opening failed','InvalidStateError')
+      slot.showPopover=()=>{throw failure}
+      try {el.requestMaximize();return false}
+      catch(error) {return error===failure}
+      finally {slot.showPopover=open}
+    })
+    assert.equal(await fail('#panel'),true,'The original native error is preserved')
+    assert.equal(await maximized(page),false)
+    assert.deepEqual(await metrics(page),before)
+    assert.equal(await page.locator('#panel').evaluate(el=>{const s=el.shadowRoot.querySelector('slot');return !s.hasAttribute('popover')&&!s.hasAttribute('tabindex')}),true)
+    assert.equal(await page.evaluate(()=>authored===document.querySelector('#panel').outerHTML&&field===document.querySelector('#draft')),true)
+    assert.equal(await page.locator('#draft').inputValue(),'Retained after failure')
+    // Native beforetoggle cancellation also returns without opening the popover.
+    await page.locator('#panel').evaluate(el=>el.shadowRoot.querySelector('slot').addEventListener('beforetoggle',e=>e.preventDefault(),{once:true}))
+    await request(page);assert.equal(await maximized(page),false)
+    assert.deepEqual(await metrics(page),before)
+    await request(page);assert.equal(await maximized(page),true)
+    await page.evaluate(()=>{
+      const failed=document.createElement('a-panel');failed.id='failed'
+      failed.innerHTML='<input id="failed-field">';document.querySelector('#mount').append(failed)
+    })
+    await page.locator('#draft').focus()
+    assert.equal(await fail('#failed'),true)
+    await page.locator('#opener').focus()
+    assert.equal(await page.locator('#draft').evaluate(el=>el===document.activeElement),true,'An earlier Panel still owns focus')
+    await page.keyboard.press('Shift+Tab')
+    assert.equal(await page.locator('#last').evaluate(el=>el===document.activeElement),true)
+    await request(page,'requestRestore');await page.locator('#failed').evaluate(el=>el.remove())
+    await page.locator('#opener').focus()
+    assert.equal(await page.locator('#opener').evaluate(el=>el===document.activeElement),true)
+    assert.deepEqual(await metrics(page),before)
+  })
   test(`${name}: external consumer overrides and layer precedence reach both parts and backdrop`,async t=>{
     const page=await pageFor(t,engine,mode);await mount(page);await register(page,mode)
     for(const [cls,padding] of [['base-override','0px'],['layer-override','32px'],['override','24px']]) {

@@ -262,6 +262,8 @@ changes are not listed.
 
 #### Panel
 
+- [Maximization](/panel/#styling) restores normal layout and focus handling
+  if native popover opening fails or is canceled.
 - [React hydration](/panel/#controlled) retains state-change callbacks.
 
 #### Select

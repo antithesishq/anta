@@ -85,8 +85,11 @@ jobs:
             echo 'selection=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
-            src/components/Panel.tsx 'src/elements/a-panel.*' src/elements/{panel-focus,focus,index}.ts \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/components/Panel.tsx 'src/elements/a-panel.*' \
+            'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-input.*' \
+            'src/elements/a-menu*' 'src/elements/a-dialog.*' 'src/elements/a-box.*' 'src/elements/a-capture.*' \
+            src/elements/{panel-focus,focus,index,key-activation,shadow-aria,input-focus-modality,input-trailing-actions,copy-behavior,capture-input}.ts \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/panel*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \

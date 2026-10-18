@@ -82,7 +82,6 @@ stylesheet; behavioral and geometry assertions retain strict HTTP CSP headers.
 Use `ANTA_PANEL_CHROMIUM_EXECUTABLE` for a specific Chrome executable.
 Installation checks assert public export resolution without source aliases.
 
-
 Run `CAPTURE_TEST_BROWSER_CHANNEL=chrome node --test tests/panel.test.mjs` to
 check viewport promotion, state requests, keyboard controls, nested ownership,
 reconnection, and preservation of content, focus, selection, and scroll position.

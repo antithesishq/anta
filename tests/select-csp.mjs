@@ -276,7 +276,7 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
       assert.equal(await menu(page).locator('a-menu-group-label').textContent(), 'People')
       await page.locator('#outside').click(); await page.waitForFunction(() => !originalMenu.isOpen)
     })
-    test.fast(`${name} ${framework}: SelectFaceted text layout survives CSP and controlled drafts hydrate in place`, async t => {
+    test(`${name} ${framework}: SelectFaceted text layout survives CSP and controlled drafts hydrate in place`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
       const page = await pageFor(t,engine,mode,framework,true)
       assert.deepEqual(await page.locator('a-input[aria-label="Title"]').evaluate(el => {
         const parent=el.parentElement,style=getComputedStyle(parent)

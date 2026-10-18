@@ -20,6 +20,18 @@ changes are not listed.
 
 ### Breaking
 
+- [Select clearing](/select/#change-details) is reflected in single-select callback
+  types: handlers must accept `undefined` when `clearable` is enabled or dynamic.
+  Reusable `SelectProps<V>` handlers also accept `undefined`; use
+  `SelectProps<V, false>` when clearing is always disabled. Ordinary component
+  calls without clearing and multiple-select array callbacks retain their types.
+
+- [SelectFaceted text-editor styling](/select-faceted/#styling) now targets the
+  CSS-only `a-select-faceted-text` wrapper. Replace selectors such as
+  `a-menu div[data-menu-open] > a-input` with
+  `a-menu a-select-faceted-text > a-input`. The wrapper no longer has an inline
+  `style` attribute, so move attribute-dependent selectors to the region tag.
+
 - [Dialog styling](/dialog/#styling) follows Anta's cascade layers. Move part
   overrides from `base` to `components`, `utilities`, or unlayered CSS.
 
@@ -143,8 +155,7 @@ changes are not listed.
 ### Fixed
 
 - [SelectFaceted text editors](/select-faceted/#styling) retain their padding in
-  server-rendered HTML under `style-src-attr 'none'`. The text editor's wrapper
-  is now the CSS-only `a-select-faceted-text` tag.
+  server-rendered HTML under `style-src-attr 'none'` through external CSS.
 
 - [Select](/select/#styling) preserves its leading-content layout and validation
   chevron color in server-rendered HTML under `style-src-attr 'none'`.

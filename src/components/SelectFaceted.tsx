@@ -32,9 +32,13 @@ interface FacetBase {
   icon?: IconShape
 }
 
-/** A per-facet option-list filter (like `Select`'s `filter`): `true` uses the
- *  built-in case-insensitive substring match on an option's value / label /
- *  hint; a function `(option, query) => boolean` does custom matching. */
+/** Filter the options within a facet. `true` uses case-insensitive substring
+ *  matching on the option's value, label, and hint, with trimmed, flexible
+ *  whitespace. A custom `(option, query) => boolean` receives the original query,
+ *  including leading and trailing whitespace, in both per-facet and global
+ *  search. Custom predicates also run for an empty per-facet query. A whitespace-only
+ *  global query does not activate global results. `false` hides the facet's search
+ *  field; global search still matches its options with the built-in matcher. */
 export type FacetFilter = boolean | ((option: SelectOption<OptionValue>, query: string) => boolean)
 
 /** Pick **one** option. Value: the chosen option's `value` (or `undefined` when
@@ -370,6 +374,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     const filter = facet.filter
     if (!filter) return leaves
     const q = queries[facet.key] ?? ''
+    if (typeof filter !== 'function' && !q.trim()) return leaves
     return leaves.filter(typeof filter === 'function' ? (o) => filter(o, q) : prepareMatch(q))
   }
 

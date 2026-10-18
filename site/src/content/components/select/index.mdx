@@ -761,6 +761,11 @@ the keyboard. Validate the query before offering to create an option.
 | One option | `value` and the resolved `option`; multiple selection also includes `selected`. |
 | Select all or Clear | `all: true` and `selected`, with no single `option`. |
 
+Clear reports `undefined` in single mode and an empty array in multiple mode.
+Handle that empty value when `clearable` is enabled, including when its value is
+a dynamic boolean. Reusable `SelectProps<V>` callbacks account for clearing;
+use `SelectProps<V, false>` when those props never enable it.
+
 Check `'all' in attrs` before reading `attrs.option`, including in single mode
 when `clearable` is enabled. A controlled Select accepts a change when you update
 `value`; it has no cancelable `onStateChange`. See the

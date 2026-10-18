@@ -50,10 +50,15 @@ export function parseMdx(raw, { renderPropsTable, renderComponent, expressions =
   source = source.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
   source = source.replace(/<Disclosure\s+title="Playground"[^>]*>[\s\S]*?<\/Disclosure>/g, '')
   source = source.replace(/<Playground[\s\S]*?(?:\/>|<\/Playground>)/g, '')
-  // Keep section headings and explicit anchors when unfolding disclosures.
+  // Keep alias IDs verbatim; disclosure IDs follow the site's slug rules.
   const anchors = []
-  source = source.replace(/^<(span|a) id="([a-z][a-z0-9-]*)"><\/\1>[ \t]*$/gm, (_, tag, id) => {
-    anchors.push(`<a id="${id}"></a>`)
+  source = source.replace(/<(span|a)\b((?:"[^"]*"|'[^']*'|[^'">])*)>\s*<\/\1\s*>/g, (match, tag, attributes) => {
+    const attrs = attributes.matchAll(/([^\s=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|[^\s]+))?/g)
+    const id = [...attrs].find(attribute => attribute[1] === 'id')
+    const literal = id?.[2] ?? id?.[3]
+    if (!literal || /\s/.test(literal)) return match
+    const value = literal.replace(/"/g, '&quot;')
+    anchors.push(`<a id="${value}"></a>`)
     return `\x00ANCHOR${anchors.length - 1}\x00`
   })
   source = source.replace(/<Disclosure\s+title="([^"]+)"([^>]*)>/g, (_, title, attributes) => {

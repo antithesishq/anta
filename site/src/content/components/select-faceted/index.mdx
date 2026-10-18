@@ -41,6 +41,9 @@ Each field keeps its query independently. Built-in matching searches `value`,
 `label`, and `hint` without case sensitivity; whitespace in a query matches a
 run of whitespace. A custom `filter` receives the original query, including
 leading and trailing spaces, in both search locations.
+It also runs for an empty per-facet query. A whitespace-only global query keeps
+the facet list visible instead of opening global results. Select's custom
+filter receives a trimmed query; account for this difference when sharing predicates.
 
 Pass `placement` to control where the root facet menu opens relative to its
 trigger. It uses the same values as `Menu` and still flips or clamps when space
@@ -564,6 +567,9 @@ and custom color or radius props can still produce inline style attributes.
 Server-rendered inline styles are blocked by `style-src-attr 'none'`.
 
 The text editor uses a CSS-only `a-select-faceted-text` region in its Menu.
+If you targeted the former `div[data-menu-open]` wrapper, replace that part of
+your selector with `a-select-faceted-text`. Its padding now comes from CSS,
+so selectors that require an inline `style` attribute no longer apply.
 Use your trigger's class and the adjacent Menu to scope its padding. The class
 in this example belongs to the demo; replace it with your own selector. Open
 **Title contains** to see the larger inset.

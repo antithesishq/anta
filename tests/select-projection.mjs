@@ -255,3 +255,51 @@ test.fast('SelectFaceted controlled text updates preserve active typing and sync
   field().props.onBlur({})
   assert.equal(reports.length, count)
 })
+
+for (const value of ['alpha', 0, false]) test.fast(`Select single Clear reports undefined for ${typeof value} values`, () => {
+  const reports = []
+  const render = renderer(runtime.Select, {
+    options: [{value, label:'Chosen'}], defaultValue:value, clearable:true,
+    onValueChange:(value,attrs) => reports.push({value,attrs}),
+  })
+  row(render(), 'Clear').props.onmenuselect({})
+  assert.deepEqual(reports, [{value:undefined,attrs:{all:true,selected:false}}])
+  assert.equal(nodes(render()).find(n => n.type==='a-input').props.value, '')
+})
+
+test.fast('SelectFaceted empty built-in queries retain every option and custom filters receive raw whitespace', () => {
+  const seen = []
+  const options = [{value:0,label:'Zero'}, {value:false,label:'Off'}, {value:'disabled',label:'Unavailable',disabled:true}]
+  const render = renderer(runtime.SelectFaceted, {
+    searchable:true,
+    facets:[
+      {key:'built-in',label:'Built in',kind:'single',filter:true,options},
+      {key:'custom',label:'Custom',kind:'single',filter:(option,query)=>{seen.push(query);return query==='  Al'},options:[{value:'alpha',label:'Alpha'}]},
+    ],
+  })
+  const field = (tree,name) => nodes(tree).find(n=>n.type==='a-input' && n.props['aria-label']===name)
+  let tree = render()
+  assert.deepEqual(seen,[''])
+  field(tree,'Filter Built in').props.oninput({currentTarget:{value:'   '}})
+  field(tree,'Filter Custom').props.oninput({currentTarget:{value:'  Al'}})
+  seen.length=0
+  tree=render()
+  assert.deepEqual(seen,['  Al'])
+  assert.ok(row(tree,'Zero'));assert.ok(row(tree,'Off'));assert.ok(row(tree,'Unavailable'));assert.ok(row(tree,'Alpha'))
+  assert.equal(rows(tree).find(n=>text(n)==='Unavailable').props.disabled,'')
+  field(tree,'Filter Custom').props.oninput({currentTarget:{value:' '}})
+  seen.length=0
+  tree=render()
+  assert.deepEqual(seen,[' '])
+  assert.equal(rows(tree).some(n=>text(n)==='Alpha'),false)
+  field(tree,'Filter Custom').props.oninput({currentTarget:{value:'  Al'}})
+  field(tree,'Filter all facets').props.oninput({currentTarget:{value:'  Al'}})
+  seen.length=0
+  tree=render()
+  assert.deepEqual(seen,['  Al'])
+  assert.equal(nodes(tree).filter(n=>n.type==='a-menu-group').length,2)
+  field(tree,'Filter all facets').props.oninput({currentTarget:{value:' '}})
+  tree=render()
+  assert.ok(field(tree,'Filter Custom'))
+  assert.equal(nodes(tree).filter(n=>n.type==='a-menu-group').length,0)
+})

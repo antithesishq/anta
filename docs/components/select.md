@@ -559,7 +559,7 @@ the keyboard. Validate the query before offering to create an option.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `options` | SelectItem[] | — | The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and submenus nest and mix with plain options. Selection stays global (one `value`, leaf options only); a filter query flattens the tree into grouped results. `Select` infers its value type `V` from these options: `{ value: 365 }` makes `onValueChange` report `number`. A mix of value types widens `V` to the union. Each leaf `value` is the option's identity and must be **unique across the whole tree** (selection is value-keyed, so a value repeated in two sections is one logical pick: both rows toggle together, the trigger resolves to the last). Values that stringify alike (`365` and `"365"`) also collide as row keys; dev builds `console.warn` on either. |
-| `clearable?` | boolean | — | Add a "Clear" row pinned in the menu **footer** that empties the selection (single → none, multiple → `[]`). Shown only while something is selected, so it never scrolls away in a long or filtered list. |
+| `clearable?` | boolean \| Clearable | — | Add a "Clear" row pinned in the menu **footer** that empties the selection (single → none, multiple → `[]`). Shown only while something is selected, so it never scrolls away in a long or filtered list. |
 | `clearLabel?` | string | Clear | Label for the `clearable` footer row. |
 | `defaultValue?` | V \| V[] | — | Initial selected option value for uncontrolled use. |
 | `dimActions?` | boolean | true | Dim the default trigger's leading content and chevron at rest. They brighten on hover or focus. Ignored by `renderTrigger`. |
@@ -599,6 +599,11 @@ the keyboard. Validate the query before offering to create an option.
 | --- | --- |
 | One option | `value` and the resolved `option`; multiple selection also includes `selected`. |
 | Select all or Clear | `all: true` and `selected`, with no single `option`. |
+
+Clear reports `undefined` in single mode and an empty array in multiple mode.
+Handle that empty value when `clearable` is enabled, including when its value is
+a dynamic boolean. Reusable `SelectProps<V>` callbacks account for clearing;
+use `SelectProps<V, false>` when those props never enable it.
 
 Check `'all' in attrs` before reading `attrs.option`, including in single mode
 when `clearable` is enabled. A controlled Select accepts a change when you update

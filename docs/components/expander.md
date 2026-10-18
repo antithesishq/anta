@@ -33,6 +33,8 @@ without toggling the section. Selecting title text keeps the selection. Prefer
 
 ## Actions and indicators
 
+<a id="indicator"></a>
+
 Actions stay visible when the section is closed. Use them for operations that
 should remain available without opening the content. `indicatorPlacement="end"`
 places the disclosure mark after the actions. At the start, the chevron turns
@@ -65,6 +67,8 @@ function ExpanderActionsDemo() {
 ```
 
 ## Round and outdent
+
+<a id="round"></a>
 
 Use `round` for a `1rem` radius that stays constant when the section opens.
 Use `outdent` with `priority="tertiary"` to align the title and body with

@@ -45,7 +45,7 @@ try {
   }
   assert.equal(requireConsumer.resolve('@antadesign/anta/components/select-parts.css'), requireConsumer.resolve('@antadesign/anta/components/select.css'))
   console.log('Checking Select through installed package exports with React and Preact SSR…')
-  await run(process.execPath, ['--test', 'tests/select-csp.mjs'], root, {
+  await run(process.execPath, ['--test', 'tests/select-types.mjs', 'tests/select-csp.mjs'], root, {
     ...process.env, ANTA_SELECT_CONSUMER_ROOT: workspace,
   })
 } finally {

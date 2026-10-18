@@ -51,8 +51,8 @@ export interface SelectOption<V extends OptionValue = string> extends OptionPres
   /** Tooltip for this option's row — a string or any node. In a `multiple`
    *  select with `selectAll`, a row with no `tooltip` falls back to a default
    *  hint for the Alt/Option-click "select only this" accelerator; set `tooltip`
-   *  to override that, or `''` to suppress it. The default shortcut hint appears
-   *  after 700 ms of hovering over a row; moving to another row restarts the delay. */
+   *  to override that, or `''` to suppress it. Hovering a row reveals the default
+   *  shortcut hint; moving to another row restarts its delay. */
   tooltip?: React.ReactNode
   /** Additional application data. Read it in `renderOption`. */
   [key: string]: unknown
@@ -315,9 +315,12 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
 
 /**
  * `<Select>` props. `selection` discriminates the value shape: single mode
- * (`value: string`) or `multiple` (`value: string[]`).
+ * (`value: V`) or `multiple` (`value: V[]`).
+ * @typeParam Clearable Whether a single-select callback may receive `undefined`.
+ * Set this to `false` for reusable props that never enable clearing. Component
+ * calls infer a non-nullable callback when `clearable` is omitted or false.
  */
-export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
+export type SelectProps<V extends OptionValue = string, Clearable extends boolean = boolean> = SelectCommonProps<V> &
   (
     | {
         /** Selection mode. `'single'` (the default) keeps `value` a single value and
@@ -325,6 +328,9 @@ export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
          *  array value.
          *  @defaultValue single */
         selection?: 'single'
+        /** Add a pinned Clear footer that empties the selection. Shown only
+         *  while something is selected. Clearing reports `undefined` in single mode. */
+        clearable?: Clearable
         /** Controlled value: the selected option's `value`. Update it through
          *  `onValueChange`. Leave it undefined for uncontrolled use. */
         value?: V
@@ -335,7 +341,7 @@ export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
          *  Narrow on `'all' in attrs` before reading `option`.
          *  Update `value` to accept a controlled change. There is no cancelable
          *  `onStateChange`; see the Input event-model note. */
-        onValueChange?: (value: V, attrs: SelectChangeAttrs<V>) => void
+        onValueChange?: (value: Clearable extends false ? V : V | undefined, attrs: SelectChangeAttrs<V>) => void
       }
     | {
         /** Multi-select: checkboxes on every row, the menu stays open while
@@ -472,7 +478,9 @@ export function optionsWithSelection<V extends OptionValue = string>(
  * />
  * ```
  */
-export const Select = <V extends OptionValue = string>(props: SelectProps<V>) => {
+export function Select<V extends OptionValue = string>(props: SelectProps<V, false>): React.ReactElement
+export function Select<V extends OptionValue = string>(props: SelectProps<V>): React.ReactElement
+export function Select<V extends OptionValue = string>(props: SelectProps<V, false> | SelectProps<V>) {
   // External API is a discriminated union (value typed by `selection`); internally
   // we treat it loosely — `multiple` branches at runtime.
   const {
@@ -635,7 +643,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   const clear = () => {
     const next = multiple ? [] : undefined
     if (!controlled) setInternal(next)
-    emit?.(next as V | V[], { all: true, selected: false })
+    emit?.(next, { all: true, selected: false })
   }
 
   // One option row. `disabled` is the leaf's *effective* disabled (cascaded).

@@ -9,8 +9,6 @@ Verify these opportunities against the current source before starting work.
   separate chat Worker. Verify static delivery, custom domains, redirects,
   headers, preview bindings, streaming, limits, sanitization, and cancellation
   before changing production deployment.
-- Evaluate stricter site CSP across inline examples, Monaco workers, and preview
-  iframes. Component CSP coverage does not establish the site's policy.
 - Evaluate Astro font loading while preserving theme switching, variable fonts,
   iframe synchronization, and application-owned package font choices.
 

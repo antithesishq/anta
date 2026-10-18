@@ -1,4 +1,4 @@
-// Run in a browser served by the Anta dev server; see README's surface verification command.
+// Run in a browser served by the root dev workflow with @antadesign/plot/plot.css loaded.
 import { definePlotElement, definePlotSurfaceElement, scatter } from '../src/browser/index.ts'
 
 export async function checkSurface() {
@@ -41,11 +41,10 @@ export async function checkSurface() {
     check(measures > 0 && contexts > 0, 'initial Box notifications')
     check(surface.measurement.width === 640 && surface.measurement.height === 400, 'responsive dimensions')
 
-    const styles = surface.querySelector('style')
-    check(styles !== null, 'surface installs its own structural styles')
+    check(surface.querySelector('style') === null, 'surface does not inject styles')
     check(getComputedStyle(surface).position === 'relative', 'surface establishes a positioning context')
     check(getComputedStyle(surface.canvas).position === 'absolute'
-        && getComputedStyle(surface.highlight).position === 'absolute', 'canvases stack without external surface CSS')
+        && getComputedStyle(surface.highlight).position === 'absolute', 'canvases stack with external surface CSS')
     check(getComputedStyle(surface.highlight).pointerEvents === 'none', 'highlight passes pointer input through')
 
     const canvas = surface.canvas
@@ -141,8 +140,8 @@ export async function checkSurface() {
     host.append(surface)
     await wait()
     check(surface.canvas === canvas && surface.highlight === highlight, 'reconnect retains both canvases')
-    check(surface.querySelector('style') === styles && surface.querySelectorAll('style').length === 1,
-        'reconnect retains one structural stylesheet')
+    check(surface.querySelectorAll('style').length === 0,
+        'reconnect does not inject styles')
     rejects(() => surface.transferCanvases(), 'reconnect retains worker ownership')
     surface.capture.dispatchEvent(new MouseEvent('contextmenu', {
         bubbles: true, cancelable: true, clientX: 100, clientY: 100,

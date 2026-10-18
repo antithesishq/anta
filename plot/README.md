@@ -18,11 +18,12 @@ aliases. The root component imports shown below require `0.1.3` or later.
 
 ## Use in React
 
-Import the component, register its browser elements, and load an Anta theme:
+Import the component, register its browser elements, and load the stylesheets:
 
 ```tsx
 import { Plot, scatter } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/plot/plot.css'
 import '@antadesign/anta/elements/a-tooltip'
 import '@antadesign/anta/theme-antune.css'
 
@@ -52,6 +53,7 @@ Register `<a-plot>` and assign its configuration through the `plotArgs` property
 ```ts
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import '@antadesign/anta/theme-antune.css'
 
 const plot = document.createElement('a-plot') as APlotElement
@@ -95,13 +97,38 @@ chart; controllers and drawing lifecycle helpers remain internal.
 | `@antadesign/plot/elements/a-plot` | Registers the standalone chart and its dependencies |
 | `@antadesign/plot/elements/a-plot-surface` | Registers the surface used by the JSX components |
 | `@antadesign/plot/elements` | Registers both plot elements |
+| `@antadesign/plot/plot.css` | Required shared styles for every host |
 
-Importing the root does not register browser elements. Base element styles are
-installed automatically; load your application's Anta theme separately.
+Importing the root does not register browser elements. Load
+`@antadesign/plot/plot.css` once in the browser document for `Plot`,
+`PlotSurface`, and standalone `<a-plot>`. Registration entries do not load Plot's
+structural CSS. Load your application's Anta theme separately.
 
-For compatibility, `/auto` registers both elements, and `/plot.css` supplies the
-standalone layout stylesheet.
-A separate `/plot.css` import is not needed for the examples above.
+For compatibility, `/auto` registers both elements. All JavaScript entries,
+including `/browser` and `/auto`, keep Plot's stylesheet separate.
+
+## Load styles under a strict content security policy
+
+Extract CSS imports into an external stylesheet served from an allowed origin.
+Development loaders that inject `<style>` elements require a separate policy.
+To load CSS from HTML, serve the published `dist/plot.css` asset alongside your
+application bundle and use `<link rel="stylesheet" href="/plot.css">`.
+Load the stylesheet in each document, including a destination document before
+adopting a plot into it. Surface styles inherit the application's font and theme.
+
+Plot supports `style-src 'self'; style-src-elem 'self'; style-src-attr 'none'`
+with externally bundled scripts and styles. Runtime sizing, capture and rectangle
+coordinates, cursor, and canvas filters use direct CSSOM property updates.
+These updates still appear in the DOM's `style` attribute. Plot does not parse
+style attributes or inject style elements.
+
+Server-rendered explicit `plotArgs.width` / `height` and consumer `style` props
+serialize as style attributes and are blocked by `style-src-attr 'none'`. For
+strict server rendering, size the plot through an external CSS class and omit
+those props during SSR. Client-rendered dimensions use CSSOM updates. Custom
+tooltip content and application styles must follow the same policy.
+External workers need an allowed `worker-src`; blob workers need `blob:` as well.
+See [the CSP audit and browser validation](CSP.md) for the tested boundaries.
 
 ## Size scatter marks with the viewport
 

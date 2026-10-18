@@ -340,6 +340,7 @@ peer dependencies. For Preact, use `preact/compat` aliases.
 ```tsx
 import { Plot, line } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/plot/plot.css'
 import '@antadesign/anta/elements/a-tooltip'
 import '@antadesign/anta/theme-antune.css'
 
@@ -355,8 +356,8 @@ function Example() {
 
 `Plot` is a function component that uses Anta's configured JSX factory and hooks.
 Importing it does not register browser elements. Import the surface and tooltip
-registration modules once in your browser entry; their elements install their
-base styles automatically. Load your application's Anta theme separately.
+registration modules and `@antadesign/plot/plot.css` once in your browser entry.
+Load your application's Anta theme separately.
 `Plot` handles canvas setup, drawing, interactions, and cleanup.
 
 By default, `Plot` fills its parent. Give the parent a height or set `plotArgs.height`,
@@ -4183,15 +4184,25 @@ document.body.append(container)
 }
 ```
 
-The `a-plot-surface` element installs its structural styles automatically,
-including canvas stacking and overlay positioning. It does not require a
-separate CSS import.
+Load `@antadesign/plot/plot.css` for JSX `Plot`, low-level `PlotSurface`, and
+standalone `<a-plot>`. It provides canvas stacking, overlay positioning, tooltip
+dividers, and host layout. Registration entries keep this stylesheet separate.
+The `/browser` and `/auto` entries also require the shared stylesheet.
 
-The complete `a-plot` host installs its base styles automatically too, giving it
-a width of `100%` and a fallback height of `300px`. No `plot.css` import is needed.
+The standalone host defaults to a width of `100%` and height of `300px`.
 Its sizing rule uses `:where()` with zero specificity, so your CSS can override
-it. Set `height: auto` when using `aspect-ratio` to replace the fixed fallback
-height, as this example does.
+it. Set `height: auto` when using `aspect-ratio` to replace the fallback height.
+JSX `Plot` and `PlotSurface` fill their parent, which must have a height.
+Load the stylesheet in each destination document before adopting a plot.
+
+For a strict content security policy (CSP), extract the imports into external
+CSS allowed by `style-src`. Plot does not inject style elements. Runtime sizes,
+coordinates, cursor, and canvas filters use direct CSSOM updates. These remain
+visible in `style` attributes but do not parse style attribute strings.
+Server-rendered dimension and `style` props do produce parsed inline attributes;
+with `style-src-attr 'none'`, omit them during SSR and size with external CSS.
+Consumer tooltip content and CSS loaders must also comply with the policy.
+Worker scripts need an allowed `worker-src`; blob workers also need `blob:`.
 
 Alternatively, pass `width` and `height` to set inline styles on the host.
 These override stylesheet rules. Removing an argument restores the previous

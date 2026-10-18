@@ -1,6 +1,6 @@
 import { build } from 'esbuild'
 import ts from 'typescript'
-import { readFile, writeFile, readdir, mkdir, rm, copyFile } from 'node:fs/promises'
+import { readFile, writeFile, readdir, mkdir, rm } from 'node:fs/promises'
 import { dirname, resolve, relative, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -53,7 +53,10 @@ await declarations(resolve(output, 'types'))
 
 const result = await build({
     absWorkingDir: root,
-    entryPoints: Object.fromEntries(['index', 'browser', 'auto', 'elements', 'elements/a-plot', 'elements/a-plot-surface'].map(name => [name, `src/entries/${name}.ts`])),
+    entryPoints: {
+        ...Object.fromEntries(['index', 'browser', 'auto', 'elements', 'elements/a-plot', 'elements/a-plot-surface'].map(name => [name, `src/entries/${name}.ts`])),
+        plot: 'src/browser/plot.css',
+    },
     outdir: output,
     bundle: true,
     splitting: true,
@@ -69,15 +72,8 @@ const result = await build({
     logLevel: 'warning',
 })
 
-// Browser entries share the plot layout stylesheet; ship one public stylesheet.
-const browser_css = result.metafile.outputs['dist/browser.js'].cssBundle
-const auto_css = result.metafile.outputs['dist/auto.js'].cssBundle
-if (!browser_css || !auto_css) throw new Error('Missing browser styles')
-const css = await readFile(resolve(root, browser_css), 'utf8')
-if (css !== await readFile(resolve(root, auto_css), 'utf8')) {
-    throw new Error('Browser and auto entry styles differ; choose an explicit shared stylesheet')
-}
-await copyFile(resolve(root, browser_css), resolve(output, 'plot.css'))
+// All hosts use one explicit CSS asset; JavaScript entries never inject or load it.
+if (!result.metafile.outputs['dist/plot.css']) throw new Error('Missing plot.css')
 await mkdir(resolve(root, '.build'), { recursive: true })
 await writeFile(resolve(root, '.build/metafile.json'), JSON.stringify(result.metafile, null, 2) + '\n')
 console.log(`Built ${relative(process.cwd(), output)} (ESM, declarations, and plot.css)`)

@@ -4,7 +4,7 @@ import { clear_highlights, update_hover_canvas } from '../core/render/highlight'
 import { get_canvas_context } from './browser_view'
 import type { ATooltipElement } from '@antadesign/anta/elements/a-tooltip'
 import type { NearestPoint } from '../core/interactions/hit'
-import { render_tooltip_bodies, TOOLTIP_DIVIDER_STYLE } from '../core/presentation/tooltip'
+import { render_tooltip_bodies } from '../core/presentation/tooltip'
 import type { PlotController } from '../core/controller'
 
 type HoverSnapshot = {
@@ -73,7 +73,6 @@ export function render_hover<T>(
         divider: () => {
             const divider = doc.createElement('hr')
             divider.className = 'plot-tooltip-divider'
-            Object.assign(divider.style, TOOLTIP_DIVIDER_STYLE)
             return divider
         },
         group: (children: Node[]) => {

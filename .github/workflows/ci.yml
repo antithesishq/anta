@@ -48,6 +48,7 @@ jobs:
         run: |
           if [ -z "$TEST_BASE_SHA" ]; then
             echo 'selection=true' >> "$GITHUB_OUTPUT"
+            echo 'plot=true' >> "$GITHUB_OUTPUT"
             echo 'slider=true' >> "$GITHUB_OUTPUT"
             echo 'input-autocomplete=true' >> "$GITHUB_OUTPUT"
             echo 'select=true' >> "$GITHUB_OUTPUT"
@@ -65,6 +66,20 @@ jobs:
             echo 'toaster=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'plot/src/**' 'plot/scripts/**' 'plot/tests/**' plot/package.json \
+            src/components/{Tooltip,Menu,MenuItem}.tsx 'src/elements/a-box*' 'src/elements/a-capture*' \
+            'src/elements/a-tooltip*' 'src/elements/a-menu*' src/box-types.ts src/capture-types.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            tests/consumers/templates/nextjs/package.json scripts/build-bundle.mjs \
+            'tests/component*.mjs' .github/workflows/{ci,component-tests}.yml \
+            package.json pnpm-lock.yaml pnpm-workspace.yaml site/package.json)
+          if [ -n "$changed" ]; then
+            echo 'plot=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'plot=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             src/components/{Calendar,InputDate,RadioGroup,Tabs,TabPanel,Steps,Input,InputTime,Button,Menu,MenuItem,Tooltip,Icon}.tsx \

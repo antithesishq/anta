@@ -12,7 +12,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
 const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
 const metadata = JSON.parse(await readFile(resolve(root, '.build/metafile.json'), 'utf8'))
-assert.equal(metadata.outputs['dist/elements.js'].cssBundle, undefined, 'element registration does not implicitly load the standalone stylesheet')
+for (const name of ['index', 'browser', 'auto', 'elements', 'elements/a-plot', 'elements/a-plot-surface']) {
+    assert.equal(metadata.outputs[`dist/${name}.js`].cssBundle, undefined, `${name} keeps Plot CSS separate`)
+}
+assert.deepEqual(Object.keys(metadata.outputs).filter(path => path.endsWith('.css')), ['dist/plot.css'], 'one published Plot stylesheet')
 
 // Follow emitted imports, including lazy chunks, to verify each entry's actual runtime boundary.
 function inputs(entry, visited = new Set()) {
@@ -140,7 +143,8 @@ try {
         }
         const css = await readFile(new URL(import.meta.resolve('@antadesign/plot/plot.css')), 'utf8')
         assert.ok(css.includes(':where(a-plot)'), 'standalone host layout')
-        assert.ok(!css.includes('a-plot-surface'), 'surface owns its layout')
+        assert.ok(css.includes('a-plot-surface'), 'shared surface layout ships in plot.css')
+        assert.ok(css.includes('[data-plot-root]'), 'JSX wrapper layout ships in plot.css')
     `
     await writeFile(resolve(sandbox, 'runtime.mjs'), runtime)
 

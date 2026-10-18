@@ -15,7 +15,7 @@ pnpm test:components --tier slow --component banner
 
 The shared command defaults to `fast`. `--component` accepts `all`, one suite,
 or a comma-separated list. Use `--list` to inspect the selected files without
-running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputAutocomplete, InputTime, Menu, Progress, Select, Selection (Calendar/RadioGroup/Tabs), Slider, Text, Toaster, and Tooltip are registered.
+running them. Banner, Calendar/InputDate, Card, Copy, Dialog, Expander, Input, InputAutocomplete, InputTime, Menu, Plot, Progress, Select, Selection (Calendar/RadioGroup/Tabs), Slider, Text, Toaster, and Tooltip are registered.
 
 Fast checks run selected core regressions in Chromium: initial rendering, primary
 interactions, state, accessibility, and React/Preact integration where applicable.
@@ -44,6 +44,20 @@ to the suite's `slow` list. Update the workflow change gates and manual selector
 Existing commands such as `pnpm test:banner` and `pnpm test:calendar` still run the
 full source suite by default. `ANTA_COMPONENT_TEST_TIER=fast` selects the same core
 subset when invoking a suite directly. No test cases have been removed.
+
+## Plot
+
+Run `pnpm --filter @antadesign/plot test:csp` for HTTP CSP, React/Preact
+hydration, public entries, interactions, worker ownership, and document adoption.
+`pnpm --filter @antadesign/plot test:csp:package` installs local Plot and Anta
+npm tarballs in an isolated directory and repeats the matrix through package
+exports. The shared runner selects Plot with `--component plot`.
+
+Set `PLOT_COMPARE_REF=<ref>` to compare JSX and standalone plots against a Git
+revision in light and dark themes. PNGs, pixel counts, geometry, and viewport
+results go to `tests/.test-output/plot`. Baseline pages permit inline styles;
+current pages use strict HTTP CSP. Explicit SSR dimensions and consumer `style`
+props have separate negative checks because parsed style attributes are blocked.
 
 ## Calendar and InputDate
 

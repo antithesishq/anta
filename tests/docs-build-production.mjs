@@ -78,6 +78,52 @@ async function productionPage(t, engine = chromium) {
   return { page, errors }
 }
 
+test('changelog feed preserves dated releases, HTML notes and working release links', async t => {
+  const { page } = await productionPage(t)
+  const [feed, html, changelog] = await Promise.all([
+    readFile(new URL('changelog.rss', dist), 'utf8'),
+    readFile(new URL('changelog/dev/index.html', dist), 'utf8'),
+    readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf8'),
+  ])
+  const result = await page.evaluate(({ feed, html }) => {
+    const xml = new DOMParser().parseFromString(feed, 'application/xml')
+    const releases = new DOMParser().parseFromString(html, 'text/html')
+    const text = (element, selector) => element.querySelector(selector)?.textContent
+    const channel = xml.querySelector('channel')
+    return {
+      parseError: xml.querySelector('parsererror')?.textContent ?? null,
+      title: text(channel, 'title'),
+      link: text(channel, 'link'),
+      language: text(channel, 'language'),
+      self: xml.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'link')[0]?.getAttribute('href'),
+      buildDate: text(channel, 'lastBuildDate'),
+      items: [...xml.querySelectorAll('item')].map(item => {
+        const link = new URL(text(item, 'link'))
+        return {
+          title: text(item, 'title'),
+          date: text(item, 'pubDate'),
+          validLink: link.origin === 'https://anta.design' && link.pathname === '/changelog/dev/'
+            && !!releases.getElementById(decodeURIComponent(link.hash.slice(1))),
+          validGuid: text(item, 'guid') === link.href && item.querySelector('guid')?.getAttribute('isPermaLink') === 'true',
+          hasNotes: !!new DOMParser().parseFromString(text(item, 'description'), 'text/html').querySelector('li'),
+        }
+      }),
+    }
+  }, { feed, html })
+  assert.equal(result.parseError, null)
+  assert.equal(result.title, 'Anta changelog')
+  assert.equal(result.link, 'https://anta.design/changelog/')
+  assert.equal(result.language, 'en')
+  assert.equal(result.self, 'https://anta.design/changelog.rss')
+  assert.equal(result.buildDate, result.items[0].date)
+  const versions = [...changelog.matchAll(/^## (\S+) — [A-Z][a-z]+ \d{1,2}, \d{4}$/gm)].map(match => `Anta ${match[1]}`)
+  assert.deepEqual(result.items.map(item => item.title), versions)
+  for (const item of result.items) {
+    assert.ok(Number.isFinite(Date.parse(item.date)), item.title)
+    assert.ok(item.validLink && item.validGuid && item.hasNotes, item.title)
+  }
+})
+
 for (const engine of engines) {
   test(`${engine.name()}: review stars render before scripts without moving the page title`, { timeout: 30_000 }, async t => {
     const { page, errors } = await productionPage(t, engine)
@@ -178,6 +224,31 @@ for (const engine of engines) {
     assert.deepEqual(errors, [])
   })
 
+  test(`${engine.name()}: Panel preview retains hydrated requests, layout and input across maximization`, async t => {
+    const {page,errors}=await productionPage(t,engine)
+    await page.goto('https://anta.test/panel/')
+    const island=page.locator('astro-island[component-url*="PanelControlledDemo"]')
+    await page.waitForFunction(el=>!el.hasAttribute('ssr'),await island.elementHandle())
+    const panel=island.locator('a-panel'),input=island.locator('a-input input')
+    await input.fill('Retained production draft')
+    const bounds=()=>panel.evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x+scrollX,y:r.y+scrollY,width:r.width,height:r.height}})
+    const before=await bounds()
+    await island.getByRole('button',{name:'Maximize panel',exact:true}).click()
+    await page.waitForFunction(el=>el.matches(':state(maximized)'),await panel.elementHandle())
+    const size=page.viewportSize()
+    assert.deepEqual(await panel.evaluate(el=>{
+      const surface=el.shadowRoot.querySelector('slot'),r=surface.getBoundingClientRect()
+      return [r.x,r.y,r.width,r.height,getComputedStyle(surface).overflow]
+    }),[0,0,size.width,size.height,'auto'])
+    // A native request exercises the hydrated statechange listener, rather than
+    // the demo button's separate click callback.
+    await panel.evaluate(el=>el.requestRestore())
+    await page.waitForFunction(el=>!el.matches(':state(maximized)'),await panel.elementHandle())
+    assert.deepEqual(await bounds(),before)
+    assert.equal(await input.inputValue(),'Retained production draft')
+    assert.equal(await panel.evaluate(el=>el.shadowRoot.querySelectorAll('style,link').length),0)
+    assert.deepEqual(errors,[])
+  })
   test(`${engine.name()}: selection previews keep uncontrolled values off authored attributes`, async t => {
     const {page,errors}=await productionPage(t,engine)
     await page.goto('https://anta.test/input-date/')

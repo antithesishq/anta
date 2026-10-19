@@ -154,6 +154,15 @@
     color: var(--menu-item-icon-color);
   }
 
+  /* Center custom artwork on the label's first line in rows with hints. */
+  a-menu-item > [data-indicator] {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 1lh;
+    pointer-events: none;
+  }
+
   /* Selection indicator (checkbox / radio) — a passive, label-less control at the
      leading edge. The row is the actual control (see MenuItem), so zero the
      control's own label gap (no label here) and let the row's flex `gap` space it,

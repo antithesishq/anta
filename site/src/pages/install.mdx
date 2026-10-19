@@ -228,6 +228,11 @@ imports with `import '@antadesign/anta/elements'`. Keep the shared tokens and
 optional reset. Registration is idempotent and guarded when `customElements`
 is unavailable. CSS imports need a bundler that handles stylesheets.
 
+CSS-only components such as Title, Tag, Progress, Icon, and Loader render
+without custom element registration. Their entries load styles. Icon and Loader
+retain `register_a_icon()` and `register_a_loader()` for integrations that
+explicitly require a defined tag.
+
 Static imports register classes before the app's first client render or
 hydration. Server-rendered HTML can paint before the browser loads JavaScript;
 load its CSS with the initial document, as in the Next.js setup below.
@@ -657,12 +662,30 @@ Anta's tokens, component stylesheets, and optional themes work when your
 its `style-src` fallback. External CSS and named theme values do not require
 inline style attributes.
 
-Some JSX props produce inline CSS custom properties for custom colors, lengths,
-and dynamic values. The `style` prop also produces inline styles.
-Server rendering serializes these values into HTML
-`style` attributes, which `style-src-attr 'none'` blocks. Put these
-visual customizations in classes and an allowed stylesheet when inline attributes
-are forbidden. Check each component's reference for dynamic-value requirements.
+Custom color props such as `tone="#6750a4"`, explicit lengths such as
+`round={12}` or Icon's `size={24}`, and some dynamic value props produce inline
+CSS custom properties. The `style` prop also produces inline styles.
+Server rendering serializes these values into HTML `style` attributes, which
+`style-src-attr 'none'` blocks. Named tones, preset sizes, and boolean `round`
+use external CSS without these attributes.
+
+When inline attributes are forbidden, omit the customization prop and apply
+its value through `className` and an allowed stylesheet. For example, replace
+`<Icon shape="check" size={24} />` with:
+
+```tsx
+<Icon shape="check" className="confirmation-icon" />
+```
+
+```css
+.confirmation-icon {
+  --icon-size: 24px;
+}
+```
+
+Define runtime values in an application-managed stylesheet permitted by your
+policy when they cannot be expressed with predefined classes. Check each
+component's reference for its styling surface and dynamic-value requirements.
 Client-side assignments to individual CSS properties can behave
 differently; do not rely on hydration to repair blocked server-rendered styles.
 See [CSP rules for style attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
@@ -674,6 +697,16 @@ Server-rendered `<style>` blocks also need CSP permission. They follow
 policy. A nonce on a `<style>` element does not authorize HTML `style`
 attributes. See [CSP rules for stylesheet elements](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-elem).
 
-Anta does not yet support strict CSP across every component. Some components
-still inject shadow `<style>` elements. Loading a theme does not unblock those styles, and
-nested components retain their own CSP requirements.
+Component defaults in `@antadesign/anta`, including Panel's maximized surface
+and backdrop, use external stylesheets. Load the UI entry or bundle CSS as
+described in [Installation](#installation). Custom props and application
+styles can still require inline-style permission as described here.
+
+When placing an Anta component inside an application-owned shadow root, load
+its external CSS in that root through a stylesheet link. Document styles do
+not cross that boundary.
+
+The separate `@antadesign/stickers` package has its own CSP requirements. Its
+static and animated elements still inject shadow `<style>` blocks, which a
+policy allowing only external styles blocks. Loading Anta's external CSS or a
+theme does not authorize those blocks.

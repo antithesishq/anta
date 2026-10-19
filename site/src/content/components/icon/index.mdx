@@ -12,10 +12,9 @@ import Disclosure from '../../../components/Disclosure.astro'
 
 # Icon
 
-Inline-block icon rendered via CSS `mask-image`. Color follows
-`currentColor`, default size is 16×16, and the only required prop is
-`shape`. The set of valid shapes is the union of Anta's built-ins plus
-any custom icons you generate yourself.
+Use Icon for standalone symbols, such as a warning beside a message. Pass a
+`shape` from Anta's built-in set or your generated icons. Color follows the
+surrounding text, and the default size is 16×16 pixels.
 
 `shape="loader"` is the exception: it is Anta's animated loading alias for
 string-only icon props. Use `Loader` when you need a progress value, speed, or
@@ -41,8 +40,9 @@ accessible loading status.
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-Set the accessible name on the raw element. Use `--icon-size` for a portable custom
-size.
+Icon needs its stylesheet without JavaScript registration. Set an accessible
+name when the icon conveys meaning, or `aria-hidden="true"` when decorative.
+Use `--icon-size` for custom dimensions.
 
 <Preview>
   <a-icon shape="warning-triangle" role="img" aria-label="Warning" style={{ '--icon-size': '24px' }}></a-icon>
@@ -70,22 +70,16 @@ together. Default is `16`. Color always follows `currentColor`.
 <Text tone="critical"><Icon shape="warning-triangle" /></Text> {/* tinted */}
 ```
 
-Internally, `size` is applied as the `--icon-size` CSS custom property
-on the rendered `<a-icon>`. The base CSS rule reads it as
-`width: var(--icon-size, 16px); height: var(--icon-size, 16px)`. That
-means consumer CSS (or a parent's variable cascade) can drive icon
-size too — useful for sizing whole regions of UI at once:
+Set `--icon-size` on a container to size its icons together:
 
 ```css
 .toolbar { --icon-size: 18px; }
 ```
 
-> The `<Icon size>` wrapper sets `--icon-size` inline, so it works
-> everywhere. Hand-authoring the raw element's `size` *attribute*
-> (`<a-icon size="18">`) instead relies on typed `attr()` (Chrome 133+);
-> on browsers without it (iOS Safari, Firefox) the attribute is ignored
-> and the icon falls back to the 16px default. Prefer `<Icon size>` for
-> exact custom sizes.
+For a raw `<a-icon>`, use `--icon-size` for custom dimensions. Its `size`
+attribute requires typed CSS `attr()` support. See
+[Content Security Policy](/install/#content-security-policy) when your policy
+blocks inline styles from custom size props.
 
 ## The `blank` spacer
 

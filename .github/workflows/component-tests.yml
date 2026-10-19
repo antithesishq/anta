@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, copy, dialog, expander, input, input-autocomplete, input-time, menu, plot, progress, select, selection, slider, text, toaster, tooltip]
+        options: [all, banner, calendar, card, copy, dialog, expander, input, input-autocomplete, input-time, menu, panel, plot, progress, select, selection, slider, text, toaster, tooltip]
       select_compare_ref:
         description: Optional Git ref for a one-off Select appearance comparison
         type: string
@@ -137,5 +137,13 @@ jobs:
         with:
           name: plot-visual
           path: tests/.test-output/plot
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Panel visual comparison
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: panel-visual
+          path: tests/.test-output/panel
           include-hidden-files: true
           if-no-files-found: ignore

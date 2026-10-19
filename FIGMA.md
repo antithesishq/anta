@@ -115,3 +115,27 @@ Confirmed via the collection dump on 2026-09-25:
 - For component names/structures, use `get_metadata` to see the tree before designing code names.
 - For visual ground truth, use `get_screenshot` on the relevant node.
 - Don't guess from a single component instance — Figma libraries usually contain more variants than any one example surfaces.
+
+## Pending component token rename
+
+The repository does not record whether this rename was completed in Figma.
+Read the full variable collection before changing anything. Check variable
+names, aliases, and WEB code syntax against the map, then apply only missing
+renames. Preserve each variable's values and mode mappings.
+
+These are the corresponding CSS token names. Figma variables may include
+collection folder prefixes.
+
+| Previous name | Current name |
+| --- | --- |
+| `--checkbox-fill` | `--checkbox-bg-selected` |
+| `--checkbox-fill-hover` | `--checkbox-bg-selected-hover` |
+| `--checkbox-fill-active` | `--checkbox-bg-selected-active` |
+| `--radio-fill` | `--radio-bg-selected` |
+| `--radio-fill-hover` | `--radio-bg-selected-hover` |
+| `--radio-fill-active` | `--radio-bg-selected-active` |
+| `--tag-fill` | `--tag-bg-solid` |
+
+Use current collection values when checking the rename. Historical palette
+snapshots do not define the current component colors. Remove this pending
+checklist after confirming that the Figma variables and code syntax match.

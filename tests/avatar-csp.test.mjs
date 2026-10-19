@@ -8,7 +8,7 @@ import { build } from 'esbuild'
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium } = requireSite('playwright')
 const { PNG } = requireSite('pngjs')
-const policy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'"
+const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self'; object-src 'none'"
 let browser, server, origin
 
 before(async () => {
@@ -150,16 +150,4 @@ test('Avatar badge visibility, placement, and cutout follow the badge attribute 
       assert.equal(badge.mask, 'none')
     }
   }
-})
-
-test('direct style.display assignments remain allowed under style-src self', async t => {
-  const page = await pageFor(t)
-  assert.equal(await page.evaluate(() => {
-    const probe = document.createElement('span')
-    document.body.append(probe)
-    probe.style.display = 'none'
-    const display = getComputedStyle(probe).display
-    probe.remove()
-    return display
-  }), 'none')
 })

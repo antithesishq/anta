@@ -9,6 +9,8 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 Astro dev uses `--ignore-lock` so agent sessions keep the server in the root
 dev process tree. The root launcher owns PID tracking and shutdown.
 
+See [site follow-ups](FOLLOWUPS.md) for pending deployment and performance work.
+
 ## Local servers
 
 Choose the server from the task without asking the user to choose process flags.

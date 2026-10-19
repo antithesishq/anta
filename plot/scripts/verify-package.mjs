@@ -197,7 +197,7 @@ try {
 
     const core_consumer = resolve(sandbox, 'core-consumer.ts')
     await writeFile(core_consumer, `
-        import { Plot, PlotSurface, scatter, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError, type FontArg, type FontConfig, type FontCaps } from '@antadesign/plot'
+        import { Plot, PlotSurface, scatter, bar, custom, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError, type FontArg, type FontConfig, type FontCaps } from '@antadesign/plot'
         import type { ReactNode } from 'react'
         const props: PlotProps<ReactNode> = {plotArgs:{series:[]}}
         const surfaceProps: PlotSurfaceProps = {canvasOwner:'worker'}
@@ -207,7 +207,27 @@ try {
         import { PlotController } from '@antadesign/plot'
         // @ts-expect-error Canvas lifecycle helpers are internal.
         import { update_hover_canvas } from '@antadesign/plot'
-        const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const args: PlotArgs<string> = {series:[scatter({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const mixed: PlotArgs<string> = { series: [
+            scatter({ data: [{ time: 1, temperature: 20 }], x: 'time', y: 'temperature', tooltip: ({ row }) => row.temperature.toFixed() }),
+            scatter({ data: [{ time: 1, pressure: 100 }], x: 'time', y: 'pressure', tooltip: ({ row }) => row.pressure.toFixed() }),
+        ] }
+        // @ts-expect-error The plot boundary must not weaken row inference inside a factory.
+        const wrongRow: PlotArgs<string> = { series: [scatter({ data: [{ time: 1, temperature: 20 }], x: 'time', y: 'temperature', tooltip: ({ row }) => row.pressure.toFixed() })] }
+        type StackRow = { group: string; first: number } | { group: string; second: number }
+        const stackRows: StackRow[] = [{ group: 'A', first: 2 }, { group: 'B', second: 3 }]
+        bar({ data: stackRows, x: 'group', y: ['first', 'second'] })
+        bar({ data: stackRows, y: 'group', x: ['first', 'second'] })
+        // @ts-expect-error Stack fields must exist on at least one member of the row union.
+        bar({ data: stackRows, x: 'group', y: ['frist'] })
+        const customRows = custom({
+            data: [{ value: 2 }],
+            renderer: (series) => { series.rows?.[0].value.toFixed() },
+            hit_test: () => 0,
+            tooltip: ({ row }) => row.value.toFixed(),
+            on_select: ({ row }) => { row.value.toFixed() },
+        })
+        custom({ renderer: () => {} })
         const viewportSized = scatter({
             data: [{ x: 1, y: 2, weight: 3 }],
             size: (row, index, viewport) => Math.min(12, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
@@ -260,8 +280,8 @@ try {
             onError(failure) { const phase: string = failure.phase },
         }
         createElement(Plot<React.ReactNode>, reactProps)
-        const renderer: CustomRendererFn = (series, context) => { context.color_at(0) }
-        const highlight_renderer: CustomHighlightRendererFn = (series, index, context) => { context.color_at(index) }
+        const renderer: CustomRendererFn<{ x: number; y: number }> = (series, context) => { context.color_at(0) }
+        const highlight_renderer: CustomHighlightRendererFn<{ x: number; y: number }> = (series, index, context) => { context.color_at(index) }
         custom({data:[{x:1,y:2}], renderer, highlight_renderer, hit_test:() => 0})
         import { Plot as AntaPlot, type PlotProps as AntaPlotProps } from '@antadesign/plot'
         const antaProps: AntaPlotProps = { plotArgs: { series: [scatter({data: [{x:1,y:2}], tooltip: true})] } }
@@ -272,9 +292,9 @@ try {
         import '@antadesign/plot/elements/a-plot-surface'
         import { plotElementReady } from '@antadesign/plot/elements'
         import { plotSurfaceElementReady } from '@antadesign/plot/elements'
-        const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const args: PlotArgs<string> = {series:[scatter({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
         // @ts-expect-error Tooltip content must match the declared host content type.
-        const invalid: PlotArgs<string> = {series:[scatter<number>({data:[],tooltip:()=> 1})]}
+        const invalid: PlotArgs<string> = {series:[scatter({data:[],tooltip:()=> 1})]}
     `
     await writeFile(resolve(sandbox, 'consumer.ts'), consumer)
     for (const resolution of [ts.ModuleResolutionKind.Bundler, ts.ModuleResolutionKind.NodeNext]) {

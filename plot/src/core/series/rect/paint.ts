@@ -7,7 +7,7 @@ import { inset_band } from "../../render/band"
  * @param series - the rect series
  * @param render - the shared render context (canvas, inner rect, scales, fallback color)
  */
-export function draw_rect(series: ComposedRect, render: RenderContext): void {
+export function draw_rect<Row, TooltipContent>(series: ComposedRect<Row, TooltipContent>, render: RenderContext): void {
     const { ctx, inner, x_scale, y_scale, color } = render
 
     if (series.x.length === 0) {
@@ -59,7 +59,7 @@ export function draw_rect(series: ComposedRect, render: RenderContext): void {
  * @param inner - the plot area, which a spanned axis covers edge to edge
  * @returns a resolver mapping a row index to its { left, top, width, height } in canvas pixels, or null
  */
-export function make_rect_resolver(series: ComposedRect, x_scale: Scale, y_scale: Scale, inner: Rect): (i: number) => PixelRect | null {
+export function make_rect_resolver<Row, TooltipContent>(series: ComposedRect<Row, TooltipContent>, x_scale: Scale, y_scale: Scale, inner: Rect): (i: number) => PixelRect | null {
     const align = series.band_align ?? 'center'
     const offset_x = series.offset?.x ?? 0
     const offset_y = series.offset?.y ?? 0

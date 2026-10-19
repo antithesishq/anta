@@ -1,6 +1,7 @@
 import { HTMLElementBase, isModifiedNavigationKey } from '../anta_helpers'
 import { Temporal } from 'temporal-polyfill'
 import './a-calendar.css'
+import { upgradeValueProperties } from './value-input'
 
 /**
  * `<a-calendar>` — a **light-DOM, form-associated** month grid, and the
@@ -23,18 +24,18 @@ import './a-calendar.css'
  *   `{ next, prev, reason }`: ISO-string dates (or `null`), `reason` ∈
  *   `'user' | 'reset' | 'restore'`. `preventDefault()` vetoes a `'user'` pick in
  *   uncontrolled mode.
- * - `change` — fired AFTER a selection applies (uncontrolled), and on
- *   reset/restore.
+ * - `change` — fired AFTER a selection applies, including controlled attribute
+ *   updates and accepted reset/restore.
  * - `navigate` — `detail: { date }` (ISO). Fired on keyboard navigation (and
  *   when the target month isn't rendered) so the renderer can move the roving tab
  *   stop and flip the displayed month.
  *
  * ## Controlled vs uncontrolled (like `<a-radio-group>`)
  *
- * Presence of the **`value`** attribute = controlled: a pick only *requests* a
- * change (fires `statechange`); the consumer answers by updating `value`. With
- * **`defaultvalue`** instead, the element owns selection — a pick self-applies
- * (form value + `change`) unless vetoed.
+ * Presence of **`value`** = controlled: a pick requests a change through
+ * `statechange`; the renderer answers by updating `value`. With **`defaultvalue`**
+ * instead, the element owns selection and applies picks unless vetoed. Consumer
+ * property assignments reflect these inputs; picks never rewrite them.
  *
  * ## Selection & keyboard
  *
@@ -49,8 +50,9 @@ export class ACalendarElement extends HTMLElementBase {
   static observedAttributes = ['value', 'data-focus']
 
   private internals?: ElementInternals
-  /** Selection in uncontrolled mode (controlled reads the `value` attribute). */
+  /** Latest applied selection, retained when controlled state is removed. */
   private selectedIso: string | null = null
+  private seeded = false
 
   constructor() {
     super()
@@ -61,22 +63,25 @@ export class ACalendarElement extends HTMLElementBase {
     }
     this.addEventListener('click', this.onClick)
     this.addEventListener('keydown', this.onKeydown)
+    upgradeValueProperties(this)
   }
 
   connectedCallback() {
-    // A `value` property set before upgrade shadows the accessor — re-apply it.
-    if (Object.prototype.hasOwnProperty.call(this, 'value')) {
-      const v = (this as unknown as { value: string }).value
-      delete (this as unknown as { value?: string }).value
-      ;(this as unknown as { value: string }).value = v
+    if (!this.seeded) {
+      this.selectedIso = this.#controlled
+        ? this.currentIso()
+        : this.getAttribute('defaultvalue') || null
+      this.seeded = true
     }
-    this.selectedIso = this.getAttribute('value') || this.getAttribute('defaultvalue') || null
     this.applyFormValue(this.currentIso())
   }
 
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
     if (name === 'value') {
-      this.applyFormValue(this.currentIso())
+      const prev = this.selectedIso
+      this.selectedIso = this.currentIso()
+      this.applyFormValue(this.selectedIso)
+      if (this.seeded && this.selectedIso !== prev) this.dispatchEvent(new Event('change', { bubbles: true }))
       return
     }
     if (name === 'data-focus') {
@@ -84,13 +89,14 @@ export class ACalendarElement extends HTMLElementBase {
     }
   }
 
-  /** Controlled when the `value` attribute is present (the renderer sets it only
-   *  in controlled mode); otherwise the element owns selection. */
+  /** A present value input keeps selection controlled, including an empty date. */
   get #controlled(): boolean {
     return this.hasAttribute('value')
   }
   private currentIso(): string | null {
-    return this.#controlled ? this.getAttribute('value') || null : this.selectedIso
+    return this.#controlled
+      ? this.getAttribute('value') || null
+      : this.selectedIso
   }
 
   private applyFormValue(value: string | null) {
@@ -206,42 +212,45 @@ export class ACalendarElement extends HTMLElementBase {
   // --- Public value API + form callbacks ----------------------------------
 
   private emitState(next: string | null, prev: string | null, reason: 'reset' | 'restore') {
+    const controlled = this.#controlled
+    if (!controlled) {
+      this.selectedIso = next
+      this.applyFormValue(next)
+    }
     // Non-bubbling — see requestSelect (avoid colliding with an ancestor a-menu).
     this.dispatchEvent(
       new CustomEvent('statechange', { bubbles: false, detail: { next, prev, reason } }),
     )
-    this.dispatchEvent(new Event('change', { bubbles: true }))
+    if (!controlled) this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
-  /** The selected date as an ISO string (`''` when empty). */
-  get value(): string {
-    return this.currentIso() ?? ''
+  /** Applied ISO date, or `null` when empty. String assignments supply controlled input. */
+  get value(): string | null {
+    return this.currentIso()
   }
-  set value(v: string) {
-    // React and Preact assign known custom-element properties instead of
-    // attributes. Reflect every public property write so an initially
-    // controlled Calendar enters the same mode as authored value="..." HTML.
-    this.setAttribute('value', v ?? '')
+
+  set value(value: string | null | undefined) {
+    if (value == null) this.removeAttribute('value')
+    else this.setAttribute('value', value)
   }
-  /** Form field name — mirrors the `name` attribute, like native `<input>.name`. */
-  get name(): string {
-    return this.getAttribute('name') ?? ''
+
+  /** Authored initial/reset date, or `null` when no default is supplied. */
+  get defaultValue(): string | null {
+    return this.getAttribute('defaultvalue')
   }
-  set name(v: string) {
-    this.setAttribute('name', v)
+
+  set defaultValue(value: string | null | undefined) {
+    if (value == null) this.removeAttribute('defaultvalue')
+    else this.setAttribute('defaultvalue', value)
   }
 
   formResetCallback() {
     const def = this.getAttribute('defaultvalue') || null
     const prev = this.currentIso()
-    this.selectedIso = def
-    this.applyFormValue(def)
     this.emitState(def, prev, 'reset')
   }
   formStateRestoreCallback(state: string) {
     const prev = this.currentIso()
-    this.selectedIso = state || null
-    this.applyFormValue(state || null)
     this.emitState(state || null, prev, 'restore')
   }
 }

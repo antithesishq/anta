@@ -8,7 +8,7 @@ export const DEFAULT_RULE_WIDTH = 1
  * @param series - the composed rule series
  * @returns the values on the rule's own axis
  */
-export function rule_values(series: ComposedRule): Float64Array {
+export function rule_values<Row, TooltipContent>(series: ComposedRule<Row, TooltipContent>): Float64Array {
     return series.side === 'x' ? series.x : series.y
 }
 
@@ -19,7 +19,7 @@ export function rule_values(series: ComposedRule): Float64Array {
  * @param series - the rule series
  * @param render - the shared render context (canvas, inner rect, scales, fallback color)
  */
-export function draw_rule(series: ComposedRule, render: RenderContext): void {
+export function draw_rule<Row, TooltipContent>(series: ComposedRule<Row, TooltipContent>, render: RenderContext): void {
     const { ctx, inner, x_scale, y_scale, color } = render
     const values = rule_values(series)
 

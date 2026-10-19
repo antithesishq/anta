@@ -3,11 +3,12 @@ import {
   SYNC_POPUP_ARIA,
   anchorRect,
   isPopupAriaReceiver,
+  isComposingKey,
   isModifiedNavigationKey,
   setMenuPresence,
   type PopupAriaReceiver,
 } from '../anta_helpers'
-import { AMenuItemElement, MENU_ITEM_SELECTOR, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
+import { AMenuItemElement, MENU_ITEM_SELECTOR, isMenuItemEl, isCustomMenuItem, ensureMenuItemKeyListener } from './a-menu-item'
 import { activeFocus, cycleFocus, focusParent, tabStops } from './focus'
 import { emitCopyRequest } from './copy-behavior'
 import './a-menu.css'
@@ -56,207 +57,255 @@ type StateChangeDetail = {
   originEvent?: Event
 }
 
-/* ------------------------------------------------------------------ *
- * Module-level coordinator — PURE IN-MEMORY JS, never touches the DOM
- * tree or host attributes (the host app may reconcile light DOM from a
- * worker thread). It only tracks the open stack and calls each element's
- * own _doShow()/_doHide(), which mutate only their shadow internals, plus
- * el.focus() (moving focus is not a tree mutation).
- * ------------------------------------------------------------------ */
-const openStack: AMenuElement[] = []
-
-let docBound = false
-let boundDoc: Document | null = null
-let boundView: (Window & typeof globalThis) | null = null
-// A click can remove hovered popup content before _doHide runs, making
-// :hover false even though the mouse is still inside the popup's bounds.
-let mouseX: number | null = null
-let mouseY = 0
-
-function trackMouse(e: PointerEvent) {
-  mouseX = e.pointerType === 'mouse' ? e.clientX : null
-  if (mouseX !== null) mouseY = e.clientY
-}
-
-function mouseInside(rect: DOMRect): boolean {
-  return mouseX !== null && mouseX >= rect.left && mouseX < rect.right
-    && mouseY >= rect.top && mouseY < rect.bottom
-}
-
-function bindDocListeners(doc: Document, view: Window & typeof globalThis) {
-  if (docBound) return
-  doc.addEventListener('pointerdown', onDocPointerDown, true)
-  doc.addEventListener('pointermove', trackMouse, { capture: true, passive: true })
-  doc.addEventListener('pointerleave', clearMouse)
-  doc.addEventListener('keydown', onDocKeyDown, true)
-  doc.addEventListener('keyup', onDocKeyUp, true)
-  doc.addEventListener('contextmenu', onDocContextMenu, true)
-  view.addEventListener('resize', onResize)
-  boundDoc = doc
-  boundView = view
-  docBound = true
-}
-
-function unbindDocListeners() {
-  if (!docBound) return
-  boundDoc?.removeEventListener('pointerdown', onDocPointerDown, true)
-  boundDoc?.removeEventListener('pointermove', trackMouse, true)
-  boundDoc?.removeEventListener('pointerleave', clearMouse)
-  boundDoc?.removeEventListener('keydown', onDocKeyDown, true)
-  boundDoc?.removeEventListener('keyup', onDocKeyUp, true)
-  boundDoc?.removeEventListener('contextmenu', onDocContextMenu, true)
-  boundView?.removeEventListener('resize', onResize)
-  boundDoc = null
-  boundView = null
-  docBound = false
-  mouseX = null
-}
-
-function clearMouse() {
-  mouseX = null
-}
-
-/** Find the deepest open menu whose surface or anchor contains the event.
- *  `composedPath` includes shadow surfaces around slotted custom content.
- *
- *  `primaryClick` marks a left-button pointerdown. A context menu's anchor is
- *  the whole region it follows and re-triggers ONLY on right-click, so on a
- *  normal left-click it isn't part of the menu system — a click on it must
- *  dismiss like any outside click. (A click-trigger anchor stays exempt so its
- *  own click handler toggles instead of racing the dismiss.) */
-function menuIndexForEvent(e: Event, primaryClick = false): number {
-  const path = e.composedPath()
-  for (let i = openStack.length - 1; i >= 0; i--) {
-    const m = openStack[i]
-    if (path.includes(m.surface)) return i
-    const anchor = m.triggerAnchor
-    if (!anchor) continue
-    if (primaryClick && m.hasAttribute('context')) continue
-    if (path.includes(anchor)) return i
-  }
-  return -1
+function isElement(node: EventTarget | null): node is HTMLElement {
+  return !!node && (node as Node).nodeType === 1
 }
 
 function pathCrossesTopLayerBeforeAnchor(e: Event, anchor: HTMLElement): boolean {
   for (const node of e.composedPath()) {
     if (node === anchor) return false
     if (
-      (node instanceof HTMLDialogElement && node.matches(':modal')) ||
-      (node instanceof HTMLElement && node.matches(':popover-open'))
+      (isElement(node) && node.localName === 'dialog' && node.matches(':modal')) ||
+      (isElement(node) && node.matches(':popover-open'))
     )
       return true
   }
   return false
 }
 
-/** Is `node` part of any open menu — its shadow surface or its slotted
- *  light-DOM content (the menu items)? Published to `anta_helpers` so
- *  `a-tooltip` suppresses every tooltip that isn't part of an open menu (it
- *  would otherwise paint over the menu). The trigger anchor is deliberately
- *  NOT counted: a context menu's anchor is the whole right-clicked region, and
- *  even a dropdown's trigger sits outside the menu, so their tooltips must stay
- *  suppressed while the menu is open. */
-function nodeHitsMenus(node: Node): boolean {
-  for (const m of openStack) {
-    if (m.contains(node) || m.surface.contains(node)) return true
+const MENU_COORDINATION = Symbol.for('anta.menu-coordination')
+interface MenuCoordination {
+  stack: AMenuElement[]
+  observe(menu: AMenuElement, anchor: HTMLElement): void
+  unobserve(menu: AMenuElement, anchor: HTMLElement): void
+  watchParent(parent: Node, refresh: () => void): (() => void) | undefined
+  bind(doc: Document, view: Window & typeof globalThis): void
+  unbind(): void
+  readonly mouseX: number | null
+  mouseInside(rect: DOMRect): boolean
+}
+type MenuDocument = Document & { [MENU_COORDINATION]?: MenuCoordination }
+
+function coordination(doc: Document): MenuCoordination {
+  return (doc as MenuDocument)[MENU_COORDINATION] ??= createCoordination(doc)
+}
+
+function createCoordination(doc: Document): MenuCoordination {
+  const openStack: AMenuElement[] = []
+
+  let docBound = false
+  let boundDoc: Document | null = null
+  let boundView: (Window & typeof globalThis) | null = null
+  // A click can remove hovered popup content before _doHide runs, making
+  // :hover false even though the mouse is still inside the popup's bounds.
+  let mouseX: number | null = null
+  let mouseY = 0
+
+  function trackMouse(e: PointerEvent) {
+    mouseX = e.pointerType === 'mouse' ? e.clientX : null
+    if (mouseX !== null) mouseY = e.clientY
   }
-  return false
-}
 
-// Live open-state provider (reads `openStack` directly, so no push/pop
-// instrumentation is needed). Set once on module load; `a-tooltip` consumes it.
-setMenuPresence({
-  isOpen: () => openStack.length > 0,
-  contains: nodeHitsMenus,
-})
-
-function onDocPointerDown(e: PointerEvent) {
-  trackMouse(e)
-  if (!openStack.length) return
-  const index = menuIndexForEvent(e, (e as MouseEvent).button === 0)
-  // The first menu above the hit owns the branch to dismiss. A miss closes
-  // the root; a hit on the deepest menu leaves the stack open.
-  openStack[index + 1]?.requestClose(e)
-}
-
-function onDocContextMenu(e: Event) {
-  if (!openStack.length) return
-  // Right-click inside the menu system (or on an open anchor) is left alone —
-  // a context anchor's own handler repositions rather than toggling.
-  if (menuIndexForEvent(e) === -1) dismiss(e)
-}
-
-function onResize() {
-  if (!openStack.length) return
-  dismiss()
-}
-
-function onDocKeyDown(e: KeyboardEvent) {
-  const menu = openStack[openStack.length - 1]
-  if (!menu) return
-  menu.handleKey(e)
-}
-
-function onDocKeyUp(e: KeyboardEvent) {
-  const menu = openStack[openStack.length - 1]
-  if (!menu) return
-  menu.handleKeyUp(e)
-}
-
-/** Dismiss the open system after an outside interaction or resize. Routed through
- *  the root's `requestClose`, so it emits `statechange` and respects a controlled
- *  root (which stays open until the consumer flips `state`). */
-function dismiss(originEvent?: Event) {
-  openStack[0]?.requestClose(originEvent)
-}
-
-/** Force-close the whole stack, top-down, emitting `statechange` for each menu
- *  that was open. Used when a fresh root menu takes over (a hard replace) —
- *  the backstop for the "at most one menu system on screen" invariant. A
- *  controlled menu is force-hidden too: its polite, controlled-respecting
- *  dismissal already happened via the outside-pointerdown path (see
- *  `_dismissNotified`, which keeps it from receiving `statechange` twice). A
- *  consumer who ignores `statechange` ends with `state="open"` but a hidden
- *  menu — the same misuse class as ignoring `onChange` on a controlled input.
- *  This is a force-close backstop, so the emit is notify-only (the veto result
- *  is ignored). */
-function closeAll() {
-  for (let i = openStack.length - 1; i >= 0; i--) {
-    const m = openStack[i]
-    if (m.isOpen && !m._dismissNotified) m.emitChange('closed')
-    m._doHide()
+  function mouseInside(rect: DOMRect): boolean {
+    return mouseX !== null && mouseX >= rect.left && mouseX < rect.right
+      && mouseY >= rect.top && mouseY < rect.bottom
   }
-  openStack.length = 0
-  unbindDocListeners()
-}
 
-/* ------------------------------------------------------------------ *
- * Lazy-listener observer — attach the trigger listeners only while the
- * anchor is on-screen (also correctness under DOM reconciliation: it
- * re-attaches when the anchor reappears, tears down when it leaves).
- * ------------------------------------------------------------------ */
-const anchorToMenu = new WeakMap<Element, AMenuElement>()
+  function bindDocListeners(doc: Document, view: Window & typeof globalThis) {
+    if (docBound) return
+    doc.addEventListener('pointerdown', onDocPointerDown, true)
+    doc.addEventListener('pointermove', trackMouse, { capture: true, passive: true })
+    doc.addEventListener('pointerleave', clearMouse)
+    doc.addEventListener('keydown', onDocKeyDown, true)
+    doc.addEventListener('keyup', onDocKeyUp, true)
+    doc.addEventListener('contextmenu', onDocContextMenu, true)
+    view.addEventListener('resize', onResize)
+    boundDoc = doc
+    boundView = view
+    docBound = true
+  }
 
-function handleIntersection(entries: IntersectionObserverEntry[]) {
-  for (const entry of entries) {
-    const menu = anchorToMenu.get(entry.target)
-    if (!menu) continue
-    if (!menu.listening && entry.isIntersecting) {
-      requestAnimationFrame(() => menu.setupListeners())
-    } else if (menu.listening && !entry.isIntersecting) {
-      requestAnimationFrame(() => {
-        menu.teardownListeners()
-        // An anchor scrolled out of view shouldn't leave an orphaned menu.
-        if (menu.isOpen) menu.close()
-      })
+  function unbindDocListeners() {
+    if (!docBound) return
+    boundDoc?.removeEventListener('pointerdown', onDocPointerDown, true)
+    boundDoc?.removeEventListener('pointermove', trackMouse, true)
+    boundDoc?.removeEventListener('pointerleave', clearMouse)
+    boundDoc?.removeEventListener('keydown', onDocKeyDown, true)
+    boundDoc?.removeEventListener('keyup', onDocKeyUp, true)
+    boundDoc?.removeEventListener('contextmenu', onDocContextMenu, true)
+    boundView?.removeEventListener('resize', onResize)
+    boundDoc = null
+    boundView = null
+    docBound = false
+    mouseX = null
+  }
+
+  function clearMouse() {
+    mouseX = null
+  }
+
+  /** Find the deepest open menu whose surface or anchor contains the event.
+   *  `composedPath` includes shadow surfaces around slotted custom content.
+   *
+   *  `primaryClick` marks a left-button pointerdown. A context menu's anchor is
+   *  the whole region it follows and re-triggers ONLY on right-click, so on a
+   *  normal left-click it isn't part of the menu system — a click on it must
+   *  dismiss like any outside click. (A click-trigger anchor stays exempt so its
+   *  own click handler toggles instead of racing the dismiss.) */
+  function menuIndexForEvent(e: Event, primaryClick = false): number {
+    const path = e.composedPath()
+    for (let i = openStack.length - 1; i >= 0; i--) {
+      const m = openStack[i]
+      if (path.includes(m.surface)) return i
+      const anchor = m.triggerAnchor
+      if (!anchor) continue
+      if (primaryClick && m.hasAttribute('context')) continue
+      if (path.includes(anchor)) return i
+    }
+    return -1
+  }
+
+  /** Is `node` part of any open menu — its shadow surface or its slotted
+   *  light-DOM content (the menu items)? Published to `anta_helpers` so
+   *  `a-tooltip` suppresses every tooltip that isn't part of an open menu (it
+   *  would otherwise paint over the menu). The trigger anchor is deliberately
+   *  NOT counted: a context menu's anchor is the whole right-clicked region, and
+   *  even a dropdown's trigger sits outside the menu, so their tooltips must stay
+   *  suppressed while the menu is open. */
+  function nodeHitsMenus(node: Node): boolean {
+    for (const m of openStack) {
+      if (m.contains(node) || m.surface.contains(node)) return true
+    }
+    return false
+  }
+
+  // Live open-state provider (reads `openStack` directly, so no push/pop
+  // instrumentation is needed). Register it per connected document for Tooltip.
+  const menuPresence = {
+    isOpen: (doc?: Document) => openStack.some(menu => !doc || menu.ownerDocument === doc),
+    contains: nodeHitsMenus,
+  }
+
+  setMenuPresence(menuPresence, doc)
+
+  function onDocPointerDown(e: PointerEvent) {
+    trackMouse(e)
+    if (!openStack.length) return
+    const index = menuIndexForEvent(e, (e as MouseEvent).button === 0)
+    // The first menu above the hit owns the branch to dismiss. A miss closes
+    // the root; a hit on the deepest menu leaves the stack open.
+    openStack[index + 1]?.requestClose(e)
+  }
+
+  function onDocContextMenu(e: Event) {
+    if (!openStack.length) return
+    // Right-click inside the menu system (or on an open anchor) is left alone —
+    // a context anchor's own handler repositions rather than toggling.
+    if (menuIndexForEvent(e) === -1) dismiss(e)
+  }
+
+  function onResize() {
+    if (!openStack.length) return
+    dismiss()
+  }
+
+  function onDocKeyDown(e: KeyboardEvent) {
+    const menu = openStack[openStack.length - 1]
+    if (!menu) return
+    menu.handleKey(e)
+  }
+
+  function onDocKeyUp(e: KeyboardEvent) {
+    const menu = openStack[openStack.length - 1]
+    if (!menu) return
+    menu.handleKeyUp(e)
+  }
+
+  /** Dismiss the open system after an outside interaction or resize. Routed through
+   *  the root's `requestClose`, so it emits `statechange` and respects a controlled
+   *  root (which stays open until the consumer flips `state`). */
+  function dismiss(originEvent?: Event) {
+    openStack[0]?.requestClose(originEvent)
+  }
+
+  // Root menus share a direct-child observer for their sibling triggers.
+  // Submenu anchors are their parents, so reparenting already reconnects them.
+  const parents = new Map<Node, { observer: MutationObserver; refresh: Set<() => void> }>()
+  function watchParent(parent: Node, refresh: () => void) {
+    const Observer = doc.defaultView?.MutationObserver
+    if (!Observer) return
+    let entry = parents.get(parent)
+    if (!entry) {
+      const callbacks = new Set<() => void>()
+      const observer = new Observer(() => { for (const callback of callbacks) callback() })
+      observer.observe(parent, { childList: true })
+      entry = { observer, refresh: callbacks }
+      parents.set(parent, entry)
+    }
+    const { observer, refresh: callbacks } = entry
+    callbacks.add(refresh)
+    return () => {
+      if (!callbacks.delete(refresh) || callbacks.size) return
+      observer.disconnect()
+      parents.delete(parent)
     }
   }
-}
 
-const lazyObserver: IntersectionObserver | null =
-  typeof IntersectionObserver !== 'undefined'
-    ? new IntersectionObserver(handleIntersection, { root: null, rootMargin: '0px', threshold: 0 })
-    : null
+  const anchorToMenu = new Map<Element, AMenuElement>()
+
+  const frames = new Map<Element, number>()
+  let observer: IntersectionObserver | undefined
+
+  function observe(menu: AMenuElement, anchor: HTMLElement) {
+    const previous = anchorToMenu.get(anchor)
+    if (previous && previous !== menu) {
+      previous.teardownListeners()
+      const frame = frames.get(anchor)
+      if (frame !== undefined) doc.defaultView?.cancelAnimationFrame(frame)
+      frames.delete(anchor)
+      // Re-observing an existing target is a no-op. Start a new observation so
+      // an overlapping replacement receives its own initial visibility entry.
+      observer?.unobserve(anchor)
+    }
+    anchorToMenu.set(anchor, menu)
+    const Observer = doc.defaultView?.IntersectionObserver
+    if (!Observer) { menu.setupListeners(); return }
+    observer ??= new Observer(entries => {
+      for (const entry of entries) {
+        const menu = anchorToMenu.get(entry.target)
+        if (!menu) continue
+        const view = doc.defaultView
+        if (!view) continue
+        const previous = frames.get(entry.target)
+        if (previous !== undefined) view.cancelAnimationFrame(previous)
+        frames.set(entry.target, view.requestAnimationFrame(() => {
+          frames.delete(entry.target)
+          if (anchorToMenu.get(entry.target) !== menu || !menu.isConnected || menu.ownerDocument !== doc) return
+          if (entry.isIntersecting) menu.setupListeners()
+          else if (menu.listening) {
+            menu.teardownListeners()
+            if (menu.isOpen) menu.close()
+          }
+        }))
+      }
+    }, { root: null, rootMargin: '0px', threshold: 0 })
+    observer.observe(anchor)
+  }
+
+  function unobserve(menu: AMenuElement, anchor: HTMLElement) {
+    if (anchorToMenu.get(anchor) !== menu) return
+    anchorToMenu.delete(anchor)
+    const frame = frames.get(anchor)
+    if (frame !== undefined) doc.defaultView?.cancelAnimationFrame(frame)
+    frames.delete(anchor)
+    observer?.unobserve(anchor)
+    if (!anchorToMenu.size) { observer?.disconnect(); observer = undefined }
+  }
+  return {
+    stack: openStack, observe, unobserve, watchParent, bind: bindDocListeners, unbind: unbindDocListeners,
+    get mouseX() { return mouseX }, mouseInside,
+  }
+}
 
 /**
  * `<a-menu>` — dropdown / context menu surface (shadow popover, JS
@@ -265,7 +314,7 @@ const lazyObserver: IntersectionObserver | null =
  * Styling notes (`a-menu.css` ships comment-free):
  * - `a-menu:not(:defined)` is hidden — before upgrade the host is an unknown
  *   inline element and its light-DOM items would flash in the page. Once
- *   defined, the shadow `:host { display: contents }` governs and content
+ *   defined, external `display: contents` governs and content
  *   renders only inside the popover surface via the slot.
  * - Only the surface "chrome" is tokenized (`--menu-*`): it lives inside the
  *   shadow popover, unreachable from plain consumer CSS; the custom
@@ -321,6 +370,8 @@ export class AMenuElement extends HTMLElementBase {
   // layout shifts. Those movements do not all produce a DOM observer callback, so
   // this frame is active only while the menu is visible.
   #anchorTrackingFrame?: number
+  // Preserve anchoring mode while a sibling trigger is temporarily absent.
+  #anchorRelative = false
   #lastAnchorRect?: readonly number[]
   // Vertical-follow baseline captured on each full position(): the frozen
   // horizontal offset and the gap to the anchor's top. Tracking translates to hold
@@ -348,124 +399,7 @@ export class AMenuElement extends HTMLElementBase {
       if (this.internals) this.internals.ariaHidden = 'true'
     } catch {}
     const shadow = this.attachShadow({ mode: 'open' })
-    const style = document.createElement('style')
-    // Shadow surface CSS (kept comment-free — this string ships into every
-    // consumer document). The shadow root holds the surface div and its slots, so
-    // the bare `div` selector is
-    // unambiguous; slotted light DOM isn't matched by shadow selectors.
-    // Two non-obvious rules, learned the hard way:
-    // - `display` is set ONLY on `:popover-open`. Any author display on the
-    //   closed state beats the UA `[popover]:not(:popover-open){display:none}`
-    //   rule regardless of specificity, which would keep a CLOSED popover laid
-    //   out in the top layer — invisible yet still hoverable/clickable. Closed
-    //   stays UA-governed (plus the discrete `display` transition below), so a
-    //   closed menu is truly gone once the exit finishes.
-    // - Enter AND exit are a CSS transition (opacity + a vertical `translate`),
-    //   with `display`/`overlay` transitioned via `allow-discrete` so the menu
-    //   animates OUT before leaving the top layer, and `@starting-style` driving
-    //   the enter. (An earlier attempt got stuck at display:flex/opacity 0 after
-    //   close — including `overlay` in the transition is what fixes that.)
-    //   Resting at opacity 0 also hides the first paint, before position() sets
-    //   the transform. Where `allow-discrete`/`@starting-style` are unsupported
-    //   (older Safari/Firefox) it degrades to an instant open/close.
-    style.textContent = `
-      :host { display: contents; }
-
-      .container {
-        position: fixed;
-        left: 0;
-        top: 0;
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        flex-direction: column;
-        min-width: max(var(--menu-min-width, 88px), var(--_anchor-width, 0px));
-        max-width: calc(100vw - ${2 * MARGIN}px);
-        max-height: calc(100dvh - ${2 * MARGIN}px);
-        overflow: hidden;
-        background: var(--menu-bg, Canvas);
-        color: var(--text-2, CanvasText);
-        border: var(--menu-border, 1px solid);
-        border-radius: var(--menu-radius, 8px);
-        box-shadow: var(--menu-shadow, 0 8px 24px rgba(0,0,0,0.2));
-        -webkit-backdrop-filter: var(--menu-backdrop-filter, blur(20px));
-        backdrop-filter: var(--menu-backdrop-filter, blur(20px));
-        outline: none;
-
-        /* Closed / exit state — fade + a tiny vertical settle (no horizontal
-           shift). This 140ms governs the EXIT (open → closed); the enter is a
-           touch quicker (see :popover-open below) so the menu feels snappy to
-           open but unhurried to dismiss. 'display' and 'overlay' transition with
-           'allow-discrete' so the menu stays in the top layer and visible while
-           it animates OUT, then hides. */
-        opacity: 0;
-        translate: 0 -4px;
-        transition:
-          opacity 140ms ease-out,
-          translate 140ms ease-out,
-          width var(--menu-width-duration, 160ms) ease,
-          display 140ms allow-discrete,
-          overlay 140ms allow-discrete;
-      }
-      .container:popover-open {
-        display: flex;
-        opacity: 1;
-        translate: 0 0;
-        /* Enter (closed → open) — quicker than the exit above. */
-        transition:
-          opacity 100ms ease-out,
-          translate 100ms ease-out,
-          width var(--menu-width-duration, 160ms) ease,
-          display 100ms allow-discrete,
-          overlay 100ms allow-discrete;
-      }
-      /* Enter: start from the closed state and transition in. */
-      @starting-style {
-        .container:popover-open { opacity: 0; translate: 0 -4px; }
-      }
-      slot[name="header"],
-      slot[name="footer"] {
-        display: block;
-        flex: none;
-      }
-      slot[name="header"]::slotted(a-menu-header),
-      slot[name="header"]::slotted(a-select-header),
-      slot[name="footer"]::slotted(a-menu-footer),
-      slot[name="footer"]::slotted(a-select-footer) {
-        display: block;
-        padding: var(--menu-padding, 4px);
-      }
-      /* The scrolling body — only the items scroll; the header / footer slots stay
-         fixed above and below it. min-height:0 lets it shrink so its own scrollbar
-         engages instead of the flex item overflowing. The 1px inter-item gap that
-         used to live on the container lives here now. */
-      .scroll {
-        flex: 1 1 auto;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        scrollbar-width: thin;
-        /* The menu's padding lives here (not on the clipping container) so an item's
-           focus outline has room inside the scroll box instead of being clipped at
-           the edge; scroll-padding keeps a focused row off the edge when scrolled. */
-        padding: var(--menu-padding, 4px);
-        scroll-padding-block: var(--menu-padding, 4px);
-        /* Soft scroll edges: fade the content into the top / bottom only on the side
-           with more to scroll (the --fade-* vars, set from JS, are 0 otherwise). The
-           top also clears a hard --gap-top band (fully transparent, ahead of the ramp)
-           so a row scrolling up disappears cleanly under a pinned header / filter field
-           before the fade begins, instead of bleeding right against it. */
-        --fade-top: 0px;
-        --fade-bottom: 0px;
-        --gap-top: 0px;
-        -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--gap-top), #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
-        mask-image: linear-gradient(to bottom, transparent 0, transparent var(--gap-top), #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
-      }
-    `
-    this.surface = document.createElement('div')
+    this.surface = this.doc.createElement('div')
     this.surface.className = 'container'
     // Exposed as a shadow part so consumers can style the popover surface
     // (background, radius, shadow, padding) from plain CSS — `a-menu::part(menu)` —
@@ -477,16 +411,18 @@ export class AMenuElement extends HTMLElementBase {
     // pinned content (a filter field, a footer action) stays put and the scrollbar
     // spans just the items. `header`/`footer` slots are empty (0-height) for a plain
     // menu, so the body fills the surface exactly as before.
-    const header = document.createElement('slot')
+    const header = this.doc.createElement('slot')
     header.setAttribute('name', 'header')
-    const scroll = document.createElement('div')
+    header.part.add('header')
+    const scroll = this.doc.createElement('div')
     scroll.className = 'scroll'
     scroll.setAttribute('part', 'scroll')
-    scroll.append(document.createElement('slot'))
+    scroll.append(this.doc.createElement('slot'))
     scroll.addEventListener('scroll', () => this.updateScrollFade(), { passive: true })
     this.scrollEl = scroll
-    const footer = document.createElement('slot')
+    const footer = this.doc.createElement('slot')
     footer.setAttribute('name', 'footer')
+    footer.part.add('footer')
     this.surface.append(header, scroll, footer)
 
     // Keep an open submenu alive while the pointer is inside it. Hover-intent is
@@ -508,21 +444,43 @@ export class AMenuElement extends HTMLElementBase {
 
     // Single delegated click for activation + the close contract.
     this.surface.addEventListener('click', this.onSurfaceClick)
+    // Combobox popup padding must retain field focus just like its option rows.
+    this.surface.addEventListener('mousedown', (e) => {
+      if (e.button === 0 && this.#comboAnchor) e.preventDefault()
+    })
 
-    shadow.append(style, this.surface)
+    shadow.append(this.surface)
+  }
+
+  #connectedDocument?: Document
+  #observedAnchor?: HTMLElement
+  #unwatchTrigger?: () => void
+  #stateFrame?: number
+  #positionFrame?: number
+  get #coordination(): MenuCoordination { return coordination(this.#connectedDocument ?? this.doc) }
+
+  #closeAll() {
+    const state = this.#coordination
+    for (let i = state.stack.length - 1; i >= 0; i--) {
+      const menu = state.stack[i]
+      if (menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
+      menu._doHide()
+    }
+    state.stack.length = 0
+    state.unbind()
   }
 
   connectedCallback() {
+    this.#connectedDocument = this.doc
     // Ensure Enter/Space activation works even for a menu built only from link
     // items (`<a data-anta-menu-item>`), where no `<a-menu-item>` ever upgrades
     // to install the listener itself. Idempotent per document.
     ensureMenuItemKeyListener(this.doc)
     this.#syncStopPropagation()
     this.#syncAccessibilityRegions()
-    const anchor = this.triggerAnchor
-    if (anchor) {
-      anchorToMenu.set(anchor, this)
-      lazyObserver?.observe(anchor)
+    this.#syncTriggerAnchor()
+    if (!this.isSubmenu && this.parentNode) {
+      this.#unwatchTrigger = this.#coordination.watchParent(this.parentNode, () => this.#syncTriggerAnchor())
     }
     this.#syncPopupAriaRelations()
     queueMicrotask(() => {
@@ -531,10 +489,18 @@ export class AMenuElement extends HTMLElementBase {
     // Apply an initial controlled state (e.g. <a-menu state="open">) once
     // connected — attributeChangedCallback may have fired before this during
     // upgrade, when the anchor / layout weren't ready yet.
-    if (this.hasAttribute('state')) requestAnimationFrame(() => this.syncState())
+    if (this.hasAttribute('state')) this.#stateFrame = this.view.requestAnimationFrame(() => {
+      this.#stateFrame = undefined
+      this.syncState()
+    })
   }
 
   disconnectedCallback() {
+    this.#unwatchTrigger?.()
+    this.#unwatchTrigger = undefined
+    const oldView = this.#connectedDocument?.defaultView
+    if (this.#stateFrame !== undefined) oldView?.cancelAnimationFrame(this.#stateFrame)
+    this.#stateFrame = undefined
     // Silent teardown — don't emit `statechange` for an element being removed.
     this.hide(false)
     this.teardownListeners()
@@ -543,11 +509,41 @@ export class AMenuElement extends HTMLElementBase {
     this.accessibilityObserver?.disconnect()
     this.accessibilityObserver = undefined
     this.#clearPopupAriaRelations()
-    const anchor = this.triggerAnchor
-    if (anchor && anchorToMenu.get(anchor) === this) {
-      anchorToMenu.delete(anchor)
-      lazyObserver?.unobserve(anchor)
+    if (this.#observedAnchor) this.#coordination.unobserve(this, this.#observedAnchor)
+    this.#observedAnchor = undefined
+    this.#connectedDocument = undefined
+  }
+
+  /** Rebind only when the authored sibling node changes, after reconciliation.
+   *  Keep open state intact; focus remains with the application replacing it. */
+  #syncTriggerAnchor() {
+    if (!this.isConnected) return
+    const anchor = this.triggerAnchor ?? undefined
+    if (anchor === this.#observedAnchor) return
+    if (this.#observedAnchor) this.#coordination.unobserve(this, this.#observedAnchor)
+    this.teardownListeners()
+    this.listening = false
+    this.cancelOpenTimer()
+    this.cancelCloseTimer()
+    this.#pendingComboActivate = null
+    this.#observedAnchor = anchor
+    if (anchor) this.#coordination.observe(this, anchor)
+
+    if (this._shown) {
+      if (this.#searchField) this.startComboObserver()
+      else {
+        this.comboObserver?.disconnect()
+        this.comboObserver = undefined
+        if (this.activeItem) this.setActive(null)
+      }
+      if (this.#anchorRelative) {
+        if (anchor) {
+          this.position()
+          this.#startAnchorTracking()
+        } else this.#stopAnchorTracking()
+      }
     }
+    this.#syncPopupAriaRelations()
   }
 
   attributeChangedCallback(name: string) {
@@ -696,7 +692,7 @@ export class AMenuElement extends HTMLElementBase {
   /** Custom menu rows that support the combobox cursor and selection state. */
   private focusableItems(): AMenuItemElement[] {
     return this.navigableItems().filter(
-      (el): el is AMenuItemElement => el instanceof AMenuItemElement,
+      (el): el is AMenuItemElement => isCustomMenuItem(el),
     )
   }
 
@@ -753,16 +749,22 @@ export class AMenuElement extends HTMLElementBase {
   private scrollItemIntoView(item: HTMLElement) {
     const c = this.scrollEl
     if (!c) return
-    const pad = 4
+    const style = this.view.getComputedStyle(c)
+    const padding = (value: string) => {
+      const amount = Number.parseFloat(value)
+      return Number.isFinite(amount) ? amount * (value.endsWith('%') ? c.clientHeight / 100 : 1) : 0
+    }
     const cr = c.getBoundingClientRect()
+    const top = cr.top + c.clientTop + padding(style.scrollPaddingTop)
+    const bottom = cr.top + c.clientTop + c.clientHeight - padding(style.scrollPaddingBottom)
     const ir = item.getBoundingClientRect()
-    if (ir.top < cr.top + pad) c.scrollTop -= cr.top + pad - ir.top
-    else if (ir.bottom > cr.bottom - pad) c.scrollTop += ir.bottom - cr.bottom + pad
+    if (ir.top < top) c.scrollTop -= top - ir.top
+    else if (ir.bottom > bottom) c.scrollTop += ir.bottom - bottom
   }
 
   /** Fade the scrolling body's content into the top / bottom edges — but only on the
    *  side that actually has more to scroll, so a short (non-scrolling) menu and the
-   *  true top / bottom stay crisp. Drives the `--fade-*` / `--gap-top` vars the
+   *  true top / bottom stay crisp. Drives the private fade/gap properties the
    *  `.scroll` mask reads; runs on scroll and after every (re)position.
    *  Shadow-internal only. */
   private updateScrollFade() {
@@ -770,9 +772,9 @@ export class AMenuElement extends HTMLElementBase {
     if (!el) return
     const top = el.scrollTop > 1
     const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1
-    el.style.setProperty('--fade-top', top ? '16px' : '0px')
-    el.style.setProperty('--gap-top', top ? '3px' : '0px')
-    el.style.setProperty('--fade-bottom', bottom ? '14px' : '0px')
+    el.style.setProperty('--_menu-fade-top', top ? '16px' : '0px')
+    el.style.setProperty('--_menu-gap-top', top ? '3px' : '0px')
+    el.style.setProperty('--_menu-fade-bottom', bottom ? '14px' : '0px')
   }
 
   /* ------------------------------ combobox mode ------------------------------ */
@@ -883,7 +885,7 @@ export class AMenuElement extends HTMLElementBase {
     this.activeItem = item
     if (item) {
       item.active = true
-      item.scrollIntoView?.({ block: 'nearest' })
+      this.scrollItemIntoView(item)
     }
     this.#syncPopupAriaRelations()
     // Keep the raw event for custom fields and observers. Built-in a-input fields
@@ -893,6 +895,11 @@ export class AMenuElement extends HTMLElementBase {
     )
   }
 
+  #clearComboCursor() {
+    this.#pendingComboActivate = null
+    if (this.activeItem) this.setActive(null)
+  }
+
   /** Re-seat the cursor on the first option — but only once the filter has input.
    *  An empty filter (e.g. right after opening) shows NO active row, so the first
    *  ArrowDown is what steps onto the list; typing then keeps the top match active.
@@ -900,12 +907,13 @@ export class AMenuElement extends HTMLElementBase {
    *  the seat target — the cursor lands on the first real option — but they stay
    *  arrow-reachable. */
   private resetActive() {
-    const q = (this.#searchField as { value?: string } | null)?.value
-    if (!q || !q.trim()) return this.setActive(null)
     // Combobox-anchor (free-text autocomplete): never auto-seat a match, so Enter
     // commits the typed text — the user arrows down to highlight a suggestion
     // first. (The slotted-filter case below still seats the top match.)
-    if (this.#comboAnchor) return this.setActive(null)
+    if (this.#comboAnchor) return this.#clearComboCursor()
+    this.#pendingComboActivate = null
+    const q = (this.#searchField as { value?: string } | null)?.value
+    if (!q || !q.trim()) return this.setActive(null)
     const items = this.focusableItems()
     this.setActive(items.find((it) => !it.hasAttribute('data-menu-skip-active')) ?? items[0] ?? null)
   }
@@ -917,6 +925,7 @@ export class AMenuElement extends HTMLElementBase {
    *  instead. Any other key falls through to the input (typing). */
   private handleComboKey(e: KeyboardEvent): boolean {
     const items = this.focusableItems()
+    if (this.activeItem && !items.includes(this.activeItem)) this.#clearComboCursor()
     const idx = this.activeItem ? items.indexOf(this.activeItem) : -1
     switch (e.key) {
       case 'ArrowDown':
@@ -963,10 +972,14 @@ export class AMenuElement extends HTMLElementBase {
   /** Combobox keyup: activate the item a filter-field Enter armed. Paired with the
    *  keydown pre-request in `handleComboKey` so lazy content resolves in the gap. */
   handleKeyUp(e: KeyboardEvent) {
+    if (isComposingKey(e)) {
+      this.#pendingComboActivate = null
+      return
+    }
     if (e.key !== 'Enter') return
     const el = this.#pendingComboActivate
     this.#pendingComboActivate = null
-    el?.click()
+    if (el && this.focusableItems().includes(el as AMenuItemElement)) el.click()
   }
 
   /* ============================ open / close ============================ */
@@ -1005,6 +1018,7 @@ export class AMenuElement extends HTMLElementBase {
    *  `statechange`; applies the visibility itself ONLY when uncontrolled and
    *  not vetoed — a controlled menu waits for the consumer to flip `state`. */
   requestOpen(opts?: { coord?: [number, number]; viaKeyboard?: boolean; originEvent?: Event }) {
+    if (!this.isConnected) return
     if (this._shown) {
       this.show(opts?.coord, opts?.viaKeyboard, opts?.originEvent) // reposition
       return
@@ -1018,6 +1032,7 @@ export class AMenuElement extends HTMLElementBase {
    *  uncontrolled and not vetoed. */
   requestClose(originEvent?: Event) {
     if (!this._shown) return
+    const stack = this.#coordination.stack
     // Close any menus stacked ABOVE this one first — e.g. `Calendar`'s year/month
     // jump menu, which sits inside `InputDate`'s popover: toggling that popover
     // shut via its own anchor closes it but would otherwise leave the jump menu in
@@ -1025,14 +1040,14 @@ export class AMenuElement extends HTMLElementBase {
     // can never be reopened. Emit a notify-only `statechange('closed')` for each
     // (as `closeAll` / `show`'s trim do) so a controlled one resets, then hide +
     // pop them. No-op in the common case where this IS the top of the stack.
-    const idx = openStack.indexOf(this)
+    const idx = stack.indexOf(this)
     if (idx !== -1) {
-      for (let i = openStack.length - 1; i > idx; i--) {
-        const m = openStack[i]
+      for (let i = stack.length - 1; i > idx; i--) {
+        const m = stack[i]
         if (m.isOpen && !m._dismissNotified) m.emitChange('closed')
         m._doHide()
       }
-      openStack.length = idx + 1
+      stack.length = idx + 1
     }
     const ok = this.emitChange('closed', { originEvent })
     if (this.isControlled) {
@@ -1045,24 +1060,25 @@ export class AMenuElement extends HTMLElementBase {
   /** Apply OPEN to the DOM (no event) — used by uncontrolled intent and by the
    *  controlled `state` sync. */
   private show(coord?: [number, number], viaKeyboard = false, _originEvent?: Event) {
+    const stack = this.#coordination.stack
     if (this.isSubmenu) {
       // Collapse any deeper menus opened from sibling items.
       const parent = this.#ownerMenu
       if (parent) {
-        const pidx = openStack.indexOf(parent)
+        const pidx = stack.indexOf(parent)
         if (pidx !== -1) {
-          for (let i = openStack.length - 1; i > pidx; i--) {
-            const menu = openStack[i]
+          for (let i = stack.length - 1; i > pidx; i--) {
+            const menu = stack[i]
             // Replacing a submenu also displaces any controlled popup inside it.
             // Notify its owner before hiding it, as the other stack trims do.
             // Reopening this same submenu is not a dismissal of that submenu.
             if (menu !== this && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
             menu._doHide()
           }
-          openStack.length = pidx + 1
+          stack.length = pidx + 1
         }
       }
-    } else if (!openStack.includes(this)) {
+    } else if (!stack.includes(this)) {
       // A fresh root normally closes any other open menu system entirely. But if
       // this menu's trigger lives inside an already-open menu's content — a menu
       // opened from within another menu, e.g. `Calendar`'s year/month jump menu
@@ -1080,42 +1096,42 @@ export class AMenuElement extends HTMLElementBase {
       // (the root also `contains()` the anchor), which would trim away the flyout.
       let container: AMenuElement | undefined
       if (anchor)
-        for (let i = openStack.length - 1; i >= 0; i--) {
-          if (openStack[i] !== this && openStack[i].contains(anchor)) {
-            container = openStack[i]
+        for (let i = stack.length - 1; i >= 0; i--) {
+          if (stack[i] !== this && stack[i].contains(anchor)) {
+            container = stack[i]
             break
           }
         }
       if (container) {
-        const idx = openStack.indexOf(container)
+        const idx = stack.indexOf(container)
         // Trim everything stacked above the container. Emit a notify-only
         // `statechange('closed')` for each (as closeAll does), so a controlled
         // menu among them isn't left `open` in consumer state with no surface.
-        for (let i = openStack.length - 1; i > idx; i--) {
-          const m = openStack[i]
+        for (let i = stack.length - 1; i > idx; i--) {
+          const m = stack[i]
           if (m.isOpen && !m._dismissNotified) m.emitChange('closed')
           m._doHide()
         }
-        openStack.length = idx + 1
+        stack.length = idx + 1
       } else {
-        closeAll()
+        this.#closeAll()
       }
     }
 
-    if (openStack.includes(this)) {
+    if (stack.includes(this)) {
       // Already open — just reposition (e.g. a context re-trigger).
       this.position(coord)
       return
     }
 
-    const wasEmpty = openStack.length === 0
+    const wasEmpty = stack.length === 0
     // Opening atop an already-open menu (a submenu over its parent, or a
     // sibling submenu) appears INSTANTLY — the enter-fade reads as a blink next
     // to the static menu already on screen. A fresh root menu still fades in.
     this._doShow(coord, !wasEmpty)
-    openStack.push(this)
+    stack.push(this)
     if (wasEmpty) {
-      bindDocListeners(this.doc, this.view)
+      this.#coordination.bind(this.doc, this.view)
     }
 
     const search = this.#searchField
@@ -1131,15 +1147,16 @@ export class AMenuElement extends HTMLElementBase {
     }
   }
 
-  /** While a filter field is open, the visible option list changes as the user
-   *  types (the consumer re-renders the matches); re-seat the cursor on the first
-   *  match. `childList` only — an item toggling its own `selected` (multi-select)
-   *  mutates deep in its subtree, not this menu's direct children, so it won't
-   *  spuriously reset the cursor. */
+  /** Reconcile changed results while filtering. Slotted filters observe direct
+   * children only; autocomplete also observes row content and disabled changes. */
   private startComboObserver() {
     this.comboObserver?.disconnect()
-    this.comboObserver = new this.view.MutationObserver(() => {
+    this.comboObserver = new this.view.MutationObserver((records) => {
       if (!this._shown || !this.#searchField) return
+      if (this.#comboAnchor && !records.some(record =>
+        record.type !== 'attributes' ||
+        (isMenuItemEl(record.target) && record.target.parentElement === this),
+      )) return
       this.resetActive()
       // The filtered list changed the menu's height — re-anchor to the trigger,
       // keeping the side chosen at open (`reanchor`). Matters when flipped ABOVE:
@@ -1148,30 +1165,28 @@ export class AMenuElement extends HTMLElementBase {
       // it must NOT flip back under the field once it's short enough to fit.
       this.position(undefined, false, true)
     })
-    this.comboObserver.observe(this, { childList: true })
+    this.comboObserver.observe(this, {
+      childList: true,
+      ...(this.#comboAnchor ? { characterData: true, attributes: true, subtree: true, attributeFilter: ['disabled'] } : {}),
+    })
   }
 
   /** Apply CLOSE without notifying this menu's owner. Notify nested menus so
    *  their controlled state follows the closing parent. */
   private hide(notifyDescendants = true) {
-    // Tear down combobox state (no-op for a plain menu).
-    this.comboObserver?.disconnect()
-    this.comboObserver = undefined
-    this.setActive(null)
-    this._flippedTop = null // re-decide the side on the next open
-    this._flippedSide = null
-    const idx = openStack.indexOf(this)
+    const stack = this.#coordination.stack
+    const idx = stack.indexOf(this)
     if (idx === -1) {
       if (this._shown) this._doHide()
       return
     }
-    for (let i = openStack.length - 1; i >= idx; i--) {
-      const menu = openStack[i]
+    for (let i = stack.length - 1; i >= idx; i--) {
+      const menu = stack[i]
       if (notifyDescendants && i > idx && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
       menu._doHide()
     }
-    openStack.length = idx
-    if (openStack.length === 0) unbindDocListeners()
+    stack.length = idx
+    if (stack.length === 0) this.#coordination.unbind()
   }
 
   /** Shadow-only show: open the popover and position it. `instant` positions
@@ -1206,22 +1221,31 @@ export class AMenuElement extends HTMLElementBase {
 
   /** Shadow-only hide. */
   _doHide() {
+    this.comboObserver?.disconnect()
+    this.comboObserver = undefined
+    this.#clearComboCursor()
+    this._flippedTop = null
+    this._flippedSide = null
+    clearTimeout(this.typeTimer)
+    this.typeTimer = undefined
+    this.typeBuffer = ''
+    if (this.#positionFrame !== undefined) (this.#connectedDocument?.defaultView ?? this.view).cancelAnimationFrame(this.#positionFrame)
+    this.#positionFrame = undefined
     // A nested popup can disappear beneath a stationary pointer outside its
     // ancestor flyout. The resulting pointerleave belongs to the disappearing
     // popup, so hold the flyout until the pointer re-enters it or its trigger.
     const parent = this.parentElement?.closest('a-menu') as AMenuElement | null
-    if (this._shown && parent && mouseX !== null && mouseInside(this.surface.getBoundingClientRect())) {
+    if (this._shown && parent && this.#coordination.mouseX !== null && this.#coordination.mouseInside(this.surface.getBoundingClientRect())) {
       for (
         let ancestor: AMenuElement | null = parent;
         ancestor;
         ancestor = ancestor.parentElement?.closest('a-menu') as AMenuElement | null
       ) {
-        if (!ancestor.isSubmenu || !ancestor.#isHover || !ancestor._shown || ancestor.surface.matches(':hover')) continue
-        ancestor.#holdHoverClose = true
-        ancestor.cancelCloseTimer()
+        ancestor.holdHoverClose?.()
       }
     }
     this.#stopAnchorTracking()
+    this.#anchorRelative = false
     if (this.surface.isConnected && this._shown) this.surface.hidePopover()
     this._shown = false
     this.#holdHoverClose = false
@@ -1255,7 +1279,8 @@ export class AMenuElement extends HTMLElementBase {
    *  opening point. */
   #startAnchorTracking(coord?: [number, number]) {
     this.#stopAnchorTracking()
-    if (coord || this.#isCoord) return
+    this.#anchorRelative = !coord && !this.#isCoord
+    if (!this.#anchorRelative) return
 
     const anchor = this.triggerAnchor
     if (!anchor) return
@@ -1296,7 +1321,7 @@ export class AMenuElement extends HTMLElementBase {
 
   #stopAnchorTracking() {
     if (this.#anchorTrackingFrame !== undefined) {
-      this.view.cancelAnimationFrame(this.#anchorTrackingFrame)
+      (this.#connectedDocument?.defaultView ?? this.view).cancelAnimationFrame(this.#anchorTrackingFrame)
       this.#anchorTrackingFrame = undefined
     }
     this.#lastAnchorRect = undefined
@@ -1326,7 +1351,7 @@ export class AMenuElement extends HTMLElementBase {
       let top = MARGIN
 
       if (coord) {
-        surface.style.maxHeight = `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`
+        surface.style.setProperty('--_menu-max-height', `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`)
         const box = surface.getBoundingClientRect()
         left = coord[0]
         if (left + box.width > vw - MARGIN) left = vw - box.width - MARGIN
@@ -1337,7 +1362,7 @@ export class AMenuElement extends HTMLElementBase {
       } else if (this.isSubmenu) {
         const it = this.triggerAnchor ? anchorRect(this.triggerAnchor) : null
         if (!it) return
-        surface.style.maxHeight = `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`
+        surface.style.setProperty('--_menu-max-height', `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`)
         const box = surface.getBoundingClientRect()
         left = it.right + this.#offset
         if (left + box.width > vw - MARGIN) {
@@ -1362,7 +1387,7 @@ export class AMenuElement extends HTMLElementBase {
         const a = this.triggerAnchor ? anchorRect(this.triggerAnchor) : null
         if (!a) return
         // A root menu is never narrower than its trigger: publish the anchor width
-        // so the surface min-width floors to it (see the shadow style's `max()`).
+        // so the surface min-width floors to it (see the external part rule's `max()`).
         // Content can still make it wider; it never shrinks below the trigger.
         // `autowidth` opts out — the surface sizes to its content (floored only at
         // --menu-min-width) for a content menu whose trigger is a wide field (e.g.
@@ -1377,7 +1402,7 @@ export class AMenuElement extends HTMLElementBase {
           // lacks room and the other has more. Cross axis: `-start` top-aligns to the
           // anchor, `-end` bottom-aligns, no suffix centers.
           surface.style.removeProperty('--_anchor-width') // a side menu sizes to content
-          surface.style.maxHeight = `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`
+          surface.style.setProperty('--_menu-max-height', `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`)
           const box = surface.getBoundingClientRect()
           const spaceRight = vw - a.right - 2 * MARGIN
           const spaceLeft = a.left - 2 * MARGIN
@@ -1406,7 +1431,7 @@ export class AMenuElement extends HTMLElementBase {
           // The body scrolls (not the surface), so a capped surface no longer reports
           // its natural height. Drop the cap, read the full height, then re-cap below.
           // Synchronous, so the unconstrained layout never paints.
-          surface.style.maxHeight = ''
+          surface.style.removeProperty('--_menu-max-height')
           const natural = surface.scrollHeight
           if (reanchor && this._flippedTop !== null) {
             // Keep the side chosen at open — don't let a shrunk (filtered) menu hop
@@ -1420,7 +1445,7 @@ export class AMenuElement extends HTMLElementBase {
 
           // Cap the surface to the chosen side's space (it scrolls if taller).
           const space = onTop ? spaceAbove : spaceBelow
-          surface.style.maxHeight = `${Math.max(MIN_HEIGHT, Math.floor(space))}px`
+          surface.style.setProperty('--_menu-max-height', `${Math.max(MIN_HEIGHT, Math.floor(space))}px`)
 
           const box = surface.getBoundingClientRect()
           // Cross axis: align the surface's own edge to the trigger's — `-start`
@@ -1454,8 +1479,13 @@ export class AMenuElement extends HTMLElementBase {
     }
     // Sync (instant open atop an already-open menu) avoids both the rAF delay
     // and the unpositioned first frame; otherwise position next frame.
+    if (this.#positionFrame !== undefined) this.view.cancelAnimationFrame(this.#positionFrame)
+    this.#positionFrame = undefined
     if (sync) run()
-    else requestAnimationFrame(run)
+    else this.#positionFrame = this.view.requestAnimationFrame(() => {
+      this.#positionFrame = undefined
+      run()
+    })
   }
 
   /* ====================== click / close contract ====================== */
@@ -1480,7 +1510,7 @@ export class AMenuElement extends HTMLElementBase {
     // bubble past their surface; the containing menu must not handle it again.
     for (const node of e.composedPath()) {
       if (node === this.surface) break
-      if (node instanceof AMenuElement && node !== this) return
+      if (isElement(node) && node.localName === 'a-menu' && node !== this) return
     }
 
     // Contain the click so activating an item doesn't also register as a click on
@@ -1495,9 +1525,9 @@ export class AMenuElement extends HTMLElementBase {
     let exemptTrigger = false
     for (const node of e.composedPath()) {
       if (node === this.surface) break
-      if (!(node instanceof Element)) continue
+      if (!(isElement(node))) continue
       if (node.matches(DECLARATIVE_TRIGGER)) exemptTrigger = true
-      if (node instanceof AMenuItemElement || node.hasAttribute('data-menu-close')) contain = true
+      if (isCustomMenuItem(node) || node.hasAttribute('data-menu-close')) contain = true
     }
     if (contain && !exemptTrigger) e.stopPropagation()
 
@@ -1517,7 +1547,7 @@ export class AMenuElement extends HTMLElementBase {
     // for it, otherwise `menuselect` would fire once per ancestor menu level.
     for (const node of e.composedPath()) {
       if (node === this.surface) break
-      if (node instanceof AMenuItemElement) {
+      if (isCustomMenuItem(node)) {
         if (!node.hasAttribute('disabled') && !node.querySelector(':scope > a-menu') && node.closest('a-menu') === this) {
           node.dispatchEvent(
             new MouseEvent('menuselect', {
@@ -1535,13 +1565,13 @@ export class AMenuElement extends HTMLElementBase {
 
     for (const node of e.composedPath()) {
       if (node === this.surface) break // reached the menu boundary
-      if (!(node instanceof Element)) continue
+      if (!(isElement(node))) continue
 
       // Nearest `data-menu-open` keeps it open (replaces the legacy
       // `data-popover-stay`; put it on an item, a group, or any container).
       if (node.hasAttribute('data-menu-open')) return
 
-      if (node instanceof AMenuItemElement) {
+      if (isCustomMenuItem(node)) {
         if (node.hasAttribute('disabled')) {
           e.preventDefault()
           return
@@ -1578,7 +1608,7 @@ export class AMenuElement extends HTMLElementBase {
       this.requestClose(e)
       return
     }
-    const root = openStack[0] ?? this
+    const root = this.#coordination.stack[0] ?? this
     root.requestClose(e)
   }
 
@@ -1610,6 +1640,10 @@ export class AMenuElement extends HTMLElementBase {
    *  (synthesizes a click → routed through onSurfaceClick). Combobox Enter (focus
    *  in the filter field) is handled here via handleComboKey / handleKeyUp. */
   handleKey(e: KeyboardEvent) {
+    if (isComposingKey(e)) {
+      this.#pendingComboActivate = null
+      return
+    }
     if (isModifiedNavigationKey(e)) return
     const active = this.doc.activeElement as HTMLElement | null
 
@@ -1706,7 +1740,7 @@ export class AMenuElement extends HTMLElementBase {
     // whether or not the `submenu` attribute is set (the wrapper only emits it when the
     // consumer passes `submenu`). Direct-child so a composed control slotted deeper (a
     // `Select` / `InputDate` with its own menu) isn't opened as if it were a submenu.
-    if (!item || !(item instanceof AMenuItemElement)) return null
+    if (!item || !(isCustomMenuItem(item))) return null
     return item.querySelector(':scope > a-menu') as AMenuElement | null
   }
 
@@ -1737,7 +1771,7 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   setupListeners() {
-    if (this.listening) return
+    if (this.listening || !this.isConnected) return
     const anchor = this.triggerAnchor
     if (!anchor) {
       this.listening = true
@@ -1795,19 +1829,29 @@ export class AMenuElement extends HTMLElementBase {
       // Combobox-anchor (autocomplete): the editable anchor IS the filter field.
       // Wire NO click-toggle — clicking to place the caret or typing must not
       // close the list. The reactive wrapper owns open state via controlled
-      // `state`; Esc / outside-click / picking a suggestion still close. No
-      // listeners to remove, but honor the teardown contract every branch keeps:
-      // reset `listening` so a later setupListeners() (guarded by `if
-      // (this.listening) return`) can re-wire if the anchor leaves combobox mode.
-      this.teardown = () => { this.listening = false }
+      // `state`; Esc / outside-click / picking a suggestion still close.
+      // Editing invalidates an explicitly chosen cursor even when remote results
+      // retain their row nodes. The next Enter must keep the new free text.
+      const onInput = () => this.#clearComboCursor()
+      anchor.addEventListener('input', onInput)
+      this.teardown = () => {
+        anchor.removeEventListener('input', onInput)
+        this.listening = false
+      }
       this.listening = true
       return
     } else {
       const onClick = (e: MouseEvent) => {
+        if (anchor.matches(':disabled, [disabled], [loading]')) return
+        const path = e.composedPath()
+        const anchorPath = path.slice(0, path.indexOf(anchor))
         // A button in the input's clear slot is its own action. Its click
         // bubbles through the field anchor after clearing; opening the popup
         // here makes the next field click close it instead of opening it.
-        if (anchor.matches('a-input') && e.composedPath().some((node) => node instanceof Element && node.getAttribute('slot') === 'clear')) return
+        if (anchor.matches('a-input') && anchorPath.some((node) => isElement(node) && node.getAttribute('slot') === 'clear')) return
+        // Field anchors also contain labels, hints, and extra content outside the field.
+        const field = anchor.shadowRoot?.querySelector('[part~="field"]')
+        if (field && !anchorPath.includes(field)) return
         // detail === 0 ⇒ a keyboard-synthesized click (a button / <a-button>
         // turning Enter/Space into one) ⇒ open + focus the first item. Fields with
         // no such click go through onKey below.
@@ -1828,7 +1872,7 @@ export class AMenuElement extends HTMLElementBase {
       const onKey = (e: KeyboardEvent) => {
         if (isModifiedNavigationKey(e)) return
         if (this._shown) return // open-only; while open the surface owns the keys
-        if (anchor.hasAttribute('disabled') || anchor.hasAttribute('loading')) return
+        if (anchor.matches(':disabled, [disabled], [loading]')) return
         const arrow = e.key === 'ArrowDown' || e.key === 'ArrowUp'
         if (!arrow && anchor.matches(SELF_ACTIVATING)) return
         // Either arrow opens (the menu can flip above the trigger, and native
@@ -1886,7 +1930,7 @@ export class AMenuElement extends HTMLElementBase {
     // mid-interaction with it, so a mouse hover-away must not collapse this
     // flyout and take that popup with it. It closes on the explicit paths once
     // its descendants are gone.
-    if (openStack.some((m) => m !== this && (this.contains(m) || (m.triggerAnchor != null && this.contains(m.triggerAnchor))))) {
+    if (this.#coordination.stack.some((m) => m !== this && (this.contains(m) || (m.triggerAnchor != null && this.contains(m.triggerAnchor))))) {
       this.cancelCloseTimer()
       return
     }
@@ -1907,6 +1951,12 @@ export class AMenuElement extends HTMLElementBase {
     const active = this.doc.activeElement as HTMLElement | null
     return !!active && this.contains(active) && active.matches(':focus-visible')
   }
+  private holdHoverClose() {
+    if (!this.isSubmenu || !this.#isHover || !this._shown || this.surface.matches(':hover')) return
+    this.#holdHoverClose = true
+    this.cancelCloseTimer()
+  }
+
   private cancelOpenTimer() {
     if (this.openTimer !== undefined) {
       clearTimeout(this.openTimer)

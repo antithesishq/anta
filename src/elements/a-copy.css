@@ -11,4 +11,37 @@
   a-copy:not(:defined) {
     display: contents;
   }
+
+  a-copy::part(feedback) {
+    --_copy-opacity-from: 1;
+    --_copy-opacity-to: 0;
+    --_copy-easing: ease-out;
+    --_copy-above-from: translateY(calc(-100% - 10px));
+    --_copy-above-to: translateY(calc(-100% - 1.5em));
+    --_copy-below-from: translateY(10px);
+    --_copy-below-to: translateY(1.5em);
+
+    position: fixed;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    right: auto;
+    bottom: auto;
+    background: none;
+    overflow: visible;
+    pointer-events: none;
+    align-items: center;
+    gap: 4px;
+    box-sizing: border-box;
+    color: var(--text-2-success);
+    font-family: var(--sans-serif);
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  a-copy::part(feedback):popover-open {
+    display: inline-flex;
+  }
 }

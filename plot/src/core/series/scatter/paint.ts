@@ -11,7 +11,7 @@ const DOT_DIAMETER = 5
  * @param i - the row index
  * @returns the dot's pixel radius
  */
-export function dot_radius(series: ComposedScatter, i: number): number {
+export function dot_radius<Row, TooltipContent>(series: ComposedScatter<Row, TooltipContent>, i: number): number {
     return (series.sizes?.[i] ?? series.size ?? DOT_DIAMETER) / 2
 }
 
@@ -20,7 +20,7 @@ export function dot_radius(series: ComposedScatter, i: number): number {
  * @param series - the scatter series
  * @param render - the shared render context (canvas, inner rect, scales, fallback color)
  */
-export function draw_scatter(series: ComposedScatter, render: RenderContext): void {
+export function draw_scatter<Row, TooltipContent>(series: ComposedScatter<Row, TooltipContent>, render: RenderContext): void {
     const { ctx, x_scale, y_scale, color } = render
     ctx.fillStyle = color
     const length = series.x.length

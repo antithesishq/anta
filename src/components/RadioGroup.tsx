@@ -1,8 +1,9 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — so a custom runtime resolves them, not whatever
 // `react` maps to. See AGENTS.md (stateless-wrapper exception for RadioGroup).
-import { useId, useState } from "../jsx-runtime"
-import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle } from "../anta_helpers"
+import { useNativeEventProps } from "../native-event-props"
+import { useId } from "../jsx-runtime"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, useSelectionMirror } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps, ToneScope } from "../general_types"
 
 /** The element's `statechange` payload. `next`/`prev` are values (`null` = nothing
@@ -150,11 +151,7 @@ export const RadioGroup = ({
   ...rest
 }: RadioGroupProps) => {
   const controlled = value !== undefined
-  // Uncontrolled selection lives here (re-renders declaratively) rather than in
-  // the element — the wrapper needs the value to compute the roving tabindex, and
-  // component state re-rendering is allowed where element DOM mutation isn't.
-  const [internalValue, setInternalValue] = useState<string | undefined>(defaultValue)
-  const currentValue = controlled ? value : internalValue
+  const [currentValue, setInternalValue] = useSelectionMirror(value, defaultValue)
 
   // Values are an option's identity — duplicates make selection ambiguous. Warn
   // (only ever fires on the bug itself), matching a-input's bare console.warn.
@@ -200,6 +197,8 @@ export const RadioGroup = ({
         }
       : undefined
 
+  const events = useNativeEventProps({ onstatechange, onchange, onfocusin: onFocus, onfocusout: onBlur })
+
   return (
     <a-radio-group
       role="radiogroup"
@@ -210,7 +209,7 @@ export const RadioGroup = ({
       // Controlled → drive the element's `state`. Uncontrolled → seed `default-state`
       // and let the ELEMENT own selection (it self-applies on pick, off-DOM via each
       // radio's `selected` property) — so a radio works even unhydrated (static docs
-      // preview) or hand-assembled. Either way the wrapper's `useState` mirror (kept
+      // preview) or hand-assembled. Either way the wrapper's selection mirror (kept
       // current via `onstatechange`) is what feeds the roving `tabindex` below.
       state={controlled ? value : undefined}
       default-state={!controlled ? defaultValue : undefined}
@@ -221,14 +220,7 @@ export const RadioGroup = ({
       size={size && size !== "medium" ? size : undefined}
       disabled={disabled ? "" : undefined}
       orientation={orientation && orientation !== "vertical" ? orientation : undefined}
-      onstatechange={onstatechange}
-      // Native `change` (post-apply), same lowercase spelling as `<a-input>`.
-      onchange={onchange}
-      // Focus lands on an individual option, not the group — so report group focus
-      // via the bubbling `focusin` / `focusout` (not `focus` / `blur`, which don't
-      // bubble and would never fire for child focus).
-      onfocusin={onFocus}
-      onfocusout={onBlur}
+      {...events}
       class={className}
       // Custom tones flow to children through both sources; CSS decides whether
       // the resting source participates from tone-scope.

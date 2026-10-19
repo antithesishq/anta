@@ -410,27 +410,39 @@
     pointer-events: none;
   }
 
+  /* Auto-placement keeps panels after the selected step without an inline row
+     index. With no selected step, panels follow the complete sequence. */
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"]
+    > a-tab:state(selected) ~ a-tab {
+    order: 2;
+  }
+
   a-steps[data-orientation="vertical"] > a-tabpanel {
+    position: relative;
+    order: 1;
     grid-column: 1;
-    grid-row: var(--steps-panel-row);
     width: calc(100% - var(--steps-content-indent));
     margin-inline-start: var(--steps-content-indent);
   }
 
   a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
     > a-tabs[orientation="vertical"] > a-tab:state(selected):not(:last-child)
-  )::after {
+  ) > a-tabpanel {
+    min-height: max(0px, calc(var(--steps-marker-size) - var(--steps-vertical-gap)));
+  }
+
+  a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
+    > a-tabs[orientation="vertical"] > a-tab:state(selected):not(:last-child)
+  ) > a-tabpanel::before {
     content: "";
-    grid-column: 1;
-    grid-row: var(--steps-panel-row);
-    align-self: stretch;
-    justify-self: start;
+    position: absolute;
+    inset-block: 0 calc(-1 * var(--steps-vertical-gap));
+    inset-inline-start: calc(
+      -1 * var(--steps-content-indent) + var(--steps-marker-size) / 2
+      - var(--steps-connector-width) / 2
+    );
     width: var(--steps-connector-width);
     min-height: var(--steps-marker-size);
-    margin-inline-start: calc(
-      var(--steps-marker-size) / 2 - var(--steps-connector-width) / 2
-    );
-    margin-block-end: calc(-1 * var(--steps-vertical-gap));
     background: var(--steps-connector-color);
     pointer-events: none;
     z-index: 1;
@@ -445,7 +457,7 @@
   a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
     > a-tabs[data-steps][orientation="vertical"]
       > a-tab[data-step-state="completed"]:state(selected):not(:last-child)
-  )::after {
+  ) > a-tabpanel::before {
     background: var(--steps-complete-connector-color);
   }
 

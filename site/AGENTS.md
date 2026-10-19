@@ -9,6 +9,8 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 Astro dev uses `--ignore-lock` so agent sessions keep the server in the root
 dev process tree. The root launcher owns PID tracking and shutdown.
 
+See [site follow-ups](FOLLOWUPS.md) for pending deployment and performance work.
+
 ## Local servers
 
 Choose the server from the task without asking the user to choose process flags.
@@ -101,6 +103,10 @@ The Playground regressions also use WebKit; install it with
 
 Astro renders static output. Sätteri handles Markdown/MDX and GFM; astro-expressive-code handles code blocks. Optional math and directive syntax are disabled. Keep interactive behavior in imported JSX components or the existing external Playground demo source; MDX composes the prose and previews. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
 
+Use an imported TSX component when a preview passes JSX through props such as
+Input's `leading` or `trailing`. Nested JSX props written directly in MDX can
+produce empty projected content. Static examples need no hydration directive.
+
 Smart punctuation also processes raw text inside MDX JSX. Use inline code for
 code identifiers, or a quoted JSX expression such as `{'--text-1'}` when a live
 preview must preserve its existing font. The package/LLM Markdown converter
@@ -116,7 +122,7 @@ MDX from retaining the client-only component's CSS in both page and island build
 - Astro 7.3.3 needs the versioned [collection CSS patch](../patches/README.md) to keep client-only and processed-script styles attached to their content entries. Preserve it when installing dependencies. Before removing it or upgrading Astro, run the production asset tests and compare per-page stylesheet ownership. Incremental prerendering remains disabled until its dependency invalidation is checked with the patch.
 - **All component styles stay co-located** (a `.astro` scoped `<style>` or a `.module.css`). `astro.config.mjs` sets `build.inlineStylesheets: 'never'` so scoped styles are emitted into *linked* bundles, never inlined into the page `<head>` — Astro's per-page inline path can land present-but-inert in production for a component used inside MDX wrapping a hydrated island. Per-route CSS code-splitting stays on (default), so heavy island CSS (Monaco/Playground) loads only where it's used.
 - For a one-off style that must stay inline and untouched by Astro's pipeline, use **`<style is:inline>`** — it's rendered verbatim (no scoping, bundling, or hoisting).
-- **In MDX docs pages, a styling example's live CSS goes in a `<style is:inline>` placed *inside* its `<Preview>` (as a child, after the element), targeting a demo class on that preview's element; the folded recipe under the preview is that same CSS.** Putting the `<style>` inside the preview means the applied rule is literally in the preview's DOM, right next to the element it styles — a reader can inspect the preview and find exactly the rule the recipe shows — and it's never a far-away or page-wide stylesheet. Don't hide the applied CSS behind a `style=""` attribute either: an attribute can't express what these examples need (`::part`, `::before`, `:hover`, `:state`, descendant selectors) — those are only legal in a stylesheet. Use a demo class (e.g. `.hide-chevron`, `.code-like`) so each example is self-identifying and examples don't collide, and tell the reader (once, near the first example) that the class is just for the demo and they'd swap their own selector. `src/content/components/expander/index.mdx`'s "Styling the chevron & header" section is the reference pattern.
+- **In MDX docs pages, a styling example's live CSS goes in a `<style is:inline>` placed *inside* its `<Preview>` (as a child, after the element), targeting a demo class on that preview's element; the folded recipe under the preview is that same CSS.** Putting the `<style>` inside the preview means the applied rule is literally in the preview's DOM, right next to the element it styles — a reader can inspect the preview and find exactly the rule the recipe shows — and it's never a far-away or page-wide stylesheet. Don't hide the applied CSS behind a `style=""` attribute either: an attribute can't express what these examples need (`::part`, `::before`, `:hover`, `:state`, descendant selectors) — those are only legal in a stylesheet. Use a demo class (e.g. `.hide-chevron`, `.code-like`) so each example is self-identifying and examples don't collide, and tell the reader (once, near the first example) that the class is just for the demo and they'd swap their own selector. `src/content/components/expander/index.mdx`'s "Styling" disclosure is the reference pattern.
 - **`pnpm --filter anta-site lint:css` runs Stylelint** (config: `site/stylelint.config.mjs`) over `src/**/*.{css,astro}`, including the `<style>` blocks inside `.astro` files (`postcss-html` custom syntax). It's a CI step. The config is tuned for *correctness*, not house style — most stylistic rules are off; the point is to catch CSS that the browser would silently drop. **Watch for `*/` inside a CSS comment** — e.g. writing `data-*/aria-*` ends the comment early and spills the rest into the stylesheet as invalid CSS, which (when bundled with other components) silently drops their rules in production. Stylelint now flags this.
 
 ## ClientRouter (view transitions)

@@ -7,6 +7,11 @@ on outside-click, `Escape`, or scroll. Rows are dedicated **`MenuItem`s** (not
 buttons), with optional leading icons, trailing keyboard hints, separators,
 grouped sections, and nested submenus.
 
+The trigger can be replaced while Menu stays mounted, such as when a responsive
+layout switches controls. Keep Menu immediately after the replacement element.
+Menu reconnects its trigger listeners and popup relationships without resetting
+its open state.
+
 Open state is uncontrolled by default — pass **`onStateChange`** (event-first:
 `(event, { next, prev })`, or listen for the raw **`statechange`** event) to
 observe it, or pass **`open`** to control it, applying `detail.next` to `open`
@@ -213,7 +218,7 @@ footer stays the menu's divider.
 <Button>Filter</Button>
 <Menu inset={8}>
   <a-menu-header slot="header" data-menu-open>
-    <Input size="small" placeholder="Filter…" />
+    <Input size="small" placeholder="Filter…" aria-label="Filter items" />
   </a-menu-header>
   <MenuItem label="Design" />
   <MenuItem label="Engineering" />
@@ -488,7 +493,7 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 | `open?` | boolean | — | Controlled open state. Omit for the default **uncontrolled** menu (it opens/closes itself via its triggers). Pass a boolean to **control** it: the menu's visibility follows `open`, and user dismiss (Esc, outside-click, select) fires `onStateChange` *without* self-closing — you update `open` in response. Submenus are always uncontrolled regardless of this. See STATEFUL-COMPONENTS.md. |
 | `placement?` | 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'bottom' \| 'top' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' \| 'right' \| 'left' | bottom-start | Preferred placement relative to the trigger. `bottom` / `top` place the menu below / above; `right` / `left` place it beside (like a submenu flyout). The cross-axis suffix (`-start` / `-end`) aligns the near / far edges, and no suffix centers on the trigger. The menu flips to the opposite side when the preferred one lacks room, and clamps to the viewport. |
 | `role?` | string | menu | ARIA role of the menu surface. |
-| `round?` | boolean \| number \| string | — | Round the menu: the container softens to a 20px radius and its items go fully round. A `number` (px) or CSS length string tunes the container radius only — items stay full pills. |
+| `round?` | boolean \| number \| string | — | Round the menu container to a 20px radius. A `number` (px) or CSS length string sets a custom container radius. Items use the container radius minus `inset`, clamped to zero. Nested submenus inherit the container radius unless they set their own `round` value. |
 | `stopPropagation?` | boolean \| string \| string[] | — | Contain events so they don't bubble out of the menu to ancestor handlers (e.g. a clickable row the menu sits in). Selecting an item is always contained; this extends it to whole event types. `true` contains `click`; pass an event name or list (`"click pointerdown"`) to contain those. |
 
 ## MenuItem props
@@ -521,11 +526,15 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
+Use `<a-menu>` and `<a-menu-item>` directly outside JSX.
 
 Put a focusable trigger immediately before `<a-menu>` and omit `state` for an
 uncontrolled menu. Its light-DOM `<a-menu-item>` rows need their own `tabindex`
 values.
+
+Follow [Install and configure](../install-config.md) to load styles and browser behavior.
+For server-rendered applications, also follow
+[Browser hydration](../install-config.md#browser-hydration).
 
 ```html
 <a-button role="button" tabindex="0" aria-haspopup="menu">
@@ -539,9 +548,29 @@ values.
 
 ## Styling
 
-The popover surface lives in shadow DOM and is exposed as a **part** — style its
+Menu item corners follow the container radius minus `inset`, clamped to zero.
+The default 8px container radius and 4px inset give items a 4px radius.
+The Antithesis theme uses a 2px container radius, so its items have square corners
+with the default inset. Pass `round` for a 20px container radius and 16px item
+radius, or pass a number or CSS length for a custom container radius.
+Nested submenus inherit the container radius unless they set their own `round`
+value. Each submenu subtracts its own `inset` to determine its item radius.
+Use `round` and `inset` to keep these radii connected. A direct CSS override of
+`::part(menu)` or a menu item's `border-radius` controls that surface independently.
+
+The popover surface lives in shadow DOM. Style its
 chrome (background, frost, border, radius, shadow, padding, min-width) with
-`::part(menu)`. Menu items are light DOM, so style them (and their
+`::part(menu)`. Use `::part(scroll)` for the scrolling body and `::part(header)` /
+`::part(footer)` for the pinned slots. Keep `display` overrides scoped to
+`::part(menu):popover-open` so closed menus remain hidden. Position and available
+height follow the trigger and viewport; overrides of positioning, visibility,
+transforms, or transitions can change those behaviors.
+
+Put overrides in `components`, `utilities`, or unlayered CSS. If older part
+overrides are in `base`, move them to a later layer so they take precedence over
+Anta's defaults. See [Cascade layers](../install-config.md#cascade-layers).
+
+Menu items are light DOM, so style them (and their
 `a-icon` / `kbd` / `a-menu-item-label` children) directly. Match **both** item
 shapes — the `a-menu-item` custom element and the `a[data-anta-menu-item]` link —
 with `:is(a-menu-item, a[data-anta-menu-item])`, or a link row skips your item
@@ -555,7 +584,7 @@ a-menu.fancy::part(menu) {
   border-radius: 22px;
   min-width: 240px;
   padding: 8px;
-  background: light-dark(rgba(255,255,255,0.55), rgba(28,26,32,0.5));
+  background: light-dark(color-mix(in oklch, white 55%, transparent), color-mix(in oklch, rgb(28,26,32) 50%, transparent));
   backdrop-filter: blur(28px) saturate(180%);
 }
 /* Items are light DOM — style them directly. `:is()` catches both an

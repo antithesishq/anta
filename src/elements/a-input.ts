@@ -1,3 +1,6 @@
+import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest } from '../input-events'
+import { inputTrailingActions } from './input-trailing-actions'
+import { MODALITY, trackFocusModality, type InputDocument } from './input-focus-modality'
 import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from '../anta_helpers'
 import {
   applyShadowAria,
@@ -24,13 +27,13 @@ import './a-input.css'
  *     <span slot="hint">We never share it.</span>
  *   </a-input>
  *
- * Shadow structure — every node carries a `part` so consumers can reach it
- * without piercing the boundary blindly:
+ * Public shadow styling parts:
  *
  *   <slot class="label" part="label" name="label">         ← display:none until a label is slotted
  *   <div class="field" part="field">                        ← the bordered box; :focus-within ring
  *     <slot name="leading" part="leading">
  *     <input|textarea|button part="input">                  ← created in JS per field mode
+ *       <span part="input-label">                           ← button-mode value or placeholder
  *     <slot name="trailing" part="trailing">
  *   <slot class="hint" part="hint" name="hint">           ← message; the JSX wrapper may slot a status <Icon> here too when [status]
  *
@@ -71,258 +74,18 @@ const FORWARDED = [
 // Presence-based among the forwarded set (toggled, not value-copied).
 const BOOL_FORWARDED = new Set(['readonly', 'required'])
 
-// --- Keyboard-vs-pointer focus tracking (a hand-rolled `:focus-visible` for the
-// read-only field) ---
-// Chromium reports `:focus-visible` as true for a focused <input> even on a mouse
-// click, so CSS alone can't tell a read-only trigger's keyboard focus from a
-// pointer one. We track the last interaction ourselves — the same heuristic the
-// platform uses natively for buttons — and expose it via the off-DOM
-// `:state(kb-focus)` custom state, which the read-only focus-ring rule keys on.
-// Read-only iff `readonly` is present; editable fields ignore the state and ring
-// on plain `:focus` (you clicked in to type). One passive listener pair per
-// document (WeakSet-guarded), read-only — no DOM mutation.
-let focusFromKeyboard = false
-const modalityDocs = new WeakSet<Document>()
-function trackFocusModality(doc: Document) {
-  if (modalityDocs.has(doc)) return
-  modalityDocs.add(doc)
-  doc.addEventListener('keydown', () => { focusFromKeyboard = true }, true)
-  doc.addEventListener('pointerdown', () => { focusFromKeyboard = false }, true)
-}
-
-// Internal trigger the clear button dispatches (via a-button's
-// `data-custom-event`) when activated by click/Enter/Space — fired with no
-// framework hydration needed. The element converts it into the public clear
-// lifecycle (see the constructor listener): a cancelable `clearclick`, then —
-// if not prevented — `clear()`, which empties the field and fires `clearinput`.
-//
-// CONTRACT: this string MUST stay in sync with the `data-custom-event` value
-// the `<Input>` wrapper sets on its clear `<Button>` (src/components/Input.tsx).
-// It's duplicated rather than shared because the wrapper can't import from this
-// module without pulling in element registration (the tiers are decoupled, and
-// importing here self-registers `a-input` + its CSS). Rename in both places.
-const CLEAR_TRIGGER = 'clearrequest'
-
-// Public clear events. Both bubble and are all-lowercase so they bind portably
-// as `onclearclick` / `onclearinput` in React *and* Preact (React keeps the
-// case after `on`; Preact lowercases) — same rule as `oninput`/`onchange`.
-// `clearclick` fires first and is cancelable (preventDefault keeps the value);
-// `clearinput` fires after the value has actually been cleared.
-const CLEAR_CLICK_EVENT = 'clearclick'
-const CLEAR_INPUT_EVENT = 'clearinput'
-
-// `field-sizing: content` drives textarea autogrow declaratively where it's
-// supported (Chrome/Edge, Safari ≥ 26.2). Detected once at module load. Where
-// it's absent (Firefox, older Safari) the element falls back to a JS autogrow on
-// every value change (see `syncAutoHeight`), so a multiline field still grows
-// from one line instead of staying a single row. The CSS `max-height` cap
-// applies in both paths, so `maxrows` is honored regardless.
-const SUPPORTS_FIELD_SIZING =
-  typeof CSS !== 'undefined' && !!CSS.supports?.('field-sizing', 'content')
-
-// Shadow styles, injected verbatim into every <a-input> shadow root, so this
-// string is kept COMMENT-FREE (it ships + re-injects per instance — see the
-// "no comments inside shadow-<style> strings" rule in AGENTS.md).
-//
-// Styling notes (what the rules below do, by region):
-//  • :host — a grid of the three ::part regions (label / field / hint) in one
-//    column with a 4px row rhythm; consumers can re-place/resize them (label on
-//    the left, a shared label column via subgrid, …). An empty label/hint is
-//    display:none, so it contributes no track or gap. The host's own focus
-//    outline is suppressed (delegatesFocus can ring it) — the field ring is the
-//    single indicator. --_fs/--_lh are the size-driven type scale (small 13/16 ·
-//    medium 15/20 · large 17/22); label, control, and hint all read them.
-//  • .field — min-height (24/28/32) matches the same-size Button. The border is a
-//    box-shadow (inset), not a real border, so priority and status width changes
-//    (0.5px→1px, with status colors from a-input.css) never reflow.
-//    Forced-colors supplies a real system border because it suppresses shadows.
-//    The focus ring shows only when the *control* is
-//    focused (:has), not when a slotted button holds focus.
-//  • input / textarea — only the control carries the horizontal text inset; edge
-//    slots + clear sit flush. appearance:none and the ::-webkit/::-ms resets strip
-//    browser-injected affordances (search clear/spinners/Edge reveal) — Anta owns
-//    every in-field control. --_pad-block (on .field, shared with the multiline
-//    adornment boxes below) is the single source for the textarea's vertical
-//    padding; the autogrow cap (:host([maxrows]:not([rows]))) is computed from
-//    --_lh + that padding so it tracks size, with JS injecting only the --_maxrows
-//    integer. A fixed `rows` turns autogrow off, so the cap doesn't apply.
-//    A readonly single-line input shows an ellipsis for an overflowing value
-//    (text-overflow: ellipsis), so the Select trigger reads a long value as `name …`
-//    instead of a hard clip. Editable inputs keep the default clip (caret needs the
-//    scrolled end); textarea wraps, so neither applies there. Font stretch and style
-//    are normalized with standard properties because the UA form-control `font`
-//    shorthand can otherwise give the control different metrics from its label,
-//    hint, and pre-upgrade skeleton. Variation settings explicitly inherit the
-//    active theme's axis pin because Safari does not reliably carry it into form
-//    controls on its own.
-//  • slots — leading/trailing are display:none until they hold content. A slotted
-//    clear button reserves its space even while invisible, so showing the button
-//    does not add width. The host stylesheet derives
-//    named-slot presence with `:has(> [slot])` and styles the matching part.
-//    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
-//    <a-button> keeps its own color. Slotted TEXT gets the field's type scale
-//    (--_fs/--_lh) plus a condensed wdth 88, so a key prefix lines up with the value
-//    and reads as a compact label; icons carry their own explicit size + width.
-//    `dim-actions` rests them at 0.6 and brightens
-//    to full on field hover/focus — but never while disabled. The clear slot shows
-//    only when filled + editable (hidden when disabled/readonly). A leading item is
-//    inset to line up with the text's left rhythm. Single-line, adornments center
-//    in the one-line field; multiline, they top-anchor in a one-line-tall box
-//    (--_lh + 2·--_pad-block) so they stay centered on the first text line — same
-//    vertical position as single-line, no jump when `multiline` toggles.
-//  • .hint — reads quieter (1px smaller, tighter line, --input-hint), 1px off the
-//    left edge; a status recolors the whole row (message + glyph) via the
-//    per-status --input-hint override in a-input.css.
-const SHADOW_STYLE = `
-  :host {
-    --_fs: 15px;
-    --_lh: 20px;
-
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
-    outline: none;
-  }
-
-  .label {
-    display: none;
-    color: var(--input-label);
-    font-family: var(--sans-serif);
-    font-size: var(--_fs);
-    line-height: var(--_lh);
-    font-weight: 500;
-  }
-
-  .field {
-    --_bc: var(--input-rest-border);
-    --_bw: var(--input-border-width);
-    --_pad-block: 4px;
-
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
-    min-height: 28px;
-    background: var(--input-bg);
-    border-radius: 4px;
-    box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
-    transition: box-shadow 120ms ease;
-  }
-  :host([multiline]) .field { align-items: stretch; }
-  :host([size="small"]) { --_fs: 13px; --_lh: 16px; }
-  :host([size="large"]) { --_fs: 17px; --_lh: 22px; }
-  :host([size="small"]) .field { min-height: 24px; }
-  :host([size="large"]) .field { min-height: 32px; }
-  :host([round]) .field { border-radius: var(--input-round, 999px); }
-
-  @media (hover: hover) and (pointer: fine) {
-    :host(:not(:disabled)) .field:hover { --_bw: 1px; --_bc: var(--input-border); }
-  }
-  :host(:not([readonly])) .field:has(input:focus, textarea:focus, button:focus-visible),
-  :host([readonly]:state(kb-focus)) .field {
-    --_bw: 1px;
-    --_bc: var(--input-border);
-    outline: var(--_input-focus-width, 1px) solid var(--focus-ring);
-    outline-offset: var(--_input-focus-offset, 1px);
-  }
-  @media (forced-colors: active) { .field { border: 1px solid ButtonBorder; } }
-
-  input, textarea, button {
-    flex: 1 1 auto;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-    border: 0;
-    margin: 0;
-    padding-block: 0;
-    padding-inline: 7px;
-    background: transparent;
-    outline: none;
-    color: var(--input-text);
-    font-family: var(--sans-serif);
-    font-stretch: normal;
-    font-style: normal;
-    font-variation-settings: inherit;
-    font-size: var(--_fs);
-    line-height: var(--_lh);
-    font-weight: 400;
-    -webkit-appearance: none;
-            appearance: none;
-  }
-  textarea {
-    resize: none;
-    padding-block: var(--_pad-block);
-    overflow-y: auto;
-  }
-  button { text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
-  button.placeholder { color: var(--input-placeholder); }
-  :host([maxrows]:not([rows])) textarea {
-    max-height: calc(var(--_lh) * var(--_maxrows) + var(--_pad-block) * 2);
-  }
-  input::placeholder, textarea::placeholder { color: var(--input-placeholder); opacity: 1; }
-  input:disabled, textarea:disabled, button:disabled { cursor: not-allowed; }
-  :host([readonly]:not([disabled])) .field,
-  :host([readonly]:not([disabled])) input,
-  :host([readonly]:not([disabled])) textarea { cursor: pointer; }
-  :host([readonly]:not([disabled])) input { text-overflow: ellipsis; }
-  input::-webkit-search-cancel-button,
-  input::-webkit-search-decoration,
-  input::-webkit-search-results-button,
-  input::-webkit-search-results-decoration,
-  input::-webkit-inner-spin-button,
-  input::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; display: none; }
-  input::-ms-clear, input::-ms-reveal { display: none; }
-
-  slot[name="leading"], slot[name="trailing"] {
-    display: none;
-    color: var(--input-adornment);
-    font-size: var(--_fs);
-    line-height: var(--_lh);
-    font-stretch: var(--_input-adornment-font-stretch, normal);
-  }
-  :host([dim-actions]) slot[name="leading"],
-  :host([dim-actions]) slot[name="trailing"],
-  :host([dim-actions]) slot[name="clear"] {
-    opacity: 0.6;
-    transition: opacity 120ms ease;
-  }
-  :host([dim-actions]:not(:disabled)) .field:hover slot[name="leading"],
-  :host([dim-actions]:not(:disabled)) .field:hover slot[name="trailing"],
-  :host([dim-actions]:not(:disabled)) .field:hover slot[name="clear"],
-  :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="leading"],
-  :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="trailing"],
-  :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="clear"] {
-    opacity: 1;
-  }
-
-  :host(:disabled) slot[name="leading"],
-  :host(:disabled) slot[name="trailing"] { opacity: 0.5; pointer-events: none; }
-
-  slot[name="clear"] {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    visibility: hidden;
-  }
-  :host(:state(filled):not(:disabled):not([readonly])) slot[name="clear"] { visibility: visible; }
-
-  :host([multiline]:state(filled)) slot[name="clear"] {
-    align-self: flex-start;
-    height: calc(var(--_lh) + var(--_pad-block) * 2);
-  }
-
-  .hint {
-    display: none;
-    gap: 4px;
-    align-items: flex-start;
-    padding-inline-start: 1px;
-    color: var(--input-hint);
-    font-family: var(--sans-serif);
-    font-size: calc(var(--_fs) - 1px);
-    line-height: calc(var(--_lh) - 2px);
-  }
-`
+// Use JS autosizing in WebKit to avoid crashes inside closed <details>, even
+// when CSS.supports returns true. Desktop Chrome also includes AppleWebKit in
+// its user agent; Chrome and Firefox on iOS use WebKit.
+const USER_AGENT = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+const IS_WEBKIT = /AppleWebKit\//.test(USER_AGENT) && !/Chrom(?:e|ium)\//.test(USER_AGENT)
+const USE_NATIVE_FIELD_SIZING =
+  !IS_WEBKIT && typeof CSS !== 'undefined' && !!CSS.supports?.('field-sizing', 'content')
 
 type Control = HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement
+const isInput = (control: Control | undefined): control is HTMLInputElement => control?.localName === 'input'
+const isTextarea = (control: Control | undefined): control is HTMLTextAreaElement => control?.localName === 'textarea'
+const isButton = (control: Control | undefined): control is HTMLButtonElement => control?.localName === 'button'
 const READ_DELEGATED_ARIA = Symbol('readDelegatedAria')
 const WRITE_DELEGATED_ARIA = Symbol('writeDelegatedAria')
 
@@ -338,11 +101,15 @@ export class AInputElement extends HTMLElementBase {
   private labelSlot: HTMLSlotElement
   private hintSlot: HTMLSlotElement
   private leadingSlot: HTMLSlotElement
+  #trailingSlot: HTMLSlotElement
+  #trailingActions: ReturnType<typeof inputTrailingActions>
   private control?: Control
+  #buttonText?: HTMLSpanElement
   // The intended value, captured even before the control exists (a framework
   // may set the `value` property before the element connects), so the initial
   // value isn't lost when the control is built.
   private pendingValue?: string
+  #releaseModality?: () => void
   // True between connect and the first control build, so attribute changes for
   // forwarded props don't try to touch a control that doesn't exist yet.
   private ready = false
@@ -361,6 +128,8 @@ export class AInputElement extends HTMLElementBase {
   private popupAriaSource?: Element
   private popupControls: Element | null = null
   private popupActiveDescendant: Element | null = null
+  #labelObserver?: MutationObserver
+  #labelHasText = false
 
   constructor() {
     super()
@@ -378,38 +147,38 @@ export class AInputElement extends HTMLElementBase {
     }
     const shadow = this.attachShadow({ mode: 'open', delegatesFocus: true })
 
-    const style = document.createElement('style')
-    style.textContent = SHADOW_STYLE
-
-    this.labelSlot = document.createElement('slot')
+    this.labelSlot = this.doc.createElement('slot')
     this.labelSlot.className = 'label'
     this.labelSlot.setAttribute('part', 'label')
     this.labelSlot.name = 'label'
     // Clicking the (light-DOM) label focuses the (shadow) control — the native
     // <label for> association can't cross the boundary, so we wire it here.
     this.labelSlot.addEventListener('click', () => this.control?.focus())
-    // Mirror the label's text into the control's aria-label unless an explicit
-    // delegated name already exists.
+    // Link the native control to the consumer's label elements.
     this.labelSlot.addEventListener('slotchange', this.onLabelSlotChange)
 
-    this.field = document.createElement('div')
+    this.field = this.doc.createElement('div')
     this.field.className = 'field'
     this.field.setAttribute('part', 'field')
-    this.leadingSlot = document.createElement('slot')
+    this.leadingSlot = this.doc.createElement('slot')
     this.leadingSlot.name = 'leading'
     this.leadingSlot.setAttribute('part', 'leading')
-    const trailingSlot = document.createElement('slot')
-    trailingSlot.name = 'trailing'
-    trailingSlot.setAttribute('part', 'trailing')
+    this.#trailingSlot = this.doc.createElement('slot')
+    this.#trailingSlot.name = 'trailing'
+    this.#trailingSlot.setAttribute('part', 'trailing')
+    this.#trailingActions = inputTrailingActions(this, this.#trailingSlot, 'a-input-trailing', actions => {
+      this.internals?.states?.[actions ? 'add' : 'delete']('trailing-actions')
+    })
+    this.#trailingSlot.addEventListener('slotchange', this.#trailingActions.sync)
     // The clear button is projected here (rightmost). The element gates its
-    // visibility via shadow CSS off the filled state — see updateFilled.
-    const clearSlot = document.createElement('slot')
+    // visibility via external CSS off the filled state — see updateFilled.
+    const clearSlot = this.doc.createElement('slot')
     clearSlot.name = 'clear'
     clearSlot.setAttribute('part', 'clear')
 
     // Leading, then (control inserted after leading on build), then clear, then
     // trailing — so the clear button sits to the LEFT of any trailing actions.
-    this.field.append(this.leadingSlot, clearSlot, trailingSlot)
+    this.field.append(this.leadingSlot, clearSlot, this.#trailingSlot)
 
     // The clear button (an <a-button data-custom-event="clearrequest"> in the
     // `clear` slot) fires CLEAR_TRIGGER on click/Enter/Space — without needing
@@ -419,21 +188,19 @@ export class AInputElement extends HTMLElementBase {
     // clear() empties the field and dispatches input+change (+ clearinput) —
     // what a controlled consumer reacts to; an uncontrolled field is just
     // emptied. One path serves both.
-    this.addEventListener(CLEAR_TRIGGER, () => {
+    this.addEventListener(CLEAR_TRIGGER, event => {
+      if (!ownsInputClearRequest(this, event) || this.control?.disabled || this.hasAttribute('readonly')) return
       const proceed = this.dispatchEvent(
         new CustomEvent(CLEAR_CLICK_EVENT, { bubbles: true, cancelable: true }),
       )
       if (proceed) this.clear()
     })
 
-    this.hintSlot = document.createElement('slot')
+    this.hintSlot = this.doc.createElement('slot')
     this.hintSlot.className = 'hint'
     this.hintSlot.setAttribute('part', 'hint')
     this.hintSlot.name = 'hint'
-    // Mirror the hint/error text into the control's aria-description (unless the
-    // host already carries one) — IDREFs can't cross the shadow boundary, so the
-    // string-valued aria-description is how the message reaches the focused
-    // control. Same approach as the label → aria-label mirror above.
+    // Element references let the browser derive descriptions from live hint text.
     this.hintSlot.addEventListener('slotchange', this.onHintSlotChange)
     // Default (unnamed) slot for projecting extra children. It sits *between*
     // the field and the hint, so a plain child renders directly under the field
@@ -442,9 +209,9 @@ export class AInputElement extends HTMLElementBase {
     // and just anchors to this host — mirroring how a shadow-less <a-button>
     // already accepts a tooltip child; the slot is what lets a shadow-DOM
     // element do the same.
-    const extrasSlot = document.createElement('slot')
+    const extrasSlot = this.doc.createElement('slot')
 
-    shadow.append(style, this.labelSlot, this.field, extrasSlot, this.hintSlot)
+    shadow.append(this.labelSlot, this.field, extrasSlot, this.hintSlot)
   }
 
   /** Floating-element anchor protocol (see `anchorRect` in anta_helpers): point
@@ -456,7 +223,8 @@ export class AInputElement extends HTMLElementBase {
   }
 
   connectedCallback() {
-    trackFocusModality(this.doc)
+    this.#releaseModality?.()
+    this.#releaseModality = trackFocusModality(this.doc, this.syncButtonFocus)
     // A `value` set as a property before the element upgraded shadows the
     // accessor as an own data property — re-apply it through the setter so the
     // initial controlled value isn't lost when the control is built.
@@ -465,8 +233,25 @@ export class AInputElement extends HTMLElementBase {
       delete (this as unknown as { value?: string }).value
       this.value = v
     }
+    if (Object.prototype.hasOwnProperty.call(this, 'name')) {
+      const name = (this as unknown as { name: string }).name
+      delete (this as unknown as { name?: string }).name
+      this.name = name
+    }
     if (!this.control) this.buildControl()
+    else this.syncAutoHeight()
     this.ready = true
+    this.#trailingActions.sync()
+    this.applyLabelAria()
+    this.applyDescriptionAria()
+  }
+
+  disconnectedCallback() {
+    this.#labelObserver?.disconnect()
+    this.#trailingActions.disconnect()
+    this.#releaseModality?.()
+    this.#releaseModality = undefined
+    this.onBlur()
   }
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
@@ -494,13 +279,13 @@ export class AInputElement extends HTMLElementBase {
     if (name === 'multiline' || name === 'button' || name === 'rows' || name === 'maxrows') {
       if (!this.control) return
       const needTextarea = this.hasAttribute('multiline') || this.hasAttribute('rows')
-      const isTextarea = this.control instanceof HTMLTextAreaElement
+      const hasTextarea = isTextarea(this.control)
       const needButton = !needTextarea && this.hasAttribute('button')
-      const isButton = this.control instanceof HTMLButtonElement
+      const hasButton = isButton(this.control)
       // Only a real input<->textarea flip needs a rebuild; a rows/maxrows tweak
       // reconfigures the existing textarea in place so focus + caret survive.
-      if (needTextarea !== isTextarea || needButton !== isButton) this.buildControl(this.value)
-      else if (this.control instanceof HTMLTextAreaElement) this.configureTextarea(this.control)
+      if (needTextarea !== hasTextarea || needButton !== hasButton) this.buildControl(this.value)
+      else if (isTextarea(this.control)) this.configureTextarea(this.control)
       return
     }
     if (name === 'status') { this.syncStatus(); this.updateValidity(); return }
@@ -515,6 +300,7 @@ export class AInputElement extends HTMLElementBase {
     // flip the inner control's validity. Symmetric with the `status` branch.
     if (this.control) {
       this.forward(name, value)
+      if (name === 'readonly' || name === 'type') this.syncButtonFocus()
       this.syncButtonPresentation()
       this.updateValidity()
     }
@@ -571,7 +357,10 @@ export class AInputElement extends HTMLElementBase {
     const control = this.control
     if (!control) return
     applyShadowAria(this, control, name, this.delegatedAria.get(name) ?? null)
-    if (name === 'aria-label' || name === 'aria-labelledby') this.applyLabelAria()
+    if (name === 'aria-label' || name === 'aria-labelledby') {
+      this.applyLabelAria()
+      this.applyDescriptionAria()
+    }
     if (name === 'aria-description' || name === 'aria-describedby') this.applyDescriptionAria()
     if (name === 'aria-invalid' && !this.delegatedAria.has(name)) this.syncStatus()
     if (name === 'aria-controls' || name === 'aria-activedescendant') this.applyPopupAria()
@@ -585,6 +374,7 @@ export class AInputElement extends HTMLElementBase {
       const control = this.control
       if (!control) return
       for (const [name, value] of this.delegatedAria) applyShadowAria(this, control, name, value)
+      this.applyDescriptionAria()
     })
   }
 
@@ -596,22 +386,31 @@ export class AInputElement extends HTMLElementBase {
     const refocus = prev != null && this.shadowRoot?.activeElement === prev
     let selStart: number | null = null
     let selEnd: number | null = null
-    if (prev instanceof HTMLInputElement || prev instanceof HTMLTextAreaElement) {
-      try { selStart = prev.selectionStart; selEnd = prev.selectionEnd } catch { /* number/email expose no selection */ }
+    let selDirection: "forward" | "backward" | "none" | null = null
+    if (isInput(prev) || isTextarea(prev)) {
+      try { selStart = prev.selectionStart; selEnd = prev.selectionEnd; selDirection = prev.selectionDirection } catch { /* number/email expose no selection */ }
     }
 
     const multiline = this.hasAttribute('multiline') || this.hasAttribute('rows')
     const button = !multiline && this.hasAttribute('button')
-    const next = document.createElement(button ? 'button' : multiline ? 'textarea' : 'input') as Control
-    if (next instanceof HTMLButtonElement) next.type = 'button'
+    const next = this.doc.createElement(button ? 'button' : multiline ? 'textarea' : 'input') as Control
+    this.#buttonText = undefined
+    if (isButton(next)) {
+      next.type = 'button'
+      this.#buttonText = this.doc.createElement('span')
+      this.#buttonText.setAttribute('part', 'input-label')
+      next.append(this.#buttonText)
+    }
     next.setAttribute('part', 'input')
     if (this.control) this.control.replaceWith(next)
     else this.leadingSlot.after(next)
     this.control = next
+    this.internals?.states?.[multiline ? 'add' : 'delete']('multiline')
+    this.internals?.states?.[button ? 'add' : 'delete']('button')
 
     for (const attr of FORWARDED) {
-      if (next instanceof HTMLTextAreaElement && attr === 'type') continue
-      this.forward(attr, this.getAttribute(attr))
+      if (isTextarea(next) && attr === 'type') continue
+      this.forward(attr, attr === 'name' ? this.name : this.getAttribute(attr))
     }
     this.syncDisabled()
     this.syncStatus()
@@ -633,8 +432,8 @@ export class AInputElement extends HTMLElementBase {
 
     if (refocus) {
       next.focus()
-      if (selStart != null && (next instanceof HTMLInputElement || next instanceof HTMLTextAreaElement)) {
-        try { next.setSelectionRange(selStart, selEnd ?? selStart) } catch { /* unsupported type */ }
+      if (selStart != null && (isInput(next) || isTextarea(next))) {
+        try { next.setSelectionRange(selStart, selEnd ?? selStart, selDirection ?? undefined) } catch { /* unsupported type */ }
       }
     }
 
@@ -644,8 +443,8 @@ export class AInputElement extends HTMLElementBase {
     this.syncAutoHeight() // size to the initial value (JS-fallback browsers)
   }
 
-  /** Autogrow (no `rows`) via `field-sizing: content` — or the JS fallback where
-   *  that's unsupported — capped by `maxrows`; a fixed `rows` count switches it
+  /** Autogrow (no `rows`) via `field-sizing: content` or the JS fallback,
+   *  capped by `maxrows`; a fixed `rows` count switches it
    *  off for a constant-height box. */
   private configureTextarea(ta: HTMLTextAreaElement) {
     const rows = this.getAttribute('rows')
@@ -657,36 +456,43 @@ export class AInputElement extends HTMLElementBase {
       ta.style.removeProperty('height') // drop any height the JS fallback set
     } else {
       ta.rows = 1
-      // Native autogrow where supported; the JS fallback (syncAutoHeight) grows
+      // Native autogrow outside WebKit; the JS fallback (syncAutoHeight) grows
       // it on every value change everywhere else. The cap lives in CSS
       // (max-height off --_lh + --_pad-block) and applies in both paths; JS only
       // feeds it the row count, which CSS can't read from the attribute.
-      if (SUPPORTS_FIELD_SIZING) ta.style.setProperty('field-sizing', 'content')
-      else ta.style.removeProperty('field-sizing')
+      ta.style.setProperty('field-sizing', USE_NATIVE_FIELD_SIZING ? 'content' : 'fixed')
       if (maxrows != null) ta.style.setProperty('--_maxrows', String(parseInt(maxrows, 10) || 1))
       else ta.style.removeProperty('--_maxrows')
       this.syncAutoHeight()
     }
   }
 
-  /** Autogrow fallback for browsers without `field-sizing: content` (Firefox,
-   *  Safari < 26.2). Grows the shadow textarea to fit its content; the CSS
+  /** Autogrow fallback for WebKit and browsers without `field-sizing: content`.
+   *  Grows the shadow textarea to fit its content; the CSS
    *  `max-height` cap (when `maxrows` is set) still clamps it and scrolls past.
-   *  A no-op where `field-sizing` is supported, or when the field isn't
+   *  A no-op on the native sizing path, or when the field isn't
    *  autogrowing (fixed `rows`, or not a textarea) — those size via CSS. */
   private syncAutoHeight = () => {
-    if (SUPPORTS_FIELD_SIZING) return
+    if (USE_NATIVE_FIELD_SIZING) return
     const ta = this.control
-    if (!(ta instanceof HTMLTextAreaElement) || this.getAttribute('rows') != null) return
-    ta.style.height = 'auto'
+    if (!isTextarea(ta) || this.getAttribute('rows') != null) return
+    const minHeight = this.field.style.getPropertyValue('--_input-measured-min-height')
+    const scrollTop = ta.scrollTop
+    // Hold the field while measuring. A definite textarea height prevents flex
+    // stretching it back to the old height when its content shrinks.
+    this.field.style.setProperty('--_input-measured-min-height', this.view.getComputedStyle(this.field).height)
+    ta.style.height = '0px'
     ta.style.height = `${ta.scrollHeight}px`
+    if (minHeight) this.field.style.setProperty('--_input-measured-min-height', minHeight)
+    else this.field.style.removeProperty('--_input-measured-min-height')
+    ta.scrollTop = scrollTop
   }
 
   private forward(name: string, value: string | null) {
     const c = this.control
     if (!c) return
-    if (c instanceof HTMLButtonElement) return
-    if (c instanceof HTMLTextAreaElement && name === 'type') return
+    if (isButton(c)) return
+    if (isTextarea(c) && name === 'type') return
     if (BOOL_FORWARDED.has(name)) c.toggleAttribute(name, value != null)
     else if (value == null) c.removeAttribute(name)
     else c.setAttribute(name, value)
@@ -702,16 +508,17 @@ export class AInputElement extends HTMLElementBase {
 
   private syncButtonPresentation() {
     const button = this.control
-    if (!(button instanceof HTMLButtonElement)) return
+    if (!isButton(button)) return
     const value = button.value
-    button.textContent = value || this.getAttribute('placeholder') || ''
-    button.classList.toggle('placeholder', !value)
+    if (this.#buttonText) this.#buttonText.textContent = value || this.getAttribute('placeholder') || ''
+    this.applyDescriptionAria()
   }
 
   private syncFormValue(value: string) {
     // Button-backed Inputs are triggers rather than form fields. The native
     // button is type="button"; keep the form-associated host equally inert.
-    this.internals?.setFormValue(this.control instanceof HTMLButtonElement ? null : value)
+    if (isButton(this.control)) { this.internals?.setFormValue(null); return }
+    this.internals?.setFormValue(value)
   }
 
   /** Reflect `status` into the control's `aria-invalid` and the `:state(invalid)`
@@ -740,31 +547,63 @@ export class AInputElement extends HTMLElementBase {
   // `change` is not composed; re-emit one on the host so it escapes the shadow.
   private onChange = () => { this.dispatchEvent(new Event('change', { bubbles: true })) }
 
-  // Stamp the off-DOM `:state(kb-focus)` when this focus arrived via the keyboard
-  // (see `trackFocusModality`), so the read-only field's ring can draw for keyboard
-  // focus but not a mouse click — the one distinction Chromium's `:focus-visible`
-  // won't make for an <input>. Editable fields ignore the state (ring on `:focus`).
+  private syncButtonFocus = () => {
+    if (!isButton(this.control)) return
+    const show = this.shadowRoot?.activeElement === this.control && this.control.matches(':focus-visible')
+    this.internals?.states?.[show ? 'add' : 'delete']('button-focus')
+  }
+
   private onFocus = () => {
+    if (isButton(this.control)) this.syncButtonFocus()
+    const modality = (this.doc as InputDocument)[MODALITY]
+    if (modality) {
+      // Only a focused button's ring can change with document input modality.
+      // Focus events also identify Inputs nested inside closed shadow roots.
+      modality.active = isButton(this.control) ? this.syncButtonFocus : undefined
+      // WebKit settles native :focus-visible after dispatching focus.
+      if (isButton(this.control)) modality.refresh()
+    }
+    // Remember focus origin even while editable: readonly can change in place.
+    // Native text controls can match :focus-visible after pointer focus.
     try {
-      if (focusFromKeyboard) this.internals?.states?.add('kb-focus')
+      if ((this.doc as InputDocument)[MODALITY]?.keyboard) this.internals?.states?.add('kb-focus')
       else this.internals?.states?.delete('kb-focus')
     } catch { /* CustomStateSet unsupported */ }
   }
   private onBlur = () => {
+    const modality = (this.doc as InputDocument)[MODALITY]
+    if (modality?.active === this.syncButtonFocus) modality.active = undefined
+    if (isButton(this.control)) this.internals?.states?.delete('button-focus')
     try { this.internals?.states?.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
   }
 
   private onLabelSlotChange = () => {
     this.applyLabelAria()
+    this.applyDescriptionAria()
   }
 
   private applyLabelAria() {
     const c = this.control
     if (!c) return
-    if (this.delegatedAria.has('aria-label') || this.delegatedAria.has('aria-labelledby')) return
-    const text = this.labelSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    if (text) c.setAttribute('aria-label', text)
-    else c.removeAttribute('aria-label')
+    this.#labelObserver?.disconnect()
+    if (this.delegatedAria.has('aria-labelledby')) return
+    if (this.delegatedAria.has('aria-label')) {
+      c.ariaLabelledByElements = []
+      return
+    }
+    const labels = this.labelSlot.assignedElements()
+    c.ariaLabelledByElements = labels
+    this.#labelHasText = labels.some(label => !!label.textContent?.trim())
+    if (!isButton(c) || !this.isConnected || !labels.length) return
+    // An empty label lets the button's content become its name. Only this
+    // transition changes whether its value belongs in the description.
+    this.#labelObserver ??= new this.view.MutationObserver(() => {
+      const hasText = this.labelSlot.assignedElements().some(label => !!label.textContent?.trim())
+      if (hasText === this.#labelHasText) return
+      this.#labelHasText = hasText
+      this.applyDescriptionAria()
+    })
+    for (const label of labels) this.#labelObserver.observe(label, { childList: true, characterData: true, subtree: true })
   }
 
   private onHintSlotChange = () => {
@@ -774,23 +613,25 @@ export class AInputElement extends HTMLElementBase {
   private applyDescriptionAria() {
     const c = this.control
     if (!c) return
-    if (this.delegatedAria.has('aria-description') || this.delegatedAria.has('aria-describedby')) return
-    const text = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    if (text) c.setAttribute('aria-description', text)
-    else c.removeAttribute('aria-description')
+    if (this.delegatedAria.has('aria-describedby')) return
+    if (this.delegatedAria.has('aria-description')) {
+      c.ariaDescribedByElements = []
+      return
+    }
+    const named = c.getAttribute('aria-label')?.trim() ||
+      (this.delegatedAria.has('aria-labelledby') ? c.ariaLabelledByElements?.length :
+        !this.delegatedAria.has('aria-label') && this.#labelHasText)
+    const value = isButton(c) && named && c.value.trim() ? this.#buttonText : null
+    c.ariaDescribedByElements = [...(value ? [value] : []), ...this.hintSlot.assignedElements()]
   }
 
   private applyPopupAria() {
     const control = this.control
     if (!control) return
-    try {
-      if (!this.delegatedAria.has('aria-controls') && 'ariaControlsElements' in control)
-        control.ariaControlsElements = this.popupControls ? [this.popupControls] : null
-      if (!this.delegatedAria.has('aria-activedescendant') && 'ariaActiveDescendantElement' in control)
-        control.ariaActiveDescendantElement = this.popupActiveDescendant
-    } catch {
-      // Direct ARIA element reflection is unavailable in older engines.
-    }
+    if (!this.delegatedAria.has('aria-controls'))
+      control.ariaControlsElements = this.popupControls ? [this.popupControls] : null
+    if (!this.delegatedAria.has('aria-activedescendant'))
+      control.ariaActiveDescendantElement = this.popupActiveDescendant
   }
 
   private updateFilled() {
@@ -801,6 +642,10 @@ export class AInputElement extends HTMLElementBase {
   private updateValidity() {
     const c = this.control
     if (!this.internals || !c) return
+    if (isButton(c)) {
+      this.internals.setValidity({})
+      return
+    }
     // Reflect the inner control's native constraints — valueMissing (from
     // `required`), typeMismatch (e.g. `type="email"`), patternMismatch,
     // tooShort/tooLong, … — onto the host so the surrounding <form> sees them.
@@ -860,13 +705,18 @@ export class AInputElement extends HTMLElementBase {
   checkValidity(): boolean { return this.internals?.checkValidity() ?? true }
   reportValidity(): boolean { return this.internals?.reportValidity() ?? true }
 
-  /** Form field name — mirrors the `name` attribute, like native `<input>.name`,
-   *  so `el.name` works (e.g. keying validation messages by field in a form loop). */
+  /** Form field name, reflected to the host attribute for native form lookup. */
   get name(): string { return this.getAttribute('name') ?? '' }
-  set name(v: string) { this.setAttribute('name', v) }
+  set name(v: string | null | undefined) {
+    // React assigns this property on upgraded elements, including prop removal.
+    // Native form lookup and submission both use the host's name attribute.
+    if (v == null) this.removeAttribute('name')
+    else if (this.getAttribute('name') !== String(v)) this.setAttribute('name', String(v))
+  }
 
   // --- Form-associated callbacks ---
   formResetCallback() {
+    if (isButton(this.control)) return
     this.value = this.getAttribute('defaultvalue') ?? ''
     // The setter updates form value / validity / filled but fires no events, so a
     // controlled consumer would never learn the field reset and would re-render

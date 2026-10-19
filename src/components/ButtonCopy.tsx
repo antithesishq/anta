@@ -1,6 +1,6 @@
 import { Button, type ButtonProps } from './Button'
 import { useCopyFeedback } from '../anta_helpers'
-import { type CopyTarget, copyElementProps, isNodeCopy } from './copy-props'
+import { type CopyTarget, useCopyElementProps, isNodeCopy } from './copy-props'
 import type { IconShape } from '../elements/a-icon.shapes'
 
 /** A copy button is a plain action control, so `ButtonCopy` keeps the `Button`
@@ -90,7 +90,7 @@ export const ButtonCopy = ({
         : { icon: shownIcon }
 
   const hasText = label != null || children != null
-  const copyAttrs = copyElementProps({
+  const copyAttrs = useCopyElementProps({
     copy,
     copyNode,
     copyUrl,
@@ -110,6 +110,7 @@ export const ButtonCopy = ({
       // Icon-only (no visible text) gets an accessible name; a consumer's own
       // `aria-label` wins.
       aria-label={ariaLabel ?? (hasText ? undefined : 'Copy')}
+      data-anta-icon-only={!hasText && shownIcon != null ? '' : undefined}
       // For `copyNode`, mark the whole button so the serializer strips it (and
       // its `<a-copy>` child) from the copied region.
       data-copy-node-button={isNodeCopy({ copyNode }) ? '' : undefined}

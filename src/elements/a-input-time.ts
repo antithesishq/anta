@@ -1,5 +1,8 @@
+import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest } from '../input-events'
+import { inputTrailingActions } from './input-trailing-actions'
 import { HTMLElementBase, isModifiedNavigationKey } from '../anta_helpers'
 import { applyShadowAria, ariaAttributeProperty, type ShadowAriaAttribute } from './shadow-aria'
+import { MODALITY, trackFocusModality, type InputDocument } from './input-focus-modality'
 import './a-input-time.css'
 
 const INPUT_TIME_ARIA = [
@@ -38,12 +41,6 @@ const WRITE_DELEGATED_ARIA = Symbol('writeDelegatedAria')
  * element never mutates consumer-owned light DOM.
  */
 
-// Kept in sync with the `data-custom-event` the `<InputTime>` wrapper sets on its
-// clear <Button> (mirrors a-input's CLEAR_TRIGGER; duplicated, not shared, because
-// the wrapper can't import this module without self-registering the element).
-const CLEAR_TRIGGER = 'clearrequest'
-const CLEAR_INPUT_EVENT = 'clearinput'
-
 const pad2 = (n: number) => String(n).padStart(2, '0')
 // Native input `size` counts Latin-character columns. East Asian wide glyphs
 // occupy two columns, so account for them when sizing locale day-period inputs.
@@ -72,154 +69,11 @@ interface Seg {
   max: number
 }
 
-// Shadow styles are injected verbatim per instance, so they stay comment-free.
-// Locale-aware input sizes reserve space for both day-period labels.
-// The layout mirrors a-input's label, field, and hint chrome.
-const SHADOW_STYLE = `
-  :host {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
-    outline: none;
-  }
-
-  .label {
-    display: none;
-    color: var(--input-time-label);
-    font-family: var(--sans-serif);
-    font-size: var(--input-time-font-size);
-    line-height: var(--input-time-line-height);
-    font-weight: 500;
-  }
-
-  .field {
-    --_bc: var(--input-time-border);
-    --_bw: 0.5px;
-
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
-    min-height: var(--input-time-field-height);
-    background: var(--input-time-bg);
-    border-radius: var(--input-time-field-radius);
-    box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
-    transition: box-shadow 120ms ease;
-  }
-  :host([status]:not([status="neutral"])) .field { --_bw: 1px; }
-
-  @media (hover: hover) and (pointer: fine) {
-    :host(:not(:disabled)) .field:hover {
-      --_bc: var(--input-time-border-hover);
-      --_bw: 1px;
-    }
-  }
-  .field:focus-within {
-    --_bc: var(--input-time-border-hover);
-    --_bw: 1px;
-    outline: 1px solid var(--focus-ring);
-    outline-offset: 1px;
-  }
-  @media (forced-colors: active) { .field { border: 1px solid ButtonBorder; } }
-
-  slot[name="leading"] {
-    display: none;
-    color: var(--input-time-adornment);
-    font-size: var(--input-time-font-size);
-    line-height: var(--input-time-line-height);
-  }
-  :host([dim-actions]) slot[name="leading"] { opacity: 0.6; transition: opacity 120ms ease; }
-  :host([dim-actions]:not(:disabled)) .field:hover slot[name="leading"],
-  :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="leading"] { opacity: 1; }
-  :host(:disabled) slot[name="leading"] { opacity: 0.5; pointer-events: none; }
-
-  .segments {
-    display: flex;
-    align-items: center;
-    flex: 1 1 auto;
-    min-width: 0;
-    padding-inline: 7px;
-    color: var(--input-time-text);
-    font-family: var(--sans-serif);
-    font-stretch: normal;
-    font-style: normal;
-    font-size: var(--input-time-font-size);
-    line-height: var(--input-time-line-height);
-    font-weight: 400;
-  }
-
-  .seg {
-    appearance: none;
-    display: inline-block;
-    box-sizing: border-box;
-    min-width: 0;
-    padding-inline: 1px;
-    border: 0;
-    border-radius: 2px;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    font-variation-settings: inherit;
-    font-stretch: inherit;
-    font-style: inherit;
-    line-height: inherit;
-    text-align: center;
-    white-space: nowrap;
-    outline: none;
-    cursor: text;
-    font-variant-numeric: tabular-nums;
-  }
-  .seg--period {
-    width: auto;
-    color: var(--input-time-period-color);
-  }
-  .seg::placeholder {
-    color: var(--input-time-placeholder);
-    opacity: 1;
-  }
-  .lit {
-    margin-inline: -1px;
-    white-space: pre;
-    color: var(--input-time-text);
-  }
-
-  :host(:disabled) .segments { cursor: not-allowed; }
-  :host(:disabled) .seg { cursor: not-allowed; }
-
-  slot[name="trailing"] { display: none; }
-  :host([dim-actions]) slot[name="trailing"],
-  :host([dim-actions]) slot[name="clear"] { opacity: 0.6; transition: opacity 120ms ease; }
-  :host([dim-actions]:not(:disabled)) .field:hover slot[name="trailing"],
-  :host([dim-actions]:not(:disabled)) .field:hover slot[name="clear"],
-  :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="trailing"],
-  :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="clear"] { opacity: 1; }
-
-  slot[name="clear"] {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    visibility: hidden;
-  }
-  :host(:state(filled):not(:disabled)) slot[name="clear"] { visibility: visible; }
-
-  .hint {
-    display: none;
-    gap: 4px;
-    align-items: flex-start;
-    padding-inline-start: 1px;
-    color: var(--input-time-hint);
-    font-family: var(--sans-serif);
-    font-size: calc(var(--input-time-font-size) - 1px);
-    line-height: calc(var(--input-time-line-height) - 2px);
-  }
-`
-
 // The shell never changes. Keeping it in one declarative template makes the
 // slots, parts, and field composition visible together; locale-dependent
 // segments are the only dynamic children, rendered into `.segments` below.
 const INPUT_TIME_TEMPLATE = typeof document === 'undefined' ? undefined : (() => {
   const template = document.createElement('template')
-  const style = document.createElement('style')
-  style.textContent = SHADOW_STYLE
 
   const label = document.createElement('slot')
   label.className = 'label'
@@ -249,14 +103,14 @@ const INPUT_TIME_TEMPLATE = typeof document === 'undefined' ? undefined : (() =>
   hint.part.add('hint')
   hint.name = 'hint'
 
-  template.content.append(style, label, field, document.createElement('slot'), hint)
+  template.content.append(label, field, document.createElement('slot'), hint)
   return template
 })()
 
 export class AInputTimeElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
-    'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'min', 'max', 'required',
+    'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'readonly', 'min', 'max', 'required',
     ...INPUT_TIME_ARIA,
   ]
 
@@ -265,6 +119,9 @@ export class AInputTimeElement extends HTMLElementBase {
   #labelSlot: HTMLSlotElement
   #hintSlot: HTMLSlotElement
   #segRow: HTMLDivElement
+  #trailingSlot: HTMLSlotElement
+  #trailingActions: ReturnType<typeof inputTrailingActions>
+  #releaseModality?: () => void
   #ready = false
   #formDisabled = false
   // True once a value arrived via the `value` property setter — so connect
@@ -288,6 +145,7 @@ export class AInputTimeElement extends HTMLElementBase {
   // Pointer-focused inputs keep the browser's caret placement. Keyboard focus
   // selects the segment so a new value can be typed immediately.
   #pointerSegment?: HTMLInputElement
+  #editedSinceChange = false
 
   constructor() {
     super()
@@ -311,14 +169,23 @@ export class AInputTimeElement extends HTMLElementBase {
 
     this.#field = shadow.querySelector<HTMLDivElement>('.field')!
     this.#segRow = shadow.querySelector<HTMLDivElement>('.segments')!
+    this.#trailingSlot = shadow.querySelector<HTMLSlotElement>('slot[name=trailing]')!
+    this.#trailingActions = inputTrailingActions(this, this.#trailingSlot, 'a-input-time-trailing', actions => {
+      this.#internals?.states?.[actions ? 'add' : 'delete']('trailing-actions')
+    })
+    this.#trailingSlot.addEventListener('slotchange', this.#trailingActions.sync)
     this.#field.addEventListener('mousedown', this.#onFieldMouseDown)
+    this.#field.addEventListener('mouseup', this.#resetPointerSegment)
     this.#segRow.addEventListener('input', this.#onInput)
     this.#segRow.addEventListener('keydown', this.#onKeyDown)
     this.#segRow.addEventListener('focusin', this.#onFocusIn)
     this.#segRow.addEventListener('focusout', this.#onFocusOut)
     this.#segRow.addEventListener('paste', this.#onPaste)
 
-    this.addEventListener(CLEAR_TRIGGER, () => this.clear())
+    this.addEventListener(CLEAR_TRIGGER, event => {
+      if (!ownsInputClearRequest(this, event) || this.#disabled || this.hasAttribute('readonly')) return
+      if (this.dispatchEvent(new CustomEvent(CLEAR_CLICK_EVENT, { bubbles: true, cancelable: true }))) this.clear()
+    })
   }
 
   getAnchorRect(): DOMRect {
@@ -326,20 +193,41 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    this.#releaseModality?.()
+    this.#releaseModality = trackFocusModality(this.doc, this.#syncFocus)
+    if (Object.prototype.hasOwnProperty.call(this, 'name')) {
+      const name = this.name
+      delete (this as unknown as { name?: string }).name
+      this.name = name
+    }
     if (Object.prototype.hasOwnProperty.call(this, 'value')) {
       // A `value` set as a property before upgrade shadows the accessor as an own
       // data property — re-apply it through the setter so it isn't lost.
       const v = (this as unknown as { value: string }).value
       delete (this as unknown as { value?: string }).value
       this.#seed(v)
-    } else if (!this.#seeded) {
+    } else if (!this.#ready && !this.#seeded) {
       // No value came in via the property setter (which sets `#seeded`), so take
       // the controlled `value` or the uncontrolled `defaultvalue` attribute.
       // Guarded so a property-set value isn't clobbered by an empty attribute.
       this.#seed(this.getAttribute('value') ?? this.getAttribute('defaultvalue') ?? '')
     }
-    this.#buildSegments()
-    this.#ready = true
+    if (this.#ready) {
+      this.#applyGroupLabel()
+      this.#applyGroupDescription()
+    } else {
+      this.#buildSegments()
+      this.#ready = true
+    }
+    this.#trailingActions.sync()
+  }
+
+  disconnectedCallback() {
+    this.#trailingActions.disconnect()
+    this.#releaseModality?.()
+    this.#releaseModality = undefined
+    this.#pointerSegment = undefined
+    this.#internals?.states?.delete('kb-focus')
   }
 
   /** Seed the value state + canonical cache before the segments exist. */
@@ -360,8 +248,8 @@ export class AInputTimeElement extends HTMLElementBase {
     if (name === 'value') { if (value !== null) this.value = value; return }
     if (name === 'defaultvalue') return
     if (name === 'locale' || name === 'hour12') { this.#buildSegments(); return }
-    if (name === 'status') { this.#syncStatus(); return }
-    if (name === 'disabled') { this.#syncDisabled(); return }
+    if (name === 'status') { this.#syncStatus(); this.#updateValidity(); return }
+    if (name === 'disabled' || name === 'readonly') { this.#syncDisabled(); this.#syncFocus(); return }
     if (name === 'min' || name === 'max') {
       this.#updateValidity()
       return
@@ -487,7 +375,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#literals = []
     for (const part of parts) {
       if (part.type === 'hour' || part.type === 'minute' || part.type === 'dayPeriod') {
-        const el = document.createElement('input')
+        const el = this.doc.createElement('input')
         const kind: SegKind = part.type === 'dayPeriod' ? 'period' : part.type
         el.className = `seg seg--${kind}`
         el.type = 'text'
@@ -518,7 +406,7 @@ export class AInputTimeElement extends HTMLElementBase {
         // Numeric inputs include their own inline padding, so a whitespace-only
         // locale literal adds no useful separation and can make the row too wide.
         if (!part.value.trim()) continue
-        const lit = document.createElement('span')
+        const lit = this.doc.createElement('span')
         lit.className = 'lit'
         lit.part.add('literal')
         lit.setAttribute('aria-hidden', 'true')
@@ -544,16 +432,17 @@ export class AInputTimeElement extends HTMLElementBase {
   // --- Native segment editing + navigation ---
 
   #segFromTarget(target: EventTarget | null): Seg | undefined {
-    if (!(target instanceof HTMLInputElement)) return undefined
     return this.#segs.find((seg) => seg.el === target)
   }
 
   // Clicking the field's padding (rather than a native input) moves focus into
-  // the editor. A real pointer interaction leaves caret placement to the browser.
+  // the editor. Compatibility mousedown waits until a touch tap completes;
+  // native input targets keep the browser's caret placement.
   #onFieldMouseDown = (e: MouseEvent) => {
+    if (e.button !== 0) return
     const seg = this.#segFromTarget(e.target)
     if (seg) {
-      this.#pointerSegment = seg.el
+      this.#pointerSegment = this.shadowRoot?.activeElement === seg.el ? undefined : seg.el
       return
     }
     if (e.target === this.#field || e.target === this.#segRow) {
@@ -562,9 +451,12 @@ export class AInputTimeElement extends HTMLElementBase {
     }
   }
 
+  #resetPointerSegment = () => { this.#pointerSegment = undefined }
+
   #onFocusIn = (e: FocusEvent) => {
     const seg = this.#segFromTarget(e.target)
     if (!seg) return
+    this.#syncFocus()
     const pointerFocused = this.#pointerSegment === seg.el
     this.#pointerSegment = undefined
     if (!pointerFocused) {
@@ -574,23 +466,31 @@ export class AInputTimeElement extends HTMLElementBase {
     }
   }
 
-  #onFocusOut = (_e: FocusEvent) => {
+  #onFocusOut = (e: FocusEvent) => {
+    if (this.#pointerSegment === e.target) this.#resetPointerSegment()
     // `focusout` fires for hops within the row too. Defer until focus settles,
     // then commit the group only when it has genuinely lost focus.
     queueMicrotask(() => {
+      this.#syncFocus()
       const active = this.shadowRoot?.activeElement
-      if (this.#segs.some((seg) => seg.el === active)) return
-      if (this.#clampIfComplete()) this.#commitEdit()
+      if (this.isConnected && this.#segs.some((seg) => seg.el === active)) return
+      const readonly = this.hasAttribute('readonly')
+      // Locking the field must retain partial digits and one pending edit, but
+      // subsequent readonly focus visits do not create new commits.
+      if (readonly && !this.#editedSinceChange) return
+      if (!readonly && this.#clampIfComplete()) this.#commitEdit()
       this.#dispatch('change')
     })
   }
 
   #onKeyDown = (e: KeyboardEvent) => {
+    this.#resetPointerSegment()
     if (isModifiedNavigationKey(e)) return
     const seg = this.#segFromTarget(e.target)
     if (!seg) return
     const { el } = seg
     const key = e.key
+    if ((this.#disabled || this.hasAttribute('readonly')) && ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(key)) return
     if (key === 'ArrowUp' || key === 'ArrowDown') {
       e.preventDefault()
       this.#step(seg, key === 'ArrowUp' ? 1 : -1)
@@ -627,6 +527,7 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #onPaste = (e: ClipboardEvent) => {
+    if (this.#disabled || this.hasAttribute('readonly')) return
     const text = e.clipboardData?.getData('text/plain').trim() ?? ''
     // Let native inputs handle segment paste. A canonical complete time fills the
     // field because it cannot fit into one two-character numeric segment.
@@ -639,7 +540,8 @@ export class AInputTimeElement extends HTMLElementBase {
 
   #onInput = (e: Event) => {
     const seg = this.#segFromTarget(e.target)
-    if (!seg || (e as InputEvent).isComposing) return
+    if (!seg || this.#disabled || this.hasAttribute('readonly') || (e as InputEvent).isComposing) return
+    this.#editedSinceChange = true
     if (seg.kind === 'period') this.#onPeriodInput(e, seg)
     else this.#onNumericInput(seg)
   }
@@ -722,6 +624,7 @@ export class AInputTimeElement extends HTMLElementBase {
    *  from empty, ↑ lands on min and ↓ on max. Clamps the resulting complete value
    *  into the field's `min`/`max` range (so ↑ can't step past `max`). */
   #step(seg: Seg, delta: number) {
+    this.#editedSinceChange = true
     if (seg.kind === 'period') {
       // From empty, land on AM; otherwise toggle.
       this.#period = this.#period == null ? 'am' : this.#period === 'am' ? 'pm' : 'am'
@@ -848,14 +751,14 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #dispatch(type: 'input' | 'change') {
+    if (type === 'change') this.#editedSinceChange = false
     this.dispatchEvent(new Event(type, { bubbles: true, composed: type === 'input' }))
   }
 
   #applyGroupLabel() {
-    if (this.#delegatedAria.has('aria-label') || this.#delegatedAria.has('aria-labelledby')) return
-    const label = this.#labelSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    if (label) this.#segRow.setAttribute('aria-label', label)
-    else this.#segRow.removeAttribute('aria-label')
+    if (this.#delegatedAria.has('aria-labelledby')) return
+    if (this.#delegatedAria.has('aria-label')) { this.#segRow.ariaLabelledByElements = []; return }
+    this.#segRow.ariaLabelledByElements = this.#labelSlot.assignedElements()
   }
 
   #onLabelSlotChange = () => {
@@ -863,19 +766,33 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #applyGroupDescription() {
-    if (this.#delegatedAria.has('aria-description') || this.#delegatedAria.has('aria-describedby')) return
-    const description = this.#hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    if (description) this.#segRow.setAttribute('aria-description', description)
-    else this.#segRow.removeAttribute('aria-description')
+    if (this.#delegatedAria.has('aria-describedby')) return
+    if (this.#delegatedAria.has('aria-description')) { this.#segRow.ariaDescribedByElements = []; return }
+    this.#segRow.ariaDescribedByElements = this.#hintSlot.assignedElements()
   }
 
   #onHintSlotChange = () => {
     this.#applyGroupDescription()
   }
 
+  get #disabled() { return this.hasAttribute('disabled') || this.#formDisabled }
+
+  #syncFocus = () => {
+    const modality = (this.doc as InputDocument)[MODALITY]
+    const focused = this.isConnected && !this.#disabled && this.#segs.some(seg => seg.el === this.shadowRoot?.activeElement)
+    if (modality) {
+      if (focused && this.hasAttribute('readonly')) modality.active = this.#syncFocus
+      else if (modality.active === this.#syncFocus) modality.active = undefined
+    }
+    const keyboard = modality?.keyboard
+    this.#internals?.states?.[keyboard && focused ? 'add' : 'delete']('kb-focus')
+  }
+
   #syncDisabled() {
-    const off = this.hasAttribute('disabled') || this.#formDisabled
-    for (const seg of this.#segs) seg.el.disabled = off
+    for (const seg of this.#segs) {
+      seg.el.disabled = this.#disabled
+      seg.el.readOnly = this.hasAttribute('readonly')
+    }
   }
 
   #syncStatus() {
@@ -957,7 +874,10 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   get name(): string { return this.getAttribute('name') ?? '' }
-  set name(v: string) { this.setAttribute('name', v) }
+  set name(v: string | null | undefined) {
+    if (v == null) this.removeAttribute('name')
+    else if (this.getAttribute('name') !== String(v)) this.setAttribute('name', String(v))
+  }
 
   // Constraint-validation API, proxied from ElementInternals (mirrors a-input) so
   // the host behaves like a native control and the `InputTime` wrapper can read
@@ -974,7 +894,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#commitEdit()
     this.#dispatch('change')
   }
-  formDisabledCallback(disabled: boolean) { this.#formDisabled = disabled; this.#syncDisabled() }
+  formDisabledCallback(disabled: boolean) { this.#formDisabled = disabled; this.#syncDisabled(); this.#syncFocus() }
   formStateRestoreCallback(state: string) { this.value = state ?? '' }
 }
 

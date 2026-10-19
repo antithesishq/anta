@@ -42,7 +42,8 @@
     --tag-text: var(--text-3);
     --tag-edge: var(--text-2);
 
-    --tag-bg: light-dark(color-mix(in oklch, var(--tag-tint) 10%, transparent), color-mix(in oklch, var(--tag-tint) 20%, transparent));
+    --tag-bg-secondary: light-dark(color-mix(in oklch, var(--tag-tint) 10%, transparent), color-mix(in oklch, var(--tag-tint) 20%, transparent));
+    --tag-bg: var(--tag-bg-secondary);
     --tag-border: light-dark(color-mix(in oklch, var(--tag-tint) 15%, transparent), color-mix(in oklch, var(--tag-tint) 25%, transparent));
     --tag-separator: color-mix(in oklch, var(--tag-text) 30%, transparent);
 

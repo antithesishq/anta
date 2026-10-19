@@ -5,8 +5,8 @@
 // hide themselves — Tabs never reads or toggles them, so there's no child introspection
 // (no `Children`/Fragment scan or component-identity matching), which keeps it compatible
 // across React / Preact / custom runtimes and static SSR.
-import { useState } from "../jsx-runtime"
-import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { useNativeEventProps } from "../native-event-props"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel, useSelectionMirror } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
 import { Tooltip } from "./Tooltip"
@@ -42,9 +42,10 @@ export interface TabOption extends OptionPresentationProps {
   round?: boolean
   /** Per-tab tone override, same vocabulary as `<Tabs tone>` — colors this one tab's
    *  label + icons (all priorities/modes, named or custom color) and, when it's the
-   *  active tab, its indicator. For a **custom literal color** the sliding indicator can't
-   *  adopt it (the shared moving element can't read a descendant's color), so a custom tone
-   *  colors the label everywhere and the indicator only in `noslide`; the six **named**
+   *  active tab, its indicator. The track keeps the strip's tone. For a **custom literal
+   *  color** the sliding indicator can't adopt it (the shared moving element can't read
+   *  a descendant's color), so a custom tone colors the label everywhere and the indicator
+   *  only in `noslide`; the six **named**
    *  tones color both in every mode. Overrides the strip's `tone` for this tab.
    *  @defaultValue inherits the strip's `tone` */
   tone?: "neutral" | "brand" | "info" | "success" | "warning" | "critical" | (string & {})
@@ -124,32 +125,28 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
    *  per tab so it snaps with no movement. (Browsers without anchor positioning get that
    *  per-tab paint automatically — `noslide` is the explicit opt-out.) */
   noslide?: boolean
-  /** Fully-round the tabs and the sliding indicator (and the primary track
-   *  well). Applies strip-wide; a single tab's `round` rounds just that tab. A
-   *  `number` (px) or CSS length string sets a custom radius on the top-level
-   *  track well only — the tab pills + indicator stay fully round. */
+  /** Fully-round the tabs, the sliding indicator, and the primary track.
+   *  Applies strip-wide; a single tab's `round` rounds just that tab. A
+   *  `number` (px) or CSS length string sets that radius on all three. */
   round?: boolean | number | string
   /** Disable the whole strip. */
   disabled?: boolean
 }
 
 /**
- * `<Tabs>` — a tablist with optional panels. The strip renders from the `options`
- * array; panels are `<TabPanel>` children that manage their own visibility.
+ * Tab strip with optional panels. Give each option a unique `value` and match
+ * it to a `TabPanel` to display content for the selected tab.
  *
- * The strip (`<a-tabs>`) and the panels render as flat siblings — there is no wrapper
- * element, so `className` / `id` / `style` / `...rest` land on the strip. Laying the
- * strip out relative to its panels is the consumer's job: a horizontal strip stacks
- * above the panels in normal flow; for a vertical strip beside them, wrap `<Tabs>` in
- * your own flex container. Any non-`TabPanel` children render verbatim as siblings too.
+ * The strip and panels render as siblings. `className`, `id`, `style`, and extra
+ * props apply to the strip. Keep the strip and panels under the same parent.
+ * Horizontal tabs stack in normal flow. Use a flex container to place a
+ * vertical strip beside its panels. Other children also render as siblings.
  *
- * `<a-tabs>` owns selection off-DOM (it sets each tab's `selected` property and the
- * roving `aria-activedescendant` via `ElementInternals`, writing no attribute to any
- * tab); this wrapper mirrors the value only to render the strip's roving `tabindex`,
- * and the panels read it straight from `<a-tabs>`. Controlled (`value` + `onStateChange`)
- * or uncontrolled (`defaultValue`).
+ * Pass `value` with `onStateChange` for controlled selection, or `defaultValue`
+ * for an initial uncontrolled selection. Panels are optional when the
+ * application renders the selected content itself.
  *
- * Requires `@antadesign/anta/elements` (client-side only).
+ * See [Install and configure](https://anta.design/install/) for runtime setup.
  *
  * @example
  * ```tsx
@@ -191,11 +188,7 @@ export const Tabs = ({
   ...rest
 }: TabsProps) => {
   const controlled = value !== undefined
-  // Uncontrolled selection lives here (re-renders declaratively) — the wrapper needs
-  // the value only to render the strip's roving `tabindex`. Panels read the value
-  // straight from `<a-tabs>`, so they don't depend on this mirror.
-  const [internalValue, setInternalValue] = useState<string | undefined>(defaultValue)
-  const currentValue = controlled ? value : internalValue
+  const [currentValue, setInternalValue] = useSelectionMirror(value, defaultValue)
 
   const tabs = options ?? []
 
@@ -225,6 +218,8 @@ export const Tabs = ({
         }
       : undefined
 
+  const events = useNativeEventProps({ onstatechange, onchange, onfocusin: onFocus, onfocusout: onBlur })
+
   const vertical = orientation === "vertical"
   const focusValue =
     currentValue != null && tabs.some((tab) => tab.value === currentValue)
@@ -252,11 +247,8 @@ export const Tabs = ({
       noslide={noslide ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
-      onstatechange={onstatechange}
-      onchange={onchange}
+      {...events}
       // Focus lands on a tab, not the tablist — report via bubbling focusin/focusout.
-      onfocusin={onFocus}
-      onfocusout={onBlur}
       class={className}
       id={id}
       style={roundStyle(round, "--tabs-round", toneStyle(tone, "--tabs-tone-source", style))}

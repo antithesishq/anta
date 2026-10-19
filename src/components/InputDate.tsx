@@ -5,7 +5,7 @@
 // that opens from the field itself (click or ArrowDown), anchored to it like
 // Select. There is no `a-inputdate` element; the wrapper is the coordinator.
 import { useMemo, useState } from '../jsx-runtime'
-import { isModifiedNavigationKey } from '../anta_helpers'
+import { isModifiedNavigationKey, unwrapNativeEvent } from '../anta_helpers'
 import { Temporal } from 'temporal-polyfill'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
@@ -375,7 +375,7 @@ export const InputDate = ({
                   // fight them. A cleared / incomplete time (`t === ''`) commits
                   // the date alone (time undefined), so the clear sticks instead
                   // of the stale time reappearing on the next render.
-                  const ev = 'nativeEvent' in e ? e.nativeEvent : e
+                  const ev = unwrapNativeEvent(e)
                   if (ev?.type !== 'change') return
                   const base = dateISO || Temporal.Now.plainDateISO().toString()
                   commit(t ? `${base}T${t}` : base)

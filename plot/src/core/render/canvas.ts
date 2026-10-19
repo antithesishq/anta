@@ -105,7 +105,7 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
                 ctx.rect(inner.left, inner.top, inner.right - inner.left, inner.bottom - inner.top)
                 ctx.clip()
 
-                series_type<TooltipContent>(series.kind).paint(series, render)
+                series_type(series).paint(series, render)
             } finally {
                 ctx.restore()
             }

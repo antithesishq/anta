@@ -1,9 +1,34 @@
-import { jsx, useState, useMemo } from "./jsx-runtime"
+import { HTMLElementBase } from './element-base'
+export { HTMLElementBase } from './element-base'
+import { jsx, useState, useMemo, useOptionalClientLayoutEffect } from "./jsx-runtime"
 import type { IconShape } from "./elements/a-icon.shapes"
 import type { OptionPresentationProps } from "./general_types"
 
+/** @internal Check the native Node brand across realms without reading a document. */
+export function isDOMNode(value: unknown): value is Node {
+  if (typeof Node === 'undefined' || value == null || typeof value !== 'object') return false
+  try {
+    return Node.prototype.isSameNode.call(value, value as Node)
+  } catch {
+    return false
+  }
+}
+
 export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
+}
+
+/** @internal Mirror selection for declarative rendering, retaining the latest
+ * controlled value when ownership is released. Update the mirror only for
+ * accepted uncontrolled changes. */
+export function useSelectionMirror(value: string | undefined, defaultValue?: string) {
+  const [internalValue, setInternalValue] = useState<string | undefined>(value ?? defaultValue)
+  const [lastValue, setLastValue] = useState(value)
+  if (value !== lastValue) {
+    setLastValue(value)
+    if (value !== undefined) setInternalValue(value)
+  }
+  return [value !== undefined ? value : internalValue, setInternalValue] as const
 }
 
 /**
@@ -78,10 +103,15 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
  */
 export type StateChangeEvent<D> = CustomEvent<D> | { nativeEvent: CustomEvent<D> }
 
+/** @internal Return the raw event from native or renderer-wrapped callbacks. */
+export function unwrapNativeEvent<E extends object>(event: E | { nativeEvent: E }): E {
+  return ('nativeEvent' in event ? event.nativeEvent : event) as E
+}
+
 export function nativeStateChange<D>(
   e: StateChangeEvent<D>,
 ): { event: CustomEvent<D>; detail?: D; isOwn: boolean } {
-  const event = ('nativeEvent' in e ? e.nativeEvent : e) as CustomEvent<D>
+  const event = unwrapNativeEvent(e)
   return { event, detail: event?.detail, isOwn: !event || event.target === event.currentTarget }
 }
 
@@ -108,6 +138,13 @@ export function lineClamp(truncate: boolean | number | undefined): number | unde
 }
 
 const NAVIGATION_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'])
+
+/** Leave candidate navigation and confirmation with the input method, including
+ * browsers that report the final composing key only through legacy code 229. */
+export function isComposingKey(event: Pick<KeyboardEvent, 'isComposing' | 'keyCode'> | { nativeEvent: Pick<KeyboardEvent, 'isComposing' | 'keyCode'> }): boolean {
+  const native = unwrapNativeEvent(event)
+  return native.isComposing || native.keyCode === 229
+}
 
 /** Leave modified navigation to the browser, OS, or text field. Shift+Tab remains focus navigation. */
 export function isModifiedNavigationKey(event: Pick<KeyboardEvent, 'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>): boolean {
@@ -145,10 +182,16 @@ export function parseOpenState(v: string | null): 'open' | 'closed' {
  *  (e.g. skipping `[disabled]` triggers) lands for every element at once. */
 export function installDismissTrigger(host: HTMLElement, attr: string, onDismiss: () => void): void {
   host.addEventListener('click', (e) => {
-    const target = e.target
-    if (!(target instanceof Element)) return
-    const trigger = target.closest(`[${attr}]`)
-    if (trigger && trigger.closest(host.localName) === host) onDismiss()
+    let triggered = false
+    for (const target of e.composedPath()) {
+      const element = target as Element
+      if (element.nodeType !== 1) continue
+      if (element.localName === host.localName) {
+        if (element === host && (triggered || element.hasAttribute(attr))) onDismiss()
+        return
+      }
+      if (element.hasAttribute(attr)) triggered = true
+    }
   })
 }
 
@@ -247,6 +290,8 @@ export function useCopyFeedback(
   // jsx-runtime indirection doesn't re-export.
   const box = useMemo(() => ({ timer: undefined as ReturnType<typeof setTimeout> | undefined }), [])
 
+  useOptionalClientLayoutEffect(() => () => clearTimeout(box.timer), [box])
+
   const handleCopied = (ok: boolean) => {
     clearTimeout(box.timer)
     setStatus(ok ? 'ok' : 'fail')
@@ -281,33 +326,40 @@ export function anchorRect(el: Element): DOMRect {
  * (Menu and tooltip are both top-layer popovers, stacked by show order, so a
  * tooltip opened while a menu is up would paint over it — z-index can't reorder
  * the top layer.) Decoupled on purpose: neither element imports the other, and
- * if `a-menu` never loads the provider stays null and every tooltip shows.
+ * if `a-menu` never loads there are no providers and tooltips remain available.
  */
 export interface MenuPresence {
   /** Is any `a-menu` open? */
-  isOpen(): boolean
+  isOpen(doc?: Document): boolean
   /** Is `node` inside the open menu system — a menu surface, a slotted item, or
    *  an open trigger? (A tooltip there is a menu-item tooltip and still shows,
    *  above the menu.) */
   contains(node: Node): boolean
 }
-let menuPresence: MenuPresence | null = null
-/** `a-menu` registers its live open-state provider here (once, on load). */
-export function setMenuPresence(p: MenuPresence | null): void {
-  menuPresence = p
+const MENU_PRESENCE = Symbol.for('anta.menu-presence')
+type MenuDocument = Document & { [MENU_PRESENCE]?: Set<MenuPresence> }
+/** Register every compiled provider; a later unused class must not replace the
+ * provider belonging to the class retained by the custom-element registry. */
+export function setMenuPresence(p: MenuPresence | null, doc = typeof document === 'undefined' ? undefined : document): void {
+  if (!doc) return
+  const providers = (doc as MenuDocument)[MENU_PRESENCE] ??= new Set()
+  if (p) providers.add(p)
+  else providers.clear()
 }
-/** True while any `a-menu` is open. */
-export function isMenuOpen(): boolean {
-  return menuPresence?.isOpen() ?? false
+/** True while a menu is open in this document. */
+export function isMenuOpen(doc = typeof document === 'undefined' ? undefined : document): boolean {
+  if (!doc) return false
+  return [...((doc as MenuDocument)[MENU_PRESENCE] ?? [])].some(provider => provider.isOpen(doc))
 }
-/** True if `node` sits inside the open menu system. */
+/** True if `node` sits inside an open menu in its document. */
 export function isInsideOpenMenu(node: Node): boolean {
-  return menuPresence?.contains(node) ?? false
+  const doc = node.ownerDocument
+  return doc != null && [...((doc as MenuDocument)[MENU_PRESENCE] ?? [])].some(provider => provider.contains(node))
 }
 
 /** Internal element protocol used by a popup to associate itself and its active
  * item with an Anta-owned focus target without serializing cross-root IDs. */
-export const SYNC_POPUP_ARIA = Symbol('anta.sync-popup-aria')
+export const SYNC_POPUP_ARIA = Symbol.for('anta.sync-popup-aria')
 export interface PopupAriaRelations {
   source: Element
   controls?: Element | null
@@ -321,33 +373,19 @@ export function isPopupAriaReceiver(element: Element | null): element is PopupAr
   return element != null && typeof (element as Partial<PopupAriaReceiver>)[SYNC_POPUP_ARIA] === 'function'
 }
 
-/**
- * `HTMLElement` in browsers, a noop class in Node/Worker environments.
- * Use this as the base for custom element classes so importing the
- * module in a non-DOM environment doesn't throw on `extends HTMLElement`.
- * Instantiation in non-DOM environments still fails, but no consumer
- * should be doing that.
- */
-const NativeHTMLElement = (typeof HTMLElement !== 'undefined' ? HTMLElement : class {}) as typeof HTMLElement
-
-/**
- * Base for Anta custom elements. Adds realm-correct `view` / `doc` getters:
- * the class may be defined in one realm while the element lives in another
- * (the docs playground renders into an iframe but reuses the parent page's
- * element class), so the module-global `window` / `document` can point at the
- * wrong frame. Anything viewport- or document-scoped — clamping,
- * `getComputedStyle`, scroll / key / pointer listeners — must go through these
- * so it's correct in any frame. Shared by a-tooltip and a-menu.
- */
-export class HTMLElementBase extends NativeHTMLElement {
-  /** This element's own window (the iframe's window when nested). */
-  protected get view(): Window & typeof globalThis {
-    return (this.ownerDocument?.defaultView as Window & typeof globalThis) ?? window
-  }
-  /** This element's own document (the iframe's document when nested). */
-  protected get doc(): Document {
-    return this.ownerDocument ?? document
-  }
+/** Internal Text-to-Button protocol. The receiver publishes accessibility
+ * defaults through its own ElementInternals without changing authored DOM. */
+export const SYNC_TEXT_TOGGLE = Symbol.for('anta.sync-text-toggle')
+export interface TextToggleAria {
+  source: Element
+  expanded?: boolean
+  clear?: boolean
+}
+export interface TextToggleReceiver extends Element {
+  [SYNC_TEXT_TOGGLE](state: TextToggleAria): void
+}
+export function isTextToggleReceiver(element: Element | null): element is TextToggleReceiver {
+  return element != null && typeof (element as Partial<TextToggleReceiver>)[SYNC_TEXT_TOGGLE] === 'function'
 }
 
 /** Apply default accessible names and descriptions through element references. */
@@ -454,3 +492,14 @@ export class SelectableChildElement extends HTMLElementBase {
     applyAccessibilityRelations(this.internals, labels, descriptions)
   }
 }
+
+/** @internal Project value inputs through HTML attributes in every renderer.
+ * HTML attribute names are case-insensitive. `VALUE` avoids React's property
+ * assignment and Preact's special live-value comparison/removal, while producing
+ * the ordinary `value` attribute in the DOM and parsed SSR HTML. In particular,
+ * an empty-string option stays distinct from removing controlled ownership.
+ * Keep this projection serializable for server and worker renderers. */
+export const valueAttributes = (value: string | undefined, defaultValue?: string) => ({
+  VALUE: value,
+  defaultvalue: value === undefined ? defaultValue : undefined,
+})

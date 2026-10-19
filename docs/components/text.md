@@ -1,54 +1,21 @@
 # Text
 
-A block-level text container that scopes the color hierarchy of its
-contents. `priority` sets the emphasis from `primary` (`--text-1`) to
-`quaternary` (`--text-4`). It defaults to `secondary` (`--text-2`), so body
-text reads a step softer than the strongest foreground; pass `primary`
-for emphasis. `tone` adds a tint (`brand`, `success`, `critical`,
-`warning`, `info`, or any literal CSS color for a one-off custom tone); the
-default `neutral` leaves it untinted. `inline` renders it `inline-block` for use
-mid-sentence.
-
-Links nested inside `<Text>` take Anta's prose-link styling from the
-design system, with no per-page overrides to maintain.
+Use Text for body copy, descriptions, and supporting information. Set `priority`
+to emphasize important content or soften secondary details, and use `tone` to
+add color. Text also styles any links inside it.
 
 ## Link behavior
 
-Links inside `<Text>` follow a priority-aware hierarchy that keeps
-emphasis consistent with the surrounding text:
-
-| Priority      | Link color (default)              | Link color (hover)            |
-|---------------|-----------------------------------|-------------------------------|
-| `primary`     | `--link-color` (brand blue)       | `--link-color-hover`          |
-| `secondary`   | `--link-color`                    | `--link-color-hover`          |
-| `tertiary`    | `currentColor` (= `--text-3`)     | `--text-2`                    |
-| `quaternary`  | `currentColor` (= `--text-4`)     | `--text-3`                    |
-
-The underline is a 0.5px hairline at 75% alpha by default and bumps to
-1px / 100% alpha on hover. On `:active` it returns to the 0.5px / 75%
-resting state.
-
-For tinted text (`tone="brand|success|critical|warning|info"`) links are
-always muted regardless of priority: they take `currentColor` and step up
-to the next-stronger level of the same tint on hover. At
-`priority="primary"` there is no level above, so hovering only brings the
-underline to full alpha.
+Links follow the surrounding text's emphasis and color. In supporting text,
+they stay muted; hover makes them easier to identify. The examples show how
+links look at each priority and tone.
 
 ## Demo
 
 ## Truncation and expansion
 
-`truncate` takes `true` (or `1`) for a single-line ellipsis, any integer
-≥ 2 for multi-line clamping, and `0` or a negative value for no
-truncation. Both modes use `-webkit-line-clamp` inside
-`display: -webkit-box`, supported in every major browser despite the
-prefix (Firefox 68+, Chrome, Safari, Edge). The host gets `min-width: 0`
-so truncation works inside flex and grid containers.
-
-JSX `Text` adds a `truncatedOnly` tooltip containing its text content. It
-opens only when the text clips. Nest a `<Tooltip>` to replace that tooltip;
-an empty nested tooltip suppresses it. `expandable` text has no automatic
-tooltip because its own control reveals the content.
+Use `truncate` to keep long text compact. Pass a number to choose how many lines
+to show. Readers can hover over shortened text to read the full content in a tooltip.
 
 ```tsx
 {/* Single line */}
@@ -59,10 +26,52 @@ tooltip because its own control reveals the content.
 <Text truncate={3}>{longSentence}</Text>
 ```
 
+Add `expandable` to let readers reveal long text when they need it. The **Show more**
+icon button appears only when the text does not fit. Add `collapsible` to let them fold it again.
+
+```tsx
+{/* One-way: the chevron is hidden once expanded */}
+<Text truncate expandable>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+<Text truncate={3} expandable>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+
+{/* Two-way: the reader can collapse it back */}
+<Text truncate={3} expandable collapsible>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+
+{/* Make the folded preview a single expansion target */}
+<Text truncate={3} expandable collapsible expandableInert>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+```
+
+Use `expandableInert` when readers should expand the text before following its
+links. Selecting anywhere in the folded preview expands it; its links become
+available after expansion.
+
+## Component props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `collapsible?` | boolean | — | Allow refolding after expansion. The control stays visible, rotates its chevron, and switches between "Show more" and "Show less". Requires `expandable`. The expanded collapse target spans the full width over 16px of bottom padding; removing that padding with custom CSS allows it to overlap content. |
+| `expandable?` | boolean | — | Show a fade and expansion control when truncated text overflows. Select the control or focus it and press Enter or Space to reveal all content. Expansion is one-way: the control hides once expanded. Add `collapsible` to allow refolding. Requires `truncate`; disables the automatic tooltip. The control comes first in Tab order. By default, folded text stays selectable and its links remain focusable and clickable. Single-line text fades at the inline end with an inline-end target; multiline text fades over its last line with a full-width target. Folded content clips without scrolling or extra padding, and expansion preserves its width. |
+| `expandableInert?` | boolean | — | Make the entire folded, overflowing preview an expand target. JSX applies `inert` to its content, blocking focus, clicks, and text selection and removing it from the accessibility tree until expanded. Fitting text stays interactive, as does server-rendered content before browser measurement. Requires `expandable`. |
+| `inline?` | boolean | — | Render as inline-block instead of the default block element. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Text emphasis, from `primary` (`--text-1`, strongest) to `quaternary` (`--text-4`). `secondary` uses `--text-2`; `tertiary` uses `--text-3`. Neutral primary/secondary links use `--link-color` and `--link-color-hover`. Tertiary/quaternary links inherit the text color, with `--text-2` and `--text-3` respectively on hover. |
+| `size?` | 'small' \| 'medium' \| 'large' | medium | Font size / line height in pixels: `small` = 13/16, `medium` = 15/20, `large` = 17/24. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` uses `--text-{N}`; named tones use `--text-{N}-{tone}`. A CSS color such as `rebeccapurple` keeps its hue, with lightness and chroma set per priority in oklch. With named tones, links inherit the text color and hover uses the next-stronger tone level; at `primary`, hover changes only the underline. |
+| `truncate?` | boolean \| number | — | Clamp with a trailing ellipsis: `true` or `1` selects one line, integers ≥ 2 select that many lines, and `0` or negative values disable truncation. Clipped, non-expandable Text shows its content in an automatic tooltip. Nest `<Tooltip>` to replace it or an empty tooltip to suppress it. Uses CSS `-webkit-line-clamp` in `display: -webkit-box`, with `min-width: 0` for flex and grid layouts. |
+
+## Web Component
+
+Use `<a-text>` directly for text priority and tone.
+
+```html
+<a-text priority="secondary">
+  Read the <a href="/colors/">color guidance</a>.
+</a-text>
+```
+
 ### Use a tooltip with the web component
 
-`<a-text>` does not add a tooltip. Nest `<a-tooltip truncated-only>` and pass
-the full text as its content:
+Raw Text has no automatic tooltip. Nest `<a-tooltip truncated-only>` with the
+full text:
 
 ```html
 <a-text truncate="1" style="max-width: 260px; cursor: help">
@@ -73,74 +82,89 @@ the full text as its content:
 </a-text>
 ```
 
-`a-text.isTruncated` is a read-only layout measurement. Read it on the UI
-thread when you compose custom truncation behavior.
+Read `a-text.isTruncated` on the UI thread to check whether the clamp hides content.
+This read-only layout measurement does not change markup or accessibility.
 
-Pair `expandable` with `truncate` to let the reader reveal the full text.
-The fade and chevron appear only when the clamped content overflows; text
-that fits gets neither. Single-line truncation fades on the right edge,
-multi-line over the last line. The chevron is a real `<button>` carrying
-`aria-expanded`: click it, or focus it and press Enter, to drop the clamp.
-`expandable` takes effect only with `truncate`.
+### Expand raw HTML
 
-Expanding is one-way by default, so the control is removed once the text
-is revealed. Add `collapsible` for a two-way toggle: the chevron stays
-visible while expanded (rotated up) and flips its label between "Show
-more" and "Show less". `collapsible` takes effect only with `expandable`.
+Place a direct `a-button` before `a-text-content` to put expansion first in Tab
+order. No application toggle handler is needed. Load both entries alongside your
+shared tokens and styles:
 
-```tsx
-{/* One-way: the chevron is removed once expanded */}
-<Text truncate expandable>{longSentence}</Text>
-<Text truncate={3} expandable>{longSentence}</Text>
-
-{/* Two-way: the reader can collapse it back */}
-<Text truncate={3} expandable collapsible>{longSentence}</Text>
+```ts
+import '@antadesign/anta/elements/a-text'
+import '@antadesign/anta/elements/a-button'
 ```
 
-## Component props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `collapsible?` | boolean | — | Let the reader collapse back after expanding: the chevron becomes a "Show more" / "Show less" toggle that stays visible while expanded. Only takes effect together with `expandable`. |
-| `expandable?` | boolean | — | Show a fade hint and chevron over the truncated text and let the user expand it by clicking the chevron region or pressing Enter while the chevron has keyboard focus. Only takes effect together with `truncate`. On its own, expanding is **one-way** — the control is removed once expanded; add `collapsible` for a two-way toggle. |
-| `inline?` | boolean | — | Render as inline-block instead of the default block element. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual priority. Maps to text-1..text-4 (`primary` = text-1, the strongest). The default is `secondary` (text-2) — body text reads a step softer than the strongest foreground; pass `primary` for emphasis. |
-| `size?` | 'small' \| 'medium' \| 'large' | medium | Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is kept while lightness/chroma are pinned per priority in oklch. |
-| `truncate?` | boolean \| number | — | Truncate with a trailing ellipsis. `true` (or `1`) clamps to a single line; any integer ≥ 2 clamps to that many lines; `0` or a negative value means no truncation. A clipped, non-expandable JSX `Text` shows its text content in a tooltip by default. Nest a `<Tooltip>` to provide your own tooltip instead. Uses the `-webkit-line-clamp` technique, supported in all major browsers (Firefox 68+, Chrome, Safari, Edge). |
-
-## Web Component
-
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
-Use `<a-text>` directly for a block that carries the text priority and tone.
-
 ```html
-<a-text priority="secondary">
-  Read the <a href="/colors/">color guidance</a>.
+<a-text truncate="1" expandable collapsible>
+  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+  <a-text-content>A long description that needs more than one line.</a-text-content>
 </a-text>
 ```
 
+Expansion and accessible button labels work automatically. Your attributes and
+children stay unchanged. Explicit button ARIA overrides the defaults;
+synchronize any authored `aria-expanded` yourself.
+
+Migrate flat expandable raw markup to these two children. JSX supplies them for
+you; plain Text needs no content wrapper.
+
+For multiline raw Text, set `--line-clamp` in your stylesheet. JSX sets the line
+count through the `truncate` prop:
+
+```html
+<a-text class="summary" truncate="3" expandable collapsible>
+  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+  <a-text-content>A longer description to show across three lines.</a-text-content>
+</a-text>
+```
+
+```css
+a-text.summary { --line-clamp: 3; }
+```
+
+### Make folded content inert
+
+Raw authors manage `inert` on `a-text-content`. Add `expandable-inert` for a
+full-preview expand target, and update `inert` from `textpresentationchange`:
+
+```html
+<a-text id="summary" truncate="1" expandable collapsible expandable-inert>
+  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+  <a-text-content>A long description with <a href="/text/">a link</a>.</a-text-content>
+</a-text>
+```
+
+```js
+const text = document.querySelector('#summary')
+const content = text.querySelector(':scope > a-text-content')
+text.addEventListener('textpresentationchange', ({ detail }) => {
+  content.inert = detail.overflowing && !detail.expanded
+})
+```
+
+This non-bubbling notification reports `{ expanded, overflowing }` after
+measurement or expansion. Late listeners receive the current snapshot
+asynchronously. `overflowing` describes the folded preview, retained while
+expanded. The element leaves `inert` to you.
+
 ## Styling
 
-Color comes from **`priority`** (the neutral text level) and **`tone`** (the tint);
-`size` and the type props set the rest. For a named tone, `Text` consumes the
-global **text role tokens** (`--text-1` … `--text-5`, the `-{tone}` tints,
-`--link-color`), so retuning those once on `:root` / `.dark` shifts text color
-everywhere (see [Colors](../colors.md)). A custom `tone` (any CSS color) is derived in
-oklch from **`--text-tone-source`** — the same one-off knob as `Button` / `Tag`.
+Use `priority`, `tone`, and `size` for emphasis, color, and type scale. Shared
+[Colors](../colors.md) keep Text consistent with your theme. For a custom color,
+pass `tone` or set `--text-tone-source`.
 
 ```tsx
 <Text priority="secondary" tone="brand">Tinted secondary text</Text>
 <Text tone="#0d9488">Custom-tone body copy</Text>
 ```
 
-`<a-text>` is light-DOM, so one-offs are plain CSS on the element or its prose
-links. The `.fancy` class names the demo example:
+Style the light-DOM host, content, control, and links with plain CSS. The `.fancy`
+class belongs to this example:
 
 ```css
-/* teal body text via light-dark() (deep in light, bright in dark; Anta drives
-   color-scheme from its theme toggle), with wider tracking */
+/* Anta's theme controls color-scheme for light-dark(). */
 a-text.fancy {
   color: light-dark(#0f6e5f, #5fd0bb);
   font-size: 16px;

@@ -54,7 +54,8 @@ export default function ThemeSwitcher() {
       className="theming-select"
       size="small"
       value={value}
-      onValueChange={(v: string) => {
+      onValueChange={(v) => {
+        if (v === null) return
         setValue(v)
         try {
           localStorage.setItem(KEY, v)

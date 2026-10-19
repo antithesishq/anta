@@ -86,10 +86,10 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
  * @param viewport - committed windows and magnification supplied to size accessors
  * @returns the composed series
  */
-function compose_series<TooltipContent>(series: Series<TooltipContent>, color_theme: ColorTheme, x_scale: Scale, y_scale: Scale, viewport: ViewportChange): ComposedSeries<TooltipContent> {
+function compose_series<Row, TooltipContent>(series: Series<Row, TooltipContent>, color_theme: ColorTheme, x_scale: Scale, y_scale: Scale, viewport: ViewportChange): ComposedSeries<Row, TooltipContent> {
     const colors = resolve_series_colors(series, color_theme)
     const composed = colors.kind === 'scatter' ? resolve_scatter_sizes(colors, viewport) : colors
-    const compose_layout = series_type<TooltipContent>(series.kind).compose_layout
+    const compose_layout = series_type(series).compose_layout
 
     if (compose_layout === undefined) {
         return carry_factory_args(series, composed)
@@ -161,7 +161,7 @@ function full_domain(axis: AxisTemplate, full_scale: { domain(): (number | Date)
  * @param range - pixel range [start, end] for the scale
  * @returns the constructed d3 scale for the axis
  */
-function build_scale(axis_template: AxisTemplate, range: [number, number], tick_count: number): ComposedPlot['x_scale'] {
+function build_scale(axis_template: AxisTemplate, range: [number, number], tick_count: number): Scale {
     if (axis_template.kind === 'linear') {
         const scale = scaleLinear().domain(axis_template.domain).range(range)
         nice_continuous(scale, axis_template.nice_min, axis_template.nice_max, tick_count)

@@ -11,30 +11,119 @@
       color-mix(in oklch, var(--bg-1) 90%, transparent),
       color-mix(in oklch, var(--bg-1) 78%, transparent)
     );
+    /* An explicit submenu `round` value starts fresh instead of inheriting. */
+    --menu-round: initial;
     --menu-radius: var(--radius-md, 8px);
     --menu-border: 1px solid var(--border-3);
     --menu-shadow:
       0 2px 6px color-mix(in oklch, var(--text-1) 8%, transparent),
       0 8px 24px color-mix(in oklch, var(--text-1) 10%, transparent);
     --menu-padding: 4px;
+    --menu-item-radius: max(0px, calc(var(--menu-radius) - var(--menu-padding)));
     --menu-min-width: 88px;
     --menu-backdrop-filter: blur(20px);
     --menu-width-duration: 160ms;
+    --_anchor-width: initial;
+    --_menu-max-height: initial;
+    --_menu-fade-top: initial;
+    --_menu-fade-bottom: initial;
+    --_menu-gap-top: initial;
+
+    display: contents;
+  }
+
+  a-menu::part(menu) {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: auto;
+    bottom: auto;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    flex-direction: column;
+    min-width: max(var(--menu-min-width, 88px), var(--_anchor-width, 0px));
+    max-width: calc(100vw - 8px);
+    max-height: var(--_menu-max-height, calc(100dvh - 8px));
+    overflow: hidden;
+    background: var(--menu-bg, Canvas);
+    color: var(--text-2, CanvasText);
+    border: var(--menu-border, 1px solid);
+    border-radius: var(--menu-radius, 8px);
+    box-shadow: var(--menu-shadow, 0 8px 24px color-mix(in oklch, black 20%, transparent));
+    -webkit-backdrop-filter: var(--menu-backdrop-filter, blur(20px));
+    backdrop-filter: var(--menu-backdrop-filter, blur(20px));
+    outline: none;
+    opacity: 0;
+    translate: 0 -4px;
+    transition:
+      opacity 140ms ease-out,
+      translate 140ms ease-out,
+      width var(--menu-width-duration, 160ms) ease,
+      display 140ms allow-discrete,
+      overlay 140ms allow-discrete;
+  }
+
+  /* Closed display stays UA-owned so the invisible popover cannot intercept input. */
+  a-menu::part(menu):popover-open {
+    display: flex;
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity 100ms ease-out,
+      translate 100ms ease-out,
+      width var(--menu-width-duration, 160ms) ease,
+      display 100ms allow-discrete,
+      overlay 100ms allow-discrete;
+  }
+
+  @starting-style {
+    a-menu::part(menu):popover-open { opacity: 0; translate: 0 -4px; }
+  }
+
+  a-menu::part(header),
+  a-menu::part(footer) {
+    display: block;
+    flex: none;
+  }
+
+  :where(a-menu > :is(a-menu-header, a-select-header)[slot="header"]),
+  :where(a-menu > :is(a-menu-footer, a-select-footer)[slot="footer"]) {
+    display: block;
+    padding: var(--menu-padding, 4px);
+  }
+
+  a-menu::part(scroll) {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding: var(--menu-padding, 4px);
+    scroll-padding-block: var(--menu-padding, 4px);
+    /* Defaults at the use sites keep runtime shadow-inline measurements authoritative. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--_menu-gap-top, 0px), #000 var(--_menu-fade-top, 0px), #000 calc(100% - var(--_menu-fade-bottom, 0px)), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, transparent var(--_menu-gap-top, 0px), #000 var(--_menu-fade-top, 0px), #000 calc(100% - var(--_menu-fade-bottom, 0px)), transparent 100%);
   }
 
   @media (prefers-reduced-motion: reduce) {
     a-menu { --menu-width-duration: 0; }
   }
 
-  /* `round` softens the menu container to a 20px radius (a full pill would be
-     absurd on a tall box); the items themselves go fully round — see
-     a-menu-item.css. A custom value (`round="12px"`, or the wrapper's `round={12}`)
-     tunes the CONTAINER radius only — items stay full pills. */
+  /* Item radii are derived from this container radius and each menu's inset. */
   a-menu[round] {
-    --menu-radius: 20px;
+    --menu-radius: var(--menu-round, 20px);
     @supports (border-radius: attr(probe type(<length>), 1px)) {
-      --menu-radius: attr(round type(<length>), 20px);
+      --menu-radius: var(--menu-round, attr(round type(<length>), 20px));
     }
+  }
+
+  /* A submenu without `round` inherits its parent menu's radius. */
+  a-menu[round] a-menu:not([round]) {
+    --menu-radius: inherit;
   }
 
   /* Dark mode adds an inset ring to the shadow list. `light-dark()` carries

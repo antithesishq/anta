@@ -15,5 +15,4 @@ await build({
 await Promise.all([
   copyFile(path('../src/index.mjs'), path('../dist/index.mjs')),
   copyFile(path('../src/client.js'), path('../dist/client.js')),
-  copyFile(path('../../LICENSE.md'), path('../LICENSE.md')),
 ])

@@ -5,6 +5,15 @@ design tokens, declarative web components, and typed JSX wrappers. Use the same
 components in React, Preact via compat, plain HTML, and custom JSX runtimes via
 `configure()`.
 
+## License
+
+Anta is [MIT licensed](./LICENSE.md), with one exception: the Antithesis theme
+(`@antadesign/anta/theme-antithesis.css`) is copyright Antithesis Operations LLC
+and has a [separate license](./theme-antithesis-license.md). Noncommercial use is
+free. Commercial use of the theme requires prior written permission through
+the [Antithesis contact page](https://antithesis.com/company/contact/).
+Antune and the default styles remain available under MIT.
+
 ## Documentation for coding agents
 
 The package includes version-matched Markdown documentation. Start with the

@@ -8,7 +8,7 @@ export function bubbles(): PlotArgs<Node> {
   }))
 
   return {
-    series: [scatter<Node>({
+    series: [scatter({
       data,
       size: row => (5 + Math.sqrt(Number(row.volume)) * 1.8) * 1.3,
       color: row => Number(row.volume) > 120
@@ -35,7 +35,7 @@ export function shapes(): PlotArgs<Node> {
 
   return {
     series: [
-      scatter<Node>({
+      scatter({
         data,
         mark: 'square',
         size: 11,
@@ -43,7 +43,7 @@ export function shapes(): PlotArgs<Node> {
         stroke: { color: { light: '#6d28d9', dark: '#ddd6fe' }, width: 2 },
         tooltip: ({ x, y }) => document.createTextNode('Squares: ' + x + ', ' + Math.round(Number(y))),
       }),
-      scatter<Node>({
+      scatter({
         data: data.map(point => ({ x: point.x + 5, y: 95 - point.y })),
         mark: 'diamond',
         size: 13,

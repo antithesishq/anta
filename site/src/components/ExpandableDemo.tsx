@@ -12,15 +12,19 @@ export default function ExpandableDemo() {
     <div class="demoSection" style={{ margin: '16px 0 24px' }}>
       <div class="demoRow">
         <span class="demoLabel">truncate expandable</span>
-        <div class="demoBox"><Text truncate expandable>{longText}</Text></div>
+        <div class="demoBox"><Text truncate expandable>{longText} <a href="/text/#link-behavior">Link guidance</a>.</Text></div>
       </div>
       <div class="demoRow">
         <span class="demoLabel">truncate=&#123;3&#125; expandable</span>
-        <div class="demoBox"><Text truncate={3} expandable>{longText}</Text></div>
+        <div class="demoBox"><Text truncate={3} expandable>{longText} <a href="/text/#link-behavior">Link guidance</a>.</Text></div>
       </div>
       <div class="demoRow">
         <span class="demoLabel">truncate=&#123;3&#125; expandable collapsible</span>
-        <div class="demoBox"><Text truncate={3} expandable collapsible>{longText}</Text></div>
+        <div class="demoBox"><Text truncate={3} expandable collapsible>{longText} <a href="/text/#link-behavior">Link guidance</a>.</Text></div>
+      </div>
+      <div class="demoRow">
+        <span class="demoLabel">expandableInert</span>
+        <div class="demoBox"><Text truncate={3} expandable collapsible expandableInert>{longText} <a href="/text/#link-behavior">Link guidance</a>.</Text></div>
       </div>
     </div>
   )

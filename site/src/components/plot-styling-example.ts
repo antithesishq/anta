@@ -2,7 +2,7 @@ import { scatter, type PlotArgs } from '@antadesign/plot'
 
 export function stylingExample(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({
+    series: [scatter({
       data: [{ x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
         { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 }],
       size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false,

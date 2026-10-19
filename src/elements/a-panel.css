@@ -11,4 +11,42 @@
     min-height: 0;
     overflow: auto;
   }
+
+  a-panel:not(:state(maximized))::part(content) {
+    display: contents;
+  }
+
+  a-panel::part(content):popover-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    overflow: auto;
+    overscroll-behavior: contain;
+    color: inherit;
+    background: inherit;
+  }
+
+  a-panel::part(content)::backdrop {
+    background: transparent;
+    pointer-events: none;
+  }
+
+  a-panel::part(placeholder) {
+    display: none;
+  }
+
+  a-panel:state(maximized)::part(placeholder) {
+    display: block;
+    flex: 0 0 auto;
+    max-width: 100%;
+    pointer-events: none;
+  }
 }

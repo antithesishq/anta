@@ -3,7 +3,6 @@ import type { CapturePointerInput, CaptureWheelInput } from '@antadesign/anta/ca
 import type { InteractionRegions } from '../interactions/target'
 import type { CaptureConfiguration } from '../interactions/zoom_pan'
 import type { Rect } from '../types'
-import type { PlotInteractionController } from '../interaction_controller'
 
 export type PlotSurfacePresentation = {
     width: number
@@ -12,7 +11,12 @@ export type PlotSurfacePresentation = {
     regions?: InteractionRegions | null
     capture_policy?: { plot: CaptureConfiguration; x: CaptureConfiguration; y: CaptureConfiguration }
     filter?: string
-    menu: ReturnType<PlotInteractionController['menu_state']>
+    menu: {
+        enabled: boolean
+        zoom_in: boolean
+        zoom_out: boolean
+        reset: boolean
+    }
 }
 
 export type PlotSurfaceMouseInput = {

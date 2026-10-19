@@ -1,4 +1,4 @@
-import { attach_resolved_columns, resolve_column, validate_field_present, type ColumnMode, type ResolvedColumn } from "../../template/column"
+import { attach_resolved_columns, resolve_column, validate_field_present, has_default_field, type ColumnArg, type ColumnMode, type ResolvedColumn } from "../../template/column"
 import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { validate_finite, validate_non_negative, validate_hoverable, validate_hover_span } from "../../template/validate"
@@ -8,12 +8,12 @@ import type { ColorArg, FieldArg, RectAlign, RectSeries, SelectFn, StrokeArg, To
 export type RectSizeArg = number | { width?: number; height?: number }
 export type RectOffsetArg = { x?: number; y?: number }
 
-export type RectArgs<TooltipContent = unknown> = {
-    data: Record<string, unknown>[]
-    x?: FieldArg
-    x2?: FieldArg
-    y?: FieldArg
-    y2?: FieldArg
+export type RectArgs<Row, TooltipContent = unknown> = {
+    data: Row[]
+    x?: FieldArg<Row>
+    x2?: FieldArg<Row>
+    y?: FieldArg<Row>
+    y2?: FieldArg<Row>
     span?: 'x' | 'y'
     size?: RectSizeArg
     band_align?: RectAlign
@@ -22,11 +22,11 @@ export type RectArgs<TooltipContent = unknown> = {
     inset?: number
     min_size?: number
     offset?: RectOffsetArg
-    color?: ColorArg
-    highlight_color?: ColorArg
+    color?: ColorArg<Row>
+    highlight_color?: ColorArg<Row>
     stroke?: StrokeArg
-    tooltip?: TooltipArg<Record<string, unknown>, TooltipContent>
-    on_select?: SelectFn<Record<string, unknown>>
+    tooltip?: TooltipArg<Row, TooltipContent>
+    on_select?: SelectFn<Row>
     hoverable?: boolean
     highlight?: boolean
 }
@@ -37,7 +37,7 @@ export type RectArgs<TooltipContent = unknown> = {
  * @param args - rect series args (data, x, x2, y, y2, color)
  * @returns the resolved RectSeries
  */
-export function new_rect<TooltipContent = unknown>(args: RectArgs<TooltipContent>): RectSeries<TooltipContent> {
+export function new_rect<Row, TooltipContent = unknown>(args: RectArgs<Row, TooltipContent>): RectSeries<Row, TooltipContent> {
     const span = args.span
     validate_span(args, span)
 
@@ -60,8 +60,9 @@ export function new_rect<TooltipContent = unknown>(args: RectArgs<TooltipContent
         }
     }
 
-    const series: RectSeries<TooltipContent> = {
+    const series: RectSeries<Row, TooltipContent> = {
         kind: 'rect',
+        rows: args.data,
         x: resolved.x1,
         y: resolved.y1,
         ...resolve_color(args.data, args.color),
@@ -130,7 +131,6 @@ export function new_rect<TooltipContent = unknown>(args: RectArgs<TooltipContent
         series.highlight = args.highlight
     }
 
-    series.rows = args.data // caller's original for the tooltip
     attach_resolved_columns(series, resolved, x_fields.value, y_fields.value)
     retain_factory_args(series, args)
     return series
@@ -143,7 +143,7 @@ export function new_rect<TooltipContent = unknown>(args: RectArgs<TooltipContent
  * @param axis - the axis to resolve fields for
  * @returns the value and corner field args for that axis
  */
-function axis_field_args(args: RectArgs, axis: 'x' | 'y'): { value: FieldArg | undefined; corner: FieldArg | undefined } {
+function axis_field_args<Row, TooltipContent>(args: RectArgs<Row, TooltipContent>, axis: 'x' | 'y'): { value: ColumnArg<Row> | undefined; corner: ColumnArg<Row> | undefined } {
     if (args.span === axis) {
         return { value: undefined, corner: undefined }
     }
@@ -162,12 +162,12 @@ function axis_field_args(args: RectArgs, axis: 'x' | 'y'): { value: FieldArg | u
  * @param field - the conventional field name for this corner
  * @returns the resolved corner field arg, or undefined when none applies
  */
-function default_corner(corner_arg: FieldArg | undefined, data: Record<string, unknown>[], field: string): FieldArg | undefined {
+function default_corner<Row>(corner_arg: FieldArg<Row> | undefined, data: Row[], field: 'x2' | 'y2'): ColumnArg<Row> | undefined {
     if (corner_arg !== undefined) {
         return corner_arg
     }
 
-    if (data.some(row => field in row)) {
+    if (data.some(row => has_default_field(row, field))) {
         return field
     }
     return undefined
@@ -179,7 +179,7 @@ function default_corner(corner_arg: FieldArg | undefined, data: Record<string, u
  * @param size - the size arg (number, object, or undefined)
  * @returns the per-axis pixel size, or undefined when none applies
  */
-function resolve_size(size: RectArgs['size']): { width?: number; height?: number } | undefined {
+function resolve_size(size: RectSizeArg | undefined): { width?: number; height?: number } | undefined {
     if (size === undefined) {
         return undefined
     }
@@ -209,7 +209,7 @@ function resolve_size(size: RectArgs['size']): { width?: number; height?: number
  * @param offset - the offset arg ({ x?, y? }, or undefined)
  * @returns the per-axis pixel offset, or undefined when none applies
  */
-function resolve_offset(offset: RectArgs['offset']): { x?: number; y?: number } | undefined {
+function resolve_offset(offset: RectOffsetArg | undefined): { x?: number; y?: number } | undefined {
     if (offset === undefined) {
         return undefined
     }
@@ -235,7 +235,7 @@ function resolve_offset(offset: RectArgs['offset']): { x?: number; y?: number } 
  * @param args - the rect series args
  * @param span - the spanned axis, or undefined
  */
-function validate_span(args: RectArgs, span: 'x' | 'y' | undefined): void {
+function validate_span<Row, TooltipContent>(args: RectArgs<Row, TooltipContent>, span: 'x' | 'y' | undefined): void {
     if (span === undefined) {
         return
     }
@@ -270,7 +270,7 @@ function validate_span(args: RectArgs, span: 'x' | 'y' | undefined): void {
  * @param dimension - the spanned axis' dimension
  * @returns the conflicting field, for the error message, or undefined
  */
-function spanned_size_conflict(size: RectArgs['size'], dimension: 'width' | 'height'): string | undefined {
+function spanned_size_conflict(size: RectSizeArg | undefined, dimension: 'width' | 'height'): string | undefined {
     if (typeof size === 'number') {
         return `size (a bare number sizes both axes; pass { ${dimension === 'width' ? 'height' : 'width'} } for the other one)`
     }
@@ -322,7 +322,7 @@ function validate_rect_axis(axis: 'x' | 'y', corner: 'x2' | 'y2', mode: string, 
  * @param series - the rect series
  * @returns the [min, max] per axis
  */
-export function rect_domain_extent(series: RectSeries): { x: [number, number]; y: [number, number] } {
+export function rect_domain_extent<Row, TooltipContent>(series: RectSeries<Row, TooltipContent>): { x: [number, number]; y: [number, number] } {
     return {
         x: span_extent(series.x, series.x2),
         y: span_extent(series.y, series.y2),
@@ -376,12 +376,12 @@ export type ResolvedRectColumns = {
  * @param y_defaulted - whether y fell back to the default field name
  * @returns the resolved arrays plus per-column mode and categories
  */
-export function resolve_rect_columns(
-    data: Record<string, unknown>[],
-    x_arg: FieldArg | undefined,
-    x2_arg: FieldArg | undefined,
-    y_arg: FieldArg | undefined,
-    y2_arg: FieldArg | undefined,
+export function resolve_rect_columns<Row>(
+    data: Row[],
+    x_arg: ColumnArg<Row> | undefined,
+    x2_arg: ColumnArg<Row> | undefined,
+    y_arg: ColumnArg<Row> | undefined,
+    y2_arg: ColumnArg<Row> | undefined,
     error_prefix: string,
     x_defaulted: boolean,
     y_defaulted: boolean,

@@ -81,7 +81,7 @@ test('TabPanel follows its own strip across sibling and nested Tabs and Steps', 
   assert.deepEqual(await active('#nested-tabs a-tabpanel'), ['Inner panel', 'Other panel'])
 })
 
-test('Antune preserves primary and secondary fills for strip and selected per-tab tones', async t => {
+test('Antune preserves strip fills and selected per-tab fills', async t => {
   const context = await browser.newContext()
   t.after(() => context.close())
   const page = await context.newPage()
@@ -97,6 +97,7 @@ test('Antune preserves primary and secondary fills for strip and selected per-ta
     const results = []
     for (const scheme of ['light', 'dark']) {
       document.documentElement.style.colorScheme = scheme
+      document.documentElement.classList.toggle('dark', scheme === 'dark')
       for (const priority of ['primary', 'secondary']) {
         tabs.setAttribute('priority', priority)
         for (const perTab of [false, true]) {
@@ -110,18 +111,86 @@ test('Antune preserves primary and secondary fills for strip and selected per-ta
             const base = background()
             target.setAttribute('tone', 'neutral')
             const neutral = background()
-            target.setAttribute('tone', tone)
             theme.sheet.disabled = false
-            results.push({ scheme, priority, perTab, tone, base, neutral, themed: background() })
+            const themedNeutral = background()
+            target.setAttribute('tone', tone)
+            results.push({ scheme, priority, perTab, tone, base, neutral, themedNeutral, themed: background() })
           }
         }
       }
     }
     return results
   }, theme)
-  for (const { base, neutral, themed, ...variant } of results) {
+  for (const { base, neutral, themedNeutral, themed, ...variant } of results) {
     const description = JSON.stringify(variant)
-    assert.notEqual(base, neutral, `Tone should tint the fill: ${description}`)
-    assert.equal(themed, base, `Antune should preserve the tone fill: ${description}`)
+    if (variant.priority === 'primary' && variant.perTab) {
+      assert.equal(base, neutral, `Option tone should preserve the track: ${description}`)
+      assert.equal(themed, themedNeutral, `Antune should preserve its neutral track: ${description}`)
+    } else {
+      assert.notEqual(base, neutral, `Tone should tint the fill: ${description}`)
+      assert.equal(themed, base, `Antune should preserve the tone fill: ${description}`)
+    }
+  }
+})
+
+test('Per-tab tones preserve the track and match the named-tone indicator', async t => {
+  const context = await browser.newContext()
+  t.after(() => context.close())
+  const page = await context.newPage()
+  await page.goto(origin)
+  await page.waitForSelector('a-tabpanel[data-panel="account"]')
+  await page.addStyleTag({ content: await readFile('src/tokens.css', 'utf8') })
+  await page.addStyleTag({ content: 'a-tab, a-tabs::before { transition: none !important; }' })
+  for (const theme of [null, 'antune', 'antithesis']) {
+    const stylesheet = theme && await page.addStyleTag({ content: await readFile(`src/theme-${theme}.css`, 'utf8') })
+    const results = await page.evaluate(() => {
+      const tabs = document.querySelector('#basic-tabs a-tabs')
+      const selected = tabs.querySelector('a-tab:state(selected)')
+      const sibling = tabs.querySelector('a-tab:not(:state(selected))')
+      const paint = element => {
+        const style = getComputedStyle(element)
+        return { background: style.backgroundColor, shadow: style.boxShadow }
+      }
+      const indicator = () => {
+        const style = tabs.hasAttribute('noslide') ? getComputedStyle(selected) : getComputedStyle(tabs, '::before')
+        return { background: style.backgroundColor, shadow: style.boxShadow }
+      }
+      const results = []
+      for (const scheme of ['light', 'dark']) {
+        document.documentElement.style.colorScheme = scheme
+        document.documentElement.classList.toggle('dark', scheme === 'dark')
+        for (const priority of ['primary', 'secondary']) {
+          tabs.setAttribute('priority', priority)
+          for (const noslide of [false, true]) {
+            if (!noslide && !CSS.supports('anchor-scope: all')) continue
+            tabs.toggleAttribute('noslide', noslide)
+            for (const stripTone of ['neutral', 'brand']) {
+              selected.removeAttribute('tone')
+              tabs.setAttribute('tone', stripTone)
+              const track = paint(tabs)
+              const siblingColor = getComputedStyle(sibling).color
+              for (const tone of ['neutral', 'brand', 'info', 'success', 'warning', 'critical']) {
+                selected.removeAttribute('tone')
+                tabs.setAttribute('tone', tone)
+                const expected = indicator()
+                tabs.setAttribute('tone', stripTone)
+                selected.setAttribute('tone', tone)
+                results.push({ scheme, priority, noslide, stripTone, tone, track, actualTrack: paint(tabs), expected, actual: indicator(), siblingColor, actualSiblingColor: getComputedStyle(sibling).color })
+              }
+              selected.setAttribute('tone', '#e0457b')
+              results.push({ scheme, priority, noslide, stripTone, tone: '#e0457b', track, actualTrack: paint(tabs), siblingColor, actualSiblingColor: getComputedStyle(sibling).color })
+            }
+          }
+        }
+      }
+      return results
+    })
+    for (const { track, actualTrack, expected, actual, siblingColor, actualSiblingColor, ...variant } of results) {
+      const description = JSON.stringify({ theme, ...variant })
+      assert.deepEqual(actualTrack, track, `Option tone should preserve the track: ${description}`)
+      assert.equal(actualSiblingColor, siblingColor, `Option tone should preserve sibling labels: ${description}`)
+      if (expected) assert.deepEqual(actual, expected, `Indicator should use the option tone: ${description}`)
+    }
+    if (stylesheet) await stylesheet.evaluate(element => element.remove())
   }
 })

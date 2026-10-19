@@ -263,7 +263,8 @@ const index = options.findIndex((option) => option.value === phase)
 ## Orientation
 
 Horizontal steps scroll when needed. Vertical steps place the active panel before
-the next step.
+the next step. This layout uses external CSS and needs no inline style attributes
+under a strict [Content Security Policy](/install/#content-security-policy).
 
 <Preview background="var(--bg-base)" minHeight={230} justify="flex-start">
   <Vertical client:visible={{ rootMargin: '200px' }} />

@@ -1,4 +1,4 @@
-import type { ComposedCustom, ComposedSeries, CustomRenderContext, PixelResolver, RenderContext, Scale } from "../../types"
+import type { ComposedSeries, CustomRenderContext, CustomSeriesView, PixelResolver, RenderContext, Scale } from "../../types"
 import { pixel_resolver } from "../../render/pixel_resolver"
 import { color_resolver } from "../../template/color"
 
@@ -7,8 +7,9 @@ import { color_resolver } from "../../template/color"
  * @param series - the composed custom series
  * @param render - the shared render context (canvas, inner rect, scales, fallback color, band categories)
  */
-export function draw_custom<TooltipContent>(series: ComposedSeries<TooltipContent>, render: RenderContext): void {
-    const custom = series as ComposedCustom<TooltipContent>
+export function draw_custom<Row, TooltipContent>(series: ComposedSeries<Row, TooltipContent>, render: RenderContext): void {
+    if (series.kind !== 'custom') return
+    const custom = series
     const custom_render: CustomRenderContext = {
         ...render,
         ...custom_resolvers(custom, render.x_scale, render.y_scale),
@@ -23,8 +24,8 @@ export function draw_custom<TooltipContent>(series: ComposedSeries<TooltipConten
 }
 
 // Build the pixel resolvers handed to a caller's renderer and hit test
-export function custom_resolvers<TooltipContent>(
-    series: ComposedCustom<TooltipContent>,
+export function custom_resolvers<Row>(
+    series: CustomSeriesView<Row>,
     x_scale: Scale,
     y_scale: Scale
 ): { resolve_x: PixelResolver; resolve_y: PixelResolver } {

@@ -3,14 +3,351 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.35 — October 18, 2026
+
+### Added
+
+- [Panel's layout placeholder](/panel/#styling) exposes `::part(placeholder)`
+  for styling the reserved region while maximized.
+
+- [Text's inert expansion mode](/text/#truncation-and-expansion):
+  `expandableInert` makes the folded, overflowing preview one expand target and
+  skips content interactions until expanded. Text that fits remains interactive.
+
+- [Input button fields](/input/#styling) expose `::part(input-label)` for their
+  value or placeholder. [Select](/select/#migrate-field-styles) uses the same part.
+
+- [Select's `dimActions` prop](/select/) controls its trigger adornments. Pass
+  `false` to keep them visible instead of dimming them until hover or focus.
+
+- [Menu's header and footer slots](/menu/#styling) expose styling parts, and
+  [Dialog's optional regions](/dialog/#styling) expose CSS states for assigned
+  header and footer content.
+
+- [Title typeface](/title/#typeface): `font` sets a title in `serif`, `sans-serif`,
+  or `monospace` and overrides the theme's level default.
+
+### Breaking
+
+- [Icon](/icon/) and [Loader](/loader/) imports load styles without registering
+  custom element classes. If an integration requires a defined tag, call the
+  existing `register_a_icon()` or `register_a_loader()` export explicitly.
+
+- [Calendar selection](/input-date/#calendar) leaves authored input attributes
+  unchanged during uncontrolled picks, reset, and restoration. Its `.value`
+  getter now returns `null` when empty; InputDate retains its empty text value
+  (`''`).
+
+- [Slider controlled values](/slider/#managing-the-value) change only when the
+  application updates `value`, including on form reset. Callbacks report requested
+  values; read the element's `value` for its applied result. Uncontrolled
+  interaction, reset, and restoration no longer rewrite input attributes. Remove
+  `value` to release control while retaining the applied number.
+
+- [Browser support](/install/#browser-support) requires Chrome/Edge 135+ and
+  Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints use live
+  ARIA element references without a copied-text fallback.
+
+- [Browser hydration](/install/#browser-hydration) requires
+  `configure(h, Fragment, hooks, { hydratingEvents: true })` before mounting.
+  Client-only apps and worker renderers forward handlers immediately by default,
+  without an extra render for listener setup.
+
+- [Custom renderer configuration](/install/#preact-without-compat) replaces the
+  hooks object as a whole. Pass your runtime's hooks rather than selecting a few;
+  missing hooks report an error instead of using another renderer's hooks.
+
+- [Panel inside an application shadow root](/panel/#styling) now requires a
+  stylesheet link to `@antadesign/anta/elements/a-panel.css` inside that root
+  for its maximized layout. Document styles cannot reach its internal parts.
+
+- Normal part overrides for [Dialog](/dialog/#styling), [Menu](/menu/#styling),
+  [Slider](/slider/#styling), and [Panel](/panel/#styling) follow Anta's document
+  cascade layers. Move overrides from `base` to `components`, `utilities`, or
+  unlayered CSS.
+
+- [Select single selection](/select/#managing-the-value) uses `null` for a
+  controlled empty value, and Clear reports `null` instead of `undefined`. Use
+  `V | null` for single-select state and callbacks; reset with `value={null}`.
+  Omitted or `undefined` values remain uncontrolled, and multiple selection
+  continues to use arrays with `[]` for an empty selection.
+
+- [Select's default field](/select/#migrate-field-styles) uses `a-input[button]`,
+  which receives `className` and `style`. Replace `a-select-field > a-button`
+  selectors with `.my-select::part(field)` on your field class, and use
+  `.my-select::part(input-label)` instead of `a-button-label` for selected text.
+  Existing raw `a-select-field` compositions retain their CSS, JSX types, and
+  label and hint behavior.
+
+- [SelectFaceted text editors](/select-faceted/#styling) use the CSS-only
+  `a-select-faceted-text` wrapper. Replace selectors such as
+  `a-menu div[data-menu-open] > a-input` with
+  `a-menu a-select-faceted-text > a-input`, and move selectors that depend on the
+  former inline `style` attribute to the region tag.
+
+- [InputTime slot groups](/input-time/#styling) use `a-input-time-*` tags. Update
+  selectors that target their former spans; existing slot and part names remain.
+
+- [Expander raw markup](/expander/#web-component) uses named regions instead of
+  slot attributes. Put `level` on `a-expander-summary`, select built-in artwork
+  with `a-expander-indicator shape="chevron"`, and place that region before the
+  title or after the actions to choose its position.
+
+- [Banner raw markup](/banner/#web-component) uses light-DOM regions instead of
+  shadow slots and `::part()`. Group actions in `a-banner-actions`.
+
+- [Progress styling](/progress/#styling) uses light-DOM selectors instead of
+  `::part()`. `AProgressElement` and `register_a_progress` are removed; raw HTML
+  supplies its own ARIA.
+
+- Expandable [Text](/text/#expand-raw-html) requires
+  `@antadesign/anta/elements/a-button` when importing elements individually. The
+  full bundle and elements barrel include it. JSX creates the expansion control;
+  raw HTML authors supply it using the linked example.
+
+- [Card raw markup](/card/#migrate-from-shadow-parts) uses `a-card-*` regions
+  instead of shadow slots and `::part()`. Link Cards use
+  `a[data-anta-card-link] > a-card-layout`. `ACardElement` and `register_a_card`
+  are removed.
+
+- The [Antithesis theme](/theming/) is copyright Antithesis Operations LLC and
+  now has a separate license. Noncommercial use is free; commercial use requires
+  prior written permission. Earlier MIT-licensed copies keep their original terms.
+  Antune and the default styles remain MIT licensed.
+
+### Changed
+
+- Default styles for [Input](/input/#styling), [InputTime](/input-time/#styling),
+  [Menu](/menu/#styling), [Dialog](/dialog/#styling), [Tooltip](/tooltip/#styling),
+  [Copy feedback](/button/#copy-feedback), [Toaster](/toaster/#styling),
+  [Expander](/expander/#styling), [Slider](/slider/#styling), and
+  [Panel](/panel/#styling) load from external CSS under strict CSP.
+
+- [Input's native decorations](/input/#styling) may remain visible in some
+  browsers, including number steppers in Chrome 135 and raw HTML search controls.
+
+- [Banner](/banner/) renders its layout before registration. Dismissal leaves
+  children mounted.
+
+- [Card](/card/) renders its layout and native link directly in HTML. Generic
+  anchor display rules preserve its media and content arrangement.
+
+- [Progress](/progress/) renders its fill and loading animation without
+  JavaScript. Native `<progress data-anta>` remains a standalone control.
+
+- [Text](/text/) renders and truncates in light DOM. Expansion preserves authored
+  markup, and one-way expansion hides its control instead of removing it.
+
+- [Expander rounding](/expander/#round-and-outdent) uses a `1rem` radius when
+  `round` is `true`, independent of title level and header height. Explicit
+  radius values remain supported, and native `details[data-anta][round]` uses the
+  same default.
+
+- [Select's shared stylesheet](/select/#styling) is named `components/Select.css`.
+  The previous `components/select.css` and `components/select-parts.css` imports
+  remain supported.
+
+- [Tabs rounding](/tabs/#styling): a custom `round` radius applies to the tabs
+  and sliding indicator as well as the primary track.
+
+- [Tabs sizing](/tabs/#size) in the Antithesis theme matches text buttons'
+  horizontal padding: 10px, 12px, and 14px per side for small, medium, and large.
 
 ### Fixed
 
-- [Calendar](/calendar/) keeps controlled property updates in sync with its
-  value attribute and form value, so selecting a previous date works again.
-- [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
-  without native field autosizing. Switching between AM and PM keeps its width.
+#### Banner
+
+- [Visibility and dismissal](/banner/#controlled-vs-uncontrolled) work after an
+  initially dismissed notice and after moving between documents. Nested banners
+  keep their alignment and close styling independent, and empty action regions
+  take no layout space.
+
+#### Calendar
+
+- [Default values](/input-date/#calendar) return `null` when `.defaultValue` is
+  unset, so writing it back preserves the absence of a default.
+- [Property inputs](/input-date/#calendar) assigned before registration take
+  effect when the element upgrades, including while detached.
+- [Unbounded year menus](/input-date/#calendar) center on the displayed year, including
+  dates supplied through `value` and `defaultValue`.
+- [Controlled selection](/input-date/#calendar) keeps form values in sync in
+  React and Preact, including selecting a previous date again.
+
+#### Copy feedback
+
+- [Copying](/button/#copy-feedback) remains available while feedback CSS loads.
+  Disconnecting clears feedback and prevents stale clipboard results from
+  reopening it after reconnection.
+
+#### Dialog
+
+- [Accessible names](/dialog/) follow header text edits in place, including
+  React and Preact updates after hydration.
+- [Named triggers](/dialog/#triggers) release their listeners on removal
+  and document adoption.
+
+#### Expander
+
+- [Expansion](/expander/) keeps content clipped until opening finishes, then
+  restores overflow. Reconnection preserves applied state.
+
+#### Input
+
+- [Clear and trailing actions](/input/#leading-trailing-and-clear) fit Anta
+  buttons to the field height while preserving padding and natural text width.
+  Icon-only Button and ButtonCopy actions are square, and raw Anta buttons can
+  opt in with `data-anta-icon-only`.
+- [Multiline layout](/input/#multiline) applies when `rows` is set without
+  `multiline`, keeping actions aligned to the first line.
+- [Trailing spacing](/input/#styling) honors inherited `--input-trailing-inset`
+  overrides for text and actions. Mixed content and nested buttons keep the text
+  inset by default.
+- [Form names](/input/#forms) reflect to the host attribute, preserving named
+  form lookup and name-based selectors in React 19.
+- [Focus rings](/input/#styling) follow the focused field, and typing in large
+  forms no longer refreshes focus across unrelated Inputs. Focus tracking releases
+  listeners when fields disconnect.
+- [Clear actions](/input/#events) affect only their owning field, including
+  nested Inputs.
+- [Button-backed fields](/input/) and [Select](/select/) describe the value
+  only when a separate label supplies the accessible name. Empty fields keep
+  placeholders out of the value description.
+- [WebKit multiline sizing](/input/#multiline) uses JS autosizing to avoid crashes
+  in collapsed disclosures. Fallback measurements preserve page and textarea
+  scroll positions.
+
+#### InputAutocomplete
+
+- [Value ownership](/input-autocomplete/#managing-the-value) retains the latest
+  text, including `''`, when `value` is omitted or becomes `undefined`.
+  Uncontrolled editing resumes from that text; form reset still restores
+  `defaultValue`.
+- [Field callbacks](/input-autocomplete/#events) run alongside text updates and
+  popup handling. Form reset restores the supplied default text without opening
+  suggestions or moving focus from another control.
+- [Suggestion interaction](/input-autocomplete/#keyboard-interaction) leaves
+  composition keys with the input method and keeps rows out of Tab order.
+  Editing or result changes, including label and hint edits, clear stale active
+  suggestions.
+- [Popup interaction](/input-autocomplete/#keyboard-interaction) keeps field focus
+  on padding clicks and preserves keyboard selection when a nested control's
+  disabled state changes. Results stay dismissed after focus leaves.
+
+#### InputDate
+
+- [Calendar triggers](/input-date/) ignore label and hint clicks. The underlying
+  [Menu field anchors](/menu/) respond only to clicks within their field part.
+
+#### InputTime
+
+- [Touch editing](/input-time/#the-field) waits for a completed tap before
+  focusing field padding. Canceled gestures no longer affect later segment
+  selection.
+- [Editing and clearing](/input-time/) retain incomplete edits on reconnection,
+  preserve a custom tone with neutral status, and use live label and hint
+  references. Read-only fields prevent edits, and `onClearClick` can cancel clear
+  actions.
+- [Blur commits](/input-time/#web-component) finish when a field is removed.
+  Read-only focus visits emit `change` only for a pending edit, and disabling a
+  parent fieldset clears keyboard focus state.
+- [AM/PM labels](/input-time/) reserve space for the locale's longest label
+  without native autosizing, so switching periods keeps the field width.
+
+#### Menu
+
+- [Custom selection indicators](/select/#custom-indicators) use external layout
+  styles, preserving alignment and row activation under a strict CSP.
+
+- [Trigger replacement](/menu/) preserves keyboard interaction, popup
+  relationships, and open state, including [Select custom triggers](/select/#custom-trigger).
+  Anchored popovers reposition to follow their replacement.
+- [Positioning and dismissal](/menu/) keep RTL menus within the viewport and
+  open stacks independent between documents. Closing or removing a menu clears
+  pending navigation and positioning work.
+- [Custom rounding](/menu/#styling) applies to the container in every theme.
+- [Combobox cursor events](/menu/) report a cleared autocomplete cursor once,
+  including when an edit also updates the suggestion rows.
+
+#### Panel
+
+- [Maximization](/panel/#styling) restores normal layout and focus handling
+  if native popover opening fails or is canceled.
+- [React hydration](/panel/#controlled) retains state-change callbacks.
+
+#### Progress
+
+- [Loading stripes](/progress/) match their travel distance to the bar's width
+  during playback and resizing. Their blurred edges stay outside the track,
+  preventing jumps and edge flicker when the animation repeats.
+
+#### Select
+
+- [Field layout and validation](/select/#styling) preserve leading content and
+  the chevron's status color in server-rendered HTML under `style-src-attr 'none'`.
+
+#### SelectFaceted
+
+- [Text-editor padding](/select-faceted/#styling) survives server rendering under
+  `style-src-attr 'none'`.
+- [Searches and text drafts](/select-faceted/) keep working when React defers
+  state updates.
+
+#### Slider
+
+- [Dragging](/slider/#relative-dragging) honors consumer cancellation and ends
+  when disabled or disconnected. Parent updates remain applied during a drag,
+  and rebasing preserves the final commit. Ancestor propagation boundaries no
+  longer disable pointer or keyboard input.
+- [Accessible names](/slider/#range-values) follow live label text, and scalar
+  disabled state is exposed to accessibility tools.
+- [Inherited RTL](/slider/#relative-dragging), including CSS `direction`, aligns
+  pointer movement, thumbs, value bubbles, and markers with the rail.
+- [Numeric bounds](/slider/#managing-the-value) contain small decimal values.
+- [Property inputs](/slider/#managing-the-value) assigned before registration
+  take effect when the element upgrades, including while detached. A runtime
+  `value={null}` uses uncontrolled defaults and the matching scalar or range
+  presentation.
+- [Restored ranges](/slider/#range-values) keep each thumb on its restored
+  endpoint when the application takes control.
+
+#### RadioGroup and Tabs
+
+- [RadioGroup](/radio/) and [Tabs](/tabs/) retain the latest applied selection
+  when the JSX `value` prop is omitted or the raw `state` attribute is removed.
+  The keyboard tab stop and active tab panel follow the retained selection.
+- [Per-option tones](/tabs/#tone) color the selected indicator without recoloring
+  the track. An explicit neutral option resets the indicator on a toned strip.
+
+#### Steps
+
+- [Vertical panels](/steps/#orientation) follow the selected step using external
+  CSS, including when a Content Security Policy blocks inline style attributes.
+
+#### Text
+
+- [Keyboard order](/text/#truncation-and-expansion) places expansion controls
+  before content links. Raw HTML authors place the control before `a-text-content`.
+- [Folded content](/text/#truncation-and-expansion) stays in place when a clipped
+  link receives focus and remains selectable.
+- [Mixed imports](/text/#truncation-and-expansion) preserve expansion controls'
+  accessible names and expanded state when granular entries load before the bundle.
+- [Control layout](/text/#truncation-and-expansion) spans the full width for
+  multiline text and the inline end for single-line text. Collapse controls leave
+  revealed links clickable without adding padding to folded text or changing its
+  width on expansion.
+
+#### Toaster
+
+- [Countdown progress](/toaster/) survives interrupted exits and reconnection.
+  Reattaching an already-dismissed toast emits completion for its new owner.
+- [DOM-node content](/toaster/#web-component) clears to `null` when its prop is
+  removed. Refilled fragments can be assigned again to replace their previous
+  children.
+
+#### Tooltip
+
+- [Interactive content](/tooltip/) stays open during keyboard travel, and
+  reduced motion disables fades.
 
 ## 0.3.34 — October 5, 2026
 
@@ -77,7 +414,7 @@ changes are not listed.
 
 ### Added
 
-- [Expander indicators](/expander/#indicator) can sit after header actions and
+- [Expander indicators](/expander/#actions-and-indicators) can sit after header actions and
   use built-in chevron, triangle, or plus visuals. Custom indicators can rotate
   as one node or switch between closed and open nodes.
 - [Box measurements](/box/#measurements) can include
@@ -98,7 +435,7 @@ changes are not listed.
 
 ### Fixed
 
-- [Expander indicators](/expander/#indicator) leave the mark empty for
+- [Expander indicators](/expander/#actions-and-indicators) leave the mark empty for
   unrecognized strings and numbers instead of displaying them as text.
 - [Menu submenus](/menu/#submenus) stay open when a nested
   date picker closes under the pointer outside the submenu. Hover dismissal

@@ -20,12 +20,11 @@ export type {
     ZoomPan, RequestedViewportWindow, ViewportRequest, PlotTemplate, PlotArgs,
     Layout, ComposedPlot, Scale, NumericalScale, ContinuousScale,
     BandScale, CanvasContext, Rect, PixelRect, RenderContext,
-    CustomRenderContext, CustomRendererFn, HitContext, PixelResolver, ColorResolver,
+    CustomSeriesView, CustomRenderContext, CustomRendererFn, HitContext, PixelResolver, ColorResolver,
     CustomHitTestFn, CustomHighlightContext, CustomHighlightRendererFn, HighlightSpec, SideMode, AxisScale, AxisContext,
     ColorTheme, ColorArg, TitleArg, StrokeArg, MarkShape,
     RectAlign, FieldArg, PointData, TooltipData, TooltipFn,
     TooltipArg, PlotTooltipHit, PlotTooltipFn, SelectFn, AxisViewport, ViewportChange, ViewportChangeFn,
-    RowTypedArgs, OptionalRowTypedArgs,
 } from '../core/types'
 export { Plot, type PlotProps } from '../components/Plot'
 export { PlotSurface, type PlotSurfaceProps, type PlotSurfaceAttributes } from '../components/PlotSurface'

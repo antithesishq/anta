@@ -2,7 +2,9 @@
 
 Checkboxes let users select one or more items from a set, or toggle an option on or off. Use them for multiple independent choices; for a single immediate setting, use a switch instead.
 
-The `Checkbox` wrapper renders an `<a-checkbox>` element that manages its own state. It works both controlled and uncontrolled with `checked` / `defaultChecked` (boolean or `'indeterminate'`) and `onStateChange` for updates.
+Use `defaultChecked` for an initial choice, or pair `checked` with
+`onStateChange` to control it. Pass `'indeterminate'` for a mixed selection,
+such as a parent checkbox whose children have different states.
 
 ## Tone
 
@@ -163,11 +165,9 @@ function ParentChild() {
 
 ## Accessibility
 
-The wrapper sets `role="checkbox"`, and the element keeps `aria-checked`
-(`"true"` / `"false"` / `"mixed"`) in sync. Its light-DOM label supplies the
-accessible name and its hint supplies the accessible description through
-`ElementInternals`; no generated IDs are needed. For a label-less checkbox, pass
-`aria-label`.
+The label names the checkbox for screen readers, and the hint supplies its
+description. Without a visible label, pass `aria-label`. Screen readers
+announce the current state.
 
 Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 
@@ -192,10 +192,9 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
-The focusable host carries the state. Label and hint are light-DOM children that
-the element exposes as its accessible name and description.
+Use `<a-checkbox>` directly outside JSX. Set `role="checkbox"` and `tabindex="0"`
+for keyboard access. Its label and hint supply the accessible name and
+description.
 
 ```html
 <a-checkbox role="checkbox" tabindex="0" name="updates" default-state="checked">

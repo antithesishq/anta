@@ -4,6 +4,7 @@
 // per-row `color` field on data overrides the series-level shape for that row.
 // renderer fallback chain: colors[i], color, DEFAULT_SERIES_COLOR.
 
+import { is_row_object } from "./column"
 import { validate_non_negative } from "./validate"
 import type { AxisTemplate, ColorArg, ColorTheme, FontConfig, Stroke, StrokeArg, ThemeColor } from "../types"
 
@@ -99,17 +100,26 @@ type ResolvedColorFields = {
 
 type WithResolvedColors<S> = S extends unknown ? Omit<S, keyof ResolvedColorFields> & ResolvedColorFields : never
 
+/** Read an optional row override without requiring a color property on the caller's row type. */
+export function read_row_color(row: unknown): ThemeColor | undefined {
+    if (!is_row_object(row) || !('color' in row)) {
+        return undefined
+    }
+    const color = row.color
+    return is_theme_color(color) ? color : undefined
+}
+
 /**
  * Resolve per-row colors. A per-row `color` field wins, then the series arg (ThemeColor or accessor).
  * @param data - the data rows
  * @param arg - uniform ThemeColor, per-row accessor, or undefined
  * @returns the color and/or per-row colors to attach to the series
  */
-export function resolve_color(
-    data: Record<string, unknown>[],
-    arg: ColorArg | undefined,
+export function resolve_color<Row>(
+    data: Row[],
+    arg: ColorArg<Row> | undefined,
 ): ColorFields {
-    const has_per_item = data.some(r => is_theme_color(r.color))
+    const has_per_item = data.some(row => read_row_color(row) !== undefined)
     const is_accessor = typeof arg === 'function'
     const uniform = is_theme_color(arg) ? arg : undefined
     const result: ColorFields = {}
@@ -119,7 +129,7 @@ export function resolve_color(
 
         for (let i = 0; i < data.length; i++) {
             const row = data[i]
-            const per_item = is_theme_color(row.color) ? row.color : undefined
+            const per_item = read_row_color(row)
             colors[i] = per_item ?? resolve_color_arg(arg, row, i) ?? null
         }
         result.colors = colors
@@ -132,9 +142,9 @@ export function resolve_color(
 }
 
 /** Resolve an explicit hover color without adopting the data rows' normal `color` fields. */
-export function resolve_highlight_colors(
-    data: Record<string, unknown>[] | undefined,
-    arg: ColorArg | undefined,
+export function resolve_highlight_colors<Row>(
+    data: Row[] | undefined,
+    arg: ColorArg<Row> | undefined,
 ): { highlight_color?: ThemeColor; highlight_colors?: (ThemeColor | null)[] } {
     if (arg === undefined) return {}
     if (typeof arg !== 'function') return { highlight_color: arg }
@@ -331,9 +341,9 @@ function is_light_dark_color_pair(value: unknown): value is { light: string; dar
  * @param index - the index handed to an accessor
  * @returns the resolved ThemeColor, or undefined
  */
-export function resolve_color_arg(
-    arg: ColorArg | undefined,
-    row: Record<string, unknown>,
+export function resolve_color_arg<Row>(
+    arg: ColorArg<Row> | undefined,
+    row: Row,
     index: number,
 ): ThemeColor | undefined {
     const value = typeof arg === 'function' ? arg(row, index) : arg

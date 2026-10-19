@@ -1,0 +1,135 @@
+name: Component matrix
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Component suite
+        type: choice
+        default: all
+        options: [all, banner, calendar, card, copy, dialog, expander, input, input-autocomplete, input-time, menu, panel, progress, select, selection, slider, text, toaster, tooltip]
+      select_compare_ref:
+        description: Optional Git ref for a one-off Select appearance comparison
+        type: string
+        required: false
+        default: ''
+      slider_compare_ref:
+        description: Optional Git ref for a one-off Slider appearance comparison
+        type: string
+        required: false
+        default: ''
+permissions:
+  contents: read
+jobs:
+  components:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      # Workspace prepare scripts build the packages during installation.
+      - name: Install dependencies and build workspace
+        run: pnpm install --frozen-lockfile
+      - name: Install browser engines
+        run: pnpm --filter anta-site exec playwright install --with-deps chromium firefox webkit
+      - name: Run full component coverage
+        env:
+          COMPONENT: ${{ inputs.component }}
+          ANTA_MENU_COMPARE_ORIGINAL: '1'
+          ANTA_SELECT_COMPARE_REF: ${{ inputs.select_compare_ref }}
+          ANTA_SLIDER_COMPARE_REF: ${{ inputs.slider_compare_ref }}
+        run: pnpm test:components --tier slow --component "$COMPONENT"
+      - name: Save Expander visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: expander-visual
+          path: tests/.test-output/expander
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Tooltip visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tooltip-visual
+          path: tests/.test-output/tooltip
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Input visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: input-visual
+          path: tests/.test-output/input
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save InputTime visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: input-time-visual
+          path: tests/.test-output/input-time
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Toaster visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: toaster-visual
+          path: tests/.test-output/toaster
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Copy visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: copy-visual
+          path: tests/.test-output/copy
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Menu visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: menu-visual
+          path: tests/.test-output/menu
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Select visual comparison
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: select-visual
+          path: tests/.test-output/select
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+      - name: Save Dialog visual matrix
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dialog-visual
+          path: tests/.test-output/dialog
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Slider visual comparison
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: slider-visual
+          path: tests/.test-output/slider
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Panel visual comparison
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: panel-visual
+          path: tests/.test-output/panel
+          include-hidden-files: true
+          if-no-files-found: ignore

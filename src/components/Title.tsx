@@ -3,8 +3,8 @@ import { lineClamp, neutralToneAttr, toneStyle } from "../anta_helpers"
 import { Tooltip } from "./Tooltip"
 
 export interface TitleProps extends BaseProps {
-  /** Heading level, 1-6. Drives font-size, line-height, and vertical
-   *  rhythm. Also surfaced to assistive tech via `aria-level`
+  /** Heading level, 1–6. Sets the type scale and the
+   *  `aria-level` exposed to assistive technology
    *  (h1 is typically reserved for the page title).
    *  @defaultValue 2 */
   level?: 1 | 2 | 3 | 4 | 5 | 6
@@ -17,6 +17,12 @@ export interface TitleProps extends BaseProps {
    *  kept while lightness/chroma are pinned per priority in oklch.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Typeface. Serif names the page and its parts; sans serif names objects on
+   *  the page, such as cards, panels, and metrics; monospace names technical
+   *  identifiers, such as run IDs, hashes, and file paths. Omit it to let the
+   *  theme choose by level: the Antithesis theme sets levels 1–3 in serif and
+   *  4–6 in sans serif, and other themes use sans serif throughout. */
+  font?: 'serif' | 'sans-serif' | 'monospace'
   /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
    *  single line; any integer ≥ 2 clamps to that many lines; `0` or a
    *  negative value means no truncation. A clipped JSX `Title` shows its
@@ -30,36 +36,20 @@ export interface TitleProps extends BaseProps {
 /**
  * Block-level heading with level 1-6, priority, tone, and optional truncation.
  *
- * Renders an `<a-title>` styled tag (no JS, no shadow DOM) with
- * `role="heading"` and `aria-level={level}` set by this wrapper for
- * accessibility. Children can be anything — text, icons, badges, links
- * — so there are no `icon` / `iconTrailing` props; compose
- * inside.
+ * The wrapper supplies `role="heading"` and `aria-level`. Compose icons,
+ * badges, and links as children. Title has no margins. Use the parent's `gap`
+ * or padding to space it within a layout.
  *
- * `<Title>` carries no vertical margins: it's a spacing-neutral atom
- * that drops into any container, and the parent owns spacing (a `gap`
- * or padding). Raw `<h1>`-`<h6>` do keep per-level top/bottom margins
- * (via `src/reset.css`) for document prose rhythm — so use a real
- * heading tag if SEO matters or you want that built-in rhythm and don't
- * need the `tone` / `priority` props.
+ * Native `<h1>`–`<h6>` headings use the same type scale with document margins
+ * when Anta's reset stylesheet is loaded.
  *
- * Styling notes (`a-title.css` ships comment-free): `<a-title>` is
- * intentionally CSS-only — no JS, no shadow DOM, not even
- * `customElements.define`; the browser treats it as a generic unknown
- * element and the CSS gives it block layout, the demi-bold variable-font
- * weight, and the per-level type scale. The matching `h1`–`h6` rules in
- * `src/reset.css` share that type scale and weight, so raw markup reads
- * the same as `<Title level={n}>` — they diverge only on margins: raw
- * headings carry the document vertical rhythm, `<a-title>` is margin-free.
- * The tone × priority color matrix has the same shape as `a-text`'s.
- *
- * Requires `@antadesign/anta/elements` to be imported (client-side only)
- * so the CSS ships with the page.
+ * See [Install and configure](https://anta.design/install/) for stylesheet setup.
  *
  * @example Basic usage
  * ```tsx
  * <Title level={1}>Page title</Title>
  * <Title level={2} tone="brand">Section</Title>
+ * <Title level={3} font="sans-serif">Run 4821: 12 failures</Title>
  * ```
  *
  * @example With children beyond text
@@ -69,7 +59,7 @@ export interface TitleProps extends BaseProps {
  * </Title>
  * ```
  */
-export const Title = ({ level = 2, priority, tone, truncate, className, style, children, ...rest }: TitleProps) => {
+export const Title = ({ level = 2, priority, tone, font, truncate, className, style, children, ...rest }: TitleProps) => {
   const lineCount = lineClamp(truncate)
   const toneAttr = neutralToneAttr(tone)
   const computedStyle = toneStyle(
@@ -82,6 +72,7 @@ export const Title = ({ level = 2, priority, tone, truncate, className, style, c
       level={String(level)}
       priority={priority}
       tone={toneAttr}
+      font={font}
       truncate={lineCount != null ? String(lineCount) : undefined}
       role="heading"
       aria-level={level}

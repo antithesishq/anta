@@ -1,4 +1,4 @@
-import type { ComposedCustom, ComposedSeries, HitContext, Rect, Scale } from "../../types"
+import type { ComposedSeries, CustomSeriesView, HitContext, Rect, Scale } from "../../types"
 import { custom_resolvers } from "./paint"
 
 /**
@@ -13,14 +13,15 @@ import { custom_resolvers } from "./paint"
  * @param inner - the plot area
  * @returns the point index under the cursor, or null
  */
-export function custom_hit_test<TooltipContent>(
-    series: ComposedSeries<TooltipContent>,
+export function custom_hit_test<Row, TooltipContent>(
+    series: ComposedSeries<Row, TooltipContent>,
     cursor: { x: number; y: number },
     x_scale: Scale,
     y_scale: Scale,
     inner: Rect,
 ): number | null {
-    const custom = series as ComposedCustom<TooltipContent>
+    if (series.kind !== 'custom') return null
+    const custom = series
     const hit_test = custom.hit_test
 
     if (hit_test === undefined) {
@@ -48,7 +49,7 @@ export function custom_hit_test<TooltipContent>(
  * @param series - the composed custom series
  * @returns the index, or null if it names no point
  */
-function bounded_index<TooltipContent>(index: number | null, series: ComposedCustom<TooltipContent>): number | null {
+function bounded_index<Row>(index: number | null, series: CustomSeriesView<Row>): number | null {
     if (index === null) {
         return null
     }

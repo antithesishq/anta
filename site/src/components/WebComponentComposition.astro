@@ -16,23 +16,22 @@ const { kind } = Astro.props
     event.target instanceof Element ? event.target.closest<HTMLElement>('a-menu-item') : null
 
   function bindSelect(root: HTMLElement) {
-    const field = root.querySelector<HTMLElement>('a-button')
+    const field = root.querySelector<HTMLElement & { value: string }>('a-input')
     const menu = root.querySelector<HTMLElement>('a-menu')
     if (!field || !menu) return
 
     menu.addEventListener('statechange', (event) => {
       field.setAttribute('aria-expanded', String((event as CustomEvent).detail.next === 'open'))
     })
-    menu.addEventListener('click', (event) => {
+    menu.addEventListener('menuselect', (event) => {
       const item = itemFrom(event)
       if (!item || item.closest('a-menu') !== menu) return
       for (const option of menu.querySelectorAll<HTMLElement>(':scope > a-menu-item')) {
         const selected = option === item
         option.toggleAttribute('selected', selected)
       }
-      const label = field.querySelector('a-button-label')
-      if (label) label.textContent = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
-    })
+      field.value = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
+    }, true)
   }
 
   function bindToaster(root: HTMLElement) {

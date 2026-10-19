@@ -13,7 +13,7 @@ import { series_value_span, bar_axes, type BarAxes } from "./layout"
  * @param y_scale - y scale
  * @returns the rect spec (one per stacked segment), or null where the bar has no band position (unknown category) or paints nothing
  */
-export function bar_highlight_spec(series: ComposedBar, point_index: number, x_scale: Scale, y_scale: Scale): HighlightSpec | HighlightSpec[] | null {
+export function bar_highlight_spec<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, point_index: number, x_scale: Scale, y_scale: Scale): HighlightSpec | HighlightSpec[] | null {
     const axes = bar_axes(series, x_scale, y_scale)
     const value_span = series_value_span(series, axes)
     const rect = resolve_bar_rect(series, point_index, axes, value_span)
@@ -38,7 +38,7 @@ export function bar_highlight_spec(series: ComposedBar, point_index: number, x_s
  * @param rect - the mark's resolved rectangle
  * @returns the halo spec for that mark
  */
-function mark_spec(series: ComposedBar, i: number, rect: BarRect): HighlightSpec {
+function mark_spec<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, i: number, rect: BarRect): HighlightSpec {
     const color = series.colors?.[i] ?? series.color ?? DEFAULT_SERIES_COLOR
     const border_radius = bar_corner_radius_css(segment_border_radius(series, i), rect)
     const highlight_color = series.highlight_colors?.[i] ?? series.highlight_color
@@ -56,7 +56,7 @@ function mark_spec(series: ComposedBar, i: number, rect: BarRect): HighlightSpec
  * @param value_span - the series' value axis layout, shared with the paint
  * @returns one spec per drawn segment of the stack
  */
-function stack_specs(series: ComposedBar, point_index: number, axes: BarAxes, value_span: BarPixelSpan): HighlightSpec[] {
+function stack_specs<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, point_index: number, axes: BarAxes, value_span: BarPixelSpan): HighlightSpec[] {
     const band = axes.bands
     const hovered_band = band[point_index]
     const specs: HighlightSpec[] = []

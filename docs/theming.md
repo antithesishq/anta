@@ -10,6 +10,13 @@ and feel, add a theme stylesheet. Import one theme after the package styles:
 import '@antadesign/anta/theme-antune.css' // Choose one theme included in the package.
 ```
 
+Antune and the default styles are MIT licensed. The Antithesis theme
+(`@antadesign/anta/theme-antithesis.css`) is copyright Antithesis Operations LLC
+and has a [separate noncommercial license](https://github.com/antithesishq/anta/blob/main/theme-antithesis-license.md).
+Commercial use of that theme requires prior written permission through the
+[Antithesis contact page](https://antithesis.com/company/contact/). You can use
+Anta commercially under MIT with the default styles, Antune, or your own theme.
+
 <a id="fonts-in-a-theme"></a>
 
 ## Fonts in a theme

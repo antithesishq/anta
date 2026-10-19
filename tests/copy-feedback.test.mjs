@@ -69,7 +69,7 @@ test('Copy feedback flips below the pointer only when its upward path crosses th
       copy.dispatchEvent(new CustomEvent('copydone', { detail: { ok: true } }))
       const feedback = copy.shadowRoot.querySelector('.feedback')
       return {
-        below: feedback.getAttribute('data-placement') === 'below',
+        below: new DOMMatrix(getComputedStyle(feedback).transform).m42 > 0,
         top: feedback.getBoundingClientRect().top,
       }
     }

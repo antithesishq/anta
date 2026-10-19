@@ -12,7 +12,7 @@ const DEFAULT_MARK_DIAMETER = 6
  * @param series - the line series
  * @param render - the shared render context (canvas, inner rect, scales, fallback color)
  */
-export function draw_line(series: ComposedLine, render: RenderContext): void {
+export function draw_line<Row, TooltipContent>(series: ComposedLine<Row, TooltipContent>, render: RenderContext): void {
     const { ctx, x_scale, y_scale, color } = render
 
     if (series.x.length === 0) {
@@ -60,9 +60,9 @@ export function draw_line(series: ComposedLine, render: RenderContext): void {
  * @param resolve_y - y pixel resolver
  * @param color - the line (and marker) color
  */
-function draw_vertex_marks(
+function draw_vertex_marks<Row, TooltipContent>(
     ctx: RenderContext['ctx'],
-    series: ComposedLine,
+    series: ComposedLine<Row, TooltipContent>,
     resolve_x: (i: number) => number | undefined,
     resolve_y: (i: number) => number | undefined,
     color: string,
@@ -89,6 +89,6 @@ function draw_vertex_marks(
  * @param series - the line series
  * @returns the vertex marker radius
  */
-export function vertex_radius(series: ComposedLine): number {
+export function vertex_radius<Row, TooltipContent>(series: ComposedLine<Row, TooltipContent>): number {
     return (series.mark_size ?? DEFAULT_MARK_DIAMETER) / 2
 }

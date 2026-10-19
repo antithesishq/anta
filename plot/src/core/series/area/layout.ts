@@ -9,7 +9,7 @@ import { pixel_resolver } from "../../render/pixel_resolver"
  * @param series - the composed area series
  * @returns true for a vertical band
  */
-export function is_vertical_area(series: ComposedArea): boolean {
+export function is_vertical_area<Row, TooltipContent>(series: ComposedArea<Row, TooltipContent>): boolean {
     return series.x2 !== undefined
 }
 
@@ -21,7 +21,7 @@ export function is_vertical_area(series: ComposedArea): boolean {
  * @param y_scale - y scale
  * @returns the series carrying its pixel runs
  */
-export function compose_area_layout<TooltipContent>(series: ComposedArea<TooltipContent>, x_scale: Scale, y_scale: Scale): ComposedSeries<TooltipContent> {
+export function compose_area_layout<Row, TooltipContent>(series: ComposedArea<Row, TooltipContent>, x_scale: Scale, y_scale: Scale): ComposedSeries<Row, TooltipContent> {
     return { ...series, pixel_runs: area_pixel_runs(series, x_scale, y_scale) }
 }
 
@@ -33,7 +33,7 @@ export function compose_area_layout<TooltipContent>(series: ComposedArea<Tooltip
  * @param y_scale - y scale
  * @returns the pixel runs
  */
-export function series_pixel_runs(series: ComposedArea, x_scale: Scale, y_scale: Scale): AreaPixelRuns {
+export function series_pixel_runs<Row, TooltipContent>(series: ComposedArea<Row, TooltipContent>, x_scale: Scale, y_scale: Scale): AreaPixelRuns {
     return series.pixel_runs ?? area_pixel_runs(series, x_scale, y_scale)
 }
 
@@ -55,7 +55,7 @@ export function run_count(runs: AreaPixelRuns): number {
  * @param y_scale - y scale
  * @returns the band's pixel runs
  */
-function area_pixel_runs(series: ComposedArea, x_scale: Scale, y_scale: Scale): AreaPixelRuns {
+function area_pixel_runs<Row, TooltipContent>(series: ComposedArea<Row, TooltipContent>, x_scale: Scale, y_scale: Scale): AreaPixelRuns {
     const vertical = is_vertical_area(series)
     const along_scale = vertical ? y_scale : x_scale
     const paired_scale = vertical ? x_scale : y_scale
@@ -122,7 +122,7 @@ function is_placeable(pixel: number | undefined): pixel is number {
  * @param paired_scale - the scale of the axis the boundaries live on
  * @returns a resolver giving the boundary pixel, or undefined to break the band
  */
-function base_resolver(series: ComposedArea, paired_scale: Scale): (i: number) => number | undefined {
+function base_resolver<Row, TooltipContent>(series: ComposedArea<Row, TooltipContent>, paired_scale: Scale): (i: number) => number | undefined {
     if (series.x2 !== undefined) {
         return pixel_resolver(paired_scale, series.x2)
     }

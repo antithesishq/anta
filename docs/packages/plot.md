@@ -24,7 +24,7 @@ Combine multiple series in one plot to compare values, show trends, and add cont
 
 
 ```ts
-import { area, line, rule, scatter, type PlotArgs, type Series } from '@antadesign/plot'
+import { area, line, rule, scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
 import type { APlotElement } from '@antadesign/plot/browser'
 
@@ -52,8 +52,8 @@ function overviewExample(): PlotArgs<Node> {
 
   const meanExpected = forecast.reduce((sum, point) => sum + point.expected, 0) / forecast.length
 
-  const series: Series<Node>[] = [
-    area<Node>({
+  const series: PlotArgs<Node>['series'] = [
+    area({
       data: forecast,
       x: 'hour',
       y: 'high',
@@ -61,14 +61,14 @@ function overviewExample(): PlotArgs<Node> {
       color: { light: '#ede9fe', dark: '#30274e' },
       hoverable: false,
     }),
-    rule<Node>({
+    rule({
       y: meanExpected,
       color: { light: '#d97706', dark: '#fbbf24' },
       width: 2,
       dash: [8, 4],
       hoverable: false,
     }),
-    line<Node>({
+    line({
       data: forecast,
       x: 'hour',
       y: 'expected',
@@ -77,7 +77,7 @@ function overviewExample(): PlotArgs<Node> {
       dash: [5, 5],
       tooltip: ({ x, y }) => document.createTextNode('Forecast at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
     }),
-    line<Node>({
+    line({
       data: trend,
       x: 'hour',
       y: 'average',
@@ -85,7 +85,7 @@ function overviewExample(): PlotArgs<Node> {
       width: 3,
       tooltip: ({ x, y }) => document.createTextNode('Trend at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
     }),
-    scatter<Node>({
+    scatter({
       data: observations.filter(point => !point.outside),
       x: 'hour',
       y: 'actual',
@@ -93,7 +93,7 @@ function overviewExample(): PlotArgs<Node> {
       size: 4,
       tooltip: ({ x, y }) => document.createTextNode('Observed at ' + x + 'h: ' + y + ' requests/s'),
     }),
-    scatter<Node>({
+    scatter({
       data: observations.filter(point => point.outside),
       x: 'hour',
       y: 'actual',
@@ -165,11 +165,11 @@ function energyExample(): PlotArgs<Node> {
   ]
   return {
     series: [
-      bar<Node>({ data, y: ['solar', 'wind'],
+      bar({ data, y: ['solar', 'wind'],
         color: [{ light: '#fbbf24', dark: '#d97706' }, { light: '#2dd4bf', dark: '#0d9488' }],
         inset: 5, border_radius: 3,
         tooltip: ({ x, y, label }) => document.createTextNode('Site ' + x + ' · ' + label + ': ' + y + ' kW') }),
-      scatter<Node>({ data, y: 'demand', mark: 'diamond', size: 7,
+      scatter({ data, y: 'demand', mark: 'diamond', size: 7,
         tooltip: ({ x, y }) => document.createTextNode('Site ' + x + ' · Demand: ' + y + ' kW'),
         color: { light: '#7c3aed', dark: '#c4b5fd' },
         stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } }),
@@ -210,12 +210,12 @@ function latencyExample(): PlotArgs<Node> {
   const curve = Array.from({ length: 121 }, (_, i) => ({ x: i * 2, y: density(i * 2) }))
   return {
     series: [
-      area<Node>({ data: curve, y2: 0, color: { light: '#fce7f3', dark: '#452039' }, hoverable: false }),
-      rect<Node>({ data: bins, color: { light: '#f472b6', dark: '#be185d' },
+      area({ data: curve, y2: 0, color: { light: '#fce7f3', dark: '#452039' }, hoverable: false }),
+      rect({ data: bins, color: { light: '#f472b6', dark: '#be185d' },
         tooltip: ({ row, y }) => document.createTextNode(
           (Number(row.x) - 1) + '–' + (Number(row.x2) + 1) + ' ms · ' + Math.round(Number(y)) + ' requests',
         ) }),
-      line<Node>({ data: curve, color: { light: '#9d174d', dark: '#fbcfe8' }, width: 2.5,
+      line({ data: curve, color: { light: '#9d174d', dark: '#fbcfe8' }, width: 2.5,
         tooltip: ({ x, y }) => document.createTextNode('Distribution at ' + x + ' ms: ' + Number(y).toFixed(1) + ' requests') }),
 
     ],
@@ -279,24 +279,24 @@ function mixedExample(): PlotArgs<Node> {
   ]
   return {
     series: [
-      area<Node>({ data: Array.from({ length: 81 }, (_, i) => {
+      area({ data: Array.from({ length: 81 }, (_, i) => {
         const x = i * 1.25
         const center = 50 + 7 * Math.sin(i / 9) + 3 * Math.cos(i / 4)
         const spread = 3 + 1.5 * Math.sin(i / 11) ** 2
         return { x, y: center + spread, y2: center - spread }
       }), color: { light: '#99f6e4', dark: '#115e59' },
         stroke: { color: { light: '#14b8a6', dark: '#5eead4' }, width: 1 } }),
-      ...points.map((point, i) => scatter<Node>({ data: [point], size: [7, 12, 21, 10, 15, 9, 26, 13, 11, 8, 14][i],
+      ...points.map((point, i) => scatter({ data: [point], size: [7, 12, 21, 10, 15, 9, 26, 13, 11, 8, 14][i],
         mark: 'circle', color: colors[i % colors.length],
         tooltip: ({ x, y }) => document.createTextNode('Point ' + (i + 1) + ' · (' + x + ', ' + y + ')'),
         stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } })),
-      rect<Node>({ data: [{ x: 32, x2: 44, y: 31, y2: 47 }],
+      rect({ data: [{ x: 32, x2: 44, y: 31, y2: 47 }],
         color: { light: '#ddd6fe', dark: '#5b21b6' },
         stroke: { color: { light: '#8b5cf6', dark: '#c4b5fd' }, width: 1.5 } }),
-      rect<Node>({ data: [{ x: 76, x2: 97, y: 76, y2: 96 }],
+      rect({ data: [{ x: 76, x2: 97, y: 76, y2: 96 }],
         color: { light: 'rgba(254, 215, 170, 0.55)', dark: 'rgba(154, 52, 18, 0.55)' },
         stroke: { color: { light: '#f97316', dark: '#fdba74' }, width: 1.5 } }),
-      ...smoothPaths.map((data, i) => line<Node>({ data, width: 2.5, dash: i === 1 ? [7, 5] : [],
+      ...smoothPaths.map((data, i) => line({ data, width: 2.5, dash: i === 1 ? [7, 5] : [],
         tooltip: ({ x, y }) => document.createTextNode(
           'Line ' + (i + 1) + ' · (' + Number(x).toFixed(1) + ', ' + Number(y).toFixed(1) + ')',
         ),
@@ -304,7 +304,7 @@ function mixedExample(): PlotArgs<Node> {
           : { light: '#f97316', dark: '#fdba74' },
       })),
 
-      rule<Node>({ y: 10, color: { light: '#0284c7', dark: '#7dd3fc' }, width: 1.5, dash: [6, 4] }),
+      rule({ y: 10, color: { light: '#0284c7', dark: '#7dd3fc' }, width: 1.5, dash: [6, 4] }),
     ],
     axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
     background: { light: '#ffffff', dark: '#151b28' },
@@ -394,7 +394,7 @@ const examplePoints = [
 
 function presentation(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: examplePoints, size: 3,
+    series: [scatter({ data: examplePoints, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     title: { text: 'Plot title', font: { size: 16, color: { light: '#374151', dark: '#e5e7eb' } } },
     height: 260,
@@ -429,7 +429,7 @@ const examplePoints = [
 
 function spacing(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: examplePoints, size: 3,
+    series: [scatter({ data: examplePoints, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     height: 260,
     margin: { top: 40, right: 40, bottom: 68, left: 88 },
@@ -494,7 +494,7 @@ const examplePoints = [
 function logarithmic(): PlotArgs<Node> {
   const data = examplePoints.map(({ x, y }) => ({ x, y: 10 ** (y / 20 - 1) }))
   return {
-    series: [scatter<Node>({ data, size: 3,
+    series: [scatter({ data, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     height: 260,
     margin: { top: 12, right: 14, bottom: 44, left: 80 },
@@ -534,7 +534,7 @@ function timeAxis(): PlotArgs<Node> {
   const start = Date.UTC(2026, 0, 12)
   const data = examplePoints.map(({ x, y }) => ({ x: start + x / 100 * 86400000, y }))
   return {
-    series: [scatter<Node>({ data, size: 3,
+    series: [scatter({ data, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     height: 260,
     margin: { top: 12, right: 16, bottom: 44, left: 76 },
@@ -734,7 +734,7 @@ const data = Array.from({ length: 97 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    line<Node>({
+    line({
       data,
       y: 'expected',
       color: { light: '#c2410c', dark: '#fdba74' },
@@ -742,7 +742,7 @@ plot.plotArgs = {
       dash: [7, 5],
       tooltip: ({ y }) => document.createTextNode('Expected: ' + Math.round(Number(y))),
     }),
-    line<Node>({
+    line({
       data,
       y: 'measured',
       color: { light: '#0891b2', dark: '#67e8f9' },
@@ -779,7 +779,7 @@ const data = Array.from({ length: 13 }, (_, i) => ({
 }))
 
 plot.plotArgs = {
-  series: [line<Node>({
+  series: [line({
     data,
     color: { light: '#7c3aed', dark: '#c4b5fd' },
     width: 3,
@@ -867,7 +867,7 @@ const data = [
 ]
 
 plot.plotArgs = {
-  series: [bar<Node>({
+  series: [bar({
     data,
     x: 'day',
     y: 'requests',
@@ -911,7 +911,7 @@ const data = [
 ]
 
 plot.plotArgs = {
-  series: [bar<Node>({
+  series: [bar({
     data,
     x: 'requests',
     y: 'service',
@@ -955,7 +955,7 @@ const data = [
 ]
 
 plot.plotArgs = {
-  series: [bar<Node>({
+  series: [bar({
     data,
     x: 'month',
     y: 'change',
@@ -994,7 +994,7 @@ function categoryOrder(): PlotArgs<Node> {
     { severity: 'Critical', count: 12 }, { severity: 'Medium', count: 35 },
   ]
   return {
-    series: [bar<Node>({ data, x: 'severity', y: 'count', inset: 10, border_radius: 3,
+    series: [bar({ data, x: 'severity', y: 'count', inset: 10, border_radius: 3,
       color: { light: '#64748b', dark: '#94a3b8' },
       tooltip: ({ x, y }) => document.createTextNode(x + ': ' + y + ' issues'),
     })],
@@ -1081,7 +1081,7 @@ const data = [
 ]
 
 plot.plotArgs = {
-  series: [bar<Node>({
+  series: [bar({
     data,
     x: 'day',
     y: ['network', 'compute', 'storage'],
@@ -1123,7 +1123,7 @@ function stackedHorizontal(): PlotArgs<Node> {
     { service: 'Export', network: 12, compute: 36, storage: 18 },
   ]
   return {
-    series: [bar<Node>({ data, x: ['network', 'compute', 'storage'], y: 'service',
+    series: [bar({ data, x: ['network', 'compute', 'storage'], y: 'service',
       color: [
         { light: '#0d9488', dark: '#5eead4' },
         { light: '#6366f1', dark: '#a5b4fc' },
@@ -1166,7 +1166,7 @@ function stackedDiverging(): PlotArgs<Node> {
     { month: 'May', new: 32, expansion: 10, churn: -12, contraction: -8 },
   ]
   return {
-    series: [bar<Node>({ data, x: 'month', y: ['new', 'expansion', 'churn', 'contraction'],
+    series: [bar({ data, x: 'month', y: ['new', 'expansion', 'churn', 'contraction'],
       color: [
         { light: '#0d9488', dark: '#2dd4bf' },
         { light: '#5eead4', dark: '#99f6e4' },
@@ -1211,7 +1211,7 @@ function stackedTooltip(): PlotArgs<Node> {
   ]
 
   return {
-    series: [bar<Node>({
+    series: [bar({
       data,
       x: 'day',
       y: ['network', 'compute', 'storage'],
@@ -1225,7 +1225,8 @@ function stackedTooltip(): PlotArgs<Node> {
       hover_span_y: false,
       tooltip: ({ label, row }) => {
         const content = document.createElement('div')
-        for (const field of ['network', 'compute', 'storage']) {
+        const fields: (keyof typeof row)[] = ['network', 'compute', 'storage']
+        for (const field of fields) {
           const entry = document.createElement('div')
           const value = document.createElement(field === label ? 'strong' : 'span')
           value.textContent = field + ': ' + row[field] + ' ms'
@@ -1298,7 +1299,7 @@ const data = Array.from({ length: 97 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    area<Node>({
+    area({
       data,
       y2: 0,
       color: { light: '#99f6e4', dark: '#134e4a' },
@@ -1337,7 +1338,7 @@ const data = Array.from({ length: 81 }, (_, i) => {
 
 plot.plotArgs = {
   series: [
-    area<Node>({
+    area({
       data,
       y: 'high',
       y2: 'low',
@@ -1379,21 +1380,21 @@ const data = Array.from({ length: 97 }, (_, i) => {
 
 plot.plotArgs = {
   series: [
-    area<Node>({
+    area({
       data,
       y: 'first',
       y2: 0,
       color: { light: '#2dd4bf', dark: '#0d9488' },
       tooltip: ({ row }) => document.createTextNode('Network: ' + Math.round(Number(row.first))),
     }),
-    area<Node>({
+    area({
       data,
       y: 'second',
       y2: 'first',
       color: { light: '#a5b4fc', dark: '#6366f1' },
       tooltip: ({ row }) => document.createTextNode('Compute: ' + Math.round(Number(row.second) - Number(row.first))),
     }),
-    area<Node>({
+    area({
       data,
       y: 'total',
       y2: 'second',
@@ -1432,7 +1433,7 @@ const data = Array.from({ length: 81 }, (_, i) => {
 
 plot.plotArgs = {
   series: [
-    area<Node>({
+    area({
       data,
       x: 'low',
       x2: 'high',
@@ -1531,7 +1532,7 @@ const data = days.flatMap((day, d) => hours.map((hour, h) => ({
 
 plot.plotArgs = {
   series: [
-    rect<Node>({
+    rect({
       data,
       x: 'hour',
       y: 'day',
@@ -1576,7 +1577,7 @@ const data = [
 
 plot.plotArgs = {
   series: [
-    rect<Node>({
+    rect({
       data,
       x: 'start',
       x2: 'end',
@@ -1619,7 +1620,7 @@ const data = Array.from({ length: 32 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    rect<Node>({
+    rect({
       data,
       size: { width: 16, height: 9 },
       color: row => Number(row.value) > 65
@@ -1661,7 +1662,7 @@ const data = Array.from({ length: 36 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    rect<Node>({
+    rect({
       data: data.filter(row => row.lane === 'Passed'),
       x: 'end_ms',
       y: 'lane',
@@ -1672,7 +1673,7 @@ plot.plotArgs = {
       stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 0.5 },
       tooltip: ({ row }) => document.createTextNode('Run ' + row.run + ': ' + row.lane),
     }),
-    rect<Node>({
+    rect({
       data: data.filter(row => row.lane === 'Failed'),
       x: 'end_ms',
       y: 'lane',
@@ -1817,19 +1818,19 @@ const data = Array.from({ length: 97 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    line<Node>({
+    line({
       data,
       color: { light: '#0891b2', dark: '#67e8f9' },
       width: 2,
     }),
-    rule<Node>({
+    rule({
       y: 60,
       color: { light: '#7c3aed', dark: '#c4b5fd' },
       width: 1,
       dash: [7, 4],
       tooltip: () => document.createTextNode('Target: 60 ms'),
     }),
-    rule<Node>({
+    rule({
       y: 90,
       color: { light: '#c2410c', dark: '#fdba74' },
       width: 4,
@@ -1872,19 +1873,19 @@ const events = [
 
 plot.plotArgs = {
   series: [
-    line<Node>({
+    line({
       data,
       color: { light: '#6366f1', dark: '#a5b4fc' },
       width: 2,
     }),
-    rule<Node>({
+    rule({
       data: events.filter(event => !event.recovery),
       x: 'hour',
       color: { light: '#c2410c', dark: '#fdba74' },
       width: 3,
       tooltip: ({ row }) => document.createTextNode(row?.name + ' at hour ' + row?.hour),
     }),
-    rule<Node>({
+    rule({
       data: events.filter(event => event.recovery),
       x: 'hour',
       color: { light: '#0d9488', dark: '#5eead4' },
@@ -1985,7 +1986,7 @@ const points = groups.flatMap((group, g) => Array.from({ length: 80 }, (_, i) =>
 
 plot.plotArgs = {
   series: [
-    scatter<Node>({
+    scatter({
       data: points,
       size: 3,
       color: row => Number(row.group) === 0
@@ -1993,7 +1994,7 @@ plot.plotArgs = {
         : { light: '#7c3aed', dark: '#c4b5fd' },
       tooltip: ({ x, y }) => document.createTextNode(Number(x).toFixed(1) + ', ' + Number(y).toFixed(1)),
     }),
-    custom<Node>({
+    custom({
       data: groups,
       x: 'x', y: 'y',
       color: (_, i) => i === 0
@@ -2071,7 +2072,7 @@ const groups = matrix.map((row, i) => {
 })
 
 plot.plotArgs = {
-  series: [custom<Node>({
+  series: [custom({
     data: groups,
     color: (_, i) => [
       { light: '#0d9488', dark: '#5eead4' },
@@ -2216,7 +2217,7 @@ const data = Array.from({ length: 6 }, (_, i) => {
 const peak = Math.max(...data.flatMap(row => row.density.map(point => point.density)))
 
 plot.plotArgs = {
-  series: [custom<Node>({
+  series: [custom({
     data,
     y: 'group',
     color: (_, i) => ({ light: 'hsl(' + (175 + i * 15) + ', 55%, 55%)', dark: 'hsl(' + (175 + i * 15) + ', 50%, 45%)' }),
@@ -2323,7 +2324,7 @@ const data = distributions()
 const peak = Math.max(...data.flatMap(row => row.density.map(point => point.density)))
 
 plot.plotArgs = {
-  series: [custom<Node>({
+  series: [custom({
     data,
     x: 'group',
     color: (_, i) => [
@@ -2403,13 +2404,14 @@ Without `highlight_renderer`, Anta calls `renderer` on the overlay with a single
 For connected geometry or a different highlight, supply `highlight_renderer(series, point_index, context)`. It receives the full composed series, the original hovered index, and the normal render helpers plus `highlight_color_at(index)`. Anta handles DPR, clearing, clipping, and canvas-state isolation. Set `highlight: false` to disable either path. Both paths require data and hit testing.
 
 ```ts
-import { custom, type CustomRendererFn, type CustomHitTestFn, type CustomHighlightRendererFn } from '@antadesign/plot'
+import { custom, type PlotArgs, type CustomRendererFn, type CustomHitTestFn, type CustomHighlightRendererFn } from '@antadesign/plot'
 import type { APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
 
 const plot = document.createElement('a-plot') as APlotElement
-function highlights() {
-  const renderer: CustomRendererFn<Node> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
+function highlights(): PlotArgs<Node> {
+  type Point = { x: number; y: number }
+  const renderer: CustomRendererFn<Point> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
     for (let i = 0; i < series.x.length; i++) {
       const x = resolve_x(i), y = resolve_y(i)
       if (x === undefined || y === undefined) continue
@@ -2419,14 +2421,14 @@ function highlights() {
       ctx.fill()
     }
   }
-  const hit_test: CustomHitTestFn<Node> = (series, { cursor, resolve_x, resolve_y }) => {
+  const hit_test: CustomHitTestFn<Point> = (series, { cursor, resolve_x, resolve_y }) => {
     for (let i = series.x.length - 1; i >= 0; i--) {
       const x = resolve_x(i), y = resolve_y(i)
       if (x !== undefined && y !== undefined && Math.hypot(cursor.x - x, cursor.y - y) <= 16) return i
     }
     return null
   }
-  const highlight_renderer: CustomHighlightRendererFn<Node> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
+  const highlight_renderer: CustomHighlightRendererFn<Point> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
     const x = resolve_x(i), y = resolve_y(i)
     if (x === undefined || y === undefined) return
     ctx.strokeStyle = highlight_color_at(i)
@@ -2441,15 +2443,15 @@ function highlights() {
     margin: { top: 12, right: 12, bottom: 28, left: 32 },
     grid: false, zoom_pan: false,
     series: [
-      custom<Node>({
+      custom({
         data: [{ x: 20, y: 35 }, { x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
         color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
       }),
-      custom<Node>({
+      custom({
         data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
       }),
-      custom<Node>({
+      custom({
         data: [{ x: 80, y: 35 }, { x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
         color: '#94a3b8', highlight: false, tooltip: true,
       }),
@@ -2559,23 +2561,23 @@ const data = [
 
 plot.plotArgs = {
   series: [
-    bar<Node>({
+    bar({
       data: data.slice(0, 2), inset: 7, border_radius: 4,
       color: { light: 'rgba(13, 148, 136, 0.35)', dark: 'rgba(94, 234, 212, 0.35)' },
     }),
-    bar<Node>({
+    bar({
       data: data.slice(2, 4), inset: 7, border_radius: 4,
       color: { light: '#0d9488', dark: '#5eead4' },
       highlight_color: row => row.x === 'C'
         ? { light: '#f97316', dark: '#fdba74' }
         : 'color-mix(in oklch, magenta 50%, transparent)',
     }),
-    bar<Node>({
+    bar({
       data: data.slice(4, 5), inset: 7, border_radius: 4,
       color: { light: '#7c3aed', dark: '#c4b5fd' },
       highlight: false,
     }),
-    bar<Node>({
+    bar({
       data: data.slice(5), inset: 7, border_radius: 4,
       color: { light: '#94a3b8', dark: '#64748b' },
       hoverable: false,
@@ -2596,14 +2598,14 @@ document.body.append(plot)
 
 #### Custom hit testing
 
-`CustomHitTestFn<TooltipContent>` receives the composed custom series and a
+`CustomHitTestFn<Row>` receives a `CustomSeriesView<Row>` and a
 `HitContext`. Return the matching row index or `null` when there is no hit.
 Custom series need this callback for tooltips and selection.
 
 ```ts
-import type { ComposedCustom, HitContext } from '@antadesign/plot'
+import type { CustomSeriesView, HitContext } from '@antadesign/plot'
 
-type HitTest = (series: ComposedCustom, context: HitContext) => number | null
+type HitTest<Row> = (series: CustomSeriesView<Row>, context: HitContext) => number | null
 ```
 
 | Context field | Type | Description |
@@ -2634,13 +2636,13 @@ const data = [
 
 plot.plotArgs = {
   series: [
-    rect<Node>({
+    rect({
       data,
       color: { light: 'rgba(13, 148, 136, 0.45)', dark: 'rgba(94, 234, 212, 0.45)' },
       stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
       tooltip: true,
     }),
-    rect<Node>({
+    rect({
       data: data.map(row => ({
         ...row, x: row.x + 12, x2: row.x2 + 8, y: row.y + 12, y2: row.y2 + 10,
       })),
@@ -2698,6 +2700,16 @@ Hover the overlapping rectangles to compare baseline and current bounds under on
 import { rect, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
 
+function windowRow(row: unknown) {
+  if (typeof row !== 'object' || row === null) return undefined
+  if (!('name' in row) || typeof row.name !== 'string'
+    || !('x' in row) || typeof row.x !== 'number'
+    || !('x2' in row) || typeof row.x2 !== 'number'
+    || !('y' in row) || typeof row.y !== 'number'
+    || !('y2' in row) || typeof row.y2 !== 'number') return undefined
+  return row
+}
+
 const plot = document.createElement('a-plot') as APlotElement
 const data = [
   { x: 8, x2: 38, y: 15, y2: 48, name: 'Window A' },
@@ -2729,8 +2741,8 @@ plot.plotArgs = {
     }),
   ],
   tooltip: ([baseline_hit, current_hit]) => {
-    const baseline = baseline_hit?.data.row
-    const current = current_hit?.data.row
+    const baseline = windowRow(baseline_hit?.data.row)
+    const current = windowRow(current_hit?.data.row)
     const content = document.createElement('div')
     const title = document.createElement('strong')
     title.textContent = String((current ?? baseline)?.name ?? 'Window comparison')
@@ -2743,7 +2755,10 @@ plot.plotArgs = {
       header.append(cell)
     }
     const body = table.createTBody()
-    for (const [field, label] of [['x', 'X start'], ['x2', 'X end'], ['y', 'Y start'], ['y2', 'Y end']]) {
+    const bounds: ['x' | 'x2' | 'y' | 'y2', string][] = [
+      ['x', 'X start'], ['x2', 'X end'], ['y', 'Y start'], ['y2', 'Y end'],
+    ]
+    for (const [field, label] of bounds) {
       const before = baseline?.[field]
       const after = current?.[field]
       const delta = typeof before === 'number' && typeof after === 'number' ? after - before : undefined
@@ -2800,7 +2815,7 @@ const data = Array.from({ length: 24 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    scatter<Node>({
+    scatter({
       data, size: 13,
       color: { light: '#0891b2', dark: '#67e8f9' },
       tooltip: true,
@@ -2878,7 +2893,7 @@ const data = Array.from({ length: 201 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    line<Node>({
+    line({
       data, width: 2,
       color: { light: '#6366f1', dark: '#a5b4fc' },
       tooltip: true,
@@ -2923,7 +2938,7 @@ const data = Array.from({ length: 201 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    line<Node>({
+    line({
       data, width: 2,
       color: { light: '#6366f1', dark: '#a5b4fc' },
       tooltip: true,
@@ -2968,7 +2983,7 @@ const data = Array.from({ length: 201 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    line<Node>({
+    line({
       data, width: 2,
       color: { light: '#6366f1', dark: '#a5b4fc' },
       tooltip: true,
@@ -3030,7 +3045,7 @@ const data = Array.from({ length: 201 }, (_, i) => ({
 
 plot.plotArgs = {
   series: [
-    line<Node>({
+    line({
       data, width: 2,
       color: { light: '#6366f1', dark: '#a5b4fc' },
       tooltip: true,
@@ -3133,12 +3148,12 @@ export function viewportSizes(): PlotArgs<Node> {
     grid: false,
     zoom_pan: { x: true, y: false },
     series: [
-      scatter<Node>({ data: rows(labels[0]), size: 4,
+      scatter({ data: rows(labels[0]), size: 4,
         color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),
-      scatter<Node>({ data: rows(labels[1]),
+      scatter({ data: rows(labels[1]),
         size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true }),
-      scatter<Node>({ data: rows(labels[2]),
+      scatter({ data: rows(labels[2]),
         size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.5),
         color: { light: '#c2410c', dark: '#fdba74' }, tooltip: true }),
     ],
@@ -3210,7 +3225,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3262,7 +3277,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3318,7 +3333,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3361,7 +3376,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3414,7 +3429,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3432,7 +3447,7 @@ function base(): PlotArgs<Node> {
 function grid(): PlotArgs<Node> {
   const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
   return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
       size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
       y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
@@ -3453,7 +3468,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3471,7 +3486,7 @@ function base(): PlotArgs<Node> {
 function grid(): PlotArgs<Node> {
   const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
   return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
       size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
       y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
@@ -3496,7 +3511,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3514,7 +3529,7 @@ function base(): PlotArgs<Node> {
 function grid(): PlotArgs<Node> {
   const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
   return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
       size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
       y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
@@ -3539,7 +3554,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3557,7 +3572,7 @@ function base(): PlotArgs<Node> {
 function grid(): PlotArgs<Node> {
   const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
   return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
       size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
       y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
@@ -3591,7 +3606,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3607,7 +3622,7 @@ function base(): PlotArgs<Node> {
 }
 
 function themeColors(): PlotArgs<Node> {
-  return { ...base(), series: [scatter<Node>({
+  return { ...base(), series: [scatter({
     data: [{ x: 20, y: 30 }, { x: 50, y: 65 }, { x: 80, y: 45 }],
     size: 18, color: { light: 'tomato', dark: 'lightskyblue' }, hoverable: false,
   })] }
@@ -3642,7 +3657,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3659,7 +3674,7 @@ function base(): PlotArgs<Node> {
 
 function scales(): PlotArgs<Node> {
   return { ...base(),
-    series: [scatter<Node>({ data: [1, 10, 100, 1000, 10000].map((y, i) => ({ x: 10 + i * 20, y })),
+    series: [scatter({ data: [1, 10, 100, 1000, 10000].map((y, i) => ({ x: 10 + i * 20, y })),
       size: 4, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
     axis: { x: { scale: 'linear', min: 0, max: 100, label: 'Linear' },
       y: { scale: 'log', min: 1, max: 10000, label: 'Logarithmic',
@@ -3682,7 +3697,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3700,7 +3715,7 @@ function base(): PlotArgs<Node> {
 function timeCategory(): PlotArgs<Node> {
   const start = new Date(2026, 0, 12).getTime()
   return { ...base(),
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: start, y: 'Alpha' }, { x: start + 3600000, y: 'Beta' },
       { x: start + 7200000, y: 'Alpha' }, { x: start + 10800000, y: 'Gamma' },
       { x: start + 14400000, y: 'Beta' },
@@ -3744,7 +3759,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3780,7 +3795,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3828,7 +3843,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3873,7 +3888,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3889,7 +3904,7 @@ function base(): PlotArgs<Node> {
 }
 
 function seriesColors(): PlotArgs<Node> {
-  return { ...base(), series: [scatter<Node>({
+  return { ...base(), series: [scatter({
     data: [{ x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 }, { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 }],
     size: 8, color: row => Number(row.y) >= 60
       ? { light: '#c2410c', dark: '#fdba74' } : { light: '#64748b', dark: '#94a3b8' },
@@ -3908,12 +3923,12 @@ and custom series accept it; line and area use one `ThemeColor` per series.
 | Form | Type | Description |
 |---|---|---|
 | Shared color | [`ThemeColor`](#theme-colors) | Apply one color or theme pair to the series. |
-| Accessor | [`(row: Record<string, unknown>, index: number) => ThemeColor`](#theme-colors) | Choose a color or theme pair for each row. |
+| Accessor | [`(row: Row, index: number) => ThemeColor`](#theme-colors) | Choose a color or theme pair for each row. |
 
 ```ts
 import type { ColorArg } from '@antadesign/plot'
 
-const color: ColorArg = (row) => Number(row.value) >= 10 ? 'coral' : 'steelblue'
+const color: ColorArg<{ value: number }> = (row) => row.value >= 10 ? 'coral' : 'steelblue'
 ```
 
 For these series, a valid `color` on a data row takes precedence over the
@@ -3931,7 +3946,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -3948,7 +3963,7 @@ function base(): PlotArgs<Node> {
 
 function markShapes(): PlotArgs<Node> {
   const marks = ['circle', 'square', 'diamond', 'triangle'] as const
-  return { ...base(), series: marks.map((mark, i) => scatter<Node>({
+  return { ...base(), series: marks.map((mark, i) => scatter({
     data: [{ x: mark, y: 40 + i * 10 }], mark, size: 12,
     color: [
       { light: '#7c3aed', dark: '#c4b5fd' }, { light: '#db2777', dark: '#f9a8d4' },
@@ -3986,7 +4001,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({ data: [
+    series: [scatter({ data: [
       { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
       { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
     ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
@@ -4002,7 +4017,7 @@ function base(): PlotArgs<Node> {
 }
 
 function strokes(): PlotArgs<Node> {
-  return { ...base(), series: [1, 3, 5].map((width, i) => scatter<Node>({
+  return { ...base(), series: [1, 3, 5].map((width, i) => scatter({
     data: [{ x: 25 + i * 25, y: 50 }], size: 18,
     color: { light: '#f0abfc', dark: '#c026d3' },
     stroke: { color: { light: '#7e22ce', dark: '#f5d0fe' }, width }, hoverable: false,
@@ -4038,25 +4053,26 @@ such as `x` and `y`, or for a second boundary where the series supports one.
 
 | Form | Type | Description |
 |---|---|---|
-| Field name | `string` | Read the named property from each row. |
-| Accessor | `(row: Record<string, unknown>, index: number) => number \| string` | Compute a value from the row and its zero-based index. Return numbers for continuous axes or strings for categories. |
+| Field name | `keyof Row & string` | Read the named property from each row. |
+| Accessor | `(row: Row, index: number) => number \| string` | Compute a value from the row and its zero-based index. Return numbers for continuous axes or strings for categories. |
 
 ```ts
 import type { FieldArg } from '@antadesign/plot'
 
-const x: FieldArg = 'elapsed_ms'
-const y: FieldArg = (row) => Number(row.duration_ms) / 1000
+type Timing = { elapsed_ms: number; duration_ms: number }
+const x: FieldArg<Timing> = 'elapsed_ms'
+const y: FieldArg<Timing> = (row) => row.duration_ms / 1000
 ```
 
 ### Custom rendering
 
-`CustomRendererFn<TooltipContent>` receives the composed custom series and
+`CustomRendererFn<Row>` receives a `CustomSeriesView<Row>` and
 its drawing context:
 
 ```ts
-import type { ComposedCustom, CustomRenderContext } from '@antadesign/plot'
+import type { CustomSeriesView, CustomRenderContext } from '@antadesign/plot'
 
-type Renderer = (series: ComposedCustom, context: CustomRenderContext) => void
+type Renderer<Row> = (series: CustomSeriesView<Row>, context: CustomRenderContext) => void
 ```
 
 The composed series contains resolved `x` and `y` columns, source `rows` when
@@ -4122,7 +4138,7 @@ import type { APlotElement } from '@antadesign/plot/browser'
 
 function stylingExample(): PlotArgs<Node> {
   return {
-    series: [scatter<Node>({
+    series: [scatter({
       data: [{ x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
         { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 }],
       size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false,

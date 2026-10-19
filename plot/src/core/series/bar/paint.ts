@@ -13,7 +13,7 @@ type BarSegment = { rect: BarRect; color: string }
  * @param series - the bar series
  * @param render - the shared render context (canvas, inner rect, scales, fallback color)
  */
-export function draw_bar(series: ComposedBar, render: RenderContext): void {
+export function draw_bar<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, render: RenderContext): void {
     const { ctx, x_scale, y_scale, color } = render
 
     if (series.x.length === 0) {
@@ -41,7 +41,7 @@ export function draw_bar(series: ComposedBar, render: RenderContext): void {
  * @param value_span - the series' value axis layout
  * @param fallback - the series color, used where a mark has none
  */
-function draw_marks(ctx: CanvasContext, series: ComposedBar, axes: BarAxes, value_span: BarPixelSpan, fallback: string): void {
+function draw_marks<Row, TooltipContent>(ctx: CanvasContext, series: ComposedBar<Row, TooltipContent>, axes: BarAxes, value_span: BarPixelSpan, fallback: string): void {
     const colors = series.colors
 
     for (let i = 0; i < series.x.length; i++) {
@@ -68,7 +68,7 @@ function draw_marks(ctx: CanvasContext, series: ComposedBar, axes: BarAxes, valu
  * @param value_span - the series' value axis layout
  * @param fallback - the series color, used where a segment has none
  */
-function draw_stacks(ctx: CanvasContext, series: ComposedBar, axes: BarAxes, value_span: BarPixelSpan, fallback: string): void {
+function draw_stacks<Row, TooltipContent>(ctx: CanvasContext, series: ComposedBar<Row, TooltipContent>, axes: BarAxes, value_span: BarPixelSpan, fallback: string): void {
     const border_radius = series.border_radius ?? 0
 
     for (const segments of group_stacks(series, axes, value_span, fallback).values()) {
@@ -93,7 +93,7 @@ function draw_stacks(ctx: CanvasContext, series: ComposedBar, axes: BarAxes, val
  * @param fallback - the series color, used where a segment has none
  * @returns the segments of each stack, in mark order
  */
-function group_stacks(series: ComposedBar, axes: BarAxes, value_span: BarPixelSpan, fallback: string): Map<string, BarSegment[]> {
+function group_stacks<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, axes: BarAxes, value_span: BarPixelSpan, fallback: string): Map<string, BarSegment[]> {
     const groups = new Map<string, BarSegment[]>()
 
     for (let i = 0; i < series.x.length; i++) {
@@ -149,7 +149,7 @@ function stack_silhouette(segments: BarSegment[]): BarRect {
  * @param i - the mark index
  * @returns the border radius to draw, or undefined for square corners
  */
-export function segment_border_radius(series: ComposedBar, i: number): number | undefined {
+export function segment_border_radius<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, i: number): number | undefined {
     const is_tip = series.is_tip
 
     if (is_tip === undefined) {
@@ -228,7 +228,7 @@ export function bar_corner_radius_css(border_radius: number | undefined, rect: B
  * @param value_span - the series' value axis layout, from series_value_span
  * @returns the bar's { left, top, width, height } in canvas pixels, or null
  */
-export function resolve_bar_rect(series: ComposedBar, i: number, axes: BarAxes, value_span: BarPixelSpan): BarRect | null {
+export function resolve_bar_rect<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, i: number, axes: BarAxes, value_span: BarPixelSpan): BarRect | null {
     const { is_vertical, band_scale, bands } = axes
     const band_pos = band_scale(bands[i])
 

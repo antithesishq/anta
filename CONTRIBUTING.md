@@ -1,39 +1,51 @@
 # Contributing to Anta
 
-Thanks for your interest! Anta is in early development and contributions are currently **limited to project maintainers**. The repository is public so the design system can be browsed and consumed (`@antadesign/anta` on npm), but we're not yet accepting external contributions.
+Contributions are currently limited to project maintainers. The public repository
+provides source and documentation for consumers of `@antadesign/anta`.
+If you are outside the maintainer group, open an issue for a bug or question.
 
-If you find a bug or have a question and you're outside the maintainer group, please don't open a PR — open an issue and we'll respond when we can. Issues from non-collaborators are subject to interaction limits.
+## Maintainer workflow
 
-## For maintainers
+1. Read [AGENTS.md](AGENTS.md), the closest scoped guide, and
+   [WRITING.md](WRITING.md) before editing. Use the repository's SSH URL to clone.
+2. Create a descriptive branch from `main`. Keep changes off `main` and submit
+   them through a pull request.
+3. Use `pnpm run dev` from the repository root for development. It rebuilds the
+   workspace packages and serves the documentation site. See
+   [local servers](site/AGENTS.md#local-servers) for preview commands.
+4. Run the checks relevant to your changes. Package changes usually need a build,
+   lint, type checking, and affected regression suites. Run the complete set for
+   broad changes. See [verification](AGENTS.md#verification) and the
+   [test guide](tests/README.md) for commands. `dist/` is generated and ignored
+   by Git. Package builds regenerate it.
+5. Open a pull request against `main`. Explain the problem, resulting behavior,
+   and validation. Include limitations that affect review.
+6. Request review from Vlad Korobov ([@terpimost](https://github.com/terpimost)),
+   as specified in [CODEOWNERS](.github/CODEOWNERS). Do not merge without his
+   explicit approval.
+7. Wait for required CI checks to pass. Follow the
+   [human review marker rules](WRITING.md#human-review-markers) for documentation.
+   The `review-docs` label is required when changed documentation retains or adds
+   a human review marker. Delete the branch after merging.
 
-Every member of the [project's GitHub organization](https://github.com/antithesishq) already has access to this repository through the org's base role — no additional invite needed. Use the repository's SSH URL when cloning.
+## Changelog
 
-### Workflow
+Record changes to the published `@antadesign/anta` package in
+[CHANGELOG.md](CHANGELOG.md). Keep documentation-site changes in the pull request.
+Follow the [repository changelog scope](AGENTS.md#changelog) when deciding whether
+an entry belongs in a release.
 
-1. **Create a branch** off `main` with a descriptive name (e.g. `text-link-defaults`, `fix-progress-aria`). Avoid pushing directly to `main` — branch protection enforces this for everyone except admins, and even admins should go through PRs for the paper trail.
-2. **Make your changes.** Run `pnpm run build && pnpm run typecheck` locally before pushing; the pre-commit hook auto-rebuilds `dist/` if source files are staged.
-3. **Open a PR** against `main`. Include:
-   - What changed (the *what*)
-   - Why it changed (the *why* — link the slack thread, design discussion, ticket, or your own reasoning)
-   - A short test plan (how to verify it locally and what to look for)
-4. **Wait for review.** Every PR needs **Vlad Korobov ([@terpimost](https://github.com/terpimost))** to review and approve before merging — please do not self-merge or merge another teammate's PR without Vlad's explicit approval. The `CODEOWNERS` file enforces this requirement automatically.
-5. **CI must pass.** Required checks are `build` and `docs-review`; if either fails, fix the issue rather than bypassing it. The `review-docs` label is required when a PR adds or changes authored documentation.
-6. After merge, delete the branch (the GitHub UI offers this on the merged PR page).
+## Shared conventions
 
-### What goes in `CHANGELOG.md`
+- Keep JSX rendering separate from browser behavior and styles. Follow
+  [component architecture and DOM ownership](src/AGENTS.md#architecture).
+- Use `color-mix(in oklch, ...)` to adjust color alpha, as described in
+  [shared conventions](AGENTS.md#shared-conventions).
+- Browser element classes use `HTMLElementBase` for imports without a DOM.
+  CSS-only component entries do not require registration.
+- Follow [WRITING.md](WRITING.md) for prose, source comments, and API documentation.
 
-Only changes to the **published `@antadesign/anta` package** — anything under `src/`, `dist/`, the build/generator scripts, and root files in the published tarball. Documentation-site changes (anything under `site/`) are intentionally excluded; the commit history is the record for those.
+## Releasing
 
-When in doubt: would a consumer who installs this version see this change in their app? If yes, add a `CHANGELOG.md` entry under the next dev version.
-
-### Style and conventions
-
-The repo's `AGENTS.md` hierarchy documents the architecture and conventions in detail. Read the root file, then the closest scoped guide for the area you change (for example, `src/AGENTS.md` for the component library). The short version:
-
-- Two tiers per component: web component under `src/elements/a-*` (declarative, attribute-driven, no JS-set host attributes) and JSX wrapper under `src/components/<Name>.tsx`.
-- `color-mix(in oklch, …)` is the standard way to tune any color's alpha. Never `rgba()` or `#rrggbbaa`.
-- Web components must work in Node/SSR — `extends HTMLElement` is guarded via `HTMLElementBase` in `anta_helpers.ts`.
-
-### Releasing
-
-Vlad handles npm publishes for now. If a PR's changes warrant a release, mention it in the PR description so the version bump can land in the same merge window.
+Vlad handles npm publishing. Follow [RELEASING.md](RELEASING.md) for package order
+and commands. If a change needs a release, mention it in the pull request.

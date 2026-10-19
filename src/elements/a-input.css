@@ -353,7 +353,6 @@
     justify-content: center;
 
     /* One icon plus optional tooltip or copy helpers is an icon action. */
-    &[data-anta-icon-only],
     &:has(> a-icon:only-of-type):not(:has(> :not(a-icon, a-tooltip, a-copy))) {
       width: var(--_input-action-size);
     }

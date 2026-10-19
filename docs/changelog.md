@@ -8,7 +8,8 @@ changes are not listed.
 ### Fixed
 
 - Input and InputTime keep single-icon actions square with Tooltip content in
-  raw HTML and JSX. Wrap bare label text in an element to keep its natural width.
+  raw HTML and JSX. Sizing follows content instead of `data-anta-icon-only`.
+  Wrap bare label text in an element to keep its natural width.
 - Button preserves its fallback accessible name when its children contain only
   Tooltip content, including fragments and conditional children. Explicit
   accessible names continue to take precedence.

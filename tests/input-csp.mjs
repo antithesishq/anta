@@ -198,8 +198,8 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     for(const [size,height] of [['small',24],['medium',28],['large',32]]) {
       for(const direct of [false,true]) for(const attrs of ['', 'multiline', 'multiline rows="3"', 'rows="3"']) {
         const multiline=attrs!==''
-        const clear=`<a-button data-anta-icon-only role="button" tabindex="0" size="${size}" data-custom-event="clearrequest" ${direct?'slot="clear"':''}><a-icon shape="x"></a-icon></a-button>`
-        const trailing=`<a-button data-anta-icon-only role="button" ${direct?`slot="trailing" size="${size}"`:''}><a-icon shape="regex"></a-icon></a-button>`
+        const clear=`<a-button role="button" tabindex="0" size="${size}" data-custom-event="clearrequest" ${direct?'slot="clear"':''}><a-icon shape="x"></a-icon></a-button>`
+        const trailing=`<a-button role="button" ${direct?`slot="trailing" size="${size}"`:''}><a-icon shape="regex"></a-icon></a-button>`
         await mount(page,`<a-input size="${size}" value="Draft" ${attrs}>
           <a-icon slot="leading" shape="search"></a-icon>
           ${direct?clear:`<a-input-clear slot="clear">${clear}</a-input-clear>`}
@@ -259,8 +259,8 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       const actionSize=attrs&&size==='large'?26:height-4
       for(const tag of ['a-button','button','a']) for(const slot of ['clear','trailing']) for(const wrapped of [false,true]) {
         const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
-        for(const [content,iconOnly,marked] of [['<a-icon shape="search"></a-icon>',true,true],['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon><a-tooltip>Find matches</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches<a-tooltip>Help</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches',true],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['<a-icon shape="search"></a-icon><span>Find matches</span>',false],['<a-icon shape="search"></a-icon><a-icon shape="x"></a-icon>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
-          const action=`<${tag} ${extra} ${marked?'data-anta-icon-only':''} ${wrapped?'':`slot="${slot}"`} size="large" data-action data-custom-event="clearrequest">${content}</${tag}>`
+        for(const [content,iconOnly] of [['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon><a-tooltip>Find matches</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches<a-tooltip>Help</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches',true],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['<a-icon shape="search"></a-icon><span>Find matches</span>',false],['<a-icon shape="search"></a-icon><a-icon shape="x"></a-icon>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
+          const action=`<${tag} ${extra} ${wrapped?'':`slot="${slot}"`} size="large" data-action data-custom-event="clearrequest">${content}</${tag}>`
           await mount(page,`<a-input size="${size}" ${attrs} value="Draft">${wrapped?`<a-input-${slot} slot="${slot}">${action}</a-input-${slot}>`:action}</a-input>`)
           const metrics=await page.locator('[data-action]').evaluate(node=>{
             const box=node.getBoundingClientRect(),host=node.closest('a-input'),field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()

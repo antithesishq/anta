@@ -6,6 +6,12 @@ export const ICON_SHAPES = [
   'banner',
   'book-a',
   'card',
+  'chart-area',
+  'chart-column-big',
+  'chart-line',
+  'chart-network',
+  'chart-pie',
+  'chart-scatter',
   'chart-spline',
   'chevrons-right',
   'chevrons-up-down-square',
@@ -15,7 +21,9 @@ export const ICON_SHAPES = [
   'dialog',
   'footprints',
   'github-logo',
+  'grid-lines-offset',
   'inspection-panel',
+  'layout-freeform',
   'loader-docs',
   'octagon-pause',
   'search-slash',
@@ -38,6 +46,12 @@ declare module '@antadesign/anta' {
     'banner': true
     'book-a': true
     'card': true
+    'chart-area': true
+    'chart-column-big': true
+    'chart-line': true
+    'chart-network': true
+    'chart-pie': true
+    'chart-scatter': true
     'chart-spline': true
     'chevrons-right': true
     'chevrons-up-down-square': true
@@ -47,7 +61,9 @@ declare module '@antadesign/anta' {
     'dialog': true
     'footprints': true
     'github-logo': true
+    'grid-lines-offset': true
     'inspection-panel': true
+    'layout-freeform': true
     'loader-docs': true
     'octagon-pause': true
     'search-slash': true

@@ -366,7 +366,7 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await segment(page,'hour').focus();assert.equal(await host(page).locator('[part=trailing]').evaluate(el=>getComputedStyle(el).opacity),'1')
     assert.equal(await host(page).locator('[part=field]').evaluate(el=>getComputedStyle(el).transitionDuration),'0s')
   })
-  test.fast(`${name}: raw icon actions with tooltips stay square and text grows naturally`,async t=>{
+  test.fast(`${name}: single-icon actions are square and explicit labels keep natural width`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const size of ['small','medium','large']) for(const tag of ['a-button','button','a']) for(const wrapped of [false,true]) {
       const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
@@ -380,7 +380,7 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
         const actionSize={small:20,medium:24,large:28}[size],context=JSON.stringify({size,tag,wrapped,text,metrics})
         assert.equal(metrics.marked,false,context)
         assert.equal(metrics.height,actionSize,context)
-        if(text) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
+        if(text.includes('a-button-label')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
         else assert.equal(metrics.width,actionSize,context)
       }
     }

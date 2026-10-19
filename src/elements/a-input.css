@@ -338,7 +338,7 @@
     height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
 
-  /* Anta actions fit the field height; text determines their width.
+  /* Anta actions fit the field height; labeled actions keep their natural width.
      Unmarked native buttons and other custom content keep their own sizing. */
   a-input > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
   a-input > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
@@ -352,17 +352,10 @@
     min-height: 0;
     justify-content: center;
 
-    /* Retain the explicit square-width override for existing raw markup. */
-    &[data-anta-icon-only] { width: var(--_input-action-size); }
-
-    /* Let text add intrinsic width, including bare text that :has() cannot see.
-       Negative icon margins absorb padding that exceeds the field's action size. */
-    &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon, a-tooltip, a-copy))) {
-      column-gap: calc(0.5ch + var(--button-padding-x));
-
-      & > a-icon {
-        margin-inline: min(0px, calc((var(--_input-action-size) - var(--icon-size) - 2 * var(--button-padding-x)) / 2));
-      }
+    /* One icon without an explicit label is an icon action. */
+    &[data-anta-icon-only],
+    &:has(> a-icon:only-of-type):not(:has(> a-button-label)) {
+      width: var(--_input-action-size);
     }
   }
 

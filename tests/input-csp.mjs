@@ -253,13 +253,13 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.equal(labeled.height,20)
     assert.ok(labeled.width>32)
   })
-  test.fast(`${name}: Anta actions fit by height and text keeps its natural width`,async t=>{
+  test.fast(`${name}: single-icon actions are square and explicit labels keep natural width`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const [size,height,attrs] of [['small',24,''],['large',32,'rows="3"']]) {
       const actionSize=attrs&&size==='large'?26:height-4
       for(const tag of ['a-button','button','a']) for(const slot of ['clear','trailing']) for(const wrapped of [false,true]) {
         const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
-        for(const [content,iconOnly,marked] of [['<a-icon shape="search"></a-icon>',true,true],['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon><a-tooltip>Find matches</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches<a-tooltip>Help</a-tooltip>',false],['<a-icon shape="search"></a-icon>Find matches',false],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
+        for(const [content,iconOnly,marked] of [['<a-icon shape="search"></a-icon>',true,true],['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon><a-tooltip>Find matches</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches<a-tooltip>Help</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches',true],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['<a-icon shape="search"></a-icon><a-icon shape="x"></a-icon>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
           const action=`<${tag} ${extra} ${marked?'data-anta-icon-only':''} ${wrapped?'':`slot="${slot}"`} size="large" data-action data-custom-event="clearrequest">${content}</${tag}>`
           await mount(page,`<a-input size="${size}" ${attrs} value="Draft">${wrapped?`<a-input-${slot} slot="${slot}">${action}</a-input-${slot}>`:action}</a-input>`)
           const metrics=await page.locator('[data-action]').evaluate(node=>{
@@ -272,6 +272,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
           assert.ok(Math.abs(metrics.right-2)<0.05,context)
           assert.ok(metrics.width>=actionSize,context)
           if(iconOnly) assert.equal(metrics.width,actionSize,context)
+          else assert.ok(metrics.width>actionSize,context)
           if(content.includes('Copy')) assert.ok(metrics.paddingRight>2,context)
           if(!iconOnly&&content.includes('Find matches')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
         }

@@ -375,10 +375,9 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
         await mount(page,`<a-input-time size="${size}" locale="en-GB">${wrapped?`<a-input-time-trailing slot="trailing">${action}</a-input-time-trailing>`:action}</a-input-time>`)
         const metrics=await page.locator('[data-action]').evaluate(node=>{
           const box=node.getBoundingClientRect()
-          return {width:box.width,height:box.height,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth,marked:node.hasAttribute('data-anta-icon-only')}
+          return {width:box.width,height:box.height,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}
         })
         const actionSize={small:20,medium:24,large:28}[size],context=JSON.stringify({size,tag,wrapped,text,metrics})
-        assert.equal(metrics.marked,false,context)
         assert.equal(metrics.height,actionSize,context)
         if(text.startsWith('<')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
         else assert.equal(metrics.width,actionSize,context)

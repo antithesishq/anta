@@ -104,7 +104,7 @@ test('Autocomplete CI gate selects its source and test dependencies without unre
     for (const [path,wanted] of [
       ['src/components/InputAutocomplete.tsx',true],['src/components/select-options.tsx',true],
       ['src/components/Input.tsx',true],['src/elements/a-menu.ts',true],
-      ['src/anta_helpers.ts',true],['src/elements/input-trailing-actions.ts',true],
+      ['src/anta_helpers.ts',true],['src/button-content.ts',true],['src/elements/input-trailing-actions.ts',true],
       ['tests/input-autocomplete-csp.mjs',true],['tests/input-autocomplete-types.fixture.tsx',true],
       ['src/components/Calendar.tsx',false],['docs/components/input-autocomplete.md',false],
     ]) {
@@ -131,7 +131,7 @@ test('Panel CI gate selects its source and test dependencies without unrelated c
     for (const [path,wanted] of [
       ['src/components/Panel.tsx',true],['src/elements/a-panel.css',true],
       ['src/elements/a-panel.ts',true],['src/elements/panel-focus.ts',true],
-      ['src/anta_helpers.ts',true],['src/native-event-props.ts',true],
+      ['src/anta_helpers.ts',true],['src/button-content.ts',true],['src/native-event-props.ts',true],
       ['tests/panel-csp.mjs',true],['tests/panel-package.mjs',true],
       ['src/elements/a-button.ts',true],['src/elements/a-icon.css',true],
       ['src/elements/a-icon.shapes.css',true],['src/elements/a-input.ts',true],
@@ -166,7 +166,7 @@ test('Slider CI gate selects its source and test dependencies without unrelated 
     for (const [path,wanted] of [
       ['src/components/Slider.tsx',true],['src/elements/a-slider.css',true],
       ['src/elements/a-slider.ts',true],['src/elements/shadow-aria.ts',true],
-      ['src/anta_helpers.ts',true],['src/native-event-props.ts',true],
+      ['src/anta_helpers.ts',true],['src/button-content.ts',true],['src/native-event-props.ts',true],
       ['tests/slider-csp.mjs',true],['tests/slider-projection.mjs',true],
       ['src/components/Calendar.tsx',false],['docs/components/slider.md',false],
     ]) {

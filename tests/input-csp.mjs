@@ -20,7 +20,7 @@ const nodePaths = consumerRoot ? [resolve(consumerRoot, 'node_modules')] : [reso
 const jsxAlias = consumerRoot ? {} : { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime') }
 const preactCompat = consumerRoot ? 'preact/compat' : requireSite.resolve('preact/compat')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
-const browsers = new Map(), assets = new Map(), renderers = new Map(), staticRenderers = new Map(), pageErrors = new WeakMap()
+const browsers = new Map(), assets = new Map(), renderers = new Map(), staticRenderers = new Map(), buttonRenderers = new Map(), pageErrors = new WeakMap()
 let server, origin
 const components = consumerRoot ? "import {Input, Button, ButtonCopy, Tooltip, InputDate, InputAutocomplete, Select, SelectFaceted} from '@antadesign/anta'" :
   `import {Input, Button, ButtonCopy, Tooltip, InputDate, InputAutocomplete, Select, SelectFaceted} from '${source}/index'`
@@ -72,6 +72,23 @@ before(async () => {
     const result = await compile({stdin:{contents:`import React from 'react'; ${components};
       ${react ? "import {renderToString} from 'react-dom/server'" : "import renderToString from 'preact-render-to-string'"};
       ${factory}; export const render = props => renderToString(app(props));
+      export const renderButtonNames = () => {
+        const e=React.createElement,tooltip=e(Tooltip,{},'Help'),empty=[null,false,' ',NaN];
+        const Help=()=>tooltip;
+        const cases={
+          buttonTooltip:e(Button,{icon:'copy'},e(React.Fragment,{},false,tooltip)),
+          buttonCopyHelper:e(Button,{icon:'copy'},e('a-copy',{copy:'Draft'})),
+          copyTooltip:e(ButtonCopy,{copy:'Draft'},e(React.Fragment,{},false,tooltip)),
+          copyTrailingTooltip:e(ButtonCopy,{copy:'Draft',iconPlacement:'trailing'},tooltip),
+          copyTooltipExplicit:e(ButtonCopy,{copy:'Draft','aria-label':'Copy link'},tooltip),
+          buttonEmpty:e(Button,{icon:'copy'},empty),
+          copyEmpty:e(ButtonCopy,{copy:'Draft'},empty),
+          buttonZero:e(Button,{icon:'copy'},0),
+          copyZero:e(ButtonCopy,{copy:'Draft'},0),
+          customTooltipExplicit:e(Button,{icon:'copy','aria-label':'Copy link'},e(Help)),
+        };
+        return Object.fromEntries(Object.entries(cases).map(([name,node])=>[name,renderToString(node)]));
+      };
       import {configure} from '${consumerRoot ? '@antadesign/anta' : source+'/index'}';
       export const renderStatic = () => {
         configure(React.createElement,React.Fragment,{useState:()=>{throw new Error('Static Input must not use hooks')},useLayoutEffect:()=>{throw new Error('Static Input must not use hooks')}});
@@ -83,6 +100,7 @@ before(async () => {
     compiled._compile(result.outputFiles[0].text, compiled.id)
     renderers.set(framework, compiled.exports.render)
     staticRenderers.set(framework,compiled.exports.renderStatic)
+    buttonRenderers.set(framework,compiled.exports.renderButtonNames)
     const client = await compile({stdin:{contents:`import React from 'react'; ${components};
       import {configure} from '${consumerRoot ? '@antadesign/anta' : source+'/index'}';
       ${react ? "import {createRoot, hydrateRoot} from 'react-dom/client'" : "import {render, hydrate} from 'preact'"};
@@ -164,6 +182,20 @@ test.fast('React and Preact SSR keep rich regions without fixed inline styles', 
     for(const slot of ['label','leading','clear','trailing','hint']) assert.match(html,new RegExp(`<a-input-${slot} slot="${slot}"`))
     assert.doesNotMatch(html, /data-input-contents|a-input-content/)
     assert.doesNotMatch(html, /style=|<input|<textarea|part=/)
+  }
+})
+
+test.fast('React and Preact SSR name tooltip-only buttons and preserve visible zero labels', () => {
+  for(const [framework,render] of buttonRenderers) {
+    const cases=render()
+    for(const name of ['buttonTooltip','buttonCopyHelper','buttonEmpty']) assert.match(cases[name],/aria-label="copy"/,`${framework}: ${name}`)
+    for(const name of ['copyTooltip','copyTrailingTooltip','copyEmpty']) assert.match(cases[name],/aria-label="Copy"/,`${framework}: ${name}`)
+    for(const name of ['copyTooltipExplicit','customTooltipExplicit']) assert.match(cases[name],/aria-label="Copy link"/,`${framework}: ${name}`)
+    for(const name of ['buttonZero','copyZero']) {
+      assert.doesNotMatch(cases[name],/aria-label=/,`${framework}: ${name}`)
+      assert.match(cases[name],/<a-button-label>0<\/a-button-label>/,`${framework}: ${name}`)
+    }
+    for(const name of ['buttonEmpty','copyEmpty']) assert.doesNotMatch(cases[name],/a-button-label/,`${framework}: ${name}`)
   }
 })
 for (const engine of engines) for (const mode of ['granular','bundle']) {
@@ -520,16 +552,17 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       const page=await pageFor(t,engine,mode);await register(page,mode)
       await page.addScriptTag({url:`/${framework}.js`,type:'module'})
       for(const size of ['small','medium','large']) for(const href of [undefined,'#after']) {
-        for(const [label,copy,tooltip] of [[undefined,false],['Copy',false],[undefined,true],['Copy',true],[undefined,false,true],['Copy',false,true]]) {
-          await page.evaluate(({size,href,label,copy,tooltip})=>renderAction({size},{size:'large',icon:'copy',href,label,copy:'Draft'},copy,tooltip),{size,href,label,copy,tooltip});await frames(page)
+        for(const [label,copy,tooltip,ariaLabel] of [[undefined,false],['Copy',false],[undefined,true],['Copy',true],[undefined,false,true],['Copy',false,true],[undefined,true,true],['Copy',true,true],[undefined,true,true,'Copy link'],[undefined,false,true,'Use copy']]) {
+          await page.evaluate(({size,href,label,copy,tooltip,ariaLabel})=>renderAction({size},{size:'large',icon:'copy',href,label,copy:'Draft',...(ariaLabel?{'aria-label':ariaLabel}:{})},copy,tooltip),{size,href,label,copy,tooltip,ariaLabel});await frames(page)
           const metrics=await field(page).evaluate(host=>{
             const node=host.querySelector('[slot="trailing"]').firstElementChild,box=node.getBoundingClientRect(),icon=node.querySelector('a-icon').getBoundingClientRect(),clear=host.querySelector('[slot="clear"] a-button').getBoundingClientRect()
-            return {marked:node.hasAttribute('data-anta-icon-only'),ariaLabel:node.getAttribute('aria-label'),width:box.width,height:box.height,clear:[clear.width,clear.height],paddingRight:parseFloat(getComputedStyle(node).paddingRight),center:(icon.top+icon.bottom-box.top-box.bottom)/2,contained:icon.left>=box.left&&icon.right<=box.right&&icon.top>=box.top&&icon.bottom<=box.bottom}
+            return {ariaLabel:node.getAttribute('aria-label'),width:box.width,height:box.height,clear:[clear.width,clear.height],paddingRight:parseFloat(getComputedStyle(node).paddingRight),center:(icon.top+icon.bottom-box.top-box.bottom)/2,contained:icon.left>=box.left&&icon.right<=box.right&&icon.top>=box.top&&icon.bottom<=box.bottom}
           })
           const actionSize={small:20,medium:24,large:28}[size],context=JSON.stringify({size,href,label,copy,tooltip,metrics})
           assert.equal(metrics.height,actionSize,context)
-          assert.equal(metrics.marked,false,context)
-          assert.equal(metrics.ariaLabel,label===undefined?(copy?'Copy':'copy'):null,context)
+          assert.equal(metrics.ariaLabel,ariaLabel??(label===undefined?(copy?'Copy':'copy'):null),context)
+          const accessibleName=ariaLabel??label??(copy?'Copy':'copy')
+          assert.equal(await field(page).locator('[slot="trailing"]').getByRole('button',{name:accessibleName,exact:true}).count(),1,context)
           assert.deepEqual(metrics.clear,[actionSize,actionSize],context)
           assert.ok(metrics.paddingRight>2,context)
           assert.ok(Math.abs(metrics.center)<0.05&&metrics.contained,context)

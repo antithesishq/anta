@@ -733,6 +733,9 @@ element children keep their natural width. For a raw button with an icon
 and visible text, wrap the text in `<a-button-label>` to keep its natural width.
 The JSX Button wrapper does this for plain text automatically.
 
+The `data-anta-icon-only` sizing override has been removed. For a custom SVG or
+image action, set its width with CSS to match the field's action height.
+
 Set `role` and `aria-*` on `<a-input>` to describe the field to assistive
 technology. Input applies them to the control that receives focus. Explicit
 names and descriptions take precedence over its label and hint.

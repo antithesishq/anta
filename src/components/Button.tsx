@@ -1,22 +1,7 @@
-import { Fragment } from "../jsx-runtime"
-import { Tooltip } from "./Tooltip"
+import { hasButtonContent } from "../button-content"
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
 import { neutralToneAttr, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
-
-function hasButtonContent(children: React.ReactNode): boolean {
-  if (children == null || typeof children === 'boolean') return false
-  if (Array.isArray(children)) return children.some(hasButtonContent)
-  if (typeof children === 'string') return children.trim() !== ''
-  if (typeof children === 'number') return !Number.isNaN(children)
-  if (typeof children === 'object' && 'type' in children) {
-    if (children.type === Tooltip || children.type === 'a-tooltip') return false
-    if (children.type === Fragment) {
-      return hasButtonContent((children.props as { children?: React.ReactNode }).children)
-    }
-  }
-  return true
-}
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -74,7 +59,8 @@ export type ContentMode = {
   /** Leading icon shape. When set alone (no `label`, no `iconTrailing`, no
    *  visible `children`), the button renders as a square icon-only control and
    *  the wrapper auto-supplies `aria-label={icon}` (override by passing
-   *  your own `aria-label`). */
+   *  your own `aria-label`). Tooltip and copy helpers do not count as visible
+   *  content. Set an explicit name for custom child components. */
   icon?: IconShape
   /** Trailing icon shape. Renders after `children`, last in the slot order. */
   iconTrailing?: IconShape

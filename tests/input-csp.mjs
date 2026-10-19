@@ -89,8 +89,9 @@ before(async () => {
       ${factory}; let root; window.recoverableErrors=[];
       window.hydrateInput = props => { configure(React.createElement,React.Fragment,React,{hydratingEvents:true}); ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(app(props), document.querySelector('#mount'))"} };
       window.renderInput = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(app(props))" : "render(app(props), document.querySelector('#mount'))"} };
-      window.renderAction = (fieldProps, buttonProps, copy) => window.renderInput({
-        ...fieldProps, trailing:React.createElement(copy ? ButtonCopy : Button,buttonProps),
+      window.renderAction = (fieldProps, buttonProps, copy, tooltip) => window.renderInput({
+        ...fieldProps, trailing:React.createElement(copy ? ButtonCopy : Button,buttonProps,
+          tooltip?React.createElement(React.Fragment,{},false,React.createElement(Tooltip,{},'Help')):undefined),
       });
       window.renderAdornments = () => window.renderInput({
         leading:React.createElement('a-icon',{shape:'search'}),
@@ -258,8 +259,8 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       const actionSize=attrs&&size==='large'?26:height-4
       for(const tag of ['a-button','button','a']) for(const slot of ['clear','trailing']) for(const wrapped of [false,true]) {
         const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
-        for(const [content,iconOnly] of [['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon>',false],['<a-icon shape="search"></a-icon>Find matches',false],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
-          const action=`<${tag} ${extra} ${iconOnly?'data-anta-icon-only':''} ${wrapped?'':`slot="${slot}"`} size="large" data-action data-custom-event="clearrequest">${content}</${tag}>`
+        for(const [content,iconOnly,marked] of [['<a-icon shape="search"></a-icon>',true,true],['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon><a-tooltip>Find matches</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches<a-tooltip>Help</a-tooltip>',false],['<a-icon shape="search"></a-icon>Find matches',false],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
+          const action=`<${tag} ${extra} ${marked?'data-anta-icon-only':''} ${wrapped?'':`slot="${slot}"`} size="large" data-action data-custom-event="clearrequest">${content}</${tag}>`
           await mount(page,`<a-input size="${size}" ${attrs} value="Draft">${wrapped?`<a-input-${slot} slot="${slot}">${action}</a-input-${slot}>`:action}</a-input>`)
           const metrics=await page.locator('[data-action]').evaluate(node=>{
             const box=node.getBoundingClientRect(),host=node.closest('a-input'),field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
@@ -272,7 +273,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
           assert.ok(metrics.width>=actionSize,context)
           if(iconOnly) assert.equal(metrics.width,actionSize,context)
           if(content.includes('Copy')) assert.ok(metrics.paddingRight>2,context)
-          if(content.includes('Find matches')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
+          if(!iconOnly&&content.includes('Find matches')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
         }
       }
     }
@@ -518,15 +519,16 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       const page=await pageFor(t,engine,mode);await register(page,mode)
       await page.addScriptTag({url:`/${framework}.js`,type:'module'})
       for(const size of ['small','medium','large']) for(const href of [undefined,'#after']) {
-        for(const [label,copy] of [[undefined,false],['Copy',false],[undefined,true],['Copy',true]]) {
-          await page.evaluate(({size,href,label,copy})=>renderAction({size},{size:'large',icon:'copy',href,label,copy:'Draft'},copy),{size,href,label,copy});await frames(page)
+        for(const [label,copy,tooltip] of [[undefined,false],['Copy',false],[undefined,true],['Copy',true],[undefined,false,true],['Copy',false,true]]) {
+          await page.evaluate(({size,href,label,copy,tooltip})=>renderAction({size},{size:'large',icon:'copy',href,label,copy:'Draft'},copy,tooltip),{size,href,label,copy,tooltip});await frames(page)
           const metrics=await field(page).evaluate(host=>{
             const node=host.querySelector('[slot="trailing"]').firstElementChild,box=node.getBoundingClientRect(),icon=node.querySelector('a-icon').getBoundingClientRect(),clear=host.querySelector('[slot="clear"] a-button').getBoundingClientRect()
-            return {marked:node.hasAttribute('data-anta-icon-only'),width:box.width,height:box.height,clear:[clear.width,clear.height],paddingRight:parseFloat(getComputedStyle(node).paddingRight),center:(icon.top+icon.bottom-box.top-box.bottom)/2,contained:icon.left>=box.left&&icon.right<=box.right&&icon.top>=box.top&&icon.bottom<=box.bottom}
+            return {marked:node.hasAttribute('data-anta-icon-only'),ariaLabel:node.getAttribute('aria-label'),width:box.width,height:box.height,clear:[clear.width,clear.height],paddingRight:parseFloat(getComputedStyle(node).paddingRight),center:(icon.top+icon.bottom-box.top-box.bottom)/2,contained:icon.left>=box.left&&icon.right<=box.right&&icon.top>=box.top&&icon.bottom<=box.bottom}
           })
-          const actionSize={small:20,medium:24,large:28}[size],context=JSON.stringify({size,href,label,copy,metrics})
+          const actionSize={small:20,medium:24,large:28}[size],context=JSON.stringify({size,href,label,copy,tooltip,metrics})
           assert.equal(metrics.height,actionSize,context)
-          assert.equal(metrics.marked,label===undefined,context)
+          assert.equal(metrics.marked,false,context)
+          assert.equal(metrics.ariaLabel,label===undefined?(copy?'Copy':'copy'):null,context)
           assert.deepEqual(metrics.clear,[actionSize,actionSize],context)
           assert.ok(metrics.paddingRight>2,context)
           assert.ok(Math.abs(metrics.center)<0.05&&metrics.contained,context)

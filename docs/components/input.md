@@ -487,10 +487,9 @@ Group trailing buttons in `<a-input-trailing slot="trailing">` to use compact
 action spacing. Mixed content keeps the text inset. The grouping tag needs no
 JavaScript registration.
 
-Anta buttons fit the field height and keep their own padding. Add
-`data-anta-icon-only` to a raw icon-only button for a square box. Text buttons
-keep their natural width. The JSX Button and ButtonCopy wrappers mark their
-icon-only actions automatically.
+Anta buttons fit the field height and keep their own padding. CSS keeps
+single-icon buttons square, including buttons with a Tooltip or copy helper.
+Text buttons keep their natural width. This sizing works with raw HTML and JSX.
 
 Set `role` and `aria-*` on `<a-input>` to describe the field to assistive
 technology. Input applies them to the control that receives focus. Explicit

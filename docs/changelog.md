@@ -7,9 +7,11 @@ changes are not listed.
 
 ### Fixed
 
-- Button preserves icon-only sizing and its fallback accessible name when its
-  children contain only Tooltip content, including fragments and conditional children.
-  Explicit accessible names continue to take precedence.
+- Input and InputTime keep single-icon actions square with Tooltip content in
+  raw HTML and JSX. Text actions keep their natural width.
+- Button preserves its fallback accessible name when its children contain only
+  Tooltip content, including fragments and conditional children. Explicit
+  accessible names continue to take precedence.
 
 ## 0.3.35 — October 18, 2026
 

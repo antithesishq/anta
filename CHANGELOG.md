@@ -8,8 +8,7 @@ changes are not listed.
 ### Fixed
 
 - Input and InputTime keep single-icon actions square with Tooltip content in
-  raw HTML and JSX. Raw icon actions with visible text need an `<a-button-label>`
-  child to keep their natural width.
+  raw HTML and JSX. Wrap bare label text in an element to keep its natural width.
 - Button preserves its fallback accessible name when its children contain only
   Tooltip content, including fragments and conditional children. Explicit
   accessible names continue to take precedence.

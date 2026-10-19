@@ -488,8 +488,8 @@ action spacing. Mixed content keeps the text inset. The grouping tag needs no
 JavaScript registration.
 
 Anta buttons fit the field height and keep their own padding. A button with one
-direct icon child is square unless it also has an `<a-button-label>` child.
-Tooltip and copy helpers do not affect this rule. For a raw button with an icon
+direct icon child and only optional Tooltip or copy helpers is square. Other
+element children keep their natural width. For a raw button with an icon
 and visible text, wrap the text in `<a-button-label>` to keep its natural width.
 The JSX Button wrapper does this for plain text automatically.
 

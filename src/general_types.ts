@@ -720,8 +720,8 @@ export interface ASwitchAttributes extends BaseAttributes {
  * groups use compact spacing. Other wrappers keep the text inset. Override
  * either inset with the `--input-trailing-inset` CSS property. Anta buttons
  * fit the field height and keep their padding. CSS makes actions with one direct
- * icon square unless they have an `a-button-label` child. Tooltip children do not
- * affect sizing. Wrap visible text beside an icon in `a-button-label`.
+ * icon and only optional tooltip or copy helpers square. Other element children
+ * keep their natural width. Wrap visible text beside an icon in `a-button-label`.
  * Other controls keep their own sizing.
  * The element exposes `::part(field | input | label | leading | clear | trailing | hint)`
  * for styling, and `:state(filled)` / `:state(invalid)` as CSS hooks.

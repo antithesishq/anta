@@ -1,0 +1,298 @@
+# Rect
+
+Draw rectangles with explicit bounds. Use `x`, `x2`, `y`, and `y2` to select
+the fields defining each rectangle's corners. Rectangles can represent
+intervals, regions, or cells in a grid.
+
+## Categorical cells
+
+Combine two categorical axes to form a heatmap. Color each cell from its value and use `inset` to separate neighboring cells.
+
+```ts
+import { rect, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+
+const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+const hours = ['09', '11', '13', '15', '17', '19']
+const data = days.flatMap((day, d) => hours.map((hour, h) => ({
+  day, hour, activity: Math.round(20 + 75 * Math.sin(h * 0.8 + d * 0.5) ** 2),
+})))
+
+plot.plotArgs = {
+  series: [
+    rect({
+      data,
+      x: 'hour',
+      y: 'day',
+      inset: 2,
+      color: row => ({
+        light: 'hsl(174, 65%, ' + (94 - Number(row.activity) * 0.6) + '%)',
+        dark: 'hsl(174, 55%, ' + (16 + Number(row.activity) * 0.4) + '%)',
+      }),
+      tooltip: ({ row }) => document.createTextNode(row.day + ' ' + row.hour + ':00 · ' + row.activity + '%'),
+    }),
+  ],
+  height: 260,
+  margin: { top: 5, right: 8, bottom: 20, left: 38 },
+  axis: { x: { categories: hours, label: '' }, y: { categories: days, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: false,
+  border: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+## Intervals with explicit bounds
+
+Set `x` and `x2` to show durations within categorical rows. Each rectangle retains its start and end values as the plot resizes.
+
+```ts
+import { rect, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+
+const data = [
+  { task: 'Fetch', start: 0.5, end: 3.2 },
+  { task: 'Parse', start: 2.8, end: 5.1 },
+  { task: 'Build', start: 4.5, end: 9.4 },
+  { task: 'Test', start: 7.8, end: 11.2 },
+  { task: 'Ship', start: 10.8, end: 12.5 },
+]
+
+plot.plotArgs = {
+  series: [
+    rect({
+      data,
+      x: 'start',
+      x2: 'end',
+      y: 'task',
+      inset: 9,
+      color: { light: '#c4b5fd', dark: '#6d28d9' },
+      stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 1 },
+      hover_span_y: true,
+      tooltip: ({ row }) => document.createTextNode(row.task + ': ' + row.start + '–' + row.end + ' s'),
+    }),
+  ],
+  height: 260,
+  margin: { top: 5, right: 8, bottom: 20, left: 44 },
+  axis: { x: { min: 0, max: 14, label: '' }, y: { label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: false,
+  border: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+## Fixed pixel dimensions
+
+Set `size` to draw rectangles with a consistent width and height at numeric coordinates. An outline keeps nearby marks distinct.
+
+```ts
+import { rect, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+
+const data = Array.from({ length: 32 }, (_, i) => ({
+  x: 8 + (i * 23 % 84),
+  y: 18 + (i * 13 % 65),
+  value: 20 + (i * 17 % 80),
+}))
+
+plot.plotArgs = {
+  series: [
+    rect({
+      data,
+      size: { width: 16, height: 9 },
+      color: row => Number(row.value) > 65
+        ? { light: '#c2410c', dark: '#fdba74' }
+        : { light: '#0891b2', dark: '#67e8f9' },
+      stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1 },
+      tooltip: ({ row }) => document.createTextNode('Value: ' + row.value),
+    }),
+  ],
+  height: 260,
+  margin: { top: 5, right: 8, bottom: 20, left: 30 },
+  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: false,
+  border: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+## Run history
+
+Place fixed-size rectangles on a time axis in Passed and Failed lanes. Use `band_align` to anchor both sets of marks to the shared divider, with passing runs above and failures below.
+
+```ts
+import { rect, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+
+const start = Date.UTC(2026, 0, 1, 9)
+const data = Array.from({ length: 36 }, (_, i) => ({
+  run: i + 1,
+  end_ms: start + (i * 3 + (i % 3)) * 60_000,
+  lane: [5, 6, 14, 23, 24, 25, 32].includes(i) ? 'Failed' : 'Passed',
+}))
+
+plot.plotArgs = {
+  series: [
+    rect({
+      data: data.filter(row => row.lane === 'Passed'),
+      x: 'end_ms',
+      y: 'lane',
+      size: { width: 10, height: 40 },
+      band_align: 'end',
+      inset: 0,
+      color: { light: '#189e3e', dark: '#4ade80' },
+      stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 0.5 },
+      tooltip: ({ row }) => document.createTextNode('Run ' + row.run + ': ' + row.lane),
+    }),
+    rect({
+      data: data.filter(row => row.lane === 'Failed'),
+      x: 'end_ms',
+      y: 'lane',
+      size: { width: 10, height: 40 },
+      band_align: 'start',
+      inset: 0,
+      color: { light: '#c41e5e', dark: '#fb7185' },
+      stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 0.5 },
+      tooltip: ({ row }) => document.createTextNode('Run ' + row.run + ': ' + row.lane),
+    }),
+  ],
+  height: 260,
+  margin: { top: 5, right: 8, bottom: 24, left: 56 },
+  axis: {
+    x: {
+      scale: 'utc',
+      min: start - 5 * 60_000,
+      max: start + 115 * 60_000,
+      label: '',
+      line: false,
+      tick_label: { format: value => new Date(Number(value)).toISOString().slice(11, 16) },
+    },
+    y: { categories: ['Failed', 'Passed'], grid_align: 'edge', label: '', line: false },
+  },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: true,
+  border: false,
+  theme_invert: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+## Rect arguments
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
+| `x?` | [`FieldArg`](../plot.md#data-fields) | `'x'` | Horizontal field name or accessor. |
+| `x2?` | [`FieldArg`](../plot.md#data-fields) | `'x2'` when present in data | Opposite horizontal corner. Numeric axes need a second corner or pixel size. |
+| `y?` | [`FieldArg`](../plot.md#data-fields) | `'y'` | Vertical field name or accessor. |
+| `y2?` | [`FieldArg`](../plot.md#data-fields) | `'y2'` when present in data | Opposite vertical corner. Numeric axes need a second corner or pixel size. |
+| `span?` | `'x' \| 'y'` | None | Stretch the rectangle across the full plot on this axis. |
+| `size?` | `number \| { width?: number; height?: number }` | Derived from bounds or band | Fixed pixel size, shared or per dimension. |
+| `band_align?` | `'center' \| 'start' \| 'end'` | `'center'` | Alignment of a fixed-size rectangle within a categorical band. |
+| `hover_span_x?` | `boolean` | `false` | Extend the horizontal hit region across the categorical band. |
+| `hover_span_y?` | `boolean` | `false` | Extend the vertical hit region across the categorical band. |
+| `inset?` | `number` | One sixth of band width | Inset on each side of a categorical band, in pixels. |
+| `min_size?` | `number` | `0` | Minimum pixel length for a rectangle defined by data bounds. |
+| `offset?` | `{ x?: number; y?: number }` | `{ x: 0, y: 0 }` | Pixel offsets applied to each rectangle. |
+| `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
+| [`stroke?`](../plot.md#strokes) | `StrokeArg` | None | Outline color and optional width. |
+| [`tooltip?`](../plot.md#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](../plot.md#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
+| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+
+```ts
+import { rect } from '@antadesign/plot'
+
+const series = [rect({
+  data: [
+    { start: 1, end: 3, low: 2, high: 5 },
+    { start: 4, end: 6, low: 1, high: 4 },
+  ],
+  x: 'start',
+  x2: 'end',
+  y: 'low',
+  y2: 'high',
+  min_size: 2,
+  offset: { x: 0, y: 0 },
+  color: 'lightsteelblue',
+  stroke: { color: 'steelblue', width: 1 },
+  tooltip: ({ x, y }) => `(${x}, ${y})`,
+  on_select: ({ row }) => console.log('Selected row:', row),
+  hoverable: true,
+  highlight: true,
+})]
+```
+For fixed-size marks in categorical bands, use `size` and `band_align`.
+`inset` controls the space around a band when its size is not fixed:
+
+```ts
+import { rect } from '@antadesign/plot'
+
+const series = [rect({
+  data: [{ group: 'A', row: 'First' }, { group: 'B', row: 'Second' }],
+  x: 'group',
+  y: 'row',
+  size: { width: 12 },
+  band_align: 'start',
+  inset: 4,
+  offset: { x: 2, y: 0 },
+  hover_span_x: true,
+  hover_span_y: true,
+  color: 'steelblue',
+  tooltip: true,
+})]
+```
+
+Use `span` to fill one axis, leaving its coordinates unspecified. Add this
+series before the data series to draw a background region:
+
+```ts
+import { rect } from '@antadesign/plot'
+
+const series = [rect({
+  data: [{ low: 2, high: 5 }],
+  span: 'x',
+  y: 'low',
+  y2: 'high',
+  color: 'aliceblue',
+  hoverable: false,
+  highlight: false,
+})]
+```
+
+## Shared configuration
+
+See [Install and configure](../plot.md#install-and-configure) to set up Plot.
+The argument tables describe omitted fields; examples may override these defaults.
+See [Data fields](../plot.md#data-fields), [Series colors](../plot.md#series-colors),
+[Strokes](../plot.md#strokes), and [Mark shapes](../plot.md#mark-shapes) for shared options.
+For callbacks, see [Tooltips](../plot.md#tooltips) and
+[Selection callbacks](../plot.md#selection-callbacks).

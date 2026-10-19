@@ -57,6 +57,24 @@ checks, browser overrides, and appearance comparisons.
 The Capture, Slider pointer, and Panel regressions are also included in `pnpm test`.
 Consumer fixtures and the Button harness run separately on request.
 
+## Plot
+
+Run `pnpm --filter @antadesign/plot test:csp` for HTTP CSP, React/Preact
+hydration, public entries, interactions, worker ownership, and document adoption.
+`pnpm --filter @antadesign/plot test:csp:package` installs local Plot and Anta
+npm tarballs in an isolated directory and repeats the matrix through package
+exports. Slow checks execute JSX, surface, and standalone code copied from the
+packaged Plot documentation. Fast checks include the site prose stylesheet and
+capture visibility before Plot CSS loads. The shared runner selects Plot with
+`--component plot`.
+
+Set `ANTA_PLOT_COMPARE_REF=<ref>` to compare JSX and standalone plots against a Git
+revision in light and dark themes. PNGs, pixel counts, geometry, and viewport
+results go to `tests/.test-output/plot`. Baseline pages permit inline styles;
+current pages use strict HTTP CSP. SSR dimensions and consumer `style` props
+have hydration checks that verify CSSOM updates after commit without parsed
+inline attributes.
+
 ## CI bounds and follow-ups
 
 New runs cancel older runs for the same PR. Manual CI runs remain independent.

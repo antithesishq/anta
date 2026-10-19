@@ -12,7 +12,7 @@ import type { PlotSurfaceEventMap, PlotSurfacePresentation } from '../core/prese
 import type { ResolvedTooltip } from '../core/interactions/tooltip'
 import type { PlotLifecycleError, PlotDrawHost } from '../core/controller'
 import type { PlotArgs } from '../core/types'
-import { render_tooltip_body, TOOLTIP_DIVIDER_STYLE, TOOLTIP_OPTIONS } from '../core/presentation/tooltip'
+import { render_tooltip_body, TOOLTIP_OPTIONS } from '../core/presentation/tooltip'
 
 export interface PlotProps<Content = React.ReactNode> extends Omit<BaseProps, 'children'> {
     /** Complete configuration. Replace the object to apply changes. */
@@ -147,9 +147,9 @@ export function Plot<Content = React.ReactNode>({
     }, [plotArgs, onError, revision])
 
     const host = retained.current.host
-    // Initial markup uses the supplied pins; subsequent renders follow the accepted template.
-    const width = view === null ? plotArgs.width : view.width
-    const height = view === null ? plotArgs.height : view.height
+    // Apply styles after commit so hydration sets CSSOM properties instead of parsing inline attributes.
+    const width = view?.width
+    const height = view?.height
 
     const onContextChange = (event: PlotSurfaceEventMap['contextchange']) => {
         if (host === null) return
@@ -191,7 +191,7 @@ export function Plot<Content = React.ReactNode>({
                 : content as React.ReactNode,
         text: (text: string) => text,
         line_break: () => <br />,
-        divider: () => <hr style={TOOLTIP_DIVIDER_STYLE} />,
+        divider: () => <hr className="plot-tooltip-divider" />,
         group: (children: React.ReactNode[]) => <>{children}</>,
     })
 
@@ -199,11 +199,8 @@ export function Plot<Content = React.ReactNode>({
         <div
             {...rest}
             className={className}
-            style={{
-                display: 'block',
-                position: 'relative',
-                width: '100%',
-                height: '100%',
+            data-plot-root=""
+            style={view === null ? undefined : {
                 ...style,
                 ...(width === undefined ? {} : { width }),
                 ...(height === undefined ? {} : { height }),
@@ -232,8 +229,8 @@ export function Plot<Content = React.ReactNode>({
                 />
             )}
 
-            <Tooltip {...TOOLTIP_OPTIONS} style={tooltip.style}>
-                <div style={tooltip.style}>{tooltip.body}</div>
+            <Tooltip {...TOOLTIP_OPTIONS} className={tooltip.hidden ? 'plot-tooltip-hidden' : undefined}>
+                <div>{tooltip.body}</div>
             </Tooltip>
         </div>
     )

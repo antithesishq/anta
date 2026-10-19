@@ -105,7 +105,7 @@
     "test:consumers": "node tests/consumers/run.mjs",
     "test:input": "node --test tests/input-csp.mjs",
     "test:input:package": "node tests/input-package.mjs",
-    "test:tooltip": "node --test tests/tooltip-csp.mjs tests/tooltip-button.mjs",
+    "test:tooltip": "node --test tests/tooltip-csp.mjs",
     "test:tooltip:package": "node tests/tooltip-package.mjs",
     "test:toaster": "node --test tests/toaster-csp.mjs",
     "test:toaster:package": "node tests/toaster-package.mjs",

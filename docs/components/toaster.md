@@ -4,23 +4,17 @@ Show temporary notices in one of six viewport placements. Toast a `Banner`,
 `Card`, string, JSX, or an existing DOM node. Toaster handles placement, stacking,
 and dismissal timing.
 
-Mount `<Toaster>` once and add content through `Toaster.manager.add(render)`.
-The mounted region renders the store through React or Preact.
+Mount `Toaster` once in your application, then call `Toaster.manager.add()`
+when an action needs feedback.
 
 ```tsx title="ToasterDemo.tsx"
-import { useState, useEffect } from 'preact/hooks'
+import { useState } from 'preact/hooks'
 import { Toaster, Button, Input, Banner, Card } from '@antadesign/anta'
 import { StickerClap } from '@antadesign/stickers'
 import styles from './ToasterDemo.module.css'
 
 export default function ToasterDemo() {
   const [duration, setDuration] = useState('4000')
-
-  // Register the elements client-side (idempotent; the layout also does anta's).
-  useEffect(() => {
-    import('@antadesign/anta/elements')
-    import('@antadesign/stickers/elements')
-  }, [])
 
   // Empty / zero / non-numeric → the 5000ms default (0 is not sticky; sticky is Infinity).
   const opts = () => ({ placement: 'bottom-right' as const, duration: Number(duration) || 5000 })
@@ -157,9 +151,8 @@ export default function ToasterDemo() {
 }
 ```
 
-Configure one toast and fire it — the playground shows the render function plus the
-options object you pass to `add`. Edit the `Banner` in the code (or the props panel)
-and the `{ placement, duration }` it's toasted with.
+Use the playground to try notification content, placement, and duration.
+Edit the Banner and the options passed to `add`.
 
 ## Mount the region, drive the store
 
@@ -178,8 +171,8 @@ function App() {
 }
 ```
 
-Then, from anywhere, add a toast by passing a render function. The simplest case is
-a string — it's wrapped in a dismissible `Banner` for you:
+Add a toast by passing a function that returns its content. Returning a string
+creates a dismissible Banner:
 
 ```tsx
 import { Toaster } from '@antadesign/anta'
@@ -187,16 +180,14 @@ import { Toaster } from '@antadesign/anta'
 Toaster.manager.add(() => 'Saved.', { placement: 'bottom-right' })
 ```
 
-`add` returns an `id`, and the render function receives it — so a toast can dismiss
-itself. See [Timing and dismissal](#timing-and-dismissal) for how each kind of
-content closes its toast.
+`add` returns an `id` and passes it to the render function. Use it to update or
+dismiss that notification. See [Timing and dismissal](#timing-and-dismissal).
 
 ## Toast anything
 
-The render function can return a **string, JSX, or a live DOM node** — the same
-`add` handles all three. A bare string / number is wrapped in a dismissible `Banner`;
-other JSX renders through the reconciler as-is; a DOM node is slotted by the element
-(return a stable node that is not owned by another React or Preact tree).
+Return a string or number for a dismissible Banner, or JSX for custom content.
+For an existing widget, return its DOM node. Use a stable node that is not owned
+by another React or Preact tree.
 
 ```tsx
 // JSX — rendered as-is
@@ -213,10 +204,18 @@ el.textContent = '🎉'
 Toaster.manager.add(() => el)
 ```
 
-Returning a raw DOM node **into React errors** if you hand it to JSX directly —
-`add` avoids that by routing a `Node` to the element instead of the reconciler.
-(Toast a JSX component like `<Banner/>` by returning it; reach for a DOM node only
-when you already have one, e.g. from a non-React widget.)
+### Existing DOM nodes
+
+Return a DOM node from the render function rather than placing it directly in
+JSX. Toast moves the original node into its content region, preserving listeners
+and widget state. It does not clone the node or restore its previous parent when
+the toast is removed.
+
+When using the raw `content` property, replacing or clearing it removes only
+nodes previously supplied through that property. A fragment's children move into
+the toast, leaving the fragment empty. Refill and reassign the fragment to
+replace those children. The getter returns the assigned node, or `null` after
+clearing. Never supply a node still owned by another renderer.
 
 ## Placement
 
@@ -225,29 +224,25 @@ grow upward (newest nearest the edge), top zones grow downward. Six values:
 
 `top-left`, `top-center`, `top-right`, `bottom-left`, `bottom-center`, `bottom-right`.
 
-One `<Toaster>` serves every placement — each toast routes to its own zone, so a
-single mounted region drops notices in any corner.
+One Toaster serves all six placements. Choose a placement for each notification.
 
 ## Timing and dismissal
 
-Each toast auto-dismisses after `duration` (ms), 5000 by default; the countdown
-pauses while the pointer is over the toast **or** focus is inside it. `duration:
-Infinity` keeps it until dismissed (empty, zero, and non-positive values fall back
-to the default). On dismiss the toast animates out and then leaves.
+Set `duration` in milliseconds to control how long a notification stays visible.
+The default is 5000ms. The timer pauses while the toast is hovered or contains
+focus. Pass `Infinity` to keep it until dismissed. Empty, zero, and non-positive
+values use the default. Dismissing a toast plays its exit animation, then removes it.
 
 ```tsx
 Toaster.manager.add(() => 'Still here until you close it', { duration: Infinity })   // sticky
 ```
 
-The toast itself carries **no ✕** — dismissal comes from the content. Three ways,
-depending on what you toast:
+Provide a dismissal action when a notification should be closable before its
+timer ends:
 
-- **A string** auto-wraps in a `Banner`, so its ✕ is there for free.
-- **Any control carrying `data-toast-dismiss`** dismisses the toast on click. This is
-  the simplest path — no handler, no `id`, no `onDismiss`; the render function doesn't
-  even take an argument. Add the attribute to a button, link, or menu item inside
-  the content (the same convention as `<a-banner>`'s `data-banner-dismiss` and
-  `<a-dialog>`'s `data-dialog-close`):
+- A string becomes a Banner with its own close button.
+- Add `data-toast-dismiss` to a button, link, or menu item inside custom content
+  to dismiss its toast without a separate handler:
 
   ```tsx
   Toaster.manager.add(() => (
@@ -257,9 +252,8 @@ depending on what you toast:
   ))
   ```
 
-- **A `Banner` you toast yourself** dismisses through its own `onDismiss` — wire it
-  to `dismiss(id)`, and its ✕ (plus any `data-banner-dismiss` action inside it)
-  closes the toast:
+- For a Banner you render yourself, connect `onDismiss` to `dismiss(id)`.
+  Its close button and any `data-banner-dismiss` actions then close the toast:
 
   ```tsx
   Toaster.manager.add((id) => (
@@ -276,9 +270,8 @@ Toaster.manager.update(id, () => 'Saved')       // swap content in place
 Toaster.manager.clear()                         // dismiss all
 ```
 
-Pass your own `id` to **upsert** — a second `add` with the same id replaces the
-live toast's content and restarts its timer, instead of stacking a duplicate. Good
-for a step that reports progress, or to dedupe a repeated event:
+Pass the same `id` to update an existing notification and restart its timer.
+Use this for task progress or repeated events that should share one notice:
 
 ```tsx
 Toaster.manager.add(() => <Banner message="Saving…" />, { id: 'save' })
@@ -288,12 +281,11 @@ Toaster.manager.add(() => <Banner tone="success" message="Saved" />, { id: 'save
 
 ## Show the time left
 
-The toast exposes how much of its timer is left as **`--toast-remaining`** — a
-number that animates from `1` (just shown) to `0` (about to dismiss), inherited by
-the content. Draw a countdown with one CSS rule that reads it. No duration to pass,
-no keyframes, no timer of your own — and it pauses with the toast (hover / focus)
-because the variable itself pauses. Try **Toast with countdown** in the demo above
-and hover it.
+Read `--toast-remaining` to draw a countdown. It decreases from `1` to `0` and
+pauses while the toast is hovered or contains focus. Use the same value for the
+bar so it follows the notification's timer.
+
+Try **Toast with countdown** and hover the notification to pause it.
 
 ```tsx
 Toaster.manager.add(
@@ -317,14 +309,20 @@ Toaster.manager.add(
 }
 ```
 
-`--toast-remaining` is display only — the real dismissal is the toast's own timer — so
-where a browser can't animate a custom property it simply stays full. A **sticky**
-(`duration: Infinity`) toast has no countdown; the value stays `1`.
+The countdown is visual feedback. Dismissal still follows `duration` if the
+browser cannot animate the custom property. With `duration: Infinity`, the
+value stays at `1`.
 
-The bar is motion — if you draw one, gate it under `prefers-reduced-motion` yourself
-(e.g. `@media (prefers-reduced-motion: reduce) { .countdown-bar { display: none } }`).
-`a-toast`'s own enter/exit fades are already suppressed there; `--toast-remaining`
-keeps ticking so non-visual uses still work, and the toast still auto-dismisses.
+Hide a custom countdown bar for people who prefer reduced motion:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .countdown-bar { display: none; }
+}
+```
+
+Toast already suppresses its entrance and exit fades for reduced motion.
+The timer continues, so notifications still dismiss on schedule.
 
 ## Multiple regions
 
@@ -343,17 +341,27 @@ export const alerts = createToaster()
 alerts.add(() => <Banner tone="critical" message="Connection lost" />, { placement: 'top-center' })
 ```
 
-One store drives one `<Toaster>`.
+Use one Toaster per store.
+
+### Server rendering and shared stores
+
+Keep toast stores empty during server rendering to avoid hydration mismatches.
+Follow [Browser hydration](../install-config.md#browser-hydration) before mounting.
+
+Use the same JSX entry for a region and its default `Toaster.manager`.
+Independent full and granular builds have separate default stores. To coordinate
+across those entries, pass the same `createToaster()` store explicitly.
 
 ## Announcements
 
-Announcement is opt-in **per toast**: pass `politeness` to give that toast an
-`role` of `status` or `alert`: `'polite'` waits for a pause, `'assertive'` interrupts. Omit
-it for no announcement, which is right when the content carries its own live
-semantics (a `Banner` defaults to `role="status"`).
+Use `politeness: 'polite'` for a routine screen reader announcement, or
+`'assertive'` for an urgent notice that should interrupt. Omit it when the
+content already supplies its announcement. Banner defaults to `role="status"`.
+When Toaster supplies the announcement, set the Banner's role to `none` to
+avoid nested live regions.
 
 ```tsx
-Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, {
+Toaster.manager.add(() => <Banner role="none" tone="critical" message="Connection lost" />, {
   politeness: 'assertive',
 })
 ```
@@ -367,37 +375,11 @@ Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, 
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
+Use `<a-toaster>` and `<a-toast>` directly outside JSX. Place each toast in a
+slot named for its placement, such as `bottom-center`. Add a dismissal control
+with `data-toast-dismiss`, then listen for `dismiss` and remove that toast.
 
-The region retains one manual-popover surface and six named slots. Each slot is
-its placement column. Toast retains one content slot. The element changes only
-its owned shadow nodes and off-DOM state; JSX or raw authors own host attributes
-and authored children. The owner removes a toast after its `dismiss` event.
-
-Setting the `content` property explicitly transfers insertion ownership of that
-node to Toast. It moves the original node into light DOM without cloning it, so
-listeners and widget state remain attached. Replacing or clearing `content`
-removes only nodes previously supplied through that property, including a
-fragment's inserted children. Refill and reassign a fragment to replace those
-children. The getter returns the assigned node; a fragment is normally empty
-after insertion. Clearing the property returns `null`. Do not supply a node
-still owned by another reconciler. Removing the toast does not restore the node's previous parent.
-
-`duration="Infinity"` is sticky. Missing, empty, zero, negative, and invalid
-values use 5000ms. Updating `rev` or calling `restart()` restarts the countdown;
-changing `duration` alone applies on the next restart. Hover and focus pause it
-independently. Reconnection starts a fresh duration or resumes a pending exit.
-
-Keep stores empty during server rendering. React uses the empty server snapshot;
-Preact compatibility hooks can read the live snapshot. Configure browser event
-hydration before mounting, as described in [Browser hydration](/install-config/#browser-hydration).
-Use one JSX entry for a region and its default `Toaster.manager`; independent
-full and granular builds have separate module-local default stores. Pass the
-same `createToaster()` store explicitly when coordinating across those entries.
-
-Place each `<a-toast>` in a positional slot. This button clones the toast template
-into the toaster. `data-toast-dismiss` requests removal; listen for `dismiss` and
-remove the toast from the DOM.
+This example adds a notification by cloning a template:
 
 ```html
 <div data-anta-composition="toaster">
@@ -428,6 +410,16 @@ remove the toast from the DOM.
   })
 </script>
 ```
+
+### Raw toast timing
+
+`duration="Infinity"` keeps a toast until dismissed. Missing, empty, zero,
+negative, and invalid durations use 5000ms. Hover and focus each pause the timer.
+
+Change `rev` or call `restart()` to restart the countdown. Changing `duration`
+alone applies on the next restart. Reconnecting starts a fresh duration or
+resumes a pending exit. The `dismiss` event fires after the exit animation.
+The application then removes the element.
 
 ## Styling
 

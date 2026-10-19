@@ -526,17 +526,15 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
+Use `<a-menu>` and `<a-menu-item>` directly outside JSX.
 
 Put a focusable trigger immediately before `<a-menu>` and omit `state` for an
 uncontrolled menu. Its light-DOM `<a-menu-item>` rows need their own `tabindex`
 values.
 
-Default styles load from external `a-menu.css`, included by the element entry or
-full stylesheet. No shadow stylesheet is injected. Menu owns its popover,
-positioning, scrolling, and applied state; authored children and attributes stay
-with the application. For browser SSR hydration, enable `hydratingEvents` before
-mounting as described in [Browser hydration](../install-config.md#browser-hydration).
+Follow [Install and configure](../install-config.md) to load styles and browser behavior.
+For server-rendered applications, also follow
+[Browser hydration](../install-config.md#browser-hydration).
 
 ```html
 <a-button role="button" tabindex="0" aria-haspopup="menu">
@@ -568,13 +566,9 @@ chrome (background, frost, border, radius, shadow, padding, min-width) with
 height follow the trigger and viewport; overrides of positioning, visibility,
 transforms, or transitions can change those behaviors.
 
-Menu defaults use the document's `anta.components` cascade layer. Use unlayered
-consumer rules or the later `anta.theme`, `components`, or `utilities` layers for
-overrides. When migrating from shadow-injected defaults, move normal `::part(...)`
-overrides out of the earlier `base` layer: Anta's document-level defaults take
-precedence over that layer. Header and footer tag rules can override the region
-padding within `anta.components` because the default region selectors have zero
-specificity.
+Put overrides in `components`, `utilities`, or unlayered CSS. If older part
+overrides are in `base`, move them to a later layer so they take precedence over
+Anta's defaults. See [Cascade layers](../install-config.md#cascade-layers).
 
 Menu items are light DOM, so style them (and their
 `a-icon` / `kbd` / `a-menu-item-label` children) directly. Match **both** item

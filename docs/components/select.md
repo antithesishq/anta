@@ -812,10 +812,9 @@ Set `dimActions={false}` to keep them fully visible. Custom triggers control
 their own adornments. Use Input's parts to style slots and `a-select-chevron`
 to style the chevron.
 
-Select's fixed leading layout and chevron color use external CSS. Consumer
-`style` props, custom color or radius values, and render-hook content can still
-produce inline styles. A custom `renderIndicator` also uses MenuItem's inline
-layout wrapper. Follow the [CSP guidance](../install-config.md#content-security-policy)
+Select's leading layout, chevron color, and custom indicator wrapper use external
+CSS. Consumer `style` props, custom color or radius values, and render-hook content
+can still produce inline styles. Follow the [CSP guidance](../install-config.md#content-security-policy)
 when choosing styles for a restricted policy.
 
 ### Migrate field styles

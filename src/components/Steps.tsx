@@ -219,26 +219,12 @@ export const Steps = ({
     }
   })
 
-  const currentIndex = options.findIndex(
-    (option) => option.value === currentValue,
-  )
   const vertical = orientation === "vertical"
-  const hasPanels = children != null && children !== false
-  const hasVerticalPanel = vertical && hasPanels
-  // An unmatched controlled value (currentIndex === -1) parks the panel after
-  // the last step instead of auto-placing it over a step row.
-  const panelRow = (currentIndex >= 0 ? currentIndex : options.length - 1) + 2
-  const rootStyle = hasVerticalPanel
-    ? ({
-        ...style,
-        "--steps-panel-row": panelRow,
-      } as React.CSSProperties)
-    : style
 
   return (
     <a-steps
       class={className}
-      style={rootStyle}
+      style={style}
       id={id}
       {...rest}
       data-orientation={vertical ? "vertical" : undefined}

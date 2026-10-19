@@ -1,16 +1,10 @@
-import { useState, useEffect } from 'preact/hooks'
+import { useState } from 'preact/hooks'
 import { Toaster, Button, Input, Banner, Card } from '@antadesign/anta'
 import { StickerClap } from '@antadesign/stickers'
 import styles from './ToasterDemo.module.css'
 
 export default function ToasterDemo() {
   const [duration, setDuration] = useState('4000')
-
-  // Register the elements client-side (idempotent; the layout also does anta's).
-  useEffect(() => {
-    import('@antadesign/anta/elements')
-    import('@antadesign/stickers/elements')
-  }, [])
 
   // Empty / zero / non-numeric → the 5000ms default (0 is not sticky; sticky is Infinity).
   const opts = () => ({ placement: 'bottom-right' as const, duration: Number(duration) || 5000 })

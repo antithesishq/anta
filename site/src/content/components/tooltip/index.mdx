@@ -353,8 +353,9 @@ positioning region; Input reports its field instead of its label and hint.
 
 Default styles load from the external component stylesheet. Under CSP, allow
 that same-origin stylesheet and the browser entry. Runtime positioning updates
-only Tooltip's owned shadow elements. Input and Menu retain separate shadow
-styles, so a composition containing them can still need additional CSP work.
+only Tooltip's owned shadow elements. Input and Menu also load their defaults
+from external CSS. Custom values serialized into HTML style attributes remain
+subject to the [CSP guidance](/install/#content-security-policy).
 
 Reduced motion disables both fades. Older supported browsers can omit parts of
 the native popover transition while retaining the content and interaction.

@@ -5,8 +5,13 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   docs-review:
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -20,8 +25,10 @@ jobs:
           cache: pnpm
       # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
+        timeout-minutes: 10
         run: pnpm install --frozen-lockfile
       - name: Check documentation authors
+        timeout-minutes: 5
         env:
           DOCS_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_REVIEWED: ${{ contains(github.event.pull_request.labels.*.name, 'review-docs') }}
@@ -33,6 +40,7 @@ jobs:
           fi
 
   build:
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 45 || 30 }}
     runs-on: ubuntu-latest
     env:
       ANTA_TEST_WEBKIT: '0'
@@ -49,6 +57,7 @@ jobs:
           if [ -z "$TEST_BASE_SHA" ]; then
             echo 'selection=true' >> "$GITHUB_OUTPUT"
             echo 'plot=true' >> "$GITHUB_OUTPUT"
+            echo 'panel=true' >> "$GITHUB_OUTPUT"
             echo 'slider=true' >> "$GITHUB_OUTPUT"
             echo 'input-autocomplete=true' >> "$GITHUB_OUTPUT"
             echo 'select=true' >> "$GITHUB_OUTPUT"
@@ -88,7 +97,7 @@ jobs:
             'src/elements/a-calendar.*' 'src/elements/a-radio*' 'src/elements/a-tab*' \
             'src/elements/a-input*' 'src/elements/a-menu*' 'src/elements/a-button.*' \
             'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/elements/{value-input,index,key-activation,shadow-aria,focus,input-focus-modality,input-trailing-actions}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             tests/selection-{projection,value,package}.mjs tests/calendar-controlled.mjs \
@@ -101,8 +110,23 @@ jobs:
             echo 'selection=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            src/components/Panel.tsx 'src/elements/a-panel.*' \
+            'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-input.*' \
+            'src/elements/a-menu*' 'src/elements/a-dialog.*' 'src/elements/a-box.*' 'src/elements/a-capture.*' \
+            src/elements/{panel-focus,focus,index,key-activation,shadow-aria,input-focus-modality,input-trailing-actions,copy-behavior,capture-input}.ts \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index,bundle}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/panel*' tests/consumers/templates/nextjs/package.json \
+            scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'panel=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'panel=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             src/components/Slider.tsx 'src/elements/a-slider.*' src/elements/shadow-aria.ts \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/slider-*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -116,7 +140,7 @@ jobs:
             src/components/{InputAutocomplete,Input,Menu,MenuItem,Button,Icon,Select}.tsx src/components/select-options.tsx \
             'src/elements/a-input*' 'src/elements/a-menu*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
             src/elements/{index,focus,key-activation,shadow-aria,copy-behavior,input-focus-modality,input-trailing-actions}.ts src/elements/a-loader.css \
-            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/input-autocomplete-*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -128,10 +152,10 @@ jobs:
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             src/components/{Select,SelectFaceted,Input,Menu,MenuItem,MenuGroup,MenuSeparator,Button,Icon,Tooltip,Tag}.tsx \
-            'src/components/select-*' src/components/select.css 'src/elements/a-select*' 'src/elements/a-input*' 'src/elements/a-menu*' \
+            'src/components/select-*' src/components/Select.css 'src/elements/a-select*' 'src/elements/a-input*' 'src/elements/a-menu*' \
             'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-checkbox.*' 'src/elements/a-radio*' 'src/elements/a-tooltip.*' 'src/elements/a-tag.*' \
             src/elements/{index,focus,key-activation,shadow-aria}.ts \
-            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/select-*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -145,7 +169,7 @@ jobs:
             'src/elements/a-dialog.*' 'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-input.*' \
             src/elements/{index,key-activation,shadow-aria,input-focus-modality,input-trailing-actions}.ts src/elements/a-loader.css \
             src/components/{Dialog,Button,Icon,Input}.tsx \
-            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/dialog-*' tests/native-event-props.test.mjs tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -159,7 +183,7 @@ jobs:
             'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' 'src/elements/a-copy.*' \
             src/elements/{index,focus,key-activation,shadow-aria,copy-behavior}.ts \
             src/components/{Menu,MenuItem,MenuItemCopy,Input,InputAutocomplete,InputDate,InputTime,Select,SelectFaceted,Breadcrumbs,Button,Tooltip}.tsx src/components/copy-props.ts \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/menu-*' tests/native-event-props.test.mjs tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -173,7 +197,7 @@ jobs:
             'src/elements/a-copy.*' 'src/elements/a-button.*' 'src/elements/a-menu*' 'src/elements/a-icon*' \
             src/elements/{copy-behavior,key-activation,index}.ts \
             src/components/{ButtonCopy,MenuItemCopy,Button,Menu,MenuItem}.tsx src/components/copy-props.ts \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/copy-*' tests/native-event-props.test.mjs tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -191,7 +215,7 @@ jobs:
             'src/elements/a-calendar.*' 'src/elements/a-input*' \
             'src/elements/a-button.*' 'src/elements/a-menu*' \
             'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
-            src/{calendar-core,jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index}.ts \
+            src/{calendar-core,jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index}.ts \
             src/elements/{value-input,index,key-activation,shadow-aria,focus,copy-behavior,input-focus-modality,input-trailing-actions}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             tests/calendar-controlled.mjs .github/workflows/ci.yml \
@@ -205,7 +229,7 @@ jobs:
             'src/elements/a-card.*' \
             src/components/Card.tsx src/components/Title.tsx src/components/Text.tsx src/components/Icon.tsx \
             'src/elements/a-title.*' 'src/elements/a-text.*' 'src/elements/a-icon*' \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts src/elements/index.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/card-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
             'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
@@ -217,7 +241,7 @@ jobs:
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-text.*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' \
             src/components/{Text,Tooltip}.tsx \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/elements/{index,key-activation}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/text-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
@@ -229,7 +253,7 @@ jobs:
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-progress*' src/components/Progress.tsx \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts src/elements/index.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts src/elements/index.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/progress-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
             'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
@@ -241,7 +265,7 @@ jobs:
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-banner.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
             src/components/{Banner,Button,Icon}.tsx \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/elements/{index,key-activation}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/banner-csp*' tests/banner-package.mjs tests/consumers/templates/nextjs/package.json \
@@ -255,7 +279,7 @@ jobs:
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-expander.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
             src/components/{Expander,Button,Icon}.tsx \
-            src/{jsx-runtime,native-event-props,anta_helpers,general_types,index,bundle}.ts src/elements/{index,key-activation}.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts src/elements/{index,key-activation}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/expander-*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -268,12 +292,12 @@ jobs:
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-tooltip.*' 'src/elements/a-text.*' 'src/elements/a-button.*' \
             'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-tab*' \
-            src/components/{Tooltip,Text,Button,Steps,Tabs,Select,SelectFaceted,Menu,MenuItem,Input}.tsx \
-            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/components/{Tooltip,Text,Button,Steps,Tabs,TabPanel,Select,SelectFaceted,Menu,MenuItem,Input}.tsx \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/elements/{index,key-activation,shadow-aria,input-focus-modality,input-trailing-actions}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'src/elements/a-steps.*' 'src/elements/a-select*' \
-            src/components/{Steps,select}.css \
+            src/components/{Steps,Select}.css \
             'tests/tooltip*' tests/consumers/templates/nextjs/package.json \
             scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
             'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
@@ -286,7 +310,7 @@ jobs:
             'src/elements/a-input*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' 'src/elements/a-icon*' \
             'src/elements/a-menu*' 'src/elements/a-calendar.*' 'src/elements/a-select*' \
             src/components/{Input,InputDate,InputAutocomplete,Select,SelectFaceted,Button,Tooltip,Menu,Icon}.tsx \
-            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/elements/{index,key-activation,shadow-aria,input-focus-modality,input-trailing-actions}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/input-*' tests/consumers/templates/nextjs/package.json \
@@ -301,7 +325,7 @@ jobs:
             'src/elements/a-input*' src/elements/{input-focus-modality,input-trailing-actions,shadow-aria,key-activation,index}.ts \
             'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-menu*' 'src/elements/a-calendar.*' \
             src/components/{InputTime,Input,InputDate,Button,Icon,Menu,Calendar}.tsx \
-            src/{jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/input-time*' tests/native-event-props.test.mjs tests/consumers/templates/nextjs/package.json \
             'tests/component*.mjs' scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
@@ -316,7 +340,7 @@ jobs:
             'src/elements/a-button.*' 'src/elements/a-icon*' 'src/elements/a-input.*' \
             'src/elements/a-title.*' 'src/elements/a-text.*' 'src/elements/a-tooltip.*' \
             src/components/{Toaster,Banner,Card,Button,Icon,Input,Title,Text,Tooltip}.tsx \
-            src/{toaster,jsx-runtime,native-event-props,input-events,anta_helpers,general_types,index,bundle}.ts \
+            src/{toaster,jsx-runtime,native-event-props,input-events,anta_helpers,element-base,general_types,index,bundle}.ts \
             src/elements/{index,input-focus-modality,input-trailing-actions,key-activation,shadow-aria}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
             'tests/toaster-*' tests/consumers/templates/nextjs/package.json \
@@ -334,10 +358,12 @@ jobs:
           cache: pnpm
       # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
+        timeout-minutes: 10
         run: pnpm install --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run typecheck
       - name: Run tests
+        timeout-minutes: 5
         run: pnpm test
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
@@ -345,6 +371,7 @@ jobs:
           NODE_OPTIONS: >-
             --test-skip-pattern="^debounces typing, keeps previous matches, and shows activity only in the input$"
       - name: Test selected components
+        timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 25 || 10 }}
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
           COMPONENT_TEST_SELECTION: ${{ toJSON(steps.component-tests.outputs) }}
@@ -372,8 +399,10 @@ jobs:
       - name: Typecheck search worker
         run: pnpm --filter anta-site run typecheck:worker
       - name: Build site
+        timeout-minutes: 10
         run: pnpm --filter anta-site build
       - name: Test production site
+        timeout-minutes: 5
         run: pnpm --filter anta-site test:production
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome

@@ -209,17 +209,14 @@ const STATUS_ICON: Record<string, IconShape> = {
 }
 
 /**
- * `<Input>` — a text field. Renders an `<a-input>` web component whose real
- * `<input>` / `<textarea>` lives in shadow DOM, so it's self-contained: focus,
- * forms (via `ElementInternals`), IME, and autofill are all native, and the
- * control is reachable for styling through `::part(input)`.
+ * Text field for single-line or multiline input, with labels, hints, and actions.
+ * Supports native form submission, validation, autofill, and input methods.
+ * Pass `multiline` for a textarea and `clearable` to offer a clear action.
  *
- * The wrapper maps props to attributes and slots. Native event props use the
- * shared listener helper without DOM access. The clear button uses the `clear`
- * slot and requests clearing through a native event.
- * Its visibility follows the element's `:state(filled)`.
+ * Use `leading` and `trailing` for content inside the field. Style the editable
+ * control through `::part(input)`.
  *
- * Requires `@antadesign/anta/elements` to be imported (client-side only).
+ * See [Install and configure](https://anta.design/install/) for runtime setup.
  *
  * @example
  * ```tsx

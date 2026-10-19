@@ -27,7 +27,7 @@ before(async () => {
       ? `import '${source}/bundle'; ${process.env.ANTA_PROGRESS_PACKAGE_ROOT ? `import '${source}/bundle.css';` : ''}`
       : `import '${source}/tokens.css'; import '${source}/reset.css'; import '${source}/elements/a-progress';`
     const result = await build({ stdin: { contents, resolveDir: process.cwd() }, bundle: true, write: false,
-      outfile: `${mode}.js`, format: 'esm', target: 'es2022',
+      outfile: `${mode}.js`, format: 'esm', target: 'es2022', minify: true,
       alias: { react: requireSite.resolve('preact/compat') }, nodePaths: [resolve('node_modules')],
     })
     for (const file of result.outputFiles) assets.set(`/${mode}.${file.path.endsWith('.css') ? 'css' : 'js'}`, file.text)
@@ -74,7 +74,7 @@ before(async () => {
     res.setHeader('Content-Type', `${req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html'}; charset=utf-8`)
     const props = { ...initialProps, ...(url.searchParams.has('loading') ? { value: false } : {}) }
     const html = url.searchParams.has('raw') ? renderServer(props).replace(/ style="[^"]*"/g, '') : renderServer(props)
-    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${mode === 'native' ? '<progress data-anta value="42" max="100" aria-label="Native upload"></progress>' : html}</main><div id="following">Following content</div>`)
+    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount"${url.searchParams.has('motion') ? ' class="motion"' : ''}>${mode === 'native' ? '<progress data-anta value="42" max="100" aria-label="Native upload"></progress>' : html}</main><div id="following">Following content</div>`)
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   origin = `http://127.0.0.1:${server.address().port}`
@@ -87,7 +87,7 @@ after(async () => {
   if (server) await new Promise(resolve => server.close(resolve))
 })
 async function pageFor(t, engine, mode = 'granular', query = '', javaScriptEnabled = true, expectedViolations = []) {
-  const page = await browsers.get(engine).newPage({ reducedMotion: 'reduce', javaScriptEnabled })
+  const page = await browsers.get(engine).newPage({ reducedMotion: query.includes('&motion=') ? 'no-preference' : 'reduce', javaScriptEnabled })
   page.setDefaultTimeout(10000)
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
@@ -132,6 +132,51 @@ async function assertPaintedFill(page, selector) {
   assert.deepEqual(pixel(200), [255, 255, 255])
 }
 for (const engine of engines) {
+  if (engine === chromium) test.fast(`${engine.name()}: running stripes travel one period per loop after resizing`, async t => {
+    const page = await pageFor(t, engine, 'granular', '&loading=1&raw=1&motion=1')
+    const host = page.locator('#mount > a-progress')
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await host.evaluate(n => { n.style.width = '300px' })
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    const box = await host.boundingBox()
+    const clip = { x: box.x + 25, y: box.y + box.height - 3, width: 250, height: 2 }
+    const samples = []
+    // Pausing the animation hides the compositor's container-unit mismatch.
+    for (let i = 0; i < 10; i++) {
+      const image = PNG.sync.read(await page.screenshot({ clip }))
+      const timing = await host.evaluate(n => {
+        const animation = n.getAnimations({ subtree: true })[0]
+        return {
+          time: animation.currentTime,
+          period: -parseFloat(getComputedStyle(n, '::before').left) / 2,
+          duration: animation.effect.getTiming().duration,
+        }
+      })
+      const line = Array.from({ length: image.width }, (_, x) =>
+        image.data[x * 4] + image.data[x * 4 + 1] + image.data[x * 4 + 2])
+      samples.push({ ...timing, line, scale: image.width / clip.width })
+    }
+    let comparisons = 0
+    for (let i = 1; i < samples.length; i++) {
+      const previous = samples[i - 1], current = samples[i]
+      const elapsed = current.time - previous.time
+      if (elapsed > current.duration / 4) continue
+      const period = current.period * current.scale
+      const expected = elapsed / current.duration * period
+      let best = { shift: 0, error: Infinity }
+      for (let shift = -Math.floor(period / 2); shift <= period / 2; shift++) {
+        let error = 0
+        for (let x = 50; x < current.line.length - 50; x++) {
+          error += (previous.line[x] - current.line[x + shift]) ** 2
+        }
+        if (error < best.error) best = { shift, error }
+      }
+      assert.ok(Math.abs(best.shift - expected) <= 2.5,
+        `Painted stripes moved ${best.shift}px; expected ${expected.toFixed(2)}px`)
+      comparisons++
+    }
+    assert.ok(comparisons >= 4, 'Enough moving frames were sampled')
+  })
   test.fast(`${engine.name()}: SSR paints one declarative indicator with JavaScript disabled`, async t => {
     const page = await pageFor(t, engine, 'granular', '', false)
     assert.equal(await page.locator('a-progress').getAttribute('aria-valuenow'), '42')

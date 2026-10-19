@@ -560,8 +560,8 @@ border color, and `size` for dimensions. The focus ring uses the global
 Style shadow regions with `::part(field)`, `::part(input)`, `::part(input-label)`,
 `::part(label)`, `::part(leading)`, `::part(trailing)`, `::part(clear)`, and
 `::part(hint)`. Use `:state(filled)` for a nonempty value,
-`:state(invalid)` for critical status, and `:state(control-focus)::part(field)`
-for the focused field. The clear button lives in the light DOM, so target it
+`:state(invalid)` for critical status, and `:focus::part(field)` when the
+editable control is focused. Focus on a slotted action does not match this rule. The clear button lives in the light DOM, so target it
 with a regular selector. Use `light-dark()` for theme-specific colors.
 
 Set `--input-trailing-inset` to override the ending space for any trailing
@@ -572,9 +572,8 @@ In button fields, `::part(input)` targets the native button, and
 `::part(input-label)` targets its value or placeholder text. `::part(label)`
 targets the separate visible field label.
 
-Input's field stylesheet also supplies the default Select trigger's boxless
-leading content and status-colored chevron. These field details remain available
-when a granular composition loads Input without Select's separate layout styles.
+Select uses the same field styling. See [Select styling](./select.md#styling) for
+trigger customization.
 
 ```css
 a-input::part(field) { border-radius: 999px; }
@@ -585,9 +584,9 @@ a-input.custom-inset { --input-trailing-inset: 4px; }
 
 To remove the field's border, use `box-shadow: none` as shown in the example.
 
-Input's default styles are external. If a Content Security Policy blocks inline
-styles, use external CSS for custom colors and dimensions. Custom `tone`,
-custom `round`, and application `style` props can serialize style attributes.
+If your policy blocks inline styles, set custom colors and dimensions in an
+external stylesheet. See [Content Security Policy](../install-config.md#content-security-policy)
+for customization props that emit inline styles.
 
 Some browsers may show native number steppers or controls on a raw
 `<a-input type="search">`. These keep their browser behavior. The JSX
@@ -610,7 +609,7 @@ a-input.fancy::part(input)::placeholder {
   color: light-dark(#b8b8b8, #666666);
   opacity: 1;
 }
-a-input.fancy:state(control-focus)::part(field) { background: light-dark(#161616, #ffffff); }
+a-input.fancy:focus::part(field) { background: light-dark(#161616, #ffffff); }
 ```
 
 ### Placeholder contrast

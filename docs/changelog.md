@@ -7,6 +7,9 @@ changes are not listed.
 
 ### Added
 
+- [Panel's layout placeholder](/panel/#styling) exposes `::part(placeholder)`
+  for styling the reserved region while maximized.
+
 - [Text's inert expansion mode](/text/#truncation-and-expansion):
   `expandableInert` makes the folded, overflowing preview one expand target and
   skips content interactions until expanded. Text that fits remains interactive.
@@ -25,6 +28,10 @@ changes are not listed.
   or `monospace` and overrides the theme's level default.
 
 ### Breaking
+
+- [Icon](/icon/) and [Loader](/loader/) imports load styles without registering
+  custom element classes. If an integration requires a defined tag, call the
+  existing `register_a_icon()` or `register_a_loader()` export explicitly.
 
 - [Calendar selection](/input-date/#calendar) leaves authored input attributes
   unchanged during uncontrolled picks, reset, and restoration. Its `.value`
@@ -50,9 +57,14 @@ changes are not listed.
   hooks object as a whole. Pass your runtime's hooks rather than selecting a few;
   missing hooks report an error instead of using another renderer's hooks.
 
+- [Panel inside an application shadow root](/panel/#styling) now requires a
+  stylesheet link to `@antadesign/anta/elements/a-panel.css` inside that root
+  for its maximized layout. Document styles cannot reach its internal parts.
+
 - Normal part overrides for [Dialog](/dialog/#styling), [Menu](/menu/#styling),
-  and [Slider](/slider/#styling) follow Anta's document cascade layers. Move
-  overrides from `base` to `components`, `utilities`, or unlayered CSS.
+  [Slider](/slider/#styling), and [Panel](/panel/#styling) follow Anta's document
+  cascade layers. Move overrides from `base` to `components`, `utilities`, or
+  unlayered CSS.
 
 - [Select single selection](/select/#managing-the-value) uses `null` for a
   controlled empty value, and Clear reports `null` instead of `undefined`. Use
@@ -108,8 +120,8 @@ changes are not listed.
 - Default styles for [Input](/input/#styling), [InputTime](/input-time/#styling),
   [Menu](/menu/#styling), [Dialog](/dialog/#styling), [Tooltip](/tooltip/#styling),
   [Copy feedback](/button/#copy-feedback), [Toaster](/toaster/#styling),
-  [Expander](/expander/#styling), and [Slider](/slider/#styling) load from external
-  CSS under strict CSP.
+  [Expander](/expander/#styling), [Slider](/slider/#styling), and
+  [Panel](/panel/#styling) load from external CSS under strict CSP.
 
 - [Input's native decorations](/input/#styling) may remain visible in some
   browsers, including number steppers in Chrome 135 and raw HTML search controls.
@@ -131,8 +143,9 @@ changes are not listed.
   radius values remain supported, and native `details[data-anta][round]` uses the
   same default.
 
-- [Select's shared stylesheet](/select/#styling) is named `components/select.css`.
-  The previous `components/select-parts.css` import remains supported.
+- [Select's shared stylesheet](/select/#styling) is named `components/Select.css`.
+  The previous `components/select.css` and `components/select-parts.css` imports
+  remain supported.
 
 - [Tabs rounding](/tabs/#styling): a custom `round` radius applies to the tabs
   and sliding indicator as well as the primary track.
@@ -242,6 +255,9 @@ changes are not listed.
 
 #### Menu
 
+- [Custom selection indicators](/select/#custom-indicators) use external layout
+  styles, preserving alignment and row activation under a strict CSP.
+
 - [Trigger replacement](/menu/) preserves keyboard interaction, popup
   relationships, and open state, including [Select custom triggers](/select/#custom-trigger).
   Anchored popovers reposition to follow their replacement.
@@ -251,6 +267,18 @@ changes are not listed.
 - [Custom rounding](/menu/#styling) applies to the container in every theme.
 - [Combobox cursor events](/menu/) report a cleared autocomplete cursor once,
   including when an edit also updates the suggestion rows.
+
+#### Panel
+
+- [Maximization](/panel/#styling) restores normal layout and focus handling
+  if native popover opening fails or is canceled.
+- [React hydration](/panel/#controlled) retains state-change callbacks.
+
+#### Progress
+
+- [Loading stripes](/progress/) match their travel distance to the bar's width
+  during playback and resizing. Their blurred edges stay outside the track,
+  preventing jumps and edge flicker when the animation repeats.
 
 #### Select
 
@@ -289,6 +317,11 @@ changes are not listed.
   The keyboard tab stop and active tab panel follow the retained selection.
 - [Per-option tones](/tabs/#tone) color the selected indicator without recoloring
   the track. An explicit neutral option resets the indicator on a toned strip.
+
+#### Steps
+
+- [Vertical panels](/steps/#orientation) follow the selected step using external
+  CSS, including when a Content Security Policy blocks inline style attributes.
 
 #### Text
 

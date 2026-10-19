@@ -2,7 +2,8 @@
 
 Switches change a single setting immediately. Use a checkbox when people select one or more values to submit together.
 
-The `Switch` wrapper renders a form-associated `<a-switch>` element. It works uncontrolled with `defaultChecked`, or controlled with `checked` and `onStateChange`.
+Use `defaultChecked` for an initial setting, or pair `checked` with
+`onStateChange` when the application controls the setting.
 
 ## Tone
 
@@ -121,10 +122,9 @@ Use **`onStateChange`** to intercept a toggle or drive a controlled switch. Use 
 
 ## Accessibility
 
-The wrapper sets `role="switch"`, and the element keeps `aria-checked` in sync
-with the current value. Its light-DOM label supplies the accessible name and its
-hint supplies the accessible description through `ElementInternals`; no generated
-IDs are needed. For a label-less switch, pass `aria-label`.
+The label names the switch for screen readers, and the hint supplies its
+description. Without a visible label, pass `aria-label`. Screen readers
+announce the current state.
 
 Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w3.org/WAI/ARIA/apg/patterns/switch/).
 
@@ -150,10 +150,9 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
-The focusable host carries the state. Label and hint are light-DOM children that
-the element exposes as its accessible name and description.
+Use `<a-switch>` directly outside JSX. Set `role="switch"` and `tabindex="0"`
+for keyboard access. Its label and hint supply the accessible name and
+description.
 
 ```html
 <a-switch role="switch" tabindex="0" name="updates" default-state="checked">

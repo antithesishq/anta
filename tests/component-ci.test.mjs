@@ -211,3 +211,26 @@ test('Selection CI gate covers Calendar, InputDate, RadioGroup, Tabs, and shared
     assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('selection'))
   } finally {await rm(directory,{recursive:true})}
 })
+
+test('Plot CI gate includes input, measurement, focus, and copy dependencies', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-plot-gate-'))
+  const git = args => execFileSync('git', args, {cwd:directory, encoding:'utf8'})
+  try {
+    git(['init','-b','fixture']); git(['config','user.name','Fixture']); git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection = workflow.jobs.build.steps.find(step => step.id === 'component-tests').run
+    for (const [path, selected] of [
+      ['src/elements/capture-input.ts',true], ['src/box-observation.ts',true],
+      ['src/elements/focus.ts',true], ['src/elements/copy-behavior.ts',true],
+      ['src/elements/key-activation.ts',true], ['src/components/Calendar.tsx',false],
+    ]) {
+      const base = git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true})
+      await writeFile(join(directory,path),'fixture')
+      git(['add',path]); git(['commit','-m',path])
+      const output = join(directory,'outputs'); await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'), new RegExp(`^plot=${selected}$`,'m'), path)
+    }
+  } finally { await rm(directory,{recursive:true}) }
+})

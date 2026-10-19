@@ -2,12 +2,6 @@ import type { Rect } from '../types'
 import type { ResolvedTooltip } from '../interactions/tooltip'
 
 export const TOOLTIP_OPTIONS = { follow: true, delay: 10 }
-export const TOOLTIP_DIVIDER_STYLE = {
-    border: '0',
-    borderTop: '1px solid rgba(160, 160, 160, 0.4)',
-    margin: '5px 0 4px',
-}
-
 type TooltipRenderer<Content, Body, Text> = {
     custom(content: Content): Body | undefined
     text(value: string): Text
@@ -45,7 +39,7 @@ export function render_tooltip_bodies<Content, Body, Text>(
         bodies.push(body)
     }
     const hidden = bodies.length === 0
-    return { bodies, hidden, style: hidden ? { display: 'none' } : undefined }
+    return { bodies, hidden }
 }
 
 /** Mount as one body, wrapping only multiple entries so a single custom body keeps its identity. */
@@ -53,20 +47,19 @@ export function render_tooltip_body<Content, Body, Text>(
     tooltips: ResolvedTooltip<Content>[],
     renderer: TooltipRenderer<Content, Body, Text>,
 ) {
-    const { bodies, style } = render_tooltip_bodies(tooltips, renderer)
+    const { bodies, hidden } = render_tooltip_bodies(tooltips, renderer)
     let body: Body | undefined
     if (bodies.length === 1) {
         body = bodies[0]
     } else if (bodies.length > 1) {
         body = renderer.group(bodies)
     }
-    return { style, body }
+    return { hidden, body }
 }
 
 /** Place the tooltip's input overlay at the inner-plot origin. */
 export function tooltip_wrapper_style(inner: Rect) {
     return {
-        position: 'absolute' as const,
         left: `${inner.left}px`,
         top: `${inner.top}px`,
         width: `${inner.right - inner.left}px`,

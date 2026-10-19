@@ -4,6 +4,155 @@ A canvas-based plotting library for React, Preact, and plain JavaScript.
 Compose plots using built-in and custom [series](#series), with configurable [axes](#axes), [scales](#scales), and [styles](#styling).
 Explore your data through [tooltip](#tooltips), [selection](#selection-callbacks), and [zoom](#zoom-and-pan) interactions.
 
+<a id="install"></a>
+
+## Install and configure
+
+Plot is a separate package. Install it alongside Anta and your renderer:
+
+```sh
+npm install @antadesign/plot @antadesign/anta react react-dom
+```
+
+Plot requires Anta `^0.3.30`, React `^19.0.0`, and a bundler that supports ES
+modules and CSS imports. Preact applications use `preact/compat` aliases for
+React and React DOM. See Anta's [renderer setup](../install-config.md#preact-with-compat) for configuration.
+
+Load `@antadesign/plot/plot.css` once in your browser entry. The shared Plot
+stylesheet is required for JSX `Plot`, low-level
+`PlotSurface`, and standalone `<a-plot>`, including the `/browser` and `/auto`
+entries. Element registration loads the supporting Anta element styles.
+
+Anta's `tokens.css` is optional. Selection rectangles, tooltips, and menus use
+fallback colors when tokens are absent. When using Anta's theme colors, put
+tokens before the Plot stylesheet. Omit the tokens import if your application
+already loads Anta's full bundle:
+
+```ts
+import '@antadesign/anta/tokens.css'
+import '@antadesign/plot/plot.css'
+```
+
+Anta's `reset.css` and themes are also optional application-wide choices.
+
+### JSX plots
+
+Import the component, register its surface and tooltip elements in the browser,
+and load the Plot stylesheet:
+
+```tsx
+import { Plot, line } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/anta/elements/a-tooltip'
+import '@antadesign/plot/plot.css'
+
+const plotArgs = {
+  height: 300,
+  series: [line({ data: [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
+}
+
+export function Chart() {
+  return <Plot plotArgs={plotArgs} />
+}
+```
+
+`Plot` uses Anta's configured JSX factory and hooks. Importing the root package
+does not register browser elements or load CSS. For server rendering, keep
+registration and stylesheet imports in your application's browser entry.
+Before hydrating, configure Anta with your renderer's hooks and
+`{ hydratingEvents: true }` as described in [SSR and hydration](../install-config.md#browser-hydration).
+
+By default, `Plot` fills its parent. Give the parent a height or set
+`plotArgs.height`, as above. Replace `plotArgs` to update the chart.
+`Plot` owns canvas rendering, interactions, tooltips, and cleanup.
+
+### Browser elements
+
+Register `<a-plot>` and assign its configuration through the `plotArgs` property:
+
+```ts
+import { scatter, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = {
+  height: 300,
+  series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
+}
+document.body.append(plot)
+```
+
+The registration import includes the surface and tooltip elements. To register
+programmatically, import and await `definePlotElement()` from
+`@antadesign/plot/browser`. Both paths require the shared stylesheet.
+
+### Low-level surfaces
+
+Use `PlotSurface` when your application owns drawing and supplies the surface's
+presentation and input handlers:
+
+```tsx
+import { PlotSurface } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/plot/plot.css'
+
+export function Surface() {
+  return <PlotSurface className="custom-surface" />
+}
+```
+
+Give the surface a height in your application's external stylesheet:
+
+```css
+.custom-surface {
+  width: 100%;
+  height: 300px;
+}
+```
+
+The wrapper measures its host and forwards input. Controllers and drawing
+lifecycle helpers remain internal. With a worker renderer and a DOM bridge that
+transfers the surface's canvases, `Plot` can run in the worker while the surface
+and browser registration stay in the UI thread.
+
+### Styles and content security policy
+
+Load an optional Anta theme after the base styles, for example
+`import '@antadesign/anta/theme-antune.css'`. Plot inherits the application's
+font and theme. Put broad application resets in `@layer base` so they do not
+unintentionally override the component rules in `anta.components`.
+
+For a strict content security policy (CSP), configure your bundler to extract
+Plot and Anta CSS imports into external stylesheets served from an allowed
+origin. For same-origin stylesheets, Plot supports:
+
+```text
+style-src 'self'; style-src-elem 'self'; style-src-attr 'none'
+```
+
+A stylesheet link to the published `dist/plot.css` asset also works alongside
+your application bundle. Load it in each destination document before adopting
+a plot there.
+
+Development CSS loaders that inject `<style>` elements are blocked by this
+policy. Configure CSS extraction or serve emitted CSS through stylesheet links.
+If your development server requires injected styles, its development CSP must
+explicitly permit that loader.
+
+Runtime dimensions, capture visibility, coordinates, cursor, and canvas filters
+use direct CSSOM updates. JSX `Plot` applies dimension and `style` props after
+commit, including after hydration, so its SSR markup has no inline styles.
+Use an external CSS class to reserve space before hydration and prevent layout
+shifts. Low-level `PlotSurface` style props and custom tooltip HTML still follow
+your renderer's normal serialization rules. Use external CSS for them under
+`style-src-attr 'none'`.
+
+Worker rendering requires `worker-src` to allow the worker script's origin.
+Use `worker-src 'self'` for same-origin worker scripts. If your renderer creates
+blob workers, also allow `blob:`, for example `worker-src 'self' blob:`. Plot
+does not create your renderer worker or its DOM bridge.
+
 ## Series types
 
 Select a series type below to see its options and examples.
@@ -26,6 +175,7 @@ Combine multiple series in one plot to compare values, show trends, and add cont
 ```ts
 import { area, line, rule, scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function overviewExample(): PlotArgs<Node> {
@@ -150,6 +300,7 @@ document.body.append(plot)
 ```ts
 import { bar, scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function energyExample(): PlotArgs<Node> {
@@ -198,6 +349,7 @@ document.body.append(plot)
 ```ts
 import { area, rect, line, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function latencyExample(): PlotArgs<Node> {
@@ -243,6 +395,7 @@ document.body.append(plot)
 ```ts
 import { area, rect, line, scatter, rule, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function mixedExample(): PlotArgs<Node> {
@@ -325,52 +478,6 @@ plot.plotArgs = {
 document.body.append(plot)
 ```
 
-## Install
-
-Install the package to use plots in React, Preact, or plain JavaScript.
-
-```sh
-npm install @antadesign/plot   # or pnpm / bun
-```
-
-Import `Plot` and series factories from `@antadesign/plot`. These root component
-imports require version `0.1.3` or later. Anta `^0.3.30` and React `^19.0.0` are
-peer dependencies. For Preact, use `preact/compat` aliases.
-
-```tsx
-import { Plot, line } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot-surface'
-import '@antadesign/anta/elements/a-tooltip'
-import '@antadesign/anta/theme-antune.css'
-
-const plotArgs = {
-  height: 300,
-  series: [line({ data: [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
-}
-
-function Example() {
-  return <Plot plotArgs={plotArgs} />
-}
-```
-
-`Plot` is a function component that uses Anta's configured JSX factory and hooks.
-Importing it does not register browser elements. Import the surface and tooltip
-registration modules once in your browser entry; their elements install their
-base styles automatically. Load your application's Anta theme separately.
-`Plot` handles canvas setup, drawing, interactions, and cleanup.
-
-By default, `Plot` fills its parent. Give the parent a height or set `plotArgs.height`,
-as above. Custom renderers supply their hooks through Anta's `configure()`.
-With a worker renderer and a DOM bridge that transfers the surface's canvases,
-`Plot` runs in the worker while `a-plot-surface` stays in the browser.
-
-For plain JavaScript or TypeScript, import `@antadesign/plot/elements/a-plot`, then use `<a-plot>` and assign its `plotArgs` property.
-
-`Plot` owns canvas rendering, interactions, and cleanup. The package also exports
-`PlotSurface` as a low-level JSX wrapper, but controllers and drawing lifecycle
-helpers remain internal. Customize marks through `renderer` and
-`highlight_renderer`, and tooltips through the series or root tooltip callbacks.
-
 ## Plot arguments
 
 `PlotArgs` configures the whole plot: its series, axes, and presentation. Pass it
@@ -385,6 +492,7 @@ Set a title, reserve space with `margin`, and style the plot background and hori
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 const examplePoints = [
@@ -420,6 +528,7 @@ Set `border: true` and `grid: false` to frame the plot without grid lines. Use `
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 const examplePoints = [
@@ -484,6 +593,7 @@ Use a logarithmic axis to compare values across orders of magnitude. Format larg
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 const examplePoints = [
@@ -523,6 +633,7 @@ Plot timestamps on a UTC axis and format the horizontal ticks as hours and minut
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 const examplePoints = [
@@ -598,6 +709,7 @@ Use a size accessor to vary mark diameter and a color accessor to highlight larg
 ```ts
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -636,6 +748,7 @@ Use different marks to distinguish groups without relying on color alone. Each s
 ```ts
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -722,6 +835,7 @@ Compare measured values with a forecast. A solid line follows each fluctuation, 
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -770,6 +884,7 @@ Show individual samples with diamond marks. Set the line width, mark size, and m
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -853,6 +968,7 @@ Set corner rounding and spacing independently. A color accessor highlights days 
 ```ts
 import { bar, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -899,6 +1015,7 @@ Place categories on the y-axis to leave room for their names. Hover anywhere alo
 ```ts
 import { bar, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -941,6 +1058,7 @@ Bars extend from zero in either direction. Use a color accessor to distinguish m
 ```ts
 import { bar, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -986,6 +1104,7 @@ Set `axis.x.categories` to order bars by severity, independently of the source r
 ```ts
 import { bar, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function categoryOrder(): PlotArgs<Node> {
@@ -1069,6 +1188,7 @@ Pass multiple value fields to stack them within each category. Colors follow the
 ```ts
 import { bar, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1113,6 +1233,7 @@ Pass multiple fields to `x` and categories to `y` to compare contributions acros
 ```ts
 import { bar, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function stackedHorizontal(): PlotArgs<Node> {
@@ -1155,6 +1276,7 @@ Positive and negative values stack separately from zero. Each segment retains it
 ```ts
 import { bar, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function stackedDiverging(): PlotArgs<Node> {
@@ -1199,6 +1321,7 @@ Hover a segment to see every value in its stack. The callback reads the values f
 ```ts
 import { bar, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function stackedTooltip(): PlotArgs<Node> {
@@ -1288,6 +1411,7 @@ Fill beneath a signal with a constant zero baseline. A stroke traces the area’
 ```ts
 import { area, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1327,6 +1451,7 @@ Use two value fields to draw a changing interval. A dashed outline distinguishes
 ```ts
 import { area, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1368,6 +1493,7 @@ Compose adjacent areas with explicit cumulative bounds. Each band shows one cont
 ```ts
 import { area, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1422,6 +1548,7 @@ Use `x` and `x2` for horizontal bounds. The filled band shows how an interval sh
 ```ts
 import { area, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1521,6 +1648,7 @@ Combine two categorical axes to form a heatmap. Color each cell from its value a
 ```ts
 import { rect, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1564,6 +1692,7 @@ Set `x` and `x2` to show durations within categorical rows. Each rectangle retai
 ```ts
 import { rect, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1609,6 +1738,7 @@ Set `size` to draw rectangles with a consistent width and height at numeric coor
 ```ts
 import { rect, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1650,6 +1780,7 @@ Place fixed-size rectangles on a time axis in Passed and Failed lanes. Use `band
 ```ts
 import { rect, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1807,6 +1938,7 @@ Use numeric `y` values for reference lines without a data array. A thin dashed t
 ```ts
 import { rule, line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1857,6 +1989,7 @@ Read `x` positions from data to mark events along a signal. A solid rule marks d
 ```ts
 import { rule, line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -1965,6 +2098,7 @@ Overlay 95% contours for two specified Gaussian models on their sampled points. 
 ```ts
 import { custom, scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -2044,6 +2178,7 @@ Connect five groups with ribbons whose widths represent shared volume. The outer
 ```ts
 import { custom, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -2185,6 +2320,7 @@ Compare six weekly distributions with overlapping density curves. Each ridge use
 ```ts
 import { custom, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -2290,6 +2426,7 @@ Mirror a kernel density estimate around each group’s center. Wider sections co
 ```ts
 import { custom, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -2407,6 +2544,7 @@ For connected geometry or a different highlight, supply `highlight_renderer(seri
 import { custom, type PlotArgs, type CustomRendererFn, type CustomHitTestFn, type CustomHighlightRendererFn } from '@antadesign/plot'
 import type { APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 function highlights(): PlotArgs<Node> {
@@ -2550,6 +2688,7 @@ Hover feedback is temporary. For custom geometry, supply a [hit-testing callback
 ```ts
 import { bar, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -2626,6 +2765,7 @@ Use `tooltip: true` for default content, or return a DOM node from the standalon
 ```ts
 import { rect, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 
@@ -2699,6 +2839,7 @@ Hover the overlapping rectangles to compare baseline and current bounds under on
 ```ts
 import { rect, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 function windowRow(row: unknown) {
   if (typeof row !== 'object' || row === null) return undefined
@@ -2800,6 +2941,7 @@ The callback does not create persistent selection styling. This preview keeps th
 ```ts
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
@@ -2879,6 +3021,7 @@ Right-click for **Reset Zoom**, **Zoom Out**, and **Zoom In**. Menu zoom anchors
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
@@ -2924,6 +3067,7 @@ Scroll over an axis to zoom around the pointer, or drag on the axis to zoom arou
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
@@ -2969,6 +3113,7 @@ Scroll to zoom or drag to pan. Only the horizontal window changes; the vertical 
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
@@ -3030,6 +3175,7 @@ Set `viewport` to control the visible range. Increment its `key` to apply a new 
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import '@antadesign/anta/elements/a-button'
 
 const plot = document.createElement('a-plot') as APlotElement
@@ -3133,6 +3279,7 @@ the starting sizes.
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 export function viewportSizes(): PlotArgs<Node> {
@@ -3221,6 +3368,7 @@ The title combines bold weight, condensed width, and tighter letters. The axes s
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3273,6 +3421,7 @@ The title inherits italic small caps and expanded spacing. The horizontal label 
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3329,6 +3478,7 @@ Set the title text, size, and purple theme colors.
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3372,6 +3522,7 @@ The canvas uses a gray CSS background. The plot background fills only the area i
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3425,6 +3576,7 @@ Both grid directions
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3464,6 +3616,7 @@ Vertical grid lines
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3507,6 +3660,7 @@ Horizontal grid lines
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3550,6 +3704,7 @@ No grid lines
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3602,6 +3757,7 @@ The scatter marks use `tomato` in light mode and `lightskyblue` in dark mode, wi
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3653,6 +3809,7 @@ Linear and logarithmic scales
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3693,6 +3850,7 @@ Time and category scales
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3755,6 +3913,7 @@ Right and top labels
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3791,6 +3950,7 @@ Left and bottom labels
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3839,6 +3999,7 @@ Add units to tick labels with formatting callbacks. The horizontal ticks use 10p
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3884,6 +4045,7 @@ Use a color accessor to distinguish values at or above 60.
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3942,6 +4104,7 @@ Set a different mark shape for each category.
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -3997,6 +4160,7 @@ Compare outlines with widths of 1, 3, and 5 pixels on equal-sized circles.
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function base(): PlotArgs<Node> {
@@ -4106,6 +4270,7 @@ controller setup, drawing, and cleanup in the browser.
 ```ts
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 plot.plotArgs = { series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 3 }] })] }
@@ -4134,6 +4299,7 @@ Set `background: false` to let the container background show through the canvas.
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 import type { APlotElement } from '@antadesign/plot/browser'
 
 function stylingExample(): PlotArgs<Node> {
@@ -4183,15 +4349,26 @@ document.body.append(container)
 }
 ```
 
-The `a-plot-surface` element installs its structural styles automatically,
-including canvas stacking and overlay positioning. It does not require a
-separate CSS import.
+Load `@antadesign/plot/plot.css` for JSX `Plot`, low-level `PlotSurface`, and
+standalone `<a-plot>`. It provides canvas stacking, overlay positioning, tooltip
+dividers, and host layout. Registration entries keep this stylesheet separate.
+The `/browser` and `/auto` entries also require the shared stylesheet.
 
-The complete `a-plot` host installs its base styles automatically too, giving it
-a width of `100%` and a fallback height of `300px`. No `plot.css` import is needed.
+The standalone host defaults to a width of `100%` and height of `300px`.
 Its sizing rule uses `:where()` with zero specificity, so your CSS can override
-it. Set `height: auto` when using `aspect-ratio` to replace the fixed fallback
-height, as this example does.
+it. Set `height: auto` when using `aspect-ratio` to replace the fallback height.
+JSX `Plot` and `PlotSurface` fill their parent, which must have a height.
+Load the stylesheet in each destination document before adopting a plot.
+
+For a strict content security policy (CSP), extract the imports into external
+CSS allowed by `style-src`. Plot does not inject style elements. Runtime sizes,
+coordinates, cursor, and canvas filters use direct CSSOM updates. These remain
+visible in `style` attributes but do not parse style attribute strings.
+JSX `Plot` applies dimension and `style` props after commit through CSSOM. Use
+external CSS to reserve its size before hydration. Low-level `PlotSurface` style
+props and custom tooltip markup still follow the renderer's serialization rules.
+Consumer tooltip content and CSS loaders must also comply with the policy.
+Worker scripts need an allowed `worker-src`; blob workers also need `blob:`.
 
 Alternatively, pass `width` and `height` to set inline styles on the host.
 These override stylesheet rules. Removing an argument restores the previous

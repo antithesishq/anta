@@ -192,7 +192,8 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
 }
 
 /* Anta's reset owns prose rhythm; the site owns `hr` and Expressive Code spacing. */
-hr, .expressive-code { margin: 0 0 1.5em; }
+hr:not(:where(a-tooltip *)),
+.expressive-code { margin: 0 0 1.5em; }
 
 /* Proximity: a paragraph that introduces a <Preview> hugs it (caption-to-
    figure), so the prose groups with the example it describes rather than the

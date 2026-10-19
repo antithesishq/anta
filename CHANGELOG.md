@@ -3,6 +3,14 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Button preserves icon-only sizing and its fallback accessible name when its
+  children contain only Tooltip content, including fragments and conditional children.
+  Explicit accessible names continue to take precedence.
+
 ## 0.3.35 — October 18, 2026
 
 ### Added

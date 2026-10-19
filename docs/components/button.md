@@ -223,7 +223,7 @@ clipboard format explicit.
 | `download?` | string \| boolean | — | Anchor download attribute. Empty string / `true` triggers a download with the resource's default name; a string overrides the filename. |
 | `form?` | string | — | Form id when the button isn't a descendant of its form. |
 | `href?` | string | — | URL to link to. A definite string renders `<a role="button">`; omit it (or pass `undefined`) to render `<a-button>`, so `href={maybeUrl}` degrades to a plain button when the URL is absent. |
-| `icon?` | IconShape | — | Leading icon shape. When set alone (no `label`, no `iconTrailing`, no `children`), the button renders as a square icon-only control and the wrapper auto-supplies `aria-label={icon}` (override by passing your own `aria-label`). |
+| `icon?` | IconShape | — | Leading icon shape. When set alone (no `label`, no `iconTrailing`, no visible `children`), the button renders as a square icon-only control and the wrapper auto-supplies `aria-label={icon}` (override by passing your own `aria-label`). |
 | `iconPlacement?` | 'leading' \| 'trailing' \| 'none' | 'leading' | Where the copy glyph sits relative to the label — or `'none'` to omit it. Without a glyph, a successful copy shows a small confirmation label near the pointer and leaves the button unchanged. |
 | `iconTrailing?` | IconShape | — | Trailing icon shape. Renders after `children`, last in the slot order. |
 | `label?` | string | — | Label text. Renders between the leading icon and `children`. |
@@ -316,7 +316,7 @@ take ownership of `onClick`.
 | `download?` | string \| boolean | — | Anchor download attribute. Empty string / `true` triggers a download with the resource's default name; a string overrides the filename. |
 | `form?` | string | — | Form id when the button isn't a descendant of its form. |
 | `href?` | string | — | URL to link to. A definite string renders `<a role="button">`; omit it (or pass `undefined`) to render `<a-button>`, so `href={maybeUrl}` degrades to a plain button when the URL is absent. |
-| `icon?` | IconShape | — | Leading icon shape. When set alone (no `label`, no `iconTrailing`, no `children`), the button renders as a square icon-only control and the wrapper auto-supplies `aria-label={icon}` (override by passing your own `aria-label`). |
+| `icon?` | IconShape | — | Leading icon shape. When set alone (no `label`, no `iconTrailing`, no visible `children`), the button renders as a square icon-only control and the wrapper auto-supplies `aria-label={icon}` (override by passing your own `aria-label`). |
 | `iconTrailing?` | IconShape | — | Trailing icon shape. Renders after `children`, last in the slot order. |
 | `label?` | string | — | Label text. Renders between the leading icon and `children`. |
 | `loading?` | boolean | — | Show a rotating loading indicator. Blocks clicks and keyboard activation, and removes the button from the tab order while active. |

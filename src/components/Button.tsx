@@ -1,6 +1,22 @@
+import { Fragment } from "../jsx-runtime"
+import { Tooltip } from "./Tooltip"
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
 import { neutralToneAttr, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+
+function hasButtonContent(children: React.ReactNode): boolean {
+  if (children == null || typeof children === 'boolean') return false
+  if (Array.isArray(children)) return children.some(hasButtonContent)
+  if (typeof children === 'string') return children.trim() !== ''
+  if (typeof children === 'number') return !Number.isNaN(children)
+  if (typeof children === 'object' && 'type' in children) {
+    if (children.type === Tooltip || children.type === 'a-tooltip') return false
+    if (children.type === Fragment) {
+      return hasButtonContent((children.props as { children?: React.ReactNode }).children)
+    }
+  }
+  return true
+}
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -56,7 +72,7 @@ export type ContentMode = {
   /** Label text. Renders between the leading icon and `children`. */
   label?: string
   /** Leading icon shape. When set alone (no `label`, no `iconTrailing`, no
-   *  `children`), the button renders as a square icon-only control and
+   *  visible `children`), the button renders as a square icon-only control and
    *  the wrapper auto-supplies `aria-label={icon}` (override by passing
    *  your own `aria-label`). */
   icon?: IconShape
@@ -201,7 +217,7 @@ export const Button = ({
   // (leading / trailing), and swaps it to check / ✕ on the result.
   // Icon-only: a leading icon and no text content.
   const isIconOnly =
-    icon != null && label == null && children == null && iconTrailing == null
+    icon != null && label == null && !hasButtonContent(children) && iconTrailing == null
 
   const sharedAttrs = {
     // `<a-button>` is a custom element with no implicit ARIA role, so AT would

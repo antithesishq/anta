@@ -669,6 +669,7 @@
 
   a-tabs[data-steps] > a-tab {
     --steps-tone-solid: var(--fill-1);
+    --steps-tone-hover: var(--fill-1-hover);
     --steps-tone-edge: var(--text-2);
     --steps-on-solid: var(--label-on-fill);
     --steps-tone-tint: color-mix(in oklch, var(--steps-tone-solid) 10%, transparent);
@@ -682,22 +683,27 @@
 
   a-tabs[data-steps] > a-tab[tone="brand"] {
     --steps-tone-solid: var(--fill-1-brand);
+    --steps-tone-hover: var(--fill-1-brand-hover);
     --steps-tone-edge: var(--text-2-brand);
   }
   a-tabs[data-steps] > a-tab[tone="info"] {
     --steps-tone-solid: var(--fill-1-info);
+    --steps-tone-hover: var(--fill-1-info-hover);
     --steps-tone-edge: var(--text-2-info);
   }
   a-tabs[data-steps] > a-tab[tone="success"] {
     --steps-tone-solid: var(--fill-1-success);
+    --steps-tone-hover: var(--fill-1-success-hover);
     --steps-tone-edge: var(--text-2-success);
   }
   a-tabs[data-steps] > a-tab[tone="warning"] {
     --steps-tone-solid: light-dark(var(--fill-1-warning-active), var(--fill-1-warning));
+    --steps-tone-hover: light-dark(color-mix(in oklch, var(--fill-1-warning-active) 90%, black), var(--fill-1-warning-hover));
     --steps-tone-edge: var(--text-2-warning);
   }
   a-tabs[data-steps] > a-tab[tone="critical"] {
     --steps-tone-solid: var(--fill-1-critical);
+    --steps-tone-hover: var(--fill-1-critical-hover);
     --steps-tone-edge: var(--text-2-critical);
     --steps-on-solid: var(--label-on-fill-critical);
   }
@@ -732,6 +738,9 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
+    a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) > a-tab[data-step-state="completed"]:not(:state(selected), [disabled]):hover {
+      --steps-marker-bg: var(--steps-tone-hover);
+    }
     a-tabs[data-steps] > a-tab:not(:state(selected), [disabled], [data-step-state="completed"], [data-step-state="error"]):hover {
       --steps-marker-bg: var(--bg-5);
       --steps-marker-fg: var(--text-2);
@@ -747,6 +756,9 @@
     a-tabs[data-steps][priority="tertiary"] > a-tab:hover {
       --steps-marker-bg: transparent;
       --steps-marker-edge: none;
+    }
+    a-tabs[data-steps][priority="tertiary"] > a-tab[data-step-state="completed"]:not(:state(selected), [disabled]):hover {
+      --steps-marker-fg: color-mix(in oklch, var(--steps-tone-solid) 80%, var(--text-1));
     }
   }
 

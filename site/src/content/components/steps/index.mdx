@@ -41,8 +41,9 @@ Give each option a unique `value`, a visible `label`, and a `state`. Incomplete
 steps show their position in the sequence, starting at 1. Pass `label` on `Steps`
 to give the sequence an accessible name.
 
-This example starts at **Project details**. Select another phase to change the
-selection; the step numbers stay the same.
+This example uses a brand tone, with **Project details** completed and
+**Repository** selected. Hints describe each phase's progress. Select another
+phase to change the selection; completed work keeps its check.
 
 <Preview align="stretch">
   <Basic client:visible={{ rootMargin: '200px' }} />
@@ -50,12 +51,13 @@ selection; the step numbers stay the same.
 
 ```tsx folded
 <Steps
-  defaultValue="project"
+  defaultValue="repository"
+  tone="brand"
   label="Project setup"
   options={[
-    { value: 'project', label: 'Project details', state: 'incomplete' },
-    { value: 'repository', label: 'Repository', state: 'incomplete' },
-    { value: 'review', label: 'Review', state: 'incomplete' },
+    { value: 'project', label: 'Project details', hint: 'payments-service', state: 'completed' },
+    { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete' },
+    { value: 'review', label: 'Review', hint: 'Not started', state: 'incomplete' },
   ]}
 />
 ```

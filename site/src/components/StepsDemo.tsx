@@ -84,12 +84,13 @@ export function Basic() {
   useElements()
   return (
     <Steps
-      defaultValue="project"
+      defaultValue="repository"
+      tone="brand"
       label="Project setup"
       options={[
-        { value: 'project', label: 'Project details', state: 'incomplete' },
-        { value: 'repository', label: 'Repository', state: 'incomplete' },
-        { value: 'review', label: 'Review', state: 'incomplete' },
+        { value: 'project', label: 'Project details', hint: 'payments-service', state: 'completed' },
+        { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete' },
+        { value: 'review', label: 'Review', hint: 'Not started', state: 'incomplete' },
       ]}
     />
   )

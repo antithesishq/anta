@@ -5,6 +5,11 @@ changes are not listed.
 
 ## Unreleased
 
+### Changed
+
+- [Steps](/steps/#antithesis-theme) uses square markers, a separate selection ring,
+  and the theme's control fills in Antithesis.
+
 ### Fixed
 
 - Input and InputTime keep single-icon actions square with Tooltip content in

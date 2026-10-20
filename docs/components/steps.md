@@ -3,6 +3,37 @@
 Ordered process navigation built on [`Tabs`](./tabs.md). Use `Tabs` when the views
 are peers rather than phases in a flow.
 
+## Antithesis theme
+
+The Antithesis theme uses square markers and a separate ring around the selected
+step. Primary markers use the theme's control fills, secondary markers use tints,
+and tertiary markers have no background. Labels stay neutral while markers and
+completed connectors carry the tone. Error steps keep their critical tone.
+
+Select **Antithesis** in the theme switcher to see this treatment. Numbered phases
+use the existing `marker` option, so the application can keep a check for completed
+work and numbers for upcoming steps.
+
+```tsx
+<Steps
+  fill
+  priority="primary"
+  tone="brand"
+  defaultValue="repository"
+  label="Project setup"
+  options={[
+    { value: 'project', label: 'Project details', hint: 'payments-service', state: 'completed' },
+    { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete', marker: 2 },
+    { value: 'environment', label: 'Environment', hint: 'Not started', state: 'incomplete', marker: 3 },
+    { value: 'review', label: 'Review', hint: 'Unavailable', state: 'incomplete', marker: 4, disabled: true },
+  ]}
+/>
+```
+
+The state, priority, and tone descriptions that follow describe the default
+appearance. Themes can change its visual treatment while retaining the same
+selection, process states, and keyboard behavior.
+
 ## State
 
 Each option needs a unique `value`, a `label`, and a `state`. `state`

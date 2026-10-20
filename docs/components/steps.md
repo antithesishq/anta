@@ -3,41 +3,12 @@
 Ordered process navigation built on [`Tabs`](./tabs.md). Use `Tabs` when the views
 are peers rather than phases in a flow.
 
-## Antithesis theme
-
-The Antithesis theme uses square markers and a separate ring around the selected
-step. Primary markers use the theme's control fills, secondary markers use tints,
-and tertiary markers have no background. Labels stay neutral while markers and
-completed connectors carry the tone. Error steps keep their critical tone.
-
-Select **Antithesis** in the theme switcher to see this treatment. Upcoming steps
-show their position automatically, while completed work keeps its check.
-
-```tsx
-<Steps
-  fill
-  priority="primary"
-  tone="brand"
-  defaultValue="repository"
-  label="Project setup"
-  options={[
-    { value: 'project', label: 'Project details', hint: 'payments-service', state: 'completed' },
-    { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete' },
-    { value: 'environment', label: 'Environment', hint: 'Not started', state: 'incomplete' },
-    { value: 'review', label: 'Review', hint: 'Unavailable', state: 'incomplete', disabled: true },
-  ]}
-/>
-```
-
-The state, priority, and tone descriptions that follow describe the default
-appearance. Themes can change its visual treatment while retaining the same
-selection, process states, and keyboard behavior.
-
 ## State
 
 Each option needs a unique `value`, a `label`, and a `state`. `state`
 supplies the default marker, `value` controls selection, and `disabled`
-controls access.
+controls access. Incomplete and disabled steps show their position in the sequence
+in every theme.
 
 - `incomplete` — step number, starting at 1
 - `loading` — loader
@@ -68,13 +39,10 @@ Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
 
 ## Priority
 
-`secondary` is the default: selected markers have a subtle fill inside their
-outline. `primary` fills the selected marker with its tone and uses a white icon,
-like a primary Button. Its 2px resting marker uses `border-3` and its 2px rail
-uses `border-3`; a completed, unselected marker keeps the primary fill at 80%
-without an outline. Its completed connector moves one step stronger to `border-2`.
-`tertiary` removes the marker stroke and makes its marker the icon size plus 2px on
-each side.
+`secondary` is the default and uses a subtle fill for selected markers.
+`primary` uses solid fills for selected and completed markers. `tertiary` makes
+markers compact and removes their background and outline. The active theme
+controls marker shape and selection styling.
 
 ```tsx
 <Steps
@@ -93,15 +61,10 @@ each side.
 
 ## Tone
 
-Set `tone` on `Steps` to color every step's label, hint, and icon, plus active
-and completed markers. Inactive incomplete/loading marker rings stay neutral.
-Set `option.tone` when one step needs an override. Labels strengthen on hover and
-selection; hints stay at the muted `text-3` tone. In `secondary` and
-`tertiary`, the marker icon always matches the label's current color; a secondary
-marker's resting stroke uses the matching muted border tone. With every priority,
-the connector after a completed step is one border step stronger: `border-2` from
-the standard `border-3` rail. Error markers stay critical and gain a critical fill
-when selected.
+Set `tone` on `Steps` to color active and completed markers and completed
+connectors. Set `option.tone` when one step needs an override. Error steps stay
+critical and disabled steps stay neutral. The active theme controls label colors,
+marker fills, and outlines.
 
 ```tsx
 const options = [
@@ -224,7 +187,7 @@ const index = options.findIndex((option) => option.value === phase)
 
 ## Size
 
-`small`, `medium` (default), and `large` use 24px, 28px, and 32px markers.
+Use `small`, `medium` (default), or `large` to scale markers and text.
 
 ```tsx
 <Steps

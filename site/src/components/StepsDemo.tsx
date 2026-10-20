@@ -274,24 +274,3 @@ export function FullWidthSteps() {
     </div>
   )
 }
-
-export function NumberedSteps() {
-  useElements()
-  const options: StepOption[] = [
-    { value: 'project', label: 'Project details', hint: 'payments-service', state: 'completed' },
-    { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete' },
-    { value: 'environment', label: 'Environment', hint: 'Not started', state: 'incomplete' },
-    { value: 'review', label: 'Review', hint: 'Unavailable', state: 'incomplete', disabled: true },
-  ]
-
-  return (
-    <Steps
-      fill
-      priority="primary"
-      tone="brand"
-      defaultValue="repository"
-      label="Project setup"
-      options={options}
-    />
-  )
-}

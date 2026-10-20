@@ -7,7 +7,7 @@ changes are not listed.
 
 ### Changed
 
-- [Steps](/steps/#antithesis-theme) uses square markers, a separate selection ring,
+- [Steps](/steps/) uses square markers, a separate selection ring,
   and the theme's control fills in Antithesis.
 - [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by
   their position. Loading, completed, and error phases retain their state

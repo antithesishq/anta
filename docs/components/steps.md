@@ -1,54 +1,231 @@
 # Steps
 
-Ordered process navigation built on [`Tabs`](./tabs.md). Use `Tabs` when the views
-are peers rather than phases in a flow.
+Steps shows progress through an ordered process and lets people select a phase.
+Use it for setup, publishing, and deployment flows. For views that are peers,
+use [Tabs](./tabs.md).
+
+## Basic usage
+
+Give each option a unique `value`, a visible `label`, and a `state`. Incomplete
+steps show their position in the sequence, starting at 1. Pass `label` on `Steps`
+to give the sequence an accessible name.
+
+This example starts at **Project details**. Select another phase to change the
+selection; the step numbers stay the same.
+
+```tsx
+<Steps
+  defaultValue="project"
+  label="Project setup"
+  options={[
+    { value: 'project', label: 'Project details', state: 'incomplete' },
+    { value: 'repository', label: 'Repository', state: 'incomplete' },
+    { value: 'review', label: 'Review', state: 'incomplete' },
+  ]}
+/>
+```
 
 ## State
 
-Each option needs a unique `value`, a `label`, and a `state`. `state`
-supplies the default marker, `value` controls selection, and `disabled`
-controls access. Incomplete and disabled steps show their position in the sequence
-in every theme.
+Use `state` to describe the work in each phase. The application sets these states:
 
-- `incomplete` — step number, starting at 1
-- `loading` — loader
-- `completed` — check
-- `error` — critical ×
-- `disabled` — step number by default
+| State | Default marker |
+| --- | --- |
+| `incomplete` | Step number |
+| `loading` | Loading indicator |
+| `completed` | Check |
+| `error` | Critical × |
 
-```tsx
-const options = [
-  { value: 'completed', label: 'Completed', state: 'completed' },
-  { value: 'loading', label: 'Loading', state: 'loading' },
-  { value: 'error', label: 'Error', state: 'error' },
-  { value: 'incomplete', label: 'Incomplete', state: 'incomplete' },
-]
+Each completed step colors the connector toward the next step with its tone.
+Selecting a phase does not complete it or change the states of preceding phases.
 
-<Steps fill defaultValue="loading" label="Task state" options={options}>
-  <TabPanel value="completed"><Text size="small">This work is complete and ready to use.</Text></TabPanel>
-  <TabPanel value="loading"><Text size="small">This work is currently running.</Text></TabPanel>
-  <TabPanel value="error"><Text size="small">Resolve this error before continuing.</Text></TabPanel>
-  <TabPanel value="incomplete"><Text size="small">This work has not started yet.</Text></TabPanel>
-</Steps>
-```
-
-An incomplete step can still be selected. Add `disabled` only when it is locked;
-disabled steps keep their layout space and show their step number by default.
-Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
-`loading` for work running in the background.
-
-## Priority
-
-`secondary` is the default and uses a subtle fill for selected markers.
-`primary` uses solid fills for selected and completed markers. `tertiary` makes
-markers compact and removes their background and outline. The active theme
-controls marker shape and selection styling.
+Use `disabled` to prevent selection of a locked phase. Disabled steps keep their
+position and show their number unless you provide a custom marker. In this example,
+**Loading** is selected and **Disabled** cannot be selected.
 
 ```tsx
 <Steps
   fill
-  priority="primary"
-  tone="brand"
+  defaultValue="loading"
+  label="Task state"
+  options={[
+    { value: 'completed', label: 'Completed', state: 'completed' },
+    { value: 'loading', label: 'Loading', state: 'loading' },
+    { value: 'error', label: 'Error', state: 'error' },
+    { value: 'incomplete', label: 'Incomplete', state: 'incomplete' },
+    { value: 'disabled', label: 'Disabled', state: 'incomplete', disabled: true },
+  ]}
+/>
+```
+
+## Selection
+
+Use `defaultValue` to choose the initial phase and let `Steps` manage selection.
+When neither `defaultValue` nor `value` is supplied, the first option is selected.
+
+Use `value` with `onStateChange` when the application needs to validate a phase,
+update a route, or coordinate other content. Selection and process state remain
+separate. `Steps` does not complete work or enable future phases automatically.
+
+Select **Complete setup** to mark setup complete, enable **Next steps**, and select
+it. **Reset setup** restores the initial state.
+
+```tsx
+import { useState } from 'react'
+import { Button, Steps, type StepOption } from '@antadesign/anta'
+
+function Demo() {
+  const [value, setValue] = useState('setup')
+  const [setupComplete, setSetupComplete] = useState(false)
+  const options: StepOption[] = [
+    { value: 'build', label: 'Build', state: 'completed' },
+    { value: 'setup', label: 'Setup', state: setupComplete ? 'completed' : 'loading' },
+    { value: 'next', label: 'Next steps', state: 'incomplete', disabled: !setupComplete },
+  ]
+
+  return (
+    <div style={{ width: '100%', maxWidth: '560px' }}>
+      <Steps
+        value={value}
+        label="Release progress"
+        options={options}
+        onStateChange={(_event, { next }) => next && setValue(next)}
+      />
+      <Button
+        style={{ marginTop: '16px' }}
+        label={setupComplete ? 'Reset setup' : 'Complete setup'}
+        priority="secondary"
+        onClick={() => {
+          setSetupComplete((complete) => !complete)
+          setValue(setupComplete ? 'setup' : 'next')
+        }}
+      />
+    </div>
+  )
+}
+```
+
+## Flow actions
+
+Place **Back** and **Continue** beside `Steps` when the flow needs sequential
+navigation. Keep validation, saving, and completion in the application.
+
+These buttons change only the selected phase. The connectors keep reflecting the
+states in `options`.
+
+```tsx
+import { useState } from 'react'
+import { Button, Steps, type StepOption } from '@antadesign/anta'
+
+function Demo() {
+  const options: StepOption[] = [
+    { value: 'build', label: 'Build', state: 'completed' },
+    { value: 'setup', label: 'Setup', state: 'loading' },
+    { value: 'next', label: 'Next steps', state: 'incomplete' },
+  ]
+  const [value, setValue] = useState('setup')
+  const index = options.findIndex((option) => option.value === value)
+
+  return (
+    <div style={{ width: '100%', maxWidth: '560px' }}>
+      <Steps
+        value={value}
+        tone="brand"
+        label="Deployment progress"
+        options={options}
+        onStateChange={(_event, { next }) => next && setValue(next)}
+      />
+      <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+        <Button
+          label="Back"
+          priority="tertiary"
+          tone="brand"
+          disabled={index <= 0}
+          onClick={() => setValue(options[index - 1].value)}
+        />
+        <Button
+          label="Continue"
+          priority="secondary"
+          tone="brand"
+          disabled={index >= options.length - 1}
+          onClick={() => setValue(options[index + 1].value)}
+        />
+      </div>
+    </div>
+  )
+}
+```
+
+## Panels
+
+Add a [TabPanel](./tabs.md#panels) for each phase's content and match its `value` to
+an option. Selecting a phase reveals its panel. Inactive panels stay mounted,
+so their local state is preserved.
+
+Omit panels when a router or another part of the application renders the content.
+Use controlled selection when you need to place content elsewhere or unmount
+inactive content.
+
+```tsx
+const panelStyle = {
+  minHeight: '72px',
+  marginTop: '16px',
+  padding: '16px',
+  border: '1px solid var(--border-4)',
+  borderRadius: '8px',
+};
+
+<Steps
+  defaultValue="setup"
+  label="Deployment progress"
+  options={[
+    { value: 'build', label: 'Build', state: 'completed' },
+    { value: 'setup', label: 'Setup', state: 'loading' },
+    { value: 'next', label: 'Next steps', state: 'incomplete' },
+  ]}
+>
+  <TabPanel value="build" style={panelStyle}><Text size="small">Build output and artifacts are ready.</Text></TabPanel>
+  <TabPanel value="setup" style={panelStyle}><Text size="small">Preparing the deployment environment.</Text></TabPanel>
+  <TabPanel value="next" style={panelStyle}><Text size="small">Review the deployment and share the result.</Text></TabPanel>
+</Steps>
+```
+
+## Orientation
+
+Use the default horizontal layout for a compact progress strip. Labels shorten
+when space is limited, and the strip scrolls when needed.
+
+Set `orientation="vertical"` for a stacked sequence. Its active panel appears
+between the selected phase and the next phase. Select a different phase to see
+the content move with it.
+
+```tsx
+<div style={{ width: '100%', maxWidth: '480px' }}>
+  <Steps
+    orientation="vertical"
+    defaultValue="setup"
+    label="Deployment progress"
+    options={[
+      { value: 'build', label: 'Build', state: 'completed' },
+      { value: 'setup', label: 'Setup', state: 'loading' },
+      { value: 'next', label: 'Next steps', state: 'incomplete' },
+    ]}
+  >
+    <TabPanel value="build"><Text size="small">Build output and artifacts are ready.</Text></TabPanel>
+    <TabPanel value="setup"><Text size="small">Preparing the deployment environment.</Text></TabPanel>
+    <TabPanel value="next"><Text size="small">Review the deployment and share the result.</Text></TabPanel>
+  </Steps>
+</div>
+```
+
+## Width
+
+The step strip fits its content by default. Pass `fill` to spread horizontal steps across
+the container. Connectors use the available space between phases.
+
+```tsx
+<Steps
+  fill
   defaultValue="review"
   label="Deployment progress"
   options={[
@@ -59,72 +236,131 @@ controls marker shape and selection styling.
 />
 ```
 
-## Tone
+## Size
 
-Set `tone` on `Steps` to color active and completed markers and completed
-connectors. Set `option.tone` when one step needs an override. Error steps stay
-critical and disabled steps stay neutral. The active theme controls label colors,
-marker fills, and outlines.
+Use `small` for compact layouts, the default `medium` for general use, and `large`
+when the sequence needs more prominence. Markers and text scale together.
 
 ```tsx
-const options = [
-  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
-  { value: 'current', label: 'Validate', hint: 'Checking dependencies', state: 'loading' },
-  { value: 'review', label: 'Review', hint: 'Needs attention', state: 'incomplete', tone: 'warning' },
-  { value: 'deploy', label: 'Deploy', hint: 'Waiting', state: 'incomplete', tone: 'info' },
-  { value: 'error', label: 'Error', hint: 'Resolve before continuing', state: 'error' },
-]
-
-<Steps tone="brand" defaultValue="current" options={options} />
+<div style={{ display: 'grid', gap: '20px', width: '100%' }}>
+  {(['small', 'medium', 'large'] as const).map((size) => (
+    <Steps
+      key={size}
+      size={size}
+      defaultValue="setup"
+      label={`${size} steps`}
+      options={[
+        { value: 'build', label: 'Build', state: 'completed' },
+        { value: 'setup', label: 'Setup', state: 'loading' },
+        { value: 'next', label: 'Next steps', state: 'incomplete', disabled: true },
+      ]}
+    />
+  ))}
+</div>
 ```
 
-Labels and hints ellipsize within each step. Hovering or focusing a clipped step
-shows its full label and hint in a tooltip.
+## Priority
 
-Steps and option tones are `neutral` (default), `brand`, `info`, `success`,
-`warning`, and `critical`. Options inherit the Steps tone until `option.tone` is
-set. Omit the Steps tone, or pass an empty string, for neutral; set an option to
-`neutral` or an empty string to opt it out of an inherited tone.
+Use `primary` to emphasize active and completed markers with solid fills.
+`secondary` is the default and uses a subtle selected fill. Use `tertiary` for
+compact markers without a background or outline.
+
+The theme controls marker shape and selection styling. These examples use the
+same phases and brand tone at each priority.
+
+```tsx
+<div style={{ display: 'grid', gap: '16px', width: '100%' }}>
+  {(['primary', 'secondary', 'tertiary'] as const).map((priority) => (
+    <div key={priority} style={{ display: 'grid', gap: '6px' }}>
+      <Text size="small" tone="neutral">{priority}</Text>
+      <Steps
+        fill
+        priority={priority}
+        tone="brand"
+        defaultValue="review"
+        label={`${priority} deployment progress`}
+        options={[
+          { value: 'build', label: 'Build', state: 'completed' },
+          { value: 'review', label: 'Review', state: 'loading' },
+          { value: 'deploy', label: 'Deploy', state: 'incomplete' },
+        ]}
+      />
+    </div>
+  ))}
+</div>
+```
+
+## Tone
+
+Set `tone` on `Steps` to color the markers and completed connectors. Use
+`option.tone` when one phase needs a different tone. Error steps stay critical,
+and disabled steps stay neutral. The theme controls label colors, fills, and
+outlines.
+
+This sequence uses a brand tone, with warning and info overrides. Keep the meaning
+in labels and hints so people can understand it without color.
+
+```tsx
+<Steps
+  fill
+  tone="brand"
+  defaultValue="current"
+  label="Deployment progress"
+  options={[
+    { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
+    { value: 'current', label: 'Validate', hint: 'Checking dependencies', state: 'loading' },
+    { value: 'review', label: 'Review', hint: 'Needs attention', state: 'incomplete', tone: 'warning' },
+    { value: 'deploy', label: 'Deploy', hint: 'Waiting', state: 'incomplete', tone: 'info' },
+    { value: 'error', label: 'Error', hint: 'Resolve before continuing', state: 'error' },
+  ]}
+/>
+```
+
+The named tones are `neutral`, `brand`, `info`, `success`, `warning`, and
+`critical`. Omitting the Steps tone, or passing an empty string, uses neutral.
+Options inherit the Steps tone when their tone is omitted or empty. Set an
+option's `tone="neutral"` to override an inherited tone.
 
 ## Markers and hints
 
-Marker precedence is:
+Numbers are the default for incomplete and disabled phases in every theme.
+Use `marker` to replace a phase's number or state indicator with a specific number
+or an Anta icon shape. Add `hint` for supporting text such as a saved result or
+what remains to do.
 
-1. `renderMarker(...)` result, unless it returns `undefined`
-2. `option.marker`
-3. Step number for incomplete or disabled phases, otherwise the state indicator
-
-Return `null` from `renderMarker` for an intentionally empty ring.
-
-Step numbers follow the option order, starting at 1. Loading, completed, and error
-states replace the number with their built-in indicator. A custom number marker
-is shown directly; an icon-shape string renders an `Icon`.
-`hint` adds secondary text.
+Labels and hints shorten when space is limited. Hover or focus a clipped phase to
+read its full label and hint in a tooltip.
 
 ```tsx
-const options = [
-  { value: 'draft', label: 'Draft', hint: 'Saved', state: 'completed', marker: 1 },
-  { value: 'approval', label: 'Approval', hint: 'In review', state: 'loading', marker: 'hourglass' },
-  { value: 'publish', label: 'Publish', hint: 'Not started', state: 'incomplete', marker: 'send' },
-]
-
-<Steps defaultValue="approval" label="Publishing progress" options={options} />
-```
-
-Use `renderMarker` when a marker depends on the current step state. Its returned
-node wins; return `undefined` to fall back to `marker`, then the state marker.
-
-```tsx
-const options = [
-  { value: 'draft', label: 'Draft', state: 'completed', marker: 1 },
-  { value: 'approval', label: 'Approval', state: 'loading' },
-  { value: 'publish', label: 'Publish', state: 'incomplete', marker: 'send' },
-]
-
 <Steps
   defaultValue="approval"
-  label="Publishing progress"
-  options={options}
+  label="Custom step markers"
+  options={[
+    { value: 'draft', label: 'Draft', hint: 'Content saved', state: 'completed', marker: 1 },
+    { value: 'approval', label: 'Approval', hint: 'Waiting for review', state: 'loading' },
+    { value: 'publish', label: 'Publish', hint: 'Not started', state: 'incomplete', marker: 'send' },
+  ]}
+/>
+```
+
+### State-aware markers
+
+Use `renderMarker` when the marker depends on the phase's state or selection.
+Its result takes precedence over `marker`. Return `undefined` to use `marker`
+or the built-in number or state indicator. Return `null` to leave the marker empty.
+
+This example replaces the loading indicator with an icon that changes when
+**Approval** is selected.
+
+```tsx
+<Steps
+  defaultValue="approval"
+  label="Custom step markers"
+  options={[
+    { value: 'draft', label: 'Draft', hint: 'Content saved', state: 'completed', marker: 1 },
+    { value: 'approval', label: 'Approval', hint: 'Waiting for review', state: 'loading' },
+    { value: 'publish', label: 'Publish', hint: 'Not started', state: 'incomplete', marker: 'send' },
+  ]}
   renderMarker={(option, { selected }) =>
     option.state === 'loading'
       ? <Icon shape={selected ? 'refresh-ccw-dot' : 'hourglass'} />
@@ -133,112 +369,65 @@ const options = [
 />
 ```
 
-## Panels
-
-Add a [`TabPanel`](./tabs.md#panels) with the same `value` as its option. Panels stay
-mounted while inactive. Omit them when a router renders the content.
-
-## Selection
-
-Use `defaultValue` for uncontrolled selection. Use `value` and `onStateChange`
-when the application owns it.
-
-```tsx
-const options = [
-  { value: 'build', label: 'Build', state: 'completed' },
-  { value: 'setup', label: 'Setup', state: 'loading' },
-  { value: 'next', label: 'Next steps', state: 'incomplete' },
-]
-const [phase, setPhase] = useState('setup')
-
-<Steps
-  value={phase}
-  tone="brand"
-  options={options}
-  onStateChange={(_event, { next }) => next && setPhase(next)}
-/>
-```
-
-The application also owns state changes and decides when to enable future
-steps. `Steps` does not advance or complete them automatically.
-
-### Flow actions
-
-Place Back and Continue beside `Steps` so validation and side effects stay in the
-application.
-
-```tsx
-const options = [
-  { value: 'build', label: 'Build', state: 'completed' },
-  { value: 'setup', label: 'Setup', state: 'loading' },
-  { value: 'next', label: 'Next steps', state: 'incomplete' },
-]
-const [phase, setPhase] = useState('setup')
-const index = options.findIndex((option) => option.value === phase)
-
-<Steps
-  value={phase}
-  options={options}
-  onStateChange={(_event, { next }) => next && setPhase(next)}
-/>
-<Button label="Back" disabled={index === 0} onClick={() => setPhase(options[index - 1].value)} />
-<Button label="Continue" disabled={index === options.length - 1} onClick={() => setPhase(options[index + 1].value)} />
-```
-
-## Size
-
-Use `small`, `medium` (default), or `large` to scale markers and text.
-
-```tsx
-<Steps
-  size="small"
-  options={[
-    { value: 'build', label: 'Build', state: 'completed' },
-    { value: 'setup', label: 'Setup', state: 'loading' },
-    { value: 'next', label: 'Next steps', state: 'incomplete' },
-  ]}
-/>
-```
-
-## Orientation
-
-Horizontal steps scroll when needed. Vertical steps place the active panel before
-the next step. This layout uses external CSS and needs no inline style attributes
-under a strict [Content Security Policy](../install-config.md#content-security-policy).
-
-```tsx
-<Steps
-  orientation="vertical"
-  options={[
-    { value: 'build', label: 'Build', state: 'completed' },
-    { value: 'setup', label: 'Setup', state: 'loading' },
-    { value: 'next', label: 'Next steps', state: 'incomplete' },
-  ]}
->
-  <TabPanel value="build"><Text size="small">Build output is ready.</Text></TabPanel>
-  <TabPanel value="setup"><Text size="small">Preparing the environment.</Text></TabPanel>
-  <TabPanel value="next"><Text size="small">Review the result.</Text></TabPanel>
-</Steps>
-```
-
 ## Keyboard and accessibility
 
-Pass `label` to name the tablist. Arrow keys follow the orientation; `Home` and
-`End` move to the edges; `Enter` and `Space` activate a focused step. Disabled
-steps are skipped.
+Pass `label` to name the sequence. Steps uses the [Tabs keyboard
+pattern](./tabs.md#keyboard-accessibility): Left and Right move through horizontal
+steps, while Up and Down move through vertical steps. Arrow keys wrap at the ends.
+`Home` and `End` move to the first and last enabled steps. Selection follows focus;
+`Enter` and `Space` also activate the focused step. Disabled steps are skipped.
 
-Markers and connectors are decorative. Put important state text in the active
-panel or an application-owned live region.
+Markers and connectors are decorative. Include important state information in
+labels, hints, or the active panel. Use an application-owned live region when a
+background state change needs to be announced.
 
 ## Events
 
-Events match [`Tabs`](./tabs.md#events).
+Selection events match [Tabs events](./tabs.md#events). They report a change of
+selected phase. The application manages process states separately.
 
 | Callback | When | Cancelable | Payload |
-|---|---|---|---|
-| `onStateChange(event, { next, prev })` | Before selection | Yes | Next and previous values |
-| `onChange(event)` | After selection | No | Native `change` event |
-| `onValueChange(event, { value })` | After selection | No | Selected value |
+| --- | --- | --- | --- |
+| `onStateChange(event, { next, prev })` | Before selection is applied | Yes | Next and previous values |
+| `onChange(event)` | After selection changes | No | Native `change` event |
+| `onValueChange(event, { value })` | After selection changes | No | Selected value |
+
+For uncontrolled selection, call `event.preventDefault()` in `onStateChange` to
+reject a request. For controlled selection, update `value` to accept the request.
+
+## Styling
+
+Use `priority`, `tone`, `size`, `orientation`, and `fill` for the supported visual
+choices. For further changes, target the light-DOM markers or connector
+pseudo-elements. Each option also accepts `className`, `style`, and `data-*`
+attributes.
+
+`className` on `Steps` applies to `a-steps`. The `.dotted-steps` class scopes this
+example; replace it with your own selector.
+
+For a dotted connector, replace the horizontal connector's solid background
+with a border:
+
+```tsx title="Steps markup"
+<Steps
+  className="dotted-steps"
+  defaultValue="setup"
+  label="Deployment progress"
+  options={[
+    { value: 'build', label: 'Build', state: 'completed' },
+    { value: 'setup', label: 'Setup', state: 'loading' },
+    { value: 'next', label: 'Next steps', state: 'incomplete', disabled: true },
+  ]}
+/>
+```
+
+```css title="Connector CSS"
+.dotted-steps a-tab:not(:last-child)::before {
+  height: 0;
+  background: none;
+  border-block-start: 2px dotted var(--border-2-brand);
+}
+```
 
 ## Steps props
 
@@ -278,75 +467,41 @@ Events match [`Tabs`](./tabs.md#events).
 
 ## Web Component
 
-For framework-free use, compose the same light DOM that `Steps` emits.
-`a-steps` and its `a-step-*` children are structural elements styled by the
-shipped Steps stylesheet. The [Tabs Web Component](./tabs.md#web-component) inside
-owns selection and panel behavior; markers, states, and tones stay in your markup.
+For framework-free use, compose `a-steps` around the [Tabs Web
+Component](./tabs.md#web-component). The `a-step-*` tags provide the styled structure;
+`a-tabs` owns selection and panel behavior.
 
-```js
-import '@antadesign/anta/elements/a-steps'
-import '@antadesign/anta/elements/a-tabs'
-import '@antadesign/anta/elements/a-tab'
-import '@antadesign/anta/elements/a-tabpanel'
-```
+Author numbers, icons, process states, and tones in your markup. Automatic number
+and state-marker rendering belongs to the JSX `Steps` wrapper. Set
+`data-step-state="completed"` to color a step's outgoing connector.
 
 ```html
-<div>
-  <a-steps>
-    <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" default-state="setup" data-steps fill noslide>
-      <a-tab role="tab" value="build" tabindex="0" tone="success">
-        <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
-        <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>
-      </a-tab>
-      <a-tab role="tab" value="setup" tabindex="-1" tone="brand">
-        <a-step-marker aria-hidden="true"><a-loader></a-loader></a-step-marker>
-        <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
-      </a-tab>
-      <a-tab role="tab" value="review" tabindex="-1">
-        <a-step-marker aria-hidden="true">3</a-step-marker>
-        <a-step-desc><a-tab-label>Review</a-tab-label><a-step-hint>Waiting</a-step-hint></a-step-desc>
-      </a-tab>
-    </a-tabs>
-    <a-tabpanel role="tabpanel" value="build">Build output is ready.</a-tabpanel>
-    <a-tabpanel role="tabpanel" value="setup">Prepare the environment.</a-tabpanel>
-    <a-tabpanel role="tabpanel" value="review">Review the result.</a-tabpanel>
-  </a-steps>
-</div>
-```
+<script type="module">
+  import '@antadesign/anta/elements/a-steps'
+  import '@antadesign/anta/elements/a-tabs'
+  import '@antadesign/anta/elements/a-tab'
+  import '@antadesign/anta/elements/a-tabpanel'
+  import '@antadesign/anta/elements/a-icon'
+  import '@antadesign/anta/elements/a-loader'
+</script>
 
-## Styling
-
-Use `priority`, `size`, and `orientation` first. Set `tone` on each option. Each
-option also accepts `className`, `style`, and `data-*` attributes. Markers are
-light DOM; connectors are pseudo-elements.
-
-**Dotted connector.** For horizontal steps, replace the connector's solid
-background with a dotted border:
-
-```css
-.dotted-steps a-tab:not(:last-child)::before {
-  height: 0;
-  background: none;
-  border-block-start: 2px dotted var(--border-2-brand);
-}
-```
-
-`className` on `Steps` applies to `a-steps`. `.dotted-steps` is only the demo
-scope; use your own selector when applying the rule.
-
-**Fill the container.** Pass `fill` to spread horizontal steps across their
-container. The connectors take the remaining space, placing the middle step in
-the middle and the last step at the far edge.
-
-```tsx
-<Steps
-  fill
-  defaultValue="review"
-  label="Deployment progress"
-  options={[
-    { value: 'build', label: 'Build', state: 'completed' },
-    { value: 'review', label: 'Review', state: 'loading' },
-    { value: 'deploy', label: 'Deploy', state: 'incomplete' },
-  ]}
-/>
+<a-steps>
+  <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" default-state="setup" data-steps fill noslide>
+    <a-tab role="tab" value="build" tabindex="-1" tone="success" data-step-state="completed">
+      <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
+      <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>
+    </a-tab>
+    <a-tab role="tab" value="setup" tabindex="0" tone="brand" data-step-state="loading">
+      <a-step-marker aria-hidden="true"><a-loader></a-loader></a-step-marker>
+      <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
+    </a-tab>
+    <a-tab role="tab" value="review" tabindex="-1" data-step-state="incomplete">
+      <a-step-marker aria-hidden="true">3</a-step-marker>
+      <a-step-desc><a-tab-label>Review</a-tab-label><a-step-hint>Waiting</a-step-hint></a-step-desc>
+    </a-tab>
+  </a-tabs>
+  <a-tabpanel role="tabpanel" value="build">Build output is ready.</a-tabpanel>
+  <a-tabpanel role="tabpanel" value="setup">Prepare the environment.</a-tabpanel>
+  <a-tabpanel role="tabpanel" value="review">Review the result.</a-tabpanel>
+</a-steps>
 ```

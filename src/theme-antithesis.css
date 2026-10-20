@@ -753,7 +753,7 @@
       --steps-marker-fg: var(--steps-on-solid);
       --steps-marker-edge: none;
     }
-    a-tabs[data-steps][priority="secondary"] > a-tab[data-step-state="error"]:not(:state(selected), [disabled]):hover {
+    a-tabs[data-steps][priority="secondary"] > a-tab:is([data-step-state="error"], [data-step-state="completed"][tone]:not([tone=""], [tone="neutral"])):not(:state(selected), [disabled]):hover {
       --steps-marker-bg: color-mix(in oklch, var(--steps-tone-solid) 20%, transparent);
       --steps-marker-fg: var(--steps-tone-edge);
       --steps-marker-edge: inset 0 0 2px -1px var(--text-2);

@@ -19,7 +19,8 @@ changes are not listed.
 
 - [Steps](/steps/#priority) improves secondary marker contrast in Antithesis with
   lighter tints, stronger foreground colors, and a clearer hover fill. Completed
-  steps also show hover feedback across all three priorities.
+  steps also show hover feedback across all three priorities. Primary and
+  secondary steps share the same hover surface for completed and upcoming steps.
 
 - [Steps](/steps/#orientation) keeps vertical tertiary connectors aligned through
   active panels in every theme.

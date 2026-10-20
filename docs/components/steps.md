@@ -199,8 +199,8 @@ when space is limited, and the strip scrolls when needed.
 
 Set `orientation="vertical"` for a stacked sequence. Its active panel appears
 between the selected phase and the next phase. Select a different phase to see
-the content move with it. Compare all three priorities here; **Build** is completed
-with a brand tone in each sequence.
+the content move with it. All three priorities use a brand tone, with **Build**
+completed and **Setup** selected.
 
 ```tsx
 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', alignItems: 'start', gap: '24px', width: '100%' }}>
@@ -210,10 +210,11 @@ with a brand tone in each sequence.
       <Steps
         priority={priority}
         orientation="vertical"
+        tone="brand"
         defaultValue="setup"
         label={`${priority} deployment progress`}
         options={[
-          { value: 'build', label: 'Build', state: 'completed', tone: 'brand' },
+          { value: 'build', label: 'Build', state: 'completed' },
           { value: 'setup', label: 'Setup', state: 'loading' },
           { value: 'next', label: 'Next steps', state: 'incomplete' },
         ]}

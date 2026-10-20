@@ -228,10 +228,11 @@ export function Vertical() {
           <Steps
             priority={priority}
             orientation="vertical"
+            tone="brand"
             defaultValue="setup"
             label={`${priority} deployment progress`}
             options={[
-              { value: 'build', label: 'Build', state: 'completed', tone: 'brand' },
+              { value: 'build', label: 'Build', state: 'completed' },
               { value: 'setup', label: 'Setup', state: 'loading' },
               { value: 'next', label: 'Next steps', state: 'incomplete' },
             ]}

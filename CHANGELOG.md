@@ -7,8 +7,8 @@ changes are not listed.
 
 ### Changed
 
-- [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary priority across all
-  themes.
+- [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary
+  priority across all themes.
 - [Steps](/steps/) uses square markers, a separate selection ring,
   and the theme's control fills in Antithesis.
 - [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by
@@ -20,8 +20,8 @@ changes are not listed.
 - [Steps](/steps/#orientation) keeps vertical tertiary connectors aligned through
   active panels in every theme.
 
-- Steps keeps text blocks at least `4ch` wide and scrolls narrow sequences
-  without overlapping markers. Empty text blocks have no minimum.
+- [Steps](/steps/#width) keeps text blocks at least `4ch` wide and scrolls narrow
+  sequences without overlapping markers. Empty text blocks have no minimum.
 
 - Input and InputTime keep single-icon actions square with Tooltip content in
   raw HTML and JSX.

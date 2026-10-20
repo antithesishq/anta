@@ -450,7 +450,10 @@ export class ATooltipElement extends HTMLElementBase {
       // overflow, so consume the element's read-only UI-thread measurement first.
       if (reportsTruncation(target)) return target.isTruncated
       if (target.clientWidth === 0 && target.clientHeight === 0) return false
-      return target.scrollWidth - target.clientWidth > 1 || target.scrollHeight - target.clientHeight > 1
+      if (target.scrollWidth - target.clientWidth > 1) return true
+      // Tight line heights can produce vertical font overflow without an ellipsis.
+      if (this.view.getComputedStyle(target).whiteSpace === 'nowrap') return false
+      return target.scrollHeight - target.clientHeight > 1
     })
   }
 

@@ -25,6 +25,7 @@ const stateExamples: StepOption[] = [
   { value: 'loading', label: 'Loading', state: 'loading' },
   { value: 'error', label: 'Error', state: 'error' },
   { value: 'incomplete', label: 'Incomplete', state: 'incomplete' },
+  { value: 'disabled', label: 'Disabled', state: 'incomplete', disabled: true },
 ]
 
 const toneExamples: StepOption[] = [
@@ -74,13 +75,39 @@ export function State() {
   useElements()
   return (
     <div style={{ width: '100%' }}>
-      <Steps fill defaultValue="loading" label="Task state" options={stateExamples}>
-        <TabPanel value="completed" style={panel}>{panelText('This work is complete and ready to use.')}</TabPanel>
-        <TabPanel value="loading" style={panel}>{panelText('This work is currently running.')}</TabPanel>
-        <TabPanel value="error" style={panel}>{panelText('Resolve this error before continuing.')}</TabPanel>
-        <TabPanel value="incomplete" style={panel}>{panelText('This work has not started yet.')}</TabPanel>
-      </Steps>
+      <Steps fill defaultValue="loading" label="Task state" options={stateExamples} />
     </div>
+  )
+}
+
+export function Basic() {
+  useElements()
+  return (
+    <Steps
+      defaultValue="repository"
+      tone="brand"
+      label="Project setup"
+      options={[
+        { value: 'project', label: 'Project details', hint: 'payments-service', state: 'completed' },
+        { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete' },
+        { value: 'review', label: 'Review', hint: 'Not started', state: 'incomplete' },
+      ]}
+    />
+  )
+}
+
+export function Panels() {
+  useElements()
+  return (
+    <Steps defaultValue="setup" label="Deployment progress" options={[
+      { value: 'build', label: 'Build', state: 'completed' },
+      { value: 'setup', label: 'Setup', state: 'loading' },
+      { value: 'next', label: 'Next steps', state: 'incomplete' },
+    ]}>
+      <TabPanel value="build" style={panel}>{panelText('Build output and artifacts are ready.')}</TabPanel>
+      <TabPanel value="setup" style={panel}>{panelText('Preparing the deployment environment.')}</TabPanel>
+      <TabPanel value="next" style={panel}>{panelText('Review the deployment and share the result.')}</TabPanel>
+    </Steps>
   )
 }
 
@@ -118,6 +145,11 @@ export function Tones() {
       />
     </div>
   )
+}
+
+export function Markers() {
+  useElements()
+  return <Steps defaultValue="approval" label="Custom step markers" options={customExamples} />
 }
 
 export function Customization() {
@@ -189,21 +221,28 @@ export function Sizes() {
 export function Vertical() {
   useElements()
   return (
-    <div style={{ width: '100%', maxWidth: '480px' }}>
-      <Steps
-        orientation="vertical"
-        defaultValue="setup"
-        label="Deployment progress"
-        options={[
-          { value: 'build', label: 'Build', state: 'completed' },
-          { value: 'setup', label: 'Setup', state: 'loading' },
-          { value: 'next', label: 'Next steps', state: 'incomplete' },
-        ]}
-      >
-        <TabPanel value="build">{panelText('Build output and artifacts are ready.')}</TabPanel>
-        <TabPanel value="setup">{panelText('Preparing the deployment environment.')}</TabPanel>
-        <TabPanel value="next">{panelText('Review the deployment and share the result.')}</TabPanel>
-      </Steps>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', alignItems: 'start', gap: '24px', width: '100%' }}>
+      {(['primary', 'secondary', 'tertiary'] as const).map((priority) => (
+        <div key={priority} style={{ display: 'grid', gap: '12px' }}>
+          <Text size="small" tone="neutral">{priority}</Text>
+          <Steps
+            priority={priority}
+            orientation="vertical"
+            tone="brand"
+            defaultValue="setup"
+            label={`${priority} deployment progress`}
+            options={[
+              { value: 'build', label: 'Build', state: 'completed' },
+              { value: 'setup', label: 'Setup', state: 'loading' },
+              { value: 'next', label: 'Next steps', state: 'incomplete' },
+            ]}
+          >
+            <TabPanel value="build">{panelText('Build output and artifacts are ready.')}</TabPanel>
+            <TabPanel value="setup">{panelText('Preparing the deployment environment.')}</TabPanel>
+            <TabPanel value="next">{panelText('Review the deployment and share the result.')}</TabPanel>
+          </Steps>
+        </div>
+      ))}
     </div>
   )
 }

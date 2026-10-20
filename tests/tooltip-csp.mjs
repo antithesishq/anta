@@ -87,6 +87,7 @@ before(async () => {
     assets.set(`/${framework}.js`, client.outputFiles.find(f=>f.path.endsWith('.js')).text)
   }
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
+  assets.set('/truncation.css', `.single-line-target{display:block;width:160px;font-family:system-ui;font-size:20px;line-height:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vertical-target{display:block;width:160px;height:12px;font-size:12px;line-height:12px;white-space:normal;overflow:hidden}`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .anchor{position:absolute;left:300px;top:180px;width:140px;height:40px} .second{left:450px} .third{left:600px} .edge{left:2px;top:2px} .bottom{top:440px} .clip,.clamp{display:block;width:130px;max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis} .override::part(bubble){background:rgb(30,40,50);color:white;padding:12px;border-radius:11px;box-shadow:none;backdrop-filter:none} .content{font-size:18px;font-weight:600} a-tooltip::part(container){z-index:1}`)
   server = createServer((req,res) => {
     const url = new URL(req.url,'http://localhost'), mode = url.searchParams.get('mode') ?? 'granular'
@@ -207,6 +208,28 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.match(await page.locator('a-tooltip').evaluate(n=>n.shadowRoot.querySelector('slot').textContent),/long label/)
     await mount(page);await show(page);await page.locator('a-tooltip').evaluate(n=>n.textContent='');await waitOpen(page,'a-tooltip',false)
     await page.locator('a-tooltip').evaluate(n=>n.textContent='Changed content');await page.mouse.move(10,10);await page.locator('#anchor').hover();await waitOpen(page)
+  })
+  test.fast(`${name}: single-line ellipsis ignores font-height overflow and preserves vertical clipping`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/truncation.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/truncation.css')))
+    for(const part of ['a-tab-label','a-step-hint']) {
+      await mount(page,`<a-steps><a-tabs data-steps priority="secondary" default-state="draft"><a-tab id="anchor" value="draft"><a-step-marker>1</a-step-marker><a-step-desc><${part} class="single-line-target">Short text</${part}></a-step-desc><a-tooltip truncated-only delay="30">Full step text</a-tooltip></a-tab></a-tabs></a-steps>`)
+      const target=page.locator('.single-line-target')
+      const overflow=await target.evaluate(n=>({x:n.scrollWidth-n.clientWidth,y:n.scrollHeight-n.clientHeight}))
+      assert.ok(overflow.x<=1)
+      // Font ink contributes to scrollHeight in Chromium, but not every engine.
+      if(engine===chromium)assert.ok(overflow.y>1)
+      await show(page);assert.equal(await open(page),false)
+      await target.evaluate(n=>n.textContent='A long step description that must be ellipsized')
+      assert.ok(await target.evaluate(n=>n.scrollWidth-n.clientWidth>1))
+      await show(page);await waitOpen(page)
+      await page.keyboard.press('Escape');await waitOpen(page,'a-tooltip',false)
+      await target.evaluate(n=>n.textContent='Short text')
+      await show(page);assert.equal(await open(page),false)
+    }
+    await mount(page,'<div id="anchor"><span class="vertical-target">First line<br>Second line<br>Third line</span><a-tooltip truncated-only truncated-selector=".vertical-target" delay="30">Full multi-line text</a-tooltip></div>')
+    await show(page);await waitOpen(page)
   })
   test.fast(`${name}: touch long-press, quick tap, drag, and scrolling cancellation`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page)

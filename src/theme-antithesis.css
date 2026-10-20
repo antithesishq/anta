@@ -609,6 +609,269 @@
     --tab-padding-x: round(0.8em, 1px);
   }
 
+  a-steps {
+    --steps-marker-size: 32px;
+    --steps-icon-size: 16px;
+    --steps-number-size: 13px;
+    --steps-marker-radius: 2px;
+    --steps-ring-space: 4px;
+    --steps-connector-color: var(--border-4);
+    --steps-connector-width: 1px;
+    --steps-complete-connector-color: var(--fill-1);
+    --steps-hint-leading: 14px;
+  }
+
+  a-steps:has(> a-tabs[size="small"]) {
+    --steps-marker-size: 24px;
+    --steps-icon-size: 14px;
+    --steps-number-size: 12px;
+  }
+
+  a-steps:has(> a-tabs[size="large"]) {
+    --steps-marker-size: 40px;
+    --steps-icon-size: 20px;
+    --steps-number-size: 15px;
+    --steps-hint-leading: 18px;
+  }
+
+  a-steps:has(> a-tabs[priority="tertiary"]),
+  a-tabs[data-steps][priority="tertiary"] {
+    --steps-marker-size: calc(var(--steps-icon-size) + 4px);
+  }
+
+  a-steps:has(> a-tabs:not([priority="tertiary"])) {
+    --steps-item-gap: 12px;
+  }
+
+  a-steps:has(> a-tabs[size="small"]:not([priority="tertiary"])) {
+    --steps-item-gap: 8px;
+  }
+
+  a-steps:has(> a-tabs[size="large"]:not([priority="tertiary"])) {
+    --steps-item-gap: 14px;
+  }
+
+  a-tabs[data-steps] {
+    --steps-connector-width: 1px;
+    --steps-connector-color: var(--border-4);
+  }
+
+  /* The scrollport reserves the selected marker's outward ring. */
+  a-tabs[data-steps]:not([orientation="vertical"]) {
+    box-sizing: content-box;
+    padding: var(--steps-ring-space);
+    margin: calc(-1 * var(--steps-ring-space));
+  }
+
+  a-tabs[data-steps][fill]:not([orientation="vertical"]) {
+    width: 100%;
+  }
+
+  a-tabs[data-steps] > a-tab {
+    --steps-tone-solid: var(--fill-1);
+    --steps-tone-hover: var(--fill-1-hover);
+    --steps-tone-edge: var(--text-2);
+    --steps-on-solid: var(--label-on-fill);
+    --steps-tone-tint: color-mix(in oklch, var(--steps-tone-solid) 10%, transparent);
+    --steps-complete-connector-color: var(--steps-tone-solid);
+    --steps-marker-bg: var(--bg-4);
+    --steps-marker-fg: var(--text-3);
+    --steps-marker-edge: inset 0 0 2px -1px var(--text-3);
+    --steps-label-fg: var(--text-2);
+    --steps-hint-fg: var(--text-4);
+  }
+
+  a-tabs[data-steps] > a-tab[tone="brand"] {
+    --steps-tone-solid: var(--fill-1-brand);
+    --steps-tone-hover: var(--fill-1-brand-hover);
+    --steps-tone-edge: var(--text-2-brand);
+  }
+  a-tabs[data-steps] > a-tab[tone="info"] {
+    --steps-tone-solid: var(--fill-1-info);
+    --steps-tone-hover: var(--fill-1-info-hover);
+    --steps-tone-edge: var(--text-2-info);
+  }
+  a-tabs[data-steps] > a-tab[tone="success"] {
+    --steps-tone-solid: var(--fill-1-success);
+    --steps-tone-hover: var(--fill-1-success-hover);
+    --steps-tone-edge: var(--text-2-success);
+  }
+  a-tabs[data-steps] > a-tab[tone="warning"] {
+    --steps-tone-solid: light-dark(var(--fill-1-warning-active), var(--fill-1-warning));
+    --steps-tone-hover: light-dark(color-mix(in oklch, var(--fill-1-warning-active) 90%, black), var(--fill-1-warning-hover));
+    --steps-tone-edge: var(--text-2-warning);
+  }
+  a-tabs[data-steps] > a-tab[tone="critical"] {
+    --steps-tone-solid: var(--fill-1-critical);
+    --steps-tone-hover: var(--fill-1-critical-hover);
+    --steps-tone-edge: var(--text-2-critical);
+    --steps-on-solid: var(--label-on-fill-critical);
+  }
+
+  a-tabs[data-steps] > a-tab[data-step-state="loading"] {
+    --steps-label-fg: var(--text-1);
+    --steps-hint-fg: var(--text-3);
+  }
+  /* The disabled guard must not outrank tertiary's transparent background. */
+  a-tabs[data-steps] > a-tab:is(:state(selected), [data-step-state="completed"], [data-step-state="error"]):where(:not([disabled])) {
+    --steps-marker-bg: var(--steps-tone-solid);
+    --steps-marker-fg: var(--steps-on-solid);
+    --steps-marker-edge: none;
+    --steps-label-fg: var(--text-1);
+    --steps-hint-fg: var(--text-3);
+  }
+  a-tabs[data-steps][priority="secondary"] > a-tab:is([data-step-state="completed"], [data-step-state="error"]):not([disabled]) {
+    --steps-marker-bg: var(--steps-tone-tint);
+    --steps-marker-fg: var(--steps-tone-edge);
+    --steps-marker-edge: inset 0 0 2px -0.5px var(--steps-tone-edge);
+  }
+  a-tabs[data-steps][priority="secondary"] > a-tab:state(selected):not([disabled]) {
+    --steps-marker-bg: color-mix(in oklch, var(--steps-tone-solid) 20%, transparent);
+    --steps-marker-fg: var(--steps-tone-edge);
+    --steps-marker-edge: inset 0 0 2px 0 var(--steps-tone-edge);
+  }
+  a-tabs[data-steps][priority="tertiary"] > a-tab {
+    --steps-marker-bg: transparent;
+    --steps-marker-edge: none;
+  }
+  a-tabs[data-steps][priority="tertiary"] > a-tab:is(:state(selected), [data-step-state="completed"], [data-step-state="error"]):not([disabled]) {
+    --steps-marker-fg: var(--steps-tone-solid);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    a-tabs[data-steps] > a-tab:not(:state(selected), [disabled], [data-step-state="error"]):hover {
+      --steps-marker-bg: var(--bg-5);
+      --steps-marker-fg: var(--text-2);
+      --steps-marker-edge: inset 0 0 2px -1px var(--text-2);
+      --steps-label-fg: var(--text-1);
+      --steps-hint-fg: var(--text-3);
+    }
+    a-tabs[data-steps] > a-tab[data-step-state="completed"]:not(:state(selected), [disabled]):hover {
+      --steps-marker-fg: var(--steps-tone-edge);
+    }
+    a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) > a-tab[data-step-state="completed"]:not(:state(selected), [disabled]):hover {
+      --steps-marker-bg: var(--steps-tone-hover);
+      --steps-marker-fg: var(--steps-on-solid);
+      --steps-marker-edge: none;
+    }
+    a-tabs[data-steps]:not([priority="tertiary"]) > a-tab[tone]:not([tone=""], [tone="neutral"], :state(selected), [disabled], [data-step-state="completed"], [data-step-state="error"]):hover,
+    a-tabs[data-steps][priority="secondary"] > a-tab:is([data-step-state="error"], [data-step-state="completed"][tone]:not([tone=""], [tone="neutral"])):not(:state(selected), [disabled]):hover {
+      --steps-marker-bg: color-mix(in oklch, var(--steps-tone-solid) 20%, transparent);
+      --steps-marker-fg: var(--steps-tone-edge);
+      --steps-marker-edge: inset 0 0 2px -1px var(--text-2);
+    }
+    a-tabs[data-steps][priority="tertiary"] > a-tab:hover {
+      --steps-marker-bg: transparent;
+      --steps-marker-edge: none;
+    }
+    a-tabs[data-steps][priority="tertiary"] > a-tab[data-step-state="completed"]:not(:state(selected), [disabled]):hover {
+      --steps-marker-fg: color-mix(in oklch, var(--steps-tone-solid) 80%, var(--text-1));
+    }
+  }
+
+  a-tabs[data-steps] > a-tab[disabled] {
+    --steps-marker-bg: var(--bg-3);
+    --steps-marker-fg: color-mix(in oklch, var(--text-5) 60%, transparent);
+    --steps-marker-edge: none;
+    --steps-label-fg: var(--text-5);
+    --steps-hint-fg: color-mix(in oklch, var(--text-5) 70%, transparent);
+  }
+  a-tabs[data-steps][priority="tertiary"] > a-tab[disabled] {
+    --steps-marker-bg: transparent;
+  }
+
+  a-tabs[data-steps] a-step-marker {
+    position: relative;
+    color: var(--steps-marker-fg);
+    background-color: var(--steps-marker-bg);
+    border: 0;
+    border-radius: var(--steps-marker-radius);
+    box-shadow: var(--steps-marker-edge);
+    font-size: var(--steps-number-size);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    transition: color var(--tab-timing), background-color var(--tab-timing), box-shadow var(--tab-timing);
+  }
+  a-tabs[data-steps] a-step-marker > a-loader {
+    color: inherit;
+  }
+  a-tabs[data-steps]:not([priority="tertiary"]) > a-tab:state(selected):not([disabled]) a-step-marker::after {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--steps-ring-space));
+    border: 2px solid color-mix(in oklch, var(--steps-tone-solid) 60%, transparent);
+    border-radius: var(--steps-marker-radius);
+    pointer-events: none;
+  }
+  a-tabs[data-steps] a-step-desc {
+    gap: 2px;
+  }
+  a-tabs[data-steps] a-step-desc > a-tab-label {
+    color: var(--steps-label-fg);
+    transition: color var(--tab-timing);
+  }
+  a-tabs[data-steps] a-step-hint {
+    color: var(--steps-hint-fg);
+    font-size: calc(1em - 1px);
+    transition: color var(--tab-timing);
+  }
+  a-tabs[data-steps]:not([orientation="vertical"], [priority="tertiary"]) > a-tab:not(:last-child)::before {
+    margin-inline-end: calc(1ch - 2 * var(--tab-padding-x) + var(--steps-ring-space));
+  }
+
+  a-tabs[data-steps]:not([priority="tertiary"]) {
+    --steps-connector-clearance: var(--steps-ring-space);
+  }
+
+  a-steps[data-orientation="vertical"] {
+    --steps-vertical-gap: calc(var(--steps-gap) + 20px);
+    --steps-line-start: 4px;
+    --steps-line-end: 4px;
+  }
+  a-steps[data-orientation="vertical"] > a-tabs > a-tab {
+    align-items: flex-start;
+  }
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] > a-tab > a-step-desc {
+    justify-content: center;
+    min-height: var(--steps-marker-size);
+  }
+  a-steps[data-orientation="vertical"] > a-tabs:not([priority="tertiary"]) > a-tab:state(selected) {
+    --steps-line-start: 6px;
+  }
+  a-steps[data-orientation="vertical"] > a-tabs:not([priority="tertiary"]) > a-tab:has(+ a-tab:state(selected)) {
+    --steps-line-end: 6px;
+  }
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] > a-tab:not(:last-child)::before {
+    inset-block-start: calc(var(--steps-marker-size) + var(--steps-line-start));
+    height: calc(100% - var(--steps-marker-size) + var(--steps-vertical-gap) - var(--steps-line-start) - var(--steps-line-end));
+  }
+  a-steps[data-orientation="vertical"]:has(> a-tabpanel:state(active)) > a-tabs[orientation="vertical"] > a-tab:state(selected):not(:last-child)::before {
+    height: calc(100% - var(--steps-marker-size) + var(--steps-vertical-gap) - var(--steps-line-start));
+  }
+  a-steps[data-orientation="vertical"] > a-tabpanel::before {
+    inset-block-end: calc(var(--steps-line-end) - var(--steps-vertical-gap));
+  }
+
+  /* The panel bridge inherits from Steps rather than its selected tab. */
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="brand"]) { --steps-complete-connector-color: var(--fill-1-brand); }
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="info"]) { --steps-complete-connector-color: var(--fill-1-info); }
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="success"]) { --steps-complete-connector-color: var(--fill-1-success); }
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="warning"]) { --steps-complete-connector-color: light-dark(var(--fill-1-warning-active), var(--fill-1-warning)); }
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="critical"]) { --steps-complete-connector-color: var(--fill-1-critical); }
+
+  @media (forced-colors: active) {
+    a-tabs[data-steps] a-step-marker {
+      color: CanvasText;
+      background: Canvas;
+      border: 1px solid CanvasText;
+      box-shadow: none;
+    }
+    a-tabs[data-steps] > a-tab:state(selected) a-step-marker::after {
+      border-color: Highlight;
+    }
+  }
+
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])) {
     --_padding-x-text: round(0.8em, 1px);

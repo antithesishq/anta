@@ -727,7 +727,7 @@
   a-tabs[data-steps][priority="secondary"] > a-tab:state(selected) {
     --steps-marker-bg: color-mix(in oklch, var(--steps-tone-solid) 20%, transparent);
     --steps-marker-fg: var(--steps-tone-edge);
-    --steps-marker-edge: inset 0 0 0 1px var(--steps-tone-solid);
+    --steps-marker-edge: inset 0 0 2px 0 var(--steps-tone-edge);
   }
   a-tabs[data-steps][priority="tertiary"] > a-tab {
     --steps-marker-bg: transparent;
@@ -802,6 +802,9 @@
     border: 2px solid color-mix(in oklch, var(--steps-tone-solid) 60%, transparent);
     border-radius: var(--steps-marker-radius);
     pointer-events: none;
+  }
+  a-tabs[data-steps][priority="secondary"] > a-tab:state(selected):not([disabled]) a-step-marker::after {
+    border-color: color-mix(in oklch, var(--steps-tone-solid) 30%, transparent);
   }
   a-tabs[data-steps] a-step-desc {
     gap: 2px;

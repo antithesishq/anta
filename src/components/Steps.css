@@ -15,7 +15,6 @@
        the `--border-3` rest rail. This root value is the neutral default the
        vertical bridge reads; each tab re-points it to its own tone below. */
     --steps-complete-connector-color: var(--border-2);
-    --steps-tab-padding-x: 9px;
     --steps-tab-padding-block: 0px;
     --steps-hint-leading: 16px;
 
@@ -28,14 +27,12 @@
   a-steps:has(> a-tabs[size="small"]) {
     --steps-marker-size: 24px;
     --steps-icon-size: 14px;
-    --steps-tab-padding-x: 7px;
     --steps-hint-leading: 14px;
   }
 
   a-steps:has(> a-tabs[size="large"]) {
     --steps-marker-size: 32px;
     --steps-icon-size: 18px;
-    --steps-tab-padding-x: 13px;
     --steps-hint-leading: 20px;
   }
 
@@ -128,7 +125,7 @@
 
   a-tabs[data-steps] > a-tab {
     --steps-desc-min-width: 0px;
-    --steps-tab-padding-start: var(--steps-tab-padding-x);
+    --steps-tab-padding-start: var(--tab-padding-x);
     /* The connector belongs to its own step, so it takes that step's tone.
        Tabs sets --tab-selected-border to the tone's --border-2 per tab; the
        marker border uses --steps-marker-active-border instead so the two can differ. */
@@ -153,7 +150,7 @@
     min-width: calc(
       var(--steps-marker-size) + var(--steps-desc-min-width)
       + var(--steps-item-gap) + var(--steps-tab-padding-start)
-      + var(--steps-tab-padding-x)
+      + var(--tab-padding-x)
     );
     max-width: max-content;
     padding-block: 0;
@@ -362,7 +359,7 @@
     min-width: calc(
       var(--steps-marker-size) * 1.5 + var(--steps-desc-min-width)
       + var(--steps-item-gap) + var(--steps-tab-padding-start)
-      - var(--steps-tab-padding-x) + 2ch + var(--steps-connector-clearance)
+      - var(--tab-padding-x) + 2ch + var(--steps-connector-clearance)
     );
   }
 
@@ -375,7 +372,7 @@
     min-width: calc(var(--steps-marker-size) / 2);
     height: var(--steps-connector-width);
     margin-inline-start: calc(1ch - var(--steps-item-gap));
-    margin-inline-end: calc(1ch - 2 * var(--steps-tab-padding-x));
+    margin-inline-end: calc(1ch - 2 * var(--tab-padding-x));
     background: var(--steps-connector-color);
     pointer-events: none;
   }
@@ -432,7 +429,7 @@
   }
 
   a-steps[data-orientation="vertical"]
-    a-tab:not(:last-child)::before {
+    > a-tabs[orientation="vertical"] > a-tab:not(:last-child)::before {
     content: "";
     position: absolute;
     inset-block-start: calc(
@@ -464,13 +461,13 @@
     margin-inline-start: var(--steps-content-indent);
   }
 
-  a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
+  a-steps[data-orientation="vertical"]:has(> a-tabpanel:state(active)):has(
     > a-tabs[orientation="vertical"] > a-tab:state(selected):not(:last-child)
   ) > a-tabpanel {
     min-height: max(0px, calc(var(--steps-marker-size) - var(--steps-vertical-gap)));
   }
 
-  a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
+  a-steps[data-orientation="vertical"]:has(> a-tabpanel:state(active)):has(
     > a-tabs[orientation="vertical"] > a-tab:state(selected):not(:last-child)
   ) > a-tabpanel::before {
     content: "";
@@ -493,7 +490,7 @@
     background: var(--steps-complete-connector-color);
   }
 
-  a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
+  a-steps[data-orientation="vertical"]:has(> a-tabpanel:state(active)):has(
     > a-tabs[data-steps][orientation="vertical"]
       > a-tab[data-step-state="completed"]:state(selected):not(:last-child)
   ) > a-tabpanel::before {

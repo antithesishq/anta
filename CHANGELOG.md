@@ -15,11 +15,12 @@ changes are not listed.
 
 ### Fixed
 
-- [Steps](/steps/#orientation) keeps vertical tertiary connectors aligned through
-  active panels in every theme.
+- [Steps](/steps/#orientation) keeps vertical connectors aligned through active
+  panels. Nested Steps and Tabs retain their own orientation.
 
 - [Steps](/steps/#width) keeps text blocks at least `4ch` wide and scrolls narrow
-  sequences without overlapping markers. Empty text blocks have no minimum.
+  sequences without overlapping markers. Empty text blocks have no minimum,
+  and layout respects customized tab padding.
 
 - Input and InputTime keep single-icon actions square with Tooltip content in
   raw HTML and JSX.

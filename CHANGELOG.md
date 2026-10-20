@@ -9,18 +9,11 @@ changes are not listed.
 
 - [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary
   priority across all themes.
-- [Steps](/steps/) uses square markers, a separate selection ring,
-  and the theme's control fills in Antithesis.
 - [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by
   their position. Loading, completed, and error phases retain their state
   indicators, and custom markers take precedence.
 
 ### Fixed
-
-- [Steps](/steps/#priority) improves secondary marker contrast in Antithesis with
-  lighter tints, stronger foreground colors, and a clearer hover fill. Completed
-  steps also show hover feedback across all three priorities. Colored primary
-  and secondary steps use a tinted hover fill for upcoming steps.
 
 - [Steps](/steps/#orientation) keeps vertical tertiary connectors aligned through
   active panels in every theme.

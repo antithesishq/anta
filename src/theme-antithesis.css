@@ -787,6 +787,10 @@
     margin-inline-end: calc(1ch - 2 * var(--steps-tab-padding-x) + var(--steps-ring-space));
   }
 
+  a-tabs[data-steps]:not([priority="tertiary"]) {
+    --steps-connector-clearance: var(--steps-ring-space);
+  }
+
   a-steps[data-orientation="vertical"] {
     --steps-vertical-gap: calc(var(--steps-gap) + 20px);
     --steps-line-start: 4px;

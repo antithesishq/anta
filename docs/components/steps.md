@@ -225,6 +225,9 @@ the content move with it.
 The step strip fits its content by default. Pass `fill` to spread horizontal steps across
 the container. Connectors use the available space between phases.
 
+Text blocks keep at least `5ch` of width before the strip scrolls. Empty text
+blocks have no minimum. Markers keep their size while labels and hints shorten.
+
 ```tsx
 <Steps
   fill

@@ -43,6 +43,7 @@
     --steps-marker-active-border: var(--border-1);
     --steps-primary-marker-fg: #ffffff;
     --tabs-gap: 0px;
+    --steps-connector-clearance: 0px;
 
     align-items: center;
     width: fit-content;
@@ -113,6 +114,8 @@
   }
 
   a-tabs[data-steps] > a-tab {
+    --steps-desc-min-width: 0px;
+    --steps-tab-padding-start: var(--steps-tab-padding-x);
     /* The connector belongs to its own step, so it takes that step's tone.
        Tabs sets --tab-selected-border to the tone's --border-2 per tab; the
        marker border uses --steps-marker-active-border instead so the two can differ. */
@@ -132,7 +135,13 @@
 
     position: relative;
     flex: 1 1 0;
-    min-width: 0;
+    /* Keep the tab wide enough for its marker and text floor, so children do
+       not overlap the next step when the strip starts scrolling. */
+    min-width: calc(
+      var(--steps-marker-size) + var(--steps-desc-min-width)
+      + var(--steps-item-gap) + var(--steps-tab-padding-start)
+      + var(--steps-tab-padding-x)
+    );
     max-width: max-content;
     padding-block: 0;
     justify-content: flex-start;
@@ -141,6 +150,12 @@
       color var(--tab-timing),
       background-color var(--tab-timing),
       box-shadow var(--tab-timing);
+  }
+
+  a-tabs[data-steps] > a-tab:has(
+    > a-step-desc > :is(a-tab-label, a-step-hint):not(:empty)
+  ) {
+    --steps-desc-min-width: 5ch;
   }
 
   /* In vertical Steps the bridge through a selected panel belongs to the outer
@@ -169,6 +184,8 @@
   /* A sequence starts directly at its first marker. Later horizontal steps retain
      their inset so their labels do not run into the preceding connector. */
   a-tabs[data-steps]:not([orientation="vertical"]) > a-tab:first-child {
+    --steps-tab-padding-start: 0px;
+
     padding-inline-start: 0;
   }
 
@@ -198,7 +215,7 @@
     display: inline-flex;
     flex: 0 1 auto;
     flex-direction: column;
-    min-width: 0;
+    min-width: var(--steps-desc-min-width, 0px);
     max-width: 100%;
   }
 
@@ -328,6 +345,14 @@
   /* In a horizontal strip, each nonfinal tab draws a flexible final pseudo-
      element. It starts immediately after the description and reaches the next
      marker rather than being a fixed segment stranded between two step boxes. */
+  a-tabs[data-steps]:not([orientation="vertical"]) > a-tab:not(:last-child) {
+    min-width: calc(
+      var(--steps-marker-size) * 1.5 + var(--steps-desc-min-width)
+      + var(--steps-item-gap) + var(--steps-tab-padding-start)
+      - var(--steps-tab-padding-x) + 2ch + var(--steps-connector-clearance)
+    );
+  }
+
   a-tabs[data-steps]:not([orientation="vertical"])
     > a-tab:not(:last-child)::before {
     content: "";
@@ -384,8 +409,9 @@
   }
 
   a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] > a-tab {
+    --steps-tab-padding-start: 0px;
+
     flex: none;
-    min-width: 0;
     grid-column: 1;
     width: max-content;
     max-width: 100%;

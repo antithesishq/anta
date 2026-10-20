@@ -18,7 +18,7 @@ changes are not listed.
 ### Fixed
 
 - [Steps](/steps/#priority) improves secondary marker contrast in Antithesis with
-  lighter tints, stronger foreground colors, and a clearer hover fill and outline.
+  lighter tints, stronger foreground colors, and a clearer hover fill.
 
 - [Steps](/steps/#orientation) keeps vertical tertiary connectors aligned through
   active panels in every theme.

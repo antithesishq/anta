@@ -7,6 +7,8 @@ changes are not listed.
 
 ### Changed
 
+- [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary priority across all
+  themes.
 - [Steps](/steps/) uses square markers, a separate selection ring,
   and the theme's control fills in Antithesis.
 - [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by

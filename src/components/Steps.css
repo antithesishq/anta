@@ -39,6 +39,18 @@
     --steps-hint-leading: 20px;
   }
 
+  a-steps:has(> a-tabs[priority="tertiary"]) {
+    --steps-item-gap: 4px;
+  }
+
+  a-steps:has(> a-tabs[priority="tertiary"][size="small"]) {
+    --steps-item-gap: 2px;
+  }
+
+  a-steps:has(> a-tabs[priority="tertiary"][size="large"]) {
+    --steps-item-gap: 6px;
+  }
+
   a-tabs[data-steps] {
     --steps-marker-active-border: var(--border-1);
     --steps-primary-marker-fg: #ffffff;

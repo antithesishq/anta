@@ -10,9 +10,8 @@ step. Primary markers use the theme's control fills, secondary markers use tints
 and tertiary markers have no background. Labels stay neutral while markers and
 completed connectors carry the tone. Error steps keep their critical tone.
 
-Select **Antithesis** in the theme switcher to see this treatment. Numbered phases
-use the existing `marker` option, so the application can keep a check for completed
-work and numbers for upcoming steps.
+Select **Antithesis** in the theme switcher to see this treatment. Upcoming steps
+show their position automatically, while completed work keeps its check.
 
 ```tsx
 <Steps
@@ -23,9 +22,9 @@ work and numbers for upcoming steps.
   label="Project setup"
   options={[
     { value: 'project', label: 'Project details', hint: 'payments-service', state: 'completed' },
-    { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete', marker: 2 },
-    { value: 'environment', label: 'Environment', hint: 'Not started', state: 'incomplete', marker: 3 },
-    { value: 'review', label: 'Review', hint: 'Unavailable', state: 'incomplete', marker: 4, disabled: true },
+    { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete' },
+    { value: 'environment', label: 'Environment', hint: 'Not started', state: 'incomplete' },
+    { value: 'review', label: 'Review', hint: 'Unavailable', state: 'incomplete', disabled: true },
   ]}
 />
 ```
@@ -40,11 +39,11 @@ Each option needs a unique `value`, a `label`, and a `state`. `state`
 supplies the default marker, `value` controls selection, and `disabled`
 controls access.
 
-- `incomplete` — empty circle
+- `incomplete` — step number, starting at 1
 - `loading` — loader
 - `completed` — check
 - `error` — critical ×
-- `disabled` — incomplete marker by default
+- `disabled` — step number by default
 
 ```tsx
 const options = [
@@ -63,7 +62,7 @@ const options = [
 ```
 
 An incomplete step can still be selected. Add `disabled` only when it is locked;
-disabled steps keep their layout space and use the incomplete marker by default.
+disabled steps keep their layout space and show their step number by default.
 Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
 `loading` for work running in the background.
 
@@ -130,11 +129,13 @@ Marker precedence is:
 
 1. `renderMarker(...)` result, unless it returns `undefined`
 2. `option.marker`
-3. Built-in marker from `state`
+3. Step number for incomplete or disabled phases, otherwise the state indicator
 
 Return `null` from `renderMarker` for an intentionally empty ring.
 
-A number marker is shown directly; an icon-shape string renders an `Icon`.
+Step numbers follow the option order, starting at 1. Loading, completed, and error
+states replace the number with their built-in indicator. A custom number marker
+is shown directly; an icon-shape string renders an `Icon`.
 `hint` adds secondary text.
 
 ```tsx
@@ -303,12 +304,12 @@ Events match [`Tabs`](./tabs.md#events).
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `label` | ReactNode | — | Visible phase label. It ellipsizes in a constrained step; its full content is available in a tooltip only when clipped. |
-| `state` | 'incomplete' \| 'loading' \| 'completed' \| 'error' | — | Application-owned process state. Selection and availability are separate; `error` keeps a critical icon and outline, and selection adds the fill. |
+| `state` | 'incomplete' \| 'loading' \| 'completed' \| 'error' | — | Application-owned process state. Incomplete phases show their step number; loading, completed, and error phases use state indicators. Selection and availability are separate. |
 | `value` | string | — | Stable phase identity. Values must be unique within the sequence. |
 | `className?` | string | — | CSS class on the option's rendered row. |
-| `disabled?` | boolean | — | Disables this phase. A custom `marker` or `renderMarker` result is kept; otherwise it uses the incomplete marker. |
+| `disabled?` | boolean | — | Disables this phase. A custom `marker` or `renderMarker` result is kept; otherwise it shows its position in the sequence, starting at 1. |
 | `hint?` | ReactNode | — | Secondary text shown below the label. It ellipsizes in a constrained step; its full content is available in a tooltip only when clipped. |
-| `marker?` | StepMarker | — | Replaces the marker derived from `state`. A number is shown directly; an Anta icon shape is rendered as an `<Icon>`. |
+| `marker?` | StepMarker | — | Replaces the default step number or state indicator. A number is shown directly; an Anta icon shape is rendered as an `<Icon>`. |
 | `style?` | CSSProperties | — | Inline styles on the option's rendered row. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| '' | inherits Steps `tone | Tone for this phase. It colors the label, hint, marker, and completed connector. Overrides the Steps `tone`; error steps stay critical and disabled steps stay neutral. |
 
@@ -339,7 +340,7 @@ import '@antadesign/anta/elements/a-tabpanel'
         <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
       </a-tab>
       <a-tab role="tab" value="review" tabindex="-1">
-        <a-step-marker aria-hidden="true"><a-icon shape="circle-large"></a-icon></a-step-marker>
+        <a-step-marker aria-hidden="true">3</a-step-marker>
         <a-step-desc><a-tab-label>Review</a-tab-label><a-step-hint>Waiting</a-step-hint></a-step-desc>
       </a-tab>
     </a-tabs>

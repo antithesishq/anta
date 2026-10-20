@@ -279,9 +279,9 @@ export function NumberedSteps() {
   useElements()
   const options: StepOption[] = [
     { value: 'project', label: 'Project details', hint: 'payments-service', state: 'completed' },
-    { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete', marker: 2 },
-    { value: 'environment', label: 'Environment', hint: 'Not started', state: 'incomplete', marker: 3 },
-    { value: 'review', label: 'Review', hint: 'Unavailable', state: 'incomplete', marker: 4, disabled: true },
+    { value: 'repository', label: 'Repository', hint: 'Current step', state: 'incomplete' },
+    { value: 'environment', label: 'Environment', hint: 'Not started', state: 'incomplete' },
+    { value: 'review', label: 'Review', hint: 'Unavailable', state: 'incomplete', disabled: true },
   ]
 
   return (

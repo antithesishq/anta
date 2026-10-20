@@ -671,7 +671,7 @@
     --steps-tone-solid: var(--fill-1);
     --steps-tone-edge: var(--text-2);
     --steps-on-solid: var(--label-on-fill);
-    --steps-tone-tint: color-mix(in oklch, var(--steps-tone-solid) 28%, transparent);
+    --steps-tone-tint: color-mix(in oklch, var(--steps-tone-solid) 10%, transparent);
     --steps-complete-connector-color: var(--steps-tone-solid);
     --steps-marker-bg: var(--bg-4);
     --steps-marker-fg: var(--text-3);
@@ -715,11 +715,11 @@
   }
   a-tabs[data-steps][priority="secondary"] > a-tab:is([data-step-state="completed"], [data-step-state="error"]) {
     --steps-marker-bg: var(--steps-tone-tint);
-    --steps-marker-fg: var(--steps-tone-solid);
+    --steps-marker-fg: var(--steps-tone-edge);
     --steps-marker-edge: inset 0 0 2px -0.5px var(--steps-tone-edge);
   }
   a-tabs[data-steps][priority="secondary"] > a-tab:state(selected) {
-    --steps-marker-bg: color-mix(in oklch, var(--steps-tone-solid) 45%, transparent);
+    --steps-marker-bg: color-mix(in oklch, var(--steps-tone-solid) 20%, transparent);
     --steps-marker-fg: var(--steps-tone-edge);
     --steps-marker-edge: inset 0 0 0 1px var(--steps-tone-solid);
   }

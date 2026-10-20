@@ -5,6 +5,22 @@ changes are not listed.
 
 ## Unreleased
 
+### Fixed
+
+- Input and InputTime keep single-icon actions square with Tooltip content in
+  raw HTML and JSX.
+- Button and ButtonCopy preserve their fallback accessible names with only
+  Tooltip, copy helpers, or empty children, including fragments and conditional
+  children. Explicit accessible names continue to take precedence.
+
+### Breaking
+
+- Input and InputTime no longer use `data-anta-icon-only` for action sizing.
+  Set a custom SVG or image action's width with CSS. Wrap bare text beside an
+  icon in an element to keep the action's natural width.
+
+## 0.3.35 — October 18, 2026
+
 ### Added
 
 - [Panel's layout placeholder](/panel/#styling) exposes `::part(placeholder)`

@@ -55,6 +55,13 @@ export function optionPresentationAttrs(
   return attrs as OptionPresentationProps
 }
 
+/** @internal Match primitive label values that produce no visible content. */
+export function isEmptyLabelValue(value: React.ReactNode): boolean {
+  return value == null || typeof value === 'boolean' ||
+    (typeof value === 'string' && value.trim() === '') ||
+    (typeof value === 'number' && Number.isNaN(value))
+}
+
 /**
  * Normalize a wrapper's label content the way `Button` / `Tabs` do: a bare string
  * or number becomes a `<tag>` — the ellipsis-capable label part (`a-button-label`,
@@ -68,9 +75,8 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
   if (kids == null) return kids
   const arr = Array.isArray(kids) ? kids : [kids]
   return arr.map((child, i) => {
-    if (typeof child === "string") return child.trim() === "" ? null : jsx(tag, { children: child }, i)
-    if (typeof child === "number") return Number.isNaN(child) ? null : jsx(tag, { children: child }, i)
-    if (child == null || typeof child === "boolean") return null
+    if (isEmptyLabelValue(child)) return null
+    if (typeof child === "string" || typeof child === "number") return jsx(tag, { children: child }, i)
     return child
   }) as React.ReactNode
 }

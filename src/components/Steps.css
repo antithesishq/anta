@@ -40,6 +40,7 @@
   }
 
   a-steps:has(> a-tabs[priority="tertiary"]) {
+    --steps-marker-size: calc(var(--steps-icon-size) + 4px);
     --steps-item-gap: 4px;
   }
 

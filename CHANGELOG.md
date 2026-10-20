@@ -17,6 +17,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Steps](/steps/#orientation) keeps vertical tertiary connectors aligned through
+  active panels in every theme.
+
 - Steps keeps text blocks at least `4ch` wide and scrolls narrow sequences
   without overlapping markers. Empty text blocks have no minimum.
 

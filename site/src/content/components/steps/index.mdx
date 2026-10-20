@@ -250,28 +250,35 @@ when space is limited, and the strip scrolls when needed.
 
 Set `orientation="vertical"` for a stacked sequence. Its active panel appears
 between the selected phase and the next phase. Select a different phase to see
-the content move with it.
+the content move with it. Compare all three priorities here; **Build** is completed
+with a brand tone in each sequence.
 
-<Preview minHeight={230} justify="flex-start">
+<Preview minHeight={270} align="stretch" justify="flex-start">
   <Vertical client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
-<div style={{ width: '100%', maxWidth: '480px' }}>
-  <Steps
-    orientation="vertical"
-    defaultValue="setup"
-    label="Deployment progress"
-    options={[
-      { value: 'build', label: 'Build', state: 'completed' },
-      { value: 'setup', label: 'Setup', state: 'loading' },
-      { value: 'next', label: 'Next steps', state: 'incomplete' },
-    ]}
-  >
-    <TabPanel value="build"><Text size="small">Build output and artifacts are ready.</Text></TabPanel>
-    <TabPanel value="setup"><Text size="small">Preparing the deployment environment.</Text></TabPanel>
-    <TabPanel value="next"><Text size="small">Review the deployment and share the result.</Text></TabPanel>
-  </Steps>
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', alignItems: 'start', gap: '24px', width: '100%' }}>
+  {(['primary', 'secondary', 'tertiary'] as const).map((priority) => (
+    <div key={priority} style={{ display: 'grid', gap: '12px' }}>
+      <Text size="small" tone="neutral">{priority}</Text>
+      <Steps
+        priority={priority}
+        orientation="vertical"
+        defaultValue="setup"
+        label={`${priority} deployment progress`}
+        options={[
+          { value: 'build', label: 'Build', state: 'completed', tone: 'brand' },
+          { value: 'setup', label: 'Setup', state: 'loading' },
+          { value: 'next', label: 'Next steps', state: 'incomplete' },
+        ]}
+      >
+        <TabPanel value="build"><Text size="small">Build output and artifacts are ready.</Text></TabPanel>
+        <TabPanel value="setup"><Text size="small">Preparing the deployment environment.</Text></TabPanel>
+        <TabPanel value="next"><Text size="small">Review the deployment and share the result.</Text></TabPanel>
+      </Steps>
+    </div>
+  ))}
 </div>
 ```
 

@@ -221,21 +221,27 @@ export function Sizes() {
 export function Vertical() {
   useElements()
   return (
-    <div style={{ width: '100%', maxWidth: '480px' }}>
-      <Steps
-        orientation="vertical"
-        defaultValue="setup"
-        label="Deployment progress"
-        options={[
-          { value: 'build', label: 'Build', state: 'completed' },
-          { value: 'setup', label: 'Setup', state: 'loading' },
-          { value: 'next', label: 'Next steps', state: 'incomplete' },
-        ]}
-      >
-        <TabPanel value="build">{panelText('Build output and artifacts are ready.')}</TabPanel>
-        <TabPanel value="setup">{panelText('Preparing the deployment environment.')}</TabPanel>
-        <TabPanel value="next">{panelText('Review the deployment and share the result.')}</TabPanel>
-      </Steps>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', alignItems: 'start', gap: '24px', width: '100%' }}>
+      {(['primary', 'secondary', 'tertiary'] as const).map((priority) => (
+        <div key={priority} style={{ display: 'grid', gap: '12px' }}>
+          <Text size="small" tone="neutral">{priority}</Text>
+          <Steps
+            priority={priority}
+            orientation="vertical"
+            defaultValue="setup"
+            label={`${priority} deployment progress`}
+            options={[
+              { value: 'build', label: 'Build', state: 'completed', tone: 'brand' },
+              { value: 'setup', label: 'Setup', state: 'loading' },
+              { value: 'next', label: 'Next steps', state: 'incomplete' },
+            ]}
+          >
+            <TabPanel value="build">{panelText('Build output and artifacts are ready.')}</TabPanel>
+            <TabPanel value="setup">{panelText('Preparing the deployment environment.')}</TabPanel>
+            <TabPanel value="next">{panelText('Review the deployment and share the result.')}</TabPanel>
+          </Steps>
+        </div>
+      ))}
     </div>
   )
 }

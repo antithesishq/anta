@@ -712,7 +712,8 @@
     --steps-label-fg: var(--text-1);
     --steps-hint-fg: var(--text-3);
   }
-  a-tabs[data-steps] > a-tab:is(:state(selected), [data-step-state="completed"], [data-step-state="error"]):not([disabled]) {
+  /* The disabled guard must not outrank tertiary's transparent background. */
+  a-tabs[data-steps] > a-tab:is(:state(selected), [data-step-state="completed"], [data-step-state="error"]):where(:not([disabled])) {
     --steps-marker-bg: var(--steps-tone-solid);
     --steps-marker-fg: var(--steps-on-solid);
     --steps-marker-edge: none;

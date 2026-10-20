@@ -15,6 +15,10 @@ changes are not listed.
 
 ### Fixed
 
+- [Tooltip](/tooltip/#show-only-when-truncated) keeps truncated-only tooltips
+  closed for single-line labels and hints that fit, including text with a tight
+  line height. Multi-line clipping still shows the tooltip.
+
 - [Steps](/steps/#orientation) keeps vertical connectors aligned through active
   panels. Nested Steps and Tabs retain their own orientation.
 

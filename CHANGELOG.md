@@ -17,7 +17,7 @@ changes are not listed.
 
 ### Fixed
 
-- Steps keeps text blocks at least `5ch` wide and scrolls narrow sequences
+- Steps keeps text blocks at least `4ch` wide and scrolls narrow sequences
   without overlapping markers. Empty text blocks have no minimum.
 
 - Input and InputTime keep single-icon actions square with Tooltip content in

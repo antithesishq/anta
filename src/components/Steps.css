@@ -167,7 +167,7 @@
   a-tabs[data-steps] > a-tab:has(
     > a-step-desc > :is(a-tab-label, a-step-hint):not(:empty)
   ) {
-    --steps-desc-min-width: 5ch;
+    --steps-desc-min-width: 4ch;
   }
 
   /* In vertical Steps the bridge through a selected panel belongs to the outer

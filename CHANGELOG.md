@@ -7,6 +7,9 @@ changes are not listed.
 
 ### Changed
 
+- [Slider](/slider/#managing-the-value) keeps controlled and uncontrolled values
+  compatible with custom renderers that preserve attribute-name casing.
+
 - [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary
   priority across all themes.
 - [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by

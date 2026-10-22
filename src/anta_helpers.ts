@@ -499,7 +499,7 @@ export class SelectableChildElement extends HTMLElementBase {
   }
 }
 
-/** @internal Project value inputs through HTML attributes in every renderer.
+/** @internal Project Calendar value inputs through HTML attributes in every renderer.
  * HTML attribute names are case-insensitive. `VALUE` avoids React's property
  * assignment and Preact's special live-value comparison/removal, while producing
  * the ordinary `value` attribute in the DOM and parsed SSR HTML. In particular,

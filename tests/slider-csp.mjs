@@ -18,6 +18,9 @@ const resolveDir = consumer ?? process.cwd(), base = consumer ? '@antadesign/ant
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
 const assets = new Map(), renderers = new Map(), browsers = new Map()
 const compareRef=process.env.ANTA_SLIDER_COMPARE_REF
+const initialProps=(controlled,range=false)=>controlled
+  ? {value:range?[20,70]:0,defaultValue:range?[10,90]:70}
+  : {defaultValue:range?[20,70]:35}
 let server, origin
 async function compile(options) {
   const result = await build({absWorkingDir:resolveDir,bundle:true,write:false,metafile:true,nodePaths:[resolve(resolveDir,'node_modules'),resolve('site/node_modules')],target:'es2022',...options})
@@ -63,6 +66,7 @@ before(async () => {
       const commit=node=>{${react?"root??=createRoot(document.querySelector('#mount'));root.render(node)":"render(node,document.querySelector('#mount'))"}};
       window.hydrateSlider=initial=>{props=initial;configure(h,React.Fragment,React,{hydratingEvents:true});${react?"root=hydrateRoot(document.querySelector('#mount'),app({...handlers(),...props}),{onRecoverableError:e=>recoverableErrors.push(e.message)})":"hydrate(app({...handlers(),...props}),document.querySelector('#mount'))"}};
       window.updateSlider=updates=>{props={...props,...updates};commit(app({...handlers(),...props}))};
+      window.releaseSlider=()=>{delete props.value;commit(app({...handlers(),...props}))};
       window.refreshCallbacks=()=>{version++;updateSlider({})};
     `,resolveDir},outfile:`${framework}.js`,format:'esm',jsx:'automatic',jsxImportSource:'@antadesign/anta',alias,define:{'process.env.NODE_ENV':'"production"'}}),framework)
   }
@@ -70,7 +74,7 @@ before(async () => {
   assets.set('/fixture.css',`body{margin:40px;font:14px/20px system-ui}a-slider{width:260px}.consumer::part(thumb){border-radius:3px}.consumer::part(fill){background:rgb(1,2,3)}.marker{--slider-marker-position:50%}.marker-start{--slider-marker-position:0%}.marker-end{--slider-marker-position:100%}.css-rtl{direction:rtl}`)
   server=createServer((req,res)=>{
     const url=new URL(req.url,'http://localhost'),mode=url.searchParams.get('mode')??'granular',framework=url.searchParams.get('framework')??'React'
-    const props=url.searchParams.has('controlled')?{value:0,defaultValue:70}:{defaultValue:35}
+    const props=initialProps(url.searchParams.has('controlled'),url.searchParams.has('range'))
     res.setHeader('Content-Security-Policy',url.searchParams.has('compare')?policy.replace("style-src 'self'","style-src 'self' 'unsafe-inline'"):policy)
     res.setHeader('Content-Type',`${url.pathname.endsWith('.js')?'text/javascript':url.pathname.endsWith('.css')?'text/css':'text/html'}; charset=utf-8`)
     res.end(assets.get(url.pathname)??`<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><form id="form"><input id="before" aria-label="Before"><main id="mount">${url.searchParams.has('raw')?'<a-slider id="slider" defaultvalue="35" tabindex="0" aria-label="Volume" name="volume"><span slot="label">Volume</span></a-slider>':renderers.get(framework)(props)}</main><input id="after" aria-label="After"></form>`)
@@ -82,18 +86,18 @@ before(async () => {
 after(async()=>{await Promise.all([...browsers.values()].map(b=>b.close()));if(server)await new Promise(r=>server.close(r))})
 const settled=page=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))
 const value=page=>page.locator('#slider').evaluate(s=>s.value)
-async function pageFor(t,engine,mode,framework,controlled=false,upgrade=true) {
+async function pageFor(t,engine,mode,framework,controlled=false,upgrade=true,range=false) {
   const page=await browsers.get(engine).newPage();page.setDefaultTimeout(7000)
   const errors=[];page.on('pageerror',e=>errors.push(e.message))
-  const response=await page.goto(`${origin}/?mode=${mode}&framework=${framework??'React'}${controlled?'&controlled':''}${framework?'':'&raw'}`)
+  const response=await page.goto(`${origin}/?mode=${mode}&framework=${framework??'React'}${controlled?'&controlled':''}${range?'&range':''}${framework?'':'&raw'}`)
   assert.equal(response.headers()['content-security-policy'],policy)
   t.after(async()=>{try{assert.deepEqual(errors,[]);assert.deepEqual(await page.evaluate(()=>recoverableErrors),[]);assert.deepEqual(await page.evaluate(()=>violations),[])}finally{await page.close()}})
   if(!upgrade)return page
-  await page.evaluate(async({mode,framework,controlled})=>{
+  await page.evaluate(async({mode,framework,props})=>{
     window.originalSlider=document.querySelector('#slider');window.originalLabel=originalSlider.firstElementChild;
     await import(`/${mode}.js`)
-    if(framework){await import(`/${framework}.js`);hydrateSlider(controlled?{value:0,defaultValue:70}:{defaultValue:35})}
-  },{mode,framework,controlled})
+    if(framework){await import(`/${framework}.js`);hydrateSlider(props)}
+  },{mode,framework,props:initialProps(controlled,range)})
   await settled(page)
   assert.equal(await page.evaluate(()=>originalSlider===document.querySelector('#slider')&&originalLabel===originalSlider.firstElementChild),true)
   return page
@@ -175,6 +179,35 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await update(page,{onInput:undefined,onValueChange:undefined,onChange:undefined,onValueCommit:undefined})
     await page.keyboard.press('ArrowRight');await settled(page)
     assert.deepEqual(await page.evaluate(()=>reports),[]);assert.equal(await value(page),0)
+  })
+  for(const framework of ['React','Preact'])for(const range of [false,true])test(`${name} ${framework}: ${range?'range':'scalar'} value acquires and releases ownership at the applied value`,{tier:mode==='granular'?'fast':'slow'},async t=>{
+    const page=await pageFor(t,engine,mode,framework,true,true,range)
+    const original=range?[20,70]:0,changed=range?[21,70]:1
+    const serialized=range?'20 70':'0'
+    const submission=()=>page.evaluate(()=>new FormData(document.querySelector('form')).getAll('volume'))
+    const key=async()=>{await page.getByRole('slider').first().focus();await page.keyboard.press('ArrowRight');await settled(page)}
+    assert.deepEqual(await value(page),original)
+    assert.equal(await page.locator('#slider').getAttribute('value'),serialized)
+    assert.deepEqual(await submission(),range?['20','70']:['0'])
+    for(const release of ['undefined','null','omitted']) {
+      await page.evaluate(()=>{reports=[]})
+      if(release==='omitted'){await page.evaluate(()=>releaseSlider());await settled(page)}
+      else await update(page,{value:release==='null'?null:undefined})
+      assert.equal(await page.locator('#slider').getAttribute('value'),null,release)
+      assert.deepEqual(await value(page),original)
+      assert.deepEqual(await page.evaluate(()=>reports),[])
+      await update(page,{value:original})
+      assert.equal(await page.locator('#slider').getAttribute('value'),serialized,'Acquire control even when the applied value already matches')
+      await key();assert.deepEqual(await value(page),original,'Reject requests until the owner accepts them')
+      assert.deepEqual(await submission(),range?['20','70']:['0'])
+    }
+    await update(page,{value:undefined})
+    await key();assert.deepEqual(await value(page),changed,'Resume uncontrolled input after release')
+    assert.equal(await page.locator('#slider').getAttribute('value'),null)
+    assert.deepEqual(await submission(),range?['21','70']:['1'])
+    await page.evaluate(()=>document.querySelector('form').reset());await settled(page)
+    assert.deepEqual(await value(page),range?[10,90]:70)
+    assert.equal(await page.locator('#slider').getAttribute('value'),null)
   })
   test.fast(`${name}: authored inputs own control and uncontrolled operations never rewrite attributes`,async t=>{
     const page=await pageFor(t,engine,mode)

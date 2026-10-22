@@ -1,6 +1,6 @@
 import { useNativeEventProps } from '../native-event-props'
 import type { BaseProps, DOMEventHandlers } from '../general_types'
-import { valueAttributes, unwrapNativeEvent, neutralToneAttr, toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
+import { unwrapNativeEvent, neutralToneAttr, toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
 
 /** A text marker displayed below the slider rail. Markers are labels only; they
  * do not add dots or ticks to the rail. */
@@ -234,7 +234,10 @@ export const Slider = <T extends SliderValue = number>({
 
   return (
     <a-slider
-      {...valueAttributes(serializeValue(value), serializeValue(defaultValue))}
+      // Preact skips explicit undefined values and compares against the numeric
+      // live getter. Omit uncontrolled value and serialize controlled inputs.
+      {...(controlled ? { value: serializeValue(value) } : {})}
+      defaultvalue={!controlled ? serializeValue(defaultValue) : undefined}
       min={min}
       max={max}
       step={step}

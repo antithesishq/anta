@@ -5,7 +5,29 @@ changes are not listed.
 
 ## Unreleased
 
+### Changed
+
+- [Slider](/slider/#managing-the-value) keeps controlled and uncontrolled values
+  compatible with custom renderers that preserve attribute-name casing.
+
+- [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary
+  priority across all themes.
+- [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by
+  their position. Loading, completed, and error phases retain their state
+  indicators, and custom markers take precedence.
+
 ### Fixed
+
+- [Tooltip](/tooltip/#show-only-when-truncated) keeps truncated-only tooltips
+  closed for single-line labels and hints that fit, including text with a tight
+  line height. Multi-line clipping still shows the tooltip.
+
+- [Steps](/steps/#orientation) keeps vertical connectors aligned through active
+  panels. Nested Steps and Tabs retain their own orientation.
+
+- [Steps](/steps/#width) keeps text blocks at least `4ch` wide and scrolls narrow
+  sequences without overlapping markers. Empty text blocks have no minimum,
+  and layout respects customized tab padding.
 
 - Input and InputTime keep single-icon actions square with Tooltip content in
   raw HTML and JSX.

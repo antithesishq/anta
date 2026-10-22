@@ -281,7 +281,7 @@ for (const engine of engines) {
     t.after(()=>release())
     await page.route('https://anta.test/**/*.js',async route=>{await gate;await route.fallback()})
     await page.goto('https://anta.test/slider/',{waitUntil:'commit'})
-    const slider=page.locator('a-slider[defaultvalue="35"]').first()
+    const slider=page.locator('a-slider[default-value="35"]').first()
     await slider.waitFor()
     await page.waitForFunction(()=>[...document.querySelectorAll('link[rel=stylesheet]')].every(link=>link.sheet))
     const before=await slider.boundingBox()

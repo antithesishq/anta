@@ -237,7 +237,7 @@ export const Slider = <T extends SliderValue = number>({
       // Preact skips explicit undefined values and compares against the numeric
       // live getter. Omit uncontrolled value and serialize controlled inputs.
       {...(controlled ? { value: serializeValue(value) } : {})}
-      defaultvalue={!controlled ? serializeValue(defaultValue) : undefined}
+      default-value={!controlled ? serializeValue(defaultValue) : undefined}
       min={min}
       max={max}
       step={step}

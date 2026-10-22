@@ -37,6 +37,10 @@ changes are not listed.
 
 ### Breaking
 
+- [Slider's raw HTML default](/slider/#web-component) is now `default-value`
+  instead of `defaultvalue`. JSX `defaultValue` and the element's `.defaultValue`
+  property keep their existing names.
+
 - Input and InputTime no longer use `data-anta-icon-only` for action sizing.
   Set a custom SVG or image action's width with CSS. Wrap bare text beside an
   icon in an element to keep the action's natural width.

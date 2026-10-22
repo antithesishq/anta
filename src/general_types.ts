@@ -809,7 +809,7 @@ export interface ASliderAttributes extends BaseAttributes {
   /** Controlled numeric input. A range uses two space-separated numbers. */
   value?: number | string
   /** Uncontrolled initial value and reset baseline. */
-  defaultvalue?: number | string
+  'default-value'?: number | string
   /** Lowest permitted value. Defaults to 0. */
   min?: number | string
   /** Highest permitted value. Defaults to 100. */

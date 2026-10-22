@@ -2,7 +2,7 @@ import cn from "clsx"
 import { useNativeEventProps } from "../native-event-props"
 import { Temporal } from "temporal-polyfill"
 import { useMemo, useState } from "../jsx-runtime"
-import { valueAttributes, nativeStateChange } from "../anta_helpers"
+import { nativeStateChange } from "../anta_helpers"
 import { Button } from "./Button"
 import { Menu } from "./Menu"
 import { MenuItem } from "./MenuItem"
@@ -336,7 +336,8 @@ export const Calendar = ({
         role="group"
         aria-label={ariaLabel ?? month.heading}
         name={name}
-        {...valueAttributes(value, defaultValue)}
+        state={controlled ? value : undefined}
+        default-state={!controlled ? defaultValue : undefined}
         disabled={disabled ? "" : undefined}
         data-focus={focusReq ? `${focusReq.iso}#${focusReq.n}` : undefined}
         {...events}

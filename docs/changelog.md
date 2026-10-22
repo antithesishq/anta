@@ -5,7 +5,26 @@ changes are not listed.
 
 ## Unreleased
 
+### Changed
+
+- [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary
+  priority across all themes.
+- [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by
+  their position. Loading, completed, and error phases retain their state
+  indicators, and custom markers take precedence.
+
 ### Fixed
+
+- [Tooltip](/tooltip/#show-only-when-truncated) keeps truncated-only tooltips
+  closed for single-line labels and hints that fit, including text with a tight
+  line height. Multi-line clipping still shows the tooltip.
+
+- [Steps](/steps/#orientation) keeps vertical connectors aligned through active
+  panels. Nested Steps and Tabs retain their own orientation.
+
+- [Steps](/steps/#width) keeps text blocks at least `4ch` wide and scrolls narrow
+  sequences without overlapping markers. Empty text blocks have no minimum,
+  and layout respects customized tab padding.
 
 - Input and InputTime keep single-icon actions square with Tooltip content in
   raw HTML and JSX.
@@ -14,6 +33,11 @@ changes are not listed.
   children. Explicit accessible names continue to take precedence.
 
 ### Breaking
+
+- [Raw Calendar inputs](/input-date/#raw-calendar-value-and-form-api) now use
+  `state` / `default-state` instead of `value` / `defaultvalue`. The element's
+  `.value` is read-only and `.defaultValue` is removed; public Calendar and
+  InputDate JSX props remain `value` / `defaultValue`.
 
 - Input and InputTime no longer use `data-anta-icon-only` for action sizing.
   Set a custom SVG or image action's width with CSS. Wrap bare text beside an

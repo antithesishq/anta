@@ -174,38 +174,36 @@ Their web-component input attributes follow their existing public contracts:
 
 | Component | Controlled input | Uncontrolled default | Applied value |
 | --- | --- | --- | --- |
-| Calendar | `value` | `defaultvalue` | `.value` (get/set) |
+| Calendar | `state` | `default-state` | `.value` (read-only) |
 | Slider | `value` | `defaultvalue` | `.value` (get/set) |
 | RadioGroup, Tabs | `state` | `default-state` | `.value` (read-only) |
 
 Presence of the controlled input attribute defines ownership. Empty-string
 options remain valid for RadioGroup and Tabs; an empty Calendar date stays
-controlled through `value=""`, and Slider's `0` stays controlled.
+controlled through `state=""`, and Slider's `0` stays controlled.
 
-Calendar and Slider's consumer `value` / `defaultValue` assignments reflect only
-`value` / `defaultvalue`, including removal on `null` or `undefined`. Their
-wrappers use `valueAttributes` to render the ordinary HTML attribute directly.
+Slider's consumer `value` / `defaultValue` assignments reflect only
+`value` / `defaultvalue`, including removal on `null` or `undefined`. Its
+wrapper uses `valueAttributes` to render the ordinary HTML attribute directly.
 Its uppercase spelling in renderer props avoids React property assignment and
 Preact live-value special cases; HTML attribute names are case-insensitive.
 Custom renderers must apply these as HTML attributes, normalizing their names;
 the projection does not work unchanged in case-sensitive XML attribute maps.
-Replay their pre-upgrade property assignments through `upgradeValueProperties`.
-RadioGroup and Tabs wrappers project directly to `state` / `default-state` and
-never pass their read-only `value` property as a JSX attribute. Neither pair has
-input aliases.
+Replay Slider's pre-upgrade property assignments through `upgradeValueProperties`.
+Calendar, RadioGroup, and Tabs wrappers project directly to `state` /
+`default-state` and never pass their read-only `value` property as a JSX
+attribute. These components have no value-attribute or property-setter aliases.
 
 The applied value getter is separate from the authored initial/reset value.
-Calendar, RadioGroup, and Tabs return `null` when nothing is selected. Writing an
-empty uncontrolled Calendar's value back therefore leaves it uncontrolled.
-InputDate retains its text-field empty value (`''`). Calendar's
-`defaultValue` getter returns `null` when the reset input is absent, preserving
-absence when read back into its setter.
+Calendar, RadioGroup, and Tabs return `null` when nothing is selected. Their
+`.value` properties are read-only; set the `state` attribute to supply selection
+and remove it to release control. InputDate retains its text-field empty value
+(`''`). Read a Calendar reset baseline through `getAttribute('default-state')`.
 
-Raw Preact `<a-calendar value={...}>` bindings cannot reliably release ownership:
-explicit `undefined` can retain the old input, while omission can write an empty
-string. Use the Calendar wrapper for declarative ownership, or remove `value` /
-assign `.value = null` on a raw instance. Do not describe this raw-renderer
-limitation as resolved by the wrapper projection.
+Raw Calendar bindings use `<a-calendar state={...}>` and `default-state`,
+including before registration. React and Preact update and remove these as
+ordinary attributes. Never bind a `value` prop to the raw element's read-only
+result; the `Calendar` wrapper translates the public JSX `value` prop.
 
 Uncontrolled interaction, reset, and restoration update internal state and form
 submission without writing host attributes. Removing the controlled input

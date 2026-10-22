@@ -266,7 +266,7 @@ selection:
   const grid = root.querySelector('a-calendar')
   const heading = root.querySelector('[data-heading]')
   let cursor = Temporal.Now.plainDateISO()
-  grid.value = cursor.toString()
+  grid.setAttribute('state', cursor.toString())
 
   function focusDate(iso) {
     grid.querySelector(`[data-date="${iso}"]`)?.focus()
@@ -321,7 +321,7 @@ selection:
     render()
   })
   grid.addEventListener('statechange', (event) => {
-    grid.value = event.detail.next ?? ''
+    grid.setAttribute('state', event.detail.next ?? '')
     cursor = parseISODate(grid.value) ?? cursor
     render()
     focusDate(cursor.toString())
@@ -340,25 +340,30 @@ range-aware controls.
 
 ### Raw Calendar value and form API
 
-Use `value` for controlled selection or `defaultvalue` for an uncontrolled
-initial and reset date. The `.value` property returns the applied ISO date, or
-`null` when empty. The `.defaultValue` property returns the authored reset date,
-or `null` when unset.
+Use `state` for controlled selection or `default-state` for an uncontrolled
+initial and reset date. The read-only `.value` property returns the applied ISO
+date, or `null` when empty. Read the reset date with
+`getAttribute('default-state')`.
 
-Assigning a string to `.value` supplies controlled input. An empty `value=""`
-keeps the calendar controlled and empty. Remove `value`, or assign `null` or
-`undefined` to `.value`, to release control while retaining the applied date.
-Uncontrolled picks, reset, and restoration leave those input attributes unchanged.
+An empty `state=""` keeps the calendar controlled and empty. Remove `state` to
+release control while retaining the applied date. Uncontrolled picks, reset, and
+restoration leave those input attributes unchanged.
 
-Accept controlled picks from `statechange` by updating `value`. `change` reports
+Accept controlled picks from `statechange` by updating `state`. `change` reports
 applied selection. `navigate` requests a new focus date. The application renders
 the requested month and focuses that day. Author the month label and each day
 button's accessible name. Calendar does not generate those labels.
 
-For Preact, prefer the Calendar wrapper. Raw `<a-calendar value={...}>` bindings
-can retain the old value when assigned `undefined`, or write `value=""` when the
-prop is omitted. Release a raw instance by removing its `value` attribute or
-assigning `null` to `.value`.
+When migrating raw Calendar code, replace `value` / `defaultvalue` attributes
+with `state` / `default-state`. Replace assignments to `.value` with
+`setAttribute('state', date)` and assignments to `.defaultValue` with
+`setAttribute('default-state', date)`. Remove `state` to release control.
+The old attributes have no effect on selection, `.value` is read-only, and the
+`.defaultValue` property is no longer provided.
+
+Public `Calendar` and `InputDate` JSX props remain `value` and `defaultValue`.
+For raw React or Preact markup, bind `state` directly; omitting it or setting it
+to `undefined` releases control.
 
 ## Calendar props
 

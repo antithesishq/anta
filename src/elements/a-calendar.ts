@@ -1,7 +1,6 @@
 import { HTMLElementBase, isModifiedNavigationKey } from '../anta_helpers'
 import { Temporal } from 'temporal-polyfill'
 import './a-calendar.css'
-import { upgradeValueProperties } from './value-input'
 
 /**
  * `<a-calendar>` — a **light-DOM, form-associated** month grid, and the
@@ -18,7 +17,7 @@ import { upgradeValueProperties } from './value-input'
  * to off-DOM work (form value, `ElementInternals` state), event dispatch, and
  * imperative focus of cells that already exist — the `<a-radio-group>` model.
  *
- * ## Events (all bubble; lowercase so React + Preact bind them)
+ * ## Events (lowercase so React + Preact bind them)
  *
  * - `statechange` — cancelable, fired BEFORE a pick applies. `detail` is
  *   `{ next, prev, reason }`: ISO-string dates (or `null`), `reason` ∈
@@ -32,10 +31,10 @@ import { upgradeValueProperties } from './value-input'
  *
  * ## Controlled vs uncontrolled (like `<a-radio-group>`)
  *
- * Presence of **`value`** = controlled: a pick requests a change through
- * `statechange`; the renderer answers by updating `value`. With **`defaultvalue`**
- * instead, the element owns selection and applies picks unless vetoed. Consumer
- * property assignments reflect these inputs; picks never rewrite them.
+ * Presence of **`state`** = controlled: a pick requests a change through
+ * `statechange`; the renderer answers by updating `state`. With **`default-state`**
+ * instead, the element owns selection and applies picks unless vetoed. The
+ * read-only `value` property reports the applied date; picks never rewrite inputs.
  *
  * ## Selection & keyboard
  *
@@ -47,7 +46,7 @@ import { upgradeValueProperties } from './value-input'
  */
 export class ACalendarElement extends HTMLElementBase {
   static formAssociated = true
-  static observedAttributes = ['value', 'data-focus']
+  static observedAttributes = ['state', 'data-focus']
 
   private internals?: ElementInternals
   /** Latest applied selection, retained when controlled state is removed. */
@@ -63,21 +62,20 @@ export class ACalendarElement extends HTMLElementBase {
     }
     this.addEventListener('click', this.onClick)
     this.addEventListener('keydown', this.onKeydown)
-    upgradeValueProperties(this)
   }
 
   connectedCallback() {
     if (!this.seeded) {
       this.selectedIso = this.#controlled
         ? this.currentIso()
-        : this.getAttribute('defaultvalue') || null
+        : this.getAttribute('default-state') || null
       this.seeded = true
     }
     this.applyFormValue(this.currentIso())
   }
 
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
-    if (name === 'value') {
+    if (name === 'state') {
       const prev = this.selectedIso
       this.selectedIso = this.currentIso()
       this.applyFormValue(this.selectedIso)
@@ -89,13 +87,13 @@ export class ACalendarElement extends HTMLElementBase {
     }
   }
 
-  /** A present value input keeps selection controlled, including an empty date. */
+  /** A present state input keeps selection controlled, including an empty date. */
   get #controlled(): boolean {
-    return this.hasAttribute('value')
+    return this.hasAttribute('state')
   }
   private currentIso(): string | null {
     return this.#controlled
-      ? this.getAttribute('value') || null
+      ? this.getAttribute('state') || null
       : this.selectedIso
   }
 
@@ -224,28 +222,13 @@ export class ACalendarElement extends HTMLElementBase {
     if (!controlled) this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
-  /** Applied ISO date, or `null` when empty. String assignments supply controlled input. */
+  /** Applied ISO date, or `null` when empty. Supply selection through `state`. */
   get value(): string | null {
     return this.currentIso()
   }
 
-  set value(value: string | null | undefined) {
-    if (value == null) this.removeAttribute('value')
-    else this.setAttribute('value', value)
-  }
-
-  /** Authored initial/reset date, or `null` when no default is supplied. */
-  get defaultValue(): string | null {
-    return this.getAttribute('defaultvalue')
-  }
-
-  set defaultValue(value: string | null | undefined) {
-    if (value == null) this.removeAttribute('defaultvalue')
-    else this.setAttribute('defaultvalue', value)
-  }
-
   formResetCallback() {
-    const def = this.getAttribute('defaultvalue') || null
+    const def = this.getAttribute('default-state') || null
     const prev = this.currentIso()
     this.emitState(def, prev, 'reset')
   }

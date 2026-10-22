@@ -17,11 +17,11 @@ for(const shim of [false,true])test.fast(`Selection value projection works witho
     for(const [name,tag] of [['Calendar','a-calendar'],['RadioGroup','a-radio-group'],['Tabs','a-tabs']]) {
       const requests=[]
       const controlled=find(runtime[name]({value:'',options:[],locale:'en-US',onStateChange:(e,d)=>requests.push(d)}),tag)
-      const calendar=name==='Calendar',input=calendar?'VALUE':'state',initial=calendar?'defaultvalue':'default-state'
+      const input='state',initial='default-state'
       assert.equal(controlled.props[input],'')
       assert.equal(controlled.props[initial],undefined)
-      assert.equal((calendar?'state':'VALUE') in controlled.props,false)
-      assert.equal((calendar?'default-state':'defaultvalue') in controlled.props,false)
+      assert.equal('VALUE' in controlled.props,false)
+      assert.equal('defaultvalue' in controlled.props,false)
       assert.equal('value' in controlled.props,false)
       const detail={next:'b',prev:'',reason:'user'}
       controlled.props.onstatechange({nativeEvent:{detail}})

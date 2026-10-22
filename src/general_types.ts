@@ -922,8 +922,8 @@ export interface AInputTimeAttributes extends BaseAttributes {
  * wrapper. It does **not** build or mutate its own contents: whoever renders into
  * it (the `Calendar` JSX wrapper, or a vanilla consumer using the exported
  * `buildMonth` engine) fills it with day cells and *re-renders on its events* —
- * the `<a-radio-group>` model. Controlled by the presence of `value` (a pick only
- * requests a change); uncontrolled with `defaultvalue` (a pick self-applies).
+ * the `<a-radio-group>` model. Controlled by the presence of `state` (a pick only
+ * requests a change); uncontrolled with `default-state` (a pick self-applies).
  * For the typed, batteries-included wrapper use `Calendar` from `@antadesign/anta`.
  *
  * `:state(filled)` is the styling hook for "has a selection".
@@ -931,9 +931,9 @@ export interface AInputTimeAttributes extends BaseAttributes {
 export interface ACalendarAttributes extends BaseAttributes {
   /** Controlled selected date — ISO `YYYY-MM-DD`. Present → controlled (a pick
    *  only requests a change). Mirrored to the owning form via `ElementInternals`. */
-  value?: string
+  state?: string
   /** Uncontrolled initial date / reset baseline — ISO `YYYY-MM-DD`. */
-  defaultvalue?: string
+  'default-state'?: string
   /** Form field name — the selected ISO date submits under this key. */
   name?: string
   /** Disable the whole calendar. Presence-based (`''` on, omit off). */

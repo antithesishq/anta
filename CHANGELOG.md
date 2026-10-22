@@ -34,6 +34,11 @@ changes are not listed.
 
 ### Breaking
 
+- [Raw Calendar inputs](/input-date/#raw-calendar-value-and-form-api) now use
+  `state` / `default-state` instead of `value` / `defaultvalue`. The element's
+  `.value` is read-only and `.defaultValue` is removed; public Calendar and
+  InputDate JSX props remain `value` / `defaultValue`.
+
 - Input and InputTime no longer use `data-anta-icon-only` for action sizing.
   Set a custom SVG or image action's width with CSS. Wrap bare text beside an
   icon in an element to keep the action's natural width.

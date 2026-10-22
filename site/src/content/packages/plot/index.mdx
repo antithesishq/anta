@@ -47,15 +47,8 @@ Combine multiple series in one plot to compare values, show trends, and add cont
 <div class="plot-gallery-card">
   <PlotGalleryPreview example="overview" />
 
-```ts folded
-import { area, line, rule, scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import '@antadesign/plot/plot.css'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function overviewExample(): PlotArgs<Node> {
-  // Synthetic data, sampled every 15 minutes. No randomness: edits keep the same data.
-  const forecast = Array.from({ length: 97 }, (_, i) => {
+```js folded
+const forecast = Array.from({ length: 97 }, (_, i) => {
     const hour = i / 4
     const morning = 150 * Math.exp(-(((hour - 9) / 2.8) ** 2))
     const evening = 240 * Math.exp(-(((hour - 17) / 3.4) ** 2))
@@ -77,8 +70,8 @@ function overviewExample(): PlotArgs<Node> {
 
   const meanExpected = forecast.reduce((sum, point) => sum + point.expected, 0) / forecast.length
 
-  const series: PlotArgs<Node>['series'] = [
-    area({
+  const series = [
+    plot.area({
       data: forecast,
       x: 'hour',
       y: 'high',
@@ -86,39 +79,39 @@ function overviewExample(): PlotArgs<Node> {
       color: { light: '#ede9fe', dark: '#30274e' },
       hoverable: false,
     }),
-    rule({
+    plot.rule({
       y: meanExpected,
       color: { light: '#d97706', dark: '#fbbf24' },
       width: 2,
       dash: [8, 4],
       hoverable: false,
     }),
-    line({
+    plot.line({
       data: forecast,
       x: 'hour',
       y: 'expected',
       color: { light: '#8b5cf6', dark: '#c4b5fd' },
       width: 2,
       dash: [5, 5],
-      tooltip: ({ x, y }) => document.createTextNode('Forecast at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
+      tooltip: pure(({ x, y }) => h('span', {}, 'Forecast at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s')),
     }),
-    line({
+    plot.line({
       data: trend,
       x: 'hour',
       y: 'average',
       color: { light: '#0891b2', dark: '#67e8f9' },
       width: 3,
-      tooltip: ({ x, y }) => document.createTextNode('Trend at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
+      tooltip: pure(({ x, y }) => h('span', {}, 'Trend at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s')),
     }),
-    scatter({
+    plot.scatter({
       data: observations.filter(point => !point.outside),
       x: 'hour',
       y: 'actual',
       color: { light: '#0891b2', dark: '#67e8f9' },
       size: 4,
-      tooltip: ({ x, y }) => document.createTextNode('Observed at ' + x + 'h: ' + y + ' requests/s'),
+      tooltip: pure(({ x, y }) => h('span', {}, 'Observed at ' + x + 'h: ' + y + ' requests/s')),
     }),
-    scatter({
+    plot.scatter({
       data: observations.filter(point => point.outside),
       x: 'hour',
       y: 'actual',
@@ -126,49 +119,36 @@ function overviewExample(): PlotArgs<Node> {
       mark: 'diamond',
       size: 9,
       stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1 },
-      tooltip: ({ x, y }) => document.createTextNode('Outside forecast range: ' + x + 'h · ' + y + ' requests/s'),
+      tooltip: pure(({ x, y }) => h('span', {}, 'Outside forecast range: ' + x + 'h · ' + y + ' requests/s')),
     }),
   ]
 
-  const options = {
-
-    height: 400,
+  const request_volume = plot({
+    height: 280,
+    series,
+    axis: {
+      x: { min: 0, max: 24, label: 'Hour' },
+      y: { min: 0, max: 440, label: 'Requests/s' },
+    },
+    margin: { top: 12, right: 16, bottom: 42, left: 74 },
+    grid: false,
     border: false,
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     background: { light: '#ffffff', dark: '#151b28' },
-    theme_invert: false,
-  }
+    zoom_pan: false,
+  })
 
-  const axis = {
-
-    x: { min: 0, max: 24, label: 'Hour' },
-
-    y: { min: 0, max: 440, label: 'Requests/s' },
-
-  }
-
-  const margin = 12
-
-  const grid = false
-
-  const zoom_pan = { x: true, y: true }
-
-  // Replace the object to apply a change; Plot does not observe in-place mutation.
-  const plotArgs: PlotArgs<Node> = { ...options, series, axis, margin, grid, zoom_pan }
-
-  return plotArgs
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-const args = overviewExample()
-plot.plotArgs = {
-  ...args,
-  height: 280,
-  margin: { top: 12, right: 16, bottom: 42, left: 74 },
-  zoom_pan: false,
-}
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(request_volume)
+  // presentation.blank('Request volume').print(request_volume)
 ```
+
+This Request volume snippet uses the Antithesis notebook API. Paste the whole
+block into a version 2 notebook and uncomment either or both final output lines
+to display the chart. The snippet includes its data.
+Hover the lines and points to see custom tooltips. Web application setup is
+covered under [Install](#install).
+
 
 </div>
 

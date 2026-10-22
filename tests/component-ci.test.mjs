@@ -234,3 +234,26 @@ test('Plot CI gate includes input, measurement, focus, and copy dependencies', a
     }
   } finally { await rm(directory,{recursive:true}) }
 })
+
+test('Stickers CI gate includes shipped tokens and component workflow dependencies', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-stickers-gate-'))
+  const git = args => execFileSync('git', args, {cwd:directory, encoding:'utf8', stdio:['ignore','pipe','pipe']})
+  try {
+    git(['init','-b','fixture']);git(['config','user.name','Fixture']);git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection = workflow.jobs.build.steps.find(step=>step.id==='component-tests').run
+    for (const [path,wanted] of [
+      ['src/tokens.css',true],['src/reset.css',true],['src/theme-antune.css',true],['src/theme-antithesis.css',true],
+      ['.github/workflows/component-tests.yml',true],['stickers/src/elements/a-sticker-animated.ts',true],
+      ['site/src/content/packages/plot/index.mdx',false],
+    ]) {
+      const base = git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true})
+      await writeFile(join(directory,path),'fixture')
+      git(['add',path]);git(['commit','-m',path])
+      const output=join(directory,'outputs');await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'),new RegExp(`^stickers=${wanted}$`,'m'),path)
+    }
+  } finally {await rm(directory,{recursive:true})}
+})

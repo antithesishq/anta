@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, copy, dialog, expander, input, input-autocomplete, input-time, menu, progress, select, selection, slider, stickers, text, toaster, tooltip]
+        options: [all, banner, calendar, card, copy, dialog, expander, input, input-autocomplete, input-time, menu, panel, plot, progress, select, selection, slider, stickers, text, toaster, tooltip]
       select_compare_ref:
         description: Optional Git ref for a one-off Select appearance comparison
         type: string
@@ -14,6 +14,11 @@ on:
         default: ''
       slider_compare_ref:
         description: Optional Git ref for a one-off Slider appearance comparison
+        type: string
+        required: false
+        default: ''
+      plot_compare_ref:
+        description: Optional Git ref for a Plot appearance comparison
         type: string
         required: false
         default: ''
@@ -42,6 +47,7 @@ jobs:
           COMPONENT: ${{ inputs.component }}
           ANTA_MENU_COMPARE_ORIGINAL: '1'
           ANTA_SELECT_COMPARE_REF: ${{ inputs.select_compare_ref }}
+          ANTA_PLOT_COMPARE_REF: ${{ inputs.plot_compare_ref }}
           ANTA_SLIDER_COMPARE_REF: ${{ inputs.slider_compare_ref }}
         run: pnpm test:components --tier slow --component "$COMPONENT"
       - name: Save Expander visual matrix
@@ -123,6 +129,22 @@ jobs:
         with:
           name: slider-visual
           path: tests/.test-output/slider
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Plot visual comparison
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: plot-visual
+          path: tests/.test-output/plot
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - name: Save Panel visual comparison
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: panel-visual
+          path: tests/.test-output/panel
           include-hidden-files: true
           if-no-files-found: ignore
       - name: Save Stickers visual matrix

@@ -1,33 +1,33 @@
 # InputTime
 
-**`InputTime`** is a segmented wall-clock field: one boxed input, like the others,
-holding separate **hour** and **minute** sections — plus an **AM/PM** section in
-12-hour locales — that behave as a single control. Each section is a native text
-input:
-↑/↓ steps its value (wrapping 59 → 00), ←/→
-moves between sections at the caret boundary, and typing a digit fills the section
-and advances to the next once it can't hold more. AM/PM accepts its locale text or
-`a` / `p`.
+Use InputTime for a time of day, such as a meeting start or office hours.
+The field provides hour and minute sections, with AM/PM in 12-hour locales.
+Enter digits or use the arrow keys to adjust each section.
 
-A leading clock icon marks the affordance (change it with `icon`). Unlike a text
-`Input` (which fills its container), the field **sizes to its content** — a time
-is a small, fixed control — so set a `width` (e.g. `style={{ width: '100%' }}`) if
-you want it to fill. The value is a 24-hour `"HH:mm"` string (`''` until both hour
-and minute are set), never a `Date`. It works controlled (`value` + `onValueChange`)
-or uncontrolled (`defaultValue`), and submits under `name` via the native form APIs.
+The value is a 24-hour `HH:mm` string, or `''` while the time is incomplete.
+Use `defaultValue` for an initial time, or pair `value` with `onValueChange`
+to control it. Add `name` to submit the value with a form.
 
 ## The field
 
-Focus a section and edit it with the keyboard: ↑/↓ to step (it
-wraps), PageUp/PageDown for a larger jump on minutes,
-or enter the digits. Home/End, selection, deletion, and
-paste behave as they do in a native text input. Typing
-`9` then `3` `0` lands `09:30` and moves across the sections on its own; an
-out-of-range digit (a `6` in the minutes) commits and advances immediately.
-Backspace on an empty section selects the previous one. The whole thing
-reads as one field while preserving native caret behavior. In a
-12-hour field, typing a 24-hour hour converts it and flips AM/PM — `18` becomes
-`6 PM`, so pasted 24-hour times work.
+Focus a section and enter digits. The caret advances when the section is
+complete. For example, entering `9`, `3`, and `0` produces `09:30`.
+In a 12-hour field, entering `18` sets `6 PM`. The period section accepts its
+localized text or `a` and `p`.
+
+Use the keyboard to adjust or move between sections:
+
+- ↑ and ↓ step the value, wrapping at its limits.
+- ← and → move between sections at the caret boundary.
+- PageUp and PageDown make larger minute adjustments.
+- Backspace in an empty section selects the previous section.
+
+Home, End, selection, deletion, and paste keep their native text-field behavior.
+When one digit cannot grow into a valid two-digit value, the field confirms
+that section and advances. Entering `6` in minutes, for example, sets `06`.
+
+The field sizes to its content. Set `width` when it should fill its container.
+Use `icon` to replace the leading clock, or `icon={false}` to remove it.
 
 ```tsx
 <InputTime label="Start time" defaultValue="09:30" onValueChange={(_, { value }) => save(value)} />
@@ -35,14 +35,13 @@ reads as one field while preserving native caret behavior. In a
 
 ## Locale
 
-The clock follows the locale: `en-US` shows 12-hour with an AM/PM section, most
-others show 24-hour with none. It's derived from `Intl` (the resolved `hourCycle`),
-and the section **order**, the **separator**, and the **AM/PM text** all come from
-the locale too — Japanese renders the period first (`午後2:05`), Finnish separates
-with a dot (`14.05`), and 24-hour locales drop the AM/PM section entirely. Set
-`hour12` to force one clock regardless of locale. The AM/PM section reserves
-space for the longer locale label, so its width stays the same when the period
-changes.
+Set `locale` to choose the clock format, section order, separator, and AM/PM
+text. For example, `en-US` uses a 12-hour clock and `de-DE` uses a 24-hour clock.
+Japanese can place the period first, and Finnish uses a dot separator.
+Pass `hour12` or `hour12={false}` to override the locale's clock format.
+
+The period section reserves enough space for either label, so switching AM/PM
+does not change the field's width.
 
 ```tsx
 <InputTime label="US English" locale="en-US" defaultValue="14:05" />   {/* 12-hour: 02 : 05 PM */}
@@ -122,22 +121,18 @@ const [keep, setKeep] = useState(false)
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
+Use `<a-input-time>` directly outside JSX. Its `label`, `leading`, `clear`,
+`trailing`, and `hint` slots accept field content. Use the `hour`, `minute`, and
+`period` parts to style sections independently of their locale order.
 
-Slots supply the label, leading content, clear action, trailing content, and hint.
-The owned native inputs remain inside the shadow root. The `segments` part groups
-them; `hour`, `minute`, and `period` keep their meanings in every locale.
+If existing selectors target JSX grouping spans, update them to the
+`a-input-time-label`, `a-input-time-leading`, `a-input-time-clear`,
+`a-input-time-trailing`, and `a-input-time-hint` tags or their slot attributes.
+Raw HTML can keep its existing slot markup.
 
-JSX groups slot content in CSS-only `a-input-time-label`, `a-input-time-leading`,
-`a-input-time-clear`, `a-input-time-trailing`, and `a-input-time-hint` tags. These
-replace the wrapper's spans. Update span-based consumer selectors to the grouping
-tags or slot attributes. Raw HTML can keep its existing slot markup.
-
-Defaults load from external CSS, including under `style-src-attr 'none'`.
-Custom `tone`, numeric `round`, and application `style` props can still serialize
-inline styles that a policy blocks. Before browser SSR hydration, configure
-`hydratingEvents: true` as described in [Browser hydration](../install-config.md#browser-hydration).
-Client-only and worker renderers forward events immediately by default.
+For styles and renderer setup, follow [Install and configure](../install-config.md).
+Custom colors and dimensions may require external CSS under a strict
+[Content Security Policy](../install-config.md#content-security-policy).
 
 The canonical value remains `HH:mm`, or an empty string for an incomplete time.
 `input` bubbles and is composed; `change` bubbles on commit. A clear action first
@@ -171,9 +166,9 @@ field treatments.
 
 ## Styling
 
-`InputTime` renders an `<a-input-time>` whose field chrome mirrors `<a-input>`.
-Route feedback color through `status`; everything else is reachable as plain CSS on
-the host or through `::part()`. Unlayered consumer rules override Anta's layered defaults. `segment` targets every editable input. `hour`,
+Use `status` for feedback color and `tone` for a custom accent. Style the host
+with ordinary CSS and its sections with `::part()`. Unlayered consumer rules
+override Anta's defaults. `segment` targets every editable input. `hour`,
 `minute`, and `period` target one segment type regardless of locale order. `literal`
 targets the localized separator. The element also exposes `field`, `segments`,
 `leading`, `label`, `hint`, `clear`, and `trailing`. Don't override the internal

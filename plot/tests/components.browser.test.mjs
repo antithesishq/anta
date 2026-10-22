@@ -49,8 +49,8 @@ before(async () => {
         file.text,
     ]))
 
-    // These checks exercise injected host styles without the compatibility stylesheet.
-    assert.doesNotMatch(assets.get('/fixture.css') ?? '', /:where\(a-plot\)/)
+    // Consumers explicitly load the published structural stylesheet.
+    assert.match(assets.get('/fixture.css') ?? '', /:where\(a-plot\)/)
 
     server = createServer((req, res) => {
         res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript'
@@ -358,7 +358,7 @@ test('rejected arguments retain wrapper dimensions and valid updates can remove 
     await page.evaluate(() => renderPlot())
     await page.waitForFunction(() => document.querySelector('canvas').width === 600)
     assert.deepEqual(await page.locator('[data-plot]').evaluate(el => [el.style.width, el.style.height]),
-        ['100%', '100%'])
+        ['', ''])
 })
 
 for (const offscreen of [false, true]) {

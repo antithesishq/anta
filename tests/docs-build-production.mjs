@@ -9,8 +9,39 @@ import { inputByLabel } from './helpers/input-locator.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium, webkit } = requireSite('playwright')
+const { parse } = requireSite('parse5')
 const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, webkit]
 const dist = new URL('../site/dist/', import.meta.url)
+
+test('Plot pages retain working links, unique anchors, and one page title', async () => {
+  const pages = (await readPageCatalog()).filter(page => page.package === 'plot')
+  const documents = new Map()
+  async function document(path) {
+    if (documents.has(path)) return documents.get(path)
+    const html = await readFile(new URL(`.${path}index.html`, dist), 'utf8')
+    const nodes = []
+    function visit(node) {
+      nodes.push(node)
+      for (const child of node.childNodes ?? []) visit(child)
+    }
+    visit(parse(html))
+    const result = { nodes, ids: nodes.flatMap(node => node.attrs?.filter(attr => attr.name === 'id').map(attr => attr.value) ?? []) }
+    documents.set(path, result)
+    return result
+  }
+  for (const page of pages) {
+    const { nodes, ids } = await document(page.path)
+    assert.equal(nodes.filter(node => node.tagName === 'h1').length, 1, page.path)
+    assert.equal(new Set(ids).size, ids.length, `${page.path} has duplicate anchors`)
+    for (const node of nodes.filter(node => node.tagName === 'a')) {
+      const href = node.attrs.find(attr => attr.name === 'href')?.value
+      if (!href || !/^(?:#|\/plot\/)/.test(href)) continue
+      const target = new URL(href, `https://anta.test${page.path}`)
+      const destination = await document(target.pathname)
+      if (target.hash) assert.ok(destination.ids.includes(decodeURIComponent(target.hash.slice(1))), `${page.path}: ${href}`)
+    }
+  }
+})
 
 test('collection reads keep island and script styles on the pages that use them', async () => {
   const catalog = await readPageCatalog()
@@ -23,7 +54,7 @@ test('collection reads keep island and script styles on the pages that use them'
     // Plot's processed script and the browser-only Box/Capture demos own this
     // shared element chunk. Reading their metadata must not load it elsewhere.
     const elementStyles = styles.filter(path => path.includes('/a-tooltip.'))
-    assert.equal(elementStyles.length, ['/box/', '/capture/', '/plot/'].includes(entry.path) ? 1 : 0,
+    assert.equal(elementStyles.length, ['/box/', '/capture/'].includes(entry.path) || entry.package === 'plot' ? 1 : 0,
       `${entry.path} must not inherit another collection entry's script CSS`)
   }
 })
@@ -47,7 +78,177 @@ async function productionPage(t, engine = chromium) {
   return { page, errors }
 }
 
+test('changelog feed preserves dated releases, HTML notes and working release links', async t => {
+  const { page } = await productionPage(t)
+  const [feed, html, changelog] = await Promise.all([
+    readFile(new URL('changelog.rss', dist), 'utf8'),
+    readFile(new URL('changelog/dev/index.html', dist), 'utf8'),
+    readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf8'),
+  ])
+  const result = await page.evaluate(({ feed, html }) => {
+    const xml = new DOMParser().parseFromString(feed, 'application/xml')
+    const releases = new DOMParser().parseFromString(html, 'text/html')
+    const text = (element, selector) => element.querySelector(selector)?.textContent
+    const channel = xml.querySelector('channel')
+    return {
+      parseError: xml.querySelector('parsererror')?.textContent ?? null,
+      title: text(channel, 'title'),
+      link: text(channel, 'link'),
+      language: text(channel, 'language'),
+      self: xml.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'link')[0]?.getAttribute('href'),
+      buildDate: text(channel, 'lastBuildDate'),
+      items: [...xml.querySelectorAll('item')].map(item => {
+        const link = new URL(text(item, 'link'))
+        return {
+          title: text(item, 'title'),
+          date: text(item, 'pubDate'),
+          validLink: link.origin === 'https://anta.design' && link.pathname === '/changelog/dev/'
+            && !!releases.getElementById(decodeURIComponent(link.hash.slice(1))),
+          validGuid: text(item, 'guid') === link.href && item.querySelector('guid')?.getAttribute('isPermaLink') === 'true',
+          hasNotes: !!new DOMParser().parseFromString(text(item, 'description'), 'text/html').querySelector('li'),
+        }
+      }),
+    }
+  }, { feed, html })
+  assert.equal(result.parseError, null)
+  assert.equal(result.title, 'Anta changelog')
+  assert.equal(result.link, 'https://anta.design/changelog/')
+  assert.equal(result.language, 'en')
+  assert.equal(result.self, 'https://anta.design/changelog.rss')
+  assert.equal(result.buildDate, result.items[0].date)
+  const versions = [...changelog.matchAll(/^## (\S+) — [A-Z][a-z]+ \d{1,2}, \d{4}$/gm)].map(match => `Anta ${match[1]}`)
+  assert.deepEqual(result.items.map(item => item.title), versions)
+  for (const item of result.items) {
+    assert.ok(Number.isFinite(Date.parse(item.date)), item.title)
+    assert.ok(item.validLink && item.validGuid && item.hasNotes, item.title)
+  }
+})
+
 for (const engine of engines) {
+  test(`${engine.name()}: review stars render before scripts without moving the page title`, { timeout: 30_000 }, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    let release
+    const gate = new Promise(resolve => { release = resolve })
+    t.after(() => release())
+    await page.route('https://anta.test/**/*.js', async route => { await gate; await route.fallback() })
+    await page.goto('https://anta.test/plot/rect/', { waitUntil: 'commit' })
+    const heading = page.locator('main h1')
+    const marker = heading.locator('.doc-review-marker')
+    await marker.waitFor()
+    await page.waitForFunction(() => [...document.querySelectorAll('link[rel=stylesheet]')].every(link => link.sheet))
+    // WebKit's fonts.ready can wait for the scripts deliberately held by this test.
+    await page.evaluate(() => Promise.all(['main h1', 'main > p'].map(selector => {
+      const element = document.querySelector(selector)
+      const style = getComputedStyle(element)
+      return document.fonts.load(`${style.fontWeight} ${style.fontSize} ${style.fontFamily}`, element.textContent)
+    })))
+    assert.equal(await marker.textContent(), '✦')
+    assert.equal(await marker.evaluate(element => getComputedStyle(element).display), 'inline')
+    assert.equal(await heading.locator(':scope > a-tooltip').count(), 1)
+    assert.equal(await heading.getAttribute('aria-description'), 'Documentation has not yet been reviewed by a human.')
+    const before = { heading: await heading.boundingBox(), paragraph: await page.locator('main > p').first().boundingBox() }
+    release()
+    await page.waitForFunction(() => Boolean(customElements.get('a-tooltip')))
+    assert.deepEqual({ heading: await heading.boundingBox(), paragraph: await page.locator('main > p').first().boundingBox() }, before)
+    await heading.hover({ position: { x: 4, y: 12 } })
+    await page.waitForFunction(() => document.querySelector('h1 > a-tooltip')?.shadowRoot?.querySelector(':popover-open'))
+    await page.keyboard.press('Escape')
+    await heading.focus()
+    await page.waitForFunction(() => document.querySelector('h1 > a-tooltip')?.shadowRoot?.querySelector(':popover-open'))
+    await page.keyboard.press('Escape')
+    await page.goto('https://anta.test/')
+    assert.equal(await page.locator('main h1 .doc-review-marker').count(), 0)
+    await page.locator('.sidebar a[href="/plot/"]').click()
+    await page.waitForURL('https://anta.test/plot/')
+    await page.locator('main h1 .doc-review-marker').waitFor()
+    assert.equal(await page.locator('main h1 > a-tooltip').count(), 1)
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: Plot navigation expands, persists, and follows page history`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/button/')
+    const sidebar = page.locator('.sidebar')
+    const children = sidebar.getByRole('list', { name: 'Plot documentation', includeHidden: true })
+    assert.equal(await children.isVisible(), false)
+    await sidebar.evaluate(element => { element.dataset.testPersist = 'true' })
+    await sidebar.getByRole('link', { name: 'Plot', exact: true }).click()
+    await page.waitForURL('https://anta.test/plot/')
+    await children.waitFor({ state: 'visible' })
+    assert.equal(await children.isVisible(), true)
+    assert.equal(await children.getByRole('link').count(), 7)
+    for (const name of ['Scatter', 'Line', 'Bar', 'Area', 'Rect', 'Rule', 'Custom']) {
+      await children.getByRole('link', { name, exact: true }).click()
+      await page.waitForURL(`https://anta.test/plot/${name.toLowerCase()}/`)
+      await page.getByRole('heading', { level: 1, name, exact: true }).waitFor()
+      await children.locator(`a[href="/plot/${name.toLowerCase()}/"][aria-current="page"]`).waitFor()
+      const breadcrumbs = page.getByRole('navigation', { name: 'Site breadcrumb' })
+      assert.equal(await breadcrumbs.getByRole('button', { name: 'Plot', exact: true }).getAttribute('href'), '/plot/')
+      assert.equal((await breadcrumbs.locator('[aria-current="page"]').textContent()).trim(), name)
+      assert.equal((await children.locator('[aria-current="page"]').textContent()).trim(), name)
+      assert.equal(await sidebar.locator('a[href="/plot/"]').getAttribute('data-active-parent'), '')
+      await page.waitForFunction(() => [...document.querySelectorAll('main a-plot canvas')].some(canvas => canvas.width > 0))
+      assert.equal(await sidebar.getAttribute('data-test-persist'), 'true')
+    }
+    await page.goBack()
+    await page.waitForURL('https://anta.test/plot/rule/')
+    await children.locator('a[href="/plot/rule/"][aria-current="page"]').waitFor()
+    assert.equal((await children.locator('[aria-current="page"]').textContent()).trim(), 'Rule')
+    await page.goForward()
+    await page.waitForURL('https://anta.test/plot/custom/')
+    await page.getByRole('navigation', { name: 'Site breadcrumb' }).getByRole('button', { name: 'Plot', exact: true }).click()
+    await page.waitForURL('https://anta.test/plot/')
+    await page.locator('main').getByRole('link', { name: 'Explore stacked bars series' }).click()
+    await page.waitForURL('https://anta.test/plot/bar/#stacked-bars')
+    await sidebar.getByRole('link', { name: 'Button', exact: true }).click()
+    await page.waitForURL('https://anta.test/button/')
+    await children.waitFor({ state: 'hidden' })
+    assert.equal(await children.isVisible(), false)
+    await page.goto('https://anta.test/plot/scatter/')
+    assert.equal(await children.isVisible(), true)
+    await page.setViewportSize({ width: 390, height: 844 })
+    const breadcrumbs = page.getByRole('navigation', { name: 'Site breadcrumb' })
+    assert.equal(await breadcrumbs.getByRole('button', { name: 'Plot', exact: true }).isVisible(), true)
+    assert.equal(await breadcrumbs.locator('[aria-current="page"]').isVisible(), true)
+    const currentLabel = breadcrumbs.locator('[aria-current="page"] a-button-label')
+    assert.equal(await currentLabel.evaluate(element => element.scrollWidth <= element.clientWidth), true,
+      'the current series name must fit in the mobile breadcrumb')
+    await breadcrumbs.getByRole('button', { name: 'Anta', exact: true }).click()
+    await page.waitForFunction(() => document.body.dataset.menuOpen === 'true')
+    assert.equal(await children.isVisible(), true)
+    await children.getByRole('link', { name: 'Line', exact: true }).click()
+    await page.waitForURL('https://anta.test/plot/line/')
+    await breadcrumbs.getByRole('button', { name: 'Plot', exact: true }).click()
+    await page.waitForURL('https://anta.test/plot/')
+    assert.notEqual(await page.locator('body').getAttribute('data-menu-open'), 'true')
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: Panel preview retains hydrated requests, layout and input across maximization`, async t => {
+    const {page,errors}=await productionPage(t,engine)
+    await page.goto('https://anta.test/panel/')
+    const island=page.locator('astro-island[component-url*="PanelControlledDemo"]')
+    await page.waitForFunction(el=>!el.hasAttribute('ssr'),await island.elementHandle())
+    const panel=island.locator('a-panel'),input=island.locator('a-input input')
+    await input.fill('Retained production draft')
+    const bounds=()=>panel.evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x+scrollX,y:r.y+scrollY,width:r.width,height:r.height}})
+    const before=await bounds()
+    await island.getByRole('button',{name:'Maximize panel',exact:true}).click()
+    await page.waitForFunction(el=>el.matches(':state(maximized)'),await panel.elementHandle())
+    const size=page.viewportSize()
+    assert.deepEqual(await panel.evaluate(el=>{
+      const surface=el.shadowRoot.querySelector('slot'),r=surface.getBoundingClientRect()
+      return [r.x,r.y,r.width,r.height,getComputedStyle(surface).overflow]
+    }),[0,0,size.width,size.height,'auto'])
+    // A native request exercises the hydrated statechange listener, rather than
+    // the demo button's separate click callback.
+    await panel.evaluate(el=>el.requestRestore())
+    await page.waitForFunction(el=>!el.matches(':state(maximized)'),await panel.elementHandle())
+    assert.deepEqual(await bounds(),before)
+    assert.equal(await input.inputValue(),'Retained production draft')
+    assert.equal(await panel.evaluate(el=>el.shadowRoot.querySelectorAll('style,link').length),0)
+    assert.deepEqual(errors,[])
+  })
   test(`${engine.name()}: selection previews keep uncontrolled values off authored attributes`, async t => {
     const {page,errors}=await productionPage(t,engine)
     await page.goto('https://anta.test/input-date/')

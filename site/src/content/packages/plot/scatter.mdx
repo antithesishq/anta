@@ -1,0 +1,234 @@
+---
+title: Scatter
+nav:
+  icon: chart-scatter
+  order: 10
+---
+import PlotDetailPreview from '../../../components/PlotDetailPreview.astro'
+import Preview from '../../../components/Preview.astro'
+import Columns from '../../../components/Columns.astro'
+import Col from '../../../components/Col.astro'
+import PlotExampleGrid from '../../../components/PlotExampleGrid.astro'
+import PlotScatterPreview from '../../../components/PlotScatterPreview.astro'
+
+# Scatter
+
+Draw a mark at each data point. Use `size`, [`mark`](/plot/#mark-shapes), and [`stroke`](/plot/#strokes) to control
+its appearance. Set `tooltip: true` for a tooltip showing the point's values.
+
+<PlotExampleGrid>
+<Columns>
+<Col min={360}>
+
+## Size and color from data
+
+Use a size accessor to vary mark diameter and a color accessor to highlight larger values. An outline keeps overlapping bubbles distinct.
+
+<Preview minHeight={308}>
+  <PlotScatterPreview example="bubbles" />
+</Preview>
+
+```ts folded
+import { scatter, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+
+const data = Array.from({ length: 24 }, (_, i) => ({
+  x: 12 + (i * 17 % 83),
+  y: 15 + (i * 31 % 72),
+  volume: 20 + (i * 43 % 180),
+}))
+
+plot.plotArgs = {
+  series: [scatter({
+    data,
+    size: row => (5 + Math.sqrt(Number(row.volume)) * 1.8) * 1.3,
+    color: row => Number(row.volume) > 120
+      ? { light: '#e76f51', dark: '#fda489' }
+      : { light: '#0891b2', dark: '#67e8f9' },
+    stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 2 },
+    tooltip: ({ row }) => document.createTextNode('Volume: ' + row.volume),
+  })],
+  height: 260,
+  margin: { top: 12, right: 12, bottom: 28, left: 36 },
+  axis: { x: { min: 0, max: 110, label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  border: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+</Col>
+<Col min={360}>
+
+## Mark shapes and outlines
+
+Use different marks to distinguish groups without relying on color alone. Each series sets its own shape, size, and stroke.
+
+<Preview minHeight={308}>
+  <PlotScatterPreview example="shapes" />
+</Preview>
+
+```ts folded
+import { scatter, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+
+const data = Array.from({ length: 18 }, (_, i) => ({
+  x: 10 + i * 4.5,
+  y: 18 + i * 2.5 + Math.sin(i * 2.1) * 12,
+}))
+
+plot.plotArgs = {
+  series: [
+    scatter({
+      data,
+      mark: 'square',
+      size: 11,
+      color: { light: '#c4b5fd', dark: '#8b5cf6' },
+      stroke: { color: { light: '#6d28d9', dark: '#ddd6fe' }, width: 2 },
+      tooltip: ({ x, y }) => document.createTextNode('Squares: ' + x + ', ' + Math.round(Number(y))),
+    }),
+    scatter({
+      data: data.map(point => ({ x: point.x + 5, y: 95 - point.y })),
+      mark: 'diamond',
+      size: 13,
+      color: { light: '#99f6e4', dark: '#0d9488' },
+      stroke: { color: { light: '#0f766e', dark: '#5eead4' }, width: 2 },
+      tooltip: ({ x, y }) => document.createTextNode('Diamonds: ' + x + ', ' + Math.round(Number(y))),
+    }),
+  ],
+  height: 260,
+  margin: { top: 12, right: 12, bottom: 28, left: 36 },
+  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  border: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+
+</Col>
+</Columns>
+</PlotExampleGrid>
+
+## Scatter arguments
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
+| `x?` | [`FieldArg`](/plot/#data-fields) | `'x'` | Horizontal field name or accessor. |
+| `y?` | [`FieldArg`](/plot/#data-fields) | `'y'` | Vertical field name or accessor. |
+| `color?` | [`ColorArg`](/plot/#series-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
+| `size?` | `number \| ((row, index, viewport) => number)` | `5` | [Mark diameter](#size) in pixels, or a per-row accessor. A row’s `size` takes precedence. |
+| [`mark?`](/plot/#mark-shapes) | `MarkShape` | `'circle'` | Mark shape: circle, square, diamond, or triangle. |
+| [`stroke?`](/plot/#strokes) | `StrokeArg` | None | Outline color and optional width. |
+| [`tooltip?`](/plot/#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](/plot/#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
+| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+
+```ts
+import { scatter } from '@antadesign/plot'
+
+const series = [scatter({
+  data: [{ time: 1, value: 3 }, { time: 2, value: 5 }, { time: 3, value: 4 }],
+  x: 'time',
+  y: 'value',
+  color: (row) => Number(row.value) >= 5 ? 'coral' : 'steelblue',
+  size: (row) => Number(row.value) * 2,
+  mark: 'diamond',
+  stroke: { color: 'navy', width: 1 },
+  tooltip: ({ x, y }) => `(${x}, ${y})`,
+  on_select: ({ row }) => console.log('Selected row:', row),
+  hoverable: true,
+  highlight: true,
+})]
+```
+
+## Size
+
+Scatter `size` accepts a fixed pixel diameter or a pure accessor returning a number.
+The accessor receives `(row, index, viewport)`, so you can combine data and viewport
+without storing zoom in application state.
+
+Scroll near **50**. The first series stays at 4px. The other series
+alternate between 2px and 4px based on their data, then grow with horizontal zoom,
+at different rates, up to 16px. Drag to pan; **Reset Zoom** in the context menu restores
+the starting sizes.
+
+<Preview minHeight={308}>
+  <PlotDetailPreview example="viewportSizes" label="Scatter size from data and viewport" />
+</Preview>
+
+```ts folded
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+import type { APlotElement } from '@antadesign/plot/browser'
+
+export function viewportSizes(): PlotArgs<Node> {
+  const labels = ['Fixed 4px', 'Data + gradual zoom', 'Data + faster zoom']
+  const positions = [0, 10, 25, 40, 45, 48, 49, 49.5, 49.75, 50, 50.25, 50.5, 51, 52, 55, 60, 75, 90, 100]
+  const rows = (label: string) => positions.map((x, i) => ({ x, y: label, weight: i % 2 ? 4 : 2 }))
+  return {
+    height: 260,
+    margin: { top: 24, right: 20, bottom: 48, left: 160 },
+    axis: { x: { min: 0, max: 100, label: 'Zoom near 50' }, y: { categories: labels, label: '' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#64748b', dark: '#cbd5e1' },
+    grid: false,
+    zoom_pan: { x: true, y: false },
+    series: [
+      scatter({ data: rows(labels[0]), size: 4,
+        color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),
+      scatter({ data: rows(labels[1]),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
+        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true }),
+      scatter({ data: rows(labels[2]),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.5),
+        color: { light: '#c2410c', dark: '#fdba74' }, tooltip: true }),
+    ],
+  }
+}
+
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = viewportSizes()
+document.body.append(plot)
+```
+
+`viewport` has the same shape as [Viewport changes](/plot/#viewport-changes): `x` and `y`
+contain visible and full domains (`null` for a categorical axis), and `zoom_factor.x` and
+`zoom_factor.y` contain gesture magnification. Each starts at 1. Panning, resizing, and
+data-domain changes preserve magnification. Reset and new keyed viewport requests
+establish factor 1 on their affected axes. Zooming out beyond a requested initial
+window can yield factors below 1. Use `Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y)`
+to follow the more magnified axis.
+
+Size accessors run during composition, including zoom and pan, rather than when
+the series is constructed. Keep them pure and inexpensive. Existing accessors
+that only read the row or index remain valid. Returned sizes must be finite and
+non-negative; invalid results report a composition error and retain the previous
+plot. Numeric row `size` fields take precedence, and the index stays tied to the
+original input row after category filtering. Drawing, hit testing, and highlights
+reuse the composed sizes. Other series' size options and font sizes remain numeric.
+
+## Shared configuration
+
+See [Install and configure](/plot/#install-and-configure) to set up Plot.
+The argument tables describe omitted fields; examples may override these defaults.
+See [Data fields](/plot/#data-fields), [Series colors](/plot/#series-colors),
+[Strokes](/plot/#strokes), and [Mark shapes](/plot/#mark-shapes) for shared options.
+For callbacks, see [Tooltips](/plot/#tooltips) and
+[Selection callbacks](/plot/#selection-callbacks).

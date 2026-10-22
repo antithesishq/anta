@@ -349,16 +349,9 @@ export const MenuItem = ({
           `indicator` node wins (rendered passive: aria-hidden + no pointer events,
           `flex: none` so the row's flex `gap` spaces it, matching the built-ins);
           otherwise reuse the checkbox/radio *element* visuals (no role, no focus,
-          no form value). a-menu-item.css handles the built-ins' gap/pointer-events. */}
+          no form value). a-menu-item.css handles indicator layout and pointer events. */}
       {indicator != null ? (
-        // `min-height: 1lh` makes the wrapper one text line tall and centers the node
-        // in it, so a small indicator aligns with the label's first line in a hinted
-        // (top-aligned) row instead of riding at the top.
-        <span
-          aria-hidden="true"
-          data-indicator=""
-          style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', minHeight: '1lh', pointerEvents: 'none' }}
-        >
+        <span aria-hidden="true" data-indicator="">
           {indicator}
         </span>
       ) : selectionIndicator === 'checkbox' ? (

@@ -1,3 +1,5 @@
+import { HTMLElementBase } from './element-base'
+export { HTMLElementBase } from './element-base'
 import { jsx, useState, useMemo, useOptionalClientLayoutEffect } from "./jsx-runtime"
 import type { IconShape } from "./elements/a-icon.shapes"
 import type { OptionPresentationProps } from "./general_types"
@@ -53,6 +55,13 @@ export function optionPresentationAttrs(
   return attrs as OptionPresentationProps
 }
 
+/** @internal Match primitive label values that produce no visible content. */
+export function isEmptyLabelValue(value: React.ReactNode): boolean {
+  return value == null || typeof value === 'boolean' ||
+    (typeof value === 'string' && value.trim() === '') ||
+    (typeof value === 'number' && Number.isNaN(value))
+}
+
 /**
  * Normalize a wrapper's label content the way `Button` / `Tabs` do: a bare string
  * or number becomes a `<tag>` — the ellipsis-capable label part (`a-button-label`,
@@ -66,9 +75,8 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
   if (kids == null) return kids
   const arr = Array.isArray(kids) ? kids : [kids]
   return arr.map((child, i) => {
-    if (typeof child === "string") return child.trim() === "" ? null : jsx(tag, { children: child }, i)
-    if (typeof child === "number") return Number.isNaN(child) ? null : jsx(tag, { children: child }, i)
-    if (child == null || typeof child === "boolean") return null
+    if (isEmptyLabelValue(child)) return null
+    if (typeof child === "string" || typeof child === "number") return jsx(tag, { children: child }, i)
     return child
   }) as React.ReactNode
 }
@@ -384,35 +392,6 @@ export interface TextToggleReceiver extends Element {
 }
 export function isTextToggleReceiver(element: Element | null): element is TextToggleReceiver {
   return element != null && typeof (element as Partial<TextToggleReceiver>)[SYNC_TEXT_TOGGLE] === 'function'
-}
-
-/**
- * `HTMLElement` in browsers, a noop class in Node/Worker environments.
- * Use this as the base for custom element classes so importing the
- * module in a non-DOM environment doesn't throw on `extends HTMLElement`.
- * Instantiation in non-DOM environments still fails, but no consumer
- * should be doing that.
- */
-const NativeHTMLElement = (typeof HTMLElement !== 'undefined' ? HTMLElement : class {}) as typeof HTMLElement
-
-/**
- * Base for Anta custom elements. Adds realm-correct `view` / `doc` getters:
- * the class may be defined in one realm while the element lives in another
- * (the docs playground renders into an iframe but reuses the parent page's
- * element class), so the module-global `window` / `document` can point at the
- * wrong frame. Anything viewport- or document-scoped — clamping,
- * `getComputedStyle`, scroll / key / pointer listeners — must go through these
- * so it's correct in any frame. Shared by a-tooltip and a-menu.
- */
-export class HTMLElementBase extends NativeHTMLElement {
-  /** This element's own window (the iframe's window when nested). */
-  protected get view(): Window & typeof globalThis {
-    return (this.ownerDocument?.defaultView as Window & typeof globalThis) ?? window
-  }
-  /** This element's own document (the iframe's document when nested). */
-  protected get doc(): Document {
-    return this.ownerDocument ?? document
-  }
 }
 
 /** Apply default accessible names and descriptions through element references. */

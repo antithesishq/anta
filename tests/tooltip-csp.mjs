@@ -19,12 +19,16 @@ const nodePaths = consumerRoot ? [resolve(consumerRoot, 'node_modules')] : [reso
 const jsxAlias = consumerRoot ? {} : { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime') }
 const preactCompat = consumerRoot ? 'preact/compat' : requireSite.resolve('preact/compat')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
-const browsers = new Map(), assets = new Map(), renderers = new Map()
+const browsers = new Map(), assets = new Map(), renderers = new Map(), stepsRenderers = new Map()
 let server, origin
-const components = consumerRoot ? "import {Tooltip, Button, Text, Steps, Select, SelectFaceted} from '@antadesign/anta'" :
-  `import {Tooltip, Button, Text, Steps, Select, SelectFaceted} from '${source}/index'`
+const components = consumerRoot ? "import {Tooltip, Button, Text, Steps, TabPanel, Select, SelectFaceted, configure} from '@antadesign/anta'" :
+  `import {Tooltip, Button, Text, Steps, TabPanel, Select, SelectFaceted, configure} from '${source}/index'`
 const factory = `const app = (props = {}) => React.createElement(Button, {label: 'Save', 'aria-label': 'Save', 'aria-description': 'Saves your work'},
   React.createElement(Tooltip, {id:'hint', delay:30, ...props}, props.content ?? 'Saves your work'))`
+const stepsFactory = `const stepsApp = (props = {}) => React.createElement(Steps, {
+  orientation:'vertical', defaultValue:'1', label:'Release phases',
+  options:Array.from({length:12},(_,i)=>({value:String(i),label:'Phase '+i,state:'completed'})), ...props,
+}, Array.from({length:12},(_,i)=>React.createElement(TabPanel,{key:i,value:String(i)},'Details for phase '+i)))`
 
 function checkInstalled(result) {
   if (!consumerRoot) return
@@ -39,7 +43,7 @@ async function compile(options) {
 }
 before(async () => {
   for (const mode of ['granular', 'bundle']) {
-    const entries = ['a-tooltip', 'a-button', 'a-text', 'a-steps', 'a-tabs', 'a-tab', 'a-select', 'a-select-faceted', 'a-input', 'a-menu', 'a-menu-item', 'a-menu-group', 'a-menu-separator', 'a-icon', 'a-checkbox']
+    const entries = ['a-tooltip', 'a-button', 'a-text', 'a-steps', 'a-tabs', 'a-tab', 'a-tabpanel', 'a-select', 'a-select-faceted', 'a-input', 'a-menu', 'a-menu-item', 'a-menu-group', 'a-menu-separator', 'a-icon', 'a-checkbox']
     const base = consumerRoot ? '@antadesign/anta' : source
     const contents = mode === 'bundle'
       ? `import '${base}/bundle'; ${consumerRoot || process.env.ANTA_TOOLTIP_PACKAGE_ROOT ? `import '${base}/bundle.css'` : ''}`
@@ -57,14 +61,18 @@ before(async () => {
     const alias = {...jsxAlias, ...(react ? consumerRoot ? {} : {react:resolve('node_modules/react')} : {react:preactCompat})}
     const result = await compile({stdin:{contents:`import React from 'react'; ${components};
       ${react ? "import {renderToString} from 'react-dom/server'" : "import renderToString from 'preact-render-to-string'"};
-      ${factory}; export const render = props => renderToString(app(props));`, resolveDir}, platform:'node', format:'cjs',
-      jsx:'automatic', jsxImportSource:'@antadesign/anta', alias:{...alias, ...(consumerRoot ? {} : react ? {'react-dom/server':requirePlot.resolve('react-dom/server')} : {'preact-render-to-string':requireRenderer.resolve('preact-render-to-string')})}})
+      ${factory}; ${stepsFactory}; export const render = props => renderToString(app(props));
+      export const renderSteps = props => renderToString(stepsApp(props));`, resolveDir}, platform:'node', format:'cjs',
+      jsx:'automatic', jsxImportSource:'@antadesign/anta', define:{'process.env.NODE_ENV':'"production"'}, alias:{...alias, ...(consumerRoot ? {} : react ? {'react-dom/server':requirePlot.resolve('react-dom/server')} : {'preact-render-to-string':requireRenderer.resolve('preact-render-to-string')})}})
     const compiled = new Module(resolve(`tests/tooltip-${framework}-server.cjs`))
     compiled._compile(result.outputFiles[0].text, compiled.id)
     renderers.set(framework, compiled.exports.render)
+    stepsRenderers.set(framework, compiled.exports.renderSteps)
     const client = await compile({stdin:{contents:`import React from 'react'; ${components};
       ${react ? "import {createRoot, hydrateRoot} from 'react-dom/client'" : "import {render, hydrate} from 'preact'"};
-      ${factory}; let root; window.recoverableErrors=[];
+      ${factory}; ${stepsFactory}; let root; window.recoverableErrors=[];
+      window.hydrateSteps = props => { configure(React.createElement,React.Fragment,React,{hydratingEvents:true}); ${react ? "root = hydrateRoot(document.querySelector('#mount'), stepsApp(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(stepsApp(props), document.querySelector('#mount'))"} };
+      window.renderSteps = props => { ${react ? "root.render(stepsApp(props))" : "render(stepsApp(props), document.querySelector('#mount'))"} };
       window.hydrateTooltip = props => { ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(app(props), document.querySelector('#mount'))"} };
       window.renderTooltip = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(app(props))" : "render(app(props), document.querySelector('#mount'))"} };
       window.renderComposition = name => {
@@ -79,12 +87,14 @@ before(async () => {
     assets.set(`/${framework}.js`, client.outputFiles.find(f=>f.path.endsWith('.js')).text)
   }
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
+  assets.set('/truncation.css', `.single-line-target{display:block;width:160px;font-family:system-ui;font-size:20px;line-height:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vertical-target{display:block;width:160px;height:12px;font-size:12px;line-height:12px;white-space:normal;overflow:hidden}`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .anchor{position:absolute;left:300px;top:180px;width:140px;height:40px} .second{left:450px} .third{left:600px} .edge{left:2px;top:2px} .bottom{top:440px} .clip,.clamp{display:block;width:130px;max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis} .override::part(bubble){background:rgb(30,40,50);color:white;padding:12px;border-radius:11px;box-shadow:none;backdrop-filter:none} .content{font-size:18px;font-weight:600} a-tooltip::part(container){z-index:1}`)
   server = createServer((req,res) => {
     const url = new URL(req.url,'http://localhost'), mode = url.searchParams.get('mode') ?? 'granular'
     res.setHeader('Content-Security-Policy', policy)
     res.setHeader('Content-Type', `${url.pathname.endsWith('.js') ? 'text/javascript' : url.pathname.endsWith('.css') ? 'text/css' : 'text/html'}; charset=utf-8`)
-    res.end(assets.get(url.pathname) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? renderers.get(url.searchParams.get('framework') ?? 'React')({}) : ''}</main><a href="#after" id="after">After</a>`)
+    const renderer = (url.searchParams.has('steps') ? stepsRenderers : renderers).get(url.searchParams.get('framework') ?? 'React')
+    res.end(assets.get(url.pathname) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? renderer({}) : ''}</main><a href="#after" id="after">After</a>`)
   })
   await new Promise(r=>server.listen(0,'127.0.0.1',r)); origin=`http://127.0.0.1:${server.address().port}`
   for (const engine of engines) {
@@ -95,13 +105,12 @@ before(async () => {
 })
 after(async () => { await Promise.all([...browsers.values()].map(b=>b.close())); if(server) await new Promise(r=>server.close(r)) })
 async function pageFor(t,engine,mode='granular',query='',options={}) {
-  const {knownShadowStyles=false,...context} = options
-  const page=await browsers.get(engine).newPage({viewport:{width:900,height:500},reducedMotion:'reduce',...context})
+  const page=await browsers.get(engine).newPage({viewport:{width:900,height:500},reducedMotion:'reduce',...options})
   page.setDefaultTimeout(8000)
   const errors=[]; page.on('pageerror',e=>errors.push(e.message))
   const response=await page.goto(`${origin}/?mode=${mode}${query}`)
   assert.equal(response.headers()['content-security-policy'],policy)
-  t.after(async()=>{try {assert.deepEqual(errors,[]);if(!knownShadowStyles) assert.deepEqual(await page.evaluate(()=>window.violations),[])} finally {await page.close()} })
+  t.after(async()=>{try {assert.deepEqual(errors,[]);assert.deepEqual(await page.evaluate(()=>window.violations),[])} finally {await page.close()} })
   return page
 }
 const register=(page,mode='granular')=>page.evaluate(mode=>import(`/${mode}.js`),mode)
@@ -120,8 +129,49 @@ const geometry=(page,selector='a-tooltip')=>page.locator(selector).evaluate(t=>{
 test.fast('React and Preact SSR keep Tooltip content authored without structural inline styles',()=>{
   for(const render of renderers.values()) {const html=render({});assert.match(html,/<a-tooltip/);assert.match(html,/aria-description="Saves your work"/);assert.doesNotMatch(html,/style=|part=|popover=/)}
 })
+test.fast('React and Preact SSR render vertical Steps without structural inline styles',()=>{
+  for(const render of stepsRenderers.values()) {
+    for(const props of [{}, {value:'missing'}, {orientation:'horizontal'}]) {
+      const html=render(props)
+      assert.match(html,/<a-steps/)
+      assert.doesNotMatch(html,/style=/)
+    }
+  }
+})
 for(const engine of engines) for(const mode of ['granular','bundle']) {
   const name=`${engine.name()} ${mode}`
+  for(const framework of ['React','Preact']) test.fast(`${name} ${framework}: vertical Steps panels follow selection under strict CSP`,async t=>{
+    const page=await pageFor(t,engine,mode,`&ssr&steps&framework=${framework}`)
+    await page.evaluate(()=>window.serverSteps=document.querySelector('a-steps'))
+    await register(page,mode)
+    await page.evaluate(framework=>import(`/${framework}.js`),framework)
+    await page.evaluate(()=>hydrateSteps({}));await frames(page)
+    assert.equal(await page.evaluate(()=>serverSteps===document.querySelector('a-steps')),true)
+    const check=async index=>{
+      const result=await page.locator('a-steps').evaluate((root,index)=>{
+        const tabs=[...root.querySelector('a-tabs').children]
+        const panel=root.querySelector('a-tabpanel:state(active)')
+        const box=panel.getBoundingClientRect(), selected=tabs[index].getBoundingClientRect()
+        return {after:box.top>=selected.bottom, before:index===tabs.length-1 || box.bottom<=tabs[index+1].getBoundingClientRect().top,
+          bridge:getComputedStyle(panel,'::before').content, selected:tabs[index].matches(':state(selected)'), inline:root.querySelectorAll('[style]').length, hostStyle:root.hasAttribute('style')}
+      },index)
+      assert.deepEqual(result,{after:true,before:true,bridge:index===11?'none':'""',selected:true,inline:0,hostStyle:false})
+    }
+    await check(1)
+    await page.locator('a-tab[value="0"]').click();await frames(page);await check(0)
+    await page.keyboard.press('ArrowDown');await frames(page);await check(1)
+    await page.keyboard.press('End');await frames(page);await check(11)
+    await page.evaluate(()=>renderSteps({value:'5',dir:'rtl'}));await frames(page);await check(5)
+    await page.locator('a-tabpanel:state(active)').evaluate(panel=>panel.replaceChildren())
+    assert.equal(await page.locator('a-tabpanel:state(active)').evaluate(panel=>{
+      const root=getComputedStyle(panel.parentElement)
+      return panel.getBoundingClientRect().height>=parseFloat(root.getPropertyValue('--steps-marker-size'))-parseFloat(root.rowGap)
+    }),true)
+    await check(5)
+    await page.evaluate(()=>renderSteps({value:'missing'}));await frames(page)
+    assert.equal(await page.locator('a-tabpanel:state(active)').count(),0)
+    assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+  })
   test.fast(`${name}: pre-upgrade content stays hidden; external parts render without authored mutations`,async t=>{
     const page=await pageFor(t,engine,mode,'&ssr')
     assert.equal(await page.locator('a-tooltip').evaluate(n=>getComputedStyle(n).display),'none')
@@ -158,6 +208,28 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.match(await page.locator('a-tooltip').evaluate(n=>n.shadowRoot.querySelector('slot').textContent),/long label/)
     await mount(page);await show(page);await page.locator('a-tooltip').evaluate(n=>n.textContent='');await waitOpen(page,'a-tooltip',false)
     await page.locator('a-tooltip').evaluate(n=>n.textContent='Changed content');await page.mouse.move(10,10);await page.locator('#anchor').hover();await waitOpen(page)
+  })
+  test.fast(`${name}: single-line ellipsis ignores font-height overflow and preserves vertical clipping`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/truncation.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/truncation.css')))
+    for(const part of ['a-tab-label','a-step-hint']) {
+      await mount(page,`<a-steps><a-tabs data-steps priority="secondary" default-state="draft"><a-tab id="anchor" value="draft"><a-step-marker>1</a-step-marker><a-step-desc><${part} class="single-line-target">Short text</${part}></a-step-desc><a-tooltip truncated-only delay="30">Full step text</a-tooltip></a-tab></a-tabs></a-steps>`)
+      const target=page.locator('.single-line-target')
+      const overflow=await target.evaluate(n=>({x:n.scrollWidth-n.clientWidth,y:n.scrollHeight-n.clientHeight}))
+      assert.ok(overflow.x<=1)
+      // Font ink contributes to scrollHeight in Chromium, but not every engine.
+      if(engine===chromium)assert.ok(overflow.y>1)
+      await show(page);assert.equal(await open(page),false)
+      await target.evaluate(n=>n.textContent='A long step description that must be ellipsized')
+      assert.ok(await target.evaluate(n=>n.scrollWidth-n.clientWidth>1))
+      await show(page);await waitOpen(page)
+      await page.keyboard.press('Escape');await waitOpen(page,'a-tooltip',false)
+      await target.evaluate(n=>n.textContent='Short text')
+      await show(page);assert.equal(await open(page),false)
+    }
+    await mount(page,'<div id="anchor"><span class="vertical-target">First line<br>Second line<br>Third line</span><a-tooltip truncated-only truncated-selector=".vertical-target" delay="30">Full multi-line text</a-tooltip></div>')
+    await show(page);await waitOpen(page)
   })
   test.fast(`${name}: touch long-press, quick tap, drag, and scrolling cancellation`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page)
@@ -307,7 +379,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
 }
 for(const engine of engines) for(const order of [['granular','bundle'],['bundle','granular']]) {
   test.fast(`${engine.name()} ${order.join(' then ')}: Menu presence survives independent builds`,async t=>{
-    const page=await pageFor(t,engine,order[0],'',{knownShadowStyles:true});await register(page,order[0]);await register(page,order[1])
+    const page=await pageFor(t,engine,order[0]);await register(page,order[0]);await register(page,order[1])
     await mount(page,'<div class="anchor" id="trigger" tabindex="0">Menu<a-tooltip id="outside">Outside</a-tooltip><a-menu><a-menu-item role="menuitem" tabindex="0">Item<a-tooltip id="inside">Inside</a-tooltip></a-menu-item></a-menu></div>')
     await page.locator('a-menu').evaluate(n=>n.show());await frames(page)
     const baseline=await page.evaluate(()=>violations.length);assert.equal(baseline,0)
@@ -316,7 +388,7 @@ for(const engine of engines) for(const order of [['granular','bundle'],['bundle'
     await frames(page);assert.equal(await page.evaluate(()=>violations.length),baseline,'Tooltip and Menu retain strict CSP')
   })
   test(`${engine.name()} ${order.join(' then ')}: Select and SelectFaceted hints keep Menu ownership`,async t=>{
-    const page=await pageFor(t,engine,order[0],'',{knownShadowStyles:true});await register(page,order[0]);await register(page,order[1]);await page.evaluate(()=>import('/Preact.js'))
+    const page=await pageFor(t,engine,order[0]);await register(page,order[0]);await register(page,order[1]);await page.evaluate(()=>import('/Preact.js'))
     for(const name of ['select','faceted']) {
       await page.evaluate(name=>renderComposition(name),name);await frames(page)
       await page.locator('a-menu').first().evaluate(n=>n.show());await frames(page)
@@ -328,7 +400,7 @@ for(const engine of engines) for(const order of [['granular','bundle'],['bundle'
 
 for(const engine of engines) for(const order of [['anchor','bundle'],['bundle','anchor']]) {
   test.fast(`${engine.name()} ${order.join(' then ')}: separately compiled Input and Menu retain native ARIA relations`,async t=>{
-    const page=await pageFor(t,engine,'granular','',{knownShadowStyles:true})
+    const page=await pageFor(t,engine,'granular')
     await register(page,order[0]);await register(page,order[1])
     await mount(page,'<a-input button aria-label="Choices"><span slot="input-label">Choose</span><a-tooltip id="outside">Trigger help</a-tooltip></a-input><a-menu><a-menu-item role="menuitem" tabindex="0">Alpha<a-tooltip id="inside">Alpha help</a-tooltip></a-menu-item></a-menu>')
     await page.locator('a-menu').evaluate(n=>n.show());await frames(page)

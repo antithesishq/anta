@@ -46,19 +46,20 @@ export interface StepOption extends OptionPresentationProps {
   /** Secondary text shown below the label. It ellipsizes in a constrained step;
    * its full content is available in a tooltip only when clipped. */
   hint?: React.ReactNode
-  /** Application-owned process state. Selection and availability are separate;
-   * `error` keeps a critical icon and outline, and selection adds the fill. */
+  /** Application-owned process state. Incomplete phases show their step number;
+   * loading, completed, and error phases use state indicators. Selection and
+   * availability are separate. */
   state: StepState
   /** Tone for this phase. It colors the label, hint, marker, and completed
    * connector. Overrides the Steps `tone`; error steps stay critical and
    * disabled steps stay neutral.
    * @defaultValue inherits Steps `tone` */
   tone?: StepTone | ""
-  /** Replaces the marker derived from `state`. A number is shown directly; an
-   * Anta icon shape is rendered as an `<Icon>`. */
+  /** Replaces the default step number or state indicator. A number is shown
+   * directly; an Anta icon shape is rendered as an `<Icon>`. */
   marker?: StepMarker
   /** Disables this phase. A custom `marker` or `renderMarker` result is kept;
-   * otherwise it uses the incomplete marker. */
+   * otherwise it shows its position in the sequence, starting at 1. */
   disabled?: boolean
 }
 
@@ -91,8 +92,7 @@ export interface StepsProps extends Omit<
 type StateDetail = { next: string | null; prev: string | null }
 type StateChangeEvent = CustomEvent<StateDetail>
 
-const STATE_ICON: Record<Exclude<StepState, "loading">, IconShape> = {
-  incomplete: "circle-large",
+const STATE_ICON: Record<Exclude<StepState, "loading" | "incomplete">, IconShape> = {
   completed: "check",
   error: "x",
 }
@@ -160,7 +160,7 @@ export const Steps = ({
     setInternalValue(detail.next ?? undefined)
   }
 
-  const tabs: TabOption[] = options.map((option) => {
+  const tabs: TabOption[] = options.map((option, index) => {
     const { className: optionClassName, style: optionStyle, ...optionAttrs } =
       optionPresentationAttrs(option)
 
@@ -175,8 +175,8 @@ export const Steps = ({
       selected: option.value === currentValue,
       disabled: !!option.disabled,
     })
-    const builtInMarker = option.disabled
-      ? <Icon shape={STATE_ICON.incomplete} />
+    const builtInMarker = option.disabled || option.state === "incomplete"
+      ? index + 1
       : option.state === "loading"
         ? <Loader tone={stepTone} />
         : <Icon shape={STATE_ICON[option.state]} />
@@ -219,26 +219,12 @@ export const Steps = ({
     }
   })
 
-  const currentIndex = options.findIndex(
-    (option) => option.value === currentValue,
-  )
   const vertical = orientation === "vertical"
-  const hasPanels = children != null && children !== false
-  const hasVerticalPanel = vertical && hasPanels
-  // An unmatched controlled value (currentIndex === -1) parks the panel after
-  // the last step instead of auto-placing it over a step row.
-  const panelRow = (currentIndex >= 0 ? currentIndex : options.length - 1) + 2
-  const rootStyle = hasVerticalPanel
-    ? ({
-        ...style,
-        "--steps-panel-row": panelRow,
-      } as React.CSSProperties)
-    : style
 
   return (
     <a-steps
       class={className}
-      style={rootStyle}
+      style={style}
       id={id}
       {...rest}
       data-orientation={vertical ? "vertical" : undefined}

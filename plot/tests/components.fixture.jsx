@@ -7,6 +7,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client'
 import { Plot } from '../dist/index.js'
 import { Plot as AntaPlot } from '../dist/index.js'
 import '../dist/elements/a-plot-surface.js'
+import '../dist/plot.css'
 import '@antadesign/anta/elements/a-tooltip'
 import { scatter } from '../dist/index.js'
 

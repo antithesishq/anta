@@ -314,7 +314,8 @@ is available on the next interaction. Use `round` for a softer shape.
 
 `truncatedOnly` measures the anchor's reported truncation or its `a-tab-label`,
 `a-button-label`, and `a-step-hint` regions. `truncatedSelector` selects a different
-measurement target. Measurements are refreshed when opening.
+measurement target. Single-line targets use horizontal overflow; multi-line
+targets can also report vertical clipping. Measurements are refreshed when opening.
 
 A custom numeric or length `round` prop emits an inline CSS variable. If your CSP
 blocks style attributes, use external `::part(bubble)` CSS for a custom radius.
@@ -353,8 +354,9 @@ positioning region; Input reports its field instead of its label and hint.
 
 Default styles load from the external component stylesheet. Under CSP, allow
 that same-origin stylesheet and the browser entry. Runtime positioning updates
-only Tooltip's owned shadow elements. Input and Menu retain separate shadow
-styles, so a composition containing them can still need additional CSP work.
+only Tooltip's owned shadow elements. Input and Menu also load their defaults
+from external CSS. Custom values serialized into HTML style attributes remain
+subject to the [CSP guidance](/install/#content-security-policy).
 
 Reduced motion disables both fades. Older supported browsers can omit parts of
 the native popover transition while retaining the content and interaction.

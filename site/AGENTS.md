@@ -9,6 +9,8 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 Astro dev uses `--ignore-lock` so agent sessions keep the server in the root
 dev process tree. The root launcher owns PID tracking and shutdown.
 
+See [site follow-ups](FOLLOWUPS.md) for pending deployment and performance work.
+
 ## Local servers
 
 Choose the server from the task without asking the user to choose process flags.
@@ -258,7 +260,9 @@ We only register workers for languages the playground actually uses. Adding JSON
 
 Page review status comes from the optional `author` frontmatter field. Leave it
 absent until a human has reviewed the complete page; the layout then shows a
-warning-tone ✦ beside the title. `WRITING.md` defines the matching TSDoc
+warning-tone ✦ as inline title text, with the whole heading as its tooltip
+target. Render the marker with the initial HTML; moving it after page load
+causes layout shifts. `WRITING.md` defines the matching TSDoc
 `@author` convention and the safe `pnpm docs-fix` command. Never add an author
 field on behalf of a human reviewer.
 After a human reviews a page, `pnpm docs-review <page.mdx>` adds its author
@@ -285,6 +289,13 @@ For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop
 **Demos use Anta's own components wherever one exists — down to the incidental controls.** Any control the design system ships — `Checkbox`, `Input`, `Button`, `RadioGroup`, `Select`, `Tabs`, `Tag`, `Tooltip`, … — is what a demo reaches for, whether it's the component under test or just a knob beside it (a "simulate loading" toggle, a filter field, a segmented switcher). This holds in every demo surface: Playground `initialCode`, a hydrated island (`src/components/*.tsx`), and inline `.mdx` examples. The point is that every example dogfoods the library and looks/behaves like real usage; a raw `<input>` / `<button>` / `<select>` next to an Anta component reads as an oversight. Drop to a raw HTML control **only** when there's genuinely no Anta equivalent yet (e.g. `<input type="range">` — there's no slider component). The `Playground` island itself is exempt — it's editor/props-form infrastructure kept standalone for extraction, not a component demo.
 
 Package docs use separate `plotDocs`, `tableDocs`, and `stickersDocs` collections. Put the package landing page in `src/content/packages/{package}/index.mdx`; `getting-started.mdx` or `getting-started/index.mdx` creates `/{package}/getting-started/`. Package navigation derives its group from the collection. Subpages default to the package landing page as their parent; set `parent` to an entry ID for deeper breadcrumbs. Keep each demo beside its page, preferably in its own directory.
+
+The sidebar nests catalog parents through `getNavigationTree()` and
+`SidebarNavItem.astro`. Children appear while their parent or a descendant is
+current. The persisted sidebar synchronizes branch visibility and active links
+on `astro:page-load`; keep cold loads and ClientRouter navigation consistent.
+Reset prose-list margins on nested navigation items so their row spacing
+matches the top-level links.
 
 Use `nav: false` to omit a page from navigation and `export: false` to omit it from Markdown exports. These flags are independent. Optional `path` overrides the generated URL. The shared schema rejects unknown metadata and the catalog rejects duplicate URLs, sources, export paths, and missing or cyclic parents.
 

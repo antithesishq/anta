@@ -1,4 +1,5 @@
 import { Button, type ButtonProps } from './Button'
+import { hasButtonContent } from '../button-content'
 import { useCopyFeedback } from '../anta_helpers'
 import { type CopyTarget, useCopyElementProps, isNodeCopy } from './copy-props'
 import type { IconShape } from '../elements/a-icon.shapes'
@@ -47,7 +48,8 @@ export type ButtonCopyProps = ButtonProps & {
  * `'none'`, `<a-copy>` shows its `Copied` confirmation instead.
  *
  * With a `label` it's a labeled button; without one it's an icon-only copy button
- * (named "Copy" for assistive tech). Everything else is a normal `Button` prop —
+ * (named "Copy" for assistive tech). Tooltip-only children preserve that name.
+ * Everything else is a normal `Button` prop —
  * `tone`, `priority`, `size`, `icon` (the resting glyph), `onCopied`.
  *
  * @example
@@ -89,7 +91,7 @@ export const ButtonCopy = ({
         ? {}
         : { icon: shownIcon }
 
-  const hasText = label != null || children != null
+  const hasText = label != null || hasButtonContent(children)
   const copyAttrs = useCopyElementProps({
     copy,
     copyNode,
@@ -110,7 +112,6 @@ export const ButtonCopy = ({
       // Icon-only (no visible text) gets an accessible name; a consumer's own
       // `aria-label` wins.
       aria-label={ariaLabel ?? (hasText ? undefined : 'Copy')}
-      data-anta-icon-only={!hasText && shownIcon != null ? '' : undefined}
       // For `copyNode`, mark the whole button so the serializer strips it (and
       // its `<a-copy>` child) from the copied region.
       data-copy-node-button={isNodeCopy({ copyNode }) ? '' : undefined}

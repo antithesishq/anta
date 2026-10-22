@@ -353,7 +353,7 @@
     /* Icon-only: default icons are 14 / 16 / 18px. Half an em minus 1.5px on
        each side makes their boxes 24 / 28 / 32px. Equal padding keeps custom
        icon sizes square too. Ignore tooltip and copy helpers when matching. */
-    &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
+    &:has(> a-icon:only-of-type):not(:has(> :not(a-icon, a-tooltip, a-copy))) {
       --button-padding-y: calc(0.5em - 1.5px);
       --button-padding-x: var(--button-padding-y);
       min-height: 0;

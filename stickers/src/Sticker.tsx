@@ -4,7 +4,10 @@ import type { BaseProps } from "@antadesign/anta/general_types";
  *  Inherits `className` and `style` from `BaseProps`. The animated
  *  variant (`StickerAnimated`) extends this with `paused`. */
 export interface StickerProps extends Omit<BaseProps, "children"> {
-  /** Edge length in pixels. Stickers are always square. Defaults to 256. */
+  /** Edge length in pixels. Emits an inline style; use external CSS with
+   * `--sticker-size` for strict CSP server rendering.
+   * @defaultValue 256
+   */
   size?: number;
   label?: string;
 }

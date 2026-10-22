@@ -1,4 +1,5 @@
 export const componentSuites = {
+  stickers: { tests: ['tests/stickers-csp.mjs'], slow: ['tests/stickers-package.mjs'] },
   plot: { tests: ['plot/tests/csp.test.mjs'], slow: ['plot/tests/csp-package.mjs'] },
   selection: { tests: ['tests/selection-projection.mjs', 'tests/selection-value.mjs'], slow: ['tests/selection-package.mjs'] },
   slider: { tests: ['tests/slider-projection.mjs', 'tests/slider-csp.mjs'], slow: ['tests/slider-package.mjs'] },

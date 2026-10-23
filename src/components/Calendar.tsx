@@ -25,10 +25,12 @@ export interface CalendarChangeAttrs {
 export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> {
   /** Controlled selected date — ISO `YYYY-MM-DD`. When provided, the application
    *  controls selection: the grid follows this prop and a pick only *requests* a change via
-   *  `onStateChange`. Leave undefined for uncontrolled. */
-  value?: string
-  /** Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`). */
-  defaultValue?: string
+   *  `onStateChange`. Use `null` for a controlled empty selection or leave
+   *  undefined for uncontrolled. An empty string also clears selection. */
+  value?: string | null
+  /** Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`), or
+   *  `null` to start without a selection. Also supplies the form-reset baseline. */
+  defaultValue?: string | null
   /** Earliest selectable date (ISO `YYYY-MM-DD`) — earlier days render disabled. */
   min?: string
   /** Latest selectable date (ISO `YYYY-MM-DD`) — later days render disabled. */
@@ -110,7 +112,7 @@ export const Calendar = ({
   ...rest
 }: CalendarProps) => {
   const controlled = value !== undefined
-  const selectionInput = controlled ? value ?? "" : defaultValue
+  const selectionInput = (controlled ? value : defaultValue) ?? ""
   const resolvedLocale =
     locale || (typeof navigator !== "undefined" ? navigator.language : "en-US")
   const minD = parseISODate(min)
@@ -338,7 +340,7 @@ export const Calendar = ({
         aria-label={ariaLabel ?? month.heading}
         name={name}
         state={controlled ? selectionInput : undefined}
-        default-state={!controlled ? defaultValue : undefined}
+        default-state={!controlled ? defaultValue ?? undefined : undefined}
         disabled={disabled ? "" : undefined}
         data-focus={focusReq ? `${focusReq.iso}#${focusReq.n}` : undefined}
         {...events}

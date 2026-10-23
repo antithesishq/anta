@@ -37,7 +37,8 @@ changes are not listed.
 - [Raw Calendar inputs](/input-date/#raw-calendar-value-and-form-api) now use
   `state` / `default-state` instead of `value` / `defaultvalue`. The element's
   `.value` is read-only and `.defaultValue` is removed; public Calendar and
-  InputDate JSX props remain `value` / `defaultValue`.
+  InputDate JSX props remain `value` / `defaultValue`. Calendar's JSX props now
+  accept `null` for no selected date.
 
 - [Slider](/slider/#web-component) renames raw HTML `defaultvalue` to
   `default-value`, keeping JSX `defaultValue` and the element's `.defaultValue`

@@ -139,7 +139,18 @@ for (const engine of engines) {
       })
     }
 
-    test.fast(`${engine.name()}: ${framework} runtime null keeps Calendar controlled and empty through release`, async t => {
+    test.fast(`${engine.name()}: ${framework} null Calendar default starts empty and resets without a selection`, async t => {
+      const page = await pageFor(t, engine, framework, { defaultValue: null })
+      const empty = { value: null, state: null, legacy: null, form: null, selected: null, filled: false }
+      assert.deepEqual(await snapshot(page), empty)
+      const date = await page.locator('a-calendar [data-part="day-cell"]:not([disabled])').nth(12).getAttribute('data-date')
+      await pick(page, date); await expectDate(page, date)
+      await page.evaluate(() => document.querySelector('form').reset())
+      await page.waitForFunction(() => document.querySelector('a-calendar').value === null)
+      assert.deepEqual(await snapshot(page), empty)
+    })
+
+    test.fast(`${engine.name()}: ${framework} null keeps Calendar controlled and empty through release`, async t => {
       const page = await pageFor(t, engine, framework, { value: null, defaultValue: '2026-10-08' })
       const empty = { value: null, state: '', legacy: null, form: null, selected: null, filled: false }
       assert.deepEqual(await snapshot(page), empty)

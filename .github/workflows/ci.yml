@@ -101,7 +101,7 @@ jobs:
             src/{jsx-runtime,native-event-props,anta_helpers,button-content,element-base,general_types,index,bundle}.ts \
             src/elements/{value-input,index,key-activation,shadow-aria,focus,input-focus-modality,input-trailing-actions}.ts \
             src/{tokens,reset,theme-antune,theme-antithesis}.css \
-            tests/selection-{projection,value,package}.mjs tests/calendar-controlled.mjs \
+            tests/selection-{projection,value,package}.mjs tests/selection-types.fixture.tsx tests/calendar-controlled.mjs \
             tests/consumers/templates/nextjs/package.json scripts/build-bundle.mjs \
             'tests/component*.mjs' .github/workflows/ci.yml package.json pnpm-lock.yaml \
             pnpm-workspace.yaml {site,plot}/package.json)

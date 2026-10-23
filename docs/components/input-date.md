@@ -106,6 +106,11 @@ fill when it is not selected.
 <Calendar defaultValue="2026-06-12" />
 ```
 
+Use `value={null}` to keep Calendar controlled with no date selected, or
+`defaultValue={null}` to start empty and let Calendar own selection. An empty
+string also clears selection. Omit `value` or pass `undefined` to release control
+while retaining the last applied date.
+
 ## Size
 
 `size` scales the whole calendar: the day cells, the prev/next chevrons, and the

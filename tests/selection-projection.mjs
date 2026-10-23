@@ -3,6 +3,7 @@ import { before } from 'node:test'
 import { Module } from 'node:module'
 import { resolve } from 'node:path'
 import { build } from 'esbuild'
+import ts from 'typescript'
 import { componentTest as test } from './component-tier.mjs'
 let runtime
 before(async()=>{
@@ -10,6 +11,15 @@ before(async()=>{
   const compiled=new Module(resolve('tests/selection-projection.cjs'));compiled._compile(result.outputFiles[0].text,compiled.id);runtime=compiled.exports
 })
 const find=(node,type)=>node?.type===type?node:(node?.children??[]).flat(Infinity).map(child=>find(child,type)).find(Boolean)
+test.fast('Calendar accepts nullable dates without widening date or callback types',()=>{
+  const config=ts.readConfigFile('src/tsconfig.json',ts.sys.readFile)
+  const parsed=ts.parseJsonConfigFileContent(config.config,ts.sys,resolve('src'))
+  const program=ts.createProgram(['tests/selection-types.fixture.tsx'],{...parsed.options,rootDir:resolve('.'),noEmit:true})
+  const diagnostics=ts.getPreEmitDiagnostics(program)
+  assert.equal(diagnostics.length,0,ts.formatDiagnosticsWithColorAndContext(diagnostics,{
+    getCanonicalFileName:file=>file,getCurrentDirectory:ts.sys.getCurrentDirectory,getNewLine:()=> '\n',
+  }))
+})
 for(const shim of [false,true])test.fast(`Selection value projection works without DOM access (window: ${shim})`,()=>{
   if(shim)globalThis.window={}
   try {

@@ -163,9 +163,10 @@ For a migrated control, test an initially empty controlled value, parent-driven
 reset without a callback, a rejected pick after reset, and a subsequent accepted
 update. Cover uncontrolled defaults, valid falsy values, and SSR/hydration.
 
-This is the convention for new and migrated APIs. Single Select supports the
-nullable selection contract. Calendar, InputDate, and RadioGroup need separate
-nullable-API migrations; their current public types remain authoritative until then.
+This is the convention for new and migrated APIs. Calendar and single Select
+support the nullable selection contract. InputDate, RadioGroup, and Tabs need
+separate nullable-API migrations; their current public types remain authoritative
+until then.
 
 ## Value inputs for selection and Slider
 

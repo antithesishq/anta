@@ -73,7 +73,9 @@ export class ATocElement extends HTMLElement {
 
     this.headings = Array.from(
       root.querySelectorAll<HTMLElement>(HEADING_SELECTOR),
-    ).filter((h) => h.textContent?.trim() && Number(h.tagName[1]) <= maxLevel)
+    ).filter((h) => h.textContent?.trim()
+      && Number(h.tagName[1]) <= maxLevel
+      && !h.closest('.plot-table-heading, [data-toc-exclude]'))
 
     const hasEntries = this.headings.length >= MIN_HEADINGS
     this.toggleAttribute('data-empty', !hasEntries)

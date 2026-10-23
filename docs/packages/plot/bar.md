@@ -181,22 +181,24 @@ document.body.append(plot)
 
 ## Bar arguments
 
+### BarArgs
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
 | `x?` | [`FieldArg \| string[]`](../plot.md#data-fields) | `'x'` | Category or value field. An array of value fields creates horizontal stacks. |
 | `y?` | [`FieldArg \| string[]`](../plot.md#data-fields) | `'y'` | Category or value field. An array of value fields creates vertical stacks. |
-| `color?` | [`ColorArg`](../plot.md#series-colors)` \| ``ThemeColor``[]` | Black | Uniform or per-row color; a color array maps to stacked fields in order. |
+| `color?` | [`ColorArg`](../plot.md#series-colors) or [`ThemeColor[]`](../plot.md#theme-colors) | Black | Uniform or per-row color. A color array maps to stacked fields in order. |
 | `border_radius?` | `number` | `0` | Bar corner radius in pixels. |
 | `inset?` | `number` | One sixth of band width | Inset on each side of a categorical band, in pixels. |
 | `min_size?` | `number` | `2` | Minimum rendered value length in pixels. |
 | `hover_span_x?` | `boolean` | `false` | Extend the horizontal hit region across the categorical band. |
 | `hover_span_y?` | `boolean` | `false` | Extend the vertical hit region across the categorical band. |
-| [`tooltip?`](../plot.md#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { bar } from '@antadesign/plot'
@@ -448,4 +450,4 @@ The argument tables describe omitted fields; examples may override these default
 See [Data fields](../plot.md#data-fields), [Series colors](../plot.md#series-colors),
 [Strokes](../plot.md#strokes), and [Mark shapes](../plot.md#mark-shapes) for shared options.
 For callbacks, see [Tooltips](../plot.md#tooltips) and
-[Selection callbacks](../plot.md#selection-callbacks).
+[Selection](../plot.md#selection).

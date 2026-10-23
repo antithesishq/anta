@@ -93,22 +93,24 @@ document.body.append(plot)
 
 ## Line arguments
 
+### LineArgs
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
 | `x?` | [`FieldArg`](../plot.md#data-fields) | `'x'` | Horizontal field name or accessor. |
 | `y?` | [`FieldArg`](../plot.md#data-fields) | `'y'` | Vertical field name or accessor. |
-| `color?` | [`ThemeColor`](../plot.md#theme-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
+| `color?` | [`ThemeColor`](../plot.md#theme-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
 | `width?` | `number` | `2` | Line width in pixels. |
 | `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
 | [`mark?`](../plot.md#mark-shapes) | `MarkShape` | None | Shape drawn at each point. |
 | `mark_size?` | `number` | `6` | Point marker diameter in pixels. |
-| [`mark_stroke?`](../plot.md#strokes) | `StrokeArg` | None | Outline for the point markers. |
-| [`tooltip?`](../plot.md#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| `mark_stroke?` | [`StrokeArg`](../plot.md#strokes) | None | Outline for the point markers. |
+| `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { line } from '@antadesign/plot'
@@ -137,4 +139,4 @@ The argument tables describe omitted fields; examples may override these default
 See [Data fields](../plot.md#data-fields), [Series colors](../plot.md#series-colors),
 [Strokes](../plot.md#strokes), and [Mark shapes](../plot.md#mark-shapes) for shared options.
 For callbacks, see [Tooltips](../plot.md#tooltips) and
-[Selection callbacks](../plot.md#selection-callbacks).
+[Selection](../plot.md#selection).

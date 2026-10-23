@@ -516,20 +516,22 @@ document.body.append(plot)
 
 ## Custom arguments
 
+### CustomArgs
+
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data?` | `Record<string, unknown>[]` | None | Optional rows; required when using field selectors or hit testing. |
-| `x?` | [`FieldArg`](../plot.md#data-fields) | Unclaimed | Horizontal field or accessor; omitted axes do not contribute data bounds. |
-| `y?` | [`FieldArg`](../plot.md#data-fields) | Unclaimed | Vertical field or accessor; omitted axes do not contribute data bounds. |
+| `data?` | `Record<string, unknown>[]` | None | Optional data. Required when using field selectors or hit testing. |
+| `x?` | [`FieldArg`](../plot.md#data-fields) | Unclaimed | Horizontal field or accessor. Omitted axes do not contribute data bounds. |
+| `y?` | [`FieldArg`](../plot.md#data-fields) | Unclaimed | Vertical field or accessor. Omitted axes do not contribute data bounds. |
 | [`renderer`](#custom-rendering) | `CustomRendererFn` | Required | Draw the series using its data and the supplied canvas context and pixel resolvers. |
 | `highlight_renderer?` | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
 | `highlight?` | `boolean` | `true` | Enable the custom callback or default single-point repaint. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 | [`hit_test?`](../plot.md#custom-hit-testing) | `CustomHitTestFn` | None | Return a row index for a hit, or `null`. Required for custom tooltips and selection. |
 | `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Color made available to the renderer, including optional per-row colors. |
 | `axis_range?` | `{ x?: number[]; y?: number[] }` | Data extent | Explicit `[low, high]` bounds for either axis. |
-| [`tooltip?`](../plot.md#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 
 This example draws a cross at each point and finds the nearest cross within
@@ -588,18 +590,14 @@ to declare bounds when they cannot be inferred from the data.
 
 ## Custom rendering
 
-`CustomRendererFn<Row>` receives a `CustomSeriesView<Row>` and
-its drawing context:
-
-```ts
-import type { CustomSeriesView, CustomRenderContext } from '@antadesign/plot'
-
-type Renderer<Row> = (series: CustomSeriesView<Row>, context: CustomRenderContext) => void
-```
+The `renderer` callback receives the series and a `CustomRenderContext`
+with the canvas, scales, and helpers needed to draw it.
 
 The composed series contains resolved `x` and `y` columns, source `rows` when
 provided, and theme-resolved colors. Category coordinates are stored as
 indices; use the pixel resolvers to place them on the canvas.
+
+### CustomRenderContext
 
 | Context field | Type | Description |
 |---|---|---|
@@ -626,4 +624,4 @@ The argument tables describe omitted fields; examples may override these default
 See [Data fields](../plot.md#data-fields), [Series colors](../plot.md#series-colors),
 [Strokes](../plot.md#strokes), and [Mark shapes](../plot.md#mark-shapes) for shared options.
 For callbacks, see [Tooltips](../plot.md#tooltips) and
-[Selection callbacks](../plot.md#selection-callbacks).
+[Selection](../plot.md#selection).

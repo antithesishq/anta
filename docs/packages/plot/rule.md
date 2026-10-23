@@ -115,19 +115,21 @@ document.body.append(plot)
 
 ## Rule arguments
 
+### RuleArgs
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `data?` | `Record<string, unknown>[]` | None | Optional rows for multiple reference lines. |
 | `x?` | [`number \| FieldArg`](../plot.md#data-fields) | None | Vertical rule position, or a field/accessor when `data` is supplied. Set exactly one of `x` and `y`. |
 | `y?` | [`number \| FieldArg`](../plot.md#data-fields) | None | Horizontal rule position, or a field/accessor when `data` is supplied. |
-| `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
+| `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
 | `width?` | `number` | `1` | Rule width in pixels. |
 | `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
-| [`tooltip?`](../plot.md#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { rule } from '@antadesign/plot'
@@ -165,4 +167,4 @@ The argument tables describe omitted fields; examples may override these default
 See [Data fields](../plot.md#data-fields), [Series colors](../plot.md#series-colors),
 [Strokes](../plot.md#strokes), and [Mark shapes](../plot.md#mark-shapes) for shared options.
 For callbacks, see [Tooltips](../plot.md#tooltips) and
-[Selection callbacks](../plot.md#selection-callbacks).
+[Selection](../plot.md#selection).

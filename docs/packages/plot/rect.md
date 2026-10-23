@@ -205,6 +205,8 @@ document.body.append(plot)
 
 ## Rect arguments
 
+### RectArgs
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
@@ -220,13 +222,13 @@ document.body.append(plot)
 | `inset?` | `number` | One sixth of band width | Inset on each side of a categorical band, in pixels. |
 | `min_size?` | `number` | `0` | Minimum pixel length for a rectangle defined by data bounds. |
 | `offset?` | `{ x?: number; y?: number }` | `{ x: 0, y: 0 }` | Pixel offsets applied to each rectangle. |
-| `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
-| [`stroke?`](../plot.md#strokes) | `StrokeArg` | None | Outline color and optional width. |
-| [`tooltip?`](../plot.md#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
+| `stroke?` | [`StrokeArg`](../plot.md#strokes) | None | Outline color and optional width. |
+| `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { rect } from '@antadesign/plot'
@@ -295,4 +297,4 @@ The argument tables describe omitted fields; examples may override these default
 See [Data fields](../plot.md#data-fields), [Series colors](../plot.md#series-colors),
 [Strokes](../plot.md#strokes), and [Mark shapes](../plot.md#mark-shapes) for shared options.
 For callbacks, see [Tooltips](../plot.md#tooltips) and
-[Selection callbacks](../plot.md#selection-callbacks).
+[Selection](../plot.md#selection).

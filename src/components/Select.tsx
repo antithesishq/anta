@@ -344,7 +344,27 @@ export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
          *  toggling, the field shows an "N selected" count, and `value` is an array. */
         selection: 'multiple'
         /** Controlled option values. Use `[]` for an empty selection. Omit or
-         *  pass `undefined` for uncontrolled use; release retains the latest array. */
+         *  pass `undefined` for uncontrolled use; release retains the latest array.
+         *  Inline arrays work correctly. For a derived array, `useMemo` can avoid
+         *  an extra component render when the parent renders with unchanged inputs.
+         *  Pass arrays held in state directly. Update memo dependencies immutably.
+         *
+         *  @example Memoize a derived selection
+         *  ```tsx
+         *  import { useMemo } from 'react'
+         *  import { Select } from '@antadesign/anta'
+         *
+         *  function TeamFilter({ teamIds, onChange }: {
+         *    teamIds: ReadonlySet<string>
+         *    onChange: (ids: string[]) => void
+         *  }) {
+         *    const value = useMemo(() => [...teamIds], [teamIds])
+         *    return <Select<string> label="Teams" selection="multiple"
+         *      options={['design', 'engineering']} value={value}
+         *      onValueChange={onChange} />
+         *  }
+         *  ```
+         */
         value?: V[]
         /** Initial values (option `value`s) for the uncontrolled case. */
         defaultValue?: V[]

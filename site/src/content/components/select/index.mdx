@@ -293,6 +293,11 @@ selection and `[]` for multiple selection.
 Single selection uses one option value. Multiple selection uses an array of
 values. Keep each option's value unique across groups and submenus.
 
+Inline controlled arrays work correctly. If you derive a multiple-selection array
+during rendering, `useMemo` can avoid an extra component render when its inputs
+are unchanged. Pass arrays held in state directly. See the `value` prop's API
+reference for an example.
+
 Values can be strings, numbers, or booleans. Select preserves their types, so a
 numeric ID can remain a number in your application state. Use a stable primitive
 key for richer data, and attach the record to its option when you need it in a

@@ -170,7 +170,27 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   offset?: number
   /** Controlled value record, keyed by facet. When provided, update it through
    *  `onValueChange`. Leave it undefined for uncontrolled use; releasing control
-   *  retains the latest applied record. */
+   *  retains the latest applied record. Inline records work correctly. For a
+   *  derived record, `useMemo` can avoid an extra component render when the parent
+   *  renders with unchanged inputs. Pass records held in state directly.
+   *
+   *  @example Memoize a derived filter record
+   *  ```tsx
+   *  import { useMemo } from 'react'
+   *  import { SelectFaceted, type SelectFacetedValue } from '@antadesign/anta'
+   *
+   *  function StatusFilter({ status, onChange }: {
+   *    status: string
+   *    onChange: (value: SelectFacetedValue) => void
+   *  }) {
+   *    const value = useMemo(() => ({ status }), [status])
+   *    return <SelectFaceted
+   *      facets={[{ key: 'status', kind: 'single', label: 'Status',
+   *        options: ['open', 'closed'] }]}
+   *      value={value} onValueChange={onChange} />
+   *  }
+   *  ```
+   */
   value?: SelectFacetedValue
   /** Initial value for uncontrolled use. */
   defaultValue?: SelectFacetedValue

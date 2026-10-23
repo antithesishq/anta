@@ -248,6 +248,11 @@ the keys that remain. Use `value` with `onValueChange` to control the filter, or
 use `defaultValue` for the uncontrolled case. Omit `value` or pass `undefined` to
 release control while retaining the latest filter record.
 
+Inline controlled records work correctly. If you derive the record during
+rendering, `useMemo` can avoid an extra component render when its inputs are
+unchanged. Pass records held in state directly. See the `value` prop's API
+reference for an example.
+
 Because one control mixes facets that hold different value types, the record is typed
 `Record<string, unknown>`; narrow per facet when you read it.
 

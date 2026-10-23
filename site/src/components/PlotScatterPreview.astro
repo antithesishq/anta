@@ -1,13 +1,19 @@
 ---
 interface Props {
-  example: 'bubbles' | 'shapes'
+  example: 'bubbles' | 'shapes' | 'latency' | 'dense'
 }
 const { example } = Astro.props
+const labels = {
+  bubbles: 'Scatter plot with varying bubble sizes and colors',
+  shapes: 'Scatter plot comparing square and diamond marks',
+  latency: 'Request latency over time, with successful responses and errors',
+  dense: 'Dense scatter plot with translucent marks and zoom controls',
+}
 ---
 
 <a-plot
   data-scatter-example={example}
-  aria-label={example === 'bubbles' ? 'Scatter plot with varying bubble sizes and colors' : 'Scatter plot comparing square and diamond marks'}
+  aria-label={labels[example]}
 ></a-plot>
 
 <script>

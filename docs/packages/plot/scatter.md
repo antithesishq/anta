@@ -1,7 +1,10 @@
 # Scatter
 
-Draw a mark at each data point. Use `size`, [`mark`](../plot.md#mark-shapes), and [`stroke`](../plot.md#strokes) to control
-its appearance. Set `tooltip: true` for a tooltip showing the point's values.
+A scatter series displays each data point as a mark positioned by its x and y
+values. Scatter plots can reveal relationships, clusters, and individual values.
+Use `size`, [`mark`](../plot.md#mark-shapes),
+and [`stroke`](../plot.md#strokes) to control each point's appearance. Set
+`tooltip: true` for a tooltip showing the point's values.
 
 ## Size and color from data
 
@@ -36,7 +39,7 @@ plot.plotArgs = {
   background: { light: '#ffffff', dark: '#151b28' },
   chrome_color: { light: '#e2e8f0', dark: '#334155' },
   border: false,
-  zoom_pan: false,
+  zoom_pan: true,
 }
 
 document.body.append(plot)
@@ -83,10 +86,120 @@ plot.plotArgs = {
   background: { light: '#ffffff', dark: '#151b28' },
   chrome_color: { light: '#e2e8f0', dark: '#334155' },
   border: false,
-  zoom_pan: false,
+  zoom_pan: true,
 }
 
 document.body.append(plot)
+```
+
+## Latency under load
+
+Blue points show successful requests and red points show errors over 12 minutes.
+Zoom into the spike near 315 seconds to inspect the incident, or into the baseline
+to compare individual request latencies. The axes show seconds and milliseconds.
+
+```js
+const noise = (index) => {
+    const value = Math.sin(index * 12.9898) * 43758.5453
+    return value - Math.floor(value)
+  }
+
+  const requests = Array.from({ length: 800 }, (_, i) => {
+    const seconds = i / 799 * 720
+    const r1 = noise(i)
+    const r2 = noise(i + 9999)
+    const incident = Math.exp(-((seconds - 315) ** 2) / 128)
+    const outlier = incident < 0.1 && r1 > 0.985 ? 400 + r2 * 300 : 0
+    const failed = incident > 0.4 && r2 > 0.5
+    const latency = 170 + r1 * 60 + incident * (900 + r2 * 700) + outlier + (failed ? 300 : 0)
+    return { seconds, latency, status: failed ? 'Error' : 'OK' }
+  })
+
+  const request_latency = plot({
+    series: [
+      plot.scatter({
+        data: requests.filter(request => request.status === 'OK'),
+        x: 'seconds',
+        y: 'latency',
+        size: pure((_row, _index, viewport) => Math.min(12, 2.5 * Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y) ** 0.35)),
+        color: {
+          light: 'color-mix(in oklch, #1e6edc 45%, transparent)',
+          dark: 'color-mix(in oklch, #60a5fa 45%, transparent)',
+        },
+        tooltip: pure(({ row }) => h('span', {},
+          row.status + ' · ' + row.seconds.toFixed(1) + ' s · ' + Math.round(row.latency) + ' ms',
+        )),
+      }),
+      plot.scatter({
+        data: requests.filter(request => request.status === 'Error'),
+        x: 'seconds',
+        y: 'latency',
+        size: pure((_row, _index, viewport) => Math.min(12, 3 * Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y) ** 0.35)),
+        color: { light: '#dc2828', dark: '#f87171' },
+        tooltip: pure(({ row }) => h('span', {},
+          row.status + ' · ' + row.seconds.toFixed(1) + ' s · ' + Math.round(row.latency) + ' ms',
+        )),
+      }),
+    ],
+    height: 260,
+    margin: { top: 12, right: 12, bottom: 28, left: 46 },
+    axis: {
+      x: { min: 0, max: 720, label: '' },
+      y: { min: 0, label: '' },
+    },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: true,
+    border: false,
+    zoom_pan: true,
+  })
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(request_latency)
+  // presentation.blank("Latency under load").print(request_latency)
+```
+
+## Dense data
+
+A noisy dataset has a slight upward trend. Small, translucent marks reveal where points overlap. Scroll to zoom or hold Ctrl and drag a rectangle to inspect individual points.
+
+```js
+const sample = (index) => {
+    const value = Math.sin(index * 127.1 + 311.7) * 43758.5453
+    return value - Math.floor(value)
+  }
+
+  const data = Array.from({ length: 7200 }, (_, i) => {
+    const x = 10 + sample(i * 3) * 80
+    const spread = i < 6000 ? 45 : 18
+    const noise = (sample(i * 3 + 1) + sample(i * 3 + 2) - 1) * spread
+    return { x, y: 50 + (x - 50) * 0.28 + noise }
+  })
+
+  const dense_points = plot({
+    series: [plot.scatter({
+      data,
+      size: pure((_row, _index, viewport) => Math.min(12, 4 * Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y) ** 0.35)),
+      color: {
+        light: 'color-mix(in oklch, #0e7490 22%, transparent)',
+        dark: 'color-mix(in oklch, #67e8f9 22%, transparent)',
+      },
+      tooltip: pure(({ x, y }) => h('span', {},
+        'x: ' + Number(x).toFixed(1) + ' · y: ' + Number(y).toFixed(1),
+      )),
+    })],
+    height: 260,
+    margin: { top: 12, right: 12, bottom: 28, left: 36 },
+    axis: { x: { min: 10, max: 90, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    border: false,
+    zoom_pan: true,
+  })
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(dense_points)
+  // presentation.blank("Dense data").print(dense_points)
 ```
 
 ## Scatter arguments
@@ -95,18 +208,21 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
+| `data` | `{[key: string]: any}[]` | Required | Data points to plot. |
 | `x?` | [`FieldArg`](../plot.md#data-fields) | `'x'` | Horizontal field name or accessor. |
 | `y?` | [`FieldArg`](../plot.md#data-fields) | `'y'` | Vertical field name or accessor. |
 | `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
-| `size?` | `number \| ((row, index, viewport) => number)` | `5` | [Mark diameter](#size) in pixels, or a per-row accessor. A row’s `size` takes precedence. |
+| [`size?`](#size) | `number \| ((row, index, viewport) => number)` | `5` | Mark diameter in pixels, or a per-row accessor. A row’s `size` takes precedence. |
 | [`mark?`](../plot.md#mark-shapes) | `MarkShape` | `'circle'` | Mark shape: circle, square, diamond, or triangle. |
 | `stroke?` | [`StrokeArg`](../plot.md#strokes) | None | Outline color and optional width. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
 | [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
+| `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
 | `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+
+This example maps `time` and `value` to coordinates, uses color and size to
+distinguish values, and adds tooltips and a selection callback.
 
 ```ts
 import { scatter } from '@antadesign/plot'
@@ -128,14 +244,12 @@ const series = [scatter({
 
 ## Size
 
-Scatter `size` accepts a fixed pixel diameter or a pure accessor returning a number.
-The accessor receives `(row, index, viewport)`, so you can combine data and viewport
-without storing zoom in application state.
+Set `size` to a diameter in pixels, or use a callback to size each point from
+its data and the current zoom level. The callback receives `(row, index, viewport)`.
 
-Scroll near **50**. The first series stays at 4px. The other series
-alternate between 2px and 4px based on their data, then grow with horizontal zoom,
-at different rates, up to 16px. Drag to pan; **Reset Zoom** in the context menu restores
-the starting sizes.
+The plot below compares fixed-size points with points that grow as you zoom in.
+Scroll near **50** to compare the growth rates. **Reset Zoom** restores their
+starting sizes.
 
 ```ts
 import { scatter, type PlotArgs } from '@antadesign/plot'
@@ -173,21 +287,13 @@ plot.plotArgs = viewportSizes()
 document.body.append(plot)
 ```
 
-`viewport` has the same shape as [Viewport changes](../plot.md#viewport-changes): `x` and `y`
-contain visible and full domains (`null` for a categorical axis), and `zoom_factor.x` and
-`zoom_factor.y` contain gesture magnification. Each starts at 1. Panning, resizing, and
-data-domain changes preserve magnification. Reset and new keyed viewport requests
-establish factor 1 on their affected axes. Zooming out beyond a requested initial
-window can yield factors below 1. Use `Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y)`
-to follow the more magnified axis.
+Use `viewport.zoom_factor.x` or `viewport.zoom_factor.y` to scale points with
+zoom. A factor of `1` represents the starting zoom level. See
+[Viewport changes](../plot.md#viewport-changes) for the other callback fields.
 
-Size accessors run during composition, including zoom and pan, rather than when
-the series is constructed. Keep them pure and inexpensive. Existing accessors
-that only read the row or index remain valid. Returned sizes must be finite and
-non-negative; invalid results report a composition error and retain the previous
-plot. Numeric row `size` fields take precedence, and the index stays tied to the
-original input row after category filtering. Drawing, hit testing, and highlights
-reuse the composed sizes. Other series' size options and font sizes remain numeric.
+The callback is evaluated as the view changes, so keep it fast and free of side
+effects. Return a finite, non-negative size. A data item's own `size` value
+takes precedence over the series setting.
 
 ## Shared configuration
 

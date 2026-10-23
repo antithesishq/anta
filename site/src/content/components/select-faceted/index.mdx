@@ -245,7 +245,8 @@ depends on `kind`: an option value for `single`, an array for `multiple`, a
 string for `text`, and a value of type `V` for `custom`. A cleared facet is
 absent from the record, rather than set to `undefined`. The trigger badge counts
 the keys that remain. Use `value` with `onValueChange` to control the filter, or
-use `defaultValue` for the uncontrolled case.
+use `defaultValue` for the uncontrolled case. Omit `value` or pass `undefined` to
+release control while retaining the latest filter record.
 
 Because one control mixes facets that hold different value types, the record is typed
 `Record<string, unknown>`; narrow per facet when you read it.

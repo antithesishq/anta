@@ -18,17 +18,21 @@ export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
 }
 
-/** @internal Mirror selection for declarative rendering, retaining the latest
- * controlled value when ownership is released. Update the mirror only for
- * accepted uncontrolled changes. */
-export function useSelectionMirror(value: string | undefined, defaultValue?: string) {
-  const [internalValue, setInternalValue] = useState<string | undefined>(value ?? defaultValue)
-  const [lastValue, setLastValue] = useState(value)
+/** @internal Retain the latest controlled value when ownership is released.
+ * Update the mirror only for accepted uncontrolled changes. */
+export function useValueMirror<T>(value: T | undefined, defaultValue: T) {
+  const [internalValue, setInternalValue] = useState<T>(() => value !== undefined ? value : defaultValue)
+  const [lastValue, setLastValue] = useState<T | undefined>(() => value)
   if (value !== lastValue) {
-    setLastValue(value)
-    if (value !== undefined) setInternalValue(value)
+    setLastValue(() => value)
+    if (value !== undefined) setInternalValue(() => value)
   }
   return [value !== undefined ? value : internalValue, setInternalValue] as const
+}
+
+/** @internal String-selection specialization shared by selection wrappers. */
+export function useSelectionMirror(value: string | undefined, defaultValue?: string) {
+  return useValueMirror<string | undefined>(value, defaultValue)
 }
 
 /**

@@ -116,7 +116,10 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 ## Controlled values and clearing
 
 Update `value` from `onValueChange` to control the time. An incomplete time reports
-an empty string while the native segments retain the text being edited. Call
+an empty string while the native segments retain the text being edited.
+Omit `value` or pass `undefined` to release control and retain the current time.
+Form reset and browser restoration preserve a controlled value; an uncontrolled
+reset restores `defaultValue`. Call
 `preventDefault()` in `onClearClick` to keep a value when clearing is disallowed.
 
 <Preview>

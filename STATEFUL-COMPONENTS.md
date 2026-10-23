@@ -168,6 +168,29 @@ support the nullable selection contract. InputDate, RadioGroup, and Tabs need
 separate nullable-API migrations; their current public types remain authoritative
 until then.
 
+## Releasing values and resetting forms
+
+Omitting a controlled prop or setting it to `undefined` releases ownership while
+retaining the latest applied value, including an empty selection or filter record.
+`defaultValue` and `defaultChecked` initialize uncontrolled values and supply reset
+baselines for form-associated controls. They do not reapply merely because
+control was released.
+
+Controlled form reset and restoration keep the applied value. State controls may
+request a reset or restoration through `statechange`; only an explicit owner
+update accepts it. Input and InputTime ignore controlled form
+callbacks without emitting applied-value notifications.
+
+Uncontrolled text fields apply their reset baseline or restored text and notify
+composed owners through `input` and `change`, keeping InputDate's ISO submission
+and Autocomplete's text mirror aligned. Checkbox and Switch reset clear their dirty
+flags; restoration makes their applied state dirty until the next reset.
+
+Input and InputTime's wrappers declare ownership through the internal
+`data-anta-value-mode` attribute because a renderer may set `.value` without
+reflecting a `value` attribute. A composed field supplies its outer mode. Raw
+consumers continue to control ownership through the `value` attribute.
+
 ## Value inputs for selection and Slider
 
 Calendar, RadioGroup, Tabs, and Slider use JSX `value` / `defaultValue` props.

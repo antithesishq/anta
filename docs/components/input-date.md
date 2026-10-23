@@ -56,6 +56,10 @@ to control it. InputDate reports an ISO string: `YYYY-MM-DD`, or
 `YYYY-MM-DDTHH:mm` with `time`. An empty field reports `''`. Add `name` to
 submit that value with a form.
 
+Omit `value` or pass `undefined` to release control and retain the latest date.
+Form reset and browser restoration preserve a controlled value. An uncontrolled
+reset restores `defaultValue`, including its time when `time` is enabled.
+
 ```tsx
 const [date, setDate] = useState('2026-06-15')
 
@@ -67,7 +71,7 @@ const [date, setDate] = useState('2026-06-15')
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `clearable?` | boolean | — | Show a clear button once the field has a value. |
-| `defaultValue?` | string | — | Initial value for the uncontrolled case. |
+| `defaultValue?` | string | — | Initial uncontrolled value and form-reset baseline, including time. |
 | `disabled?` | boolean | — | Disable the field and the calendar. |
 | `hint?` | ReactNode | — | Helper text under the field. Replaced by a format hint while the entry is unrecognized. |
 | `hour12?` | boolean | — | Force the time cycle when `time` is on: `true` for 12-hour (AM/PM), `false` for 24-hour. Omit to follow the locale (`en-US` → 12-hour, most others → 24). |
@@ -85,7 +89,7 @@ const [date, setDate] = useState('2026-06-15')
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. Also sizes the calendar and the time row. |
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | neutral | Validation/feedback tone. An unrecognized entry forces `critical` until fixed. |
 | `time?` | boolean | — | Include a time. The value becomes ISO `YYYY-MM-DDTHH:mm`, the field parses a trailing time after a space (`06/15/2026 14:30`, `… 2:30pm`), and the menu shows a time row (hours : minutes, an AM/PM toggle in 12-hour locales, then a Done button) under the calendar. Picking a day keeps the menu open so you can set the time. |
-| `value?` | string | — | Controlled value — ISO `YYYY-MM-DD` (or `YYYY-MM-DDTHH:mm` with `time`), `''` for empty. Pair with `onValueChange`; the field and calendar follow it and a pick only *requests* a change. |
+| `value?` | string | — | Controlled value — ISO `YYYY-MM-DD` (or `YYYY-MM-DDTHH:mm` with `time`), `''` for empty. Pair with `onValueChange`; the field and calendar follow it and a pick only *requests* a change. Releasing control retains the latest date. Form reset and restoration preserve a controlled value. |
 
 ## Calendar
 
@@ -381,7 +385,7 @@ to `undefined` releases control.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `aria-label?` | string | — | Accessible name for the grid (defaults to the visible month heading). |
-| `defaultValue?` | string | — | Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`). |
+| `defaultValue?` | string \| null | — | Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`), or `null` to start without a selection. Also supplies the form-reset baseline. |
 | `disabled?` | boolean | — | Disable the whole calendar (not focusable or selectable). |
 | `focusSignal?` | number | — | Move keyboard focus onto the active day. Change this to a new value (e.g. increment a counter) to focus the cursor cell — `InputDate` bumps it when the calendar is opened from the field by keyboard (ArrowDown), so focus lands in the grid. The initial value never focuses; only a change does. |
 | `locale?` | string | navigator.language | BCP-47 locale tag driving first-day-of-week, weekday, and month names. |
@@ -392,7 +396,7 @@ to `undefined` releases control.
 | `onStateChange?` | (event, detail) => void | — | Fired whenever the selection changes — event-first. `detail` is `{ next, prev, reason }`: `next` / `prev` are ISO date strings (`null` = none); `reason` is `'user'` \| `'reset'` \| `'restore'`. A `'user'` pick fires *before* applying and is **cancelable** — `event.preventDefault()` vetoes it (uncontrolled), or in controlled mode answer by updating `value`. `'reset'` / `'restore'` are not cancelable. |
 | `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value, name }` snapshot as the second argument, matching `Input`. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size of the whole calendar — scales the day cells, the chevrons, and the weekday / month-heading type together (uses Button's `small` / `medium` / `large` scale). |
-| `value?` | string | — | Controlled selected date — ISO `YYYY-MM-DD`. When provided, the application controls selection: the grid follows this prop and a pick only *requests* a change via `onStateChange`. Leave undefined for uncontrolled. |
+| `value?` | string \| null | — | Controlled selected date — ISO `YYYY-MM-DD`. When provided, the application controls selection: the grid follows this prop and a pick only *requests* a change via `onStateChange`. Use `null` for a controlled empty selection or leave undefined for uncontrolled. An empty string also clears selection. |
 
 ## Web Component
 

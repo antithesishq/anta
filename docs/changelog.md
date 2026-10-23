@@ -15,6 +15,13 @@ changes are not listed.
 
 ### Fixed
 
+- [Select](/select/#managing-the-value), [SelectFaceted](/select-faceted/),
+  [InputDate](/input-date/#manage-the-value), [Checkbox](/checkbox/#controlled),
+  and [Switch](/switch/#controlled) retain their latest applied value when control
+  is released. InputDate form reset restores its default date and time.
+- Checkbox and Switch become pristine after form reset, so later default changes
+  apply until the next interaction or restoration.
+
 - [Tooltip](/tooltip/#show-only-when-truncated) keeps truncated-only tooltips
   closed for single-line labels and hints that fit, including text with a tight
   line height. Multi-line clipping still shows the tooltip.
@@ -33,6 +40,12 @@ changes are not listed.
   children. Explicit accessible names continue to take precedence.
 
 ### Breaking
+
+- [Input](/input/#controlled-and-uncontrolled), [InputTime](/input-time/#controlled-values-and-clearing),
+  and [InputAutocomplete](/input-autocomplete/#managing-the-value) preserve controlled
+  values through form reset and browser restoration; update `value` to reset them.
+  Uncontrolled Input and InputTime restoration now emits `input` and `change` so
+  composed fields follow the restored value.
 
 - [Raw Calendar inputs](/input-date/#raw-calendar-value-and-form-api) now use
   `state` / `default-state` instead of `value` / `defaultvalue`. The element's

@@ -2,7 +2,7 @@
 // as in RadioGroup. Select keeps its selection and open state, then renders an
 // Input-styled trigger followed by a Menu of options. There is no `a-select` element.
 import { useState } from '../jsx-runtime'
-import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs } from '../anta_helpers'
+import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs, useValueMirror } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
 import { prepareSelectOptions, type SelectNode } from './select-tree'
 import type { BaseProps, OptionPresentationProps, ToneScope } from '../general_types'
@@ -327,7 +327,8 @@ export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
         selection?: 'single'
         /** Controlled option value. Use `null` for an empty selection; clearing
          *  to `null` keeps the Select controlled. Omit or pass `undefined` for
-         *  uncontrolled use. Empty strings, `0`, and `false` remain option values. */
+         *  uncontrolled use; release retains the latest selection. Empty strings,
+         *  `0`, and `false` remain option values. */
         value?: V | null
         /** Initial option value for uncontrolled use. `null` starts empty. */
         defaultValue?: V | null
@@ -343,7 +344,7 @@ export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
          *  toggling, the field shows an "N selected" count, and `value` is an array. */
         selection: 'multiple'
         /** Controlled option values. Use `[]` for an empty selection. Omit or
-         *  pass `undefined` for uncontrolled use. */
+         *  pass `undefined` for uncontrolled use; release retains the latest array. */
         value?: V[]
         /** Initial values (option `value`s) for the uncontrolled case. */
         defaultValue?: V[]
@@ -524,8 +525,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   const controlled = value !== undefined
   // Uncontrolled selection lives here (component state re-render is allowed where
   // element DOM mutation isn't). `open` drives the chevron + aria-expanded.
-  const [internal, setInternal] = useState<V | V[] | null>(defaultValue ?? (multiple ? [] : null))
-  const currentRaw = controlled ? value : internal
+  const [currentRaw, setInternal] = useValueMirror<V | V[] | null>(value, defaultValue ?? (multiple ? [] : null))
   const [open, setOpen] = useState(false)
   // Filter query (reset when the menu closes — see the Menu's onStateChange).
   const [query, setQuery] = useState('')

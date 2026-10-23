@@ -9,3 +9,11 @@ export function ownsInputClearRequest(host: Element, event: Event): boolean {
     return name === 'a-input' || name === 'a-input-time'
   }) === host
 }
+
+/** @internal JSX property assignment need not reflect a value attribute.
+ * The wrapper declares ownership, including release after SSR; raw elements use
+ * attribute presence. Composed fields declare their outer owner's mode. */
+export function inputValueIsControlled(host: Element): boolean {
+  const mode = host.getAttribute('data-anta-value-mode')
+  return mode === 'controlled' || (mode !== 'uncontrolled' && host.hasAttribute('value'))
+}

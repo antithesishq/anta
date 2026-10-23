@@ -102,6 +102,10 @@ to control it. InputDate reports an ISO string: `YYYY-MM-DD`, or
 `YYYY-MM-DDTHH:mm` with `time`. An empty field reports `''`. Add `name` to
 submit that value with a form.
 
+Omit `value` or pass `undefined` to release control and retain the latest date.
+Form reset and browser restoration preserve a controlled value. An uncontrolled
+reset restores `defaultValue`, including its time when `time` is enabled.
+
 ```tsx folded
 const [date, setDate] = useState('2026-06-15')
 

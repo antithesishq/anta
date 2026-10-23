@@ -92,6 +92,8 @@
     "test:banner:package": "node tests/banner-package.mjs",
     "test:card": "node --test tests/card-csp.mjs",
     "test:progress": "node --test tests/progress-csp.mjs",
+    "test:value-ownership:package": "node tests/value-ownership-package.mjs",
+    "test:value-ownership": "node --test tests/value-ownership.mjs",
     "test:calendar": "node --test tests/calendar-controlled.mjs",
     "test:capture-input": "node --test tests/capture-input.test.mjs",
     "lint": "node scripts/lint-getters.mjs && node scripts/lint-css-layers.mjs",

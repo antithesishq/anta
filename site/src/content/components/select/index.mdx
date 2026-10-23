@@ -286,7 +286,8 @@ selection. Set it to `null` to clear a single selection while keeping control.
 The example's **Reset selection** button does this from application state.
 
 For a Select that manages its own selection, omit `value` or pass `undefined`.
-Use `defaultValue` to choose an initial option. Clear reports `null` for single
+Use `defaultValue` to choose an initial option. Omit `value` or pass `undefined`
+to release control while retaining the latest selection. Clear reports `null` for single
 selection and `[]` for multiple selection.
 
 Single selection uses one option value. Multiple selection uses an array of

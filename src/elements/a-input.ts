@@ -1,4 +1,4 @@
-import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest } from '../input-events'
+import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest, inputValueIsControlled } from '../input-events'
 import { inputTrailingActions } from './input-trailing-actions'
 import { MODALITY, trackFocusModality, type InputDocument } from './input-focus-modality'
 import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from '../anta_helpers'
@@ -664,7 +664,8 @@ export class AInputElement extends HTMLElementBase {
     if (this.control) return this.control.value
     return this.pendingValue ?? this.getAttribute('value') ?? this.getAttribute('defaultvalue') ?? ''
   }
-  set value(v: string) {
+  set value(v: string | undefined) {
+    if (v === undefined) return
     this.pendingValue = v
     if (this.control && this.control.value !== v) this.control.value = v
     this.syncButtonPresentation()
@@ -716,16 +717,19 @@ export class AInputElement extends HTMLElementBase {
 
   // --- Form-associated callbacks ---
   formResetCallback() {
-    if (isButton(this.control)) return
+    if (isButton(this.control) || inputValueIsControlled(this)) return
     this.value = this.getAttribute('defaultvalue') ?? ''
-    // The setter updates form value / validity / filled but fires no events, so a
-    // controlled consumer would never learn the field reset and would re-render
-    // the stale value back. Emit input + change (matching clear()) so it re-syncs.
+    // Notify composed uncontrolled fields so their state follows the form value.
     this.dispatchEvent(new Event('input', { bubbles: true }))
     this.dispatchEvent(new Event('change', { bubbles: true }))
   }
   formDisabledCallback(disabled: boolean) { this.formDisabled = disabled; this.syncDisabled() }
-  formStateRestoreCallback(state: string) { this.value = state ?? '' }
+  formStateRestoreCallback(state: string) {
+    if (isButton(this.control) || inputValueIsControlled(this)) return
+    this.value = state ?? ''
+    this.dispatchEvent(new Event('input', { bubbles: true }))
+    this.dispatchEvent(new Event('change', { bubbles: true }))
+  }
 }
 
 // React 19 assigns properties that already exist on a custom element. Shadow

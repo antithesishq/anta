@@ -1,4 +1,4 @@
-import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest } from '../input-events'
+import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest, inputValueIsControlled } from '../input-events'
 import { inputTrailingActions } from './input-trailing-actions'
 import { HTMLElementBase, isModifiedNavigationKey } from '../anta_helpers'
 import { applyShadowAria, ariaAttributeProperty, type ShadowAriaAttribute } from './shadow-aria'
@@ -840,7 +840,8 @@ export class AInputTimeElement extends HTMLElementBase {
     if (h == null || this.#minute == null) return ''
     return `${pad2(h)}:${pad2(this.#minute)}`
   }
-  set value(v: string) {
+  set value(v: string | undefined) {
+    if (v === undefined) return
     this.#seeded = true
     const next = v ?? ''
     // Reconcile only when the incoming value differs from what the field already
@@ -890,12 +891,19 @@ export class AInputTimeElement extends HTMLElementBase {
   reportValidity(): boolean { return this.#internals?.reportValidity() ?? true }
 
   formResetCallback() {
+    if (inputValueIsControlled(this)) return
     this.#applyValue(this.getAttribute('defaultvalue') ?? '')
     this.#commitEdit()
     this.#dispatch('change')
   }
   formDisabledCallback(disabled: boolean) { this.#formDisabled = disabled; this.#syncDisabled(); this.#syncFocus() }
-  formStateRestoreCallback(state: string) { this.value = state ?? '' }
+  formStateRestoreCallback(state: string) {
+    if (inputValueIsControlled(this)) return
+    this.#seeded = true
+    this.#applyValue(state ?? '')
+    this.#commitEdit()
+    this.#dispatch('change')
+  }
 }
 
 for (const name of INPUT_TIME_ARIA) {

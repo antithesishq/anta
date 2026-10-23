@@ -56,7 +56,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    * @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
   /** Controlled value. Update it with `onInput` or `onValueChange` for live
-   * editing. */
+   * editing. Form reset and restoration preserve controlled text; release
+   * retains the current text. */
   value?: string
   /** Initial value for an uncontrolled field, restored on form reset. */
   defaultValue?: string
@@ -296,10 +297,9 @@ export const Input = ({
       priority={priority && priority !== 'primary' ? priority : undefined}
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
+      data-anta-value-mode={value !== undefined ? 'controlled' : 'uncontrolled'}
       value={value}
-      // Pass `defaultvalue` even when controlled, so a <form> reset has a target
-      // (the element resets to it and fires change → controlled state re-syncs).
-      // `value` still wins for the live render — the element reads it first.
+      // Keep the reset baseline available after controlled ownership is released.
       defaultvalue={defaultValue}
       multiline={presence(multiline || rows != null)}
       rows={rows != null ? String(rows) : undefined}

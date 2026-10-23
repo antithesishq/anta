@@ -33,7 +33,7 @@ const sameSliderValue = (left: SliderValue, right: SliderValue) =>
  * subsequent horizontal movement changes the value. Set `track-click="jump"`
  * for the conventional position-based track click.
  *
- * The `value` attribute is the controlled input; `defaultvalue` seeds uncontrolled
+ * The `value` attribute is the controlled input; `default-value` seeds uncontrolled
  * state. Consumer property assignments reflect these inputs; interaction never
  * rewrites them. Reading the `value` property returns the applied result.
  * Input/change event details contain numeric request snapshots, including rejected controlled requests. Defaults require external
@@ -42,7 +42,7 @@ const sameSliderValue = (left: SliderValue, right: SliderValue) =>
 export class ASliderElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
-    'value', 'defaultvalue', 'min', 'max', 'step', 'disabled', 'track-click',
+    'value', 'default-value', 'min', 'max', 'step', 'disabled', 'track-click',
     'value-display', 'value-prefix', 'value-suffix', 'inverted', 'name', 'aria-label', 'aria-labelledby', 'aria-describedby', 'aria-description',
   ]
 
@@ -104,17 +104,19 @@ export class ASliderElement extends HTMLElementBase {
 
   set value(value: SliderValue | string | null | undefined) {
     // Preact clears a removed property with an empty string.
-    if (value == null || value === '') this.removeAttribute('value')
-    else this.setAttribute('value', serializeSliderValue(value))
+    const next = value == null || value === '' ? null : serializeSliderValue(value)
+    if (this.getAttribute('value') === next) return
+    if (next === null) this.removeAttribute('value')
+    else this.setAttribute('value', next)
   }
 
   get defaultValue(): SliderValue {
-    return parseSliderValue(this.getAttribute('defaultvalue'), this.#fallbackValue())
+    return parseSliderValue(this.getAttribute('default-value'), this.#fallbackValue())
   }
 
   set defaultValue(value: SliderValue | string | null | undefined) {
-    if (value == null) this.removeAttribute('defaultvalue')
-    else this.setAttribute('defaultvalue', serializeSliderValue(value))
+    if (value == null) this.removeAttribute('default-value')
+    else this.setAttribute('default-value', serializeSliderValue(value))
   }
 
   constructor() {
@@ -264,6 +266,8 @@ export class ASliderElement extends HTMLElementBase {
 
   attributeChangedCallback(name: string, previous: string | null, next: string | null) {
     if (!this.#seeded) return
+    // Repeated controlled inputs must not rebase an active rejected drag.
+    if (name === 'value' && previous === next) return
     if (name.startsWith('aria-')) this.#accessibilityDirty = true
     if (name === 'value') {
       if (next === null && previous !== null) {
@@ -271,7 +275,7 @@ export class ASliderElement extends HTMLElementBase {
         this.#pendingRequest = undefined
         this.#rebaseDrag()
       } else this.#syncInput()
-    } else if (name === 'defaultvalue') {
+    } else if (name === 'default-value') {
       if (!this.#controlled && !this.#dirty) this.#syncInput()
     } else if (name === 'min' || name === 'max' || name === 'step') {
       if (this.#controlled) this.#syncInput()

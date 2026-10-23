@@ -3,7 +3,7 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.36 — October 22, 2026
 
 ### Changed
 
@@ -14,6 +14,13 @@ changes are not listed.
   indicators, and custom markers take precedence.
 
 ### Fixed
+
+- [Select](/select/#managing-the-value), [SelectFaceted](/select-faceted/),
+  [InputDate](/input-date/#manage-the-value), [Checkbox](/checkbox/#controlled),
+  and [Switch](/switch/#controlled) retain their latest applied value when control
+  is released. InputDate form reset restores its default date and time.
+- Checkbox and Switch become pristine after form reset, so later default changes
+  apply until the next interaction or restoration.
 
 - [Tooltip](/tooltip/#show-only-when-truncated) keeps truncated-only tooltips
   closed for single-line labels and hints that fit, including text with a tight
@@ -33,6 +40,25 @@ changes are not listed.
   children. Explicit accessible names continue to take precedence.
 
 ### Breaking
+
+- [Input](/input/#controlled-and-uncontrolled), [InputTime](/input-time/#controlled-values-and-clearing),
+  and [InputAutocomplete](/input-autocomplete/#managing-the-value) preserve controlled
+  values through form reset and browser restoration; update `value` to reset them.
+  This includes raw `<a-input value="…">` and `<a-input-time value="…">` markup.
+  Use `defaultvalue` without `value` for raw fields that should reset to a default.
+  Uncontrolled Input and InputTime restoration now emits `input` and `change` so
+  composed fields follow the restored value.
+
+- [Raw Calendar inputs](/input-date/#raw-calendar-value-and-form-api) now use
+  `state` / `default-state` instead of `value` / `defaultvalue`. The element's
+  `.value` is read-only and `.defaultValue` is removed; public Calendar and
+  InputDate JSX props remain `value` / `defaultValue`. Calendar's JSX props now
+  accept `null` for no selected date.
+
+- [Slider](/slider/#web-component) renames raw HTML `defaultvalue` to
+  `default-value`, keeping JSX `defaultValue` and the element's `.defaultValue`
+  unchanged. Value bindings support renderers that preserve attribute-name casing
+  and keep active drags stable across unchanged parent updates.
 
 - Input and InputTime no longer use `data-anta-icon-only` for action sizing.
   Set a custom SVG or image action's width with CSS. Wrap bare text beside an

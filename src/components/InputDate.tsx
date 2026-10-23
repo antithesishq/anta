@@ -5,7 +5,7 @@
 // that opens from the field itself (click or ArrowDown), anchored to it like
 // Select. There is no `a-inputdate` element; the wrapper is the coordinator.
 import { useMemo, useState } from '../jsx-runtime'
-import { isModifiedNavigationKey, unwrapNativeEvent } from '../anta_helpers'
+import { isModifiedNavigationKey, unwrapNativeEvent, useValueMirror } from '../anta_helpers'
 import { Temporal } from 'temporal-polyfill'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
@@ -37,9 +37,10 @@ export interface InputDateChangeAttrs {
 export interface InputDateProps extends Omit<BaseProps, 'children'> {
   /** Controlled value — ISO `YYYY-MM-DD` (or `YYYY-MM-DDTHH:mm` with `time`), `''`
    *  for empty. Pair with `onValueChange`; the field and calendar follow it and a
-   *  pick only *requests* a change. */
+   *  pick only *requests* a change. Releasing control retains the latest date.
+   *  Form reset and restoration preserve a controlled value. */
   value?: string
-  /** Initial value for the uncontrolled case. */
+  /** Initial uncontrolled value and form-reset baseline, including time. */
   defaultValue?: string
   /** Earliest selectable date (ISO). Earlier days disable, and a typed date before
    *  it stays uncommitted. */
@@ -179,8 +180,7 @@ export const InputDate = ({
 
   const controlled = value !== undefined
   // Uncontrolled committed value lives here; `current` is the effective ISO value.
-  const [internal, setInternal] = useState<string | undefined>(() => normalize(defaultValue))
-  const current = controlled ? value : internal
+  const [current, setInternal] = useValueMirror<string | undefined>(value, normalize(defaultValue))
   const dateISO = current ? current.slice(0, 10) : ''
   const hasTime = !!current && current.length >= 16 && current[10] === 'T'
   const h24 = hasTime ? parseInt(current!.slice(11, 13), 10) || 0 : 0
@@ -281,6 +281,8 @@ export const InputDate = ({
         clearable={clearable}
         leading={icon === false ? undefined : <Icon shape={icon ?? 'calendar-days'} />}
         value={text}
+        defaultValue={fmt(normalize(defaultValue))}
+        data-anta-value-mode={controlled ? 'controlled' : 'uncontrolled'}
         placeholder={pattern}
         inputMode={time ? 'text' : 'numeric'}
         autoComplete="off"

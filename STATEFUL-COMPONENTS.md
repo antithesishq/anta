@@ -163,9 +163,33 @@ For a migrated control, test an initially empty controlled value, parent-driven
 reset without a callback, a rejected pick after reset, and a subsequent accepted
 update. Cover uncontrolled defaults, valid falsy values, and SSR/hydration.
 
-This is the convention for new and migrated APIs. Single Select supports the
-nullable selection contract. Calendar, InputDate, and RadioGroup need separate
-nullable-API migrations; their current public types remain authoritative until then.
+This is the convention for new and migrated APIs. Calendar and single Select
+support the nullable selection contract. InputDate, RadioGroup, and Tabs need
+separate nullable-API migrations; their current public types remain authoritative
+until then.
+
+## Releasing values and resetting forms
+
+Omitting a controlled prop or setting it to `undefined` releases ownership while
+retaining the latest applied value, including an empty selection or filter record.
+`defaultValue` and `defaultChecked` initialize uncontrolled values and supply reset
+baselines for form-associated controls. They do not reapply merely because
+control was released.
+
+Controlled form reset and restoration keep the applied value. State controls may
+request a reset or restoration through `statechange`; only an explicit owner
+update accepts it. Input and InputTime ignore controlled form
+callbacks without emitting applied-value notifications.
+
+Uncontrolled text fields apply their reset baseline or restored text and notify
+composed owners through `input` and `change`, keeping InputDate's ISO submission
+and Autocomplete's text mirror aligned. Checkbox and Switch reset clear their dirty
+flags; restoration makes their applied state dirty until the next reset.
+
+Input and InputTime's wrappers declare ownership through the internal
+`data-anta-value-mode` attribute because a renderer may set `.value` without
+reflecting a `value` attribute. A composed field supplies its outer mode. Raw
+consumers continue to control ownership through the `value` attribute.
 
 ## Value inputs for selection and Slider
 
@@ -174,38 +198,39 @@ Their web-component input attributes follow their existing public contracts:
 
 | Component | Controlled input | Uncontrolled default | Applied value |
 | --- | --- | --- | --- |
-| Calendar | `value` | `defaultvalue` | `.value` (get/set) |
-| Slider | `value` | `defaultvalue` | `.value` (get/set) |
+| Calendar | `state` | `default-state` | `.value` (read-only) |
+| Slider | `value` | `default-value` | `.value` (get/set) |
 | RadioGroup, Tabs | `state` | `default-state` | `.value` (read-only) |
 
 Presence of the controlled input attribute defines ownership. Empty-string
 options remain valid for RadioGroup and Tabs; an empty Calendar date stays
-controlled through `value=""`, and Slider's `0` stays controlled.
+controlled through `state=""`, and Slider's `0` stays controlled.
 
-Calendar and Slider's consumer `value` / `defaultValue` assignments reflect only
-`value` / `defaultvalue`, including removal on `null` or `undefined`. Their
-wrappers use `valueAttributes` to render the ordinary HTML attribute directly.
-Its uppercase spelling in renderer props avoids React property assignment and
-Preact live-value special cases; HTML attribute names are case-insensitive.
-Custom renderers must apply these as HTML attributes, normalizing their names;
-the projection does not work unchanged in case-sensitive XML attribute maps.
-Replay their pre-upgrade property assignments through `upgradeValueProperties`.
-RadioGroup and Tabs wrappers project directly to `state` / `default-state` and
-never pass their read-only `value` property as a JSX attribute. Neither pair has
-input aliases.
+Slider's consumer `value` / `defaultValue` assignments reflect only
+`value` / `default-value`, including removal on `null` or `undefined`. Its
+wrapper renders lowercase `value` only when controlled, serializing numbers and
+ranges as strings. The string differs from its numeric/array live getter, so
+Preact does not skip same-value acquisition. Omit the prop entirely to release
+control; on raw `<a-slider>`, an explicit `value={undefined}` can retain the old
+input. The `Slider` wrapper omits that prop automatically. Project the
+uncontrolled default to `default-value` to avoid Preact's special
+`defaultValue` handling. Slider needs no attribute-name case normalization.
+Replay Slider's pre-upgrade property assignments through `upgradeValueProperties`.
+
+Calendar, RadioGroup, and Tabs wrappers project directly to `state` /
+`default-state` and never pass their read-only `value` property as a JSX
+attribute. These components have no value-attribute or property-setter aliases.
 
 The applied value getter is separate from the authored initial/reset value.
-Calendar, RadioGroup, and Tabs return `null` when nothing is selected. Writing an
-empty uncontrolled Calendar's value back therefore leaves it uncontrolled.
-InputDate retains its text-field empty value (`''`). Calendar's
-`defaultValue` getter returns `null` when the reset input is absent, preserving
-absence when read back into its setter.
+Calendar, RadioGroup, and Tabs return `null` when nothing is selected. Their
+`.value` properties are read-only; set the `state` attribute to supply selection
+and remove it to release control. InputDate retains its text-field empty value
+(`''`). Read a Calendar reset baseline through `getAttribute('default-state')`.
 
-Raw Preact `<a-calendar value={...}>` bindings cannot reliably release ownership:
-explicit `undefined` can retain the old input, while omission can write an empty
-string. Use the Calendar wrapper for declarative ownership, or remove `value` /
-assign `.value = null` on a raw instance. Do not describe this raw-renderer
-limitation as resolved by the wrapper projection.
+Raw Calendar bindings use `<a-calendar state={...}>` and `default-state`,
+including before registration. React and Preact update and remove these as
+ordinary attributes. Never bind a `value` prop to the raw element's read-only
+result; the `Calendar` wrapper translates the public JSX `value` prop.
 
 Uncontrolled interaction, reset, and restoration update internal state and form
 submission without writing host attributes. Removing the controlled input

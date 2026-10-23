@@ -31,7 +31,7 @@ function renderer(props, deferred = false) {
   runtime.configure(h, Symbol.for('fragment'), {
     useState: initial => {
       const slot = cursor++
-      if (!(slot in state)) state[slot] = initial
+      if (!(slot in state)) state[slot] = typeof initial === 'function' ? initial() : initial
       return [state[slot], next => {
         const update = () => {state[slot] = typeof next === 'function' ? next(state[slot]) : next}
         if (deferred) pending.push(update)

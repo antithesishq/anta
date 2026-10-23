@@ -348,6 +348,10 @@ Use `defaultValue` when the field can manage its own value. Use `value` with
 `onInput` or `onValueChange` when your application needs to keep track of every
 edit, such as updating a search or showing a character count.
 
+Omit `value` or pass `undefined` to release control and retain the current text.
+Form reset and browser restoration preserve controlled text; reset it by updating
+`value`. An uncontrolled reset restores `defaultValue`.
+
 Read the current text from `e.target.value`, or use the value provided by
 `onValueChange`. Use `onChange` for edits that are committed, such as when the
 field loses focus.
@@ -443,7 +447,7 @@ function Demo() {
 
 Input submits its value under `name` with the surrounding form, and
 `new FormData(form)` includes it. Native constraints such as `required` block
-normal submission while invalid. A reset button restores `defaultValue`.
+normal submission while invalid. A reset button restores `defaultValue` on uncontrolled fields.
 
 </Col>
 </Columns>
@@ -718,6 +722,11 @@ Narrow the preview to see the layout adjust.
 <Disclosure title="Web Component">
 
 Use `<a-input>` directly outside React or Preact.
+
+In raw HTML, a `value` attribute makes the field controlled, so form reset and
+browser restoration preserve its current text. Use `defaultvalue` without `value`
+for an uncontrolled field that resets to its initial text. Remove `value` to
+release control while retaining the current text.
 
 Slots accept content; shadow parts expose regions for CSS. The `label`,
 `leading`, `clear`, `trailing`, and `hint` slots are independent of the parts

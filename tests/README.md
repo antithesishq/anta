@@ -36,7 +36,10 @@ pnpm test:components --component all --list
 
 The [suite registry](component-suites.mjs) lists available names and test files.
 `calendar` includes InputDate, `selection` covers Calendar/RadioGroup/Tabs value
-ownership, and `tooltip` includes Steps and other compositions.
+ownership, `value-ownership` covers control release and form reset/restore across
+text, selection, date, and checked controls, and `tooltip` includes Steps and other
+compositions. Use `pnpm test:value-ownership` for its full source matrix or
+`pnpm test:value-ownership:package` for an installed tarball.
 
 Direct commands such as `pnpm test:select` run the full source suite by default.
 Set `ANTA_COMPONENT_TEST_TIER=fast` to limit a direct command to its core cases.

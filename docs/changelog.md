@@ -44,6 +44,8 @@ changes are not listed.
 - [Input](/input/#controlled-and-uncontrolled), [InputTime](/input-time/#controlled-values-and-clearing),
   and [InputAutocomplete](/input-autocomplete/#managing-the-value) preserve controlled
   values through form reset and browser restoration; update `value` to reset them.
+  This includes raw `<a-input value="…">` and `<a-input-time value="…">` markup.
+  Use `defaultvalue` without `value` for raw fields that should reset to a default.
   Uncontrolled Input and InputTime restoration now emits `input` and `change` so
   composed fields follow the restored value.
 

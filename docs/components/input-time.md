@@ -128,6 +128,11 @@ Use `<a-input-time>` directly outside JSX. Its `label`, `leading`, `clear`,
 `trailing`, and `hint` slots accept field content. Use the `hour`, `minute`, and
 `period` parts to style sections independently of their locale order.
 
+In raw HTML, a `value` attribute makes the field controlled, so form reset and
+browser restoration preserve its current time. Use `defaultvalue` without `value`
+for an uncontrolled field that resets to its initial time. Remove `value` to
+release control while retaining the current time.
+
 If existing selectors target JSX grouping spans, update them to the
 `a-input-time-label`, `a-input-time-leading`, `a-input-time-clear`,
 `a-input-time-trailing`, and `a-input-time-hint` tags or their slot attributes.

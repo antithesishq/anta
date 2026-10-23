@@ -483,6 +483,11 @@ Narrow the preview to see the layout adjust.
 
 Use `<a-input>` directly outside React or Preact.
 
+In raw HTML, a `value` attribute makes the field controlled, so form reset and
+browser restoration preserve its current text. Use `defaultvalue` without `value`
+for an uncontrolled field that resets to its initial text. Remove `value` to
+release control while retaining the current text.
+
 Slots accept content; shadow parts expose regions for CSS. The `label`,
 `leading`, `clear`, `trailing`, and `hint` slots are independent of the parts
 with matching names. Unslotted children appear after the field and before the hint.

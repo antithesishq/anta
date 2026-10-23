@@ -1,13 +1,19 @@
 ---
 interface Props {
-  example: 'comparison' | 'markers'
+  example: 'comparison' | 'markers' | 'services' | 'contours'
 }
 const { example } = Astro.props
+const labels = {
+  comparison: 'Solid measurements and dashed forecast lines',
+  markers: 'Line with diamond marks and outlines',
+  services: 'Response times for three services during a traffic surge',
+  contours: 'Elevation contours around a large hill and two smaller hills',
+}
 ---
 
 <a-plot
   data-line-example={example}
-  aria-label={example === 'comparison' ? 'Solid measurements and dashed forecast lines' : 'Line with diamond marks and outlines'}
+  aria-label={labels[example]}
 ></a-plot>
 
 <script>

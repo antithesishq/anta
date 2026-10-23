@@ -581,19 +581,19 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data?` | `Record<string, unknown>[]` | None | Optional data. Required when using field selectors or hit testing. |
+| `data?` | `{[key: string]: any}[]` | None | Optional data. Required when using field selectors or hit testing. |
 | `x?` | [`FieldArg`](/plot/#data-fields) | Unclaimed | Horizontal field or accessor. Omitted axes do not contribute data bounds. |
 | `y?` | [`FieldArg`](/plot/#data-fields) | Unclaimed | Vertical field or accessor. Omitted axes do not contribute data bounds. |
 | [`renderer`](#custom-rendering) | `CustomRendererFn` | Required | Draw the series using its data and the supplied canvas context and pixel resolvers. |
 | `highlight_renderer?` | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
-| `highlight?` | `boolean` | `true` | Enable the custom callback or default single-point repaint. |
+| `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it, using the custom callback or default drawing. |
 | `highlight_color?` | [`ColorArg`](/plot/#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 | [`hit_test?`](/plot/#custom-hit-testing) | `CustomHitTestFn` | None | Return a row index for a hit, or `null`. Required for custom tooltips and selection. |
 | `color?` | [`ColorArg`](/plot/#series-colors) | Black | Color made available to the renderer, including optional per-row colors. |
 | `axis_range?` | `{ x?: number[]; y?: number[] }` | Data extent | Explicit `[low, high]` bounds for either axis. |
 | `tooltip?` | [`TooltipArg`](/plot/#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
 | [`on_select?`](/plot/#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
+| `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
 
 This example draws a cross at each point and finds the nearest cross within
 eight pixels for tooltips and selection:

@@ -185,7 +185,7 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
+| `data` | `{[key: string]: any}[]` | Required | Rows used to build the series. |
 | `x?` | [`FieldArg \| string[]`](../plot.md#data-fields) | `'x'` | Category or value field. An array of value fields creates horizontal stacks. |
 | `y?` | [`FieldArg \| string[]`](../plot.md#data-fields) | `'y'` | Category or value field. An array of value fields creates vertical stacks. |
 | `color?` | [`ColorArg`](../plot.md#series-colors) or [`ThemeColor[]`](../plot.md#theme-colors) | Black | Uniform or per-row color. A color array maps to stacked fields in order. |
@@ -196,9 +196,11 @@ document.body.append(plot)
 | `hover_span_y?` | `boolean` | `false` | Extend the vertical hit region across the categorical band. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
 | [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
+| `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
 | `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+
+This example draws a bar for each `group` using its `count`, rounds the corners, and adds tooltips and a selection callback.
 
 ```ts
 import { bar } from '@antadesign/plot'

@@ -188,7 +188,7 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
+| `data` | `{[key: string]: any}[]` | Required | Rows used to build the series. |
 | `x?` | [`FieldArg`](../plot.md#data-fields) | `'x'` | Horizontal field name or accessor. |
 | `x2?` | [`FieldArg \| number`](../plot.md#data-fields) | None | Second horizontal boundary, as a field, accessor, or constant. Use either `x2` or `y2`. |
 | `y?` | [`FieldArg`](../plot.md#data-fields) | `'y'` | Vertical field name or accessor. |
@@ -198,9 +198,11 @@ document.body.append(plot)
 | `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
 | [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
+| `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
 | `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+
+This example fills the band between `low` and `high` over `time`, adds a dashed outline, and enables tooltips and a selection callback.
 
 ```ts
 import { area } from '@antadesign/plot'

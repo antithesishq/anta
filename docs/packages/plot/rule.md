@@ -119,7 +119,7 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data?` | `Record<string, unknown>[]` | None | Optional rows for multiple reference lines. |
+| `data?` | `{[key: string]: any}[]` | None | Optional rows for multiple reference lines. |
 | `x?` | [`number \| FieldArg`](../plot.md#data-fields) | None | Vertical rule position, or a field/accessor when `data` is supplied. Set exactly one of `x` and `y`. |
 | `y?` | [`number \| FieldArg`](../plot.md#data-fields) | None | Horizontal rule position, or a field/accessor when `data` is supplied. |
 | `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
@@ -127,9 +127,11 @@ document.body.append(plot)
 | `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
 | [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
+| `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
 | `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+
+This example draws dashed horizontal lines at two thresholds, colors them by value, and adds tooltips and a selection callback.
 
 ```ts
 import { rule } from '@antadesign/plot'

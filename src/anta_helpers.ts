@@ -498,14 +498,3 @@ export class SelectableChildElement extends HTMLElementBase {
     applyAccessibilityRelations(this.internals, labels, descriptions)
   }
 }
-
-/** @internal Project value inputs through HTML attributes in every renderer.
- * HTML attribute names are case-insensitive. `VALUE` avoids React's property
- * assignment and Preact's special live-value comparison/removal, while producing
- * the ordinary `value` attribute in the DOM and parsed SSR HTML. In particular,
- * an empty-string option stays distinct from removing controlled ownership.
- * Keep this projection serializable for server and worker renderers. */
-export const valueAttributes = (value: string | undefined, defaultValue?: string) => ({
-  VALUE: value,
-  defaultvalue: value === undefined ? defaultValue : undefined,
-})

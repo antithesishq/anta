@@ -175,7 +175,7 @@ Their web-component input attributes follow their existing public contracts:
 | Component | Controlled input | Uncontrolled default | Applied value |
 | --- | --- | --- | --- |
 | Calendar | `state` | `default-state` | `.value` (read-only) |
-| Slider | `value` | `defaultvalue` | `.value` (get/set) |
+| Slider | `value` | `default-value` | `.value` (get/set) |
 | RadioGroup, Tabs | `state` | `default-state` | `.value` (read-only) |
 
 Presence of the controlled input attribute defines ownership. Empty-string
@@ -183,13 +183,15 @@ options remain valid for RadioGroup and Tabs; an empty Calendar date stays
 controlled through `state=""`, and Slider's `0` stays controlled.
 
 Slider's consumer `value` / `defaultValue` assignments reflect only
-`value` / `defaultvalue`, including removal on `null` or `undefined`. Its
-wrapper uses `valueAttributes` to render the ordinary HTML attribute directly.
-Its uppercase spelling in renderer props avoids React property assignment and
-Preact live-value special cases; HTML attribute names are case-insensitive.
-Custom renderers must apply these as HTML attributes, normalizing their names;
-the projection does not work unchanged in case-sensitive XML attribute maps.
+`value` / `default-value`, including removal on `null` or `undefined`. Its
+wrapper renders lowercase `value` only when controlled, serializing numbers and
+ranges as strings. The string differs from its numeric/array live getter, so
+Preact does not skip same-value acquisition. Omit the prop entirely to release
+control; an explicit `value={undefined}` can retain the old input. Project the
+uncontrolled default to `default-value` to avoid Preact's special
+`defaultValue` handling. Slider needs no attribute-name case normalization.
 Replay Slider's pre-upgrade property assignments through `upgradeValueProperties`.
+
 Calendar, RadioGroup, and Tabs wrappers project directly to `state` /
 `default-state` and never pass their read-only `value` property as a JSX
 attribute. These components have no value-attribute or property-setter aliases.

@@ -7,6 +7,9 @@ changes are not listed.
 
 ### Changed
 
+- [Slider](/slider/#managing-the-value) keeps controlled and uncontrolled values
+  compatible with custom renderers that preserve attribute-name casing.
+
 - [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary
   priority across all themes.
 - [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by
@@ -38,6 +41,10 @@ changes are not listed.
   `state` / `default-state` instead of `value` / `defaultvalue`. The element's
   `.value` is read-only and `.defaultValue` is removed; public Calendar and
   InputDate JSX props remain `value` / `defaultValue`.
+
+- [Slider's raw HTML default](/slider/#web-component) is now `default-value`
+  instead of `defaultvalue`. JSX `defaultValue` and the element's `.defaultValue`
+  property keep their existing names.
 
 - Input and InputTime no longer use `data-anta-icon-only` for action sizing.
   Set a custom SVG or image action's width with CSS. Wrap bare text beside an

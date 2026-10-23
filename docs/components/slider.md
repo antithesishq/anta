@@ -223,7 +223,7 @@ thumb in every theme. The native range uses the same rule for `thumb-tone`.
 
 ## Web Component
 
-Use `<a-slider>` with `value` for a controlled value or `defaultvalue` for an
+Use `<a-slider>` with `value` for a controlled value or `default-value` for an
 uncontrolled initial value. Reading the `value` property returns the applied
 number or sorted pair. `input` and `change` events carry request snapshots in
 `event.detail`; accept a controlled request by assigning `event.detail.value` to
@@ -233,13 +233,13 @@ the `value` property. Application updates are silent. See
 Setting the `value` property reflects the controlled `value` attribute. Removing
 that attribute, or assigning `null` or `undefined` to the property, releases
 control and retains the last applied number. Assigning `defaultValue` reflects
-`defaultvalue`. Uncontrolled interaction, reset, and restoration never rewrite
+`default-value`. Uncontrolled interaction, reset, and restoration never rewrite
 these attributes. The applied value stays in internal state and form submission.
 
 Add `tabindex="0"` to a scalar slider, and supply its accessible name. The element
 provides the default slider or group role through `ElementInternals`.
 
-For a range, separate the two numbers with a space in `value` or `defaultvalue`.
+For a range, separate the two numbers with a space in `value` or `default-value`.
 Use `role="group"` and give the range an accessible name. Each thumb receives
 its own slider role and keyboard focus. The element's `value` property and
 change events expose a two-number array. If you set `name`, form submission
@@ -251,7 +251,7 @@ includes both values in low-to-high order. Read them with `FormData.getAll(name)
   tabindex="0"
   aria-label="Volume"
   name="volume"
-  defaultvalue="50"
+  default-value="50"
   track-size="4px"
   thumb-fill
   thumb-size="20px"
@@ -262,7 +262,7 @@ includes both values in low-to-high order. Read them with `FormData.getAll(name)
 ```
 
 ```html
-<a-slider role="group" aria-label="Selected interval" name="interval" defaultvalue="20 70" inverted>
+<a-slider role="group" aria-label="Selected interval" name="interval" default-value="20 70" inverted>
   <span slot="label">Selected interval</span>
 </a-slider>
 ```

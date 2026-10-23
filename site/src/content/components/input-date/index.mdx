@@ -452,6 +452,10 @@ initial and reset date. The read-only `.value` property returns the applied ISO
 date, or `null` when empty. Read the reset date with
 `getAttribute('default-state')`.
 
+Changing `default-state` after connection updates the next reset's date only.
+It does not change the current selection, even before the first interaction.
+Use `state` to change the selected date after mounting.
+
 An empty `state=""` keeps the calendar controlled and empty. Remove `state` to
 release control while retaining the applied date. Uncontrolled picks, reset, and
 restoration leave those input attributes unchanged.
@@ -465,8 +469,10 @@ When migrating raw Calendar code, replace `value` / `defaultvalue` attributes
 with `state` / `default-state`. Replace assignments to `.value` with
 `setAttribute('state', date)` and assignments to `.defaultValue` with
 `setAttribute('default-state', date)`. Remove `state` to release control.
-The old attributes have no effect on selection, `.value` is read-only, and the
-`.defaultValue` property is no longer provided.
+The old HTML attributes have no effect on selection. Writing `.value`, including
+through a raw React 19 `value` prop, can throw because the property is read-only.
+Legacy `.value` and `.defaultValue` properties assigned before registration are
+discarded during upgrade. The `.defaultValue` property is no longer provided.
 
 Public `Calendar` and `InputDate` JSX props remain `value` and `defaultValue`.
 For raw React or Preact markup, bind `state` directly; omitting it or setting it

@@ -211,6 +211,33 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.deepEqual(await value(page),range?[10,90]:70)
     assert.equal(await page.locator('#slider').getAttribute('value'),null)
   })
+  for(const framework of ['React','Preact'])for(const range of [false,true])test(`${name} ${framework}: unchanged ${range?'range':'scalar'} inputs preserve rejected drag requests`,{tier:mode==='granular'?'fast':'slow'},async t=>{
+    const page=await pageFor(t,engine,mode,framework,true,true,range)
+    const original=range?[20,70]:50
+    await update(page,{value:original})
+    await page.evaluate(()=>{
+      reports=[];window.valueWrites=0
+      new MutationObserver(records=>valueWrites+=records.length).observe(document.querySelector('#slider'),{attributes:true,attributeFilter:['value']})
+    })
+    const thumb=await page.locator('#slider [part~=thumb-1]').boundingBox()
+    const width=await page.locator('#slider [part=rail-area]').evaluate(el=>el.getBoundingClientRect().width)
+    const x=thumb.x+thumb.width/2,y=thumb.y+thumb.height/2
+    const requested=()=>page.evaluate(()=>reports.filter(r=>r.kind==='value').map(r=>r.value))
+    const next=offset=>range?[20+offset,70]:50+offset
+    await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+width*.1,y);await settled(page)
+    assert.deepEqual(await requested(),[next(10)])
+    await update(page,{})
+    assert.equal(await page.evaluate(()=>valueWrites),0,'Unchanged renderer values must not rewrite the input attribute')
+    await page.mouse.move(x+width*.1,y);await settled(page)
+    assert.deepEqual(await requested(),[next(10)],'A repeated pointer position must not emit another input')
+    await page.mouse.move(x+width*.2,y);await settled(page)
+    assert.deepEqual(await requested(),[next(10),next(20)])
+    await page.locator('#slider').evaluate(s=>s.setAttribute('value',s.getAttribute('value')))
+    await page.mouse.move(x+width*.3,y);await page.mouse.up();await settled(page)
+    assert.deepEqual(await requested(),[next(10),next(20),next(30)],'Identical raw attribute writes must also preserve the drag origin')
+    assert.deepEqual(await value(page),original,'Rejected requests leave the applied value unchanged')
+    assert.deepEqual(await page.evaluate(()=>reports.filter(r=>r.kind==='commit').map(r=>r.value)),[next(30)])
+  })
   test.fast(`${name}: authored inputs own control and uncontrolled operations never rewrite attributes`,async t=>{
     const page=await pageFor(t,engine,mode)
     const result=await page.evaluate(()=>{

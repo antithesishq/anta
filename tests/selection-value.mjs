@@ -152,7 +152,12 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
   test(`${name}: accepts authored inputs before registration`,{tier:kind==='Calendar'&&mode==='granular'?'fast':'slow'},async t=>{
     const page=await pageFor(t,engine,mode,kind,undefined,false)
     await inputs(page,{value:b,defaultValue:a})
-    if(kind==='Calendar')await page.locator('a-calendar').evaluate((el,{a,b})=>{window.detachedCalendar=el.cloneNode(true);detachedCalendar.removeAttribute('id');detachedCalendar.setAttribute('state',b);detachedCalendar.setAttribute('default-state',a)},{a,b})
+    if(kind==='Calendar')await page.locator('a-calendar').evaluate((el,{a,b})=>{
+      el.value=a;el.defaultValue=b
+      window.detachedCalendar=el.cloneNode(true);detachedCalendar.removeAttribute('id')
+      detachedCalendar.setAttribute('state',b);detachedCalendar.setAttribute('default-state',a)
+      detachedCalendar.value=a;detachedCalendar.defaultValue=b
+    },{a,b})
     await page.evaluate(mode=>import(`/${mode}.js`),mode);await settled(page)
     if(kind==='Calendar'){
       assert.deepEqual(await page.evaluate(()=>{customElements.upgrade(detachedCalendar);return {own:Object.hasOwn(detachedCalendar,'value')||Object.hasOwn(detachedCalendar,'defaultValue'),value:detachedCalendar.value,input:detachedCalendar.getAttribute('state'),initial:detachedCalendar.getAttribute('default-state')}}),{own:false,value:b,input:b,initial:a})
@@ -164,6 +169,14 @@ for(const engine of engines)for(const mode of ['granular','bundle'])for(const ki
     await noAliases(page)
     await inputs(page,{value:a})
     assert.equal(await current(page),a)
+    if(kind==='Calendar'){
+      assert.equal(await page.locator('a-calendar').evaluate(el=>Object.hasOwn(el,'value')||Object.hasOwn(el,'defaultValue')),false)
+      await inputs(page,{value:null})
+      await pick(page,kind,b);assert.equal(await current(page),b)
+      await page.evaluate(()=>document.querySelector('form').reset());await settled(page)
+      assert.equal(await current(page),a)
+      assert.equal(await page.evaluate(()=>new FormData(document.querySelector('form')).get('choice')),a)
+    }
   })
   for(const framework of ['React','Preact'])test(`${name} ${framework}: hydrates, round-trips, rejects, and releases value ownership`,{tier:mode==='granular'?'fast':'slow'},async t=>{
     const page=await pageFor(t,engine,mode,kind,framework)

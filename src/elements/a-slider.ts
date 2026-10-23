@@ -104,8 +104,10 @@ export class ASliderElement extends HTMLElementBase {
 
   set value(value: SliderValue | string | null | undefined) {
     // Preact clears a removed property with an empty string.
-    if (value == null || value === '') this.removeAttribute('value')
-    else this.setAttribute('value', serializeSliderValue(value))
+    const next = value == null || value === '' ? null : serializeSliderValue(value)
+    if (this.getAttribute('value') === next) return
+    if (next === null) this.removeAttribute('value')
+    else this.setAttribute('value', next)
   }
 
   get defaultValue(): SliderValue {
@@ -264,6 +266,8 @@ export class ASliderElement extends HTMLElementBase {
 
   attributeChangedCallback(name: string, previous: string | null, next: string | null) {
     if (!this.#seeded) return
+    // Repeated controlled inputs must not rebase an active rejected drag.
+    if (name === 'value' && previous === next) return
     if (name.startsWith('aria-')) this.#accessibilityDirty = true
     if (name === 'value') {
       if (next === null && previous !== null) {

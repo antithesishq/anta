@@ -62,6 +62,8 @@ export class ACalendarElement extends HTMLElementBase {
     }
     this.addEventListener('click', this.onClick)
     this.addEventListener('keydown', this.onKeydown)
+    // Discard obsolete pre-upgrade inputs so they cannot shadow the read-only result.
+    for (const name of ['value', 'defaultValue']) Reflect.deleteProperty(this, name)
   }
 
   connectedCallback() {

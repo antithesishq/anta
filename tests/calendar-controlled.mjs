@@ -139,6 +139,27 @@ for (const engine of engines) {
       })
     }
 
+    test.fast(`${engine.name()}: ${framework} runtime null keeps Calendar controlled and empty through release`, async t => {
+      const page = await pageFor(t, engine, framework, { value: null, defaultValue: '2026-10-08' })
+      const empty = { value: null, state: '', legacy: null, form: null, selected: null, filled: false }
+      assert.deepEqual(await snapshot(page), empty)
+      const date = await page.locator('a-calendar [data-part="day-cell"]:not([disabled])').nth(12).getAttribute('data-date')
+      await pick(page, date)
+      assert.deepEqual(await snapshot(page), empty)
+      assert.deepEqual(await page.evaluate(() => window.log), { requests: [{ next: date, prev: null, reason: 'user' }], changes: [] })
+      await page.evaluate(() => window.setValue(undefined))
+      await page.waitForFunction(() => !document.querySelector('a-calendar').hasAttribute('state'))
+      assert.deepEqual(await snapshot(page), { ...empty, state: null })
+      await pick(page, date); await expectDate(page, date)
+      await page.evaluate(() => window.setValue(null))
+      await page.waitForFunction(() => document.querySelector('a-calendar').getAttribute('state') === '')
+      assert.deepEqual(await snapshot(page), empty)
+      await pick(page, date)
+      assert.deepEqual(await snapshot(page), empty)
+      await page.evaluate(date => window.setValue(date), date)
+      await expectDate(page, date)
+    })
+
     test.fast(`${engine.name()}: ${framework} controlled Calendar rejects repeated picks without changing its form value`, async t => {
       const page = await pageFor(t, engine, framework, { value: '2026-10-08', accept: false })
       await page.evaluate(() => {

@@ -110,6 +110,7 @@ export const Calendar = ({
   ...rest
 }: CalendarProps) => {
   const controlled = value !== undefined
+  const selectionInput = controlled ? value ?? "" : defaultValue
   const resolvedLocale =
     locale || (typeof navigator !== "undefined" ? navigator.language : "en-US")
   const minD = parseISODate(min)
@@ -118,13 +119,13 @@ export const Calendar = ({
 
   // Keep the selection mirror when controlled state is removed.
   const [internalSelected, setInternalSelected] = useState<Temporal.PlainDate | null>(() =>
-    parseISODate(value ?? defaultValue),
+    parseISODate(selectionInput),
   )
-  const selected = controlled ? parseISODate(value) : internalSelected
+  const selected = controlled ? parseISODate(selectionInput) : internalSelected
 
   // The cursor anchors the displayed month and the roving focus.
   const [cursor, setCursor] = useState<Temporal.PlainDate>(() =>
-    clampDate(parseISODate(value ?? defaultValue) ?? today, minD, maxD),
+    clampDate(parseISODate(selectionInput) ?? today, minD, maxD),
   )
   // A controlled `value` change moves the visible month to it (adjust-state-during-
   // render, guarded so it fires only on a real value change — an unrelated re-render,
@@ -336,7 +337,7 @@ export const Calendar = ({
         role="group"
         aria-label={ariaLabel ?? month.heading}
         name={name}
-        state={controlled ? value : undefined}
+        state={controlled ? selectionInput : undefined}
         default-state={!controlled ? defaultValue : undefined}
         disabled={disabled ? "" : undefined}
         data-focus={focusReq ? `${focusReq.iso}#${focusReq.n}` : undefined}

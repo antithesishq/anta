@@ -187,7 +187,8 @@ Slider's consumer `value` / `defaultValue` assignments reflect only
 wrapper renders lowercase `value` only when controlled, serializing numbers and
 ranges as strings. The string differs from its numeric/array live getter, so
 Preact does not skip same-value acquisition. Omit the prop entirely to release
-control; an explicit `value={undefined}` can retain the old input. Project the
+control; on raw `<a-slider>`, an explicit `value={undefined}` can retain the old
+input. The `Slider` wrapper omits that prop automatically. Project the
 uncontrolled default to `default-value` to avoid Preact's special
 `defaultValue` handling. Slider needs no attribute-name case normalization.
 Replay Slider's pre-upgrade property assignments through `upgradeValueProperties`.

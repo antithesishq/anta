@@ -1,0 +1,116 @@
+.demo {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.list {
+  width: 100%;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-2);
+  background: var(--bg-canvas);
+}
+
+.row {
+  min-height: 22px;
+  box-sizing: border-box;
+  padding: 2px 8px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  border-bottom: 1px solid var(--border-5);
+}
+
+.list:not(:state(scrolling)) .row:hover {
+  background: color-mix(in oklch, var(--text-1-brand) 5%, transparent);
+}
+
+.wide {
+  white-space: pre;
+}
+
+.index {
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+/* The demo's own highlighter. Virtual Scroll never styles row content. */
+.hit {
+  padding-inline: 1px;
+  border-radius: 2px;
+  color: var(--text-1);
+  background: color-mix(in oklch, var(--text-1-warning) 25%, transparent);
+}
+
+.hit[data-active] {
+  background: color-mix(in oklch, var(--text-1-warning) 60%, transparent);
+  outline: 1px solid var(--text-1-warning);
+}
+
+/* The demo's own bookmark style. Virtual Scroll only draws the bookmarks on its track. */
+.bookmarked {
+  box-shadow: inset 3px 0 0 color-mix(in oklch, var(--text-3) 60%, transparent);
+  background: color-mix(in oklch, var(--text-3) 8%, transparent);
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.log {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  /* A fixed height keeps the demo from resizing as entries arrive. */
+  align-content: start;
+  gap: 2px 16px;
+  box-sizing: border-box;
+  margin: 0;
+  height: 176px;
+  overflow: auto;
+  padding: 8px 12px;
+  border: 1px solid var(--border-5);
+  border-radius: 6px;
+  font: 12px/1.5 var(--monospace, monospace);
+  font-variation-settings: normal;
+  color: var(--text-3);
+  background: var(--bg-canvas);
+}
+
+.handled {
+  color: var(--text-1-brand);
+}
+
+.passed {
+  color: var(--text-1-success);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+
+.caption {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--text-3);
+}

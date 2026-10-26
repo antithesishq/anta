@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noUncheckedSideEffectImports": false,
+    "types": [],
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "dist/types",
+    "jsx": "react-jsx",
+    "jsxImportSource": "@antadesign/anta"
+  },
+  "include": [
+    "src/entries/*.ts",
+    "src/entries/elements/*.ts"
+  ]
+}

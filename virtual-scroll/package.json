@@ -1,0 +1,66 @@
+{
+  "name": "@antadesign/virtual-scroll",
+  "version": "0.1.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/entries/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./source": {
+      "types": "./dist/types/entries/source.d.ts",
+      "import": "./dist/source.js"
+    },
+    "./elements": {
+      "types": "./dist/types/entries/elements.d.ts",
+      "import": "./dist/elements.js"
+    },
+    "./elements/a-virtual-scroll": {
+      "types": "./dist/types/entries/elements/a-virtual-scroll.d.ts",
+      "import": "./dist/elements/a-virtual-scroll.js"
+    },
+    "./virtual-scroll.css": "./dist/virtual-scroll.css"
+  },
+  "sideEffects": [
+    "./dist/elements.js",
+    "./dist/elements/*.js",
+    "./dist/*.css",
+    "./dist/chunks/*.js",
+    "./src/entries/elements.ts",
+    "./src/entries/elements/*.ts",
+    "./src/elements/*.css"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:dev": "pnpm run build",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false -p tsconfig.build.json",
+    "check:package": "node scripts/verify-package.mjs",
+    "prepare": "pnpm run build",
+    "prepublishOnly": "pnpm run build",
+    "test": "node --test tests/model.test.mjs tests/source.test.mjs tests/types.test.mjs",
+    "test:browser": "node --test tests/element.browser.test.mjs",
+    "demo": "node tests/demo.mjs"
+  },
+  "peerDependencies": {
+    "@antadesign/anta": "^0.3.30",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@antadesign/anta": "workspace:*",
+    "@types/react": "19.3.0",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "esbuild": "0.28.2",
+    "react": "19.3.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2"
+  },
+  "packageManager": "pnpm@10.11.1",
+  "main": "dist/index.js",
+  "types": "dist/types/entries/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "tag": "latest"
+  }
+}

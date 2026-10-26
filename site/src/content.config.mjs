@@ -14,6 +14,7 @@ function loader(name) {
 export const collections = {
   components: defineCollection({ loader: loader('components'), schema: componentSchema }),
   plotDocs: defineCollection({ loader: loader('plotDocs'), schema: packageSchema }),
+  virtualScrollDocs: defineCollection({ loader: loader('virtualScrollDocs'), schema: packageSchema }),
   tableDocs: defineCollection({ loader: loader('tableDocs'), schema: packageSchema }),
   stickersDocs: defineCollection({ loader: loader('stickersDocs'), schema: packageSchema }),
 }

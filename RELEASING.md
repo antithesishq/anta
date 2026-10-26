@@ -1,16 +1,17 @@
 # Releasing Anta packages
 
-Three packages publish from this repository: `@antadesign/anta` at the root, `@antadesign/stickers` in `stickers/`, and `@antadesign/plot` in `plot/`. Version strings are immutable, so always bump before publishing.
+Four packages publish from this repository: `@antadesign/anta` at the root, `@antadesign/stickers` in `stickers/`, `@antadesign/plot` in `plot/`, and `@antadesign/virtual-scroll` in `virtual-scroll/`. Version strings are immutable, so always bump before publishing.
 
-Anta, Stickers, and Plot publish to the `latest` dist-tag. Anta uses the default
-tag; Stickers and Plot set `publishConfig.tag: "latest"` explicitly.
+Anta, Stickers, Plot, and Virtual Scroll publish to the `latest` dist-tag. Anta
+uses the default tag; the companion packages set `publishConfig.tag: "latest"`
+explicitly.
 
 Publish anta first, then the companion packages being released. Stickers uses
 the consumer's Anta installation through its `>=0.3.31` peer range and uses
 `workspace:*` only for local development. Plot requires Anta `^0.3.30` as a
-peer dependency and also uses `workspace:*` only for local development. Publish
-a compatible Anta release with the configured runtime hooks before either
-companion package.
+peer dependency and also uses `workspace:*` only for local development. Virtual
+Scroll requires Anta `^0.3.30` as a peer, the same way. Publish a compatible Anta
+release with the configured runtime hooks before any companion package.
 
 ```sh
 # 1. Publish anta from the repository root
@@ -24,10 +25,14 @@ pnpm publish --no-git-checks
 # 3. Publish plot from plot/
 cd ../plot
 pnpm publish --no-git-checks
+
+# 4. Publish virtual scroll from virtual-scroll/
+cd ../virtual-scroll
+pnpm publish --no-git-checks
 ```
 
-- Use `pnpm publish` for stickers and plot, never `npm publish`: pnpm rewrites the `workspace:*` dependency to a real version.
-- `stickers/package.json` and `plot/package.json` supply `publishConfig.access` and `publishConfig.tag`; anta passes access explicitly and takes the default tag.
+- Use `pnpm publish` for stickers, plot, and virtual scroll, never `npm publish`: pnpm rewrites the `workspace:*` dependency to a real version.
+- `stickers/package.json`, `plot/package.json`, and `virtual-scroll/package.json` supply `publishConfig.access` and `publishConfig.tag`; anta passes access explicitly and takes the default tag.
 - `prepublishOnly` for anta and `prepare` for all packages rebuild `dist` before packing.
 - A manual version-field bump skips the version command's Git commit and tag; tag separately if the release requires one.
 - Append `--otp=<code>` when npm 2FA requires it.

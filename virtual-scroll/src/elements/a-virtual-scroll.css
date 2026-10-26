@@ -1,0 +1,54 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+@layer anta.components {
+  a-virtual-scroll {
+    --virtual-scroll-radius: 5px;
+    --virtual-scroll-outline: color-mix(in oklch, black 10%, transparent);
+    --virtual-scroll-focus-border: color-mix(in oklch, black 60%, transparent);
+    --virtual-scroll-bar-bg: white;
+    --virtual-scroll-track-shadow: inset 0 0 6px 0 color-mix(in oklch, hsl(216deg 10% 10%) 10%, transparent);
+    --virtual-scroll-track-hover-bg: color-mix(in oklch, hsl(216deg 20% 50%) 2%, transparent);
+    --virtual-scroll-track-hover-shadow: inset 0 0 6px 0 color-mix(in oklch, hsl(216deg 10% 10%) 13%, transparent);
+    --virtual-scroll-thumb: hsl(216deg 5% 70%);
+    --virtual-scroll-thumb-hover: hsl(216deg 5% 60%);
+    --virtual-scroll-thumb-active: hsl(216deg 5% 50%);
+    --virtual-scroll-thumb-shadow: none;
+    --virtual-scroll-mark-bg: hsl(55deg 100% 75%);
+    --virtual-scroll-mark-shadow: 0 0 3px 0 white, 0 0 0 1px color-mix(in oklch, hsl(60deg 100% 15%) 25%, transparent);
+    --virtual-scroll-secondary-mark-bg: color-mix(in oklch, hsl(0deg 0% 45%) 15%, transparent);
+    --virtual-scroll-placeholder-line: color-mix(in oklch, currentColor 8%, transparent);
+    --virtual-scroll-empty-color: var(--text-3);
+
+    outline: 1px solid var(--virtual-scroll-outline);
+    outline-offset: -1px;
+    border-radius: var(--virtual-scroll-radius);
+  }
+
+  a-virtual-scroll:focus,
+  a-virtual-scroll:focus-visible {
+    outline: none;
+  }
+
+  .dark a-virtual-scroll {
+    --virtual-scroll-outline: color-mix(in oklch, white 10%, transparent);
+    --virtual-scroll-focus-border: color-mix(in oklch, white 60%, transparent);
+    --virtual-scroll-bar-bg: black;
+    --virtual-scroll-track-hover-shadow: inset 0 0 6px 0 color-mix(in oklch, black 40%, transparent);
+    --virtual-scroll-thumb: color-mix(in oklch, white 60%, transparent);
+    --virtual-scroll-thumb-hover: color-mix(in oklch, white 80%, transparent);
+    --virtual-scroll-thumb-active: color-mix(in oklch, white 95%, transparent);
+    --virtual-scroll-thumb-shadow: 0 0 4px 1px black;
+    --virtual-scroll-mark-shadow: none;
+    --virtual-scroll-secondary-mark-bg: color-mix(in oklch, hsl(0deg 0% 75%) 45%, transparent);
+  }
+
+  /* Rows are hit targets only while the list is at rest, so a wheel gesture does not flicker hover styles. */
+  a-virtual-scroll:state(scrolling) > :not([slot]) {
+    pointer-events: none;
+  }
+
+  a-virtual-scroll:not(:defined) > :not([slot]) {
+    display: none;
+  }
+}

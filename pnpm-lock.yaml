@@ -111,6 +111,9 @@ importers:
       '@antadesign/stickers':
         specifier: workspace:*
         version: link:../stickers
+      '@antadesign/virtual-scroll':
+        specifier: workspace:*
+        version: link:../virtual-scroll
       '@astrojs/markdown-satteri':
         specifier: 0.4.1
         version: 0.4.1
@@ -242,6 +245,27 @@ importers:
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
+      typescript:
+        specifier: npm:@typescript/typescript6@6.0.2
+        version: '@typescript/typescript6@6.0.2'
+
+  virtual-scroll:
+    devDependencies:
+      '@antadesign/anta':
+        specifier: workspace:*
+        version: link:..
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@typescript/native':
+        specifier: npm:typescript@7.0.2
+        version: typescript@7.0.2
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
       typescript:
         specifier: npm:@typescript/typescript6@6.0.2
         version: '@typescript/typescript6@6.0.2'

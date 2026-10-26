@@ -1,0 +1,14 @@
+---
+import Preview from './Preview.astro'
+import { VirtualScrollExample, type VirtualScrollExampleName } from './VirtualScrollExamples.tsx'
+
+interface Props {
+  example: VirtualScrollExampleName
+  minHeight?: number
+}
+const { example, minHeight = 340 } = Astro.props
+---
+
+<Preview align="stretch" minHeight={minHeight}>
+  <VirtualScrollExample client:only="preact" example={example} />
+</Preview>

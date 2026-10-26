@@ -566,7 +566,7 @@
   a-radio-group:focus-visible a-radio:state(selected)::before {
     outline: 2px solid var(--focus-ring);
     outline-offset: calc(-2px * var(--focus-ring-inset, 0));
-    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+    animation: var(--focus-ring-animation, focus-ring-pulse) 360ms;
 
     @media (prefers-reduced-motion: reduce) {
       animation: none;
@@ -576,12 +576,14 @@
   /* The tab strip clips an outward ring. */
   a-tab {
     --focus-ring-inset: 1;
+    --focus-ring-animation: focus-ring-pulse-inset;
   }
 
   /* The card clips its own box, so its ring sits inside and replaces the
      component's inset shadow ring. */
   a-card > a {
     --focus-ring-inset: 1;
+    --focus-ring-animation: focus-ring-pulse-inset;
   }
   a-card > a:focus-visible {
     box-shadow: none;
@@ -1451,7 +1453,7 @@
   a-slider::part(thumb):focus-visible,
   input[data-anta][type="range"]:focus-visible {
     outline-width: 2px;
-    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+    animation: focus-ring-pulse 360ms;
 
     @media (prefers-reduced-motion: reduce) {
       animation: none;
@@ -1548,19 +1550,30 @@
     --_input-focus-offset: -1px;
   }
 
-  /* The field ring pulses in like the other focus rings. The rule targets the
-     field part from the document, so it resolves the document's keyframes.
-     The host matches `:focus` only when its shadow control holds focus, not
-     when a slotted button does, which matches the shadow ring condition. */
+  /* Field rings are box shadows: 1px over the border and 1px outside it, the
+     same footprint as the 2px outline at -1px. Chromium rounds outline widths
+     to whole pixels, so an outline pulse steps; a shadow spread grows
+     smoothly. The transparent outline stays for forced colors, which drops
+     box shadows. The rule targets the field part from the document, so it
+     resolves the document's keyframes. The host matches `:focus` only when
+     its shadow control holds focus, not when a slotted button does, which
+     matches the shadow ring condition. */
   a-input:not([readonly]):focus::part(field),
-  a-input[readonly]:state(kb-focus)::part(field) {
-    --focus-ring-pulse-width: 3px;
-
-    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+  a-input[readonly]:state(kb-focus)::part(field),
+  a-input-time:focus-within::part(field) {
+    outline-color: transparent;
+    box-shadow:
+      inset 0 0 0 1px var(--focus-ring),
+      inset 0 0 0 1px var(--focus-field-border),
+      0 0 0 1px var(--focus-ring);
+    animation: focus-field-pulse 360ms;
 
     @media (prefers-reduced-motion: reduce) {
       animation: none;
     }
+  }
+  a-input {
+    --focus-field-border: var(--input-border);
   }
 
   a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
@@ -1616,29 +1629,22 @@
     --input-time-border-hover: var(--stroke-1-hover);
   }
 
-  a-input-time:not([tone]:not([tone=""]))::part(field),
+  a-input-time:not([tone]:not([tone=""]), :focus-within)::part(field),
   a-input-time:not([tone]:not([tone=""])):not(:defined)::after {
     box-shadow: inset 0 0 0 1px var(--input-time-border);
   }
   @media (hover: hover) and (pointer: fine) {
-    a-input-time:not([tone]:not([tone=""]), :disabled)::part(field):hover {
+    a-input-time:not([tone]:not([tone=""]), :disabled, :focus-within)::part(field):hover {
       box-shadow: inset 0 0 0 1px var(--input-time-border-hover);
     }
   }
-  a-input-time:not([tone]:not([tone=""])):focus-within::part(field) {
-    box-shadow: inset 0 0 0 1px var(--input-time-border-hover);
+  /* The field ring is shared with Input above. */
+  a-input-time {
+    --focus-field-border: var(--input-time-border-hover);
   }
-
   a-input-time:focus-within::part(field) {
-    --focus-ring-pulse-width: 3px;
-
-    outline: 2px solid var(--focus-ring);
+    outline: 2px solid transparent;
     outline-offset: -1px;
-    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
-
-    @media (prefers-reduced-motion: reduce) {
-      animation: none;
-    }
   }
 
   a-input-time[status="brand"]:not(:disabled) {
@@ -1778,7 +1784,7 @@
 @layer anta.reset {
   :root :focus-visible:not([data-anta]) {
     outline-width: 2px;
-    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+    animation: focus-ring-pulse 360ms;
 
     @media (prefers-reduced-motion: reduce) {
       animation: none;
@@ -1786,15 +1792,56 @@
   }
 }
 
+/* The focus ring grows past its 2px rest, then settles. Outward rings keep
+   their own resting offset: Chromium floors outline offsets to whole pixels,
+   so animating the offset toward a nonzero rest stalls and then jumps.
+   Inset rings, such as tabs and cards, select `focus-ring-pulse-inset`
+   through `--focus-ring-animation`; it moves the offset with the width so the
+   ring grows inward. Easing is set per segment: a fast ease-out to the peak,
+   then an ease-in-out so the end does not crawl. */
 @keyframes focus-ring-pulse {
+  from {
+    outline-width: 0;
+    outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.3, 0, 0, 1);
+  }
+  35% {
+    outline-width: var(--focus-ring-pulse-width, 4px);
+    outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.25, 0, 0.2, 1);
+  }
+}
+
+/* Fields pulse their outer shadow from 0 to 2px and settle at 1px, while the
+   inner ring fades in over the field border. */
+@keyframes focus-field-pulse {
+  from {
+    box-shadow:
+      inset 0 0 0 1px transparent,
+      inset 0 0 0 1px var(--focus-field-border),
+      0 0 0 0 color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.3, 0, 0, 1);
+  }
+  35% {
+    box-shadow:
+      inset 0 0 0 1px var(--focus-ring),
+      inset 0 0 0 1px var(--focus-field-border),
+      0 0 0 2px color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.25, 0, 0.2, 1);
+  }
+}
+
+@keyframes focus-ring-pulse-inset {
   from {
     outline-width: 0;
     outline-offset: 0;
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.3, 0, 0, 1);
   }
-  30% {
+  35% {
     outline-width: var(--focus-ring-pulse-width, 4px);
-    outline-offset: calc(-1 * var(--focus-ring-pulse-width, 4px) * var(--focus-ring-inset, 0));
+    outline-offset: calc(-1 * var(--focus-ring-pulse-width, 4px));
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.25, 0, 0.2, 1);
   }
 }

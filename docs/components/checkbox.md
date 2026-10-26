@@ -90,6 +90,11 @@ The `disabled` attribute dims the checkbox and removes it from the tab order.
 
 Uncontrolled by default: pass `defaultChecked` and read the value from `onStateChange` or at form-submit. Make it controlled with `checked` and `onStateChange` to drive it from your store.
 
+Omit `checked` or pass `undefined` to release control and retain the applied state.
+Form reset and browser restoration preserve a controlled state. An uncontrolled
+reset restores `defaultChecked` and makes later default changes apply until the
+next interaction or restoration.
+
 ```tsx
 const [agreed, setAgreed] = useState(false)
 

@@ -77,6 +77,7 @@ const READONLY_ALLOWLIST = {
   HTMLElementBase: ['view', 'doc'],
   AInputElement: ['validity', 'validationMessage', 'willValidate'],
   AInputTimeElement: ['validity', 'validationMessage', 'willValidate'],
+  ACalendarElement: ['value'],
   AMenuElement: ['isControlled', 'isSubmenu', 'triggerAnchor', 'isOpen'],
   ATextElement: ['isTruncated'],
   ABoxElement: ['measurement', 'context', 'isTruncated'],

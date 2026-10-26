@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/anta",
-  "version": "0.3.35",
+  "version": "0.3.36",
   "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
   "main": "dist/index.js",
@@ -92,6 +92,8 @@
     "test:banner:package": "node tests/banner-package.mjs",
     "test:card": "node --test tests/card-csp.mjs",
     "test:progress": "node --test tests/progress-csp.mjs",
+    "test:value-ownership:package": "node tests/value-ownership-package.mjs",
+    "test:value-ownership": "node --test tests/value-ownership.mjs",
     "test:calendar": "node --test tests/calendar-controlled.mjs",
     "test:capture-input": "node --test tests/capture-input.test.mjs",
     "lint": "node scripts/lint-getters.mjs && node scripts/lint-css-layers.mjs",
@@ -115,7 +117,9 @@
     "test:selection": "node --test tests/selection-projection.mjs tests/selection-value.mjs",
     "test:selection:package": "node tests/selection-package.mjs",
     "test:slider": "node --test tests/slider-projection.mjs tests/slider-csp.mjs",
-    "test:slider:package": "node tests/slider-package.mjs"
+    "test:slider:package": "node tests/slider-package.mjs",
+    "test:stickers": "node --test tests/stickers-csp.mjs",
+    "test:stickers:package": "node tests/stickers-package.mjs"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

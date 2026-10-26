@@ -94,6 +94,11 @@ export class ACheckboxElement extends HTMLElementBase {
     // `state` is the controlled channel — reflect changes, and fire `change` on a
     // real transition (the consumer's accepted value), like a native input.
     if (name === "state") {
+      if (!this.hasAttribute("state")) {
+        this.dirty = true;
+        this.paint();
+        return;
+      }
       const next = parseState(this.getAttribute("state"));
       const changed = next !== this.currentState;
       this.currentState = next;
@@ -197,11 +202,15 @@ export class ACheckboxElement extends HTMLElementBase {
   }
 
   formResetCallback() {
+    if (this.#isControlled) return;
+    this.dirty = false;
     this.seed();
     this.paint();
   }
 
   formStateRestoreCallback(state: string) {
+    if (this.#isControlled) return;
+    this.dirty = true;
     this.currentState = parseState(state);
     this.paint();
   }

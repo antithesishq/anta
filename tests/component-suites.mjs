@@ -1,4 +1,5 @@
 export const componentSuites = {
+  stickers: { tests: ['tests/stickers-csp.mjs'], slow: ['tests/stickers-package.mjs'] },
   plot: { tests: ['plot/tests/csp.test.mjs'], slow: ['plot/tests/csp-package.mjs'] },
   selection: { tests: ['tests/selection-projection.mjs', 'tests/selection-value.mjs'], slow: ['tests/selection-package.mjs'] },
   slider: { tests: ['tests/slider-projection.mjs', 'tests/slider-csp.mjs'], slow: ['tests/slider-package.mjs'] },
@@ -12,6 +13,7 @@ export const componentSuites = {
   toaster: { tests: ['tests/toaster-csp.mjs'], slow: ['tests/toaster-package.mjs'] },
   input: { tests: ['tests/input-csp.mjs'], slow: ['tests/input-package.mjs'] },
   banner: { tests: ['tests/banner-csp.mjs'], slow: ['tests/banner-package.mjs'] },
+  'value-ownership': { tests: ['tests/value-ownership.mjs'], slow: ['tests/value-ownership-package.mjs'] },
   calendar: { tests: ['tests/calendar-controlled.mjs'] },
   expander: { tests: ['tests/expander-csp.mjs'], slow: ['tests/expander-package.mjs'] },
   card: { tests: ['tests/card-csp.mjs'] },

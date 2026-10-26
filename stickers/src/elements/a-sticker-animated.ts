@@ -23,9 +23,7 @@ import './a-sticker-animated.css'
  *  - `replay-on-click` — present with `play-once`: clicking or pressing
  *    Enter/Space restarts the animation from its first frame.
  *
- * The shadow container is sized from `--sticker-size` (set by the JSX
- * wrapper's `size` prop or the consumer), with a 256px fallback — see
- * `<a-sticker>` for why sizing lives on the shadow node, not the host.
+ * External CSS sizes the owned `container` and `artwork` parts.
  *
  * The static counterpart is `<a-sticker>`.
  */
@@ -37,7 +35,7 @@ export class AStickerAnimatedElement extends HTMLElementBase {
   _animation: Record<string, unknown> | null = null
   #startTimer: ReturnType<typeof setTimeout> | null = null
   #replay = () => {
-    if (!this.player || !this.hasAttribute('play-once') || !this.hasAttribute('replay-on-click')) return
+    if (!this.player?.isLoaded || !this.hasAttribute('play-once') || !this.hasAttribute('replay-on-click')) return
     this.#clearStartTimer()
     this.player.goToAndPlay(0, true)
   }
@@ -51,16 +49,9 @@ export class AStickerAnimatedElement extends HTMLElementBase {
     super()
     const shadow = this.attachShadow({ mode: 'open' })
 
-    const style = document.createElement('style')
-    style.textContent = `
-      :host { display: inline-grid; place-items: center; }
-      div { width: var(--sticker-size, 256px); height: var(--sticker-size, 256px); }
-      div > svg { display: block; width: 100%; height: 100%; }
-    `
-
     this.container = document.createElement('div')
-
-    shadow.append(style, this.container)
+    this.container.part.add('container')
+    shadow.append(this.container)
   }
 
   connectedCallback() {
@@ -91,7 +82,7 @@ export class AStickerAnimatedElement extends HTMLElementBase {
     this.teardown()
     if (this._animation == null) return
 
-    this.player = lottie.loadAnimation({
+    const player = lottie.loadAnimation({
       container: this.container,
       renderer: 'svg',
       loop: !this.hasAttribute('play-once'),
@@ -99,38 +90,56 @@ export class AStickerAnimatedElement extends HTMLElementBase {
       animationData: this._animation,
     })
 
-    this.player.addEventListener('complete', () => {
-      if (this.hasAttribute('play-once')) {
-        this.player?.goToAndStop(this.player.totalFrames - 1, true)
+    this.player = player
+    const exposeArtwork = () => {
+      if (this.player === player && this.isConnected) {
+        this.container.querySelector(':scope > svg')?.part.add('artwork')
+      }
+    }
+    let initialized = false
+    const ready = () => {
+      if (initialized || this.player !== player || !this.isConnected || !player.isLoaded) return
+      initialized = true
+      exposeArtwork()
+      this.syncPlayback()
+    }
+    player.addEventListener('config_ready', exposeArtwork)
+    player.addEventListener('DOMLoaded', ready)
+    exposeArtwork()
+    ready()
+
+    player.addEventListener('complete', () => {
+      if (this.player === player && this.hasAttribute('play-once')) {
+        player.goToAndStop(player.totalFrames - 1, true)
       }
     })
-    this.syncPlayback()
   }
 
   syncPlayback() {
     this.#clearStartTimer()
-    if (!this.player) return
+    const player = this.player
+    if (!player?.isLoaded) return
     const attr = this.getAttribute('paused')
     if (attr === null) {
       const delay = Number(this.getAttribute('delay'))
       if (Number.isFinite(delay) && delay > 0) {
-        this.player.goToAndStop(0, true)
+        player.goToAndStop(0, true)
         this.#startTimer = setTimeout(() => {
           this.#startTimer = null
-          if (!this.hasAttribute('paused')) this.player?.play()
+          if (this.player === player && !this.hasAttribute('paused')) player.play()
         }, delay * 1000)
       } else {
-        this.player.play()
+        player.play()
       }
       return
     }
     const seconds = Number(attr)
-    if (Number.isFinite(seconds) && seconds > 0) {
-      const frame = seconds * this.player.frameRate
-      const clamped = Math.min(this.player.totalFrames - 1, Math.max(0, frame))
-      this.player.goToAndStop(clamped, true)
+    if (attr.trim() !== '' && Number.isFinite(seconds) && seconds >= 0) {
+      const frame = seconds * player.frameRate
+      const clamped = Math.min(player.totalFrames - 1, Math.max(0, frame))
+      player.goToAndStop(clamped, true)
     } else {
-      this.player.pause()
+      player.pause()
     }
   }
 

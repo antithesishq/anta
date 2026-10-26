@@ -9,6 +9,8 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 Astro dev uses `--ignore-lock` so agent sessions keep the server in the root
 dev process tree. The root launcher owns PID tracking and shutdown.
 
+See [site follow-ups](FOLLOWUPS.md) for pending deployment and performance work.
+
 ## Local servers
 
 Choose the server from the task without asking the user to choose process flags.
@@ -87,6 +89,8 @@ must reset for each document. Authored JSX tables retain their own layout and
 must not receive Markdown table wrappers.
 Run `pnpm --filter anta-site test:production` after the production build to check
 search, table alignment, ClientRouter navigation, and the compiled Playground.
+The Playground regressions also use WebKit; install it with
+`pnpm --filter anta-site exec playwright install webkit` before the first run.
 
 ## Site topology
 
@@ -98,6 +102,10 @@ search, table alignment, ClientRouter navigation, and the compiled Playground.
 - `src/styles/base.css` owns the minimal site reset and typography.
 
 Astro renders static output. Sätteri handles Markdown/MDX and GFM; astro-expressive-code handles code blocks. Optional math and directive syntax are disabled. Keep interactive behavior in imported JSX components or the existing external Playground demo source; MDX composes the prose and previews. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
+
+Use an imported TSX component when a preview passes JSX through props such as
+Input's `leading` or `trailing`. Nested JSX props written directly in MDX can
+produce empty projected content. Static examples need no hydration directive.
 
 Smart punctuation also processes raw text inside MDX JSX. Use inline code for
 code identifiers, or a quoted JSX expression such as `{'--text-1'}` when a live
@@ -114,7 +122,7 @@ MDX from retaining the client-only component's CSS in both page and island build
 - Astro 7.3.3 needs the versioned [collection CSS patch](../patches/README.md) to keep client-only and processed-script styles attached to their content entries. Preserve it when installing dependencies. Before removing it or upgrading Astro, run the production asset tests and compare per-page stylesheet ownership. Incremental prerendering remains disabled until its dependency invalidation is checked with the patch.
 - **All component styles stay co-located** (a `.astro` scoped `<style>` or a `.module.css`). `astro.config.mjs` sets `build.inlineStylesheets: 'never'` so scoped styles are emitted into *linked* bundles, never inlined into the page `<head>` — Astro's per-page inline path can land present-but-inert in production for a component used inside MDX wrapping a hydrated island. Per-route CSS code-splitting stays on (default), so heavy island CSS (Monaco/Playground) loads only where it's used.
 - For a one-off style that must stay inline and untouched by Astro's pipeline, use **`<style is:inline>`** — it's rendered verbatim (no scoping, bundling, or hoisting).
-- **In MDX docs pages, a styling example's live CSS goes in a `<style is:inline>` placed *inside* its `<Preview>` (as a child, after the element), targeting a demo class on that preview's element; the folded recipe under the preview is that same CSS.** Putting the `<style>` inside the preview means the applied rule is literally in the preview's DOM, right next to the element it styles — a reader can inspect the preview and find exactly the rule the recipe shows — and it's never a far-away or page-wide stylesheet. Don't hide the applied CSS behind a `style=""` attribute either: an attribute can't express what these examples need (`::part`, `::before`, `:hover`, `:state`, descendant selectors) — those are only legal in a stylesheet. Use a demo class (e.g. `.hide-chevron`, `.code-like`) so each example is self-identifying and examples don't collide, and tell the reader (once, near the first example) that the class is just for the demo and they'd swap their own selector. `src/content/components/expander/index.mdx`'s "Styling the chevron & header" section is the reference pattern.
+- **In MDX docs pages, a styling example's live CSS goes in a `<style is:inline>` placed *inside* its `<Preview>` (as a child, after the element), targeting a demo class on that preview's element; the folded recipe under the preview is that same CSS.** Putting the `<style>` inside the preview means the applied rule is literally in the preview's DOM, right next to the element it styles — a reader can inspect the preview and find exactly the rule the recipe shows — and it's never a far-away or page-wide stylesheet. Don't hide the applied CSS behind a `style=""` attribute either: an attribute can't express what these examples need (`::part`, `::before`, `:hover`, `:state`, descendant selectors) — those are only legal in a stylesheet. Use a demo class (e.g. `.hide-chevron`, `.code-like`) so each example is self-identifying and examples don't collide, and tell the reader (once, near the first example) that the class is just for the demo and they'd swap their own selector. `src/content/components/expander/index.mdx`'s "Styling" disclosure is the reference pattern.
 - **`pnpm --filter anta-site lint:css` runs Stylelint** (config: `site/stylelint.config.mjs`) over `src/**/*.{css,astro}`, including the `<style>` blocks inside `.astro` files (`postcss-html` custom syntax). It's a CI step. The config is tuned for *correctness*, not house style — most stylistic rules are off; the point is to catch CSS that the browser would silently drop. **Watch for `*/` inside a CSS comment** — e.g. writing `data-*/aria-*` ends the comment early and spills the rest into the stylesheet as invalid CSS, which (when bundled with other components) silently drops their rules in production. Stylelint now flags this.
 
 ## ClientRouter (view transitions)
@@ -130,6 +138,11 @@ MDX from retaining the client-only component's CSS in both page and island build
 - **`<html>` attributes are replaced wholesale on swap.** The runtime `.dark` class is re-stamped onto `e.newDocument` in an `astro:before-swap` hook in `DocsLayout.astro` — any future runtime root attribute needs the same treatment.
 - **Never `document.write`.** It only works during a full page parse; under the router it silently no-ops (this was the original palette-loading bug). Pre-paint work belongs in an `is:inline` head script that mutates elements already parsed above it.
 - **Theme switching**: one stable `<link id="palette-link">` defaults to `/themes/antune.css` and persists across navigation. **None** selects the empty `/themes/default.css` stub. `scripts/copy-themes.mjs` copies the package themes to `public/themes/`. Add a new theme to that script, `ThemeSwitcher.tsx`, and the layout's inline palette map. The switcher reads the live link on mount so it also works when storage is blocked. Playground iframes mirror changes to this link.
+- Reference font loading lives in `src/styles/fonts-antune.css` and
+  `fonts-antithesis.css`, separately from the published themes. The persisted
+  `palette-fonts-link` selects the matching site font stylesheet, or the empty
+  default for **None**. Keep it synchronized in the head script, ThemeSwitcher,
+  and Playground iframe. Package themes must not import these site files.
 - **Islands and page state die with the page they're on.** `transition:persist` only carries an element to pages whose HTML also renders a matching persist id — it cannot preserve a page-exclusive island across leave-and-return. State that must survive navigation goes to storage (see `ThemingLab.tsx`, sessionStorage key `anta-theming-lab`).
 - **Restoring stored state into an SSR'd island happens in a mount effect, never in the `useState` initializer.** Preact skips attribute patching during hydration, so initializer-restored state silently desyncs from the server-rendered DOM (stale `hidden`/`value` attributes). A post-mount `setState` is a normal update and patches everything (see `ThemingLab.tsx`).
 - **Swapped-in subtrees upgrade custom elements parent-first.** Anta group elements (`a-tabs`, `a-radio-group`) defer their first child sync a microtask for exactly this reason (see `childrenReady` in `src/elements/a-tabs.ts`). A new element class that reads or writes its custom-element *children* at connect time must do the same, or swapped-in pages render it dead while full loads look fine.
@@ -213,6 +226,7 @@ Supporting code:
   The root dev watcher also rebuilds it after changes to its source or
   `site/lib/sandbox/`; wait for the runtime rebuild before refreshing a local
   Playground page.
+- Mount Playground hosts only after all enclosing disclosures are open. Creating native autosizing textareas inside a closed Playground crashes Safari/WebKit during layout. Keep a mounted Playground alive when folded again so reopening preserves edits.
 
 ### Props annotations
 
@@ -246,7 +260,9 @@ We only register workers for languages the playground actually uses. Adding JSON
 
 Page review status comes from the optional `author` frontmatter field. Leave it
 absent until a human has reviewed the complete page; the layout then shows a
-warning-tone ✦ beside the title. `WRITING.md` defines the matching TSDoc
+warning-tone ✦ as inline title text, with the whole heading as its tooltip
+target. Render the marker with the initial HTML; moving it after page load
+causes layout shifts. `WRITING.md` defines the matching TSDoc
 `@author` convention and the safe `pnpm docs-fix` command. Never add an author
 field on behalf of a human reviewer.
 After a human reviews a page, `pnpm docs-review <page.mdx>` adds its author
@@ -273,6 +289,13 @@ For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop
 **Demos use Anta's own components wherever one exists — down to the incidental controls.** Any control the design system ships — `Checkbox`, `Input`, `Button`, `RadioGroup`, `Select`, `Tabs`, `Tag`, `Tooltip`, … — is what a demo reaches for, whether it's the component under test or just a knob beside it (a "simulate loading" toggle, a filter field, a segmented switcher). This holds in every demo surface: Playground `initialCode`, a hydrated island (`src/components/*.tsx`), and inline `.mdx` examples. The point is that every example dogfoods the library and looks/behaves like real usage; a raw `<input>` / `<button>` / `<select>` next to an Anta component reads as an oversight. Drop to a raw HTML control **only** when there's genuinely no Anta equivalent yet (e.g. `<input type="range">` — there's no slider component). The `Playground` island itself is exempt — it's editor/props-form infrastructure kept standalone for extraction, not a component demo.
 
 Package docs use separate `plotDocs`, `tableDocs`, and `stickersDocs` collections. Put the package landing page in `src/content/packages/{package}/index.mdx`; `getting-started.mdx` or `getting-started/index.mdx` creates `/{package}/getting-started/`. Package navigation derives its group from the collection. Subpages default to the package landing page as their parent; set `parent` to an entry ID for deeper breadcrumbs. Keep each demo beside its page, preferably in its own directory.
+
+The sidebar nests catalog parents through `getNavigationTree()` and
+`SidebarNavItem.astro`. Children appear while their parent or a descendant is
+current. The persisted sidebar synchronizes branch visibility and active links
+on `astro:page-load`; keep cold loads and ClientRouter navigation consistent.
+Reset prose-list margins on nested navigation items so their row spacing
+matches the top-level links.
 
 Use `nav: false` to omit a page from navigation and `export: false` to omit it from Markdown exports. These flags are independent. Optional `path` overrides the generated URL. The shared schema rejects unknown metadata and the catalog rejects duplicate URLs, sources, export paths, and missing or cyclic parents.
 

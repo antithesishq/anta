@@ -1,0 +1,10 @@
+body {
+  margin: 20px;
+  background: #f0f3f6;
+}
+
+.account-row {
+  block-size: auto;
+  padding: 8px;
+  background: #f0f3f6;
+}

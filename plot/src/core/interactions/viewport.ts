@@ -1,3 +1,4 @@
+import { UNIT_ZOOM, type ViewportZoom } from './viewport_zoom'
 import type { AxisTemplate, AxisViewport, Domain, Viewport, ViewportChange } from "../types"
 
 export type ViewportAxes = { x: Pick<AxisTemplate, 'kind'>; y: Pick<AxisTemplate, 'kind'> }
@@ -50,10 +51,12 @@ function same_window(before: Domain | null, after: Domain | null): boolean {
  * meaning only "this axis is categorical".
  * @param viewport - the window to report
  * @param domains - the plot's full extents, null on a categorical axis
+ * @param zoom - gesture magnification for the same staged or committed window
  * @returns the per-axis change payload
  */
-export function viewport_change(viewport: Viewport, domains: { x_full_domain: Domain | null; y_full_domain: Domain | null }): ViewportChange {
+export function viewport_change(viewport: Viewport, domains: { x_full_domain: Domain | null; y_full_domain: Domain | null }, zoom: ViewportZoom = UNIT_ZOOM): ViewportChange {
     return {
+        zoom_factor: { ...zoom },
         x: axis_viewport(viewport.x, domains.x_full_domain),
         y: axis_viewport(viewport.y, domains.y_full_domain),
     }

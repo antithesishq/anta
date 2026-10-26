@@ -2,23 +2,13 @@
 @layer anta.reset, anta.components, anta.theme;
 
 @layer anta.components {
-  /* Host + token definitions for <a-banner>. The visible box (surface, bottom
-     border) lives here so plain consumer CSS overrides it and it paints before the
-     element upgrades; the shadow <style> owns only the bar layout and REFERENCES
-     these --banner-* tokens with literal fallbacks. Named tones use Anta's
-     theme-aware role tokens, so named tones follow the inherited color scheme
-     (same as <a-card> / <a-progress>); custom tones use `light-dark()`. */
-
   a-banner {
-    /* Surface / text / border mirror <a-expander>'s PRIMARY look, so a banner reads
-       as the same pronounced toned box: bg-4 fill, border-4 edge, text-2 text — and
-       the named / custom tones below track it. */
     --banner-bg: var(--bg-4);
     --banner-border: var(--border-4);
     --banner-text: var(--text-2);
+    --banner-round: initial;
+    --banner-tone-source: initial;
 
-    /* The host lays out projected slots so it paints before upgrade and consumer CSS
-       can override it. */
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -51,14 +41,7 @@
     overflow: clip;
     overflow-clip-margin: 3px;
 
-    /* Two transitions on the host:
-       1. Fade in on :defined so the pre-upgrade layout doesn't flash.
-       2. Collapse on dismiss — block-size + block padding + border + opacity
-          animate to 0, then `display` flips to none (allow-discrete keeps the
-          box rendered through the animation). `interpolate-size: allow-keywords`
-          lets the intrinsic `height: auto` animate down to 0 (Chromium; other
-          engines fade + collapse the padding, then hide). Both are disabled
-          under prefers-reduced-motion below. */
+    /* Retain the existing dismissal transition and engine-specific degradation. */
     interpolate-size: allow-keywords;
     transition:
       opacity 160ms ease,
@@ -85,25 +68,51 @@
     }
   }
 
-  /* The dismiss ✕ is a fixed 40px-wide strip that fills the full bar height (the
-     close slot spans it — see a-banner.ts), so its glyph sits vertically centered.
-     On a taller or wrapped (multi-line) banner it spans the whole right edge rather
-     than a corner. Quaternary, so it's a bare glyph until hover. Covers the wrapper's
-     <span slot="close"><a-button></span> and a hand-authored <a-button slot="close">. */
-  a-banner [slot="close"] a-button,
-  a-banner a-button[slot="close"] {
+  /* Boxless regions keep arbitrary nodes and children as host flex items. */
+  a-banner > a-banner-content {
+    display: contents;
+  }
+
+  a-banner > a-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  a-banner > a-banner-actions:empty {
+    display: none;
+  }
+  a-banner > a-banner-message:empty,
+  a-banner > :is(a-banner-message, a-banner-content, a-banner-actions, a-banner-close)[hidden] {
+    display: none;
+  }
+
+  /* The close target spans the full block edge, including a wrapped banner. */
+  a-banner > a-banner-close {
+    position: absolute;
+    inset-inline-end: 0;
+    inset-block: 0;
+    display: grid;
+    place-items: center;
+    opacity: 0.65;
+    transition: opacity 150ms ease;
+  }
+  a-banner > a-banner-close:hover,
+  a-banner > a-banner-close:focus-within {
+    opacity: 1;
+  }
+  a-banner > a-banner-close > a-button {
     height: 100%;
     width: 40px;
   }
 
-  /* A string message gets the banner type scale; a node keeps its own type. */
   a-banner-message {
     font-size: 14px;
     line-height: 20px;
     font-weight: 475;
     text-align: start;
   }
-  a-banner[align="center"] a-banner-message {
+  a-banner[align="center"] > a-banner-message {
     text-align: center;
   }
 
@@ -162,22 +171,11 @@
     }
   }
 
-  /* Pre-upgrade: the host is already the flex bar (above), so the un-slotted
-     light-DOM children lay out as the row without a shadow — only the close ✕ sits
-     inline (its absolute pin lives in the shadow) instead of pinned right. Hold the
-     host at opacity:0 and let the `opacity` transition fade it in on :defined, once
-     the shadow's slot layout takes over. */
-  a-banner:not(:defined) {
-    opacity: 0;
-  }
-
-  /* Dismissed — the element mirrors :state(closed) off-DOM; collapse the host.
-     The attribute forms catch the pre-upgrade (controlled / pre-dismissed) paint
-     before the element sets the custom state. Placed last so display:none wins
-     over the pre-upgrade rule for a banner that starts dismissed. */
-  a-banner[state="closed"],
-  a-banner[default-state="closed"],
-  a-banner:state(closed) {
+  /* Authored state wins. The default is only a seed, never a permanent veto
+     of a later open state, including after controlled state is removed. */
+  a-banner[state]:not([state="open"]),
+  a-banner:not([state])[default-state="closed"]:not(:state(open)),
+  a-banner:not([state]):state(closed) {
     display: none;
     /* Collapse the box so a dismiss animates height → 0 (see the host transition
        above). `min-block-size: 0` overrides the base min-height so the bar can
@@ -199,6 +197,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    a-banner { transition: none; }
+    a-banner,
+    a-banner > a-banner-close { transition: none; }
   }
 }

@@ -51,10 +51,11 @@ from a worker thread. The following are hard rules **for package code**:
   `[disabled="true"]`. The element attribute type in `general_types.ts` is
   `boolean | ''`. ARIA is the exception: keep it string-valued
   (`aria-pressed={selected ? 'true' : undefined}`, typed `'true' | 'false' | boolean`).
-- **Elements are SSR-safe and self-registering.** Each `a-{name}.ts` imports its
-  own CSS at the top and calls `register_a_{name}()` at the bottom, guarded by
-  `typeof customElements !== 'undefined'`. Elements must only be imported
-  client-side.
+- **Browser elements are SSR-safe and self-registering.** Entries with browser
+  behavior import their CSS and call `register_a_{name}()`, guarded by
+  `typeof customElements !== 'undefined'`. Load them client-side. CSS-only
+  entries do not register classes. Icon and Loader keep explicit registration
+  exports for compatibility without calling them on import.
 
 ## Tokens & CSS
 

@@ -62,8 +62,13 @@ const api = () => cached('api', [
 const reference = () => cached('reference', [
   'src', 'site/typedoc.reference.mjs', 'site/lib/union-source-order.mjs',
   'site/lib/doc-review-status.mjs', 'site/src/styles/typedoc-reference.css',
-  'site/src/scripts/typedoc-reference.js',
-], ['site/public/reference/index.html'], () => cli('typedoc', [
+  'site/src/scripts/typedoc-reference.js', 'typedoc-theme/src',
+  'typedoc-theme/dist', 'typedoc-theme/package.json',
+], [
+  'site/public/reference/index.html',
+  'site/public/reference/assets/anta-theme.css',
+  'site/public/reference/assets/anta-theme.js',
+], () => cli('typedoc', [
   '--options', 'typedoc.reference.mjs',
 ]))
 

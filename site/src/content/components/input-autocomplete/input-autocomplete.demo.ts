@@ -8,11 +8,15 @@ const frameworks = [
   'React', 'Preact', 'Solid', 'Svelte', 'Vue', 'Angular', 'Qwik', 'Lit', 'Astro',
 ]
 
-<InputAutocomplete
-  label="Framework"
-  placeholder="Type to search…"
-  hint="Pick a suggestion, or type your own — the value is whatever you type."
-  clearable
-  suggestions={frameworks}
-  defaultValue=""
-/>`
+function Demo() {
+  return (
+    <InputAutocomplete
+      label="Framework"
+      placeholder="Type to search…"
+      hint="Pick a suggestion, or type your own — the value is whatever you type."
+      clearable
+      suggestions={frameworks}
+      defaultValue=""
+    />
+  )
+}`

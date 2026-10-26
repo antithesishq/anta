@@ -15,6 +15,7 @@ test('TypeDoc marks documented declarations once and leaves bare declarations al
   const tsconfig = join(dir, 'tsconfig.json')
   const options = join(dir, 'typedoc.config.mjs')
   const out = join(dir, 'html')
+  const json = join(dir, 'api.json')
 
   try {
     await writeFile(fixture, [
@@ -25,6 +26,26 @@ test('TypeDoc marks documented declarations once and leaves bare declarations al
       'export function bare(value: string) { return value }',
       '/** @param value Documented input. */',
       'export function paramOnly(value: string) { return value }',
+      '/** Shared props. */',
+      'export interface BaseProps {',
+      '  /** Defined on the base type. */ inherited?: string',
+      '}',
+      '/** Reviewed with its own fields.\n * @author Vlad\n */',
+      'export interface ReviewedProps extends BaseProps {',
+      '  /** Covered by the type review. */ local?: string',
+      '}',
+      '/** Draft type. */',
+      'export interface DraftProps {',
+      '  /** Still unreviewed. */ local?: string',
+      '}',
+      '/** Reviewed alias with its fields.\n * @author Vlad\n */',
+      'export type AliasProps = {',
+      '  /** Covered by the alias review. */ local?: string',
+      '}',
+      '/**\n * @author Vlad\n */',
+      'export interface MarkerOnlyProps {',
+      '  /** Covered without a parent summary. */ local?: string',
+      '}',
       '',
     ].join('\n'))
     await writeFile(tsconfig, JSON.stringify({
@@ -32,14 +53,23 @@ test('TypeDoc marks documented declarations once and leaves bare declarations al
     }))
     await writeFile(options, [
       "import { OptionDefaults } from 'typedoc'",
-      `export default { entryPoints: [${JSON.stringify(fixture)}], tsconfig: ${JSON.stringify(tsconfig)}, out: ${JSON.stringify(out)}, plugin: [${JSON.stringify(plugin)}], modifierTags: [...OptionDefaults.modifierTags, '@unreviewed'], readme: 'none' }`,
+      `export default { entryPoints: [${JSON.stringify(fixture)}], tsconfig: ${JSON.stringify(tsconfig)}, out: ${JSON.stringify(out)}, json: ${JSON.stringify(json)}, plugin: [${JSON.stringify(plugin)}], modifierTags: [...OptionDefaults.modifierTags, '@unreviewed'], readme: 'none' }`,
     ].join('\n'))
 
-    execFileSync('pnpm', ['exec', 'typedoc', '--options', options], { cwd: site, stdio: 'pipe' })
+    execFileSync(join(site, 'node_modules/.bin/typedoc'), ['--options', options], { cwd: site, stdio: 'pipe' })
     for (const [name, expected] of [['reviewed', 0], ['draft', 1], ['bare', 0], ['paramOnly', 1]]) {
       const html = await readFile(join(out, 'functions', `${name}.html`), 'utf8')
       assert.equal((html.match(/>Unreviewed</g) ?? []).length, expected, name)
     }
+    const api = JSON.parse(await readFile(json, 'utf8'))
+    const declaration = (name) => api.children.find((child) => child.name === name)
+    const property = (type, name) => declaration(type).children.find((child) => child.name === name)
+    const unreviewed = (node) => node.comment?.modifierTags?.includes('@unreviewed') ?? false
+    assert.equal(unreviewed(property('ReviewedProps', 'local')), false)
+    assert.equal(unreviewed(property('ReviewedProps', 'inherited')), true)
+    assert.equal(unreviewed(property('DraftProps', 'local')), true)
+    assert.equal(unreviewed(property('AliasProps', 'local')), false)
+    assert.equal(unreviewed(property('MarkerOnlyProps', 'local')), false)
   } finally {
     await rm(dir, { recursive: true, force: true })
   }

@@ -2,6 +2,16 @@ import { useEffect, useState } from 'preact/hooks'
 import { SelectFaceted, Select, Input, Button, InputDate, Calendar, MenuItem, Tag } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
+export function SelectFacetedStylingDemo() {
+  useElements()
+  return (
+    <SelectFaceted
+      className="roomy-text-filter"
+      facets={[{ key: 'title', label: 'Title contains', kind: 'text' }]}
+    />
+  )
+}
+
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
 function useElements() {
   useEffect(() => {
@@ -37,7 +47,8 @@ function DurationEditor({ value, onChange }: { value?: DurationValue; onChange: 
         aria-label="Duration comparison"
         options={DURATION_COMPARISONS}
         value={comparison}
-        onValueChange={(next: string) => {
+        onValueChange={(next) => {
+          if (next === null) return
           setDraftComparison(next)
           if (value?.min.trim()) onChange({ min: value.min, comparison: next })
         }}
@@ -136,7 +147,7 @@ export function SelectFacetedBasicDemo() {
     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '12px', alignItems: 'center', width: '100%' }}>
       <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
       {active.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '8px', alignItems: 'center', maxWidth: '100%' }}>
           {active.map((facet) => {
             // Options facets → an editable Select; the key rides the leading slot.
             if (facet.kind === 'single' || facet.kind === 'multiple')
@@ -147,9 +158,10 @@ export function SelectFacetedBasicDemo() {
                   indicator={facet.kind === 'single' ? 'check' : undefined}
                   options={facet.options}
                   renderOption={facet.renderOption}
-                  value={value[facet.key] as any}
+                  value={(value[facet.key] ?? (facet.kind === 'single' ? null : [])) as any}
                   onValueChange={(v: any) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
+                  aria-label={facet.label}
                   filter={facet.filter}
                   clearable
                   className="sf-chip"

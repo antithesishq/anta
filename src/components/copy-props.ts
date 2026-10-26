@@ -1,10 +1,11 @@
 import { nativeStateChange } from '../anta_helpers'
+import { useNativeEventProps } from '../native-event-props'
 
 /**
  * The copy target for a copy preset (`ButtonCopy` / `MenuItemCopy`) — exactly
  * one of a literal string, a DOM region, or the page URL. The write itself is
  * performed by the slotted `<a-copy>` element; these props map to its attributes
- * via `copyElementProps`. `copyWithUrl` / `onCopyRequest` are only meaningful for
+ * via `useCopyElementProps`. `copyWithUrl` / `onCopyRequest` are only meaningful for
  * the string target, so the union pins them `never` elsewhere.
  */
 export type CopyTarget =
@@ -46,7 +47,7 @@ export type CopyTarget =
       onCopyRequest?: never
     }
 
-/** Everything `copyElementProps` reads: the target plus the resolved `onCopied`
+/** Everything `useCopyElementProps` reads: the target plus the resolved `onCopied`
  *  (the preset passes its feedback-wrapped handler) and the `toast` opt-in. */
 type CopyElementInput = {
   copy?: string
@@ -72,10 +73,21 @@ export function copyElementProps(p: CopyElementInput) {
     toast: toast ? '' : undefined,
     'copied-label': copiedLabel,
     oncopydone: onCopied
-      ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false)
+      ? (e: any) => {
+          const result = nativeStateChange<{ ok: boolean }>(e)
+          if (result.isOwn) onCopied(result.detail?.ok ?? false)
+        }
       : undefined,
-    oncopyrequest: onCopyRequest ? () => onCopyRequest() : undefined,
+    oncopyrequest: onCopyRequest
+      ? (e: any) => { if (nativeStateChange(e).isOwn) onCopyRequest() }
+      : undefined,
   } as const
+}
+
+/** @internal Apply the shared browser hydration option to copy event props. */
+export function useCopyElementProps(p: CopyElementInput) {
+  const { oncopydone, oncopyrequest, ...attributes } = copyElementProps(p)
+  return { ...attributes, ...useNativeEventProps({ oncopydone, oncopyrequest }) }
 }
 
 /** True when these props copy a DOM node — the host control must then be marked

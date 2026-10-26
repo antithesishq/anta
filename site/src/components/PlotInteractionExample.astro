@@ -1,8 +1,18 @@
-<div class="plot-interaction-example">
+---
+interface Props {
+  wide?: boolean
+}
+const { wide = false } = Astro.props
+---
+<div class:list={["plot-interaction-example", { wide }]}>
   <slot />
 </div>
 
 <style>
+  .plot-interaction-example.wide {
+    max-width: 800px;
+  }
+
   .plot-interaction-example {
     width: 100%;
     max-width: 520px;

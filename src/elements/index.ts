@@ -1,7 +1,7 @@
 /**
  * Barrel: registers ALL Anta custom elements (the convenience path).
  *
- * Each `a-{name}` module self-registers and imports its own CSS when loaded,
+ * Each element with browser behavior self-registers and imports its own CSS when loaded,
  * so re-exporting them here (which evaluates each module) registers the whole
  * set + injects every element's CSS. Importing this barrel for side effects —
  * `import '@antadesign/anta/elements'` — gives you everything.
@@ -9,12 +9,14 @@
  * To reduce bundle size, import only the element(s) you use:
  *   import '@antadesign/anta/elements/a-tooltip'   // registers a-tooltip + its CSS, nothing else
  * That granular path pulls in only that element's code and CSS, nothing else.
+ * Entries for structural tags and composed layouts import only CSS and do not
+ * register custom elements. Load their nested browser elements separately.
  *
  * Must only be imported client-side — registration is guarded against missing
  * `customElements` (SSR), but there's no reason to load it server-side.
  */
 export { AAvatarElement, register_a_avatar } from './a-avatar'
-export { AProgressElement, register_a_progress } from './a-progress'
+import './a-progress.css'
 export { ALoaderElement, register_a_loader } from './a-loader'
 export { ATextElement, register_a_text } from './a-text'
 export { ABoxElement, register_a_box } from './a-box'
@@ -41,12 +43,14 @@ export { ATabElement, register_a_tab } from './a-tab'
 export { ATabsElement, register_a_tabs } from './a-tabs'
 export { ATabPanelElement, register_a_tabpanel } from './a-tabpanel'
 export { ADialogElement, register_a_dialog } from './a-dialog'
-export { ACardElement, register_a_card } from './a-card'
+import './a-card.css'
 export { ABannerElement, register_a_banner } from './a-banner'
 export { AToasterElement, register_a_toaster } from './a-toaster'
 export { AToastElement, register_a_toast } from './a-toast'
 
-// `a-title` and `a-tag` are CSS-only styled tags (no JS / no element module), so
-// their styles can't ride along on a module import — load them here directly.
 import './a-title.css'
 import './a-tag.css'
+import '../components/Breadcrumbs.css'
+import '../components/InputDate.css'
+import '../components/Select.css'
+import '../components/Steps.css'

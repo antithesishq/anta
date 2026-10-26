@@ -14,17 +14,20 @@ before(async () => {
     stdin: {
       contents: `import { h, render } from 'preact'
         import { configure } from './src/jsx-runtime'
-        import { Button, Checkbox, Input, MenuItem, Select, Switch, Tag } from './src/index'
+        import { Button, Checkbox, Input, Menu, MenuItem, Select, Slider, Switch, Tag } from './src/index'
         import './src/tokens.css'
         import './src/reset.css'
         import './src/elements/a-button'
         import './src/elements/a-input'
+        import './src/elements/a-menu'
         import './src/elements/a-checkbox'
         import './src/elements/a-radio'
         import './src/elements/a-radio-group'
         import './src/elements/a-switch'
         import './src/elements/a-tab.css'
         import './src/elements/a-tag'
+        import './src/elements/a-select'
+        import './src/elements/a-slider'
         configure(h)
         render(<>
           <Button id="button">Button</Button>
@@ -36,6 +39,11 @@ before(async () => {
           <Input id="input" value="Text" />
           <Input id="custom-input" round={8} value="Custom" />
           <Tag id="tag">Tag</Tag>
+          <Slider id="slider-default" label="Neutral slider" defaultValue={50} />
+          <Slider id="slider-brand" label="Brand slider" tone="brand" defaultValue={50} />
+          <Slider id="slider-neutral" label="Neutral thumb" tone="brand" thumbTone="neutral" defaultValue={50} />
+          <input data-anta id="native-range-brand" type="range" tone="brand" aria-label="Brand range" />
+          <input data-anta id="native-range-neutral" type="range" tone="brand" thumb-tone="neutral" aria-label="Neutral range thumb" />
           <Checkbox id="checkbox-all" tone="brand" defaultChecked>All</Checkbox>
           <Checkbox id="checkbox-selected" tone="brand" toneScope="selected">Selected only</Checkbox>
           <Checkbox id="checkbox-selected-on" tone="brand" toneScope="selected" defaultChecked>Selected only on</Checkbox>
@@ -54,6 +62,34 @@ before(async () => {
           </a-radio-group>
           <MenuItem id="menu-unselected" tone="info" toneScope="selected" label="Unselected" />
           <MenuItem id="menu-selected" tone="info" toneScope="selected" selected label="Selected" />
+          <Button>Rounded menu</Button>
+          <Menu id="custom-menu" round={12}>
+            <MenuItem id="rounded-menu-row" label="Rounded row" />
+            <MenuItem id="rounded-menu-link" href="/" label="Rounded link" />
+            <MenuItem label="Inherited submenu"><Menu id="inherited-submenu"><MenuItem id="inherited-submenu-row" label="Inherited row" /></Menu></MenuItem>
+            <MenuItem label="Inset submenu"><Menu id="inset-submenu" inset={6}><MenuItem id="inset-submenu-row" label="Inset row" /></Menu></MenuItem>
+            <MenuItem label="Custom submenu"><Menu id="custom-submenu" round={6}>
+              <MenuItem label="Deep submenu"><Menu id="deep-submenu"><MenuItem id="deep-submenu-row" label="Deep row" /></Menu></MenuItem>
+            </Menu></MenuItem>
+            <MenuItem label="Default round submenu"><Menu id="default-round-submenu" round><MenuItem label="Default round row" /></Menu></MenuItem>
+            <MenuItem label="Zero radius submenu"><Menu id="zero-radius-submenu" round={0}><MenuItem id="zero-radius-submenu-row" label="Zero radius row" /></Menu></MenuItem>
+          </Menu>
+          <Button>Default menu</Button>
+          <Menu id="default-menu">
+            <MenuItem id="default-menu-row" label="Default row" />
+            <MenuItem id="default-menu-link" href="/" label="Default link" />
+            <MenuItem label="Default submenu"><Menu id="default-submenu"><MenuItem id="default-submenu-row" label="Default submenu row" /></Menu></MenuItem>
+            <MenuItem label="Rounded submenu"><Menu round><MenuItem id="round-submenu-row" label="Rounded row" /></Menu></MenuItem>
+          </Menu>
+          <Button>Small inset menu</Button>
+          <Menu id="small-inset-menu" inset={1}>
+            <MenuItem id="small-inset-row" label="Small inset row" />
+            <MenuItem id="small-inset-link" href="/" label="Small inset link" />
+          </Menu>
+          <Button>Large inset menu</Button>
+          <Menu id="large-inset-menu" inset={12}>
+            <MenuItem id="large-inset-row" label="Large inset row" />
+          </Menu>
           <Select tone="brand" toneScope="selected" defaultValue="a" options={[
             { value: 'a', label: 'Selected option' },
             { value: 'b', label: 'Unselected option' },
@@ -74,6 +110,7 @@ before(async () => {
   assets = new Map(result.outputFiles.map(file => [file.path.endsWith('.css') ? '/fixture.css' : '/fixture.js', file.text]))
   for (const theme of ['antune', 'antithesis']) {
     assets.set(`/${theme}.css`, await readFile(new URL(`../src/theme-${theme}.css`, import.meta.url), 'utf8'))
+    assets.set(`/fonts-${theme}.css`, await readFile(new URL(`../site/src/styles/fonts-${theme}.css`, import.meta.url), 'utf8'))
   }
   assets.set('/none.css', '')
   browser = await chromium.launch({ channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
@@ -92,7 +129,7 @@ test('font-specific features and variation axes stay out of core styles', async 
   const files = await sourceFiles(new URL('../src/', import.meta.url))
   const violations = []
   for (const file of files) {
-    if (!/\.(?:css|ts|tsx)$/.test(file.pathname) || /\/theme-(?:antune|antithesis)\.css$/.test(file.pathname)) continue
+    if (!/\.(?:css|ts|tsx)$/.test(file.pathname)) continue
     const source = await readFile(file, 'utf8')
     const settings = [...source.matchAll(/font-(?:feature|variation)-settings\s*:\s*([^;]+)/g)]
     if (settings.some(([, value]) => value.trim() !== 'inherit')) violations.push(file.pathname)
@@ -100,9 +137,9 @@ test('font-specific features and variation axes stay out of core styles', async 
   assert.deepEqual(violations, [])
 })
 
-test('reference font descriptors expose supported TT Interphases axes', async () => {
+test('site reference font descriptors expose supported TT Interphases axes', async () => {
   for (const theme of ['antune', 'antithesis']) {
-    const source = await readFile(new URL(`../src/theme-${theme}.css`, import.meta.url), 'utf8')
+    const source = await readFile(new URL(`../site/src/styles/fonts-${theme}.css`, import.meta.url), 'utf8')
     const faces = [...source.matchAll(/@font-face \{[\s\S]*?\}/g)]
       .map(([face]) => face)
       .filter(face => face.includes('font-family: "TT Interphases Pro Variable"'))
@@ -120,9 +157,14 @@ test('reference font descriptors expose supported TT Interphases axes', async ()
   }
 })
 
-test('theme-free typography stays neutral while reference themes restore their font treatment', async t => {
+test('themes preserve system fonts without requests; site fonts require a separate stylesheet', async t => {
   const page = await browser.newPage()
   t.after(() => page.close())
+  const fontRequests = []
+  page.on('request', request => {
+    if (request.resourceType() === 'font') fontRequests.push(request.url())
+  })
+  await page.route('https://assets.anta.design/**', route => route.abort())
   await page.route('http://themes.test/**', route => {
     const path = new URL(route.request().url()).pathname
     return route.fulfill({
@@ -142,6 +184,7 @@ test('theme-free typography stays neutral while reference themes restore their f
         style: style.fontStyle,
         stretch: style.fontStretch,
         numeric: style.fontVariantNumeric,
+        family: style.fontFamily,
       }
     }
     return {
@@ -177,18 +220,44 @@ test('theme-free typography stays neutral while reference themes restore their f
     link.href = '/antune.css'
   }))
   const withTheme = await typography()
-  assert.equal(withTheme.root.variations, '"slnt" 0')
-  assert.equal(withTheme.italic.variations, '"slnt" 11')
-  assert.equal(withTheme.defined.variations, '"slnt" 0')
-  assert.equal(withTheme.nestedDefined.variations, '"slnt" 0')
+  for (const value of Object.values(withTheme).filter(value => typeof value === 'object')) {
+    assert.equal(value.features, 'normal')
+    assert.equal(value.variations, 'normal')
+  }
+  assert.equal(withTheme.root.family, withoutTheme.root.family)
   assert.equal(withTheme.defined.style, 'normal')
   assert.equal(withTheme.nestedDefined.style, 'normal')
   assert.equal(withTheme.button.stretch, '88%')
   assert.equal(withTheme.tab.stretch, '88%')
   assert.equal(withTheme.inputAdornmentStretch, '88%')
-  for (const feature of ['"ss01"', '"ss04"', '"ss05"']) {
-    assert.match(withTheme.tag.features, new RegExp(feature))
+  for (const theme of ['antithesis', 'antune']) {
+    const source = assets.get(`/${theme}.css`)
+    assert.equal(/@font-face|@import|url\(\s*["']?https?:|--(?:sans-serif|serif|monospace)\s*:/.test(source), false, `${theme} must not load fonts or change font stacks`)
+    await page.evaluate(theme => new Promise(resolve => {
+      const link = document.getElementById('theme')
+      link.onload = resolve
+      link.href = `/${theme}.css`
+    }), theme)
+    const themed = await typography()
+    assert.equal(themed.root.family, withoutTheme.root.family)
+    assert.equal(themed.root.variations, 'normal')
+    assert.equal(themed.tag.features, 'normal')
   }
+  assert.deepEqual(fontRequests, [])
+
+  await page.evaluate(() => new Promise(resolve => {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.onload = resolve
+    link.href = '/fonts-antune.css'
+    document.head.append(link)
+  }))
+  const withFonts = await typography()
+  assert.equal(withFonts.root.variations, '"slnt" 0')
+  assert.equal(withFonts.italic.variations, '"slnt" 11')
+  assert.equal(withFonts.defined.variations, '"slnt" 0')
+  assert.equal(withFonts.nestedDefined.variations, '"slnt" 0')
+  for (const feature of ['"ss01"', '"ss04"', '"ss05"']) assert.match(withFonts.tag.features, new RegExp(feature))
 })
 
 test('tone scope changes resting chrome without changing the tone identity', async t => {
@@ -253,6 +322,51 @@ test('tone scope changes resting chrome without changing the tone identity', asy
   assert.deepEqual(selectTones, ['brand', null])
 })
 
+test('Antithesis sliders follow the rail tone while preserving explicit neutral thumbs', async t => {
+  const page = await browser.newPage()
+  t.after(() => page.close())
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.route('http://themes.test/**', route => {
+    const path = new URL(route.request().url()).pathname
+    return route.fulfill({
+      contentType: path.endsWith('.css') ? 'text/css' : path.endsWith('.js') ? 'text/javascript' : 'text/html',
+      body: assets.get(path) ?? '<!doctype html><link rel="stylesheet" href="/fixture.css"><link rel="stylesheet" href="/antithesis.css"><script type="module" src="/fixture.js"></script>',
+    })
+  })
+  await page.goto('http://themes.test/')
+  await page.waitForFunction(() => document.querySelector('#slider-brand')?.shadowRoot)
+  assert.equal(await page.locator('#slider-neutral').getAttribute('thumb-tone'), 'neutral')
+
+  for (const dark of [false, true]) {
+    await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), dark)
+    const colors = await page.evaluate(() => {
+      const slider = id => {
+        const root = document.getElementById(id).shadowRoot
+        return {
+          fill: getComputedStyle(root.querySelector('[part~="fill"]')).backgroundColor,
+          thumb: getComputedStyle(root.querySelector('[part~="thumb"]')).borderTopColor,
+        }
+      }
+      const native = id => {
+        const el = document.getElementById(id)
+        el.style.color = 'var(--anta-native-range-fill)'
+        const fill = getComputedStyle(el).color
+        el.style.color = 'var(--anta-native-range-thumb-border)'
+        return { fill, thumb: getComputedStyle(el).color }
+      }
+      return {
+        default: slider('slider-default'), brand: slider('slider-brand'), neutral: slider('slider-neutral'),
+        nativeBrand: native('native-range-brand'), nativeNeutral: native('native-range-neutral'),
+      }
+    })
+    assert.equal(colors.brand.thumb, colors.brand.fill)
+    assert.equal(colors.neutral.thumb, colors.default.thumb)
+    assert.notEqual(colors.neutral.thumb, colors.neutral.fill)
+    assert.deepEqual(colors.nativeBrand, colors.brand)
+    assert.deepEqual(colors.nativeNeutral, colors.neutral)
+  }
+})
+
 test('Antithesis shapes and seeds follow the theme, preserving explicit rounding', async t => {
   const page = await browser.newPage()
   t.after(() => page.close())
@@ -270,17 +384,19 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
     const values = await page.evaluate(() => {
       const radius = id => {
         const el = document.getElementById(id)
-        return getComputedStyle(el.shadowRoot?.querySelector('[part="field"]') ?? el).borderTopLeftRadius
+        return getComputedStyle(el.shadowRoot?.querySelector('[part="field"], [part="menu"]') ?? el).borderTopLeftRadius
       }
       return {
         radii: ['button', 'link', 'custom-button', 'input', 'custom-input', 'tag', 'native-button', 'native-input', 'native-textarea'].map(radius),
+        menuRadii: ['custom-menu', 'rounded-menu-row', 'inherited-submenu-row', 'round-submenu-row'].map(radius),
         seeds: ['button', 'scoped-button'].map(id => {
           const style = getComputedStyle(document.getElementById(id))
           return ['--anta-seed-brand', '--anta-seed-neutral'].map(key => style.getPropertyValue(key).trim())
         }),
       }
     })
-    assert.deepEqual(values.radii, ['999px', '999px', '6px', '0px', '8px', '1px', '999px', '0px', '0px'])
+    assert.deepEqual(values.radii, ['999px', '999px', '6px', '0px', '8px', '3px', '999px', '0px', '0px'])
+    assert.deepEqual(values.menuRadii, ['12px', '8px', '8px', '16px'])
     assert.deepEqual(values.seeds, [['#cc4636', '#65605b'], ['#cc4636', '#65605b']])
   }
   for (const theme of ['antune', 'none', 'antithesis']) {
@@ -290,6 +406,52 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
       link.href = `/${theme}.css`
     }), theme)
     assert.equal(await page.locator('#button').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '999px' : '4px')
-    assert.equal(await page.locator('#tag').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '1px' : '22px')
+    assert.equal(await page.locator('#tag').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '3px' : '22px')
+    assert.equal(await page.locator('#custom-menu').evaluate(el => getComputedStyle(el.shadowRoot.querySelector('[part="menu"]')).borderTopLeftRadius), '12px')
+  }
+})
+
+test('menu item radii follow container radius minus inset and submenus inherit explicit rounding', async t => {
+  const page = await browser.newPage()
+  t.after(() => page.close())
+  await page.route('http://themes.test/**', route => {
+    const path = new URL(route.request().url()).pathname
+    return route.fulfill({
+      contentType: path.endsWith('.css') ? 'text/css' : path.endsWith('.js') ? 'text/javascript' : 'text/html',
+      body: assets.get(path) ?? '<!doctype html><link rel="stylesheet" href="/fixture.css"><link id="theme" rel="stylesheet" href="/none.css"><script type="module" src="/fixture.js"></script>',
+    })
+  })
+  await page.goto('http://themes.test/')
+  await page.waitForFunction(() => document.querySelector('#default-menu')?.shadowRoot)
+  for (const theme of ['none', 'antune', 'antithesis']) {
+    await page.evaluate(theme => new Promise(resolve => {
+      const link = document.getElementById('theme')
+      if (link.getAttribute('href') === `/${theme}.css`) return resolve()
+      link.onload = resolve
+      link.href = `/${theme}.css`
+    }), theme)
+    for (const dark of [false, true]) {
+      await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), dark)
+      const values = await page.evaluate(() => {
+        const radius = id => {
+          const el = document.getElementById(id)
+          return getComputedStyle(el.shadowRoot?.querySelector('[part="menu"]') ?? el).borderTopLeftRadius
+        }
+        return {
+          containers: ['default-menu', 'default-submenu', 'small-inset-menu', 'large-inset-menu'].map(radius),
+          items: ['default-menu-row', 'default-menu-link', 'default-submenu-row', 'small-inset-row', 'small-inset-link', 'large-inset-row'].map(radius),
+          rounded: ['custom-menu', 'inherited-submenu', 'inset-submenu', 'custom-submenu', 'deep-submenu', 'default-round-submenu', 'zero-radius-submenu'].map(radius),
+          roundedItems: ['rounded-menu-row', 'rounded-menu-link', 'inherited-submenu-row', 'inset-submenu-row', 'deep-submenu-row', 'round-submenu-row', 'zero-radius-submenu-row'].map(radius),
+        }
+      })
+      const antithesis = theme === 'antithesis'
+      const context = `${theme}, dark=${dark}`
+      assert.deepEqual(values.containers, Array(4).fill(antithesis ? '2px' : '8px'), context)
+      assert.deepEqual(values.items, antithesis
+        ? ['0px', '0px', '0px', '1px', '1px', '0px']
+        : ['4px', '4px', '4px', '7px', '7px', '0px'], context)
+      assert.deepEqual(values.rounded, ['12px', '12px', '12px', '6px', '6px', '20px', '0px'], context)
+      assert.deepEqual(values.roundedItems, ['8px', '8px', '8px', '6px', '2px', '16px', '0px'], context)
+    }
   }
 })

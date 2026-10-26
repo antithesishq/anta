@@ -1,54 +1,18 @@
 # Anta
 
-Portable UI component library. Framework-agnostic web components with JSX wrappers that work in React, Preact, or any custom JSX runtime.
+Anta provides UI components for React, Preact, and custom JSX runtimes. It combines
+CSS-only components with custom elements for browser behavior.
 
-## Usage
-
-### React
-
-Works out of the box — no configuration needed.
+In a client-only React application, load the full bundle and its stylesheet:
 
 ```tsx
-import { Progress } from 'anta'
+import '@antadesign/anta/bundle.css'
+import { Progress } from '@antadesign/anta/bundle'
 
-<Progress value={42} max={100} tone="info" />
+<Progress value={42} max={100} label="Upload" />
 ```
 
-### Preact (compat mode)
+Follow [Install and configure](../docs/install-config.md) for Preact, server
+rendering, custom runtime hooks, granular imports, and raw HTML usage.
 
-If your project aliases `react` → `preact/compat`, anta works with no extra setup — same as React.
-
-### Preact (no compat)
-
-Call `configure()` before rendering any anta components:
-
-```ts
-import { configure } from 'anta'
-import { h, Fragment } from 'preact'
-
-configure(h, Fragment)
-```
-
-### Custom JSX runtime
-
-Pass any `h(type, props, ...children)` function:
-
-```ts
-import { configure } from 'anta'
-configure(myH, myFragment)
-```
-
-## Web components
-
-Anta components are built on custom elements with shadow DOM. Import `anta/elements` to auto-register them, or use individual register functions:
-
-```ts
-import 'anta/elements'           // auto-register all
-import { register_a_progress } from 'anta/elements'  // one at a time
-```
-
-Raw web components work without JSX:
-
-```html
-<a-progress value="42" max="100" tone="info"></a-progress>
-```
+See [the component architecture guide](AGENTS.md) for source and build conventions.

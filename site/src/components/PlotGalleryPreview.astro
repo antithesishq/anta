@@ -5,13 +5,13 @@ interface Props {
 const { example } = Astro.props
 const composed = ['overview', 'energy', 'latency', 'mixed'].includes(example)
 const Tag = composed ? 'div' : 'a'
-const target = example === 'overview' ? 'series' : example === 'stacked' ? 'stacked-bars' : example
+const target = example === 'stacked' ? '/plot/bar/#stacked-bars' : `/plot/${example}/`
 const compositionLabels = { overview: 'Request volume', energy: 'Generation and demand by site',
   latency: 'Latency distribution', mixed: 'Mixed series composition' }
 const label = composed ? compositionLabels[example as keyof typeof compositionLabels] : 'Explore ' + (example === 'stacked' ? 'stacked bars' : example) + ' series'
 ---
 
-<Tag class:list={["plot-gallery-preview", { composed }]} data-plot-gallery={example} href={composed ? undefined : `#${target}`} aria-label={label}>
+<Tag class:list={["plot-gallery-preview", { composed }]} data-plot-gallery={example} href={composed ? undefined : target} aria-label={label}>
   <a-plot aria-hidden={composed ? undefined : "true"} inert={composed ? undefined : ''}></a-plot>
 </Tag>
 

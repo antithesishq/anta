@@ -9,23 +9,23 @@ export function highlights(): PlotArgs<Node> {
 
   return {
     series: [
-      bar<Node>({
+      bar({
         data: data.slice(0, 2), inset: 7, border_radius: 4,
         color: { light: 'rgba(13, 148, 136, 0.35)', dark: 'rgba(94, 234, 212, 0.35)' },
       }),
-      bar<Node>({
+      bar({
         data: data.slice(2, 4), inset: 7, border_radius: 4,
         color: { light: '#0d9488', dark: '#5eead4' },
         highlight_color: row => row.x === 'C'
           ? { light: '#f97316', dark: '#fdba74' }
           : 'color-mix(in oklch, magenta 50%, transparent)',
       }),
-      bar<Node>({
+      bar({
         data: data.slice(4, 5), inset: 7, border_radius: 4,
         color: { light: '#7c3aed', dark: '#c4b5fd' },
         highlight: false,
       }),
-      bar<Node>({
+      bar({
         data: data.slice(5), inset: 7, border_radius: 4,
         color: { light: '#94a3b8', dark: '#64748b' },
         hoverable: false,
@@ -50,13 +50,13 @@ export function tooltips(): PlotArgs<Node> {
 
   return {
     series: [
-      rect<Node>({
+      rect({
         data,
         color: { light: 'rgba(13, 148, 136, 0.45)', dark: 'rgba(94, 234, 212, 0.45)' },
         stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
         tooltip: true,
       }),
-      rect<Node>({
+      rect({
         data: data.map(row => ({
           ...row, x: row.x + 12, x2: row.x2 + 8, y: row.y + 12, y2: row.y2 + 10,
         })),
@@ -93,7 +93,7 @@ export function selection(output: HTMLOutputElement): PlotArgs<Node> {
 
   return {
     series: [
-      scatter<Node>({
+      scatter({
         data, size: 13,
         color: { light: '#0891b2', dark: '#67e8f9' },
         tooltip: true,
@@ -121,7 +121,7 @@ export function zoom(output: HTMLOutputElement): PlotArgs<Node> {
 
   return {
     series: [
-      line<Node>({
+      line({
         data, width: 2,
         color: { light: '#6366f1', dark: '#a5b4fc' },
         tooltip: true,
@@ -134,7 +134,7 @@ export function zoom(output: HTMLOutputElement): PlotArgs<Node> {
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: false,
     border: false,
-    zoom_pan: { x: true, y: true, modifier: true },
+    zoom_pan: { x: true, y: true },
     on_viewport_change: ({ x, y }) => {
       const format = (axis: { window: number[] } | null) => axis
         ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
@@ -144,15 +144,25 @@ export function zoom(output: HTMLOutputElement): PlotArgs<Node> {
 }
 
 export function zoomFree(output: HTMLOutputElement): PlotArgs<Node> {
-  return { ...zoom(output), zoom_pan: { x: true, y: true, modifier: false } }
+  return { ...zoom(output), zoom_pan: { x: true, y: true } }
 }
 
 export function zoomX(output: HTMLOutputElement): PlotArgs<Node> {
-  return { ...zoom(output), zoom_pan: { x: true, y: false, modifier: true } }
+  return { ...zoom(output), zoom_pan: { x: true, y: false } }
 }
 
 export function viewport(output: HTMLOutputElement): PlotArgs<Node> {
   return { ...zoomX(output), viewport: { x: [20, 45], y: null, key: 0 } }
+}
+
+function windowRow(row: unknown) {
+  if (typeof row !== 'object' || row === null) return undefined
+  if (!('name' in row) || typeof row.name !== 'string'
+    || !('x' in row) || typeof row.x !== 'number'
+    || !('x2' in row) || typeof row.x2 !== 'number'
+    || !('y' in row) || typeof row.y !== 'number'
+    || !('y2' in row) || typeof row.y2 !== 'number') return undefined
+  return row
 }
 
 export function composedTooltips(): PlotArgs<Node> {
@@ -160,8 +170,8 @@ export function composedTooltips(): PlotArgs<Node> {
   return {
     ...args,
     tooltip: ([baseline_hit, current_hit]) => {
-      const baseline = baseline_hit?.data.row
-      const current = current_hit?.data.row
+      const baseline = windowRow(baseline_hit?.data.row)
+      const current = windowRow(current_hit?.data.row)
       const content = document.createElement('div')
       const title = document.createElement('strong')
       title.textContent = String((current ?? baseline)?.name ?? 'Window comparison')
@@ -174,7 +184,10 @@ export function composedTooltips(): PlotArgs<Node> {
         header.append(cell)
       }
       const body = table.createTBody()
-      for (const [field, label] of [['x', 'X start'], ['x2', 'X end'], ['y', 'Y start'], ['y2', 'Y end']]) {
+      const bounds: ['x' | 'x2' | 'y' | 'y2', string][] = [
+        ['x', 'X start'], ['x2', 'X end'], ['y', 'Y start'], ['y2', 'Y end'],
+      ]
+      for (const [field, label] of bounds) {
         const before = baseline?.[field]
         const after = current?.[field]
         const delta = typeof before === 'number' && typeof after === 'number' ? after - before : undefined

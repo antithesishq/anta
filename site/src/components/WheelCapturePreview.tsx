@@ -49,7 +49,7 @@ export function WheelCapturePreview() {
           size="small"
           options={ACTIVATIONS}
           value={activation}
-          onValueChange={setActivation}
+          onValueChange={(value) => { if (value !== null) setActivation(value) }}
         />
         <Slider
           label="Settle delay"

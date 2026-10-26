@@ -1,4 +1,4 @@
-import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from "../anta_helpers";
+import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations, SYNC_TEXT_TOGGLE, type TextToggleAria } from "../anta_helpers";
 import { installKeyActivation } from "./key-activation";
 import "./a-button.css";
 
@@ -52,8 +52,9 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   covers named and custom tones alike; secondary also carries a 1px
  *   hairline box-shadow in the current fg tone at 50% alpha, which the
  *   other priorities cancel in their own blocks. `[selected]` adds a 1px
- *   inset ring in `currentColor`, declared after the priority blocks so it
- *   survives their `box-shadow: none` cancels.
+ *   inset ring at 50% `currentColor`, declared after the priority blocks so it
+ *   survives their `box-shadow: none` cancels. Paddingless uses an outside ring
+ *   so the selection mark stays clear of the label.
  * - **Dark mode** re-tunes with heavier alphas (30/40% vs 10/15%) and flips
  *   neutral's anchor to a lilac — mixing dark gray into a dark bg yields no
  *   contrast.
@@ -73,10 +74,11 @@ function installDocumentHandlers(doc: Document | undefined) {
  * - **Layout gotchas:** `flex-shrink: 0` (shrinking + `overflow: hidden`
  *   would clip the label silently); the label uses a 17px line box + 1px
  *   bottom padding for optical vertical centering at an unchanged 18px box.
- * - **Icon-only** is purely structural — `:has(> a-icon:only-child)` gives
- *   square padding + a min-size pin (and centers when the host is sized
- *   bigger). A non-only edge icon trims ~2px off its side's padding
- *   (optical), `max(0px, …)` keeping paddingless at 0.
+ * - **Icon-only** is purely structural: one direct icon, with optional
+ *   tooltip or copy helpers, gets equal font-relative padding on both axes
+ *   and no size floor. The default icons produce 24/28/32px square boxes.
+ *   A non-only edge icon trims 2px off its side's padding; `max(0px, …)`
+ *   keeps paddingless at 0.
  * - **Underline** renders only on tertiary/quaternary: 0.5px hairline at 75%
  *   alpha at rest, 1px at full alpha on hover/`[selected]`, mirroring the
  *   prose-link rule in `<Text>`.
@@ -98,6 +100,7 @@ export class AButtonElement extends HTMLElementBase {
   private popupAriaSource?: Element;
   #fieldObserver?: MutationObserver;
   #field?: Element;
+  #textToggleSource?: Element;
 
   constructor() {
     super();
@@ -110,6 +113,9 @@ export class AButtonElement extends HTMLElementBase {
     // Install on the button's OWN document so activation works in whatever
     // frame the element actually lives in (parent page or playground iframe).
     installDocumentHandlers(this.doc);
+    // Text can connect before this child upgrades or reconnects.
+    if (this.parentElement?.localName === "a-text")
+      this.dispatchEvent(new Event("anta-text-control-ready", { bubbles: true }));
     if (this.parentElement?.localName === "a-select-field") {
       this.#field = this.parentElement;
       this.#fieldObserver = new MutationObserver(() => this.#syncField());
@@ -120,6 +126,7 @@ export class AButtonElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    if (this.#textToggleSource) this[SYNC_TEXT_TOGGLE]({ source: this.#textToggleSource, clear: true });
     if (!this.#field) return;
     this.#fieldObserver?.disconnect();
     this.#field?.removeEventListener("click", this.#onFieldClick);
@@ -148,6 +155,20 @@ export class AButtonElement extends HTMLElementBase {
     if (this.hasAttribute("disabled") || this.hasAttribute("loading")) return;
     if (event.composedPath().some(node => node instanceof Element && node.localName === "a-select-label")) this.focus();
   };
+
+  [SYNC_TEXT_TOGGLE](state: TextToggleAria) {
+    if (!this.internals) return;
+    if (state.clear) {
+      if (this.#textToggleSource !== state.source) return;
+      this.#textToggleSource = undefined;
+      this.internals.ariaExpanded = null;
+      this.internals.ariaLabel = null;
+      return;
+    }
+    this.#textToggleSource = state.source;
+    this.internals.ariaExpanded = state.expanded ? "true" : "false";
+    this.internals.ariaLabel = state.expanded ? "Show less" : "Show more";
+  }
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
     if (!this.internals || !("ariaControlsElements" in this.internals)) return;

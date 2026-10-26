@@ -1,0 +1,45 @@
+name: Consumer validation
+on:
+  workflow_dispatch:
+    inputs:
+      framework:
+        description: Framework
+        type: choice
+        default: all
+        options: [all, nextjs, preact]
+      mode:
+        description: Import strategy
+        type: choice
+        default: all
+        options: [all, full, granular]
+permissions:
+  contents: read
+jobs:
+  consumers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      # Workspace prepare scripts build the packages during installation.
+      - name: Install dependencies and build workspace
+        run: pnpm install --frozen-lockfile
+      - name: Validate production consumers
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+          FRAMEWORK: ${{ inputs.framework }}
+          IMPORT_MODE: ${{ inputs.mode }}
+        run: pnpm test:consumers --skip-build --framework "$FRAMEWORK" --mode "$IMPORT_MODE"
+      - name: Upload consumer reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: consumer-validation-${{ github.run_id }}
+          path: tests/consumers/.runs/
+          include-hidden-files: true
+          retention-days: 14
+          if-no-files-found: warn

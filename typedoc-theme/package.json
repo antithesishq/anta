@@ -1,0 +1,38 @@
+{
+  "name": "@antadesign/typedoc-theme",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "exports": {
+    ".": "./dist/index.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "keywords": [
+    "typedoc-theme",
+    "typedoc-plugin"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:dev": "pnpm run build",
+    "prepare": "pnpm run build",
+    "prepublishOnly": "pnpm run build"
+  },
+  "peerDependencies": {
+    "typedoc": "^0.28.20"
+  },
+  "devDependencies": {
+    "@antadesign/anta": "workspace:*",
+    "esbuild": "0.28.2",
+    "typedoc": "0.28.20",
+    "typescript": "npm:@typescript/typescript6@6.0.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "latest"
+  }
+}

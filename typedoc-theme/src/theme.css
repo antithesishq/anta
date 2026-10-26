@@ -1,0 +1,683 @@
+@import url("@antadesign/anta/bundle.css");
+
+/* TypeDoc's own stylesheet retains its API layout and syntax rules. These
+   aliases give that UI Anta's base palette without an optional theme. */
+:root {
+  --dim-toolbar-contents-height: 43px;
+  --dim-header-height: 44px;
+  --dim-footer-height: 0px;
+  --dim-container-main-margin-y: 0rem;
+  --color-background: var(--bg-2);
+  --color-background-secondary: var(--bg-3);
+  --color-background-active: var(--bg-4-brand);
+  --color-accent: var(--border-4);
+  --color-active-menu-item: transparent;
+  --color-text: var(--text-2);
+  --color-contrast-text: var(--text-1);
+  --color-text-aside: var(--text-4);
+  --color-icon-background: var(--bg-2);
+  --color-icon-text: var(--text-3-brand);
+  --color-comment-tag-text: var(--text-2);
+  --color-comment-tag: var(--bg-3);
+  --color-link: var(--link-color);
+  --color-focus-outline: var(--focus-ring);
+}
+
+html {
+  scroll-padding-top: calc(44px + 1em);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  background: var(--bg-2);
+  color: var(--text-2);
+  font-family: var(--sans-serif);
+  font-size: 15px;
+  letter-spacing: 0.02ch;
+}
+
+a {
+  color: var(--link-color);
+}
+
+a:hover {
+  color: var(--link-color-hover);
+}
+
+.container {
+  max-width: none;
+  padding-inline: 0;
+}
+
+.container-main {
+  width: 100%;
+  margin: 0;
+  min-height: calc(100dvh - 44px);
+}
+
+footer {
+  display: none;
+}
+
+/* The docs site uses a 44px tinted bar, a compact left rail, and an open
+   content column. TypeDoc keeps ownership of the underlying page content. */
+.tsd-page-toolbar {
+  z-index: 20;
+  height: 44px;
+  background: var(--bg-3-brand);
+  border-bottom: 1px solid var(--border-4-brand);
+  transition: none;
+}
+
+.tsd-toolbar-contents {
+  gap: 8px;
+  height: 43px;
+  padding-inline: 20px 12px;
+}
+
+.tsd-toolbar-contents > .title {
+  order: 1;
+  flex: 0 1 240px;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-1-brand);
+  font-size: 14px;
+  font-weight: 585;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#tsd-toolbar-links {
+  order: 5;
+  flex: 0 0 auto;
+  gap: 12px;
+  margin: 0;
+  font-size: 13px;
+}
+
+#tsd-toolbar-links:empty {
+  display: none;
+}
+
+.tsd-page-toolbar #tsd-toolbar-links a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.tsd-page-toolbar #tsd-toolbar-links a:hover {
+  color: var(--link-color-hover);
+  text-decoration: underline dotted;
+}
+
+#tsd-search-trigger {
+  order: 2;
+  display: flex;
+  flex: 1 1 960px;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  max-width: 960px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border-4);
+  border-radius: 7px;
+  background: var(--bg-2);
+  color: var(--text-3);
+  font-size: 13px;
+  text-align: left;
+  opacity: 1;
+}
+
+#tsd-search-trigger::before {
+  flex: 1;
+  content: "Search documentation";
+}
+
+#tsd-search-trigger::after {
+  color: var(--text-5);
+  content: "⌘ K";
+  white-space: nowrap;
+}
+
+#tsd-search-trigger svg {
+  order: -1;
+  width: 16px;
+  height: 16px;
+  color: var(--text-3-brand);
+}
+
+#tsd-search-trigger:hover,
+#tsd-search-trigger:focus-visible {
+  border-color: var(--border-2-brand);
+  background: var(--bg-1);
+  color: var(--text-2);
+}
+
+#tsd-toolbar-menu-trigger {
+  order: 6;
+}
+
+.anta-visibility-menu {
+  position: relative;
+  order: 3;
+  flex: 0 0 auto;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.anta-visibility-menu > summary,
+.anta-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  font: inherit;
+  list-style: none;
+}
+
+.anta-visibility-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.anta-visibility-menu > summary:hover,
+.anta-visibility-menu[open] > summary,
+.anta-theme-toggle:hover {
+  background: var(--bg-4-brand);
+  color: var(--text-1);
+}
+
+.anta-visibility-menu > summary:focus-visible,
+.anta-theme-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.anta-visibility-menu[open] > summary a-icon[shape="chevron-down"] {
+  transform: rotate(180deg);
+}
+
+.anta-visibility-panel {
+  position: absolute;
+  z-index: 30;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0;
+  width: 220px;
+  padding: 12px;
+  border: 1px solid var(--border-4);
+  border-radius: 8px;
+  background: var(--bg-2);
+  box-shadow: 0 8px 24px color-mix(in oklch, #000 16%, transparent);
+}
+
+.anta-visibility-panel .settings-label {
+  margin: 0 0 8px;
+  color: var(--text-4);
+  font-size: 11px;
+  font-weight: 585;
+  letter-spacing: 0.06em;
+}
+
+.anta-visibility-panel #tsd-filter-options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.anta-visibility-panel .tsd-filter-item {
+  margin: 0;
+}
+
+.anta-visibility-panel .tsd-filter-input {
+  gap: 8px;
+  width: 100%;
+  padding: 6px;
+  border-radius: 5px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.anta-visibility-panel .tsd-filter-input:hover {
+  background: var(--bg-3);
+}
+
+.anta-visibility-panel .tsd-filter-input svg {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.anta-theme-toggle {
+  order: 4;
+  flex: 0 0 30px;
+  width: 30px;
+  padding: 0;
+}
+
+.anta-theme-toggle a-icon[shape="sun"] {
+  display: none;
+}
+
+.dark .anta-theme-toggle a-icon[shape="sun"] {
+  display: inline-block;
+}
+
+.dark .anta-theme-toggle a-icon[shape="moon"] {
+  display: none;
+}
+
+.anta-native-theme {
+  display: none;
+}
+
+.col-content {
+  min-width: 0;
+  padding: 32px;
+}
+
+.col-content > * {
+  max-width: 960px;
+  margin-inline: auto;
+}
+
+.tsd-page-title h1 {
+  margin: 0 0 24px;
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.tsd-breadcrumb {
+  margin-block: 0 12px;
+  color: var(--text-4);
+  font-size: 13px;
+}
+
+.tsd-panel > h1,
+.tsd-panel > h2,
+.tsd-panel > h3 {
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
+.tsd-panel-group {
+  margin-block: 24px;
+}
+
+.tsd-signature {
+  border-color: var(--border-5);
+  background: var(--bg-3);
+}
+
+/* TypeDoc's syntax stylesheet gives inline code the block-code background. */
+:not(pre) > code {
+  background: light-dark(
+    color-mix(in oklch, currentColor 6%, transparent),
+    color-mix(in oklch, currentColor 10%, transparent)
+  );
+}
+
+code.tsd-tag {
+  margin-inline-end: 0.5ch;
+}
+
+.tsd-comment p,
+.tsd-description p {
+  line-height: 1.55;
+}
+
+dt.tsd-member-summary {
+  font-style: normal;
+  font-weight: 400;
+}
+
+.tsd-member-summary-name {
+  gap: 0.5ch;
+}
+
+.tsd-accordion-summary {
+  gap: 0.5ch;
+}
+
+/* Keep TypeDoc's disclosure behavior, using Anta's chevron-down silhouette. */
+.tsd-accordion-summary > svg:first-child {
+  --_chevron-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: var(--_chevron-icon) center / contain no-repeat;
+  mask: var(--_chevron-icon) center / contain no-repeat;
+}
+
+.tsd-accordion-summary > svg:first-child use {
+  display: none;
+}
+
+.tsd-navigation a,
+.tsd-page-navigation a,
+.tsd-navigation summary > span {
+  border-radius: 4px;
+  color: var(--text-3);
+  gap: 0.5ch;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.03ch;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.site-menu .tsd-navigation a,
+.page-menu .tsd-page-navigation a {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-menu .tsd-navigation a span,
+.page-menu .tsd-page-navigation a span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tsd-navigation a.current,
+.tsd-page-navigation a.current {
+  background: transparent;
+  color: var(--text-1);
+  font-weight: 585;
+}
+
+.tsd-navigation a:hover,
+.tsd-page-navigation a:hover {
+  color: var(--text-1);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.tsd-navigation .tsd-kind-icon,
+.tsd-page-navigation .tsd-kind-icon {
+  color: var(--text-4-brand);
+}
+
+.page-menu h3,
+.site-menu h3 {
+  margin: 24px 0 8px;
+  color: var(--text-2-brand);
+  font-size: 12px;
+  font-weight: 585;
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.page-menu > .tsd-page-navigation > h3 {
+  margin: 0 0 8px;
+}
+
+.tsd-accordion-summary > :is(h2, h3) {
+  margin: 0;
+  padding: 0;
+}
+
+.page-menu .tsd-accordion-summary,
+.site-menu .tsd-accordion-summary {
+  color: var(--text-3);
+}
+
+.page-menu .tsd-navigation.settings {
+  margin-bottom: 24px;
+}
+
+.site-menu .tsd-navigation > a {
+  color: var(--text-2);
+  font-weight: 585;
+}
+
+.site-menu .tsd-navigation ul,
+.page-menu .tsd-page-navigation ul {
+  margin: 0;
+  padding: 0;
+}
+
+.site-menu .tsd-navigation ul.tsd-nested-navigation {
+  padding-inline-start: 28px;
+}
+
+.page-menu .tsd-page-navigation-section > div {
+  margin-inline-start: 20px;
+}
+
+/* Keep the built-in TypeDoc search index and keyboard behavior. */
+#tsd-search[open] {
+  width: min(960px, calc(100vw - 40px));
+  max-width: none;
+  max-height: min(640px, calc(100dvh - 80px));
+  margin-top: max(44px, 8vh);
+  margin-inline: auto;
+  padding: 12px;
+  border: 1px solid var(--border-4);
+  border-radius: 12px;
+  background: var(--bg-2);
+  box-shadow: 0 16px 48px color-mix(in oklch, #000 20%, transparent);
+}
+
+#tsd-search::backdrop {
+  background: color-mix(in oklch, #000 30%, transparent);
+}
+
+#tsd-search-input {
+  height: 40px;
+  padding-inline: 12px;
+  border: 1px solid var(--border-3);
+  border-radius: 7px;
+  background: var(--bg-1);
+  color: var(--text-1);
+  font-size: 15px;
+}
+
+#tsd-search-input:focus-visible {
+  border-color: var(--border-2-brand);
+  background: var(--bg-1);
+  color: var(--text-1);
+  outline: 1px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+#tsd-search-input::placeholder {
+  color: var(--text-4);
+  opacity: 1;
+}
+
+#tsd-search-results {
+  margin: 0;
+  padding: 0;
+}
+
+#tsd-search-results:not(:empty) {
+  margin-block-start: 16px;
+}
+
+#tsd-search-results > li,
+#tsd-search-results > li:nth-child(even) {
+  background: transparent;
+}
+
+#tsd-search-results > li:is(:hover, [aria-selected="true"]) {
+  background: var(--bg-4-brand);
+  color: var(--text-1);
+}
+
+#tsd-search-results > li > a {
+  gap: 8px;
+  padding: 9px 10px;
+  color: var(--text-2);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+#tsd-search-results > li > a .parent {
+  color: var(--text-4);
+}
+
+#tsd-search-results > li > a mark {
+  background: var(--bg-4-brand);
+  color: var(--text-1-brand);
+}
+
+#tsd-search-status {
+  color: var(--text-4);
+  font-size: 14px;
+}
+
+@media (min-width: 770px) {
+  .container-main {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-areas: "sidebar content";
+    align-items: start;
+    gap: 0;
+  }
+
+  .col-sidebar {
+    grid-area: sidebar;
+    position: sticky;
+    top: 44px;
+    width: 320px;
+    height: calc(100dvh - 44px);
+    max-height: none;
+    margin: 0;
+    padding: 20px 16px 48px 20px;
+    overflow-y: auto;
+  }
+
+  .site-menu,
+  .page-menu {
+    position: static;
+    width: auto;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .col-content {
+    grid-area: content;
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container-main {
+    grid-template-columns: 320px minmax(0, 1fr) 300px;
+    grid-template-areas: "sidebar content toc";
+  }
+
+  .col-sidebar {
+    display: contents;
+  }
+
+  .site-menu,
+  .page-menu {
+    position: sticky;
+    top: 44px;
+    height: calc(100dvh - 44px);
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .site-menu {
+    grid-area: sidebar;
+    padding: 20px 16px 48px 20px;
+  }
+
+  .page-menu {
+    grid-area: toc;
+    padding: 32px 12px 32px 4px;
+  }
+}
+
+@media (min-width: 770px) and (max-width: 1199px) {
+  .col-sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .site-menu {
+    order: 0;
+  }
+
+  .page-menu {
+    order: 1;
+  }
+}
+
+@media (max-width: 769px) {
+  .tsd-toolbar-contents {
+    padding-inline: 12px;
+  }
+
+  .tsd-toolbar-contents > .title {
+    flex-basis: auto;
+    max-width: 40vw;
+  }
+
+  .anta-visibility-menu .anta-control-label,
+  .anta-visibility-menu > summary a-icon[shape="chevron-down"] {
+    display: none;
+  }
+
+  .anta-visibility-menu > summary {
+    width: 30px;
+    padding: 0;
+  }
+
+  #tsd-search-trigger {
+    flex: 0 0 32px;
+    justify-content: center;
+    width: 32px;
+    margin-inline-start: auto;
+    padding: 0;
+  }
+
+  #tsd-search-trigger::before,
+  #tsd-search-trigger::after {
+    display: none;
+  }
+
+  #tsd-toolbar-menu-trigger {
+    display: flex;
+    flex: 0 0 30px;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    line-height: normal;
+  }
+
+  .col-content {
+    padding: 24px 20px;
+  }
+
+  .col-sidebar {
+    background: var(--bg-2);
+  }
+
+  .has-menu .col-sidebar {
+    gap: 0;
+    width: min(360px, calc(100vw - 24px));
+    padding-inline: 20px;
+  }
+}

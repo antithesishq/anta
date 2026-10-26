@@ -1,3 +1,6 @@
+import { interaction_target, type InteractionRegions, type InteractionTarget } from './interactions/target'
+import type { PointerOffset } from './interactions/hit'
+import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import { new_plot_template } from "./template/plot_template"
 import { compose_plot } from "./compose/compose_plot"
 import { draw as draw_plot } from "./render/canvas"
@@ -35,8 +38,10 @@ export class PlotController<TooltipContent = unknown> {
     readonly #on_error: (failure: PlotLifecycleError) => void
     #draw_host: PlotDrawHost | null = null
     #draw_dirty = false
+    #interaction_regions: InteractionRegions | null = null
     #has_current_composition = false
     #environment: PlotEnvironment | null = null
+    #last_composition_zoom: ViewportZoom = UNIT_ZOOM
     #last_composition_template: PlotTemplate<TooltipContent> | null = null
     #last_composition_viewport: Viewport = { x: null, y: null }
 
@@ -54,6 +59,15 @@ export class PlotController<TooltipContent = unknown> {
             x: this.#template.viewport?.window.x ?? null,
             y: this.#template.viewport?.window.y ?? null,
         })
+    }
+
+    get interaction_regions(): InteractionRegions | null {
+        return this.#interaction_regions
+    }
+
+    /** Resolve input against the geometry and tick labels of the last successful draw. */
+    interaction_target(input: PointerOffset): InteractionTarget {
+        return interaction_target(this.#interaction_regions, input)
     }
 
     get plot_args(): PlotArgs<TooltipContent> {
@@ -111,18 +125,22 @@ export class PlotController<TooltipContent = unknown> {
                 throw new Error("plot: device pixel ratio must be positive and finite")
             }
             if (recompose) {
-                composed_plot = compose_plot(this.#template, environment.width, environment.height, environment.color_theme, viewport, environment.inherited_font_family)
+                composed_plot = compose_plot(this.#template, environment.width, environment.height, environment.color_theme, viewport, environment.inherited_font_family, this.interactions.committed_zoom)
             }
         } catch (error) {
             this.#on_error({ phase: 'compose', error })
             return this.#composed_plot
         }
         this.#environment = { ...environment }
+        this.#last_composition_zoom = this.interactions.committed_zoom
         this.#last_composition_template = this.#template
         this.#last_composition_viewport = { x: viewport.x === null ? null : [...viewport.x], y: viewport.y === null ? null : [...viewport.y] }
         this.#composed_plot = composed_plot
         this.#has_current_composition = true
         if (recompose || dpr_changed) {
+            // Keep the interior navigable even if canvas preparation or a custom renderer fails.
+            // Measured axis strips are published only after a successful draw.
+            this.#interaction_regions = composed_plot === null ? null : { plot: composed_plot.inner, x: null, y: null }
             this.invalidate_draw()
         }
         return composed_plot
@@ -136,7 +154,9 @@ export class PlotController<TooltipContent = unknown> {
         const theme_changed = previous?.color_theme !== environment.color_theme
         const font_changed = previous?.inherited_font_family !== environment.inherited_font_family
         const viewport_changed = viewport_moved(this.#last_composition_viewport, viewport)
-        return template_changed || dimensions_changed || theme_changed || font_changed || viewport_changed
+        const zoom = this.interactions.committed_zoom
+        const zoom_changed = zoom.x !== this.#last_composition_zoom.x || zoom.y !== this.#last_composition_zoom.y
+        return zoom_changed || template_changed || dimensions_changed || theme_changed || font_changed || viewport_changed
     }
 
     /** Attach or replace a surface; an already composed plot needs a fresh draw. */
@@ -177,7 +197,7 @@ export class PlotController<TooltipContent = unknown> {
             return
         }
         try {
-            draw_plot(ctx, this.#composed_plot)
+            this.#interaction_regions = draw_plot(ctx, this.#composed_plot)
         } catch (error) {
             this.#on_error({ phase: 'draw', error })
         }

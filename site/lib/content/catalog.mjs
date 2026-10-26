@@ -179,6 +179,18 @@ export function getNavigationGroups(catalog) {
   })).filter(group => group.pages.length)
 }
 
+export function getNavigationTree(pages) {
+  const nodes = new Map(pages.map(page => [page.key, { ...page, children: [] }]))
+  const roots = []
+  for (const page of pages) {
+    const node = nodes.get(page.key)
+    const parent = nodes.get(page.parentKey)
+    if (parent) parent.children.push(node)
+    else roots.push(node)
+  }
+  return roots
+}
+
 export function getExportGroups(catalog) {
   const pages = catalog.filter(page => page.includeInExports)
   return {

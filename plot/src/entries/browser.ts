@@ -1,4 +1,4 @@
-import '../browser/plot.css'
+export type { ViewportZoom } from '../core/interactions/viewport_zoom'
 export { scatter, bar, rect, line, rule, area, custom, definePlotElement } from '../browser/index'
 export type {
     ScatterArgs, BarArgs, RectArgs, LineArgs, RuleArgs, AreaArgs, CustomArgs,

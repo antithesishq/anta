@@ -12,7 +12,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
 const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
 const metadata = JSON.parse(await readFile(resolve(root, '.build/metafile.json'), 'utf8'))
-assert.equal(metadata.outputs['dist/elements.js'].cssBundle, undefined, 'element registration does not implicitly load the standalone stylesheet')
+for (const name of ['index', 'browser', 'auto', 'elements', 'elements/a-plot', 'elements/a-plot-surface']) {
+    assert.equal(metadata.outputs[`dist/${name}.js`].cssBundle, undefined, `${name} keeps Plot CSS separate`)
+}
+assert.deepEqual(Object.keys(metadata.outputs).filter(path => path.endsWith('.css')), ['dist/plot.css'], 'one published Plot stylesheet')
 
 // Follow emitted imports, including lazy chunks, to verify each entry's actual runtime boundary.
 function inputs(entry, visited = new Set()) {
@@ -133,14 +136,15 @@ try {
         assert.deepEqual(internal.resolve_canvas_size({}, {width:200.5,height:100.5}), {width:200,height:100})
         const controller = new internal.PlotController({series:[plot.scatter({data:rows})]})
         controller.compose({width:600,height:300,color_theme:'light',device_pixel_ratio:1})
-        assert.equal(controller.interactions.handle_wheel({offsetX:200,offsetY:100,deltaY:-100,ctrlKey:true},controller.template.zoom_pan),true)
+        assert.equal(controller.interactions.handle_wheel({offsetX:200,offsetY:100,deltaX:0,deltaY:-100,ctrlKey:false,target:'plot'},controller.template.zoom_pan),true)
         assert.notEqual(controller.interactions.staged_viewport.x,null)
         for (const path of ['components', 'host', 'anta', 'core/controller']) {
             await assert.rejects(import('@antadesign/plot/' + path), {code:'ERR_PACKAGE_PATH_NOT_EXPORTED'})
         }
         const css = await readFile(new URL(import.meta.resolve('@antadesign/plot/plot.css')), 'utf8')
         assert.ok(css.includes(':where(a-plot)'), 'standalone host layout')
-        assert.ok(!css.includes('a-plot-surface'), 'surface owns its layout')
+        assert.ok(css.includes('a-plot-surface'), 'shared surface layout ships in plot.css')
+        assert.ok(css.includes('[data-plot-root]'), 'JSX wrapper layout ships in plot.css')
     `
     await writeFile(resolve(sandbox, 'runtime.mjs'), runtime)
 
@@ -197,7 +201,7 @@ try {
 
     const core_consumer = resolve(sandbox, 'core-consumer.ts')
     await writeFile(core_consumer, `
-        import { Plot, PlotSurface, scatter, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError, type FontArg, type FontConfig, type FontCaps } from '@antadesign/plot'
+        import { Plot, PlotSurface, scatter, bar, custom, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError, type FontArg, type FontConfig, type FontCaps } from '@antadesign/plot'
         import type { ReactNode } from 'react'
         const props: PlotProps<ReactNode> = {plotArgs:{series:[]}}
         const surfaceProps: PlotSurfaceProps = {canvasOwner:'worker'}
@@ -207,7 +211,34 @@ try {
         import { PlotController } from '@antadesign/plot'
         // @ts-expect-error Canvas lifecycle helpers are internal.
         import { update_hover_canvas } from '@antadesign/plot'
-        const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const args: PlotArgs<string> = {series:[scatter({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const mixed: PlotArgs<string> = { series: [
+            scatter({ data: [{ time: 1, temperature: 20 }], x: 'time', y: 'temperature', tooltip: ({ row }) => row.temperature.toFixed() }),
+            scatter({ data: [{ time: 1, pressure: 100 }], x: 'time', y: 'pressure', tooltip: ({ row }) => row.pressure.toFixed() }),
+        ] }
+        // @ts-expect-error The plot boundary must not weaken row inference inside a factory.
+        const wrongRow: PlotArgs<string> = { series: [scatter({ data: [{ time: 1, temperature: 20 }], x: 'time', y: 'temperature', tooltip: ({ row }) => row.pressure.toFixed() })] }
+        type StackRow = { group: string; first: number } | { group: string; second: number }
+        const stackRows: StackRow[] = [{ group: 'A', first: 2 }, { group: 'B', second: 3 }]
+        bar({ data: stackRows, x: 'group', y: ['first', 'second'] })
+        bar({ data: stackRows, y: 'group', x: ['first', 'second'] })
+        // @ts-expect-error Stack fields must exist on at least one member of the row union.
+        bar({ data: stackRows, x: 'group', y: ['frist'] })
+        const customRows = custom({
+            data: [{ value: 2 }],
+            renderer: (series) => { series.rows?.[0].value.toFixed() },
+            hit_test: () => 0,
+            tooltip: ({ row }) => row.value.toFixed(),
+            on_select: ({ row }) => { row.value.toFixed() },
+        })
+        custom({ renderer: () => {} })
+        const viewportSized = scatter({
+            data: [{ x: 1, y: 2, weight: 3 }],
+            size: (row, index, viewport) => Math.min(12, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
+        })
+        const legacySized = scatter({ data: [], size: (row, index) => index + 2 })
+        // @ts-expect-error Accessors return numeric pixel sizes, not descriptors.
+        scatter({ data: [], size: (row, index, viewport) => ({ base: 2 }) })
         const caps: FontCaps = 'small-caps'
         const font: FontConfig = { size: 12, weight: 450, caps, letter_spacing: -0.5 }
         const family: FontArg = 'Example, sans-serif'
@@ -253,8 +284,8 @@ try {
             onError(failure) { const phase: string = failure.phase },
         }
         createElement(Plot<React.ReactNode>, reactProps)
-        const renderer: CustomRendererFn = (series, context) => { context.color_at(0) }
-        const highlight_renderer: CustomHighlightRendererFn = (series, index, context) => { context.color_at(index) }
+        const renderer: CustomRendererFn<{ x: number; y: number }> = (series, context) => { context.color_at(0) }
+        const highlight_renderer: CustomHighlightRendererFn<{ x: number; y: number }> = (series, index, context) => { context.color_at(index) }
         custom({data:[{x:1,y:2}], renderer, highlight_renderer, hit_test:() => 0})
         import { Plot as AntaPlot, type PlotProps as AntaPlotProps } from '@antadesign/plot'
         const antaProps: AntaPlotProps = { plotArgs: { series: [scatter({data: [{x:1,y:2}], tooltip: true})] } }
@@ -265,9 +296,9 @@ try {
         import '@antadesign/plot/elements/a-plot-surface'
         import { plotElementReady } from '@antadesign/plot/elements'
         import { plotSurfaceElementReady } from '@antadesign/plot/elements'
-        const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const args: PlotArgs<string> = {series:[scatter({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
         // @ts-expect-error Tooltip content must match the declared host content type.
-        const invalid: PlotArgs<string> = {series:[scatter<number>({data:[],tooltip:()=> 1})]}
+        const invalid: PlotArgs<string> = {series:[scatter({data:[],tooltip:()=> 1})]}
     `
     await writeFile(resolve(sandbox, 'consumer.ts'), consumer)
     for (const resolution of [ts.ModuleResolutionKind.Bundler, ts.ModuleResolutionKind.NodeNext]) {

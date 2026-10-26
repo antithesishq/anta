@@ -11,5 +11,6 @@ for (const theme of ['antune', 'antithesis']) {
     process.exit(1)
   }
   copyFileSync(src, new URL(`${theme}.css`, dest))
+  copyFileSync(new URL(`../src/styles/fonts-${theme}.css`, import.meta.url), new URL(`fonts-${theme}.css`, dest))
   console.log(`copied theme-${theme}.css → public/themes/${theme}.css`)
 }

@@ -7,7 +7,7 @@ import type {
     BoxContext, BoxContextChange, BoxMeasurement, BoxMeasurementChange,
     CapturePointerInput, CaptureWheelInput,
 } from '@antadesign/anta'
-import type { PointerOffset } from '../core/interactions/hit'
+import type { PlotSurfaceMouseInput } from '../core/presentation/surface'
 import type { APlotElement, PlotArgs, PlotTooltipRenderer } from './index'
 import { clear_hover, render_hover } from './hover'
 import { throttle } from 'es-toolkit/function'
@@ -32,7 +32,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             this.#schedule()
         }, UPDATE_INTERVAL_MS, { edges: ['trailing'] })
 
-        readonly #host = new PlotHost<T, { event: MouseEvent; offset: PointerOffset | undefined }>({
+        readonly #host = new PlotHost<T, PlotSurfaceMouseInput>({
             commit_mode: 'immediate',
             schedule: () => this.#schedule(),
             viewport_commit: () => this.#clear_hover(),
@@ -41,10 +41,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
                 this.#emit('viewportchange', change)
                 this.#viewport_callback?.(change)
             },
-            resolve_hover: ({ event, offset }) => {
-                if (!this.isConnected) return null
-                return { ...(offset ?? this.#offset(event)), ctrlKey: event.ctrlKey }
-            },
+            resolve_hover: input => this.isConnected ? input : null,
             hover: () => {
                 if (this.#controller !== null) {
                     render_hover(this.#controller, this.#view.highlight, this.#view.tooltip,
@@ -75,39 +72,23 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
                 this.#context = (event as CustomEvent<BoxContextChange>).detail.current
                 if (this.#host.update_context(this.#context)) this.#schedule()
             })
-            this.#view.root.addEventListener('resetrequest', this.#interaction_coordinator.reset)
-            this.#view.capture.addEventListener('dblclick', this.#interaction_coordinator.handle_double_click)
-            this.#view.capture.addEventListener('wheelinput', event => {
+            this.#view.root.addEventListener('zoomrequest', event => this.#interaction_coordinator.handle_menu((event as CustomEvent).detail))
+            this.#view.root.addEventListener('wheelinput', event => {
                 const detail = (event as CustomEvent<CaptureWheelInput>).detail
                 this.#wheel(detail)
             })
-            this.#view.capture.addEventListener('pointerinput', event => {
+            this.#view.root.addEventListener('pointerinput', event => {
                 this.#pointer((event as CustomEvent<CapturePointerInput>).detail)
             })
-            this.#view.capture.addEventListener('mousemove', event => {
-                if (!this.#controller?.interactions.pan_in_progress) {
-                    // Snapshot target-relative offsets during dispatch; measure child targets after throttling.
-                    const offset = event.target === this.#view.capture ? this.#offset(event) : undefined
-                    this.#interaction_coordinator.move({ event, offset })
-                }
+            this.#view.root.setAttribute('input-scope', 'parent')
+            this.#view.root.addEventListener('plotmove', event => {
+                this.#interaction_coordinator.move((event as CustomEvent<PlotSurfaceMouseInput>).detail)
             })
-            this.#view.capture.addEventListener('mouseleave', () => this.#on_mouse_leave())
-            this.#view.capture.addEventListener('click', event => this.#on_click(event))
-            // Renderer-owned tooltips are siblings of the surface, so their input bypasses Capture.
-            this.addEventListener('mousemove', event => {
-                if (this.getAttribute('tooltip-mode') === 'external'
-                    && !this.#view.capture.contains(event.target as Node)) {
-                    this.#interaction_coordinator.move({ event, offset: undefined })
-                }
-            })
-            this.addEventListener('click', event => {
-                if (this.getAttribute('tooltip-mode') === 'external'
-                    && !this.#view.capture.contains(event.target as Node)) {
-                    this.#on_click(event)
-                }
-            })
-            this.addEventListener('mouseleave', () => {
-                if (this.getAttribute('tooltip-mode') === 'external') this.#on_mouse_leave()
+            this.#view.root.addEventListener('plotleave', () => this.#on_mouse_leave())
+            this.#view.root.addEventListener('plotclick', event => {
+                const input = (event as CustomEvent<PlotSurfaceMouseInput>).detail
+                const data = this.#interaction_coordinator.handle_click(input)
+                if (data !== undefined) this.#emit('select', data)
             })
         }
 
@@ -231,14 +212,9 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             const presentation = this.#host.render()
             if (presentation === null || this.#controller === null) return
             this.#view.root.present(presentation)
-            this.#configure_capture()
             render_hover(this.#controller, this.#view.highlight, this.#view.tooltip,
                 this.#context.devicePixelRatio, this.#hover_renderer)
             this.#update_cursor()
-        }
-
-        #configure_capture(): void {
-            if (this.#controller !== null) this.#view.root.configureCapture(this.#host.capture())
         }
 
         #update_cursor(): void {
@@ -247,32 +223,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
 
         #on_mouse_leave(): void {
             this.#interaction_coordinator.leave()
-            this.#configure_capture()
-        }
-
-        // Select the topmost eligible hit and emit its point data.
-        #on_click(event: MouseEvent): void {
-            const controller = this.#controller
-            if (controller === null) {
-                return
-            }
-            if (controller.composed_plot === null) {
-                return
-            }
-            const offset = this.#offset(event)
-            const data = this.#interaction_coordinator.handle_click({ ...offset, ctrlKey: event.ctrlKey })
-            if (data !== undefined) {
-                this.#emit('select', data)
-            }
-        }
-
-        // Native offsets are Capture-relative only for direct targets; children need a fresh origin.
-        #offset(event: MouseEvent): PointerOffset {
-            if (event.target === this.#view.capture) {
-                return { offsetX: event.offsetX, offsetY: event.offsetY }
-            }
-            const rect = this.#view.capture.getBoundingClientRect()
-            return { offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top }
+            this.#schedule()
         }
 
         #clear_hover(): void {
@@ -287,7 +238,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
 
         // Translate Capture start, move, end, and cancel phases into pan updates.
         #pointer(detail: CapturePointerInput): void {
-            this.#interaction_coordinator.handle_pan(capture_pointer_input(detail))
+            this.#interaction_coordinator.handle_drag(capture_pointer_input(detail))
         }
 
     }

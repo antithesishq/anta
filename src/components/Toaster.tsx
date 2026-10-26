@@ -2,6 +2,8 @@ import type { BaseProps } from "../general_types"
 import { useMemo, useSyncExternalStore } from "../jsx-runtime"
 import { createToaster, type Toaster as ToasterStore, type ToastEntry } from "../toaster"
 import { Banner } from "./Banner"
+import { useNativeEventProps } from "../native-event-props"
+import { nativeStateChange, isDOMNode } from "../anta_helpers"
 
 export interface ToasterProps extends BaseProps {
   /** The store this region renders. Omit to bind the default store driven by
@@ -22,8 +24,13 @@ export interface ToasterProps extends BaseProps {
 const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- content is a function of id+rev only
   const content = useMemo(() => entry.render(entry.id), [entry.id, entry.rev])
-  const isNode = typeof Node !== "undefined" && content instanceof Node
+  const isNode = isDOMNode(content)
   const isText = typeof content === "string" || typeof content === "number"
+  const eventProps = useNativeEventProps({
+    ondismiss: (event: CustomEvent) => {
+      if (nativeStateChange(event).isOwn) store.remove(entry.id)
+    },
+  })
 
   const common = {
     slot: entry.placement,
@@ -36,7 +43,7 @@ const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore })
     // announcement) unless requested.
     role: entry.politeness === "assertive" ? "alert" : entry.politeness === "polite" ? "status" : undefined,
     // Fires after the exit animation; that's when the entry actually leaves.
-    ondismiss: () => store.remove(entry.id),
+    ...eventProps,
   } as const
 
   if (isNode) return <a-toast {...common} content={content as Node} />

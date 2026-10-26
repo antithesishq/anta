@@ -1347,7 +1347,7 @@ function setupIframe(iframe: HTMLIFrameElement): (() => void) | undefined {
     const clone = doc.createElement('link')
     clone.rel = 'stylesheet'
     clone.href = link.href
-    if (link.id === 'palette-link') clone.id = link.id
+    if (link.id === 'palette-link' || link.id === 'palette-fonts-link') clone.id = link.id
     doc.head.appendChild(clone)
   }
   // Also clone any inline <style> from the head that's likely tokens.
@@ -1368,15 +1368,19 @@ function setupIframe(iframe: HTMLIFrameElement): (() => void) | undefined {
     const dark = document.documentElement.classList.contains('dark')
     doc.documentElement.classList.toggle('dark', dark)
     doc.documentElement.style.colorScheme = dark ? 'dark' : 'light'
-    const palette = document.getElementById('palette-link') as HTMLLinkElement | null
-    const clone = doc.getElementById('palette-link') as HTMLLinkElement | null
-    if (palette && clone && clone.href !== palette.href) clone.href = palette.href
+    for (const id of ['palette-link', 'palette-fonts-link']) {
+      const palette = document.getElementById(id) as HTMLLinkElement | null
+      const clone = doc.getElementById(id) as HTMLLinkElement | null
+      if (palette && clone && clone.href !== palette.href) clone.href = palette.href
+    }
   }
   apply()
   const obs = new MutationObserver(apply)
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  const palette = document.getElementById('palette-link')
-  if (palette) obs.observe(palette, { attributes: true, attributeFilter: ['href'] })
+  for (const id of ['palette-link', 'palette-fonts-link']) {
+    const palette = document.getElementById(id)
+    if (palette) obs.observe(palette, { attributes: true, attributeFilter: ['href'] })
+  }
   teardowns.push(() => obs.disconnect())
 
   // 5) Capture iframe runtime errors → bubble to parent via postMessage.

@@ -48,8 +48,11 @@ function tsDocs(content, path) {
       const match = authorLine.exec(original)
       const author = match?.[1].trim()
       const text = match ? original.slice(0, match.index) + original.slice(match.index + match[0].length) : original
+      const containingType = ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)
       const entries = docs.get(key) ?? []
-      entries.push({ author, text, original, line: lineAt(content, doc.getStart(source)), name: name ?? key })
+      entries.push({ author, text, scopeText: containingType ? node.getText(source) : undefined,
+        reviewText: containingType ? `${original}\n${node.getText(source)}` : original,
+        line: lineAt(content, doc.getStart(source)), name: name ?? key })
       docs.set(key, entries)
     }
     ts.forEachChild(node, (child) => visit(child, next))
@@ -98,11 +101,11 @@ for (let index = 0; index < entries.length && entries[index];) {
       for (const [position, doc] of docs.entries()) {
         if (!doc.author) continue
         const earlier = old[position]
-        if (doc.author === earlier?.author && doc.text === earlier.text) continue
+        if (doc.author === earlier?.author && doc.text === earlier.text && doc.scopeText === earlier.scopeText) continue
         const kind = !earlier?.author ? 'new' : doc.author !== earlier.author ? 'changed-author' : 'stale'
         findings.push({ path, line: doc.line, name: doc.name, author: doc.author,
           kind, reason: kind === 'new' ? 'New TSDoc author' : kind === 'changed-author' ? 'TSDoc author changed' : 'Authored TSDoc changed',
-          previous: earlier?.original, current: doc.original })
+          previous: earlier?.reviewText, current: doc.reviewText })
       }
     }
   }
@@ -113,6 +116,9 @@ const escapeMarkdown = (value) => String(value).replaceAll('|', '\\|').replaceAl
 function resolution(finding) {
   if (finding.kind === 'stale') {
     return 'Run pnpm docs-fix --check, then pnpm docs-fix locally or comment /docs-fix on the PR to remove this stale author. A human can instead review the final text and apply review-docs.'
+  }
+  if (finding.kind === 'new' && finding.path.startsWith('src/')) {
+    return 'Add `review-docs` to this PR, or remove the `@author` tag from the TypeScript source if the final text was not human-reviewed.'
   }
   const marker = finding.path.endsWith('.mdx') ? 'author field' : '@author tag'
   return `Remove this ${finding.kind === 'new' ? 'new' : 'changed'} ${marker} manually if the final text was not human-reviewed; docs-fix does not remove it. Otherwise ask a human to review the final text and apply review-docs.`
@@ -125,14 +131,16 @@ if (findings.length === 0) {
   console.log(`${findings.length} new or changed authored documentation section(s):`)
   summary.push('| Location | Section | Author | Change |', '| --- | --- | --- | --- |')
   for (const finding of findings) {
-    console.log(`${finding.path}:${finding.line} ${finding.name}: ${finding.reason} (${finding.author})`)
+    const newTsDocWithoutLabel = !reviewed && finding.kind === 'new' && finding.path.startsWith('src/')
+    const message = newTsDocWithoutLabel
+      ? `${finding.name}: New TSDoc author marker without the GitHub \`review-docs\` label. ${resolution(finding)}`
+      : `${finding.name}: ${finding.reason} (${finding.author}).${reviewed ? '' : ` ${resolution(finding)}`}`
+    console.log(`${finding.path}:${finding.line} ${message}`)
     if (finding.previous) console.log(`Previous TSDoc:\n${finding.previous}`)
     if (finding.current) console.log(`Current TSDoc:\n${finding.current}`)
     else console.log('Review the complete page in the PR diff.')
-    if (!reviewed) console.log(`  ${resolution(finding)}`)
     const title = reviewed ? 'Review authored documentation' : 'review-docs label required'
     const command = reviewed ? 'notice' : 'error'
-    const message = `${finding.name}: ${finding.reason} (${finding.author}).${reviewed ? '' : ` ${resolution(finding)}`}`
     console.log(`::${command} file=${escapeCommand(finding.path)},line=${finding.line},title=${title}::${escapeCommand(message)}`)
     summary.push(`| ${escapeMarkdown(`${finding.path}:${finding.line}`)} | ${escapeMarkdown(finding.name)} | ${escapeMarkdown(finding.author)} | ${finding.reason} |`)
   }

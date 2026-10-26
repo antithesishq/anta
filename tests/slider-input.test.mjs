@@ -17,7 +17,7 @@ before(async () => {
   const assets = new Map(result.outputFiles.map(file => [file.path.endsWith('.css') ? '/slider.css' : '/slider.js', file.text]))
   server = createServer((req, res) => {
     res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html')
-    res.end(assets.get(req.url) ?? '<!doctype html><link rel="stylesheet" href="/slider.css"><style>body{margin:40px}a-slider{display:block;width:240px}</style><a-slider id="slider" defaultvalue="35" tabindex="0" role="slider" aria-label="Volume"></a-slider><script type="module" src="/slider.js"></script>')
+    res.end(assets.get(req.url) ?? '<!doctype html><link rel="stylesheet" href="/slider.css"><style>body{margin:40px}a-slider{display:block;width:240px}</style><a-slider id="slider" default-value="35" tabindex="0" role="slider" aria-label="Volume"></a-slider><script type="module" src="/slider.js"></script>')
   })
   await new Promise((resolve, reject) => {
     server.once('error', reject)
@@ -176,7 +176,7 @@ test('Slider parses a space-separated range and exposes a sorted array value', a
     slider.removeAttribute('role')
     slider.removeAttribute('tabindex')
     slider.defaultValue = [70, 20]
-    const initial = { value: slider.value, attribute: slider.getAttribute('defaultvalue') }
+    const initial = { value: slider.value, attribute: slider.getAttribute('default-value') }
     slider.value = [85, 15]
     return { initial, controlled: { value: slider.value, attribute: slider.getAttribute('value') } }
   })
@@ -189,7 +189,7 @@ test('Slider parses a space-separated range and exposes a sorted array value', a
 test('Inverted fill covers the complement of single and range values', async t => {
   const { page } = await pageFor(t)
   const layouts = await page.evaluate(() => {
-    const firstFill = slider.shadowRoot.querySelector('[part="fill"]')
+    const firstFill = slider.shadowRoot.querySelector('[part~="fill-start"]')
     const secondFill = slider.shadowRoot.querySelector('[part~="fill-end"]')
     const thumbs = [...slider.shadowRoot.querySelectorAll('[part~="thumb"]')]
     const rect = element => {
@@ -237,7 +237,7 @@ test('Range thumb crosses the other thumb while a controlled owner echoes change
     slider.removeAttribute('role')
     slider.removeAttribute('tabindex')
     slider.value = [20, 70]
-    slider.addEventListener('input', () => { slider.value = slider.value })
+    slider.addEventListener('input', event => { slider.value = event.detail.value })
   })
   const firstThumb = page.locator('a-slider [part~="thumb-1"]')
   const start = await firstThumb.boundingBox()
@@ -270,11 +270,11 @@ test('Range thumbs have separate keyboard focus and keep DOM order while crossin
     slider.removeAttribute('role')
     slider.removeAttribute('tabindex')
     slider.setAttribute('aria-label', 'Price')
-    slider.value = [20, 70]
+    slider.defaultValue = [20, 70]
   })
   const before = await page.evaluate(() => [...slider.shadowRoot.querySelectorAll('[part~="thumb"]')].map(thumb => ({
     part: thumb.getAttribute('part'), role: thumb.getAttribute('role'), tabIndex: thumb.tabIndex,
-    now: thumb.getAttribute('aria-valuenow'), label: thumb.getAttribute('aria-label'),
+    now: thumb.getAttribute('aria-valuenow'), label: thumb.ariaLabelledByElements.map(el => el.textContent).join(' '),
   })))
   assert.equal(before.length, 2)
   assert.deepEqual(before.map(thumb => thumb.now), ['20', '70'])
@@ -304,10 +304,10 @@ test('Range slider submits both values and resets to its default range', async t
     form.append(slider)
     slider.setAttribute('name', 'price')
     slider.defaultValue = [20, 70]
-    slider.value = [35, 85]
+    slider.setAttribute('value', '35 85')
     const submitted = new FormData(form).getAll('price')
     slider.removeAttribute('value')
-    slider.value = [40, 90]
+    slider.formStateRestoreCallback('40 90')
     form.reset()
     const reset = slider.value
     const resetSubmission = new FormData(form).getAll('price')
@@ -334,10 +334,12 @@ test('Range slider without a default resets to two bounds and keeps range events
     slider.setAttribute('name', 'price')
     slider.setAttribute('min', '10')
     slider.setAttribute('max', '90')
-    slider.removeAttribute('defaultvalue')
-    slider.value = [20, 80]
+    slider.removeAttribute('default-value')
+    slider.setAttribute('default-value', '20 80')
+    slider.removeAttribute('default-value')
+    slider.formStateRestoreCallback('20 80')
     const defaultValue = slider.defaultValue
-    const hasDefaultAttribute = slider.hasAttribute('defaultvalue')
+    const hasDefaultAttribute = slider.hasAttribute('default-value')
     form.reset()
     const thumbs = [...slider.shadowRoot.querySelectorAll('[part~="thumb"]')]
     const reset = {

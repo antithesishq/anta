@@ -26,8 +26,9 @@
     border: none;
     border-radius: var(--tab-radius);
     /* `round` on a lone tab rounds just this tab's box; `<Tabs round>` sets it
-       strip-wide (incl. the sliding indicator) via a-tabs.css. */
-    &[round] { --tab-radius: 999px; }
+       strip-wide (incl. the sliding indicator) via a-tabs.css. Inside a round
+       strip, the tab follows the strip's custom radius. */
+    &[round] { --tab-radius: var(--tabs-round, 999px); }
     /* Inset zero-spread transparent baseline so the selected tab's ring (--tab-selected-shadow,
        inset) animates in (spread 0→0.5px, transparent→color) instead of popping from `none`.
        Inset matches the ring so the transition doesn't flip inset↔outset mid-way. */

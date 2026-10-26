@@ -1,5 +1,5 @@
 import { validate_font } from "./font"
-import type { AxisTemplate, Domain, FontConfig, Margin, PlotArgs, PlotTemplate, RequestedViewportWindow, Series, TitleArg, ViewportRequest, ZoomPan } from "../types"
+import type { AxisTemplate, Domain, FontConfig, Margin, PlotArgs, PlotTemplate, RequestedViewportWindow, TitleArg, ViewportRequest, ZoomPan } from "../types"
 import { build_resolved_axes } from "./axis"
 import { build_resolved_series } from "./build_series"
 import { validate_non_negative, validate_positive } from "./validate"
@@ -16,15 +16,11 @@ export function new_plot_template<TooltipContent = unknown>(args: PlotArgs<Toolt
     validate_dimensions(args)
     const { series, axis } = args
 
-    // Axis resolution and row remapping never inspect host tooltip content. Keep those helpers
-    // non-generic while preserving the caller's tooltip type on the returned template.
-    const structural_series = series as unknown as Series[]
-
     // validate, classify, and resolve both axes end to end
-    const { x_resolved, y_resolved } = build_resolved_axes(structural_series, axis)
+    const { x_resolved, y_resolved } = build_resolved_axes(series, axis)
 
     // resolve series and using translations to map the series categories to the axis' category union if applicable
-    const resolved_series = build_resolved_series(structural_series, x_resolved.translations, y_resolved.translations) as unknown as Series<TooltipContent>[]
+    const resolved_series = build_resolved_series(series, x_resolved.translations, y_resolved.translations)
 
     const title = normalize_title(args.title)
 
@@ -51,24 +47,28 @@ export function new_plot_template<TooltipContent = unknown>(args: PlotArgs<Toolt
 }
 
 /**
- * Resolve the zoom/pan config into its enabled + modifier + per-axis flags. `true` and an absent arg both mean
- * the Ctrl-gated default on both axes; an object tunes the modifier and opts axes out. `enabled` mirrors
+ * Resolve the zoom/pan config into its enabled + per-axis flags. `true` and an absent arg both enable
+ * both axes with fixed gestures; an object opts axes out. `enabled` mirrors
  * "some axis may move", so opting both out is the same as `zoom_pan: false`.
  * @param zoom_pan - the caller's zoom_pan arg
  * @returns the resolved config
  */
-function resolve_zoom_pan(zoom_pan: PlotArgs['zoom_pan']): ZoomPan {
+function resolve_zoom_pan<TooltipContent>(zoom_pan: PlotArgs<TooltipContent>['zoom_pan']): ZoomPan {
     if (zoom_pan === undefined || zoom_pan === true) {
-        return { enabled: true, modifier: true, x: true, y: true }
+        return { enabled: true, x: true, y: true, menu_zoom_step: 2 }
     }
 
     if (zoom_pan === false) {
-        return { enabled: false, modifier: true, x: false, y: false }
+        return { enabled: false, x: false, y: false, menu_zoom_step: 2 }
     }
     const x = zoom_pan.x ?? true
     const y = zoom_pan.y ?? true
 
-    return { enabled: x || y, modifier: zoom_pan.modifier ?? true, x, y }
+    const menu_zoom_step = zoom_pan.menu_zoom_step === undefined ? 2 : zoom_pan.menu_zoom_step
+    if (!Number.isFinite(menu_zoom_step) || menu_zoom_step <= 1) {
+        throw new Error('zoom_pan.menu_zoom_step must be finite and greater than 1')
+    }
+    return { enabled: x || y, x, y, menu_zoom_step }
 }
 
 const KEEP = 'keep' as const // this side was omitted: leave that axis wherever it is
@@ -83,7 +83,7 @@ const UNUSABLE = 'unusable' as const // the data made this side nonsense: warned
  * @param y - the resolved y axis
  * @returns the resolved request, or undefined when the caller passed none
  */
-function resolve_viewport(viewport: PlotArgs['viewport'], x: AxisTemplate, y: AxisTemplate): ViewportRequest | undefined {
+function resolve_viewport<TooltipContent>(viewport: PlotArgs<TooltipContent>['viewport'], x: AxisTemplate, y: AxisTemplate): ViewportRequest | undefined {
     if (viewport === undefined) {
         return undefined
     }

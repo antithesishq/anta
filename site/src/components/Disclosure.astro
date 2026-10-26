@@ -182,9 +182,9 @@ const Heading = `h${level}` as const
 
 <script>
   // Make the disclosure headers behave like anchor-linked headings:
-  // clicking the header link always EXPANDS the section (never toggles
-  // it closed) and deep-links it, and arriving via a `#slug` URL opens
-  // the targeted section. Bundled once per page by Astro regardless of
+  // clicking the header link toggles the section and deep-links it;
+  // arriving via a `#slug` URL opens the targeted section.
+  // Bundled once per page by Astro regardless of
   // how many <Disclosure>s render, so it queries them all.
   // Open every enclosing disclosure so nested headings become visible.
   function openContaining(id: string): Element | null {
@@ -224,9 +224,8 @@ const Heading = `h${level}` as const
     if (id) openContaining(id)
   })
 
-  // Header-link click: own the interaction so the section opens rather than
-  // relying on the native <summary> toggle (which doesn't fire for a nested
-  // link); stopPropagation keeps it from toggling closed. Document-delegated
+  // Header-link click: toggle the section directly because the native
+  // <summary> toggle doesn't fire for a nested link. Document-delegated
   // in the capture phase: this module runs once per session while anchors
   // re-render on every swap, and preventDefault must land before the router's
   // click listener treats the hash link as a navigation.
@@ -238,12 +237,15 @@ const Heading = `h${level}` as const
     e.stopPropagation()
     const headingId = a.closest('[id]')?.id
     if (!headingId) return
-    // Open instantly (`openContaining` adds `.no-anim`) so the layout is
-    // final, update the URL without firing a scroll race, then scroll on
-    // the next frame. Doing this directly (not via `hashchange`) keeps the
-    // smooth scroll from being cancelled by the expand animation.
-    const target = openContaining(headingId)
+    const details = a.closest('details')
     history.replaceState(null, '', '#' + headingId)
+    if (details?.open) {
+      details.open = false
+      return
+    }
+    // Open instantly so the layout is final before scrolling. Updating the
+    // URL through history avoids a hashchange that would reopen a folded section.
+    const target = openContaining(headingId)
     if (target) target.scrollIntoView({ block: 'start' })
   }, true)
 </script>

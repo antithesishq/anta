@@ -16,7 +16,7 @@ type HoverSpans = { band: boolean; value: boolean; value_bounds: HitSpan }
  * @param inner - the plot area, which a value-axis hover span fills
  * @returns the point index under the cursor, or null
  */
-export function bar_hit_test(series: ComposedBar, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale, inner: Rect): number | null {
+export function bar_hit_test<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale, inner: Rect): number | null {
     const axes = bar_axes(series, x_scale, y_scale)
     const value_span = series_value_span(series, axes)
     const hover = hover_spans(series, axes, inner)
@@ -51,7 +51,7 @@ export function bar_hit_test(series: ComposedBar, cursor: { x: number; y: number
  * @param inner - the plot area
  * @returns which axes fill their span, and the value axis' extent
  */
-function hover_spans(series: ComposedBar, axes: BarAxes, inner: Rect): HoverSpans {
+function hover_spans<Row, TooltipContent>(series: ComposedBar<Row, TooltipContent>, axes: BarAxes, inner: Rect): HoverSpans {
     const span_x = series.hover_span_x === true
     const span_y = series.hover_span_y === true
 

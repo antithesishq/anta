@@ -4,8 +4,8 @@ import { resolve_canvas_size, type Dimensions } from '../core/compose/layout'
 import { create_interaction_coordinator } from '../core/interactions/coordinator'
 import { capture_attributes, resolve_capture_configuration, zoom_pan_enabled } from '../core/interactions/zoom_pan'
 import { plot_color_filter } from '../core/presentation/plot'
-import { reset_zoom_presentation } from '../core/presentation/reset_zoom'
 import type { PlotSurfacePresentation, PlotSurfaceMouseInput } from '../core/presentation/surface'
+import { target_axes, type InteractionTarget } from '../core/interactions/target'
 import type { PlotArgs, ViewportChange } from '../core/types'
 
 export type PlotHostOptions<Input> = {
@@ -30,11 +30,14 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
     #last_attempted_args: PlotArgs<Content> | undefined
     #last_update_succeeded = false
     #invalid_size_reported = false
+    #reduced_motion = true
+    #rendered_dimensions: Dimensions | null = null
 
     constructor(private readonly options: PlotHostOptions<Input>) {
         this.interactions = create_interaction_coordinator({
             controller: () => this.controller,
             commit_mode: options.commit_mode,
+            reduced_motion: () => this.#reduced_motion,
             resolve_hover: options.resolve_hover,
             on_viewport_commit: () => {
                 options.viewport_commit?.()
@@ -44,12 +47,13 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
             on_hover_update: options.hover,
             on_hover_clear: options.clear_hover,
             on_pointer_change: options.pointer,
-            on_pan_end: options.schedule,
+            on_drag_end: options.schedule,
         })
     }
 
     /** Capture the inherited family once; later font changes do not invalidate the plot. */
-    update_context(context: Pick<BoxContext, 'mode' | 'devicePixelRatio' | 'font'>): boolean {
+    update_context(context: Pick<BoxContext, 'mode' | 'devicePixelRatio' | 'font'> & Partial<Pick<BoxContext, 'reducedMotion'>>): boolean {
+        this.#reduced_motion = context.reducedMotion ?? true
         const previous = this.environment
         const inherited_font_family = previous?.inherited_font_family ?? context.font.family
         if (previous?.color_theme === context.mode && previous.device_pixel_ratio === context.devicePixelRatio
@@ -66,6 +70,8 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
     update(args: PlotArgs<Content>): boolean {
         // Environment updates cannot repair invalid arguments; retry only when their reference changes.
         if (args === this.#last_attempted_args) return this.#last_update_succeeded
+
+        this.interactions.stop_animation()
 
         this.#last_attempted_args = args
         this.#last_update_succeeded = false
@@ -101,6 +107,10 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
         if (controller === null || this.environment === null) return null
         const dimensions = resolve_canvas_size(controller.template, this.measurement)
         if (dimensions === null) return null
+        if (this.#rendered_dimensions?.width !== dimensions.width || this.#rendered_dimensions.height !== dimensions.height) {
+            this.interactions.stop_animation(true)
+            this.#rendered_dimensions = dimensions
+        }
         if (dimensions.width <= 0 || dimensions.height <= 0) {
             if (!this.#invalid_size_reported) {
                 this.#invalid_size_reported = true
@@ -131,18 +141,22 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
         controller.flush_draw()
         return {
             width: plot.layout.width, height: plot.layout.height, inner: plot.inner,
+            regions: controller.interaction_regions,
+            capture_policy: { plot: this.capture(), x: this.capture('x-axis'), y: this.capture('y-axis') },
             filter: plot_color_filter(controller.template, environment.color_theme),
-            reset: reset_zoom_presentation(controller, plot.inner, environment.color_theme),
+            menu: controller.interactions.menu_state(controller.template.zoom_pan),
         }
     }
 
-    capture() {
+    capture(target: InteractionTarget = 'plot') {
         const controller = this.controller
-        const axes = controller?.template.zoom_pan
+        const axes = controller === null ? { x: false, y: false } : target_axes(target, controller.template.zoom_pan)
         return resolve_capture_configuration(
-            controller !== null && zoom_pan_enabled(controller.template), axes?.modifier ?? true,
-            controller === null || axes === undefined ? 'none' : controller.interactions.wheel_claim(
-                controller.composed_plot, controller.interactions.committed_viewport, axes,
+            controller !== null && zoom_pan_enabled({
+                ...controller.template, zoom_pan: { ...controller.template.zoom_pan, ...axes },
+            }),
+            controller === null ? 'none' : controller.interactions.wheel_claim(
+                controller.composed_plot, controller.interactions.committed_viewport, axes, target,
             ),
         )
     }

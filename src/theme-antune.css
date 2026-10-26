@@ -3,51 +3,6 @@
 
 /* The Antune theme is optional CSS for the Anta design system; if used, load it after tokens and reset. */
 
-@font-face {
-  font-family: "TT Interphases Pro Variable";
-  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-feature-settings: "ss02", "ss05", "tnum";
-  /* Safari otherwise uses the font file's non-zero internal slant default. */
-  font-variation-settings: "slnt" 0;
-  font-display: swap;
-}
-@font-face {
-  font-family: "TT Interphases Pro Variable";
-  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-feature-settings: "ss02", "ss05", "tnum";
-  font-variation-settings: "slnt" 11;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Antithesis Mono";
-  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Upright.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Antithesis Mono";
-  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Italic.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 400 700;
-  font-display: swap;
-}
-
-:root,
-.light {
-  --sans-serif: "TT Interphases Pro Variable", sans-serif;
-  --monospace: "Antithesis Mono", ui-monospace, monospace;
-  /* Safari leaves this font at its non-zero internal slant default unless the
-     axis is pinned on rendered content; the @font-face descriptor is not enough. */
-  font-variation-settings: "slnt" 0;
-}
-
 /* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
 :root,
 .light {
@@ -302,13 +257,6 @@
 
 @layer anta.theme {
 /* Typography --------------------------------------------------------------- */
-:is(address, cite, em, i, var, dt) {
-  font-variation-settings: "slnt" 11;
-  font-synthesis: none;
-}
-dfn {
-  font-variation-settings: "slnt" 0;
-}
 a-button,
 a[role="button"][data-anta],
 button[data-anta],
@@ -336,11 +284,9 @@ a-input {
   --_input-adornment-font-stretch: 88%;
 }
 a-tag {
-  font-feature-settings: 'tnum' 1, 'ss05' 1, 'lnum', 'ss01', 'ss04', 'case', 'calt';
   letter-spacing: 0.02ch;
 }
 a-tag[allcaps] {
-  font-feature-settings: 'tnum' 1, 'ss05' 1, 'ss01', 'case', 'calt';
   letter-spacing: 0.08ch;
 }
 
@@ -656,7 +602,7 @@ a-tag[tone="neutral"] {
   --tag-tint: light-dark(#44374b, #e4d1ef);
   --tag-bg-solid: light-dark(#776e77, #635b65);
   --tag-edge: var(--tag-tint);
-  --tag-bg: light-dark(color-mix(in oklch, var(--tag-tint) 7%, transparent), color-mix(in oklch, var(--tag-tint) 12%, transparent));
+  --tag-bg-secondary: light-dark(color-mix(in oklch, var(--tag-tint) 7%, transparent), color-mix(in oklch, var(--tag-tint) 12%, transparent));
   --tag-border: color-mix(in oklch, var(--tag-tint) 15%, transparent);
 }
 a-tag[tone="brand"] {
@@ -689,16 +635,16 @@ a-tag[tone="neutral"][priority="tertiary"] {
   --tag-border: color-mix(in oklch, var(--tag-edge) 25%, transparent);
 }
 
-/* Keep the neutral reference fills off toned strips and selected per-tab tones. */
-a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]):not(
-  :has(> a-tab[tone]:state(selected):not([tone=""], [tone="neutral"]))
-) {
+/* The track follows the strip's tone regardless of its selected option. */
+a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]) {
   --tabs-track-bg: light-dark(
     oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.06),
     color-mix(in oklch, #e4d1ef 7%, transparent)
   );
-  --tab-secondary-bg: light-dark(
-    oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.03),
+}
+a-tabs {
+  --tab-secondary-neutral-bg: light-dark(
+    oklch(from var(--anta-seed-neutral) 0.55 0.008 h / 0.03),
     color-mix(in oklch, #e4d1ef 8%, transparent)
   );
 }

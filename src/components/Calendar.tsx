@@ -1,4 +1,5 @@
 import cn from "clsx"
+import { useNativeEventProps } from "../native-event-props"
 import { Temporal } from "temporal-polyfill"
 import { useMemo, useState } from "../jsx-runtime"
 import { nativeStateChange } from "../anta_helpers"
@@ -24,10 +25,12 @@ export interface CalendarChangeAttrs {
 export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> {
   /** Controlled selected date — ISO `YYYY-MM-DD`. When provided, the application
    *  controls selection: the grid follows this prop and a pick only *requests* a change via
-   *  `onStateChange`. Leave undefined for uncontrolled. */
-  value?: string
-  /** Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`). */
-  defaultValue?: string
+   *  `onStateChange`. Use `null` for a controlled empty selection or leave
+   *  undefined for uncontrolled. An empty string also clears selection. */
+  value?: string | null
+  /** Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`), or
+   *  `null` to start without a selection. Also supplies the form-reset baseline. */
+  defaultValue?: string | null
   /** Earliest selectable date (ISO `YYYY-MM-DD`) — earlier days render disabled. */
   min?: string
   /** Latest selectable date (ISO `YYYY-MM-DD`) — later days render disabled. */
@@ -109,22 +112,22 @@ export const Calendar = ({
   ...rest
 }: CalendarProps) => {
   const controlled = value !== undefined
+  const selectionInput = (controlled ? value : defaultValue) ?? ""
   const resolvedLocale =
     locale || (typeof navigator !== "undefined" ? navigator.language : "en-US")
   const minD = parseISODate(min)
   const maxD = parseISODate(max)
   const today = Temporal.Now.plainDateISO()
 
-  // Uncontrolled selection lives here so the wrapper can render the `selected`
-  // Button; controlled selection comes from `value`.
+  // Keep the selection mirror when controlled state is removed.
   const [internalSelected, setInternalSelected] = useState<Temporal.PlainDate | null>(() =>
-    parseISODate(defaultValue),
+    parseISODate(selectionInput),
   )
-  const selected = controlled ? parseISODate(value) : internalSelected
+  const selected = controlled ? parseISODate(selectionInput) : internalSelected
 
   // The cursor anchors the displayed month and the roving focus.
   const [cursor, setCursor] = useState<Temporal.PlainDate>(() =>
-    clampDate(parseISODate(value ?? defaultValue) ?? today, minD, maxD),
+    clampDate(parseISODate(selectionInput) ?? today, minD, maxD),
   )
   // A controlled `value` change moves the visible month to it (adjust-state-during-
   // render, guarded so it fires only on a real value change — an unrelated re-render,
@@ -140,6 +143,7 @@ export const Calendar = ({
   if (value !== lastSyncedValue) {
     setLastSyncedValue(value)
     const d = parseISODate(value)
+    if (controlled) setInternalSelected(d)
     if (d) {
       effectiveCursor = clampDate(d, minD, maxD)
       setCursor(effectiveCursor)
@@ -166,11 +170,9 @@ export const Calendar = ({
     if (focusSignal !== undefined) setFocusReq({ iso: cursorIso, n: focusSignal })
   }
 
-  // Years for the heading menu — spanning min..max, defaulting to today ±3 years
-  // when unbounded (a short list that fits without scrolling; a bound `min`/`max`
-  // widens or narrows it). Each year is a submenu of its twelve months.
-  const minYear = minD ? minD.year : today.year - 3
-  const maxYear = maxD ? maxD.year : today.year + 3
+  // Unbounded sides follow the displayed year; explicit bounds define the range.
+  const minYear = minD ? minD.year : Math.min(effectiveCursor.year - 3, maxD?.year ?? Infinity)
+  const maxYear = maxD ? maxD.year : Math.max(effectiveCursor.year + 3, minD?.year ?? -Infinity)
   const years: number[] = []
   for (let y = minYear; y <= maxYear; y++) years.push(y)
 
@@ -214,7 +216,7 @@ export const Calendar = ({
     // dot, matching the active-year marker) and disables months outside `min`…`max`.
     const monthItem = (y: number, i: number) => {
       const m = i + 1
-      const isCurrent = y === cursor.year && m === cursor.month
+      const isCurrent = y === effectiveCursor.year && m === effectiveCursor.month
       return (
         <MenuItem
           key={`${y}-${m}`}
@@ -234,13 +236,13 @@ export const Calendar = ({
     return years.length === 1
       ? monthNames.map((_, i) => monthItem(years[0], i))
       : years.map((y) => (
-          <MenuItem key={y} submenu label={String(y)} selected={y === cursor.year}>
-            {y === cursor.year && <span className="jump-dot" aria-hidden="true" />}
+          <MenuItem key={y} submenu label={String(y)} selected={y === effectiveCursor.year}>
+            {y === effectiveCursor.year && <span className="jump-dot" aria-hidden="true" />}
             <Menu>{monthNames.map((_, i) => monthItem(y, i))}</Menu>
           </MenuItem>
         ))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monthNames, cursor.year, cursor.month, minYear, maxYear, min, max, disabled])
+  }, [monthNames, effectiveCursor.year, effectiveCursor.month, minYear, maxYear, min, max, disabled])
 
   // The `<a-calendar>` element is the interaction authority: it dispatches
   // `statechange` (picks + reset/restore) and `change`. We forward both to the
@@ -283,6 +285,8 @@ export const Calendar = ({
   const nextDisabled =
     disabled ||
     (maxD != null && Temporal.PlainDate.compare(cursor.with({ day: 1 }).add({ months: 1 }), maxD) > 0)
+
+  const events = useNativeEventProps({ onstatechange: onElementStateChange, onchange: onElementChange, onnavigate: onNavigate })
 
   return (
     <div
@@ -335,15 +339,11 @@ export const Calendar = ({
         role="group"
         aria-label={ariaLabel ?? month.heading}
         name={name}
-        // Controlled → drive the element's `value` (and it only *requests* picks);
-        // uncontrolled → seed `defaultvalue` and let the element own selection.
-        value={controlled ? value : undefined}
-        defaultvalue={!controlled ? defaultValue : undefined}
+        state={controlled ? selectionInput : undefined}
+        default-state={!controlled ? defaultValue ?? undefined : undefined}
         disabled={disabled ? "" : undefined}
         data-focus={focusReq ? `${focusReq.iso}#${focusReq.n}` : undefined}
-        onstatechange={onElementStateChange}
-        onchange={onElementChange}
-        onnavigate={onNavigate}
+        {...events}
       >
         {/* A flat 7-column grid: seven weekday headers (decorative — each day
             button names its own weekday), then the day cells as direct children. */}

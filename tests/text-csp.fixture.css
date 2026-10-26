@@ -1,0 +1,6 @@
+body { margin: 20px; }
+a-text { width: 200px; }
+a-text.wide { width: 1200px; }
+a-text[truncate="3"] { --line-clamp: 3; }
+a-text.override > a-text-content { color: red; }
+a-text.override > a-button::before { border-width: 0 2px 2px 0; }

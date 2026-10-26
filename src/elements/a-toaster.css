@@ -2,20 +2,76 @@
 @layer anta.reset, anta.components, anta.theme;
 
 @layer anta.components {
-  /* Tokens live on the host and inherit across the shadow boundary into the
-     region + zones. --toaster-inset is the gap from the viewport edge,
-     --toaster-gap the space between stacked toasts, --toaster-width the column
-     width (clamped to the viewport in the shadow). */
   a-toaster {
     --toaster-inset: 16px;
     --toaster-gap: 12px;
     --toaster-width: 380px;
+
+    display: contents;
   }
 
-  /* Before upgrade the host is an unknown inline element; its slotted toast
-     children would flash in normal page flow. Hide until defined — once defined
-     the shadow's :host { display: contents } governs. */
   a-toaster:not(:defined) {
     display: none;
+  }
+
+  a-toaster::part(region) {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+    pointer-events: none;
+    width: auto;
+    height: auto;
+  }
+
+  /* Keep the native closed-popover display rule in control when empty. */
+  a-toaster::part(region):popover-open {
+    display: block;
+  }
+
+  a-toaster::part(zone) {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: var(--toaster-gap, 12px);
+    width: min(var(--toaster-width, 380px), calc(100vw - 2 * var(--toaster-inset, 16px)));
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+
+  a-toaster > :is([slot="top-left"], [slot="top-center"], [slot="top-right"], [slot="bottom-left"], [slot="bottom-center"], [slot="bottom-right"]) {
+    pointer-events: auto;
+  }
+
+  a-toaster::part(top-left),
+  a-toaster::part(top-center),
+  a-toaster::part(top-right) {
+    top: var(--toaster-inset, 16px);
+    flex-direction: column-reverse;
+  }
+
+  a-toaster::part(bottom-left),
+  a-toaster::part(bottom-center),
+  a-toaster::part(bottom-right) {
+    bottom: var(--toaster-inset, 16px);
+  }
+
+  a-toaster::part(top-left),
+  a-toaster::part(bottom-left) {
+    left: var(--toaster-inset, 16px);
+  }
+
+  a-toaster::part(top-right),
+  a-toaster::part(bottom-right) {
+    right: var(--toaster-inset, 16px);
+  }
+
+  a-toaster::part(top-center),
+  a-toaster::part(bottom-center) {
+    left: 50%;
+    transform: translateX(-50%);
   }
 }

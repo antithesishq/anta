@@ -1,49 +1,46 @@
 # InputDate
 
-**`InputDate`** is a date field that replaces the native `type="date"` (and, with
-`time`, `type="datetime-local"`): a text field you can type into, backed by a
-`Calendar` that opens when you click the field (or press ↓), marked by a
-leading calendar icon. `Calendar`, the month grid it builds on, is documented lower
-down.
+Use InputDate to enter a date by typing or choosing a day from a calendar.
+Add `time` when the task also needs a time of day. Use [Calendar](#calendar)
+directly when the month grid should stay visible without a field.
 
-The field accepts free text and resolves it on commit (blur / Enter): a lenient
-parser reads the locale's order (`06/07/2026` is June 7 in en-US, July 6 in de-DE),
-month names, and run-together digits, then rewrites the entry to the canonical
-format. An unrecognized entry marks the field until you fix it. The value is an ISO
-`YYYY-MM-DD` string, never a `Date`; it works controlled (`value` + `onValueChange`)
-or uncontrolled (`defaultValue`), and submits under `name`.
+Render InputDate and Calendar only on the client. Their current date and locale
+can differ between server and browser rendering. In Astro, use `client:only`.
+See [Server and worker rendering](../install-config.md#server-and-worker-rendering) for
+setup guidance.
 
 ## The date field
 
-Type a date and it resolves on blur or Enter, or click the field to open
-the calendar and pick a day. Either way the field settles on the locale's canonical
-format and the value is ISO `YYYY-MM-DD`. A click keeps focus in the field, so you
-can keep typing or click a day; ↓ opens the calendar and moves focus into
-the grid, and Esc closes it back to the field. While you type, the calendar
-previews the entry — it jumps to that month and highlights the day — and commits it on
-Enter (which also closes the calendar); an unrecognized entry keeps the
-calendar open and marks the field.
+Enter a date and press Enter or leave the field to confirm it.
+InputDate accepts the locale's date order, month names, and dates without
+separators, then formats the result. An unrecognized entry stays visible and
+marks the field invalid so it can be corrected.
+
+Select the field to open its calendar while keeping focus in the text.
+Press ↓ to open the calendar and focus a day. Press Esc
+to close it and return focus to the field. While you type, the calendar previews
+recognized dates. Pressing Enter confirms the date and closes the
+calendar. An unrecognized entry keeps the calendar open.
 
 ```tsx
 <InputDate label="Due date" defaultValue="2026-06-15" onValueChange={(v) => save(v)} />
 ```
 
-The placeholder shows the locale's format, and parsing follows the same order, so
-`de-DE` reads and writes `TT.MM.JJJJ` while `en-US` uses `MM/DD/YYYY`. `min` / `max`
-bound both the calendar and what a typed date will accept.
+Set `locale` to choose the date format. For example, `06/07/2026` means June 7
+in `en-US` and July 6 in `de-DE`. The placeholder shows the expected format.
+Use `min` and `max` to limit both typed dates and calendar choices.
 
 ```tsx
 <InputDate label="US English" locale="en-US" defaultValue="2026-06-15" />
 <InputDate label="German" locale="de-DE" defaultValue="2026-06-15" />
 ```
 
-`time` turns it into a date-time field (value `YYYY-MM-DDTHH:mm`). The menu grows a
-time row under the calendar: an [`InputTime`](./input-time.md) (segmented hour / minute,
-plus AM/PM in 12-hour locales) and a confirm (✓) button. Picking a day keeps the menu
-open so you can set the time. The clock follows the locale (`en-US` is 12-hour, most
-others 24), overridable with `hour12`. The field parses a trailing time after a space
-(`06/15/2026 2:30pm` or `… 14:30`), and typing a 24-hour hour into the 12-hour time
-field converts it (18 → 6 PM).
+Pass `time` to add a time field and confirmation button to the calendar.
+Choosing a day keeps the calendar open so the time can be entered before
+confirming. The clock follows the locale. Use `hour12` to override it.
+
+You can also type a date and time together, such as `06/15/2026 2:30pm` or
+`06/15/2026 14:30`. In a 12-hour time field, entering `18` converts to `6 PM`.
 
 ```tsx
 {/* `size` scales the calendar, the time inputs, the AM/PM toggle, and the buttons together. */}
@@ -52,12 +49,29 @@ field converts it (18 → 6 PM).
 <InputDate size="large" label="Large" time defaultValue="2026-06-15T09:00" />
 ```
 
+### Manage the value
+
+Use `defaultValue` for an initial date, or pair `value` with `onValueChange`
+to control it. InputDate reports an ISO string: `YYYY-MM-DD`, or
+`YYYY-MM-DDTHH:mm` with `time`. An empty field reports `''`. Add `name` to
+submit that value with a form.
+
+Omit `value` or pass `undefined` to release control and retain the latest date.
+Form reset and browser restoration preserve a controlled value. An uncontrolled
+reset restores `defaultValue`, including its time when `time` is enabled.
+
+```tsx
+const [date, setDate] = useState('2026-06-15')
+
+<InputDate label="Due date" name="due-date" value={date} onValueChange={setDate} />
+```
+
 ## InputDate props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `clearable?` | boolean | — | Show a clear button once the field has a value. |
-| `defaultValue?` | string | — | Initial value for the uncontrolled case. |
+| `defaultValue?` | string | — | Initial uncontrolled value and form-reset baseline, including time. |
 | `disabled?` | boolean | — | Disable the field and the calendar. |
 | `hint?` | ReactNode | — | Helper text under the field. Replaced by a format hint while the entry is unrecognized. |
 | `hour12?` | boolean | — | Force the time cycle when `time` is on: `true` for 12-hour (AM/PM), `false` for 24-hour. Omit to follow the locale (`en-US` → 12-hour, most others → 24). |
@@ -75,43 +89,31 @@ field converts it (18 → 6 PM).
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. Also sizes the calendar and the time row. |
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | neutral | Validation/feedback tone. An unrecognized entry forces `critical` until fixed. |
 | `time?` | boolean | — | Include a time. The value becomes ISO `YYYY-MM-DDTHH:mm`, the field parses a trailing time after a space (`06/15/2026 14:30`, `… 2:30pm`), and the menu shows a time row (hours : minutes, an AM/PM toggle in 12-hour locales, then a Done button) under the calendar. Picking a day keeps the menu open so you can set the time. |
-| `value?` | string | — | Controlled value — ISO `YYYY-MM-DD` (or `YYYY-MM-DDTHH:mm` with `time`), `''` for empty. Pair with `onValueChange`; the field and calendar follow it and a pick only *requests* a change. |
+| `value?` | string | — | Controlled value — ISO `YYYY-MM-DD` (or `YYYY-MM-DDTHH:mm` with `time`), `''` for empty. Pair with `onValueChange`; the field and calendar follow it and a pick only *requests* a change. Releasing control retains the latest date. Form reset and restoration preserve a controlled value. |
 
 ## Calendar
 
-The sections below document `Calendar`, the month grid `InputDate` opens. Reach for
-it directly when you want the grid inline, without a field.
+Use Calendar for an inline date picker, such as a booking form with a month
+always in view. It provides day selection, month navigation, keyboard access,
+and form submission.
 
-`Calendar` uses Anta components in light DOM; it has no hidden shadow-root UI.
-The day cells and previous/next chevrons are `<Button>`s inside a
-form-associated `<a-calendar>` grid. Date calculations use the
-[Temporal API](https://tc39.es/proposal-temporal/docs/) through
-`temporal-polyfill`.
-
-For a raw grid, import `buildMonth` from `@antadesign/anta`. It returns
-localized weekday headers and day records with ISO values, accessible labels,
-and selected, disabled, today, and outside-month state. It does not manage
-navigation, roving focus, selection, or rendering. The value is an ISO
-`YYYY-MM-DD` string, never a `Date`. Use `value` with `onStateChange` to
-control it, or `defaultValue` for uncontrolled use. It participates in forms
-under `name`.
-
-**Not SSR-safe.** `Calendar` (and `InputDate`, which embeds it) reads the current
-date (`Temporal.Now`) and locale (`navigator.language`) at render, so a server
-render disagrees with the client on the highlighted "today" and on localized
-labels, and the page hydrates with a mismatch. Render it client-side only: Astro
-`client:only`, or a dynamic import inside `useEffect`. Every demo on this page uses
-`client:only` for that reason.
+Like InputDate, Calendar must render only on the client. The examples use
+Astro's `client:only` directive.
 
 ## Selecting a date
 
-Click a day, or focus the grid and press Enter / Space. The
-selected day takes the tertiary-button selected look toned brand — a brand-tinted
-filled cell with a ring. Today shows as a secondary Button, a resting fill.
+Select a day, or focus it and press Enter or Space.
+The selected day has a brand-colored fill and ring. Today's date has a subtle
+fill when it is not selected.
 
 ```tsx
 <Calendar defaultValue="2026-06-12" />
 ```
+
+Use `value={null}` to keep Calendar controlled with no date selected, or
+`defaultValue={null}` to start empty and let Calendar own selection. An empty
+string also clears selection. Omit `value` or pass `undefined` to release control
+while retaining the last applied date.
 
 ## Size
 
@@ -160,9 +162,8 @@ button are disabled, and only the in-range days stay selectable.
 
 ## Locale
 
-`Calendar` respects the browser locale by default (`navigator.language`). Pass a
-BCP-47 `locale` to override it: the first day of week comes from the locale's week
-info (never hard-coded to Sunday), and the weekday and month names are localized.
+Calendar uses the browser's locale by default. Pass a locale tag such as
+`en-US`, `fr-FR`, or `ja-JP` to choose the language and first day of the week.
 
 ```tsx
 <Calendar defaultValue="2026-06-28" locale="en-US" />  {/* week starts Sunday */}
@@ -200,9 +201,9 @@ vetoes it (uncontrolled). A controlled calendar with no `onStateChange` is read-
 
 ## Forms
 
-`Calendar` is form-associated. Give it a `name` and it submits the selected ISO
-date under that key, resets to `defaultValue` on form reset, and reports through
-the standard constraint-validation pipeline.
+Add `name` to submit the selected ISO date with a form. An uncontrolled Calendar
+returns to `defaultValue` on form reset. For a controlled Calendar, handle the
+reset request in `onStateChange` and update `value` as needed.
 
 ```tsx
 <form>
@@ -212,19 +213,13 @@ the standard constraint-validation pipeline.
 
 ## Accessibility
 
-The focused Input field is associated directly with its Calendar dialog through
-ARIA element reflection. The relationship does not require a generated popup ID,
-so separate application roots can render InputDate instances without ID
-collisions. An explicitly authored relationship on a raw Anta Input takes
-precedence.
+InputDate identifies its calendar as a dialog associated with the field.
+Opening it with ↓ moves focus into the calendar. Closing it with
+Esc returns focus to the field.
 
-The calendar is a labelled **group** of day buttons, a flat grid rather than a
-nested `grid`/`row`/`gridcell` tree. The visible month names the group directly.
-Each day is a `<button>` whose `aria-label` is its full date
-including weekday ("Sunday, June 28, 2026"), with `aria-pressed` on the selected day
-and `aria-current="date"` on today. The decorative weekday headers are `aria-hidden`,
-since each day already names its weekday. A roving `tabindex` keeps a single tab
-stop, and an `aria-live` region announces the month when it changes.
+Calendar announces the displayed month and gives each day its full date,
+including the weekday. Screen readers can identify the selected day and today's
+date. The day grid has one Tab stop, and changing months announces the new month.
 
 | Key | Moves focus |
 |---|---|
@@ -237,53 +232,38 @@ stop, and an `aria-live` region announces the month when it changes.
 
 ## Customization
 
-`InputDate` uses Input, Menu, and Calendar. Calendar uses an `<a-calendar>`
-element for the day grid and a JSX wrapper for navigation. The sections below
-describe which layer provides each behavior and how to recreate the interface
-without React.
+Use the InputDate and Calendar wrappers for the complete date-entry interface.
+For custom calendar rendering, `buildMonth` supplies localized weekday headers
+and day records with ISO values, accessible labels, and selection and range
+states. Your application supplies rendering and navigation.
 
 ### Build it from elements
 
-`InputDate` has no `a-inputdate` element. Its wrapper renders an editable
-`<Input>` and a `<Menu>` containing a `<Calendar>`. When `time` is set, the
-hour/minute fields and AM/PM `Tabs` appear below the grid. The wrapper manages
-draft text, parsing on commit, and the ISO value.
+InputDate combines Input, Menu, and Calendar. There is no separate InputDate host
+element. Recreating it requires text parsing, date formatting, popup behavior,
+and focus management. For a form that can use the browser's picker, consider
+[Native HTML date input](#native-html-date-input).
 
-Clicking the field opens the menu while keeping focus in the field. Pressing
-↓ opens the menu and moves focus to the grid. The wrapper passes a
-`focusSignal` to Calendar, which renders `data-focus`; `<a-calendar>` then
-focuses the active day. Calendar and Tabs emit their own `statechange` events,
-but Menu responds only to changes in its own open state.
+For a custom month grid, use `<a-calendar>` with day buttons marked
+`data-part="day-cell"` and `data-date="YYYY-MM-DD"`. It provides keyboard
+navigation, selection requests, and form submission. Render the surrounding
+month controls yourself and handle `navigate` when focus moves to another date.
 
-The `<a-calendar>` element provides grid behavior. It connects the supplied day
-`<button>`s to click and keyboard navigation, including arrows, Home,
-End, PageUp, and PageDown. It stores the form
-value through `ElementInternals` and emits `statechange` / `change` on selection
-and `navigate` when keyboard navigation leaves the displayed month. It is
-framework-agnostic and does not track a current month, `min`, or `max`.
+`buildMonth` returns the month heading, weekdays, and day records. Pass `min`
+and `max` to it when building a bounded grid, render out-of-range dates with
+`disabled`, and limit your month controls to that range.
 
-The JSX wrapper renders the controls above the grid as siblings of
-`<a-calendar>`. The previous/next arrows are `<Button>`s. The month/year picker
-is a `<Button>` that opens a `<Menu>` of year `MenuItem`s, each with a month
-submenu. The wrapper stores the displayed-month cursor in state and derives day
-cells and the arrows' `disabled` states from `min` and `max`. A click on an
-arrow, a menu selection, or a `navigate` event updates the cursor and re-renders
-the grid. The wrapper enforces the range. The element only ignores a day that
-was rendered with `disabled`.
-
-The element has no `min` or `max` because the wrapper provides the surrounding
-controls. Without React, render the grid with `buildMonth` and add the
-navigation behavior shown below:
+This example supplies previous and next month controls and a controlled
+selection:
 
 ```html
 <!-- `.calendar` scopes this example. Use an application selector instead. -->
 <div class="calendar" style="display: inline-flex; flex-direction: column; gap: 6px">
   <div style="display: flex; align-items: center">
-    <a-button priority="tertiary" data-prev aria-label="Previous month"><a-icon shape="chevron-left"></a-icon></a-button>
-    <a-button priority="tertiary" data-heading style="flex: 1; justify-content: center" aria-haspopup="menu"></a-button>
-    <a-button priority="tertiary" data-next aria-label="Next month"><a-icon shape="chevron-right"></a-icon></a-button>
+    <a-button role="button" tabindex="0" priority="tertiary" data-prev aria-label="Previous month"><a-icon shape="chevron-left" aria-hidden="true"></a-icon></a-button>
+    <span data-heading style="flex: 1; text-align: center"></span>
+    <a-button role="button" tabindex="0" priority="tertiary" data-next aria-label="Next month"><a-icon shape="chevron-right" aria-hidden="true"></a-icon></a-button>
   </div>
-  <!-- The element provides selection, keyboard behavior, form value, and events. -->
   <a-calendar role="group" name="date"></a-calendar>
 </div>
 <script type="module">
@@ -295,47 +275,117 @@ navigation behavior shown below:
   const grid = root.querySelector('a-calendar')
   const heading = root.querySelector('[data-heading]')
   let cursor = Temporal.Now.plainDateISO()
+  grid.setAttribute('state', cursor.toString())
+
+  function focusDate(iso) {
+    grid.querySelector(`[data-date="${iso}"]`)?.focus()
+  }
 
   function render() {
-    const m = buildMonth({ anchor: cursor, locale: navigator.language })
-    heading.textContent = m.heading
+    const month = buildMonth({
+      anchor: cursor,
+      locale: navigator.language,
+      selected: parseISODate(grid.value),
+    })
+    heading.textContent = month.heading
+    grid.setAttribute('aria-label', month.heading)
     grid.replaceChildren()
-    for (const w of m.weekdays) {
-      const s = Object.assign(document.createElement('span'), { textContent: w.narrow })
-      s.setAttribute('data-part', 'weekday')
-      s.setAttribute('aria-hidden', 'true')
-      grid.append(s)
+    for (const weekday of month.weekdays) {
+      const label = Object.assign(document.createElement('span'), { textContent: weekday.narrow })
+      label.setAttribute('data-part', 'weekday')
+      label.setAttribute('aria-hidden', 'true')
+      grid.append(label)
     }
-    for (const d of m.weeks.flat()) {
-      const b = Object.assign(document.createElement('a-button'), { textContent: String(d.day) })
-      b.setAttribute('priority', 'tertiary')
-      b.setAttribute('data-part', 'day-cell')
-      b.setAttribute('data-date', d.iso)      // the element keys off this
-      b.tabIndex = d.iso === cursor.toString() ? 0 : -1
-      if (d.selected) b.setAttribute('selected', '')
-      if (d.disabled) b.setAttribute('disabled', '')
-      grid.append(b)
+    for (const day of month.weeks.flat()) {
+      const button = document.createElement('a-button')
+      const label = Object.assign(document.createElement('a-button-label'), { textContent: String(day.day) })
+      button.append(label)
+      button.setAttribute('role', 'button')
+      button.setAttribute('priority', day.today && !day.selected ? 'secondary' : 'tertiary')
+      button.setAttribute('data-part', 'day-cell')
+      button.setAttribute('data-date', day.iso)
+      button.setAttribute('aria-label', day.label)
+      button.setAttribute('aria-pressed', String(day.selected))
+      button.tabIndex = day.iso === cursor.toString() ? 0 : -1
+      if (day.selected) {
+        button.setAttribute('selected', '')
+        button.setAttribute('tone', 'brand')
+      }
+      if (day.disabled) button.setAttribute('disabled', '')
+      if (day.today) {
+        button.setAttribute('data-today', '')
+        button.setAttribute('aria-current', 'date')
+      }
+      if (day.outside) button.setAttribute('data-outside', '')
+      grid.append(button)
     }
   }
 
-  root.querySelector('[data-prev]').addEventListener('click', () => { cursor = cursor.subtract({ months: 1 }); render() })
-  root.querySelector('[data-next]').addEventListener('click', () => { cursor = cursor.add({ months: 1 }); render() })
-  // Keyboard paging past the rendered grid: the element asks for a month flip.
-  grid.addEventListener('navigate', (e) => { cursor = parseISODate(e.detail.date) ?? cursor; render() })
+  root.querySelector('[data-prev]').addEventListener('click', () => {
+    cursor = cursor.subtract({ months: 1 })
+    render()
+  })
+  root.querySelector('[data-next]').addEventListener('click', () => {
+    cursor = cursor.add({ months: 1 })
+    render()
+  })
+  grid.addEventListener('statechange', (event) => {
+    grid.setAttribute('state', event.detail.next ?? '')
+    cursor = parseISODate(grid.value) ?? cursor
+    render()
+    focusDate(cursor.toString())
+  })
+  grid.addEventListener('navigate', (event) => {
+    cursor = parseISODate(event.detail.date) ?? cursor
+    render()
+    focusDate(cursor.toString())
+  })
   render()
 </script>
 ```
 
-Tracking the cursor, painting the grid from `buildMonth`, and re-rendering on
-`navigate` is what the React `Calendar` packages, plus the year/month jump menu,
-which uses the same `Menu` composition shown on the [Menu](./menu.md) page.
+Use the Calendar wrapper when you also need its year/month jump menu and
+range-aware controls.
+
+### Raw Calendar value and form API
+
+Use `state` for controlled selection or `default-state` for an uncontrolled
+initial and reset date. The read-only `.value` property returns the applied ISO
+date, or `null` when empty. Read the reset date with
+`getAttribute('default-state')`.
+
+Changing `default-state` after connection updates the next reset's date only.
+It does not change the current selection, even before the first interaction.
+Use `state` to change the selected date after mounting.
+
+An empty `state=""` keeps the calendar controlled and empty. Remove `state` to
+release control while retaining the applied date. Uncontrolled picks, reset, and
+restoration leave those input attributes unchanged.
+
+Accept controlled picks from `statechange` by updating `state`. `change` reports
+applied selection. `navigate` requests a new focus date. The application renders
+the requested month and focuses that day. Author the month label and each day
+button's accessible name. Calendar does not generate those labels.
+
+When migrating raw Calendar code, replace `value` / `defaultvalue` attributes
+with `state` / `default-state`. Replace assignments to `.value` with
+`setAttribute('state', date)` and assignments to `.defaultValue` with
+`setAttribute('default-state', date)`. Remove `state` to release control.
+The old HTML attributes have no effect on selection. Writing `.value`, including
+through a raw React 19 `value` prop, can throw because the property is read-only.
+Legacy `.value` and `.defaultValue` properties assigned before registration are
+discarded during upgrade. The `.defaultValue` property is no longer provided.
+
+Public `Calendar` and `InputDate` JSX props remain `value` and `defaultValue`.
+For raw React or Preact markup, bind `state` directly; omitting it or setting it
+to `undefined` releases control.
 
 ## Calendar props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `aria-label?` | string | — | Accessible name for the grid (defaults to the visible month heading). |
-| `defaultValue?` | string | — | Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`). |
+| `defaultValue?` | string \| null | — | Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`), or `null` to start without a selection. Also supplies the form-reset baseline. |
 | `disabled?` | boolean | — | Disable the whole calendar (not focusable or selectable). |
 | `focusSignal?` | number | — | Move keyboard focus onto the active day. Change this to a new value (e.g. increment a counter) to focus the cursor cell — `InputDate` bumps it when the calendar is opened from the field by keyboard (ArrowDown), so focus lands in the grid. The initial value never focuses; only a change does. |
 | `locale?` | string | navigator.language | BCP-47 locale tag driving first-day-of-week, weekday, and month names. |
@@ -346,15 +396,12 @@ which uses the same `Menu` composition shown on the [Menu](./menu.md) page.
 | `onStateChange?` | (event, detail) => void | — | Fired whenever the selection changes — event-first. `detail` is `{ next, prev, reason }`: `next` / `prev` are ISO date strings (`null` = none); `reason` is `'user'` \| `'reset'` \| `'restore'`. A `'user'` pick fires *before* applying and is **cancelable** — `event.preventDefault()` vetoes it (uncontrolled), or in controlled mode answer by updating `value`. `'reset'` / `'restore'` are not cancelable. |
 | `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value, name }` snapshot as the second argument, matching `Input`. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size of the whole calendar — scales the day cells, the chevrons, and the weekday / month-heading type together (uses Button's `small` / `medium` / `large` scale). |
-| `value?` | string | — | Controlled selected date — ISO `YYYY-MM-DD`. When provided, the application controls selection: the grid follows this prop and a pick only *requests* a change via `onStateChange`. Leave undefined for uncontrolled. |
+| `value?` | string \| null | — | Controlled selected date — ISO `YYYY-MM-DD`. When provided, the application controls selection: the grid follows this prop and a pick only *requests* a change via `onStateChange`. Use `null` for a controlled empty selection or leave undefined for uncontrolled. An empty string also clears selection. |
 
 ## Web Component
 
-`InputDate` has no host element. Rebuilding its text parsing, dropdown calendar,
-localized day grid, month navigation, keyboard navigation, and focus management
-in vanilla JavaScript is significant work, even with Anta's `buildMonth` and
-`parseISODate` helpers. Use the `InputDate` wrapper when React or Preact is an
-option. Otherwise, a native HTML date input is the practical baseline.
+Use a native date input when the browser's picker fits your form. To build a
+custom picker without JSX, see [Build it from elements](#build-it-from-elements).
 
 ### Native HTML date input
 
@@ -377,12 +424,12 @@ field treatments.
 
 ## Styling
 
-The calendar is **light DOM**, so everything is plain CSS, with no shadow parts or
-hidden internals. The days and chevrons are real `<a-button>`s, so their colors,
-hover, focus ring, and selected look come from the Button styles and theme
-themselves; they sit inside the `<a-calendar>` grid, and the switcher header sits in
-the `.anta-calendar` shell. An un-layered consumer rule beats `@layer anta` without
-`!important`. The class below is for the demo.
+Use ordinary CSS to style the calendar and its day buttons. `className` applies
+to the outer `.anta-calendar` container. Unlayered consumer rules override Anta's
+defaults. Replace the example classes with your own selectors.
+
+Set `--calendar-cell-width` and `--calendar-cell-height` to make day targets
+larger, then use `border-radius` to shape them:
 
 ```css
 /* Bigger, circular day cells. `className` lands on the outer .anta-calendar
@@ -413,5 +460,5 @@ brand dot and one is flagged in the critical color.
 }
 ```
 
-The engine (`buildMonth`, `firstDayOfWeek`, …) is exported, so you can render a
-fully custom grid and keep only the `<a-calendar>` form plumbing.
+For a custom month layout, use the exported `buildMonth` and `firstDayOfWeek`
+helpers. See [Build it from elements](#build-it-from-elements).

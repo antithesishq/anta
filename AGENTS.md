@@ -2,12 +2,13 @@
 
 Anta is a portable UI component library, published as `@antadesign/anta`. It works in React, Preact through `preact/compat`, and custom JSX runtimes through `configure()`.
 
-This pnpm workspace contains four publishable packages and one private site:
+This pnpm workspace contains five publishable packages and one private site:
 
 - `@antadesign/anta` — the root package; its source is in `src/`.
 - `@antadesign/stickers` — a separate sticker package in `stickers/`, keeping `lottie-web` out of anta's dependency graph.
 - `@antadesign/plot` — the separate canvas plot package in `plot/`.
 - `@antadesign/virtual-scroll` — the virtualized list package in `virtual-scroll/`. The table will follow as its own package.
+- `@antadesign/typedoc-theme` — the separate TypeDoc theme package in `typedoc-theme/`.
 - `site/` — the documentation site; it is not published to npm.
 
 ## Task routing
@@ -19,6 +20,7 @@ Read the closest guidance before changing a scoped area:
 - `stickers/AGENTS.md` — sticker package layout, generation, and publishing details. Read `src/AGENTS.md` as well before changing its elements or wrappers.
 - `plot/AGENTS.md` — plot entry points, build, and package verification.
 - `virtual-scroll/AGENTS.md` — virtual scroll entry points, build, tests, and the record of intentional divergences from the notebook original.
+- `typedoc-theme/README.md` — TypeDoc theme setup and package behavior.
 - `RELEASING.md` — mandatory publish order and package-manager commands.
 - `FIGMA.md`, `WRITING.md`, and `DESIGN.md` — Figma extraction, prose, and design guidance respectively.
 
@@ -33,7 +35,7 @@ pnpm run dev        # Long-running package watcher and docs-site dev server
 pnpm run build      # Build anta JS, CSS, and declarations
 pnpm run lint       # Enforce custom-element / React 19 safety rules
 pnpm run typecheck  # Type check anta without emitting
-pnpm test           # Run root regression tests (requires Chromium or installed Chrome)
+pnpm test           # Run root regression tests (requires Chromium or installed Chrome, plus WebKit)
 ```
 
 Use `pnpm run dev` for any development work, including docs-site work. It rebuilds anta and stickers before the site, so package-source edits propagate to the running site. Do not start `site`'s dev server directly for package work.
@@ -54,8 +56,27 @@ CI runs build, custom linting, anta and sticker type checks, root regression tes
 the stickers build, site CSS linting, and a production site build. `pnpm test`
 includes Capture, Slider, and disclosure-navigation browser tests and Markdown
 conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
+CI sets `ANTA_TEST_WEBKIT=0` to exclude WebKit engines and their setup from
+browser suites. Local test commands include WebKit by default.
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
+
+Keep new component-specific browser matrices separate from `pnpm test`. Give them
+a dedicated command and register them in `tests/component-suites.mjs`. Use
+`tests/component-tier.mjs` to mark core regressions as fast and keep expanded
+matrices in the slow tier. Gate fast PR checks on relevant component, shared
+runtime, dependency, test, and workflow changes. Batch selected fast suites
+through the shared runner instead of serializing one command per component.
+Manual CI runs include the slow tier; the Component matrix workflow also runs
+the full browser coverage.
+See [Component test tiers](tests/README.md#component-test-tiers) for commands and
+classification. Calendar and InputDate share the Calendar suite.
+
+The Button property harness runs separately from `pnpm test`. Start or reuse a
+site preview as described in [site/AGENTS.md](site/AGENTS.md#local-servers), then
+run `ANTA_HARNESS_ORIGIN=<preview-url> pnpm test:fuzz_component`. To check one
+case, add `ANTA_HARNESS_SHARD=22905 ANTA_HARNESS_CASES=1` (replace `22905` with
+the case ID). Failures and screenshots go to `tests/pbt/.runs/`.
 
 CI's `pnpm install --frozen-lockfile` runs the workspace `prepare` scripts to
 build Anta, stickers, and Plot. Do not repeat those builds in the same job or
@@ -73,11 +94,56 @@ Cloudflare Pages must use the Node version in `.node-version`; a dashboard
 and an optional `node_version` when redeploying. That override applies to the
 project's preview or production environment, according to the target branch.
 
+### Periodic consumer validation
+
+Run the saved Next.js and Preact production fixtures with `pnpm test:consumers`.
+These tests install a local npm tarball and cover full bundle and granular usage.
+They run only on request; they are excluded from `pnpm test` and regular CI.
+See [Consumer validation](tests/consumers/README.md) for filters, saved reports,
+and the manual GitHub Actions workflow. Reuse these fixtures for package
+regressions without asking agents to recreate apps.
+
+Occasionally validate Anta in fresh consumer apps, especially after changes to
+exports, bundles, JSX runtime integration, or installation guidance. This checks
+that the packaged docs lead new consumers to the working full bundle default.
+
+1. Use current, verified package build output and packaged docs; rebuild or
+   refresh stale artifacts first. Run
+   `npm pack --ignore-scripts --pack-destination <temporary-directory>` to pack
+   those artifacts without repeating build and documentation lifecycle scripts.
+   Install the resulting `.tgz` in isolated apps with `npm install <tarball-path>`.
+   Use the tarball as the Anta dependency, without publishing, workspace links,
+   or Anta source aliases.
+2. Ask separate subagents to create a minimal Next.js App Router app and a
+   minimal Preact app, each with Title, Tag, and a Button that updates a count.
+   Give each agent its own temporary directory and a fresh context without the
+   preceding implementation discussion. Have them use the installed
+   `docs/index.md`, `docs/install-config.md`, and component docs as their Anta
+   guidance. Let them choose imports independently; do not prescribe the bundle
+   imports. Record the initial choice and reasoning before implementation.
+3. Pin direct framework dependencies to exact stable versions compatible with
+   Anta's peer requirements. Normal runtime aliases such as `react` to
+   `preact/compat` are allowed. Keep app changes inside the assigned directories.
+4. Run production builds and browser checks for styles, Button registration,
+   pointer and keyboard interaction, and browser errors. Check Next.js server
+   rendering and hydration. Title and Tag should be styled without registered
+   custom element classes. Each agent owns and cleans up its servers and browsers.
+5. Record framework versions, dependency provenance, initial and final imports,
+   commands, screenshots, and any confusion or workarounds. Report whether both
+   agents selected the full bundle from the docs and whether their initial
+   approach worked. Preserve failures before troubleshooting so corrections do
+   not hide a package or documentation problem.
+
 ## Git workflow
 
 Commit and push work on the current branch by default. Never commit or push task
 changes directly to `main`; when the current branch is `main`, create and switch
 to a descriptively named feature or fix branch before committing or pushing.
+
+Agents must not run `gh pr merge --admin` or use an equivalent API bypass of
+branch protection. If a merge requires an admin override, explain the blocking
+requirement and ask the user to perform the merge in GitHub's web UI or run the
+command with `--admin` themselves.
 
 ## Shared conventions
 

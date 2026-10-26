@@ -127,22 +127,26 @@ Default is `256`. Stickers are always square.
 <StickerVacationAnimated size={64} />  // 64×64
 ```
 
-Internally, `size` is applied as the `--sticker-size` CSS custom
-property on the rendered `<a-sticker>` / `<a-sticker-animated>`. The
-base CSS rule reads it as
-`width: var(--sticker-size, 256px); height: var(--sticker-size, 256px)`.
-That means consumer CSS (or a parent's variable cascade) can drive
-sticker size too:
+`size` sets the `--sticker-size` CSS custom property inline on the rendered
+`<a-sticker>` or `<a-sticker-animated>`. External CSS reads it to size the host
+and the square `::part(container)` artwork box. You can also set the property
+on the host through your own stylesheet:
 
 ```css
-.sticker-grid { --sticker-size: 96px; }
+.sticker-grid :is(a-sticker, a-sticker-animated) { --sticker-size: 96px; }
 ```
+
+Both element entries load external CSS. Preserve those imports in your bundler
+and load the resulting stylesheet before displaying stickers. Without that
+stylesheet, static SVGs use their intrinsic dimensions.
 
 ## Animation control
 
 `paused`, `delay`, `playOnce`, and `replayOnClick` only apply to
 `Sticker{Name}Animated`.
-They map to observed element attributes:
+They map to observed element attributes. Playback settings apply after the
+player is ready, including asynchronous Lottie worker initialization. A numeric
+`paused={0}` seeks to the first frame; boolean `paused` holds the current frame.
 
 ```tsx
 <StickerCodingAnimated />                  // autoplay, looping
@@ -241,3 +245,59 @@ prop layer.
 the import behind a client boundary — same rule as anta's own elements.
 The sticker components themselves render fine on the server (just JSX);
 only the underlying custom-element classes need the browser.
+
+### Strict Content Security Policy
+
+The element entries load external CSS and inject no shadow stylesheets. With
+`style-src 'self'; style-src-attr 'none'`, omit `size` and set `--sticker-size`
+on each host through a same-origin stylesheet:
+
+```tsx
+<StickerCoding className="coding-sticker" label="Writing code" />
+```
+
+```css
+.coding-sticker { --sticker-size: 128px; }
+```
+
+The `size` prop still emits an inline style. The browser blocks that style in
+server-rendered HTML under this policy, leaving the default size. Client-side
+CSSOM updates may work, but hydration does not reliably repair blocked server
+styles. External CSS gives consistent sizing before and after hydration.
+
+Bundled static artwork uses SVG presentation attributes without inline styles.
+Lottie 5.13.0 writes SVG styles through CSSOM and updates presentation attributes;
+these writes work under the tested policy, including playback and seeking.
+The resulting SVG can contain `style` attributes even though CSP permits the
+CSSOM writes. If you enable Lottie's web worker, allow its blob worker through
+`worker-src blob:`; style directives can stay strict. Review custom SVGs and
+Lottie data separately, including fonts, images, and expressions.
+
+## Styling
+
+Set `--sticker-size` on the host to size the square artwork. Each host declares
+its own default, so an ancestor's value does not replace it. Host `width` and
+`height` change the surrounding box while the artwork keeps its configured
+size and stays centered.
+
+Both elements expose `container` for the artwork box and `artwork` for the root
+SVG. The SVG's internal paths remain isolated from document selectors. Apply
+rotation and other whole-sticker transforms to `container` so Lottie can retain ownership
+of the animated root SVG's dimensions and transform.
+
+```css
+.coding-sticker {
+  --sticker-size: 96px;
+  width: 160px;
+  height: 120px;
+}
+
+.coding-sticker::part(container) {
+  transform: rotate(-5deg);
+}
+```
+
+The `className` is application-owned. Import an element entry to load its CSS,
+or import `@antadesign/stickers/elements/a-sticker.css` and
+`@antadesign/stickers/elements/a-sticker-animated.css` separately when your
+application manages linked stylesheets.

@@ -25,6 +25,28 @@ test('explicit IDs use the site slug rules and do not match data attributes', ()
   assert.equal(parseMdx('<Disclosure title="Styles" level={2} data-id="canvas">\nText.\n</Disclosure>'), '## Styles\n\nText.')
 })
 
+test('renamed sections retain standalone anchor aliases in exported Markdown', () => {
+  const source = '<span id="value-and-changes"></span>\n\n## Managing the value\n\n<a id="filter"></a>\n\n## Filtering options\n\n```html\n<span id="example"></span>\n```'
+  assert.equal(parseMdx(source), '<a id="value-and-changes"></a>\n\n## Managing the value\n\n<a id="filter"></a>\n\n## Filtering options\n\n```html\n<span id="example"></span>\n```')
+})
+
+test('anchor aliases preserve literal IDs, extra attributes, and inline placement', () => {
+  for (const [source, expected] of [
+    ['<span id="Value-and-changes"></span>', '<a id="Value-and-changes"></a>'],
+    ['<a id="x" aria-hidden="true"></a>', '<a id="x"></a>'],
+    ["<span aria-hidden='true' id='Query_1:results'></span>", '<a id="Query_1:results"></a>'],
+    ['<a title="Use > to navigate" id="0-results"></a>', '<a id="0-results"></a>'],
+    ["<span title=\" id='wrong' \" id='correct'></span>", '<a id="correct"></a>'],
+    ['## <span id="旧見出し"></span>New heading', '## <a id="旧見出し"></a>New heading'],
+    ['Before <a id="x"></a> after.', 'Before <a id="x"></a> after.'],
+    ["<span id='a\"b'></span>", '<a id="a&quot;b"></a>'],
+    ['<span data-id="not-an-alias"></span>', ''],
+    ['<span id={dynamic}></span>', ''],
+    ['<span id="content">Keep this text.</span>', 'Keep this text.'],
+    ['`<a id="inline-code" aria-hidden="true"></a>`', '`<a id="inline-code" aria-hidden="true"></a>`'],
+  ]) assert.equal(parseMdx(source), expected)
+})
+
 test('anchored disclosures default to level two and keep explicit levels and IDs', () => {
   for (const title of ['Styling', 'Web Component', 'Component props', 'Component tokens']) {
     assert.equal(parseMdx(`<Disclosure title="${title}">\nText.\n</Disclosure>`), `## ${title}\n\nText.`)

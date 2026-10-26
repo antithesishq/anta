@@ -12,7 +12,7 @@ import { dot_radius } from "./paint"
  * @param y_scale - y scale
  * @returns the halo spec, or null if the dot has no pixel position (unknown band category)
  */
-export function scatter_highlight_spec(series: ComposedScatter, point_index: number, x_scale: Scale, y_scale: Scale): HighlightSpec | null {
+export function scatter_highlight_spec<Row, TooltipContent>(series: ComposedScatter<Row, TooltipContent>, point_index: number, x_scale: Scale, y_scale: Scale): HighlightSpec | null {
     const cx = pixel_resolver(x_scale, series.x)(point_index)
 
     if (cx === undefined) {

@@ -11,7 +11,7 @@ import { is_vertical_area, run_count, series_pixel_runs } from "./layout"
  * @param y_scale - y scale
  * @returns the point index under the cursor, or null
  */
-export function area_hit_test(series: ComposedArea, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale): number | null {
+export function area_hit_test<Row, TooltipContent>(series: ComposedArea<Row, TooltipContent>, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale): number | null {
     const vertical = is_vertical_area(series)
     const along = vertical ? cursor.y : cursor.x
     const across = vertical ? cursor.x : cursor.y

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Expander, Text } from '@antadesign/anta'
+import { Box, Expander, Text } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
 function useElements() {
@@ -23,7 +23,7 @@ export function AccordionDemo() {
   useElements()
   const [openId, setOpenId] = useState<string | null>('shipping')
   return (
-    <div className="accordion">
+    <Box display="grid" gap={1}>
       {ITEMS.map((item) => (
         <Expander
           key={item.id}
@@ -34,6 +34,6 @@ export function AccordionDemo() {
           <Text>{item.body}</Text>
         </Expander>
       ))}
-    </div>
+    </Box>
   )
 }

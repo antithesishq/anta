@@ -1,3 +1,4 @@
+export type { ViewportZoom } from '../core/interactions/viewport_zoom'
 export { new_scatter as scatter, type ScatterArgs } from '../core/series/scatter/factory'
 export { new_bar as bar, type BarArgs } from '../core/series/bar/factory'
 export { new_rect as rect, type RectArgs } from '../core/series/rect/factory'
@@ -19,12 +20,11 @@ export type {
     ZoomPan, RequestedViewportWindow, ViewportRequest, PlotTemplate, PlotArgs,
     Layout, ComposedPlot, Scale, NumericalScale, ContinuousScale,
     BandScale, CanvasContext, Rect, PixelRect, RenderContext,
-    CustomRenderContext, CustomRendererFn, HitContext, PixelResolver, ColorResolver,
+    CustomSeriesView, CustomRenderContext, CustomRendererFn, HitContext, PixelResolver, ColorResolver,
     CustomHitTestFn, CustomHighlightContext, CustomHighlightRendererFn, HighlightSpec, SideMode, AxisScale, AxisContext,
     ColorTheme, ColorArg, TitleArg, StrokeArg, MarkShape,
     RectAlign, FieldArg, PointData, TooltipData, TooltipFn,
     TooltipArg, PlotTooltipHit, PlotTooltipFn, SelectFn, AxisViewport, ViewportChange, ViewportChangeFn,
-    RowTypedArgs, OptionalRowTypedArgs,
 } from '../core/types'
 export { Plot, type PlotProps } from '../components/Plot'
 export { PlotSurface, type PlotSurfaceProps, type PlotSurfaceAttributes } from '../components/PlotSurface'

@@ -1,0 +1,7 @@
+# Changelog
+
+## 0.2.0
+
+- **Breaking:** Load `@antadesign/plot/plot.css` for [JSX plots, surfaces, and standalone charts](https://anta.design/plot/#styling). Every chart host requires this stylesheet, replacing per-instance injected styles.
+- JSX `Plot` applies dimension and `style` props after commit through CSSOM, so they work under strict CSP after hydration. Use external CSS to reserve space before hydration.
+- Plot uses fallback selection and keyboard focus colors when Anta tokens are absent. Loading `@antadesign/anta/tokens.css` is optional.

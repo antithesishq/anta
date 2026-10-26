@@ -24,7 +24,7 @@ const FIELDS: SelectOption[] = [
 
 export function SelectOptionsDemo() {
   useElements()
-  const [value, setValue] = useState('stream')
+  const [value, setValue] = useState<string | null>('stream')
   return (
     <div style={{ width: '260px' }}>
       <Select label="Field" options={FIELDS} value={value} onValueChange={setValue} />
@@ -53,7 +53,7 @@ const GROUPED = [
 
 export function SelectGroupsDemo() {
   useElements()
-  const [one, setOne] = useState('stream')
+  const [one, setOne] = useState<string | null>('stream')
   const [many, setMany] = useState<string[]>(['stream', 'tag.env'])
   return (
     <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -69,7 +69,7 @@ export function SelectGroupsDemo() {
 
 export function SelectBasicDemo() {
   useElements()
-  const [value, setValue] = useState('stream')
+  const [value, setValue] = useState<string | null>('stream')
   return (
     <div style={{ width: '240px' }}>
       <Select
@@ -84,8 +84,8 @@ export function SelectBasicDemo() {
 
 export function SelectModesDemo() {
   useElements()
-  const [check, setCheck] = useState('stream')
-  const [radio, setRadio] = useState('stream')
+  const [check, setCheck] = useState<string | null>('stream')
+  const [radio, setRadio] = useState<string | null>('stream')
   const [checks, setChecks] = useState<string[]>(['stream', 'container'])
   const opts = ['output_text', 'stream', 'container', 'vtime', 'custom']
   return (
@@ -167,7 +167,7 @@ const FILTER_OPTS: SelectOption[] = [
 
 export function SelectFilterDemo() {
   useElements()
-  const [one, setOne] = useState('stream')
+  const [one, setOne] = useState<string | null>('stream')
   const [many, setMany] = useState<string[]>(['stream'])
   return (
     <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -208,7 +208,7 @@ const RUNS: Run[] = [
 
 export function SelectRenderOptionDemo() {
   useElements()
-  const [value, setValue] = useState('r-8842')
+  const [value, setValue] = useState<string | null>('r-8842')
   return (
     // Cap the popover so the wide names ellipsize. The trigger width only floors the
     // menu; it grows to fit content until a max-width caps it.
@@ -268,8 +268,8 @@ const renderPath = (o: SelectOption) => (
 
 export function SelectTruncateDemo() {
   useElements()
-  const [a, setA] = useState('billing')
-  const [b, setB] = useState('billing')
+  const [a, setA] = useState<string | null>('billing')
+  const [b, setB] = useState<string | null>('billing')
   return (
     <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
       {/* The cap is the only difference between the two: it's what makes the wide
@@ -296,7 +296,7 @@ const LEVELS: Level[] = [
 
 export function SelectRenderIndicatorDemo() {
   useElements()
-  const [value, setValue] = useState('info')
+  const [value, setValue] = useState<string | null>('info')
   return (
     <div style={{ width: '220px' }}>
       <Select
@@ -421,7 +421,7 @@ const TAGS = ['bug', 'feature', 'chore', 'docs']
 export function SelectEmptyDemo() {
   useElements()
   const [options, setOptions] = useState<string[]>(TAGS)
-  const [value, setValue] = useState<string>()
+  const [value, setValue] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '260px' }}>
@@ -460,7 +460,7 @@ export function SelectEmptyDemo() {
 
 export function SelectGhostDemo() {
   useElements()
-  const [value, setValue] = useState('stream')
+  const [value, setValue] = useState<string | null>('stream')
   return (
     <div className="ghost-select" style={{ width: '220px' }}>
       <Select
@@ -560,7 +560,7 @@ export function SelectSelectionTreeDemo() {
 
 export function SelectControlledDemo() {
   useElements()
-  const [value, setValue] = useState('stream')
+  const [value, setValue] = useState<string | null>('stream')
   return (
     <div style={{ width: '260px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
       <Select
@@ -569,7 +569,9 @@ export function SelectControlledDemo() {
         options={['output_text', 'stream', 'container', 'vtime', 'custom']}
         value={value}
         onValueChange={setValue}
+        clearable
       />
+      <Button size="small" priority="tertiary" label="Reset selection" onClick={() => setValue(null)} />
       <span style={{ fontSize: '13px', color: 'var(--text-3)' }}>
         Selected value: <code>{value || '—'}</code>
       </span>

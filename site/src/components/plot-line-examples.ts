@@ -10,7 +10,7 @@ export function comparison(): PlotArgs<Node> {
 
   return {
     series: [
-      line<Node>({
+      line({
         data,
         y: 'expected',
         color: { light: '#c2410c', dark: '#fdba74' },
@@ -18,7 +18,7 @@ export function comparison(): PlotArgs<Node> {
         dash: [7, 5],
         tooltip: ({ y }) => document.createTextNode('Expected: ' + Math.round(Number(y))),
       }),
-      line<Node>({
+      line({
         data,
         y: 'measured',
         color: { light: '#0891b2', dark: '#67e8f9' },
@@ -44,7 +44,7 @@ export function markers(): PlotArgs<Node> {
   }))
 
   return {
-    series: [line<Node>({
+    series: [line({
       data,
       color: { light: '#7c3aed', dark: '#c4b5fd' },
       width: 3,

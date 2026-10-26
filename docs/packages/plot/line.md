@@ -1,0 +1,140 @@
+# Line
+
+Connect points in data order. Set `width` and `dash` for the line, or add
+[`mark`](../plot.md#mark-shapes) and `mark_size` to show the individual points.
+
+## Solid and dashed lines
+
+Compare measured values with a forecast. A solid line follows each fluctuation, while a dashed line distinguishes the expected trend.
+
+```ts
+import { line, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+
+const data = Array.from({ length: 97 }, (_, i) => ({
+  x: i / 4,
+  expected: 45 + 22 * Math.sin(i / 18) + 12 * Math.cos(i / 7),
+  measured: 45 + 22 * Math.sin(i / 18) + 12 * Math.cos(i / 7)
+    + 7 * Math.sin(i * 1.1) + 4 * Math.cos(i * 2.3),
+}))
+
+plot.plotArgs = {
+  series: [
+    line({
+      data,
+      y: 'expected',
+      color: { light: '#c2410c', dark: '#fdba74' },
+      width: 2,
+      dash: [7, 5],
+      tooltip: ({ y }) => document.createTextNode('Expected: ' + Math.round(Number(y))),
+    }),
+    line({
+      data,
+      y: 'measured',
+      color: { light: '#0891b2', dark: '#67e8f9' },
+      width: 2,
+      tooltip: ({ y }) => document.createTextNode('Measured: ' + Math.round(Number(y))),
+    }),
+  ],
+  height: 260,
+  margin: { top: 5, right: 8, bottom: 20, left: 30 },
+  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: { x: false, y: true },
+  border: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+## Point marks and outlines
+
+Show individual samples with diamond marks. Set the line width, mark size, and mark outline independently to keep each measurement visible.
+
+```ts
+import { line, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+
+const data = Array.from({ length: 13 }, (_, i) => ({
+  x: i,
+  y: 35 + i * 2 + 18 * Math.sin(i * 0.8) + 8 * Math.cos(i * 1.7),
+}))
+
+plot.plotArgs = {
+  series: [line({
+    data,
+    color: { light: '#7c3aed', dark: '#c4b5fd' },
+    width: 3,
+    mark: 'diamond',
+    mark_size: 10,
+    mark_stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 2 },
+    tooltip: ({ x, y }) => document.createTextNode('Sample ' + x + ': ' + Math.round(Number(y))),
+  })],
+  height: 260,
+  margin: { top: 5, right: 8, bottom: 20, left: 30 },
+  axis: { x: { min: -0.5, max: 12.5, label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: { x: false, y: true },
+  border: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+## Line arguments
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
+| `x?` | [`FieldArg`](../plot.md#data-fields) | `'x'` | Horizontal field name or accessor. |
+| `y?` | [`FieldArg`](../plot.md#data-fields) | `'y'` | Vertical field name or accessor. |
+| `color?` | [`ThemeColor`](../plot.md#theme-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
+| `width?` | `number` | `2` | Line width in pixels. |
+| `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
+| [`mark?`](../plot.md#mark-shapes) | `MarkShape` | None | Shape drawn at each point. |
+| `mark_size?` | `number` | `6` | Point marker diameter in pixels. |
+| [`mark_stroke?`](../plot.md#strokes) | `StrokeArg` | None | Outline for the point markers. |
+| [`tooltip?`](../plot.md#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](../plot.md#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
+| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+
+```ts
+import { line } from '@antadesign/plot'
+
+const series = [line({
+  data: [{ time: 1, value: 3 }, { time: 2, value: 5 }, { time: 3, value: 4 }],
+  x: 'time',
+  y: 'value',
+  color: { light: 'steelblue', dark: 'lightskyblue' },
+  width: 2,
+  dash: [6, 3],
+  mark: 'circle',
+  mark_size: 8,
+  mark_stroke: { color: 'navy', width: 1 },
+  tooltip: ({ x, y }) => `(${x}, ${y})`,
+  on_select: ({ row }) => console.log('Selected row:', row),
+  hoverable: true,
+  highlight: true,
+})]
+```
+
+## Shared configuration
+
+See [Install and configure](../plot.md#install-and-configure) to set up Plot.
+The argument tables describe omitted fields; examples may override these defaults.
+See [Data fields](../plot.md#data-fields), [Series colors](../plot.md#series-colors),
+[Strokes](../plot.md#strokes), and [Mark shapes](../plot.md#mark-shapes) for shared options.
+For callbacks, see [Tooltips](../plot.md#tooltips) and
+[Selection callbacks](../plot.md#selection-callbacks).

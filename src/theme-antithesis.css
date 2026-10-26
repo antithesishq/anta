@@ -1,76 +1,515 @@
+/*!
+ * Antithesis theme
+ * Copyright (c) 2026 Antithesis Operations LLC.
+ * SPDX-License-Identifier: LicenseRef-Antithesis-Theme
+ * Free for noncommercial use. Commercial use requires prior written permission.
+ * Separately licensed; the Anta MIT license does not apply to this theme.
+ * See theme-antithesis-license.md in the package root for the full terms:
+ * https://github.com/antithesishq/anta/blob/main/theme-antithesis-license.md
+ * Permission requests: https://antithesis.com/company/contact/
+ */
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
-
-/* Antithesis. Import after tokens.css and element CSS, as the only theme. */
-
-@font-face {
-  font-family: "TT Interphases Pro Variable";
-  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-feature-settings: "ss02", "ss05", "tnum";
-  /* Safari otherwise uses the font file's non-zero internal slant default. */
-  font-variation-settings: "slnt" 0;
-  font-display: swap;
-}
-@font-face {
-  font-family: "TT Interphases Pro Variable";
-  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-feature-settings: "ss02", "ss05", "tnum";
-  font-variation-settings: "slnt" 11;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Stringer";
-  src: url("https://assets.anta.design/fonts/Stringer-Regular-Web.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Antithesis Mono";
-  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Upright.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Antithesis Mono";
-  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Italic.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 400 700;
-  font-display: swap;
-}
-
-:root,
-.light {
-  --sans-serif: "TT Interphases Pro Variable", sans-serif;
-  --serif: "Stringer", serif;
-  --monospace: "Antithesis Mono", ui-monospace, monospace;
-  /* Safari leaves this font at its non-zero internal slant default unless the
-     axis is pinned on rendered content; the @font-face descriptor is not enough. */
-  font-variation-settings: "slnt" 0;
-}
 
 :root,
 .light {
   --anta-seed-brand: #cc4636;
   --anta-seed-neutral: #65605b;
+  --anta-seed-critical: #c92c46;
+}
+
+/* Role colors come from Figma's "Anta 0.4 — New Brand" collection. */
+:root,
+.light {
+  --bg-1: #ffffff;
+  --bg-2: #fdfaf8;
+  --bg-3: #faf7f5;
+  --bg-4: #f3f0ee;
+  --bg-5: #eeeae7;
+
+  --bg-2-brand: #fff6f5;
+  --bg-3-brand: #fff2f0;
+  --bg-4-brand: #ffedeb;
+  --bg-5-brand: #ffe5e0;
+
+  --bg-2-success: #f7fcf9;
+  --bg-3-success: #ecf9f0;
+  --bg-4-success: #e2f5e8;
+  --bg-5-success: #d9f2e0;
+
+  --bg-2-critical: #fefbfb;
+  --bg-3-critical: #fdf2f4;
+  --bg-4-critical: #fcebee;
+  --bg-5-critical: #fae5e9;
+
+  --bg-2-warning: #fefbf6;
+  --bg-3-warning: #fcf4e8;
+  --bg-4-warning: #fbeeda;
+  --bg-5-warning: #f9e7cd;
+
+  --bg-2-info: #fbfcfe;
+  --bg-3-info: #f2f7fd;
+  --bg-4-info: #e9f3fb;
+  --bg-5-info: #e1eefa;
+
+  --text-1: #080707;
+  --text-2: #312d2b;
+  --text-3: #665f5b;
+  --text-4: #79716d;
+  --text-5: #99908b;
+
+  --text-1-brand: #701600;
+  --text-2-brand: #912a0d;
+  --text-3-brand: #912a0dcc;
+  --text-4-brand: #912a0dbd;
+  --text-5-brand: #912a0d91;
+
+  --text-1-success: #004415;
+  --text-2-success: #1f5c31;
+  --text-3-success: #1f5c31cc;
+  --text-4-success: #1f5c31c7;
+  --text-5-success: #1f5c3199;
+
+  --text-1-critical: #8d0017;
+  --text-2-critical: #a01c32;
+  --text-3-critical: #a01c32cc;
+  --text-4-critical: #a01c32bd;
+  --text-5-critical: #a01c328f;
+
+  --text-1-warning: #632800;
+  --text-2-warning: #833e00;
+  --text-3-warning: #833e00d9;
+  --text-4-warning: #833e00c4;
+  --text-5-warning: #833e0099;
+
+  --text-1-info: #00396b;
+  --text-2-info: #175082;
+  --text-3-info: #175082cc;
+  --text-4-info: #175082c2;
+  --text-5-info: #17508296;
+
+  --border-1: #99908b;
+  --border-2: #c2b8b2;
+  --border-3: #d8cfca;
+  --border-4: #e4ddd8;
+  --border-5: #eeeae7;
+
+  --border-1-brand: #ee6d53;
+  --border-2-brand: #fea192;
+  --border-3-brand: #ffc1b8;
+  --border-4-brand: #ffd3cc;
+  --border-5-brand: #ffe5e0;
+
+  --border-1-success: #44c169;
+  --border-2-success: #88d7a0;
+  --border-3-success: #b3e5c2;
+  --border-4-success: #c6ecd1;
+  --border-5-success: #d9f2e0;
+
+  --border-1-critical: #e56c80;
+  --border-2-critical: #efa4b0;
+  --border-3-critical: #f4c2cb;
+  --border-4-critical: #f7d4da;
+  --border-5-critical: #fae5e9;
+
+  --border-1-warning: #d88118;
+  --border-2-warning: #edb25a;
+  --border-3-warning: #f3cc91;
+  --border-4-warning: #f6dbb1;
+  --border-5-warning: #f9e7cd;
+
+  --border-1-info: #56a1e1;
+  --border-2-info: #93c5ec;
+  --border-3-info: #bad6f3;
+  --border-4-info: #cfe3f7;
+  --border-5-info: #e1eefa;
+}
+
+.dark {
+  --bg-1: #0b0409;
+  --bg-2: #170812;
+  --bg-3: #1e0b18;
+  --bg-4: #250e1e;
+  --bg-5: #2c1124;
+
+  --bg-2-brand: #160803;
+  --bg-3-brand: #1f0c04;
+  --bg-4-brand: #290e05;
+  --bg-5-brand: #321106;
+
+  --bg-2-success: #041008;
+  --bg-3-success: #05140a;
+  --bg-4-success: #061b0e;
+  --bg-5-success: #081f0f;
+
+  --bg-2-critical: #190408;
+  --bg-3-critical: #1f0509;
+  --bg-4-critical: #2c070d;
+  --bg-5-critical: #330910;
+
+  --bg-2-warning: #120a03;
+  --bg-3-warning: #160d04;
+  --bg-4-warning: #201305;
+  --bg-5-warning: #241506;
+
+  --bg-2-info: #040d18;
+  --bg-3-info: #04111f;
+  --bg-4-info: #051727;
+  --bg-5-info: #071b2c;
+
+  --text-1: #eeeae7;
+  --text-2: #c0b7bd;
+  --text-3: #a398a0;
+  --text-4: #8c7e88;
+  --text-5: #7c6e78;
+
+  --text-1-brand: #ffb3a7;
+  --text-2-brand: #f88d7d;
+  --text-3-brand: #f88d7dcc;
+  --text-4-brand: #f88d7db0;
+  --text-5-brand: #f88d7d85;
+
+  --text-1-success: #9ddeb1;
+  --text-2-success: #74cd8e;
+  --text-3-success: #74cd8ecc;
+  --text-4-success: #74cd8ea1;
+  --text-5-success: #74cd8e7a;
+
+  --text-1-critical: #ffabb9;
+  --text-2-critical: #e78e9d;
+  --text-3-critical: #e78e9dcc;
+  --text-4-critical: #e78e9db3;
+  --text-5-critical: #e78e9d8a;
+
+  --text-1-warning: #f0bf75;
+  --text-2-warning: #e1a452;
+  --text-3-warning: #e1a452cc;
+  --text-4-warning: #e1a452ab;
+  --text-5-warning: #e1a45282;
+
+  --text-1-info: #99d0ff;
+  --text-2-info: #7db6e8;
+  --text-3-info: #7db6e8cc;
+  --text-4-info: #7db6e8ab;
+  --text-5-info: #7db6e882;
+
+  --border-1: #725769;
+  --border-2: #533c4b;
+  --border-3: #442e3d;
+  --border-4: #2a1824;
+  --border-5: #250e1e;
+
+  --border-1-brand: #d03711;
+  --border-2-brand: #912a0d;
+  --border-3-brand: #6d240d;
+  --border-4-brand: #3e1609;
+  --border-5-brand: #321106;
+
+  --border-1-success: #2a7e43;
+  --border-2-success: #1f5c31;
+  --border-3-success: #174525;
+  --border-4-success: #0d2b16;
+  --border-5-success: #081f0f;
+
+  --border-1-critical: #c92c46;
+  --border-2-critical: #a01c32;
+  --border-3-critical: #761928;
+  --border-4-critical: #471019;
+  --border-5-critical: #330910;
+
+  --border-1-warning: #995200;
+  --border-2-warning: #6a3b0c;
+  --border-3-warning: #4f2d0d;
+  --border-4-warning: #311d0a;
+  --border-5-warning: #241506;
+
+  --border-1-info: #1f6eb2;
+  --border-2-info: #175082;
+  --border-3-info: #133e62;
+  --border-4-info: #0d273e;
+  --border-5-info: #071b2c;
+}
+
+/* Interactive layer: colors shared by controls and menu rows.
+   A name reads family-step-tone-state, e.g. --fill-2-brand-hover.
+   - fill: 1 is solid (primary button, checked control), 2 strong translucent
+     (secondary button), 3 light translucent (tertiary button hover, menu rows).
+   - stroke: 1 outlines fields and selection controls, 2 is a light outline.
+   - label: text and icons; 1 sits on fill-2, 2 has no fill, on-fill sits on
+     fill-1.
+   Neutral is the unsuffixed name. Field surfaces use --bg-1 and --bg-2-{tone}. */
+:root,
+.light {
+  --fill-1: #665f5b;
+  --fill-1-hover: #56504d;
+  --fill-1-active: #494441;
+  --fill-1-brand: #d03711;
+  --fill-1-brand-hover: #af2e0e;
+  --fill-1-brand-active: #912a0d;
+  --fill-1-info: #1f6eb2;
+  --fill-1-info-hover: #1a5b93;
+  --fill-1-info-active: #175082;
+  --fill-1-success: #2a7e43;
+  --fill-1-success-hover: #226737;
+  --fill-1-success-active: #1f5c31;
+  --fill-1-warning: #c37416;
+  --fill-1-warning-hover: #ae6613;
+  --fill-1-warning-active: #995200;
+  --fill-1-critical: #c92c46;
+  --fill-1-critical-hover: #b02038;
+  --fill-1-critical-active: #a01c32;
+
+  --fill-2: color-mix(in oklch, #8b6b59 10%, transparent);
+  --fill-2-hover: color-mix(in oklch, #8b6b59 15%, transparent);
+  --fill-2-active: color-mix(in oklch, #8b6b59 20%, transparent);
+  --fill-2-brand: color-mix(in oklch, #e94520 10%, transparent);
+  --fill-2-brand-hover: color-mix(in oklch, #e94520 15%, transparent);
+  --fill-2-brand-active: color-mix(in oklch, #e94520 20%, transparent);
+  --fill-2-info: color-mix(in oklch, #2686d9 10%, transparent);
+  --fill-2-info-hover: color-mix(in oklch, #2686d9 15%, transparent);
+  --fill-2-info-active: color-mix(in oklch, #2686d9 20%, transparent);
+  --fill-2-success: color-mix(in oklch, #329550 10%, transparent);
+  --fill-2-success-hover: color-mix(in oklch, #329550 15%, transparent);
+  --fill-2-success-active: color-mix(in oklch, #329550 20%, transparent);
+  --fill-2-warning: color-mix(in oklch, #ae6613 10%, transparent);
+  --fill-2-warning-hover: color-mix(in oklch, #ae6613 15%, transparent);
+  --fill-2-warning-active: color-mix(in oklch, #ae6613 20%, transparent);
+  --fill-2-critical: color-mix(in oklch, #de455e 10%, transparent);
+  --fill-2-critical-hover: color-mix(in oklch, #de455e 15%, transparent);
+  --fill-2-critical-active: color-mix(in oklch, #de455e 20%, transparent);
+
+  --fill-3: color-mix(in oklch, #8b6b59 5%, transparent);
+  --fill-3-hover: color-mix(in oklch, #8b6b59 10%, transparent);
+  --fill-3-active: color-mix(in oklch, #8b6b59 15%, transparent);
+  --fill-3-brand: color-mix(in oklch, #e94520 5%, transparent);
+  --fill-3-brand-hover: color-mix(in oklch, #e94520 10%, transparent);
+  --fill-3-brand-active: color-mix(in oklch, #e94520 15%, transparent);
+  --fill-3-info: color-mix(in oklch, #2686d9 5%, transparent);
+  --fill-3-info-hover: color-mix(in oklch, #2686d9 10%, transparent);
+  --fill-3-info-active: color-mix(in oklch, #2686d9 15%, transparent);
+  --fill-3-success: color-mix(in oklch, #329550 5%, transparent);
+  --fill-3-success-hover: color-mix(in oklch, #329550 10%, transparent);
+  --fill-3-success-active: color-mix(in oklch, #329550 15%, transparent);
+  --fill-3-warning: color-mix(in oklch, #ae6613 5%, transparent);
+  --fill-3-warning-hover: color-mix(in oklch, #ae6613 10%, transparent);
+  --fill-3-warning-active: color-mix(in oklch, #ae6613 15%, transparent);
+  --fill-3-critical: color-mix(in oklch, #de455e 5%, transparent);
+  --fill-3-critical-hover: color-mix(in oklch, #de455e 10%, transparent);
+  --fill-3-critical-active: color-mix(in oklch, #de455e 15%, transparent);
+
+
+  --fill-1-disabled: color-mix(in oklch, #79716d 50%, transparent);
+
+  --fill-disabled: color-mix(in oklch, #79716d 10%, transparent);
+
+  --stroke-1: #d8cfca;
+  --stroke-1-hover: #c2b8b2;
+  --stroke-1-active: #a39994;
+  --stroke-1-brand: #fea192;
+  --stroke-1-brand-hover: #f07866;
+  --stroke-1-brand-active: #ee6d53;
+  --stroke-1-info: #93c5ec;
+  --stroke-1-info-hover: #69ace5;
+  --stroke-1-info-active: #56a1e1;
+  --stroke-1-success: #88d7a0;
+  --stroke-1-success-hover: #5bc87b;
+  --stroke-1-success-active: #44c169;
+  --stroke-1-warning: #edb25a;
+  --stroke-1-warning-hover: #e09127;
+  --stroke-1-warning-active: #d88118;
+  --stroke-1-critical: #efa4b0;
+  --stroke-1-critical-hover: #e87f91;
+  --stroke-1-critical-active: #e56c80;
+
+  --stroke-2: color-mix(in oklch, #79716d 15%, transparent);
+  --stroke-2-brand: color-mix(in oklch, #e94520 15%, transparent);
+  --stroke-2-info: color-mix(in oklch, #2686d9 15%, transparent);
+  --stroke-2-success: color-mix(in oklch, #329550 15%, transparent);
+  --stroke-2-warning: color-mix(in oklch, #ae6613 15%, transparent);
+  --stroke-2-critical: color-mix(in oklch, #de455e 15%, transparent);
+
+  --stroke-disabled: color-mix(in oklch, #79716d 10%, transparent);
+
+  --label-1: #56504d;
+  --label-1-hover: #494441;
+  --label-1-brand: #d03711;
+  --label-1-brand-hover: #af2e0e;
+  --label-1-info: #1f6eb2;
+  --label-1-info-hover: #1a5b93;
+  --label-1-success: #2a7e43;
+  --label-1-success-hover: #226737;
+  --label-1-warning: #995200;
+  --label-1-warning-hover: #7f410b;
+  --label-1-critical: #c92c46;
+  --label-1-critical-hover: #b02038;
+
+  --label-2: #665f5b;
+  --label-2-hover: #56504d;
+  --label-2-active: #494441;
+  --label-2-brand: #d03711;
+  --label-2-brand-hover: #af2e0e;
+  --label-2-brand-active: #912a0d;
+  --label-2-info: #1f6eb2;
+  --label-2-info-hover: #1a5b93;
+  --label-2-info-active: #175082;
+  --label-2-success: #2a7e43;
+  --label-2-success-hover: #226737;
+  --label-2-success-active: #1f5c31;
+  --label-2-warning: #995200;
+  --label-2-warning-hover: #7f410b;
+  --label-2-warning-active: #6a3b0c;
+  --label-2-critical: #c92c46;
+  --label-2-critical-hover: #b02038;
+  --label-2-critical-active: #a01c32;
+
+  --label-disabled: #b3a9a3;
+
+  --label-on-fill: #ffffff;
+  --label-on-fill-critical: #ffffff;
+  --label-on-fill-disabled: #b3a9a3;
+
+
+  /* #b24393 is 5.1:1 on white. */
+  --focus-ring: #b24393;
+  --focus-halo: color-mix(in oklch, #ffffff 70%, transparent);
+}
+
+.dark {
+  --fill-1: #c0b7bd;
+  --fill-1-hover: #cbc5c9;
+  --fill-1-active: #d5cfd3;
+  --fill-1-brand: #fea192;
+  --fill-1-brand-hover: #ffb3a7;
+  --fill-1-brand-active: #ffc1b8;
+  --fill-1-info: #93c5ec;
+  --fill-1-info-hover: #a6cdef;
+  --fill-1-info-active: #bad6f3;
+  --fill-1-success: #88d7a0;
+  --fill-1-success-hover: #9ddeb1;
+  --fill-1-success-active: #b3e5c2;
+  --fill-1-warning: #edb25a;
+  --fill-1-warning-hover: #ffbd59;
+  --fill-1-warning-active: #ffca7a;
+  --fill-1-critical: #c92c46;
+  --fill-1-critical-hover: #b02038;
+  --fill-1-critical-active: #a01c32;
+
+  --fill-2: color-mix(in oklch, #a398a0 17%, transparent);
+  --fill-2-hover: color-mix(in oklch, #a398a0 25%, transparent);
+  --fill-2-active: color-mix(in oklch, #a398a0 30%, transparent);
+  --fill-2-brand: color-mix(in oklch, #e94520 25%, transparent);
+  --fill-2-brand-hover: color-mix(in oklch, #e94520 30%, transparent);
+  --fill-2-brand-active: color-mix(in oklch, #e94520 35%, transparent);
+  --fill-2-info: color-mix(in oklch, #2686d9 25%, transparent);
+  --fill-2-info-hover: color-mix(in oklch, #2686d9 30%, transparent);
+  --fill-2-info-active: color-mix(in oklch, #2686d9 35%, transparent);
+  --fill-2-success: color-mix(in oklch, #329550 25%, transparent);
+  --fill-2-success-hover: color-mix(in oklch, #329550 30%, transparent);
+  --fill-2-success-active: color-mix(in oklch, #329550 35%, transparent);
+  --fill-2-warning: color-mix(in oklch, #ae6613 30%, transparent);
+  --fill-2-warning-hover: color-mix(in oklch, #ae6613 30%, transparent);
+  --fill-2-warning-active: color-mix(in oklch, #ae6613 35%, transparent);
+  --fill-2-critical: color-mix(in oklch, #de455e 25%, transparent);
+  --fill-2-critical-hover: color-mix(in oklch, #de455e 30%, transparent);
+  --fill-2-critical-active: color-mix(in oklch, #de455e 35%, transparent);
+
+  --fill-3: color-mix(in oklch, #a398a0 10%, transparent);
+  --fill-3-hover: color-mix(in oklch, #a398a0 15%, transparent);
+  --fill-3-active: color-mix(in oklch, #a398a0 20%, transparent);
+  --fill-3-brand: color-mix(in oklch, #e94520 10%, transparent);
+  --fill-3-brand-hover: color-mix(in oklch, #e94520 15%, transparent);
+  --fill-3-brand-active: color-mix(in oklch, #e94520 20%, transparent);
+  --fill-3-info: color-mix(in oklch, #2686d9 10%, transparent);
+  --fill-3-info-hover: color-mix(in oklch, #2686d9 15%, transparent);
+  --fill-3-info-active: color-mix(in oklch, #2686d9 20%, transparent);
+  --fill-3-success: color-mix(in oklch, #329550 10%, transparent);
+  --fill-3-success-hover: color-mix(in oklch, #329550 15%, transparent);
+  --fill-3-success-active: color-mix(in oklch, #329550 20%, transparent);
+  --fill-3-warning: color-mix(in oklch, #ae6613 10%, transparent);
+  --fill-3-warning-hover: color-mix(in oklch, #ae6613 15%, transparent);
+  --fill-3-warning-active: color-mix(in oklch, #ae6613 20%, transparent);
+  --fill-3-critical: color-mix(in oklch, #de455e 10%, transparent);
+  --fill-3-critical-hover: color-mix(in oklch, #de455e 15%, transparent);
+  --fill-3-critical-active: color-mix(in oklch, #de455e 20%, transparent);
+
+
+  --fill-1-disabled: color-mix(in oklch, #a398a0 50%, transparent);
+
+  --fill-disabled: color-mix(in oklch, #a398a0 10%, transparent);
+
+  --stroke-1: #533c4b;
+  --stroke-1-hover: #6b5b66;
+  --stroke-1-active: #7c6e78;
+  --stroke-1-brand: #912a0d;
+  --stroke-1-brand-hover: #d03711;
+  --stroke-1-brand-active: #e94520;
+  --stroke-1-info: #175082;
+  --stroke-1-info-hover: #1f6eb2;
+  --stroke-1-info-active: #2686d9;
+  --stroke-1-success: #1f5c31;
+  --stroke-1-success-hover: #2a7e43;
+  --stroke-1-success-active: #329550;
+  --stroke-1-warning: #6a3b0c;
+  --stroke-1-warning-hover: #995200;
+  --stroke-1-warning-active: #ae6613;
+  --stroke-1-critical: #a01c32;
+  --stroke-1-critical-hover: #c92c46;
+  --stroke-1-critical-active: #de455e;
+
+  --stroke-2: color-mix(in oklch, #a39994 15%, transparent);
+  --stroke-2-brand: color-mix(in oklch, #e94520 25%, transparent);
+  --stroke-2-info: color-mix(in oklch, #2686d9 25%, transparent);
+  --stroke-2-success: color-mix(in oklch, #329550 25%, transparent);
+  --stroke-2-warning: color-mix(in oklch, #ae6613 25%, transparent);
+  --stroke-2-critical: color-mix(in oklch, #de455e 25%, transparent);
+
+  --stroke-disabled: color-mix(in oklch, #a398a0 12%, transparent);
+
+  --label-1: #cbc5c9;
+  --label-1-hover: #d5cfd3;
+  --label-1-brand: #ffb3a7;
+  --label-1-brand-hover: #ffc1b8;
+  --label-1-info: #99d0ff;
+  --label-1-info-hover: #bad6f3;
+  --label-1-success: #68ff95;
+  --label-1-success-hover: #b3e5c2;
+  --label-1-warning: #ffbd59;
+  --label-1-warning-hover: #f3cc91;
+  --label-1-critical: #ffabb9;
+  --label-1-critical-hover: #f4c2cb;
+
+  --label-2: #b1a8ae;
+  --label-2-hover: #c0b7bd;
+  --label-2-active: #cbc5c9;
+  --label-2-brand: #fea192;
+  --label-2-brand-hover: #ffb3a7;
+  --label-2-brand-active: #ffc1b8;
+  --label-2-info: #93c5ec;
+  --label-2-info-hover: #a6cdef;
+  --label-2-info-active: #bad6f3;
+  --label-2-success: #88d7a0;
+  --label-2-success-hover: #9ddeb1;
+  --label-2-success-active: #b3e5c2;
+  --label-2-warning: #edb25a;
+  --label-2-warning-hover: #f0bf75;
+  --label-2-warning-active: #f3cc91;
+  --label-2-critical: #ff9cad;
+  --label-2-critical-hover: #ffabb9;
+  --label-2-critical-active: #f4c2cb;
+
+  --label-disabled: #6b5b66;
+
+  --label-on-fill: #000000;
+  --label-on-fill-critical: #ffffff;
+  --label-on-fill-disabled: #7c6e78;
+
+
+  /* #e17cc2 is 7.6:1 on the dark page. */
+  --focus-ring: #e17cc2;
+  --focus-halo: color-mix(in oklch, #000000 70%, transparent);
 }
 
 @layer anta.theme {
-  :is(address, cite, em, i, var, dt) {
-    font-variation-settings: "slnt" 11;
-    font-synthesis: none;
-  }
-
-  dfn {
-    font-variation-settings: "slnt" 0;
-  }
 
   a-button,
   a[role="button"][data-anta],
@@ -83,7 +522,8 @@
   a-button,
   a[role="button"][data-anta],
   button[data-anta],
-  input[data-anta]:is([type="reset"], [type="submit"]) {
+  input[data-anta]:is([type="reset"], [type="submit"]),
+  a-tab {
     letter-spacing: 0.05ch;
   }
 
@@ -92,17 +532,65 @@
   }
 
   a-tag {
-    font-feature-settings: 'tnum' 1, 'ss05' 1, 'lnum', 'ss01', 'ss04', 'case', 'calt';
     letter-spacing: 0.02ch;
   }
 
   a-tag[allcaps] {
-    font-feature-settings: 'tnum' 1, 'ss05' 1, 'ss01', 'case', 'calt';
     letter-spacing: 0.08ch;
   }
 
-  :is(h1, h2, h3, a-title[level="1"], a-title[level="2"], a-title[level="3"]) {
+  /* Serif names the page and its parts: levels 1–3 by default. A `font`
+     attribute on a title overrides the level default. */
+  :is(h1, h2, h3),
+  a-title:is([level="1"], [level="2"], [level="3"]):not([font]),
+  a-title[font="serif"] {
     font-family: var(--serif);
+    font-weight: 300;
+    /* macOS subpixel smoothing thickens a light serif's thin strokes. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  :is(h1, h2, h3, h4, h5, h6),
+  a-title {
+    letter-spacing: -0.1px;
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"], [type="checkbox"], [type="radio"]),
+      a-tab, a-menu-item, a[data-anta-menu-item],
+      details[data-anta] > summary):focus-visible,
+  a-expander::part(summary):focus-visible,
+  a-card > a:focus-visible,
+  :is(a-checkbox, a-radio, a-switch):focus-visible::before,
+  a-radio-group:focus-visible a-radio:state(selected)::before {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: calc(-2px * var(--focus-ring-inset, 0));
+    animation: var(--focus-ring-animation, focus-ring-pulse) 360ms;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  /* The tab strip clips an outward ring. */
+  a-tab {
+    --focus-ring-inset: 1;
+    --focus-ring-animation: focus-ring-pulse-inset;
+  }
+
+  /* The card clips its own box, so its ring sits inside and replaces the
+     component's inset shadow ring. */
+  a-card > a {
+    --focus-ring-inset: 1;
+    --focus-ring-animation: focus-ring-pulse-inset;
+  }
+  a-card > a:focus-visible {
+    box-shadow: none;
+  }
+
+  a-expander:not([round])::part(summary) {
+    border-radius: 1px;
   }
 
   :is(a-button, a[role="button"][data-anta], button[data-anta],
@@ -110,9 +598,1075 @@
     --_radius: 999px;
   }
 
+  /* Tabs round with buttons. Half the tab height (12/14/16px) gives a pill per
+     tab while a vertical track stays a rounded rectangle. Steps reuses the strip
+     without its track or pill, so it keeps its own geometry. */
+  a-tabs:not([round], [data-steps]) {
+    --tab-radius: calc(var(--tab-height) / 2);
+  }
+  a-tabs:not([round], [data-steps], [priority="secondary"], [priority="tertiary"]) {
+    border-radius: var(--tab-radius);
+  }
+  a-tabs:not([data-steps]) > a-tab {
+    --tab-padding-x: round(0.8em, 1px);
+  }
+
+  a-steps {
+    --steps-marker-size: 32px;
+    --steps-icon-size: 16px;
+    --steps-number-size: 13px;
+    --steps-marker-radius: 2px;
+    --steps-ring-space: 4px;
+    --steps-connector-color: var(--border-4);
+    --steps-connector-width: 1px;
+    --steps-complete-connector-color: var(--fill-1);
+    --steps-hint-leading: 14px;
+  }
+
+  a-steps:has(> a-tabs[size="small"]) {
+    --steps-marker-size: 24px;
+    --steps-icon-size: 14px;
+    --steps-number-size: 12px;
+  }
+
+  a-steps:has(> a-tabs[size="large"]) {
+    --steps-marker-size: 40px;
+    --steps-icon-size: 20px;
+    --steps-number-size: 15px;
+    --steps-hint-leading: 18px;
+  }
+
+  a-steps:has(> a-tabs[priority="tertiary"]),
+  a-tabs[data-steps][priority="tertiary"] {
+    --steps-marker-size: calc(var(--steps-icon-size) + 4px);
+  }
+
+  a-steps:has(> a-tabs:not([priority="tertiary"])) {
+    --steps-item-gap: 12px;
+  }
+
+  a-steps:has(> a-tabs[size="small"]:not([priority="tertiary"])) {
+    --steps-item-gap: 8px;
+  }
+
+  a-steps:has(> a-tabs[size="large"]:not([priority="tertiary"])) {
+    --steps-item-gap: 14px;
+  }
+
+  a-tabs[data-steps] {
+    --steps-connector-width: 1px;
+    --steps-connector-color: var(--border-4);
+  }
+
+  /* The scrollport reserves the selected marker's outward ring. */
+  a-tabs[data-steps]:not([orientation="vertical"]) {
+    box-sizing: content-box;
+    padding: var(--steps-ring-space);
+    margin: calc(-1 * var(--steps-ring-space));
+  }
+
+  a-tabs[data-steps][fill]:not([orientation="vertical"]) {
+    width: 100%;
+  }
+
+  a-tabs[data-steps] > a-tab {
+    --steps-tone-solid: var(--fill-1);
+    --steps-tone-hover: var(--fill-1-hover);
+    --steps-tone-edge: var(--text-2);
+    --steps-on-solid: var(--label-on-fill);
+    --steps-tone-tint: color-mix(in oklch, var(--steps-tone-solid) 10%, transparent);
+    --steps-complete-connector-color: var(--steps-tone-solid);
+    --steps-marker-bg: var(--bg-4);
+    --steps-marker-fg: var(--text-3);
+    --steps-marker-edge: inset 0 0 2px -1px var(--text-3);
+    --steps-label-fg: var(--text-2);
+    --steps-hint-fg: var(--text-4);
+  }
+
+  a-tabs[data-steps] > a-tab[tone="brand"] {
+    --steps-tone-solid: var(--fill-1-brand);
+    --steps-tone-hover: var(--fill-1-brand-hover);
+    --steps-tone-edge: var(--text-2-brand);
+  }
+  a-tabs[data-steps] > a-tab[tone="info"] {
+    --steps-tone-solid: var(--fill-1-info);
+    --steps-tone-hover: var(--fill-1-info-hover);
+    --steps-tone-edge: var(--text-2-info);
+  }
+  a-tabs[data-steps] > a-tab[tone="success"] {
+    --steps-tone-solid: var(--fill-1-success);
+    --steps-tone-hover: var(--fill-1-success-hover);
+    --steps-tone-edge: var(--text-2-success);
+  }
+  a-tabs[data-steps] > a-tab[tone="warning"] {
+    --steps-tone-solid: light-dark(var(--fill-1-warning-active), var(--fill-1-warning));
+    --steps-tone-hover: light-dark(color-mix(in oklch, var(--fill-1-warning-active) 90%, black), var(--fill-1-warning-hover));
+    --steps-tone-edge: var(--text-2-warning);
+  }
+  a-tabs[data-steps] > a-tab[tone="critical"] {
+    --steps-tone-solid: var(--fill-1-critical);
+    --steps-tone-hover: var(--fill-1-critical-hover);
+    --steps-tone-edge: var(--text-2-critical);
+    --steps-on-solid: var(--label-on-fill-critical);
+  }
+
+  a-tabs[data-steps] > a-tab[data-step-state="loading"] {
+    --steps-label-fg: var(--text-1);
+    --steps-hint-fg: var(--text-3);
+  }
+  /* The disabled guard must not outrank tertiary's transparent background. */
+  a-tabs[data-steps] > a-tab:is(:state(selected), [data-step-state="completed"], [data-step-state="error"]):where(:not([disabled])) {
+    --steps-marker-bg: var(--steps-tone-solid);
+    --steps-marker-fg: var(--steps-on-solid);
+    --steps-marker-edge: none;
+    --steps-label-fg: var(--text-1);
+    --steps-hint-fg: var(--text-3);
+  }
+  a-tabs[data-steps][priority="secondary"] > a-tab:is([data-step-state="completed"], [data-step-state="error"]):not([disabled]) {
+    --steps-marker-bg: var(--steps-tone-tint);
+    --steps-marker-fg: var(--steps-tone-edge);
+    --steps-marker-edge: inset 0 0 2px -0.5px var(--steps-tone-edge);
+  }
+  a-tabs[data-steps][priority="secondary"] > a-tab:state(selected):not([disabled]) {
+    --steps-marker-bg: color-mix(in oklch, var(--steps-tone-solid) 20%, transparent);
+    --steps-marker-fg: var(--steps-tone-edge);
+    --steps-marker-edge: inset 0 0 2px 0 var(--steps-tone-edge);
+  }
+  a-tabs[data-steps][priority="tertiary"] > a-tab {
+    --steps-marker-bg: transparent;
+    --steps-marker-edge: none;
+  }
+  a-tabs[data-steps][priority="tertiary"] > a-tab:is(:state(selected), [data-step-state="completed"], [data-step-state="error"]):not([disabled]) {
+    --steps-marker-fg: var(--steps-tone-solid);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    a-tabs[data-steps] > a-tab:not(:state(selected), [disabled], [data-step-state="error"]):hover {
+      --steps-marker-bg: var(--bg-5);
+      --steps-marker-fg: var(--text-2);
+      --steps-marker-edge: inset 0 0 2px -1px var(--text-2);
+      --steps-label-fg: var(--text-1);
+      --steps-hint-fg: var(--text-3);
+    }
+    a-tabs[data-steps] > a-tab[data-step-state="completed"]:not(:state(selected), [disabled]):hover {
+      --steps-marker-fg: var(--steps-tone-edge);
+    }
+    a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) > a-tab[data-step-state="completed"]:not(:state(selected), [disabled]):hover {
+      --steps-marker-bg: var(--steps-tone-hover);
+      --steps-marker-fg: var(--steps-on-solid);
+      --steps-marker-edge: none;
+    }
+    a-tabs[data-steps]:not([priority="tertiary"]) > a-tab[tone]:not([tone=""], [tone="neutral"], :state(selected), [disabled], [data-step-state="completed"], [data-step-state="error"]):hover,
+    a-tabs[data-steps][priority="secondary"] > a-tab:is([data-step-state="error"], [data-step-state="completed"][tone]:not([tone=""], [tone="neutral"])):not(:state(selected), [disabled]):hover {
+      --steps-marker-bg: color-mix(in oklch, var(--steps-tone-solid) 20%, transparent);
+      --steps-marker-fg: var(--steps-tone-edge);
+      --steps-marker-edge: inset 0 0 2px -1px var(--text-2);
+    }
+    a-tabs[data-steps][priority="tertiary"] > a-tab:hover {
+      --steps-marker-bg: transparent;
+      --steps-marker-edge: none;
+    }
+    a-tabs[data-steps][priority="tertiary"] > a-tab[data-step-state="completed"]:not(:state(selected), [disabled]):hover {
+      --steps-marker-fg: color-mix(in oklch, var(--steps-tone-solid) 80%, var(--text-1));
+    }
+  }
+
+  a-tabs[data-steps] > a-tab[disabled] {
+    --steps-marker-bg: var(--bg-3);
+    --steps-marker-fg: color-mix(in oklch, var(--text-5) 60%, transparent);
+    --steps-marker-edge: none;
+    --steps-label-fg: var(--text-5);
+    --steps-hint-fg: color-mix(in oklch, var(--text-5) 70%, transparent);
+  }
+  a-tabs[data-steps][priority="tertiary"] > a-tab[disabled] {
+    --steps-marker-bg: transparent;
+  }
+
+  a-tabs[data-steps] a-step-marker {
+    position: relative;
+    color: var(--steps-marker-fg);
+    background-color: var(--steps-marker-bg);
+    border: 0;
+    border-radius: var(--steps-marker-radius);
+    box-shadow: var(--steps-marker-edge);
+    font-size: var(--steps-number-size);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    transition: color var(--tab-timing), background-color var(--tab-timing), box-shadow var(--tab-timing);
+  }
+  a-tabs[data-steps] a-step-marker > a-loader {
+    color: inherit;
+  }
+  a-tabs[data-steps]:not([priority="tertiary"]) > a-tab:state(selected):not([disabled]) a-step-marker::after {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--steps-ring-space));
+    border: 2px solid color-mix(in oklch, var(--steps-tone-solid) 60%, transparent);
+    border-radius: var(--steps-marker-radius);
+    pointer-events: none;
+  }
+  a-tabs[data-steps] a-step-desc {
+    gap: 2px;
+  }
+  a-tabs[data-steps] a-step-desc > a-tab-label {
+    color: var(--steps-label-fg);
+    transition: color var(--tab-timing);
+  }
+  a-tabs[data-steps] a-step-hint {
+    color: var(--steps-hint-fg);
+    font-size: calc(1em - 1px);
+    transition: color var(--tab-timing);
+  }
+  a-tabs[data-steps]:not([orientation="vertical"], [priority="tertiary"]) > a-tab:not(:last-child)::before {
+    margin-inline-end: calc(1ch - 2 * var(--tab-padding-x) + var(--steps-ring-space));
+  }
+
+  a-tabs[data-steps]:not([priority="tertiary"]) {
+    --steps-connector-clearance: var(--steps-ring-space);
+  }
+
+  a-steps[data-orientation="vertical"] {
+    --steps-vertical-gap: calc(var(--steps-gap) + 20px);
+    --steps-line-start: 4px;
+    --steps-line-end: 4px;
+  }
+  a-steps[data-orientation="vertical"] > a-tabs > a-tab {
+    align-items: flex-start;
+  }
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] > a-tab > a-step-desc {
+    justify-content: center;
+    min-height: var(--steps-marker-size);
+  }
+  a-steps[data-orientation="vertical"] > a-tabs:not([priority="tertiary"]) > a-tab:state(selected) {
+    --steps-line-start: 6px;
+  }
+  a-steps[data-orientation="vertical"] > a-tabs:not([priority="tertiary"]) > a-tab:has(+ a-tab:state(selected)) {
+    --steps-line-end: 6px;
+  }
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] > a-tab:not(:last-child)::before {
+    inset-block-start: calc(var(--steps-marker-size) + var(--steps-line-start));
+    height: calc(100% - var(--steps-marker-size) + var(--steps-vertical-gap) - var(--steps-line-start) - var(--steps-line-end));
+  }
+  a-steps[data-orientation="vertical"]:has(> a-tabpanel:state(active)) > a-tabs[orientation="vertical"] > a-tab:state(selected):not(:last-child)::before {
+    height: calc(100% - var(--steps-marker-size) + var(--steps-vertical-gap) - var(--steps-line-start));
+  }
+  a-steps[data-orientation="vertical"] > a-tabpanel::before {
+    inset-block-end: calc(var(--steps-line-end) - var(--steps-vertical-gap));
+  }
+
+  /* The panel bridge inherits from Steps rather than its selected tab. */
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="brand"]) { --steps-complete-connector-color: var(--fill-1-brand); }
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="info"]) { --steps-complete-connector-color: var(--fill-1-info); }
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="success"]) { --steps-complete-connector-color: var(--fill-1-success); }
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="warning"]) { --steps-complete-connector-color: light-dark(var(--fill-1-warning-active), var(--fill-1-warning)); }
+  a-steps[data-orientation="vertical"]:has(> a-tabs > a-tab:state(selected)[tone="critical"]) { --steps-complete-connector-color: var(--fill-1-critical); }
+
+  @media (forced-colors: active) {
+    a-tabs[data-steps] a-step-marker {
+      color: CanvasText;
+      background: Canvas;
+      border: 1px solid CanvasText;
+      box-shadow: none;
+    }
+    a-tabs[data-steps] > a-tab:state(selected) a-step-marker::after {
+      border-color: Highlight;
+    }
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])) {
+    --_padding-x-text: round(0.8em, 1px);
+
+    --button-fg-primary-rest: var(--label-on-fill);
+    --bg-primary-disabled: var(--fill-disabled);
+    --fg-disabled-primary: var(--label-on-fill-disabled);
+    --bg-secondary-disabled: var(--fill-disabled);
+    --fg-disabled: var(--label-disabled);
+
+    &[priority="primary"]:focus-visible {
+      box-shadow: inset 0 0 0 1px var(--focus-halo);
+    }
+  }
+
+  /* The theme layer outranks the base state rules, so restate each state. */
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])):not([priority="primary"], [priority="tertiary"], [priority="quaternary"]) {
+    --button-fg: var(--button-fg-secondary-rest);
+
+    box-shadow: inset 0 0 2px -1px currentColor;
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        --button-fg: var(--button-fg-secondary-hover);
+      }
+    }
+    &:active,
+    &[selected] {
+      --button-fg: var(--button-fg-secondary-hover);
+    }
+    &[selected] {
+      box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 50%, transparent);
+    }
+    &[disabled] {
+      box-shadow: inset 0 0 2px -1px var(--label-1);
+    }
+  }
+
+  /* The theme clears quaternary shadows, so restore the selected ring outside
+     paddingless buttons where an inset ring would cross the label. */
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[priority="quaternary"][paddingless][selected] {
+    box-shadow: 0 0 0 1px color-mix(in oklch, currentColor 50%, transparent);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --button-bg-primary-rest: var(--fill-1);
+    --button-bg-primary-hover: var(--fill-1-hover);
+    --button-bg-primary-active: var(--fill-1-active);
+    --button-fg-secondary-rest: var(--label-1);
+    --button-fg-secondary-hover: var(--label-1-hover);
+    --button-bg-secondary-rest: var(--fill-2);
+    --button-bg-secondary-hover: var(--fill-2-hover);
+    --button-bg-secondary-active: var(--fill-2-active);
+    --button-fg-tertiary-rest: var(--label-2);
+    --button-fg-tertiary-hover: var(--label-2-hover);
+    --button-bg-tertiary-hover: var(--fill-3);
+    --button-bg-tertiary-active: var(--fill-3-hover);
+    --button-fg-quaternary-rest: light-dark(var(--label-2), color-mix(in oklch, var(--label-2) 90%, transparent));
+    --button-fg-quaternary-hover: var(--label-2-active);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="brand"] {
+    --button-bg-primary-rest: var(--fill-1-brand);
+    --button-bg-primary-hover: var(--fill-1-brand-hover);
+    --button-bg-primary-active: var(--fill-1-brand-active);
+    --button-fg-secondary-rest: var(--label-1-brand);
+    --button-fg-secondary-hover: var(--label-1-brand-hover);
+    --button-bg-secondary-rest: var(--fill-2-brand);
+    --button-bg-secondary-hover: var(--fill-2-brand-hover);
+    --button-bg-secondary-active: var(--fill-2-brand-active);
+    --button-fg-tertiary-rest: var(--label-2-brand);
+    --button-fg-tertiary-hover: var(--label-2-brand-hover);
+    --button-bg-tertiary-hover: var(--fill-3-brand);
+    --button-bg-tertiary-active: var(--fill-3-brand-hover);
+    --button-fg-quaternary-rest: light-dark(var(--label-2-brand), color-mix(in oklch, var(--label-2-brand) 90%, transparent));
+    --button-fg-quaternary-hover: var(--label-2-brand-active);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="info"] {
+    --button-bg-primary-rest: var(--fill-1-info);
+    --button-bg-primary-hover: var(--fill-1-info-hover);
+    --button-bg-primary-active: var(--fill-1-info-active);
+    --button-fg-secondary-rest: var(--label-1-info);
+    --button-fg-secondary-hover: var(--label-1-info-hover);
+    --button-bg-secondary-rest: var(--fill-2-info);
+    --button-bg-secondary-hover: var(--fill-2-info-hover);
+    --button-bg-secondary-active: var(--fill-2-info-active);
+    --button-fg-tertiary-rest: var(--label-2-info);
+    --button-fg-tertiary-hover: var(--label-2-info-hover);
+    --button-bg-tertiary-hover: var(--fill-3-info);
+    --button-bg-tertiary-active: var(--fill-3-info-hover);
+    --button-fg-quaternary-rest: light-dark(var(--label-2-info), color-mix(in oklch, var(--label-2-info) 90%, transparent));
+    --button-fg-quaternary-hover: var(--label-2-info-active);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="success"] {
+    --button-bg-primary-rest: var(--fill-1-success);
+    --button-bg-primary-hover: var(--fill-1-success-hover);
+    --button-bg-primary-active: var(--fill-1-success-active);
+    --button-fg-secondary-rest: var(--label-1-success);
+    --button-fg-secondary-hover: var(--label-1-success-hover);
+    --button-bg-secondary-rest: var(--fill-2-success);
+    --button-bg-secondary-hover: var(--fill-2-success-hover);
+    --button-bg-secondary-active: var(--fill-2-success-active);
+    --button-fg-tertiary-rest: var(--label-2-success);
+    --button-fg-tertiary-hover: var(--label-2-success-hover);
+    --button-bg-tertiary-hover: var(--fill-3-success);
+    --button-bg-tertiary-active: var(--fill-3-success-hover);
+    --button-fg-quaternary-rest: light-dark(var(--label-2-success), color-mix(in oklch, var(--label-2-success) 90%, transparent));
+    --button-fg-quaternary-hover: var(--label-2-success-active);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="warning"] {
+    --button-bg-primary-rest: var(--fill-1-warning);
+    --button-bg-primary-hover: var(--fill-1-warning-hover);
+    --button-bg-primary-active: var(--fill-1-warning-active);
+    --button-fg-secondary-rest: var(--label-1-warning);
+    --button-fg-secondary-hover: var(--label-1-warning-hover);
+    --button-bg-secondary-rest: var(--fill-2-warning);
+    --button-bg-secondary-hover: var(--fill-2-warning-hover);
+    --button-bg-secondary-active: var(--fill-2-warning-active);
+    --button-fg-tertiary-rest: var(--label-2-warning);
+    --button-fg-tertiary-hover: var(--label-2-warning-hover);
+    --button-bg-tertiary-hover: var(--fill-3-warning);
+    --button-bg-tertiary-active: var(--fill-3-warning-hover);
+    --button-fg-quaternary-rest: light-dark(var(--label-2-warning), color-mix(in oklch, var(--label-2-warning) 90%, transparent));
+    --button-fg-quaternary-hover: var(--label-2-warning-active);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="critical"] {
+    --button-fg-primary-rest: var(--label-on-fill-critical);
+    --button-bg-primary-rest: var(--fill-1-critical);
+    --button-bg-primary-hover: var(--fill-1-critical-hover);
+    --button-bg-primary-active: var(--fill-1-critical-active);
+    --button-fg-secondary-rest: var(--label-1-critical);
+    --button-fg-secondary-hover: var(--label-1-critical-hover);
+    --button-bg-secondary-rest: var(--fill-2-critical);
+    --button-bg-secondary-hover: var(--fill-2-critical-hover);
+    --button-bg-secondary-active: var(--fill-2-critical-active);
+    --button-fg-tertiary-rest: var(--label-2-critical);
+    --button-fg-tertiary-hover: var(--label-2-critical-hover);
+    --button-bg-tertiary-hover: var(--fill-3-critical);
+    --button-bg-tertiary-active: var(--fill-3-critical-hover);
+    --button-fg-quaternary-rest: light-dark(var(--label-2-critical), color-mix(in oklch, var(--label-2-critical) 90%, transparent));
+    --button-fg-quaternary-hover: var(--label-2-critical-active);
+  }
+
+  /* Lift custom dark fills under the black label. */
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --button-bg-primary-rest: light-dark(oklch(from var(--_src) 0.51 0.17 h), oklch(from var(--_src) 0.8 0.1 h));
+    --button-bg-primary-hover: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.84 0.095 h));
+    --button-bg-primary-active: light-dark(oklch(from var(--_src) 0.41 0.17 h), oklch(from var(--_src) 0.87 0.075 h));
+    --button-fg-secondary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.835 0.1 h));
+    --button-fg-secondary-hover: light-dark(oklch(from var(--_src) 0.4 0.17 h), oklch(from var(--_src) 0.865 0.07 h));
+    --button-fg-tertiary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.8 0.11 h));
+    --button-fg-tertiary-hover: light-dark(oklch(from var(--_src) 0.4 0.17 h), oklch(from var(--_src) 0.83 0.09 h));
+    --button-fg-quaternary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h / 0.85), oklch(from var(--_src) 0.76 0.115 h));
+    --button-fg-quaternary-hover: light-dark(oklch(from var(--_src) 0.38 0.17 h), oklch(from var(--_src) 0.835 0.09 h));
+  }
+
+  :is(a-checkbox, input[data-anta][type="checkbox"]) {
+    --checkbox-icon: var(--label-on-fill);
+    --checkbox-icon-disabled: var(--label-on-fill-disabled);
+    --checkbox-bg-disabled: var(--fill-disabled);
+    --checkbox-border-disabled: var(--stroke-disabled);
+  }
+
+  a-checkbox {
+    --checkbox-label-color: var(--text-1);
+    --checkbox-hint-color: var(--text-4);
+    --checkbox-mask-size: 14px;
+    --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+
+    &[size="small"] {
+      --checkbox-mask-size: 12px;
+      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    }
+    &[size="large"] {
+      --checkbox-gap: 10px;
+      --checkbox-mask-size: 16px;
+      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    }
+    &:not([round])::before {
+      border-radius: 1px;
+    }
+  }
+
+  :is(a-checkbox, input[data-anta][type="checkbox"]):is(:not([tone]), [tone=""], [tone="neutral"], [tone-scope="selected"]) {
+    --checkbox-bg: var(--bg-1);
+    --checkbox-border-neutral: var(--stroke-1);
+    --checkbox-border: var(--checkbox-border-neutral);
+    --checkbox-border-hover: var(--stroke-1-hover);
+    --checkbox-border-active: var(--stroke-1-active);
+  }
+
+  :is(a-checkbox, input[data-anta][type="checkbox"]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --checkbox-bg-selected: var(--fill-1);
+    --checkbox-bg-selected-hover: var(--fill-1-hover);
+    --checkbox-bg-selected-active: var(--fill-1-active);
+  }
+
+  :is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
+    --checkbox-bg-selected: var(--fill-1-brand);
+    --checkbox-bg-selected-hover: var(--fill-1-brand-hover);
+    --checkbox-bg-selected-active: var(--fill-1-brand-active);
+
+    &:not([tone-scope="selected"]) {
+      --checkbox-bg: var(--bg-2-brand);
+      --checkbox-border: var(--stroke-1-brand);
+      --checkbox-border-hover: var(--stroke-1-brand-hover);
+      --checkbox-border-active: var(--stroke-1-brand-active);
+    }
+  }
+
+  :is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
+    --checkbox-bg-selected: var(--fill-1-info);
+    --checkbox-bg-selected-hover: var(--fill-1-info-hover);
+    --checkbox-bg-selected-active: var(--fill-1-info-active);
+
+    &:not([tone-scope="selected"]) {
+      --checkbox-bg: var(--bg-2-info);
+      --checkbox-border: var(--stroke-1-info);
+      --checkbox-border-hover: var(--stroke-1-info-hover);
+      --checkbox-border-active: var(--stroke-1-info-active);
+    }
+  }
+
+  :is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
+    --checkbox-bg-selected: var(--fill-1-success);
+    --checkbox-bg-selected-hover: var(--fill-1-success-hover);
+    --checkbox-bg-selected-active: var(--fill-1-success-active);
+
+    &:not([tone-scope="selected"]) {
+      --checkbox-bg: var(--bg-2-success);
+      --checkbox-border: var(--stroke-1-success);
+      --checkbox-border-hover: var(--stroke-1-success-hover);
+      --checkbox-border-active: var(--stroke-1-success-active);
+    }
+  }
+
+  :is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
+    --checkbox-bg-selected: var(--fill-1-warning);
+    --checkbox-bg-selected-hover: var(--fill-1-warning-hover);
+    --checkbox-bg-selected-active: var(--fill-1-warning-active);
+
+    &:not([tone-scope="selected"]) {
+      --checkbox-bg: var(--bg-2-warning);
+      --checkbox-border: var(--stroke-1-warning);
+      --checkbox-border-hover: var(--stroke-1-warning-hover);
+      --checkbox-border-active: var(--stroke-1-warning-active);
+    }
+  }
+
+  :is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
+    --checkbox-icon: var(--label-on-fill-critical);
+    --checkbox-bg-selected: var(--fill-1-critical);
+    --checkbox-bg-selected-hover: var(--fill-1-critical-hover);
+    --checkbox-bg-selected-active: var(--fill-1-critical-active);
+
+    &:not([tone-scope="selected"]) {
+      --checkbox-bg: var(--bg-2-critical);
+      --checkbox-border: var(--stroke-1-critical);
+      --checkbox-border-hover: var(--stroke-1-critical-hover);
+      --checkbox-border-active: var(--stroke-1-critical-active);
+    }
+  }
+
+  /* Lift custom dark fills under the black mark. */
+  :is(a-checkbox, input[data-anta][type="checkbox"])[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.5 c h), oklch(from var(--checkbox-tone-source) 0.8 0.1 h));
+    --checkbox-bg-selected-hover: light-dark(oklch(from var(--checkbox-tone-source) 0.45 c h), oklch(from var(--checkbox-tone-source) 0.84 0.095 h));
+    --checkbox-bg-selected-active: light-dark(oklch(from var(--checkbox-tone-source) 0.4 c h), oklch(from var(--checkbox-tone-source) 0.87 0.075 h));
+    --_checkbox-off-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.5 c h), oklch(from var(--checkbox-tone-source) 0.45 c h));
+  }
+
+  /* Reveal the check / minus from left to right over 300ms on hover or
+     keyboard focus. Other state changes show the mark at once; unchecking
+     clears it at once. */
+  a-checkbox::after {
+    clip-path: inset(0 100% 0 0);
+  }
+  a-checkbox:is(:state(checked), :state(indeterminate))::after {
+    clip-path: inset(0);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    a-checkbox:is(:hover, :focus-visible):is(:state(checked), :state(indeterminate))::after {
+      transition: clip-path 300ms cubic-bezier(0.45, 0.05, 0.55, 0.95);
+    }
+  }
+
+  a-checkbox:is(:state(checked), :state(indeterminate)):focus-visible::before,
+  input[data-anta][type="checkbox"]:is(:checked, :indeterminate):focus-visible {
+    border-width: 0;
+    box-shadow: inset 0 0 0 1px var(--focus-halo);
+  }
+
+  /* Native checkbox marks use background images, so their colors need separate SVGs. */
+  label:has(> input[data-anta][type="checkbox"]) {
+    color: var(--text-1);
+  }
+  label:has(> input[data-anta][type="checkbox"][size="large"]) {
+    gap: 10px;
+  }
+  label:has(> input[data-anta][type="checkbox"]:disabled) {
+    color: var(--text-4);
+  }
+  input[data-anta][type="checkbox"]:not([round]) {
+    --checkbox-round: 1px;
+  }
+  input[data-anta][type="checkbox"] {
+    --checkbox-mask-size: 14px;
+  }
+  input[data-anta][type="checkbox"][size="small"] {
+    --checkbox-mask-size: 12px;
+  }
+  input[data-anta][type="checkbox"][size="large"] {
+    --checkbox-mask-size: 16px;
+  }
+  input[data-anta][type="checkbox"]:disabled {
+    border-color: var(--checkbox-border-disabled);
+    background-color: var(--checkbox-bg-disabled);
+  }
+  input[data-anta][type="checkbox"]:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  }
+  input[data-anta][type="checkbox"]:indeterminate {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+  }
+  .dark input[data-anta][type="checkbox"]:not([tone="critical"]):checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  }
+  .dark input[data-anta][type="checkbox"]:not([tone="critical"]):indeterminate {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+  }
+  input[data-anta][type="checkbox"]:disabled:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  }
+  input[data-anta][type="checkbox"]:disabled:indeterminate {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+  }
+  .dark input[data-anta][type="checkbox"]:disabled:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  }
+  .dark input[data-anta][type="checkbox"]:disabled:indeterminate {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+  }
+
+  :is(a-radio, input[data-anta][type="radio"]) {
+    --radio-bg: var(--bg-1);
+    --radio-border-neutral: var(--stroke-1);
+    --radio-border: var(--radio-border-neutral);
+    --radio-border-hover: var(--stroke-1-hover);
+    --radio-border-active: var(--stroke-1-active);
+    --radio-bg-selected: var(--fill-1);
+    --radio-bg-selected-hover: var(--fill-1-hover);
+    --radio-bg-selected-active: var(--fill-1-active);
+    --radio-dot: var(--label-on-fill);
+    --radio-dot-disabled: var(--label-on-fill-disabled);
+    --radio-bg-disabled: var(--fill-disabled);
+    --radio-border-disabled: var(--stroke-disabled);
+  }
+
+  :is(a-radio[tone="brand"], a-radio-group[tone="brand"] a-radio:not([tone]), input[data-anta][type="radio"][tone="brand"]) {
+    --radio-bg-selected: var(--fill-1-brand);
+    --radio-bg-selected-hover: var(--fill-1-brand-hover);
+    --radio-bg-selected-active: var(--fill-1-brand-active);
+    --_radio-tint-bg: var(--bg-2-brand);
+    --_radio-tint-border: var(--stroke-1-brand);
+    --_radio-tint-border-hover: var(--stroke-1-brand-hover);
+    --_radio-tint-border-active: var(--stroke-1-brand-active);
+  }
+
+  :is(a-radio[tone="info"], a-radio-group[tone="info"] a-radio:not([tone]), input[data-anta][type="radio"][tone="info"]) {
+    --radio-bg-selected: var(--fill-1-info);
+    --radio-bg-selected-hover: var(--fill-1-info-hover);
+    --radio-bg-selected-active: var(--fill-1-info-active);
+    --_radio-tint-bg: var(--bg-2-info);
+    --_radio-tint-border: var(--stroke-1-info);
+    --_radio-tint-border-hover: var(--stroke-1-info-hover);
+    --_radio-tint-border-active: var(--stroke-1-info-active);
+  }
+
+  :is(a-radio[tone="success"], a-radio-group[tone="success"] a-radio:not([tone]), input[data-anta][type="radio"][tone="success"]) {
+    --radio-bg-selected: var(--fill-1-success);
+    --radio-bg-selected-hover: var(--fill-1-success-hover);
+    --radio-bg-selected-active: var(--fill-1-success-active);
+    --_radio-tint-bg: var(--bg-2-success);
+    --_radio-tint-border: var(--stroke-1-success);
+    --_radio-tint-border-hover: var(--stroke-1-success-hover);
+    --_radio-tint-border-active: var(--stroke-1-success-active);
+  }
+
+  :is(a-radio[tone="warning"], a-radio-group[tone="warning"] a-radio:not([tone]), input[data-anta][type="radio"][tone="warning"]) {
+    --radio-bg-selected: var(--fill-1-warning);
+    --radio-bg-selected-hover: var(--fill-1-warning-hover);
+    --radio-bg-selected-active: var(--fill-1-warning-active);
+    --_radio-tint-bg: var(--bg-2-warning);
+    --_radio-tint-border: var(--stroke-1-warning);
+    --_radio-tint-border-hover: var(--stroke-1-warning-hover);
+    --_radio-tint-border-active: var(--stroke-1-warning-active);
+  }
+
+  :is(a-radio[tone="critical"], a-radio-group[tone="critical"] a-radio:not([tone]), input[data-anta][type="radio"][tone="critical"]) {
+    --radio-dot: var(--label-on-fill-critical);
+    --radio-bg-selected: var(--fill-1-critical);
+    --radio-bg-selected-hover: var(--fill-1-critical-hover);
+    --radio-bg-selected-active: var(--fill-1-critical-active);
+    --_radio-tint-bg: var(--bg-2-critical);
+    --_radio-tint-border: var(--stroke-1-critical);
+    --_radio-tint-border-hover: var(--stroke-1-critical-hover);
+    --_radio-tint-border-active: var(--stroke-1-critical-active);
+  }
+
+  /* Apply tint only when the radio's scope includes its unselected state. */
+  a-radio[tone]:not([tone=""], [tone="neutral"], [tone-scope="selected"]),
+  a-radio-group[tone]:not([tone=""], [tone="neutral"], [tone-scope="selected"]) a-radio:not([tone], [tone-scope="selected"]),
+  a-radio-group[tone]:not([tone=""], [tone="neutral"])[tone-scope="selected"] a-radio[tone-scope="all"]:not([tone]),
+  input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"], [tone-scope="selected"]) {
+    --radio-bg: var(--_radio-tint-bg);
+    --radio-border: var(--_radio-tint-border);
+    --radio-border-hover: var(--_radio-tint-border-hover);
+    --radio-border-active: var(--_radio-tint-border-active);
+  }
+
+  /* Keep custom tint borders based on the unlifted fill. */
+  :is(a-radio[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
+      a-radio-group[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) a-radio:not([tone]),
+      input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])) {
+    --radio-bg-selected: light-dark(oklch(from var(--radio-tone-source) 0.5 c h), oklch(from var(--radio-tone-source) 0.8 0.1 h));
+    --radio-bg-selected-hover: light-dark(oklch(from var(--radio-tone-source) 0.45 c h), oklch(from var(--radio-tone-source) 0.84 0.095 h));
+    --radio-bg-selected-active: light-dark(oklch(from var(--radio-tone-source) 0.4 c h), oklch(from var(--radio-tone-source) 0.87 0.075 h));
+    --_radio-off-bg-selected: light-dark(oklch(from var(--radio-tone-source) 0.5 c h), oklch(from var(--radio-tone-source) 0.45 c h));
+    --_radio-tint-bg: light-dark(oklch(from var(--radio-off-tone-source) 0.99 calc(c * 0.03) h), oklch(from var(--radio-off-tone-source) 0.15 calc(c * 0.18) h));
+    --_radio-tint-border: light-dark(oklch(from var(--_radio-border-base) calc(l + 0.17) c h), var(--_radio-border-base));
+    --_radio-tint-border-hover: oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
+    --_radio-tint-border-active: light-dark(var(--_radio-border-base), oklch(from var(--_radio-border-base) calc(l + 0.17) c h));
+  }
+
+  /* Override the base native radio's literal disabled colors. */
+  input[data-anta][type="radio"]:disabled {
+    border-color: var(--radio-border-disabled);
+    background-color: var(--radio-bg-disabled);
+  }
+  input[data-anta][type="radio"]:disabled:checked {
+    border-color: var(--radio-border-disabled);
+    background: radial-gradient(circle, var(--radio-dot-disabled) 0 var(--radio-dot-core), var(--radio-bg-disabled) var(--radio-dot-edge));
+  }
+
+  /* Switches share the interactive layer: stroke-1 outlines the unchecked
+     track and fills its thumb, fill-1 fills the checked track. Disabled
+     switches drop their tone. */
+  a-switch {
+    --switch-thumb: var(--label-on-fill);
+    --switch-thumb-shadow: 0 1px 2px color-mix(in oklch, #000000 25%, transparent);
+    --switch-track-disabled: var(--fill-disabled);
+    --switch-track-disabled-border: var(--stroke-disabled);
+    --switch-track-on-disabled: var(--fill-disabled);
+    --switch-track-on-disabled-border: var(--stroke-disabled);
+    --switch-thumb-off-disabled: var(--label-on-fill-disabled);
+    --switch-thumb-on-disabled: var(--label-on-fill-disabled);
+    --switch-thumb-shadow-disabled: none;
+  }
+
+  a-switch:is(:not([tone]), [tone=""], [tone="neutral"], [tone-scope="selected"]) {
+    --switch-track-off-stroke-neutral: var(--stroke-1);
+    --switch-track-off-stroke-hover: var(--stroke-1-hover);
+    --switch-track-off-stroke-active: var(--stroke-1-active);
+  }
+
+  a-switch:is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --switch-track-on: var(--fill-1);
+    --switch-track-on-hover: var(--fill-1-hover);
+    --switch-track-on-active: var(--fill-1-active);
+  }
+
+  a-switch[tone="brand"] {
+    --switch-track-on: var(--fill-1-brand);
+    --switch-track-on-hover: var(--fill-1-brand-hover);
+    --switch-track-on-active: var(--fill-1-brand-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-brand);
+      --switch-track-off-stroke-hover: var(--stroke-1-brand-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-brand-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="info"] {
+    --switch-track-on: var(--fill-1-info);
+    --switch-track-on-hover: var(--fill-1-info-hover);
+    --switch-track-on-active: var(--fill-1-info-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-info);
+      --switch-track-off-stroke-hover: var(--stroke-1-info-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-info-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="success"] {
+    --switch-track-on: var(--fill-1-success);
+    --switch-track-on-hover: var(--fill-1-success-hover);
+    --switch-track-on-active: var(--fill-1-success-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-success);
+      --switch-track-off-stroke-hover: var(--stroke-1-success-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-success-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="warning"] {
+    --switch-track-on: var(--fill-1-warning);
+    --switch-track-on-hover: var(--fill-1-warning-hover);
+    --switch-track-on-active: var(--fill-1-warning-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-warning);
+      --switch-track-off-stroke-hover: var(--stroke-1-warning-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-warning-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="critical"] {
+    --switch-thumb: var(--label-on-fill-critical);
+    --switch-track-on: var(--fill-1-critical);
+    --switch-track-on-hover: var(--fill-1-critical-hover);
+    --switch-track-on-active: var(--fill-1-critical-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-critical);
+      --switch-track-off-stroke-hover: var(--stroke-1-critical-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-critical-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  /* Lift custom dark fills under the black thumb. */
+  a-switch[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --switch-track-on: light-dark(oklch(from var(--switch-tone-source) 0.5 c h), oklch(from var(--switch-tone-source) 0.8 0.1 h));
+    --switch-track-on-hover: light-dark(oklch(from var(--switch-tone-source) 0.45 c h), oklch(from var(--switch-tone-source) 0.84 0.095 h));
+    --switch-track-on-active: light-dark(oklch(from var(--switch-tone-source) 0.4 c h), oklch(from var(--switch-tone-source) 0.87 0.075 h));
+  }
+
+  a-radio:state(selected):focus-visible::before,
+  a-radio-group:focus-visible a-radio:state(selected)::before,
+  input[data-anta][type="radio"]:checked:focus-visible,
+  a-switch:state(checked):focus-visible::before {
+    border-width: 0;
+    box-shadow: inset 0 0 0 1px var(--focus-halo);
+  }
+
+  :is(a-slider, input[data-anta][type="range"]):not([thumb-fill]) {
+    --anta-slider-thumb-border-width: 2px;
+  }
+
+  /* Slider focus rings match the other controls: 2px with the pulse. Only the
+     width and animation are set here; the component still decides when the
+     ring's outline style is visible. */
+  a-slider:focus-visible::part(control),
+  a-slider::part(thumb):focus-visible,
+  input[data-anta][type="range"]:focus-visible {
+    outline-width: 2px;
+    animation: focus-ring-pulse 360ms;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+  a-slider::part(control),
+  input[data-anta][type="range"] {
+    border-radius: 1px;
+  }
+
+  /* Slider rails and thumb strokes share the checked-control fills in dark
+     mode. Light mode keeps the base role-token colors. */
+  :is(a-slider, input[data-anta][type="range"]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2) 50%, var(--border-1)), var(--fill-1));
+    --slider-fill-hover: light-dark(var(--border-1), var(--fill-1-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="brand"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand)), var(--fill-1-brand));
+    --slider-fill-hover: light-dark(var(--border-1-brand), var(--fill-1-brand-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="info"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info)), var(--fill-1-info));
+    --slider-fill-hover: light-dark(var(--border-1-info), var(--fill-1-info-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="success"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success)), var(--fill-1-success));
+    --slider-fill-hover: light-dark(var(--border-1-success), var(--fill-1-success-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="warning"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning)), var(--fill-1-warning));
+    --slider-fill-hover: light-dark(var(--border-1-warning), var(--fill-1-warning-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone="critical"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical)), var(--fill-1-critical));
+    --slider-fill-hover: light-dark(var(--border-1-critical), var(--fill-1-critical-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--slider-tone-source) 65%, var(--border-2)), oklch(from var(--slider-tone-source) 0.8 0.1 h));
+    --slider-fill-hover: light-dark(color-mix(in oklch, var(--slider-tone-source) 80%, var(--border-1)), oklch(from var(--slider-tone-source) 0.84 0.095 h));
+  }
+  /* Without its own tone, the thumb matches the filled rail. */
+  :is(a-slider, input[data-anta][type="range"]):is(:not([thumb-tone]), [thumb-tone=""]) {
+    --slider-thumb-interactive-rest: var(--slider-interactive-rest);
+    --slider-thumb-border-active: var(--slider-fill-hover);
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="neutral"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2) 50%, var(--border-1)), var(--fill-1));
+    --slider-thumb-border-active: light-dark(var(--border-1), var(--fill-1-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="brand"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand)), var(--fill-1-brand));
+    --slider-thumb-border-active: light-dark(var(--border-1-brand), var(--fill-1-brand-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="info"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info)), var(--fill-1-info));
+    --slider-thumb-border-active: light-dark(var(--border-1-info), var(--fill-1-info-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="success"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success)), var(--fill-1-success));
+    --slider-thumb-border-active: light-dark(var(--border-1-success), var(--fill-1-success-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="warning"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning)), var(--fill-1-warning));
+    --slider-thumb-border-active: light-dark(var(--border-1-warning), var(--fill-1-warning-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone="critical"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical)), var(--fill-1-critical));
+    --slider-thumb-border-active: light-dark(var(--border-1-critical), var(--fill-1-critical-hover));
+  }
+  :is(a-slider, input[data-anta][type="range"])[thumb-tone]:not([thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"], [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--slider-thumb-tone-source) 65%, var(--border-2)), oklch(from var(--slider-thumb-tone-source) 0.8 0.1 h));
+    --slider-thumb-border-active: light-dark(color-mix(in oklch, var(--slider-thumb-tone-source) 80%, var(--border-1)), oklch(from var(--slider-thumb-tone-source) 0.84 0.095 h));
+  }
+  input[data-anta][type="range"] {
+    --slider-tone-source: var(--anta-native-range-tone-source, transparent);
+    --slider-thumb-tone-source: var(--anta-native-range-thumb-tone-source, transparent);
+    --anta-native-range-interactive-rest: var(--slider-interactive-rest);
+    --anta-native-range-fill-hover: var(--slider-fill-hover);
+    --anta-native-range-thumb-interactive-rest: var(--slider-thumb-interactive-rest);
+    --anta-native-range-thumb-border-active: var(--slider-thumb-border-active);
+  }
+
   a-input:not([round])::part(field),
   a-input:not([round]):not(:defined)::after {
     border-radius: 0;
+  }
+
+  /* Fields share the interactive stroke: stroke-1 at rest, stroke-1-hover on
+     hover and focus. Status and custom-tone fields keep their own border. The
+     2px focus ring straddles the field edge, 1px inside and 1px outside, so
+     focus grows the field outline by 1px without changing its layout size. */
+  a-input {
+    --_input-focus-width: 2px;
+    --_input-focus-offset: -1px;
+  }
+
+  /* Field rings are box shadows: 1px over the border and 1px outside it, the
+     same footprint as the 2px outline at -1px. Chromium rounds outline widths
+     to whole pixels, so an outline pulse steps; a shadow spread grows
+     smoothly. The transparent outline stays for forced colors, which drops
+     box shadows. The rule targets the field part from the document, so it
+     resolves the document's keyframes. The host matches `:focus` only when
+     its shadow control holds focus, not when a slotted button does, which
+     matches the shadow ring condition. */
+  a-input:not([readonly]):focus::part(field),
+  a-input[readonly]:state(kb-focus)::part(field),
+  a-input-time:focus-within::part(field) {
+    outline-color: transparent;
+    box-shadow:
+      inset 0 0 0 1px var(--focus-ring),
+      inset 0 0 0 1px var(--focus-field-border),
+      0 0 0 1px var(--focus-ring);
+    animation: focus-field-pulse 360ms;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+  a-input {
+    --focus-field-border: var(--input-border);
+  }
+
+  a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
+    --input-border: var(--stroke-1-hover);
+    --input-border-width: 1px;
+
+    &:not([priority="tertiary"]) {
+      --input-rest-border: var(--stroke-1);
+    }
+  }
+
+  /* Status fields take the brightest tone stroke; dark brand is muted to
+     sit with the other tones. The hint keeps the border's hue and chroma at
+     a lightness that holds 4.5:1 on the field's surroundings. */
+  a-input[status="brand"]:not(:disabled) {
+    --input-border: light-dark(
+      var(--stroke-1-brand-active),
+      oklch(from var(--stroke-1-brand-active) 0.6 calc(c * 0.75) h)
+    );
+  }
+  a-input[status="info"]:not(:disabled) { --input-border: var(--stroke-1-info-active); }
+  a-input[status="success"]:not(:disabled) { --input-border: var(--stroke-1-success-active); }
+  a-input[status="warning"]:not(:disabled) { --input-border: var(--stroke-1-warning-active); }
+  a-input[status="critical"]:not(:disabled) { --input-border: light-dark(#ff4a68, var(--stroke-1-critical-active)); }
+  a-input[status]:not([status="neutral"], :disabled) {
+    --input-hint: light-dark(
+      oklch(from var(--input-border) 0.53 c h),
+      oklch(from var(--input-border) 0.72 c h)
+    );
+  }
+
+  a-input:disabled {
+    --input-border: var(--stroke-disabled);
+    --input-border-width: 1px;
+
+    &:not([priority="tertiary"]) {
+      --input-rest-border: var(--stroke-disabled);
+    }
+    &:not([priority="secondary"], [priority="tertiary"]) {
+      --input-bg: var(--fill-disabled);
+    }
+  }
+
+  /* Time fields match the text fields above: square corners, a 1px stroke,
+     and the same pulsing 2px ring across the field edge. */
+  a-input-time:not([round])::part(field),
+  a-input-time:not([round]):not(:defined)::after {
+    border-radius: 0;
+  }
+
+  a-input-time:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
+    --input-time-border: var(--stroke-1);
+    --input-time-border-hover: var(--stroke-1-hover);
+  }
+
+  a-input-time:not([tone]:not([tone=""]), :focus-within)::part(field),
+  a-input-time:not([tone]:not([tone=""])):not(:defined)::after {
+    box-shadow: inset 0 0 0 1px var(--input-time-border);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    a-input-time:not([tone]:not([tone=""]), :disabled, :focus-within)::part(field):hover {
+      box-shadow: inset 0 0 0 1px var(--input-time-border-hover);
+    }
+  }
+  /* The field ring is shared with Input above. */
+  a-input-time {
+    --focus-field-border: var(--input-time-border-hover);
+  }
+  a-input-time:focus-within::part(field) {
+    outline: 2px solid transparent;
+    outline-offset: -1px;
+  }
+
+  a-input-time[status="brand"]:not(:disabled) {
+    --input-time-border: light-dark(
+      var(--stroke-1-brand-active),
+      oklch(from var(--stroke-1-brand-active) 0.6 calc(c * 0.75) h)
+    );
+  }
+  a-input-time[status="info"]:not(:disabled) { --input-time-border: var(--stroke-1-info-active); }
+  a-input-time[status="success"]:not(:disabled) { --input-time-border: var(--stroke-1-success-active); }
+  a-input-time[status="warning"]:not(:disabled) { --input-time-border: var(--stroke-1-warning-active); }
+  a-input-time[status="critical"]:not(:disabled) { --input-time-border: light-dark(#ff4a68, var(--stroke-1-critical-active)); }
+  a-input-time[status]:not([status="neutral"], :disabled) {
+    --input-time-hint: light-dark(
+      oklch(from var(--input-time-border) 0.53 c h),
+      oklch(from var(--input-time-border) 0.72 c h)
+    );
+  }
+
+  a-input-time:disabled {
+    --input-time-border: var(--stroke-disabled);
+    --input-time-bg: var(--fill-disabled);
   }
 
   :is(input[data-anta]:not([type="checkbox"], [type="radio"], [type="range"],
@@ -123,6 +1677,171 @@
   }
 
   a-tag {
+    border-radius: 3px;
+  }
+
+  /* Primary tags take the solid control fill, matching primary buttons and
+     checked checkboxes. Light warning steps to the active fill to hold 4.5:1
+     under white text. */
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"], [tone="brand"],
+      [tone="info"], [tone="success"], [tone="warning"]) {
+    --tag-text: var(--label-on-fill);
+  }
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"]) { --tag-bg: var(--fill-1); }
+  a-tag[priority="primary"][tone="brand"] { --tag-bg: var(--fill-1-brand); }
+  a-tag[priority="primary"][tone="info"] { --tag-bg: var(--fill-1-info); }
+  a-tag[priority="primary"][tone="success"] { --tag-bg: var(--fill-1-success); }
+  a-tag[priority="primary"][tone="warning"] { --tag-bg: light-dark(var(--fill-1-warning-active), var(--fill-1-warning)); }
+  a-tag[priority="primary"][tone="critical"] {
+    --tag-bg: var(--fill-1-critical);
+    --tag-text: var(--label-on-fill-critical);
+  }
+
+  /* Light secondary and tertiary text steps to text-2; the 80% text-3 tones
+     fell below 4.5:1 on the tinted fills. */
+  a-tag:is(:not([tone]), [tone=""], [tone="neutral"]):not([priority="primary"]) { --tag-text: light-dark(var(--text-2), var(--text-3)); }
+  a-tag[tone="brand"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-brand), var(--text-3-brand)); }
+  a-tag[tone="info"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-info), var(--text-3-info)); }
+  a-tag[tone="success"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-success), var(--text-3-success)); }
+  a-tag[tone="warning"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-warning), var(--text-3-warning)); }
+  a-tag[tone="critical"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-critical), var(--text-3-critical)); }
+
+  /* Dark neutral border-4 sits at the fill's lightness with less chroma, so the
+     fill's edge faded to grey. Lift the fill and brighten the edge. */
+  :where(a-progress, progress[data-anta]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --progress-indicator-bg: light-dark(var(--bg-5), #311228);
+    --progress-border-color: light-dark(var(--border-4), #3f1b35);
+  }
+
+  a-card:not([round]) {
+    --card-radius: 1px;
+  }
+
+  a-expander:not([round]) {
     border-radius: 1px;
+  }
+
+  details[data-anta]:not([round]) {
+    --native-expander-round: 1px;
+  }
+
+  a-dialog:not([round]) {
+    --dialog-radius: 1px;
+  }
+
+  /* A submenu inside a `round` menu keeps the inherited round radius. */
+  a-menu:not([round], a-menu[round] a-menu) {
+    --menu-radius: 2px;
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --menu-item-color: var(--text-1);
+    --menu-item-hover-bg: var(--fill-3-hover);
+    --menu-item-selected-bg: var(--fill-3-active);
+    --menu-item-active-bg: var(--fill-3-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="brand"] {
+    --menu-item-hover-bg: var(--fill-3-brand-hover);
+    --menu-item-selected-bg: var(--fill-3-brand-active);
+    --menu-item-active-bg: var(--fill-3-brand-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="info"] {
+    --menu-item-hover-bg: var(--fill-3-info-hover);
+    --menu-item-selected-bg: var(--fill-3-info-active);
+    --menu-item-active-bg: var(--fill-3-info-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="success"] {
+    --menu-item-hover-bg: var(--fill-3-success-hover);
+    --menu-item-selected-bg: var(--fill-3-success-active);
+    --menu-item-active-bg: var(--fill-3-success-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="warning"] {
+    --menu-item-hover-bg: var(--fill-3-warning-hover);
+    --menu-item-selected-bg: var(--fill-3-warning-active);
+    --menu-item-active-bg: var(--fill-3-warning-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="critical"] {
+    --menu-item-hover-bg: var(--fill-3-critical-hover);
+    --menu-item-selected-bg: var(--fill-3-critical-active);
+    --menu-item-active-bg: var(--fill-3-critical-active);
+  }
+
+  :is(a-menu-item[disabled], a[data-anta-menu-item][aria-disabled="true"]) {
+    --menu-item-color: var(--text-4);
+    --menu-item-icon-color: var(--text-4);
+    --menu-item-hint-color: var(--text-4);
+  }
+}
+
+/* Plain focusable HTML, such as links, takes the controls' 2px ring and pulse.
+   In the reset layer, every component focus rule still wins; `:root` outranks
+   the reset's bare `:focus-visible`. Native Anta fields keep their own ring. */
+@layer anta.reset {
+  :root :focus-visible:not([data-anta]) {
+    outline-width: 2px;
+    animation: focus-ring-pulse 360ms;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+
+/* The focus ring grows past its 2px rest, then settles. Outward rings keep
+   their own resting offset: Chromium floors outline offsets to whole pixels,
+   so animating the offset toward a nonzero rest stalls and then jumps.
+   Inset rings, such as tabs and cards, select `focus-ring-pulse-inset`
+   through `--focus-ring-animation`; it moves the offset with the width so the
+   ring grows inward. Easing is set per segment: a fast ease-out to the peak,
+   then an ease-in-out so the end does not crawl. */
+@keyframes focus-ring-pulse {
+  from {
+    outline-width: 0;
+    outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.3, 0, 0, 1);
+  }
+  35% {
+    outline-width: var(--focus-ring-pulse-width, 4px);
+    outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.25, 0, 0.2, 1);
+  }
+}
+
+/* Fields pulse their outer shadow from 0 to 2px and settle at 1px, while the
+   inner ring fades in over the field border. */
+@keyframes focus-field-pulse {
+  from {
+    box-shadow:
+      inset 0 0 0 1px transparent,
+      inset 0 0 0 1px var(--focus-field-border),
+      0 0 0 0 color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.3, 0, 0, 1);
+  }
+  35% {
+    box-shadow:
+      inset 0 0 0 1px var(--focus-ring),
+      inset 0 0 0 1px var(--focus-field-border),
+      0 0 0 2px color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.25, 0, 0.2, 1);
+  }
+}
+
+@keyframes focus-ring-pulse-inset {
+  from {
+    outline-width: 0;
+    outline-offset: 0;
+    outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.3, 0, 0, 1);
+  }
+  35% {
+    outline-width: var(--focus-ring-pulse-width, 4px);
+    outline-offset: calc(-1 * var(--focus-ring-pulse-width, 4px));
+    outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
+    animation-timing-function: cubic-bezier(0.25, 0, 0.2, 1);
   }
 }

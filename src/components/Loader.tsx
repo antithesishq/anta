@@ -37,8 +37,8 @@ export interface LoaderProps extends BaseProps {
  * to the current proportion. `shape="loader"` provides the indeterminate
  * visual for string-only icon props such as `Button`'s `icon`.
  *
- * Requires `@antadesign/anta/elements` to be imported (client-side only) to
- * register the underlying custom element.
+ * Loader needs CSS without element registration. See
+ * [Install and configure](https://anta.design/install/) for stylesheet setup.
  *
  * @example Indeterminate
  * ```tsx

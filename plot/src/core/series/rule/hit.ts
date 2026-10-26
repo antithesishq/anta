@@ -14,7 +14,7 @@ const MIN_GRAB_RADIUS = 4
  * @param y_scale - y scale
  * @returns the rule's index, or null
  */
-export function rule_hit_test(series: ComposedRule, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale): number | null {
+export function rule_hit_test<Row, TooltipContent>(series: ComposedRule<Row, TooltipContent>, cursor: { x: number; y: number }, x_scale: Scale, y_scale: Scale): number | null {
     const values = rule_values(series)
     const is_vertical = series.side === 'x'
     const resolve = pixel_resolver(is_vertical ? x_scale : y_scale, values)

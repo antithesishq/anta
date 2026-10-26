@@ -1,8 +1,12 @@
-@layer anta {
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+@layer anta.components {
   a-sticker-animated {
     --sticker-size: 256px;
 
-    display: inline-block;
+    display: inline-grid;
+    place-items: center;
     width: var(--sticker-size);
     height: var(--sticker-size);
   }
@@ -14,5 +18,14 @@
   a-sticker-animated[replay-on-click]:focus-visible {
     outline: 1px solid var(--focus-ring);
     outline-offset: 2px;
+  }
+
+  a-sticker-animated::part(container) {
+    width: var(--sticker-size);
+    height: var(--sticker-size);
+  }
+
+  a-sticker-animated::part(artwork) {
+    display: block;
   }
 }

@@ -21,81 +21,104 @@ type UseSyncExternalStore = <T>(
 
 let _jsx: JsxFunction = React.createElement as JsxFunction
 let _Fragment: ComponentType = React.Fragment as ComponentType
-// Default to React's hooks. Under Preact-compat (the documented Preact path), the
-// `react` specifier already aliases to `preact/compat`, so these resolve to Preact's
-// hooks automatically — no `configure()` needed. A non-compat custom runtime passes
-// its own via `configure(jsx, Fragment, { useState, useId })`.
-let _useState: UseState = React.useState as UseState
-let _useId: UseId = React.useId as UseId
-let _useMemo: UseMemo = React.useMemo as UseMemo
-let _useRef: UseRef = React.useRef as UseRef
-let _useLayoutEffect: UseLayoutEffect = React.useLayoutEffect as UseLayoutEffect
-let _useSyncExternalStore: UseSyncExternalStore = React.useSyncExternalStore as UseSyncExternalStore
+/** Renderer hooks used by Anta wrappers. Pass the runtime's hooks object to
+ * `configure()`. Only hooks used by the rendered components need to be present. */
+export interface RendererHooks {
+  useState?: UseState
+  useId?: UseId
+  useMemo?: UseMemo
+  useRef?: UseRef
+  useLayoutEffect?: UseLayoutEffect
+  useSyncExternalStore?: UseSyncExternalStore
+}
+
+/** Renderer behavior configured before mounting components. */
+export interface RendererOptions {
+  /** Enable the browser event-prop workaround when hydrating server-rendered
+   * HTML. Handlers attach after the first browser commit. Omit or pass `false`
+   * for immediate forwarding without listener hooks or an extra mount render.
+   * Server and worker projections without `window` always forward immediately.
+   * @defaultValue false */
+  hydratingEvents?: boolean
+}
+
+let _hooks: RendererHooks = React as RendererHooks
+let _hydratingEvents = false
+
+/** @internal Read the hydration option without exposing mutable configuration. */
+export function hydratingEventsEnabled() {
+  return _hydratingEvents
+}
 
 /**
- * Swap the underlying JSX factory (and, optionally, the hooks) used by all anta
- * components.
+ * Configure the JSX factory, fragment, and hooks before rendering Anta components.
+ * Client-rendered React and Preact with React compatibility aliases need no setup.
  *
- * Not needed for React or Preact-with-compat — those work automatically. Call this
- * before rendering any anta components when using Preact without compat aliasing,
- * or a custom JSX runtime. Pass `hooks` when your runtime's hooks don't resolve via
- * the `react` specifier (the stateful wrappers — `RadioGroup`, `Calendar`,
- * `InputDate` — need `useState` / `useId` / `useMemo`); omit it and they default
- * to whatever `react` resolves to.
+ * Pass your runtime's hooks object as a whole. It replaces the previous object;
+ * omitted hooks never fall back to another renderer. A missing hook reports an
+ * error when a component uses it. Omitting the object restores React's hooks.
+ * Configure the same package entry in each process or thread that renders JSX.
+ * Set `options.hydratingEvents` to `true` in the browser entry before hydrating
+ * server-rendered HTML. Client-only apps and worker renderers forward event
+ * subscriptions immediately by default, including workers with a `window` shim.
+ * Each call resets the option to `false` when omitted. Configure before mounting;
+ * keep the option unchanged for a mounted tree.
  *
- * @example Preact without compat
+ * @example Custom renderer
  * ```ts
  * import { configure } from '@antadesign/anta'
  * import { h, Fragment } from 'preact'
- * import { useState, useId, useMemo } from 'preact/hooks'
- * configure(h, Fragment, { useState, useId, useMemo })
+ * import * as hooks from 'preact/hooks'
+ * configure(h, Fragment, hooks)
  * ```
  */
 export function configure(
   jsx: JsxFunction,
   Fragment?: ComponentType,
-  hooks?: {
-    useState?: UseState
-    useId?: UseId
-    useMemo?: UseMemo
-    useRef?: UseRef
-    useLayoutEffect?: UseLayoutEffect
-    useSyncExternalStore?: UseSyncExternalStore
-  },
+  hooks: RendererHooks = React as RendererHooks,
+  options: RendererOptions = {},
 ) {
   _jsx = jsx
   if (Fragment !== undefined) _Fragment = Fragment
-  if (hooks?.useState) _useState = hooks.useState
-  if (hooks?.useId) _useId = hooks.useId
-  if (hooks?.useMemo) _useMemo = hooks.useMemo
-  if (hooks?.useRef) _useRef = hooks.useRef
-  if (hooks?.useLayoutEffect) _useLayoutEffect = hooks.useLayoutEffect
-  if (hooks?.useSyncExternalStore) _useSyncExternalStore = hooks.useSyncExternalStore
+  _hooks = hooks
+  _hydratingEvents = options.hydratingEvents === true
 }
 
-/** Hooks indirection so wrappers depend on the configured renderer, not a hard
- *  `import … from 'react'`. Call these exactly like the React hooks. */
+function rendererHook<K extends keyof RendererHooks>(name: K): NonNullable<RendererHooks[K]> {
+  const hook = _hooks[name]
+  if (typeof hook !== 'function') {
+    throw new Error(`Anta: the configured renderer is missing ${name}. Pass its hooks object to configure().`)
+  }
+  return hook as NonNullable<RendererHooks[K]>
+}
+
+/** Hooks delegate to the object supplied to `configure()`, or React by default. */
 export function useState<S>(initial: S | (() => S)): [S, (next: S | ((prev: S) => S)) => void] {
-  return _useState(initial)
+  return rendererHook('useState')(initial)
 }
 export function useId(): string {
-  return _useId()
+  return rendererHook('useId')()
 }
 export function useMemo<T>(factory: () => T, deps: unknown[]): T {
-  return _useMemo(factory, deps)
+  return rendererHook('useMemo')(factory, deps)
 }
 export function useRef<T>(initial: T): { current: T } {
-  return _useRef(initial)
+  return rendererHook('useRef')(initial)
 }
 export function useLayoutEffect(effect: () => void | (() => void), deps?: unknown[]): void {
-  return _useLayoutEffect(effect, deps)
+  return rendererHook('useLayoutEffect')(effect, deps)
+}
+/** @internal Optional browser cleanup for presets that also support runtimes
+ * without lifecycle hooks. Configure hooks before mounting and keep them stable. */
+export function useOptionalClientLayoutEffect(effect: () => void | (() => void), deps?: unknown[]): void {
+  if (typeof window !== 'undefined') _hooks.useLayoutEffect?.(effect, deps)
 }
 export function useSyncExternalStore<T>(
   subscribe: (onChange: () => void) => () => void,
   getSnapshot: () => T,
   getServerSnapshot?: () => T,
 ): T {
-  return _useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  return rendererHook('useSyncExternalStore')(subscribe, getSnapshot, getServerSnapshot)
 }
 
 export function jsx(type: ComponentType, props: Record<string, unknown> | null, key?: string | number): unknown {
@@ -118,7 +141,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
+import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ATextContentAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AExpanderSummaryAttributes, AExpanderIndicatorAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -141,6 +164,7 @@ export interface AntaIntrinsicElements {
   'a-progress-text': BaseAttributes
   'a-progress-hint': BaseAttributes
   'a-text': ATextAttributes
+  'a-text-content': ATextContentAttributes
   'a-box': ABoxAttributes
   'a-capture': ACaptureAttributes
   'a-panel': APanelAttributes
@@ -149,7 +173,10 @@ export interface AntaIntrinsicElements {
   'a-tag-label': BaseAttributes
   'a-tag-value': BaseAttributes
   'a-expander': AExpanderAttributes
-  'a-expander-summary': BaseAttributes
+  'a-expander-summary': AExpanderSummaryAttributes
+  'a-expander-title': BaseAttributes
+  'a-expander-actions': BaseAttributes
+  'a-expander-indicator': AExpanderIndicatorAttributes
   'a-expander-details': BaseAttributes
   'a-icon': AIconAttributes
   'a-button': AButtonAttributes
@@ -165,8 +192,18 @@ export interface AntaIntrinsicElements {
   'a-switch-hint': BaseAttributes
   'a-tooltip': ATooltipAttributes
   'a-input': AInputAttributes
+  'a-input-label': BaseAttributes
+  'a-input-leading': BaseAttributes
+  'a-input-clear': BaseAttributes
+  'a-input-trailing': BaseAttributes
+  'a-input-hint': BaseAttributes
   'a-slider': ASliderAttributes
   'a-input-time': AInputTimeAttributes
+  'a-input-time-label': BaseAttributes
+  'a-input-time-leading': BaseAttributes
+  'a-input-time-clear': BaseAttributes
+  'a-input-time-trailing': BaseAttributes
+  'a-input-time-hint': BaseAttributes
   'a-calendar': ACalendarAttributes
   'a-radio': ARadioAttributes
   'a-radio-group': ARadioGroupAttributes
@@ -191,6 +228,7 @@ export interface AntaIntrinsicElements {
   'a-select-footer': BaseAttributes
   'a-select-chevron': BaseAttributes & { open?: boolean | '' }
   'a-select-faceted-summary': BaseAttributes
+  'a-select-faceted-text': BaseAttributes
   'a-menu-group': AMenuGroupAttributes
   'a-menu-group-label': BaseAttributes
   'a-tabs': ATabsAttributes
@@ -202,11 +240,24 @@ export interface AntaIntrinsicElements {
   'a-step-desc': BaseAttributes
   'a-step-hint': BaseAttributes
   'a-dialog': ADialogAttributes
+  'a-dialog-close': BaseAttributes
+  'a-dialog-footer': BaseAttributes
   'a-card': ACardAttributes
+  'a-card-layout': BaseAttributes
   'a-card-icon-chip': BaseAttributes
+  'a-card-footer': BaseAttributes
+  'a-card-media': BaseAttributes
+  'a-card-content': BaseAttributes
+  'a-card-header': BaseAttributes
+  'a-card-icon': BaseAttributes
+  'a-card-title': BaseAttributes
+  'a-card-body': BaseAttributes
   'a-input-date-time-container': BaseAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes
+  'a-banner-content': BaseAttributes
+  'a-banner-actions': BaseAttributes
+  'a-banner-close': BaseAttributes
   'a-toaster': AToasterAttributes
   'a-toast': AToastAttributes
 }

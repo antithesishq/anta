@@ -18,26 +18,20 @@ export interface IconProps extends BaseProps {
 }
 
 /**
- * Renders an `<a-icon>` web component. Color follows `currentColor`;
- * size is set via the `size` prop (defaults to 16).
+ * Displays an icon in the current text color. Pass `size` for custom dimensions
+ * and `label` when the icon conveys meaning without accompanying text.
  *
- * Requires `@antadesign/anta/elements` to be imported (client-side only)
- * to register the underlying custom element and load the icon
- * stylesheets.
+ * Icon needs CSS without element registration. See
+ * [Install and configure](https://anta.design/install/) for stylesheet setup.
  *
- * @example Decorative icon paired with text — no label needed
+ * @example Decorative icon beside status text
  * ```tsx
- * <button>
- *   <Icon shape="trash" />
- *   Delete
- * </button>
+ * <Text><Icon shape="check" /> Saved</Text>
  * ```
  *
- * @example Meaningful icon-only control — pass a label
+ * @example Standalone icon with an accessible name
  * ```tsx
- * <button aria-label="Delete">
- *   <Icon shape="trash" label="Delete" />
- * </button>
+ * <Icon shape="warning-triangle" label="Warning" />
  * ```
  */
 export const Icon = ({ shape, size, label, className, style, ...rest }: IconProps) => {

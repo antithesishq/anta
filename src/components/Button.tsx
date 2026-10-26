@@ -1,3 +1,4 @@
+import { hasButtonContent } from "../button-content"
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
 import { neutralToneAttr, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
@@ -50,16 +51,16 @@ export type BaseButtonProps = {
 
 /** Content axis — slots render in this order inside the button:
  *  `icon` → `label` → `children` → `iconTrailing`. Pass `icon` alone
- *  for an icon-only button (the CSS detects this structurally via
- *  `:has(> a-icon:only-child)` and gives the host square padding +
- *  min-size pin). */
+ *  for an icon-only button (the CSS detects a lone icon, allowing tooltip
+ *  and copy helpers, and gives the host equal padding on both axes). */
 export type ContentMode = {
   /** Label text. Renders between the leading icon and `children`. */
   label?: string
   /** Leading icon shape. When set alone (no `label`, no `iconTrailing`, no
-   *  `children`), the button renders as a square icon-only control and
+   *  visible `children`), the button renders as a square icon-only control and
    *  the wrapper auto-supplies `aria-label={icon}` (override by passing
-   *  your own `aria-label`). */
+   *  your own `aria-label`). Tooltip and copy helpers do not count as visible
+   *  content. Set an explicit name for custom child components. */
   icon?: IconShape
   /** Trailing icon shape. Renders after `children`, last in the slot order. */
   iconTrailing?: IconShape
@@ -202,7 +203,7 @@ export const Button = ({
   // (leading / trailing), and swaps it to check / ✕ on the result.
   // Icon-only: a leading icon and no text content.
   const isIconOnly =
-    icon != null && label == null && children == null && iconTrailing == null
+    icon != null && label == null && !hasButtonContent(children) && iconTrailing == null
 
   const sharedAttrs = {
     // `<a-button>` is a custom element with no implicit ARIA role, so AT would

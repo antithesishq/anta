@@ -20,6 +20,16 @@ facet also opens a dialog containing its search field and options menu. Text and
 custom facets use dialogs for their editable content. An unfiltered option facet
 keeps the menu popup pattern.
 
+Global search matches options across all `single` and `multiple` facets, including
+facets with `filter: false`. A facet's `filter` controls its own search field.
+Each field keeps its query independently. Built-in matching searches `value`,
+`label`, and `hint` without case sensitivity; whitespace in a query matches a
+run of whitespace. A custom `filter` receives the original query, including
+leading and trailing spaces, in both search locations.
+It also runs for an empty per-facet query. A whitespace-only global query keeps
+the facet list visible instead of opening global results. Select's custom
+filter receives a trimmed query; account for this difference when sharing predicates.
+
 Pass `placement` to control where the root facet menu opens relative to its
 trigger. It uses the same values as `Menu` and still flips or clamps when space
 is limited. `offset` sets the gap in pixels between the trigger and the menu:
@@ -95,7 +105,7 @@ function Demo() {
       <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
 
       {active.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', maxWidth: '100%' }}>
           {/* Show an editable control or summary for each active facet. */}
           {active.map((facet) => {
             // Options facets → an editable Select (single shows the trailing check;
@@ -108,13 +118,13 @@ function Demo() {
                   indicator={facet.kind === 'single' ? 'check' : undefined}
                   options={facet.options}
                   renderOption={facet.renderOption}
-                  value={value[facet.key]}
+                  value={value[facet.key] ?? (facet.kind === 'single' ? null : [])}
                   onValueChange={(v) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
+                  aria-label={facet.label}
                   filter={facet.filter}
                   clearable
-                  // Chip sizes to its value and caps at a max-width (ellipsizing past it).
-                  style={{ width: 'fit-content', maxWidth: '240px' }}
+                  className="sf-chip"
                 />
               )
 
@@ -134,12 +144,11 @@ function Demo() {
                 leading={`${facet.label}:`}
                 clearable
                 dimActions
+                className="sf-chip"
                 onFocus={() => setFocusedKey(facet.key)}
                 onBlur={() => setFocusedKey(null)}
                 onInput={(e) => write(e.currentTarget.value)}
                 onClearInput={() => { setFocusedKey(null); setFacet(facet.key, undefined) }}
-                // Size the chip to its value, capped at a max-width.
-                style={{ width: 'fit-content', maxWidth: '240px' }}
               />
             )
           })}
@@ -161,9 +170,17 @@ function Demo() {
 }
 ```
 
+The demo gives editable chips a consistent width, capped by their container.
+Input truncates long values with an ellipsis when the field is unfocused.
+
+```css
+.sf-chip { width: 240px; max-width: 100%; }
+```
+
 The trigger opens the facet menu. The example shows active values beside it.
 Option facets use an editable [Select](./select.md) with the facet label in its
-`leading` prefix. Recency uses a summary tag and is edited in the facet menu.
+`leading` prefix and `aria-label` as its accessible name. Recency uses a summary
+tag and is edited in the facet menu.
 
 ### Custom option content
 
@@ -193,7 +210,13 @@ depends on `kind`: an option value for `single`, an array for `multiple`, a
 string for `text`, and a value of type `V` for `custom`. A cleared facet is
 absent from the record, rather than set to `undefined`. The trigger badge counts
 the keys that remain. Use `value` with `onValueChange` to control the filter, or
-use `defaultValue` for the uncontrolled case.
+use `defaultValue` for the uncontrolled case. Omit `value` or pass `undefined` to
+release control while retaining the latest filter record.
+
+Inline controlled records work correctly. If you derive the record during
+rendering, `useMemo` can avoid an extra component render when its inputs are
+unchanged. Pass records held in state directly. See the `value` prop's API
+reference for an example.
 
 Because one control mixes facets that hold different value types, the record is typed
 `Record<string, unknown>`; narrow per facet when you read it.
@@ -442,7 +465,7 @@ const recency: SelectFacetCustom<Recency> = {
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Default trigger's button size. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone in facet flyouts. An option's own `tone` wins. |
 | `toneScope?` | 'all' \| 'selected' | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
-| `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through `onValueChange`. Leave it undefined for uncontrolled use. |
+| `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through `onValueChange`. Leave it undefined for uncontrolled use; releasing control retains the latest applied record. Inline records work correctly. For a derived record, `useMemo` can avoid an extra component render when the parent renders with unchanged inputs. Pass records held in state directly. |
 
 ### The `SelectFacet` type
 
@@ -503,3 +526,33 @@ It can store a value of type `V`, including an object such as a date range.
 | `kind` | `'custom'` | Discriminant. |
 | `render` | `(ctx) => ReactNode` | Renders the editor. `ctx.value` is the current `V`; `ctx.onChange(next)` sets it, and `undefined` clears the facet. `ctx.close()` closes the menu. |
 | `summary` | `(value: V) => ReactNode` | The chip on the facet's row while a value is set. |
+
+## Styling
+
+`size` and `priority` style the default trigger. `tone` and `toneScope` style
+option rows. `className`, `style`, and extra attributes apply to the default
+Button; a custom `renderTrigger` owns its own styling and attributes.
+
+SelectFaceted uses external styles for its fixed layout, including the text
+editor's padding. Consumer `style` props, option styles, render-hook styles,
+and custom color or radius props can still produce inline style attributes.
+Server-rendered inline styles are blocked by `style-src-attr 'none'`.
+
+The text editor uses a CSS-only `a-select-faceted-text` region in its Menu.
+If you targeted the former `div[data-menu-open]` wrapper, replace that part of
+your selector with `a-select-faceted-text`. Its padding now comes from CSS,
+so selectors that require an inline `style` attribute no longer apply.
+Use your trigger's class and the adjacent Menu to scope its padding. The class
+in this example belongs to the demo; replace it with your own selector. Open
+**Title contains** to see the larger inset.
+
+```tsx
+<SelectFaceted
+  className="roomy-text-filter"
+  facets={[{ key: 'title', label: 'Title contains', kind: 'text' }]}
+/>
+```
+
+```css
+.roomy-text-filter + a-menu a-select-faceted-text { padding: 8px; }
+```

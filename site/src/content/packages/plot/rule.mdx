@@ -13,9 +13,10 @@ import PlotRulePreview from '../../../components/PlotRulePreview.astro'
 
 # Rule
 
-Draw a reference line across the plot. Supply `x` for a vertical line or
-`y` for a horizontal line. A single rule needs no data array; add it to the
-same series array as the data it annotates.
+A rule series adds reference lines that give context to the data, such as
+a target, a threshold, or the time of an event. Supply `x` for a vertical line
+or `y` for a horizontal line. Add the rule alongside the series it annotates.
+A single reference line can use a constant value without a data array.
 
 <PlotExampleGrid>
 <Columns>
@@ -158,17 +159,17 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data?` | `{[key: string]: any}[]` | None | Optional rows for multiple reference lines. |
+| `data?` | `{[key: string]: any}[]` | None | Data for multiple reference lines. Omit it to draw a single line by setting either `x` or `y` to a constant number or category name. Exactly one of `x` and `y` is required. |
 | `x?` | [`number \| FieldArg`](/plot/#data-fields) | None | Vertical rule position, or a field/accessor when `data` is supplied. Set exactly one of `x` and `y`. |
 | `y?` | [`number \| FieldArg`](/plot/#data-fields) | None | Horizontal rule position, or a field/accessor when `data` is supplied. |
 | `color?` | [`ColorArg`](/plot/#series-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
 | `width?` | `number` | `1` | Rule width in pixels. |
 | `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
 | `tooltip?` | [`TooltipArg`](/plot/#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](/plot/#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| [`on_select?`](/plot/#selection) | `SelectFn` | None | Callback receiving the selected point and its source data. |
 | `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
 | `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
-| `highlight_color?` | [`ColorArg`](/plot/#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](/plot/#series-colors) | Automatic | Exact hover color, including opacity. |
 
 This example draws dashed horizontal lines at two thresholds, colors them by value, and adds tooltips and a selection callback.
 

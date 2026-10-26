@@ -216,10 +216,10 @@ const sample = (index) => {
 | [`mark?`](../plot.md#mark-shapes) | `MarkShape` | `'circle'` | Mark shape: circle, square, diamond, or triangle. |
 | `stroke?` | [`StrokeArg`](../plot.md#strokes) | None | Outline color and optional width. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source data. |
 | `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
 | `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
-| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. |
 
 This example maps `time` and `value` to coordinates, uses color and size to
 distinguish values, and adds tooltips and a selection callback.

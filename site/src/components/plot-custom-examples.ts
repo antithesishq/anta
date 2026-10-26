@@ -410,6 +410,41 @@ export function highlights(): PlotArgs<Node> {
     ctx.arc(x, y, 22, 0, Math.PI * 2)
     ctx.stroke()
   }
+  const draw_arrow = (ctx: Parameters<CustomRendererFn<Point>>[1]['ctx'], x: number, y: number, size: number) => {
+    ctx.beginPath()
+    ctx.moveTo(x - size, y - size * 0.3)
+    ctx.lineTo(x, y - size * 0.3)
+    ctx.lineTo(x, y - size * 0.75)
+    ctx.lineTo(x + size, y)
+    ctx.lineTo(x, y + size * 0.75)
+    ctx.lineTo(x, y + size * 0.3)
+    ctx.lineTo(x - size, y + size * 0.3)
+    ctx.closePath()
+    ctx.fill()
+  }
+  const arrow_renderer: CustomRendererFn<Point> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
+    for (let i = 0; i < series.x.length; i++) {
+      const x = resolve_x(i), y = resolve_y(i)
+      if (x === undefined || y === undefined) continue
+      ctx.fillStyle = color_at(i)
+      draw_arrow(ctx, x, y, 16)
+    }
+  }
+  const arrow_hit_test: CustomHitTestFn<Point> = (series, { cursor, resolve_x, resolve_y }) => {
+    for (let i = series.x.length - 1; i >= 0; i--) {
+      const x = resolve_x(i), y = resolve_y(i)
+      if (x === undefined || y === undefined) continue
+      const dx = cursor.x - x, dy = Math.abs(cursor.y - y)
+      if (dx >= -16 && dx <= 16 && dy <= (dx < 0 ? 16 * 0.3 : (16 - dx) * 0.75)) return i
+    }
+    return null
+  }
+  const arrow_highlight: CustomHighlightRendererFn<Point> = (_series, i, { ctx, resolve_x, resolve_y, color_at }) => {
+    const x = resolve_x(i), y = resolve_y(i)
+    if (x === undefined || y === undefined) return
+    ctx.fillStyle = color_at(i)
+    draw_arrow(ctx, x, y, 24)
+  }
   return {
     height: 260,
     axis: { x: { min: 0, max: 100 }, y: { min: 0, max: 100 } },
@@ -417,15 +452,28 @@ export function highlights(): PlotArgs<Node> {
     grid: false, zoom_pan: false,
     series: [
       custom({
-        data: [{ x: 20, y: 35 }, { x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        data: [{ x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
         color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
       }),
       custom({
-        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
+        data: [{ x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
       }),
       custom({
-        data: [{ x: 80, y: 35 }, { x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        data: [{ x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        color: '#94a3b8', highlight: false, tooltip: true,
+      }),
+      custom({
+        data: [{ x: 20, y: 35 }], x: 'x', y: 'y', renderer: arrow_renderer, hit_test: arrow_hit_test,
+        color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
+      }),
+      custom({
+        data: [{ x: 50, y: 35 }], x: 'x', y: 'y', renderer: arrow_renderer, hit_test: arrow_hit_test,
+        highlight_renderer: arrow_highlight,
+        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
+      }),
+      custom({
+        data: [{ x: 80, y: 35 }], x: 'x', y: 'y', renderer: arrow_renderer, hit_test: arrow_hit_test,
         color: '#94a3b8', highlight: false, tooltip: true,
       }),
     ],

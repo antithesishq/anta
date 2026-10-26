@@ -251,7 +251,7 @@ const resolution = 64
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data` | `{[key: string]: any}[]` | Required | Rows used to build the series. |
+| `data` | `{[key: string]: any}[]` | Required | Data points to plot. |
 | `x?` | [`FieldArg`](../plot.md#data-fields) | `'x'` | Horizontal field name or accessor. |
 | `y?` | [`FieldArg`](../plot.md#data-fields) | `'y'` | Vertical field name or accessor. |
 | `color?` | [`ThemeColor`](../plot.md#theme-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
@@ -261,7 +261,7 @@ const resolution = 64
 | `mark_size?` | `number` | `6` | Point marker diameter in pixels. |
 | `mark_stroke?` | [`StrokeArg`](../plot.md#strokes) | None | Outline for the point markers. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source data. |
 | `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
 | `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
 | `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. |

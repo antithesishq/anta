@@ -1,8 +1,9 @@
 # Area
 
-Fill the space between two boundaries. Set `y2` for a second vertical value
-or `x2` for a second horizontal value. The second boundary can be a field
-name or a constant, such as a zero baseline.
+An area series fills the space between two boundaries, showing how values
+rise above a baseline or vary within a range. Area plots can show changing
+magnitudes, uncertainty bands, or the gap between two measurements. Set `y2`
+or `x2` to define the second boundary using a field, accessor, or constant.
 
 ## Fill to a baseline
 
@@ -188,19 +189,19 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data` | `{[key: string]: any}[]` | Required | Rows used to build the series. |
+| `data` | `{[key: string]: any}[]` | Required | Data points to plot. |
 | `x?` | [`FieldArg`](../plot.md#data-fields) | `'x'` | Horizontal field name or accessor. |
-| `x2?` | [`FieldArg \| number`](../plot.md#data-fields) | None | Second horizontal boundary, as a field, accessor, or constant. Use either `x2` or `y2`. |
+| `x2?` | [`FieldArg \| number`](../plot.md#data-fields) | None | Second horizontal boundary, as a field, accessor, or constant. Cannot be used together with `y2`. |
 | `y?` | [`FieldArg`](../plot.md#data-fields) | `'y'` | Vertical field name or accessor. |
-| `y2?` | [`FieldArg \| number`](../plot.md#data-fields) | Zero baseline if neither bound is set | Second vertical boundary, as a field, accessor, or constant. |
+| `y2?` | [`FieldArg \| number`](../plot.md#data-fields) | Zero baseline if neither bound is set | Second vertical boundary, as a field, accessor, or constant. Cannot be used together with `x2`. |
 | `color?` | [`ThemeColor`](../plot.md#theme-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
 | `stroke?` | [`StrokeArg`](../plot.md#strokes) | None | Outline color and optional width. |
 | `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source data. |
 | `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
 | `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
-| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. |
 
 This example fills the band between `low` and `high` over `time`, adds a dashed outline, and enables tooltips and a selection callback.
 

@@ -1,8 +1,12 @@
 # Custom
 
-Provide a [`renderer`](#custom-rendering) to draw directly on the canvas. Its second argument
-includes the canvas context, plot bounds, scales, and helpers that convert
-data positions into pixel coordinates.
+A custom series lets you draw your own shapes and annotations alongside other
+series, using the same plot coordinates. Use it for specialized marks, regions,
+or overlays. Provide a [`renderer`](#custom-rendering) that draws on the canvas
+with access to the plot bounds, scales, and helpers for converting data
+positions into pixel coordinates. The examples below are just starting points.
+Custom series provide an escape hatch beyond the built-in series, giving you
+the freedom to draw any visualization you can create on the canvas.
 
 ## Confidence ellipses
 
@@ -447,11 +451,18 @@ document.body.append(plot)
 
 ## Custom hover highlights
 
-Hover the points at x = 20 for the default single-point repaint, x = 50 for an explicit halo, and x = 80 for tooltips with highlighting disabled. Only the hovered point is repainted. Translucent fills strengthen when drawn again; an identical opaque fill may look unchanged.
+By default, hovering over a point calls `renderer` again with only that point.
+Use the supplied series data when drawing, and set `highlight_color` to give
+the point a different hover color.
 
-Without `highlight_renderer`, Anta calls `renderer` on the overlay with a single-point series view. The aligned `x`, `y`, `rows`, `colors`, `highlight_colors`, and `labels` arrays contain only that point at index 0; scales and bounds are unchanged. Render from the supplied series, not captured full-data arrays, to use this fallback. Set `highlight_color` to override the fallback's color without changing its geometry.
+For a different shape, such as a halo, provide `highlight_renderer`. It receives
+the full series, the hovered point's index, and drawing helpers. Set
+`highlight: false` to turn off hover highlights. Highlighting requires `data`
+and a `hit_test` callback to identify the point under the pointer.
 
-For connected geometry or a different highlight, supply `highlight_renderer(series, point_index, context)`. It receives the full composed series, the original hovered index, and the normal render helpers plus `highlight_color_at(index)`. Anta handles DPR, clearing, clipping, and canvas-state isolation. Set `highlight: false` to disable either path. Both paths require data and hit testing.
+The plot below shows circles above arrows. At x = 20, hovering redraws the
+mark with the default highlight. At x = 50, the circle gains a halo and the
+arrow grows larger. At x = 80, hovering shows tooltips without highlighting.
 
 ```ts
 import { custom, type PlotArgs, type CustomRendererFn, type CustomHitTestFn, type CustomHighlightRendererFn } from '@antadesign/plot'
@@ -488,6 +499,41 @@ function highlights(): PlotArgs<Node> {
     ctx.arc(x, y, 22, 0, Math.PI * 2)
     ctx.stroke()
   }
+  const draw_arrow = (ctx: Parameters<CustomRendererFn<Point>>[1]['ctx'], x: number, y: number, size: number) => {
+    ctx.beginPath()
+    ctx.moveTo(x - size, y - size * 0.3)
+    ctx.lineTo(x, y - size * 0.3)
+    ctx.lineTo(x, y - size * 0.75)
+    ctx.lineTo(x + size, y)
+    ctx.lineTo(x, y + size * 0.75)
+    ctx.lineTo(x, y + size * 0.3)
+    ctx.lineTo(x - size, y + size * 0.3)
+    ctx.closePath()
+    ctx.fill()
+  }
+  const arrow_renderer: CustomRendererFn<Point> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
+    for (let i = 0; i < series.x.length; i++) {
+      const x = resolve_x(i), y = resolve_y(i)
+      if (x === undefined || y === undefined) continue
+      ctx.fillStyle = color_at(i)
+      draw_arrow(ctx, x, y, 16)
+    }
+  }
+  const arrow_hit_test: CustomHitTestFn<Point> = (series, { cursor, resolve_x, resolve_y }) => {
+    for (let i = series.x.length - 1; i >= 0; i--) {
+      const x = resolve_x(i), y = resolve_y(i)
+      if (x === undefined || y === undefined) continue
+      const dx = cursor.x - x, dy = Math.abs(cursor.y - y)
+      if (dx >= -16 && dx <= 16 && dy <= (dx < 0 ? 16 * 0.3 : (16 - dx) * 0.75)) return i
+    }
+    return null
+  }
+  const arrow_highlight: CustomHighlightRendererFn<Point> = (_series, i, { ctx, resolve_x, resolve_y, color_at }) => {
+    const x = resolve_x(i), y = resolve_y(i)
+    if (x === undefined || y === undefined) return
+    ctx.fillStyle = color_at(i)
+    draw_arrow(ctx, x, y, 24)
+  }
   return {
     height: 260,
     axis: { x: { min: 0, max: 100 }, y: { min: 0, max: 100 } },
@@ -495,15 +541,28 @@ function highlights(): PlotArgs<Node> {
     grid: false, zoom_pan: false,
     series: [
       custom({
-        data: [{ x: 20, y: 35 }, { x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        data: [{ x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
         color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
       }),
       custom({
-        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
+        data: [{ x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
       }),
       custom({
-        data: [{ x: 80, y: 35 }, { x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        data: [{ x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        color: '#94a3b8', highlight: false, tooltip: true,
+      }),
+      custom({
+        data: [{ x: 20, y: 35 }], x: 'x', y: 'y', renderer: arrow_renderer, hit_test: arrow_hit_test,
+        color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
+      }),
+      custom({
+        data: [{ x: 50, y: 35 }], x: 'x', y: 'y', renderer: arrow_renderer, hit_test: arrow_hit_test,
+        highlight_renderer: arrow_highlight,
+        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
+      }),
+      custom({
+        data: [{ x: 80, y: 35 }], x: 'x', y: 'y', renderer: arrow_renderer, hit_test: arrow_hit_test,
         color: '#94a3b8', highlight: false, tooltip: true,
       }),
     ],
@@ -520,18 +579,18 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data?` | `{[key: string]: any}[]` | None | Optional data. Required when using field selectors or hit testing. |
-| `x?` | [`FieldArg`](../plot.md#data-fields) | Unclaimed | Horizontal field or accessor. Omitted axes do not contribute data bounds. |
-| `y?` | [`FieldArg`](../plot.md#data-fields) | Unclaimed | Vertical field or accessor. Omitted axes do not contribute data bounds. |
+| `data?` | `{[key: string]: any}[]` | None | Optional data. Required when using field selectors, tooltips, selection callbacks, or hover highlights. |
+| `x?` | [`FieldArg`](../plot.md#data-fields) | Unclaimed | Horizontal field or accessor. If omitted, this series does not affect the automatic range of this axis. |
+| `y?` | [`FieldArg`](../plot.md#data-fields) | Unclaimed | Vertical field or accessor. If omitted, this series does not affect the automatic range of this axis. |
 | [`renderer`](#custom-rendering) | `CustomRendererFn` | Required | Draw the series using its data and the supplied canvas context and pixel resolvers. |
-| `highlight_renderer?` | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
+| [`highlight_renderer?`](#highlight-rendering) | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
 | `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it, using the custom callback or default drawing. |
-| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
-| [`hit_test?`](../plot.md#custom-hit-testing) | `CustomHitTestFn` | None | Return a row index for a hit, or `null`. Required for custom tooltips and selection. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. |
+| [`hit_test?`](#hit-testing) | `CustomHitTestFn` | None | Return the index in `data` of the point under the pointer, or `null`. Required for custom tooltips and selection. |
 | `color?` | [`ColorArg`](../plot.md#series-colors) | Black | Color made available to the renderer, including optional per-row colors. |
 | `axis_range?` | `{ x?: number[]; y?: number[] }` | Data extent | Explicit `[low, high]` bounds for either axis. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source data. |
 | `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
 
 This example draws a cross at each point and finds the nearest cross within
@@ -584,18 +643,17 @@ const series = [custom({
 })]
 ```
 
-For tooltips or selection, also provide `data` and a [`hit_test`](../plot.md#custom-hit-testing) that returns
-the matching row index, or `null` when there is no hit. Use `axis_range`
-to declare bounds when they cannot be inferred from the data.
+Use `axis_range` to set the axis ranges when they cannot be inferred from the data.
 
 ## Custom rendering
 
-The `renderer` callback receives the series and a `CustomRenderContext`
-with the canvas, scales, and helpers needed to draw it.
+The `renderer` callback draws your custom series on the plot’s canvas whenever the plot renders.
+It receives the series and a `CustomRenderContext` with the canvas, scales,
+and helpers needed to position and style your drawing.
 
 The composed series contains resolved `x` and `y` columns, source `rows` when
 provided, and theme-resolved colors. Category coordinates are stored as
-indices; use the pixel resolvers to place them on the canvas.
+indices. Use the pixel resolvers to place them on the canvas.
 
 ### CustomRenderContext
 
@@ -608,14 +666,60 @@ indices; use the pixel resolvers to place them on the canvas.
 | `color` | `string` | Resolved fallback series color. |
 | `x_categories?` | `string[]` | Horizontal category labels, when categorical. |
 | `y_categories?` | `string[]` | Vertical category labels, when categorical. |
-| `resolve_x` | `PixelResolver` | Resolve a row index to its x position in pixels. |
-| `resolve_y` | `PixelResolver` | Resolve a row index to its y position in pixels. |
-| `color_at` | `ColorResolver` | Resolve a row index to its color, including the series fallback. |
+| `resolve_x` | `PixelResolver` | Resolve a data index to its x position in pixels. |
+| `resolve_y` | `PixelResolver` | Resolve a data index to its y position in pixels. |
+| `color_at` | `ColorResolver` | Resolve a data index to its color, including the series fallback. |
 
-`PixelResolver` is `(index: number) => number | undefined`; skip points whose
-position is `undefined`. `ColorResolver` is `(index: number) => string`.
-`CanvasContext` is `CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D`.
-`Scale` is a D3 linear, logarithmic, band, or time scale.
+`resolve_x(index)` and `resolve_y(index)` return a point’s pixel position.
+Skip drawing the point if either returns `undefined`. `color_at(index)` returns
+its color. `ctx` provides the standard 2D drawing methods, and `x_scale` and
+`y_scale` convert data values into pixel positions.
+
+## Hit testing
+
+Hit testing identifies which part of your drawing is under the pointer, enabling
+tooltips, selection callbacks, and hover highlights. Provide
+`hit_test(series, context)` and return the corresponding index in `data`, or
+`null` when the pointer is outside your shapes.
+
+Use `cursor` to read the pointer position in pixels and `resolve_x(index)` and
+`resolve_y(index)` to find each point's position on the canvas. Compare these
+positions using the shape you draw, such as a circle's radius or an arrow's outline.
+
+### HitContext
+
+| Context field | Type | Description |
+|---|---|---|
+| `cursor` | `{ x: number; y: number }` | Pointer position in canvas pixels. |
+| `inner` | `Rect` | Plot bounds in pixels. |
+| `x_scale` | `Scale` | Horizontal scale for converting data values to pixel positions. |
+| `y_scale` | `Scale` | Vertical scale for converting data values to pixel positions. |
+| `resolve_x` | `PixelResolver` | Resolve a data index to its x position in pixels. |
+| `resolve_y` | `PixelResolver` | Resolve a data index to its y position in pixels. |
+
+## Highlight rendering
+
+Use `highlight_renderer(series, point_index, context)` to draw a custom hover
+effect, such as a halo or a larger arrow. The callback receives the full series
+and the index returned by `hit_test`. Draw the effect on `context.ctx`, using
+`resolve_x(point_index)` and `resolve_y(point_index)` to position it.
+
+### CustomHighlightContext
+
+The context includes all fields from [CustomRenderContext](#customrendercontext),
+plus the following helper.
+
+| Context field | Type | Description |
+|---|---|---|
+| `highlight_color_at` | `ColorResolver` | Resolve a data index to its automatic hover color, which may include transparency. |
+
+Use `color_at(point_index)` to retain the original series color, as the enlarged
+arrow does in the [hover examples](#custom-hover-highlights). The `highlight_color`
+option controls the default repaint. With a custom highlight renderer, you choose
+the drawing color in the callback.
+
+Anta clears the hover overlay when the hovered point changes. Set
+`highlight: false` to disable hover highlights.
 
 ## Shared configuration
 

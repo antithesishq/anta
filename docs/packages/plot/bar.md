@@ -1,8 +1,9 @@
 # Bar
 
-Draw one bar per category. Use a categorical field on one axis and a numeric
-field on the other. Categories on `x` produce vertical bars; categories on
-`y` produce horizontal bars.
+A bar series represents values as bars, making it easy to compare categories
+and see their relative sizes. Use a categorical field on one axis and a numeric
+field on the other. Categories on `x` produce vertical bars, while categories
+on `y` produce horizontal bars.
 
 ## Rounded bars and data colors
 
@@ -82,7 +83,7 @@ plot.plotArgs = {
     tooltip: ({ x, y }) => document.createTextNode(y + ': ' + x + ' requests/s'),
   })],
   height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 78 },
+  margin: { top: 5, right: 12, bottom: 20, left: 78 },
   axis: { x: { min: 0, max: 100, label: '' }, y: { label: '' } },
   background: { light: '#ffffff', dark: '#151b28' },
   chrome_color: { light: '#e2e8f0', dark: '#334155' },
@@ -185,20 +186,20 @@ document.body.append(plot)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data` | `{[key: string]: any}[]` | Required | Rows used to build the series. |
+| `data` | `{[key: string]: any}[]` | Required | Data points to plot. |
 | `x?` | [`FieldArg \| string[]`](../plot.md#data-fields) | `'x'` | Category or value field. An array of value fields creates horizontal stacks. |
 | `y?` | [`FieldArg \| string[]`](../plot.md#data-fields) | `'y'` | Category or value field. An array of value fields creates vertical stacks. |
 | `color?` | [`ColorArg`](../plot.md#series-colors) or [`ThemeColor[]`](../plot.md#theme-colors) | Black | Uniform or per-row color. A color array maps to stacked fields in order. |
 | `border_radius?` | `number` | `0` | Bar corner radius in pixels. |
-| `inset?` | `number` | One sixth of band width | Inset on each side of a categorical band, in pixels. |
+| `inset?` | `number` | 1/6 of band width | Space left on each side within a categorical band, in pixels. |
 | `min_size?` | `number` | `2` | Minimum rendered value length in pixels. |
-| `hover_span_x?` | `boolean` | `false` | Extend the horizontal hit region across the categorical band. |
-| `hover_span_y?` | `boolean` | `false` | Extend the vertical hit region across the categorical band. |
+| `hover_span_x?` | `boolean` | `false` | Extend the area that responds to tooltips, selection, and hover highlights along the x axis. |
+| `hover_span_y?` | `boolean` | `false` | Extend the area that responds to tooltips, selection, and hover highlights along the y axis. |
 | `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source row. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source data. |
 | `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
 | `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
-| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. Stacked bars also accept a `ThemeColor[]` palette. |
 
 This example draws a bar for each `group` using its `count`, rounds the corners, and adds tooltips and a selection callback.
 
@@ -224,9 +225,11 @@ const series = [bar({
 
 ## Stacked bars
 
-Pass an array of value-field names to stack them within each category.
-Use `y` for vertical stacks or `x` for horizontal stacks. An array of
-colors assigns one color to each field, in the same order.
+Stacked bars divide each bar into segments, showing how individual values
+contribute to a total. They make it easy to compare both the totals and their
+composition across categories. Pass an array of value-field names to `y` for
+vertical stacks or `x` for horizontal stacks. An array of colors assigns one
+color to each field, in the same order.
 
 Stacked values
 
@@ -421,6 +424,8 @@ const plot = document.createElement('a-plot') as APlotElement
 plot.plotArgs = stackedTooltip()
 document.body.append(plot)
 ```
+
+This example stacks `passed` and `failed` counts within each `group`, assigns a color to each segment, and adds tooltips and a selection callback.
 
 ```ts
 import { bar } from '@antadesign/plot'

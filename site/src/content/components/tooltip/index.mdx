@@ -182,7 +182,7 @@ that need an explicit trigger and popup semantics.
 </Button>
 ```
 
-### Scrollable content
+<Disclosure title="Scrollable content" level={3}>
 
 Hover **Scrollable help**, move into the bubble, and scroll through the setup
 notes. The bubble stays open and scrolling stops at its edges without moving
@@ -204,7 +204,17 @@ This example uses `::part(bubble)` to set a shorter height for comparison.
         </div>
       </Tooltip>
     </Button>
-    <p>Scroll this container to dismiss the tooltip.</p>
+    <p>Scroll this setup checklist to dismiss the tooltip.</p>
+    <ol className="tooltip-scroll-checklist">
+      <li>Install the package.</li>
+      <li>Import the component bundle.</li>
+      <li>Load your theme.</li>
+      <li>Add a button and tooltip.</li>
+      <li>Check keyboard navigation.</li>
+      <li>Try scrolling inside the tooltip.</li>
+      <li>Try scrolling this checklist.</li>
+      <li>Build your application.</li>
+    </ol>
   </div>
 </div>
   <style is:inline>{`.tooltip-scroll-container {
@@ -215,8 +225,11 @@ This example uses `::part(bubble)` to set a shorter height for comparison.
   border-radius: 8px;
 }
 .tooltip-scroll-body {
-  min-height: 600px;
   padding: 32px;
+}
+.tooltip-scroll-checklist li {
+  padding-block: 12px;
+  border-top: 1px solid var(--border-2);
 }
 .tooltip-scroll-example::part(bubble) {
   max-width: 300px;
@@ -237,7 +250,17 @@ This example uses `::part(bubble)` to set a shorter height for comparison.
         </div>
       </Tooltip>
     </Button>
-    <p>Scroll this container to dismiss the tooltip.</p>
+    <p>Scroll this setup checklist to dismiss the tooltip.</p>
+    <ol className="tooltip-scroll-checklist">
+      <li>Install the package.</li>
+      <li>Import the component bundle.</li>
+      <li>Load your theme.</li>
+      <li>Add a button and tooltip.</li>
+      <li>Check keyboard navigation.</li>
+      <li>Try scrolling inside the tooltip.</li>
+      <li>Try scrolling this checklist.</li>
+      <li>Build your application.</li>
+    </ol>
   </div>
 </div>
 ```
@@ -251,14 +274,19 @@ This example uses `::part(bubble)` to set a shorter height for comparison.
   border-radius: 8px;
 }
 .tooltip-scroll-body {
-  min-height: 600px;
   padding: 32px;
+}
+.tooltip-scroll-checklist li {
+  padding-block: 12px;
+  border-top: 1px solid var(--border-2);
 }
 .tooltip-scroll-example::part(bubble) {
   max-width: 300px;
   max-height: 180px;
 }
 ```
+
+</Disclosure>
 
 ## Show only when truncated
 

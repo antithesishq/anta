@@ -112,7 +112,17 @@ This example uses `::part(bubble)` to set a shorter height for comparison.
         </div>
       </Tooltip>
     </Button>
-    <p>Scroll this container to dismiss the tooltip.</p>
+    <p>Scroll this setup checklist to dismiss the tooltip.</p>
+    <ol className="tooltip-scroll-checklist">
+      <li>Install the package.</li>
+      <li>Import the component bundle.</li>
+      <li>Load your theme.</li>
+      <li>Add a button and tooltip.</li>
+      <li>Check keyboard navigation.</li>
+      <li>Try scrolling inside the tooltip.</li>
+      <li>Try scrolling this checklist.</li>
+      <li>Build your application.</li>
+    </ol>
   </div>
 </div>
 ```
@@ -126,8 +136,11 @@ This example uses `::part(bubble)` to set a shorter height for comparison.
   border-radius: 8px;
 }
 .tooltip-scroll-body {
-  min-height: 600px;
   padding: 32px;
+}
+.tooltip-scroll-checklist li {
+  padding-block: 12px;
+  border-top: 1px solid var(--border-2);
 }
 .tooltip-scroll-example::part(bubble) {
   max-width: 300px;

@@ -1,4 +1,4 @@
-import { Tooltip, Button, Checkbox, Text } from '@antadesign/anta'
+import { Tooltip, Button, Checkbox, Text, isContainedEvent } from '@antadesign/anta'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import styles from './TooltipContainEventsPreview.module.css'
 import { useElements } from './useElements'
@@ -14,6 +14,7 @@ export function TooltipContainEventsPreview() {
     const element = parent.current
     if (!element) return
     const onWheel = (event: WheelEvent) => {
+      if (isContainedEvent(event)) return
       event.preventDefault()
       setWheels(count => count + 1)
     }

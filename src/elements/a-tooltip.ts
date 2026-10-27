@@ -1,5 +1,6 @@
 import { HTMLElementBase, anchorRect, isMenuOpen, isInsideOpenMenu } from '../anta_helpers'
 import { debounce } from 'es-toolkit'
+import { isContainedEvent } from '../event-containment'
 import './a-tooltip.css'
 
 /** Gap (px) the bubble keeps from the cursor / anchor / viewport edge. */
@@ -68,18 +69,6 @@ const LEAVE_TOUCH_DELAY = 1500
  * rather than a hold — cancels the pending long-press.
  */
 const TOUCH_SLOP = 10
-
-const CONTAINED_EVENTS = [
-  'pointerdown', 'pointerup', 'pointermove', 'pointercancel', 'pointerover', 'pointerout',
-  'gotpointercapture', 'lostpointercapture',
-  'mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout',
-  'click', 'dblclick', 'auxclick', 'contextmenu',
-  'touchstart', 'touchmove', 'touchend', 'touchcancel', 'wheel',
-]
-
-function stopContainedEvent(event: Event) {
-  event.stopPropagation()
-}
 
 type TooltipRegistry = {
   tooltips: Set<ATooltipElement>
@@ -219,7 +208,7 @@ export class ATooltipElement extends HTMLElementBase {
   // Observe `delay` so changing it at runtime — e.g. the docs playground
   // patches the attribute on the live element — rebuilds the show debounce
   // with the new value instead of keeping the one captured at setup.
-  static observedAttributes = ['delay', 'contain-events']
+  static observedAttributes = ['delay']
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */
   private container!: HTMLDivElement
@@ -230,7 +219,6 @@ export class ATooltipElement extends HTMLElementBase {
    *  container's enter/exit/cross-fade opacity. */
   private bubble!: HTMLSlotElement
   private anchor: HTMLElement | null = null
-  private containmentListening = false
   #connectedDocument?: Document
   #globalDocument?: Document
   #positionView?: Window
@@ -296,7 +284,6 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   connectedCallback() {
-    this.syncContainmentListeners()
     const parent = this.parentElement
     if (!parent) return
     this.anchor = parent
@@ -314,7 +301,6 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
-    this.syncContainmentListeners()
     this.cleanup()
     const doc = this.#connectedDocument
     if (this.anchor && doc) {
@@ -343,17 +329,6 @@ export class ATooltipElement extends HTMLElementBase {
     // `delay` is baked into the debounce, so rebuild it when the attribute
     // changes (only meaningful once listeners are wired).
     if (name === 'delay' && this.listening) this.makeDebouncedShow()
-    if (name === 'contain-events') this.syncContainmentListeners()
-  }
-
-  private syncContainmentListeners() {
-    const enabled = this.isConnected && this.hasAttribute('contain-events')
-    if (enabled === this.containmentListening) return
-    this.containmentListening = enabled
-    for (const type of CONTAINED_EVENTS) {
-      if (enabled) this.container.addEventListener(type, stopContainedEvent, { passive: true })
-      else this.container.removeEventListener(type, stopContainedEvent)
-    }
   }
 
   /** (Re)build the show debounce with the CURRENT `delay` (rebuilt when the
@@ -937,7 +912,7 @@ export class ATooltipElement extends HTMLElementBase {
     }
     const cancelPress = () => { clearPressTimer(); detachPress() }
     const onPointerDown = (e: PointerEvent) => {
-      if (e.pointerType === 'mouse') return // mouse uses the hover path above
+      if (e.pointerType === 'mouse' || isContainedEvent(e, anchor)) return
       clearPressTimer()
       pressStart = { x: e.clientX, y: e.clientY }
       anchor.addEventListener('pointermove', onPressMove)

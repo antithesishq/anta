@@ -7,9 +7,9 @@ changes are not listed.
 
 ### Added
 
-- [Tooltip](/tooltip/#contain-events) supports `containEvents` to keep pointer,
-  mouse, touch, click, context-menu, and wheel events from bubbling to parent handlers.
-  It also enables interactive behavior.
+- [Tooltip](/tooltip/#contain-events) supports `containEvents` to contain bubbling JSX input
+  handlers while preserving child callbacks. It enables interactive behavior.
+  Capture respects the boundary; custom native parents can check `isContainedEvent`.
 
 - [Tooltip](/tooltip/#placement) supports `placement="right"`, with automatic
   flipping to the left when space is limited.

@@ -599,8 +599,8 @@ export interface ATooltipAttributes extends BaseAttributes {
   /** Make the bubble hoverable/clickable (pointer events on, stays open while
    *  hovered). Always pinned. Presence-based (`''` on, omit off). */
   interactive?: boolean | ''
-  /** Contain bubbling pointer, mouse, touch, click, context-menu, and wheel
-   *  events. Also enables interactive behavior. */
+  /** Mark an input boundary respected by Capture and `isContainedEvent`.
+   *  Enables interactive behavior. The JSX wrapper also contains renderer events. */
   'contain-events'?: boolean | ''
   /** Only show when the measured target is actually truncated/clipped (its text
    *  overflows). UI-thread layout read, re-measured per show. Defaults to the

@@ -290,11 +290,13 @@ scrolling the checklist. Scroll the checklist to dismiss it.
 
 ### Contain events
 
-Pass `containEvents` to stop pointer, mouse, touch, click, context-menu, and wheel
-events from bubbling to parent handlers. It also enables `interactive`.
-Scrolling and links keep their native
-behavior. Keyboard and focus events still propagate. Ancestor capture listeners
-can still cancel interactions.
+Pass `containEvents` to contain bubbling pointer, mouse, touch, click,
+context-menu, and wheel handlers in the JSX event system. It also enables
+`interactive`. Child handlers keep working; keyboard and focus events propagate.
+
+Capture respects this boundary automatically. Custom native parent handlers must
+check `isContainedEvent(event)` before consuming input, as in this example.
+Ancestor capture listeners still run first and must also respect the boundary.
 
 Hover **Event containment help** and scroll inside the bubble or select its link.
 Clear **Contain tooltip events** to let the parent count clicks and cancel
@@ -303,7 +305,7 @@ scrolling. Scrolling over the parent always increases its wheel counter.
 <TooltipContainEventsDemo />
 
 ```tsx folded
-import { Tooltip, Button, Checkbox, Text } from '@antadesign/anta'
+import { Tooltip, Button, Checkbox, Text, isContainedEvent } from '@antadesign/anta'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import styles from './TooltipContainEventsPreview.module.css'
 
@@ -317,6 +319,7 @@ function Demo() {
     const element = parent.current
     if (!element) return
     const onWheel = (event: WheelEvent) => {
+      if (isContainedEvent(event)) return
       event.preventDefault()
       setWheels(count => count + 1)
     }
@@ -541,6 +544,9 @@ Raw attributes include `delay`, `placement`, `round`, `follow`, `interactive`, `
 `truncated-only`, and `truncated-selector`. Boolean attributes use presence.
 An anchor can implement `getAnchorRect(): DOMRect` to advertise a smaller
 positioning region; Input reports its field instead of its label and hint.
+
+In raw HTML, `contain-events` marks the boundary for Capture and
+`isContainedEvent`. It does not stop native propagation.
 
 Default styles load from the external component stylesheet. Under CSP, allow
 that same-origin stylesheet and the browser entry. Runtime positioning updates

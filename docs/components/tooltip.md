@@ -149,18 +149,20 @@ scrolling the checklist. Scroll the checklist to dismiss it.
 
 ### Contain events
 
-Pass `containEvents` to stop pointer, mouse, touch, click, context-menu, and wheel
-events from bubbling to parent handlers. It also enables `interactive`.
-Scrolling and links keep their native
-behavior. Keyboard and focus events still propagate. Ancestor capture listeners
-can still cancel interactions.
+Pass `containEvents` to contain bubbling pointer, mouse, touch, click,
+context-menu, and wheel handlers in the JSX event system. It also enables
+`interactive`. Child handlers keep working; keyboard and focus events propagate.
+
+Capture respects this boundary automatically. Custom native parent handlers must
+check `isContainedEvent(event)` before consuming input, as in this example.
+Ancestor capture listeners still run first and must also respect the boundary.
 
 Hover **Event containment help** and scroll inside the bubble or select its link.
 Clear **Contain tooltip events** to let the parent count clicks and cancel
 scrolling. Scrolling over the parent always increases its wheel counter.
 
 ```tsx
-import { Tooltip, Button, Checkbox, Text } from '@antadesign/anta'
+import { Tooltip, Button, Checkbox, Text, isContainedEvent } from '@antadesign/anta'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import styles from './TooltipContainEventsPreview.module.css'
 
@@ -174,6 +176,7 @@ function Demo() {
     const element = parent.current
     if (!element) return
     const onWheel = (event: WheelEvent) => {
+      if (isContainedEvent(event)) return
       event.preventDefault()
       setWheels(count => count + 1)
     }
@@ -309,7 +312,7 @@ is available on the next interaction. Use `round` for a softer shape.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `children?` | ReactNode | — | Supplementary text or markup. Content stays in light DOM for application CSS. |
-| `containEvents?` | boolean | — | Stop pointer, mouse, touch, click, context-menu, and wheel events from bubbling out of the bubble. Enables interactive behavior and preserves native behavior. Ancestor capture listeners run first and can still cancel interactions. |
+| `containEvents?` | boolean | — | Contain bubbling pointer, mouse, touch, click, context-menu, and wheel handlers in the JSX event system. Enables interactive behavior. Capture respects this boundary. Custom native parent handlers must check `isContainedEvent` before consuming input; ancestor capture handlers run first. |
 | `delay?` | number | 300 | Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay. |
 | `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is pinned (anchored beneath the target) by default; pass `follow` for the cursor-tracking behavior, which fades by distance as the cursor leaves. |
 | `interactive?` | boolean | — | Keep content available while the pointer or keyboard focus is inside it. Enables pointer events and pins the bubble even with `follow`. Essential actions belong in a Menu or Dialog with an explicit trigger. |
@@ -348,6 +351,9 @@ Raw attributes include `delay`, `placement`, `round`, `follow`, `interactive`, `
 `truncated-only`, and `truncated-selector`. Boolean attributes use presence.
 An anchor can implement `getAnchorRect(): DOMRect` to advertise a smaller
 positioning region; Input reports its field instead of its label and hint.
+
+In raw HTML, `contain-events` marks the boundary for Capture and
+`isContainedEvent`. It does not stop native propagation.
 
 Default styles load from the external component stylesheet. Under CSP, allow
 that same-origin stylesheet and the browser entry. Runtime positioning updates

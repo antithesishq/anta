@@ -1,7 +1,7 @@
-import type { BaseProps } from "../general_types"
+import type { BaseProps, DOMEventHandlers } from "../general_types"
 import { roundStyle, roundAttr } from "../anta_helpers"
 
-export interface TooltipProps extends BaseProps {
+export interface TooltipProps extends BaseProps, DOMEventHandlers {
   /** Supplementary text or markup. Content stays in light DOM for application CSS. */
   children?: React.ReactNode
   /** Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay.
@@ -22,10 +22,10 @@ export interface TooltipProps extends BaseProps {
    *  Enables pointer events and pins the bubble even with `follow`. Essential
    *  actions belong in a Menu or Dialog with an explicit trigger. */
   interactive?: boolean
-  /** Stop pointer, mouse, touch, click, context-menu, and wheel events from
-   *  bubbling out of the bubble. Enables interactive behavior and preserves
-   *  native behavior.
-   *  Ancestor capture listeners run first and can still cancel interactions. */
+  /** Contain bubbling pointer, mouse, touch, click, context-menu, and wheel
+   *  handlers in the JSX event system. Enables interactive behavior.
+   *  Capture respects this boundary. Custom native parent handlers must check
+   *  `isContainedEvent` before consuming input; ancestor capture handlers run first. */
   containEvents?: boolean
   /** Only show when the target is actually truncated (its text overflows and is
    *  ellipsized); a label that fits gets no tooltip. The check is a UI-thread
@@ -36,6 +36,18 @@ export interface TooltipProps extends BaseProps {
   /** CSS selector (resolved within the anchor) for the element or elements
    *  whose overflow decides whether a `truncatedOnly` tooltip shows. */
   truncatedSelector?: string
+}
+
+const CONTAINED_HANDLERS = [
+  'onPointerDown', 'onPointerUp', 'onPointerMove', 'onPointerCancel', 'onPointerOver', 'onPointerOut',
+  'onGotPointerCapture', 'onLostPointerCapture',
+  'onMouseDown', 'onMouseUp', 'onMouseMove', 'onMouseOver', 'onMouseOut',
+  'onClick', 'onDoubleClick', 'onAuxClick', 'onContextMenu',
+  'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onTouchCancel', 'onWheel',
+] as const
+
+function stopPropagation(event: { stopPropagation(): void }) {
+  event.stopPropagation()
 }
 
 /**
@@ -93,6 +105,15 @@ export const Tooltip = ({
   children,
   ...rest
 }: TooltipProps) => {
+  const events: DOMEventHandlers = {}
+  if (containEvents) {
+    for (const name of CONTAINED_HANDLERS) {
+      const handler = rest[name]
+      events[name] = handler ? event => {
+        try { handler(event) } finally { event.stopPropagation() }
+      } : stopPropagation
+    }
+  }
   return (
     <a-tooltip
       delay={delay != null ? String(delay) : undefined}
@@ -108,6 +129,7 @@ export const Tooltip = ({
       class={className}
       style={roundStyle(round, '--tooltip-round', style)}
       {...rest}
+      {...events}
     >
       {children}
     </a-tooltip>

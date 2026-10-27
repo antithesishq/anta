@@ -69,13 +69,15 @@ the pill), and pair `label` with `value` for a two-part tag. `value` is
 the primary text (default color and weight); the `label` sits before it
 as a bold "key" (weight 600, same color) with no divider — the weight
 contrast does the separating. Tabular figures are always on, so counts,
-versions, and timers don't reflow.
+versions, and timers don't reflow. The width-constrained **Deployment** tag
+keeps its key and icon visible while truncating the value.
 
 ```tsx
 <Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
 <Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
 <Tag allcaps icon="history" label="Commit" value="4f90d13" />
 <Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
+<Tag allcaps tone="info" icon="hourglass" label="Deployment" value="Production rollout in us-east-1" style={{ maxWidth: '220px' }} />
 ```
 
 ## Segments

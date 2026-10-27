@@ -16,8 +16,8 @@ changes are not listed.
 
 ### Fixed
 
-- [Tag](/tag/) keeps keys at their full width and truncates only values in
-  width-constrained tags.
+- [Tag](/tag/) truncates values first in width-constrained tags. Keys truncate
+  only when they cannot fit on their own.
 
 - Interactive [Tooltip](/tooltip/) content scrolls within the bubble without
   dismissing it or scrolling the trigger’s container at the bubble’s edges.

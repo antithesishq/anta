@@ -92,12 +92,11 @@ that need an explicit trigger and popup semantics.
 
 ### Scrollable content
 
-Hover **Scrollable help**, move into the bubble, and scroll through the setup
-notes. The bubble stays open and scrolling stops at its edges without moving
-the outer container. Scroll the outer container to dismiss it.
+Interactive tooltips scroll when their content exceeds the bubble’s height.
+Use `::part(bubble)` to limit its height, as in this example.
 
-Interactive bubbles scroll when their content exceeds the available height.
-This example uses `::part(bubble)` to set a shorter height for comparison.
+Hover **Scrollable help**, then scroll inside the bubble. It stays open without
+scrolling the checklist. Scroll the checklist to dismiss it.
 
 ```tsx
 <div className="tooltip-scroll-container">
@@ -150,17 +149,14 @@ This example uses `::part(bubble)` to set a shorter height for comparison.
 
 ### Contain events
 
-Pass `containEvents` when parent handlers would take over interactions inside
-an interactive tooltip. Pointer, mouse, touch, click, context-menu, and wheel
-events stop bubbling at the bubble, preserving native scrolling and link behavior.
-Ancestor capture listeners still run first and can cancel those interactions.
-Keyboard and focus events continue to propagate.
+Pass `containEvents` to stop pointer, mouse, touch, click, context-menu, and wheel
+events from bubbling to parent handlers. Scrolling and links keep their native
+behavior. Keyboard and focus events still propagate. Ancestor capture listeners
+can still cancel interactions.
 
-Hover **Event containment help**, enter the bubble, and scroll or select its
-link. With **Contain tooltip events** enabled, the parent counters stay unchanged
-and the bubble scrolls. Clear the checkbox to let the parent receive those events;
-its wheel handler calls `preventDefault()` and blocks scrolling inside the bubble.
-Scrolling over the parent itself always increments its wheel counter.
+Hover **Event containment help** and scroll inside the bubble or select its link.
+Clear **Contain tooltip events** to let the parent count clicks and cancel
+scrolling. Scrolling over the parent always increases its wheel counter.
 
 ```tsx
 import { Tooltip, Button, Checkbox, Text } from '@antadesign/anta'

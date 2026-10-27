@@ -22,6 +22,10 @@ export interface TooltipProps extends BaseProps {
    *  Enables pointer events and pins the bubble even with `follow`. Essential
    *  actions belong in a Menu or Dialog with an explicit trigger. */
   interactive?: boolean
+  /** Stop pointer, mouse, touch, click, context-menu, and wheel events from
+   *  bubbling out of an interactive bubble. Preserves native behavior.
+   *  Ancestor capture listeners run first and can still cancel interactions. */
+  containEvents?: boolean
   /** Only show when the target is actually truncated (its text overflows and is
    *  ellipsized); a label that fits gets no tooltip. The check is a UI-thread
    *  layout read, re-measured on each show. By default it measures every Anta
@@ -80,6 +84,7 @@ export const Tooltip = ({
   round,
   follow,
   interactive,
+  containEvents,
   truncatedOnly,
   truncatedSelector,
   className,
@@ -96,6 +101,7 @@ export const Tooltip = ({
       round={roundAttr(round)}
       follow={follow ? '' : undefined}
       interactive={interactive ? '' : undefined}
+      contain-events={containEvents ? '' : undefined}
       truncated-only={truncatedOnly ? '' : undefined}
       truncated-selector={truncatedSelector || undefined}
       class={className}

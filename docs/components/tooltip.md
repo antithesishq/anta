@@ -99,11 +99,17 @@ the outer container. Scroll the outer container to dismiss it.
 Interactive bubbles scroll when their content exceeds the available height.
 This example uses `::part(bubble)` to set a shorter height for comparison.
 
+Pass `containEvents` when parent handlers would take over interactions inside
+an interactive tooltip. Pointer, mouse, touch, click, context-menu, and wheel
+events stop bubbling at the bubble, preserving native scrolling and link behavior.
+Ancestor capture listeners still run first and can cancel those interactions.
+Keyboard and focus events continue to propagate.
+
 ```tsx
 <div className="tooltip-scroll-container">
   <div className="tooltip-scroll-body">
     <Button label="Scrollable help">
-      <Tooltip interactive className="tooltip-scroll-example">
+      <Tooltip interactive containEvents className="tooltip-scroll-example">
         <div>
           {Array.from({ length: 12 }, (_, index) => (
             <p>Setup note {index + 1}: Keep your project settings and dependencies up to date.</p>
@@ -230,6 +236,7 @@ is available on the next interaction. Use `round` for a softer shape.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `children?` | ReactNode | — | Supplementary text or markup. Content stays in light DOM for application CSS. |
+| `containEvents?` | boolean | — | Stop pointer, mouse, touch, click, context-menu, and wheel events from bubbling out of an interactive bubble. Preserves native behavior. Ancestor capture listeners run first and can still cancel interactions. |
 | `delay?` | number | 300 | Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay. |
 | `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is pinned (anchored beneath the target) by default; pass `follow` for the cursor-tracking behavior, which fades by distance as the cursor leaves. |
 | `interactive?` | boolean | — | Keep content available while the pointer or keyboard focus is inside it. Enables pointer events and pins the bubble even with `follow`. Essential actions belong in a Menu or Dialog with an explicit trigger. |
@@ -264,7 +271,7 @@ description while its internal popover is hidden. Use an authored
 `aria-description`, or reference separate application-owned descriptive content
 that remains available to assistive technology.
 
-Raw attributes include `delay`, `placement`, `round`, `follow`, `interactive`,
+Raw attributes include `delay`, `placement`, `round`, `follow`, `interactive`, `contain-events`,
 `truncated-only`, and `truncated-selector`. Boolean attributes use presence.
 An anchor can implement `getAnchorRect(): DOMRect` to advertise a smaller
 positioning region; Input reports its field instead of its label and hint.

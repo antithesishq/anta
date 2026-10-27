@@ -599,6 +599,7 @@ export interface ATooltipAttributes extends BaseAttributes {
   /** Make the bubble hoverable/clickable (pointer events on, stays open while
    *  hovered). Always pinned. Presence-based (`''` on, omit off). */
   interactive?: boolean | ''
+  'contain-events'?: boolean | ''
   /** Only show when the measured target is actually truncated/clipped (its text
    *  overflows). UI-thread layout read, re-measured per show. Defaults to the
    *  nearest Anta ellipsizing label part (`a-tab-label` / `a-button-label`) in the

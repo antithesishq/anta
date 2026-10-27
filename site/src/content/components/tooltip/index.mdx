@@ -191,11 +191,17 @@ the outer container. Scroll the outer container to dismiss it.
 Interactive bubbles scroll when their content exceeds the available height.
 This example uses `::part(bubble)` to set a shorter height for comparison.
 
+Pass `containEvents` when parent handlers would take over interactions inside
+an interactive tooltip. Pointer, mouse, touch, click, context-menu, and wheel
+events stop bubbling at the bubble, preserving native scrolling and link behavior.
+Ancestor capture listeners still run first and can cancel those interactions.
+Keyboard and focus events continue to propagate.
+
 <Preview>
 <div className="tooltip-scroll-container">
   <div className="tooltip-scroll-body">
     <Button label="Scrollable help">
-      <Tooltip interactive className="tooltip-scroll-example">
+      <Tooltip interactive containEvents className="tooltip-scroll-example">
         <div>
           {Array.from({ length: 12 }, (_, index) => (
             <p>Setup note {index + 1}: Keep your project settings and dependencies up to date.</p>
@@ -241,7 +247,7 @@ This example uses `::part(bubble)` to set a shorter height for comparison.
 <div className="tooltip-scroll-container">
   <div className="tooltip-scroll-body">
     <Button label="Scrollable help">
-      <Tooltip interactive className="tooltip-scroll-example">
+      <Tooltip interactive containEvents className="tooltip-scroll-example">
         <div>
           {Array.from({ length: 12 }, (_, index) => (
             <p>Setup note {index + 1}: Keep your project settings and dependencies up to date.</p>
@@ -455,7 +461,7 @@ description while its internal popover is hidden. Use an authored
 `aria-description`, or reference separate application-owned descriptive content
 that remains available to assistive technology.
 
-Raw attributes include `delay`, `placement`, `round`, `follow`, `interactive`,
+Raw attributes include `delay`, `placement`, `round`, `follow`, `interactive`, `contain-events`,
 `truncated-only`, and `truncated-selector`. Boolean attributes use presence.
 An anchor can implement `getAnchorRect(): DOMRect` to advertise a smaller
 positioning region; Input reports its field instead of its label and hint.

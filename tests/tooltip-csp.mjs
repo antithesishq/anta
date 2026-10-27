@@ -128,7 +128,7 @@ async function waitOpen(page,selector='a-tooltip',value=true) {
 const geometry=(page,selector='a-tooltip')=>page.locator(selector).evaluate(t=>{const b=t.shadowRoot.querySelector('[popover]').getBoundingClientRect(); const a=t.parentElement.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height,left:a.left,right:a.right,top:a.top,bottom:a.bottom,anchorHeight:a.height}})
 
 test.fast('React and Preact SSR keep Tooltip content authored without structural inline styles',()=>{
-  for(const render of renderers.values()) {const html=render({});assert.match(html,/<a-tooltip/);assert.match(html,/aria-description="Saves your work"/);assert.doesNotMatch(html,/style=|part=|popover=/)}
+  for(const render of renderers.values()) {const html=render({});assert.match(html,/<a-tooltip/);assert.match(html,/aria-description="Saves your work"/);assert.doesNotMatch(html,/style=|part=|popover=/);assert.match(render({interactive:true,containEvents:true}),/contain-events(?:="")?(?=[ >])/);assert.doesNotMatch(render({containEvents:false}),/contain-events/)}
 })
 test.fast('React and Preact SSR render vertical Steps without structural inline styles',()=>{
   for(const render of stepsRenderers.values()) {
@@ -199,6 +199,38 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await page.mouse.move(10,10);await page.locator('#anchor').focus();await page.keyboard.press(engine===webkit?'Alt+Tab':'Tab');await page.waitForTimeout(180)
     assert.equal(await page.locator('#guide').evaluate(n=>n===document.activeElement),true);assert.equal(await open(page),true)
     await page.keyboard.press('Escape');assert.equal(await open(page),false)
+  })
+  test.fast(`${name}: contain-events preserves native scrolling and blocks bubbling parent handlers`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/scroll.css')))
+    await mount(page,`<div id="outer"><div id="anchor" tabindex="0">Help<a-tooltip interactive contain-events delay="30"><div id="content">${'<p>Tooltip details</p>'.repeat(40)}<a href="#after">Guide</a></div></a-tooltip></div><div class="spacer"></div></div>`)
+    await page.evaluate(()=>{
+      window.parentWheels=0
+      document.querySelector('#outer').addEventListener('wheel',e=>{window.parentWheels++;e.preventDefault()},{passive:false})
+    })
+    await page.locator('#anchor').hover();await waitOpen(page);await page.locator('a-tooltip').locator('slot').hover()
+    await page.mouse.wheel(0,80)
+    await page.waitForFunction(()=>document.querySelector('a-tooltip').shadowRoot.querySelector('slot').scrollTop>0)
+    assert.equal(await page.evaluate(()=>window.parentWheels),0);assert.equal(await open(page),true)
+    const events=['pointerdown','pointerup','pointermove','pointercancel','pointerover','pointerout','gotpointercapture','lostpointercapture','mousedown','mouseup','mousemove','mouseover','mouseout','click','dblclick','auxclick','contextmenu','touchstart','touchmove','touchend','touchcancel','wheel']
+    assert.deepEqual(await page.evaluate(events=>{
+      const parent=document.querySelector('#outer'),tip=document.querySelector('a-tooltip'),child=document.querySelector('#content')
+      const bubble=[],capture=[],local=[],cancelled=[]
+      for(const type of [...events,'keydown','focusin']) {
+        const onBubble=()=>bubble.push(type),onCapture=()=>capture.push(type),onLocal=()=>local.push(type)
+        parent.addEventListener(type,onBubble);parent.addEventListener(type,onCapture,true);child.addEventListener(type,onLocal)
+        const event=new Event(type,{bubbles:true,composed:true,cancelable:true});child.dispatchEvent(event)
+        if(event.defaultPrevented)cancelled.push(type)
+        parent.removeEventListener(type,onBubble);parent.removeEventListener(type,onCapture,true);child.removeEventListener(type,onLocal)
+      }
+      tip.removeAttribute('contain-events')
+      child.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true,cancelable:true}))
+      const disabledCount=window.parentWheels
+      tip.setAttribute('contain-events','');tip.removeAttribute('interactive')
+      child.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true,cancelable:true}))
+      return {bubble,capture,local,cancelled,disabledCount,inactiveCount:window.parentWheels}
+    },events),{bubble:['keydown','focusin'],capture:[...events,'keydown','focusin'],local:[...events,'keydown','focusin'],cancelled:[],disabledCount:1,inactiveCount:2})
   })
   test.fast(`${name}: interactive overflow scrolls without dismissal or ancestor chaining`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)

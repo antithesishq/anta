@@ -279,6 +279,17 @@ export class ATooltipElement extends HTMLElementBase {
     this.container.addEventListener('focusout', () => {
       if (this.#isInteractive && this.shown) this.scheduleHide()
     })
+    for (const type of [
+      'pointerdown', 'pointerup', 'pointermove', 'pointercancel', 'pointerover', 'pointerout',
+      'gotpointercapture', 'lostpointercapture',
+      'mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout',
+      'click', 'dblclick', 'auxclick', 'contextmenu',
+      'touchstart', 'touchmove', 'touchend', 'touchcancel', 'wheel',
+    ]) {
+      this.container.addEventListener(type, event => {
+        if (this.#isInteractive && this.hasAttribute('contain-events')) event.stopPropagation()
+      }, { passive: true })
+    }
     shadow.append(this.container)
   }
 

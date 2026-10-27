@@ -1,238 +1,249 @@
 # Area
 
-Fill the space between two boundaries. Set `y2` for a second vertical value
-or `x2` for a second horizontal value. The second boundary can be a field
-name or a constant, such as a zero baseline.
+An area series fills the space between two boundaries, showing how values
+rise above a baseline or vary within a range. Area plots can show changing
+magnitudes, uncertainty bands, or the gap between two measurements. Set `y2`
+or `x2` to define the second boundary using a field, accessor, or constant.
 
 ## Fill to a baseline
 
 Fill beneath a signal with a constant zero baseline. A stroke traces the area’s boundary.
 
-```ts
-import { area, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-import '@antadesign/plot/plot.css'
-
-const plot = document.createElement('a-plot') as APlotElement
-
+```js
 const data = Array.from({ length: 97 }, (_, i) => ({
-  x: i / 4,
-  y: 28 + 42 * Math.exp(-(((i - 55) / 24) ** 2))
-    + 9 * Math.sin(i / 5) + 4 * Math.cos(i * 1.3),
-}))
+    x: i / 4,
+    y: 28 + 42 * Math.exp(-(((i - 55) / 24) ** 2))
+      + 9 * Math.sin(i / 5) + 4 * Math.cos(i * 1.3),
+  }))
 
-plot.plotArgs = {
-  series: [
-    area({
-      data,
-      y2: 0,
-      color: { light: '#99f6e4', dark: '#134e4a' },
-      stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
-      tooltip: ({ y }) => document.createTextNode('Load: ' + Math.round(Number(y))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
+  const baseline_area = plot({
+    series: [
+      plot.area({
+        data,
+        y2: 0,
+        color: { light: '#99f6e4', dark: '#134e4a' },
+        stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
+        tooltip: pure(({ y }) => h("span", {}, 'Load: ' + Math.round(Number(y)))),
+      }),
+    ],
+    height: 260,
+    margin: { top: 5, right: 8, bottom: 20, left: 30 },
+    axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: false, y: true },
+    border: false,
+    zoom_pan: false,
+  })
 
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(baseline_area)
+  // presentation.blank("Baseline area").print(baseline_area)
 ```
 
 ## A range between fields
 
 Use two value fields to draw a changing interval. A dashed outline distinguishes its boundaries.
 
-```ts
-import { area, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-import '@antadesign/plot/plot.css'
-
-const plot = document.createElement('a-plot') as APlotElement
-
+```js
 const data = Array.from({ length: 81 }, (_, i) => {
-  const center = 48 + 16 * Math.sin(i / 12) + 5 * Math.cos(i / 3)
-  const spread = 8 + 10 * Math.sin(i / 17) ** 2
-  return { x: i * 0.3, low: center - spread, high: center + spread }
-})
+    const center = 48 + 16 * Math.sin(i / 12) + 5 * Math.cos(i / 3)
+    const spread = 8 + 10 * Math.sin(i / 17) ** 2
+    return { x: i * 0.3, low: center - spread, high: center + spread }
+  })
 
-plot.plotArgs = {
-  series: [
-    area({
-      data,
-      y: 'high',
-      y2: 'low',
-      color: { light: '#ddd6fe', dark: '#4c1d95' },
-      stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
-      dash: [5, 3],
-      tooltip: ({ row }) => document.createTextNode(Math.round(Number(row.low)) + '–' + Math.round(Number(row.high))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
+  const range_band = plot({
+    series: [
+      plot.area({
+        data,
+        y: 'high',
+        y2: 'low',
+        color: { light: '#ddd6fe', dark: '#4c1d95' },
+        stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
+        dash: [5, 3],
+        tooltip: pure(({ row }) => h("span", {}, Math.round(Number(row.low)) + '–' + Math.round(Number(row.high)))),
+      }),
+    ],
+    height: 260,
+    margin: { top: 5, right: 8, bottom: 20, left: 30 },
+    axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: false, y: true },
+    border: false,
+    zoom_pan: false,
+  })
 
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(range_band)
+  // presentation.blank("Range band").print(range_band)
 ```
 
 ## Layered contributions
 
 Compose adjacent areas with explicit cumulative bounds. Each band shows one contribution to the total.
 
-```ts
-import { area, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-import '@antadesign/plot/plot.css'
-
-const plot = document.createElement('a-plot') as APlotElement
-
+```js
 const data = Array.from({ length: 97 }, (_, i) => {
-  const first = 18 + 7 * Math.sin(i / 13) + 3 * Math.cos(i / 4)
-  const second = first + 22 + 9 * Math.sin(i / 18 + 1)
-  const total = second + 16 + 6 * Math.cos(i / 9)
-  return { x: i / 4, first, second, total }
-})
+    const first = 18 + 7 * Math.sin(i / 13) + 3 * Math.cos(i / 4)
+    const second = first + 22 + 9 * Math.sin(i / 18 + 1)
+    const total = second + 16 + 6 * Math.cos(i / 9)
+    return { x: i / 4, first, second, total }
+  })
 
-plot.plotArgs = {
-  series: [
-    area({
-      data,
-      y: 'first',
-      y2: 0,
-      color: { light: '#2dd4bf', dark: '#0d9488' },
-      tooltip: ({ row }) => document.createTextNode('Network: ' + Math.round(Number(row.first))),
-    }),
-    area({
-      data,
-      y: 'second',
-      y2: 'first',
-      color: { light: '#a5b4fc', dark: '#6366f1' },
-      tooltip: ({ row }) => document.createTextNode('Compute: ' + Math.round(Number(row.second) - Number(row.first))),
-    }),
-    area({
-      data,
-      y: 'total',
-      y2: 'second',
-      color: { light: '#fcd34d', dark: '#b45309' },
-      tooltip: ({ row }) => document.createTextNode('Storage: ' + Math.round(Number(row.total) - Number(row.second))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
+  const layered_areas = plot({
+    series: [
+      plot.area({
+        data,
+        y: 'first',
+        y2: 0,
+        color: { light: '#2dd4bf', dark: '#0d9488' },
+        tooltip: pure(({ row }) => h("span", {}, 'Network: ' + Math.round(Number(row.first)))),
+      }),
+      plot.area({
+        data,
+        y: 'second',
+        y2: 'first',
+        color: { light: '#a5b4fc', dark: '#6366f1' },
+        tooltip: pure(({ row }) => h("span", {}, 'Compute: ' + Math.round(Number(row.second) - Number(row.first)))),
+      }),
+      plot.area({
+        data,
+        y: 'total',
+        y2: 'second',
+        color: { light: '#fcd34d', dark: '#b45309' },
+        tooltip: pure(({ row }) => h("span", {}, 'Storage: ' + Math.round(Number(row.total) - Number(row.second)))),
+      }),
+    ],
+    height: 260,
+    margin: { top: 5, right: 8, bottom: 20, left: 30 },
+    axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: false, y: true },
+    border: false,
+    zoom_pan: false,
+  })
 
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(layered_areas)
+  // presentation.blank("Layered areas").print(layered_areas)
 ```
 
 ## Horizontal intervals
 
 Use `x` and `x2` for horizontal bounds. The filled band shows how an interval shifts along the vertical axis.
 
-```ts
-import { area, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-import '@antadesign/plot/plot.css'
-
-const plot = document.createElement('a-plot') as APlotElement
-
+```js
 const data = Array.from({ length: 81 }, (_, i) => {
-  const center = 46 + 18 * Math.sin(i / 16) + 4 * Math.cos(i / 4)
-  const spread = 9 + 6 * Math.cos(i / 11) ** 2
-  return { y: i * 0.3, low: center - spread, high: center + spread }
-})
+    const center = 46 + 18 * Math.sin(i / 16) + 4 * Math.cos(i / 4)
+    const spread = 9 + 6 * Math.cos(i / 11) ** 2
+    return { y: i * 0.3, low: center - spread, high: center + spread }
+  })
 
-plot.plotArgs = {
-  series: [
-    area({
-      data,
-      x: 'low',
-      x2: 'high',
-      color: { light: '#fed7aa', dark: '#7c2d12' },
-      stroke: { color: { light: '#ea580c', dark: '#fdba74' }, width: 2 },
-      tooltip: ({ row }) => document.createTextNode(Math.round(Number(row.low)) + '–' + Math.round(Number(row.high))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 24, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: true, y: false },
-  border: false,
-  zoom_pan: false,
-}
+  const horizontal_area = plot({
+    series: [
+      plot.area({
+        data,
+        x: 'low',
+        x2: 'high',
+        color: { light: '#fed7aa', dark: '#7c2d12' },
+        stroke: { color: { light: '#ea580c', dark: '#fdba74' }, width: 2 },
+        tooltip: pure(({ row }) => h("span", {}, Math.round(Number(row.low)) + '–' + Math.round(Number(row.high)))),
+      }),
+    ],
+    height: 260,
+    margin: { top: 5, right: 8, bottom: 20, left: 30 },
+    axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 24, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: true, y: false },
+    border: false,
+    zoom_pan: false,
+  })
 
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(horizontal_area)
+  // presentation.blank("Horizontal area").print(horizontal_area)
 ```
 
 ## Area arguments
 
+### AreaArgs
+
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
+| `data` | `{[key: string]: any}[]` | Required | Data points to plot. |
 | `x?` | [`FieldArg`](../plot.md#data-fields) | `'x'` | Horizontal field name or accessor. |
-| `x2?` | [`FieldArg \| number`](../plot.md#data-fields) | None | Second horizontal boundary, as a field, accessor, or constant. Use either `x2` or `y2`. |
+| `x2?` | [`FieldArg \| number`](../plot.md#data-fields) | None | Second horizontal boundary, as a field, accessor, or constant. Cannot be used together with `y2`. |
 | `y?` | [`FieldArg`](../plot.md#data-fields) | `'y'` | Vertical field name or accessor. |
-| `y2?` | [`FieldArg \| number`](../plot.md#data-fields) | Zero baseline if neither bound is set | Second vertical boundary, as a field, accessor, or constant. |
-| `color?` | [`ThemeColor`](../plot.md#theme-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
-| [`stroke?`](../plot.md#strokes) | `StrokeArg` | None | Outline color and optional width. |
+| `y2?` | [`FieldArg \| number`](../plot.md#data-fields) | Zero baseline if neither bound is set | Second vertical boundary, as a field, accessor, or constant. Cannot be used together with `x2`. |
+| `color?` | [`ThemeColor`](../plot.md#theme-colors) | Black | Series color. Theme pairs provide separate light and dark colors. |
+| `stroke?` | [`StrokeArg`](../plot.md#strokes) | None | Outline color and optional width. |
 | `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
-| [`tooltip?`](../plot.md#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](../plot.md#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
+| `tooltip?` | [`TooltipArg`](../plot.md#tooltips) | None | Use `true` for the default tooltip, or a callback for custom content. |
+| [`on_select?`](../plot.md#selection) | `SelectFn` | None | Callback receiving the selected point and its source data. |
+| `hoverable?` | `boolean` | `true` | Enable tooltips, selection callbacks, and hover highlights for this series. |
+| `highlight?` | `boolean` | `true` | Highlight a data point when you hover over it. |
+| `highlight_color?` | [`ColorArg`](../plot.md#series-colors) | Automatic | Exact hover color, including opacity. |
 
-```ts
-import { area } from '@antadesign/plot'
+This example fills the band between `low` and `high` over `time`, adds a dashed outline, and enables tooltips and a selection callback.
 
-const series = [area({
-  data: [
-    { time: 1, low: 2, high: 4 },
-    { time: 2, low: 3, high: 6 },
-    { time: 3, low: 2, high: 5 },
-  ],
-  x: 'time',
-  y: 'high',
-  y2: 'low',
-  color: { light: 'lightsteelblue', dark: 'midnightblue' },
-  stroke: { color: 'steelblue', width: 2 },
-  dash: [6, 3],
-  tooltip: ({ x, y }) => `(${x}, ${y})`,
-  on_select: ({ row }) => console.log('Selected row:', row),
-  hoverable: true,
-  highlight: true,
-})]
+```js
+const selected_data = new reactive.StateVar('Select a point to inspect its data.')
+
+  const series = [plot.area({
+      data: [
+        { time: 1, low: 2, high: 4 },
+        { time: 2, low: 3, high: 6 },
+        { time: 3, low: 2, high: 5 },
+      ],
+      x: 'time',
+      y: 'high',
+      y2: 'low',
+      color: { light: 'lightsteelblue', dark: 'midnightblue' },
+      stroke: { color: 'steelblue', width: 2 },
+      dash: [6, 3],
+      tooltip: pure(({ x, y }) => h("span", {}, `(${x}, ${y})`)),
+      on_select: pure(({ row }) => selected_data.set(JSON.stringify(row)), { selected_data }),
+      hoverable: true,
+      highlight: true,
+    })]
+
+  const area_options_plot = plot({ series, height: 260 })
+
+  const area_options = h(
+    'div',
+    {},
+    area_options_plot,
+    h(
+      pure(({ selected_data }) =>
+        h('output', { 'aria-live': 'polite', style: { display: 'block' } }, selected_data.get()),
+      ),
+      { selected_data },
+    ),
+  )
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(area_options)
+  // presentation.blank("Area options").print(area_options)
 ```
 For a horizontal area, use `x2` instead of `y2`:
 
-```ts
-import { area } from '@antadesign/plot'
+```js
+const series = [plot.area({
+      data: [{ low: 2, high: 4, time: 1 }, { low: 3, high: 6, time: 2 }],
+      x: 'high',
+      x2: 'low',
+      y: 'time',
+      color: 'lightsteelblue',
+    })]
 
-const series = [area({
-  data: [{ low: 2, high: 4, time: 1 }, { low: 3, high: 6, time: 2 }],
-  x: 'high',
-  x2: 'low',
-  y: 'time',
-  color: 'lightsteelblue',
-})]
+  const horizontal_band = plot({ series, height: 260 })
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(horizontal_band)
+  // presentation.blank("Horizontal band").print(horizontal_band)
 ```
 
 ## Shared configuration
@@ -242,4 +253,4 @@ The argument tables describe omitted fields; examples may override these default
 See [Data fields](../plot.md#data-fields), [Series colors](../plot.md#series-colors),
 [Strokes](../plot.md#strokes), and [Mark shapes](../plot.md#mark-shapes) for shared options.
 For callbacks, see [Tooltips](../plot.md#tooltips) and
-[Selection callbacks](../plot.md#selection-callbacks).
+[Selection](../plot.md#selection).

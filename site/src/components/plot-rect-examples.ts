@@ -1,11 +1,14 @@
 import { rect, type PlotArgs } from '@antadesign/plot'
 
 export function heatmap(): PlotArgs<Node> {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
-  const hours = ['09', '11', '13', '15', '17', '19']
-  const data = days.flatMap((day, d) => hours.map((hour, h) => ({
-    day, hour, activity: Math.round(20 + 75 * Math.sin(h * 0.8 + d * 0.5) ** 2),
-  })))
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const hours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'))
+  const data = days.flatMap((day, d) => hours.map((hour, h) => {
+    const daytime = Math.exp(-(((h - 14) / 5) ** 2))
+    const variation = 0.9 + 0.1 * Math.sin(h * 1.7 + d * 2.3)
+    const requests = Math.round((120 + 880 * daytime) * (d < 5 ? 1 : 0.4) * variation)
+    return { day, hour, requests }
+  }))
 
   return {
     series: [
@@ -13,12 +16,12 @@ export function heatmap(): PlotArgs<Node> {
         data,
         x: 'hour',
         y: 'day',
-        inset: 2,
+        inset: 0.75,
         color: row => ({
-          light: 'hsl(174, 65%, ' + (94 - Number(row.activity) * 0.6) + '%)',
-          dark: 'hsl(174, 55%, ' + (16 + Number(row.activity) * 0.4) + '%)',
+          light: 'hsl(174, 65%, ' + (94 - Number(row.requests) * 0.06) + '%)',
+          dark: 'hsl(174, 55%, ' + (16 + Number(row.requests) * 0.04) + '%)',
         }),
-        tooltip: ({ row }) => document.createTextNode(row.day + ' ' + row.hour + ':00 · ' + row.activity + '%'),
+        tooltip: ({ row }) => document.createTextNode(row.day + ' ' + row.hour + ':00 · ' + row.requests + ' requests'),
       }),
     ],
     height: 260,
@@ -151,4 +154,89 @@ export function history(): PlotArgs<Node> {
   }
 }
 
-export const rectExamples = { heatmap, intervals, sized, history }
+export function bounds(): PlotArgs<Node> {
+  const series: PlotArgs<Node>['series'] = [rect({
+    data: [
+      { start: 1, end: 3, low: 2, high: 5 },
+      { start: 4, end: 6, low: 1, high: 4 },
+    ],
+    x: 'start',
+    x2: 'end',
+    y: 'low',
+    y2: 'high',
+    min_size: 2,
+    offset: { x: 0, y: 0 },
+    color: 'lightsteelblue',
+    stroke: { color: 'steelblue', width: 1 },
+    tooltip: ({ x, y }) => document.createTextNode('(' + x + ', ' + y + ')'),
+    on_select: ({ row }) => console.log('Selected data:', row),
+    hoverable: true,
+    highlight: true,
+  })]
+
+  return {
+    series,
+    height: 260,
+    margin: { top: 12, right: 12, bottom: 28, left: 36 },
+    axis: { x: { min: 0, max: 7, label: '' }, y: { min: 0, max: 6, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: true,
+    border: false,
+    zoom_pan: false,
+  }
+}
+
+export function bands(): PlotArgs<Node> {
+  const series: PlotArgs<Node>['series'] = [rect({
+    data: [{ group: 'A', row: 'First' }, { group: 'B', row: 'Second' }],
+    x: 'group',
+    y: 'row',
+    size: { width: 12 },
+    band_align: 'start',
+    inset: 16,
+    offset: { x: 2, y: 0 },
+    hover_span_x: true,
+    hover_span_y: true,
+    color: 'steelblue',
+    tooltip: true,
+  })]
+
+  return {
+    series,
+    height: 260,
+    margin: { top: 12, right: 12, bottom: 28, left: 62 },
+    axis: { x: { categories: ['A', 'B'], grid_align: 'edge', label: '' }, y: { categories: ['First', 'Second'], grid_align: 'edge', label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: true,
+    border: false,
+    zoom_pan: false,
+  }
+}
+
+export function background(): PlotArgs<Node> {
+  const series: PlotArgs<Node>['series'] = [rect({
+    data: [{ low: 2, high: 5 }],
+    span: 'x',
+    y: 'low',
+    y2: 'high',
+    color: 'aliceblue',
+    hoverable: false,
+    highlight: false,
+  })]
+
+  return {
+    series,
+    height: 260,
+    margin: { top: 12, right: 12, bottom: 28, left: 36 },
+    axis: { x: { min: 0, max: 10, label: '' }, y: { min: 0, max: 7, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: true,
+    border: false,
+    zoom_pan: false,
+  }
+}
+
+export const rectExamples = { heatmap, intervals, sized, history, bounds, bands, background }

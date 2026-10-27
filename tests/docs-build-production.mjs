@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
-import { readPageCatalog } from '../site/lib/content/catalog.mjs'
+import { parseFrontmatter, readPageCatalog } from '../site/lib/content/catalog.mjs'
 import { inputByLabel } from './helpers/input-locator.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
@@ -126,12 +126,17 @@ test('changelog feed preserves dated releases, HTML notes and working release li
 
 for (const engine of engines) {
   test(`${engine.name()}: review stars render before scripts without moving the page title`, { timeout: 30_000 }, async t => {
+    const candidates = await Promise.all((await readPageCatalog())
+      .filter(entry => entry.kind === 'component' && entry.nav !== false)
+      .map(async entry => ({ ...entry, author: parseFrontmatter(await readFile(entry.source, 'utf8'), entry.source).author })))
+    const unreviewed = candidates.find(entry => !entry.author)
+    assert.ok(unreviewed, 'review marker coverage requires an unreviewed component page')
     const { page, errors } = await productionPage(t, engine)
     let release
     const gate = new Promise(resolve => { release = resolve })
     t.after(() => release())
     await page.route('https://anta.test/**/*.js', async route => { await gate; await route.fallback() })
-    await page.goto('https://anta.test/plot/rect/', { waitUntil: 'commit' })
+    await page.goto(`https://anta.test${unreviewed.path}`, { waitUntil: 'commit' })
     const heading = page.locator('main h1')
     const marker = heading.locator('.doc-review-marker')
     await marker.waitFor()
@@ -158,8 +163,8 @@ for (const engine of engines) {
     await page.keyboard.press('Escape')
     await page.goto('https://anta.test/')
     assert.equal(await page.locator('main h1 .doc-review-marker').count(), 0)
-    await page.locator('.sidebar a[href="/plot/"]').click()
-    await page.waitForURL('https://anta.test/plot/')
+    await page.locator(`.sidebar a[href="${unreviewed.path}"]`).click()
+    await page.waitForURL(`https://anta.test${unreviewed.path}`)
     await page.locator('main h1 .doc-review-marker').waitFor()
     assert.equal(await page.locator('main h1 > a-tooltip').count(), 1)
     assert.deepEqual(errors, [])

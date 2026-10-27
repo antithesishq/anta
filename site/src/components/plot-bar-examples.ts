@@ -56,7 +56,7 @@ export function horizontal(): PlotArgs<Node> {
       tooltip: ({ x, y }) => document.createTextNode(y + ': ' + x + ' requests/s'),
     })],
     height: 260,
-    margin: { top: 5, right: 8, bottom: 20, left: 78 },
+    margin: { top: 5, right: 12, bottom: 20, left: 78 },
     axis: { x: { min: 0, max: 100, label: '' }, y: { label: '' } },
     background: { light: '#ffffff', dark: '#151b28' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },

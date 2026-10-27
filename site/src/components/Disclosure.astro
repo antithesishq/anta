@@ -231,8 +231,24 @@ const Heading = `h${level}` as const
   // click listener treats the hash link as a navigation.
   const ANCHOR_SEL = 'details.disclosure > summary :is(h2,h3,h4,h5,h6) > a.header-anchor'
   document.addEventListener('click', (e) => {
-    const a = (e.target as HTMLElement)?.closest?.('a.header-anchor') as HTMLAnchorElement | null
-    if (!a || !a.matches(ANCHOR_SEL)) return
+    const a = (e.target as Element)?.closest?.('a[href]') as HTMLAnchorElement | null
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+    if (a.hasAttribute('download') || (a.target && a.target !== '_self')) return
+    if (!a.matches(ANCHOR_SEL)) {
+      // ClientRouter can scroll without emitting hashchange. Expand before
+      // it handles ordinary same-page links, including repeated hash links.
+      const destination = new URL(a.href, location.href)
+      if (destination.origin !== location.origin || destination.pathname !== location.pathname
+        || destination.search !== location.search || !destination.hash) return
+      let id: string
+      try {
+        id = decodeURIComponent(destination.hash.slice(1))
+      } catch {
+        return
+      }
+      openContaining(id)
+      return
+    }
     e.preventDefault()
     e.stopPropagation()
     const headingId = a.closest('[id]')?.id

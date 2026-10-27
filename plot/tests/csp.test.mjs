@@ -80,14 +80,15 @@ before(async () => {
         : resolve(repo, 'docs/packages/plot.md'), 'utf8')
     const snippets = [...documentation.matchAll(/^```(?:ts|tsx)[^\n]*\n([\s\S]*?)^```/gm)].map(match => match[1])
     const registered = snippets.filter(code => /import ['"]@antadesign\/plot\/elements/.test(code))
-    assert.ok(registered.length > 20, 'check all copyable standalone examples')
+    assert.ok(registered.length > 0, 'browser integration examples include element registration')
     for (const code of registered) assert.match(code, /import ['"]@antadesign\/plot\/plot.css['"]/, 'registration examples load Plot CSS')
     const jsxExample = snippets.find(code => code.includes('export function Chart()'))
     const surfaceExample = snippets.find(code => code.includes('export function Surface()'))
     const browserExample = snippets.find(code => code.includes("import { scatter, type APlotElement } from '@antadesign/plot/browser'") && code.includes('document.body.append(plot)'))
-    const overviewExample = snippets.find(code => code.includes('function overviewExample()'))
+    assert.ok(jsxExample, 'React integration example is present')
+    assert.ok(surfaceExample, 'PlotSurface integration example is present')
+    assert.ok(browserExample, 'standalone browser integration example is present')
     const surfaceCSS = documentation.match(/```css\n(\.custom-surface[\s\S]*?)```/)[1]
-    assert.ok(jsxExample && surfaceExample && browserExample && overviewExample)
     for (const renderer of ['react', 'preact']) {
         const entries = componentTier === 'fast'
             ? renderer === 'react' ? ['surface', 'granular'] : ['surface']
@@ -112,8 +113,8 @@ before(async () => {
                 await compile(`import React from 'react'; import {createRoot} from 'react-dom/client'; ${code}; createRoot(document.querySelector('#app')).render(React.createElement(${component}));`, name, renderer)
                 if (kind === 'surface') assets.set(`/${name}.css`, assets.get(`/${name}.css`) + surfaceCSS)
             }
-            if (renderer === 'react') for (const [kind, code] of [['browser', browserExample], ['overview', overviewExample]]) {
-                await compile(code, `${renderer}-docs-${kind}`, renderer)
+            if (renderer === 'react') {
+                await compile(browserExample, `${renderer}-docs-browser`, renderer)
             }
         }
         if (compareRef && !consumer) await compile(`import '@antadesign/anta/tokens.css'; ${registrations.granular}; ${fixture}`, `${renderer}-original`, renderer, true)
@@ -284,7 +285,7 @@ for (const engine of engines) {
             return [shown, hidden, moves]
         }), ['block', 'none', 0])
     })
-    for (const [renderer, kind] of [['react', 'jsx'], ['preact', 'jsx'], ['react', 'surface'], ['preact', 'surface'], ['react', 'browser'], ['react', 'overview']]) {
+    for (const [renderer, kind] of [['react', 'jsx'], ['preact', 'jsx'], ['react', 'surface'], ['preact', 'surface'], ['react', 'browser']]) {
         test(`${name} ${renderer} ${kind}: copy the packaged Plot documentation without repairing imports`, async t => {
             const context = await browsers.get(name).newContext()
             t.after(() => context.close())

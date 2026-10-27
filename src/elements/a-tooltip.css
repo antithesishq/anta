@@ -101,6 +101,11 @@
 
   a-tooltip[interactive]::part(container) { pointer-events: auto; }
 
+  a-tooltip[interactive]::part(bubble) {
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
   a-tooltip:state(proximity-hidden)::part(bubble) {
     transition: none;
   }

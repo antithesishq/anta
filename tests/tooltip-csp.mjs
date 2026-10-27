@@ -87,6 +87,7 @@ before(async () => {
     assets.set(`/${framework}.js`, client.outputFiles.find(f=>f.path.endsWith('.js')).text)
   }
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
+  assets.set('/scroll.css', '#outer{height:260px;overflow:auto} #anchor{margin-top:150px} .spacer{height:1200px} a-tooltip::part(bubble){max-height:120px} #inner{height:80px;overflow:auto}')
   assets.set('/truncation.css', `.single-line-target{display:block;width:160px;font-family:system-ui;font-size:20px;line-height:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vertical-target{display:block;width:160px;height:12px;font-size:12px;line-height:12px;white-space:normal;overflow:hidden}`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .anchor{position:absolute;left:300px;top:180px;width:140px;height:40px} .second{left:450px} .third{left:600px} .edge{left:2px;top:2px} .bottom{top:440px} .clip,.clamp{display:block;width:130px;max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis} .override::part(bubble){background:rgb(30,40,50);color:white;padding:12px;border-radius:11px;box-shadow:none;backdrop-filter:none} .content{font-size:18px;font-weight:600} a-tooltip::part(container){z-index:1}`)
   server = createServer((req,res) => {
@@ -198,6 +199,25 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await page.mouse.move(10,10);await page.locator('#anchor').focus();await page.keyboard.press(engine===webkit?'Alt+Tab':'Tab');await page.waitForTimeout(180)
     assert.equal(await page.locator('#guide').evaluate(n=>n===document.activeElement),true);assert.equal(await open(page),true)
     await page.keyboard.press('Escape');assert.equal(await open(page),false)
+  })
+  test.fast(`${name}: interactive overflow scrolls without dismissal or ancestor chaining`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/scroll.css')))
+    for(const nested of [false,true]) {
+      await mount(page,`<div id="outer"><button id="anchor">Help<a-tooltip interactive delay="30"><div ${nested?'id="inner"':''}>${'<p>Tooltip details</p>'.repeat(40)}</div></a-tooltip></button><div class="spacer"></div></div>`)
+      await page.locator('#anchor').hover();await waitOpen(page)
+      const scroller=nested?page.locator('#inner'):page.locator('a-tooltip').locator('slot')
+      await scroller.hover();await page.waitForTimeout(180)
+      await page.mouse.wheel(0,80)
+      await page.waitForFunction(nested=>{const t=document.querySelector('a-tooltip');return (nested?document.querySelector('#inner'):t.shadowRoot.querySelector('slot')).scrollTop>0},nested)
+      await page.waitForTimeout(180);assert.equal(await open(page),true)
+      await scroller.evaluate(n=>{n.scrollTop=n.scrollHeight});await frames(page)
+      await page.mouse.wheel(0,150);await page.waitForTimeout(180)
+      assert.equal(await open(page),true)
+      assert.equal(await page.locator('#outer').evaluate(n=>n.scrollTop),0)
+      await page.locator('#outer').evaluate(n=>{n.scrollTop=20});await waitOpen(page,'a-tooltip',false)
+    }
   })
   test.fast(`${name}: empty updates, truncation, explicit precedence, and fallback remain declarative`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)

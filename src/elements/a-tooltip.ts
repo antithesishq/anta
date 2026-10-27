@@ -642,9 +642,9 @@ export class ATooltipElement extends HTMLElementBase {
       this.container.showPopover()
       this.#globalDocument = this.doc
       // A fixed-position popover doesn't scroll with the page, so dismiss
-      // on any scroll (capture catches nested scroll containers too) rather
+      // on external scroll (capture catches nested scroll containers too) rather
       // than leaving the bubble orphaned over empty space.
-      this.view.addEventListener('scroll', this.hide, { capture: true, passive: true })
+      this.view.addEventListener('scroll', this.onScroll, { capture: true, passive: true })
       this.doc.addEventListener('keydown', this.onKeyDown, true)
       // Follow the cursor for the whole time it's shown — including after the
       // pointer has left the anchor (close pending) AND through the exit fade
@@ -666,6 +666,13 @@ export class ATooltipElement extends HTMLElementBase {
       this.pendingPosition = undefined
       initialPosition()
     }
+  }
+
+  private isInternalScroll = (event: Event) =>
+    this.#isInteractive && event.composedPath().includes(this)
+
+  private onScroll = (event: Event) => {
+    if (!this.isInternalScroll(event)) this.hide()
   }
 
   hide = () => {
@@ -690,7 +697,7 @@ export class ATooltipElement extends HTMLElementBase {
     if (this.fadeTimer !== undefined) { clearTimeout(this.fadeTimer); this.fadeTimer = undefined }
     this.fading = false
     const doc = this.#globalDocument
-    doc?.defaultView?.removeEventListener('scroll', this.hide, { capture: true })
+    doc?.defaultView?.removeEventListener('scroll', this.onScroll, { capture: true })
     doc?.removeEventListener('keydown', this.onKeyDown, true)
     if (this.docMoveBound) {
       doc?.removeEventListener('mousemove', this.onDocMove)
@@ -827,7 +834,8 @@ export class ATooltipElement extends HTMLElementBase {
       }
     }
 
-    const onLeave = () => {
+    const onLeave = (event?: Event) => {
+      if (event?.type === 'scroll' && this.isInternalScroll(event)) return
       this.debouncedShow?.cancel()
       anchor.removeEventListener('pointermove', onPointerMove)
       anchor.removeEventListener('pointerleave', onLeave)

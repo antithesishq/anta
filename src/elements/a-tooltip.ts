@@ -69,6 +69,18 @@ const LEAVE_TOUCH_DELAY = 1500
  */
 const TOUCH_SLOP = 10
 
+const CONTAINED_EVENTS = [
+  'pointerdown', 'pointerup', 'pointermove', 'pointercancel', 'pointerover', 'pointerout',
+  'gotpointercapture', 'lostpointercapture',
+  'mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout',
+  'click', 'dblclick', 'auxclick', 'contextmenu',
+  'touchstart', 'touchmove', 'touchend', 'touchcancel', 'wheel',
+]
+
+function stopContainedEvent(event: Event) {
+  event.stopPropagation()
+}
+
 type TooltipRegistry = {
   tooltips: Set<ATooltipElement>
   intersecting: boolean
@@ -207,7 +219,7 @@ export class ATooltipElement extends HTMLElementBase {
   // Observe `delay` so changing it at runtime — e.g. the docs playground
   // patches the attribute on the live element — rebuilds the show debounce
   // with the new value instead of keeping the one captured at setup.
-  static observedAttributes = ['delay']
+  static observedAttributes = ['delay', 'contain-events']
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */
   private container!: HTMLDivElement
@@ -218,6 +230,7 @@ export class ATooltipElement extends HTMLElementBase {
    *  container's enter/exit/cross-fade opacity. */
   private bubble!: HTMLSlotElement
   private anchor: HTMLElement | null = null
+  private containmentListening = false
   #connectedDocument?: Document
   #globalDocument?: Document
   #positionView?: Window
@@ -279,21 +292,11 @@ export class ATooltipElement extends HTMLElementBase {
     this.container.addEventListener('focusout', () => {
       if (this.#isInteractive && this.shown) this.scheduleHide()
     })
-    for (const type of [
-      'pointerdown', 'pointerup', 'pointermove', 'pointercancel', 'pointerover', 'pointerout',
-      'gotpointercapture', 'lostpointercapture',
-      'mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout',
-      'click', 'dblclick', 'auxclick', 'contextmenu',
-      'touchstart', 'touchmove', 'touchend', 'touchcancel', 'wheel',
-    ]) {
-      this.container.addEventListener(type, event => {
-        if (this.#isInteractive && this.hasAttribute('contain-events')) event.stopPropagation()
-      }, { passive: true })
-    }
     shadow.append(this.container)
   }
 
   connectedCallback() {
+    this.syncContainmentListeners()
     const parent = this.parentElement
     if (!parent) return
     this.anchor = parent
@@ -311,6 +314,7 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    this.syncContainmentListeners()
     this.cleanup()
     const doc = this.#connectedDocument
     if (this.anchor && doc) {
@@ -339,6 +343,17 @@ export class ATooltipElement extends HTMLElementBase {
     // `delay` is baked into the debounce, so rebuild it when the attribute
     // changes (only meaningful once listeners are wired).
     if (name === 'delay' && this.listening) this.makeDebouncedShow()
+    if (name === 'contain-events') this.syncContainmentListeners()
+  }
+
+  private syncContainmentListeners() {
+    const enabled = this.isConnected && this.hasAttribute('contain-events')
+    if (enabled === this.containmentListening) return
+    this.containmentListening = enabled
+    for (const type of CONTAINED_EVENTS) {
+      if (enabled) this.container.addEventListener(type, stopContainedEvent, { passive: true })
+      else this.container.removeEventListener(type, stopContainedEvent)
+    }
   }
 
   /** (Re)build the show debounce with the CURRENT `delay` (rebuilt when the
@@ -539,6 +554,11 @@ export class ATooltipElement extends HTMLElementBase {
     return below + boxHeight > vh ? above : below
   }
 
+  private flipHorizontal(before: number, after: number, boxWidth: number, vw: number, preferRight: boolean): number {
+    if (preferRight) return after + boxWidth <= vw - MARGIN ? after : before
+    return before >= MARGIN ? before : after
+  }
+
   /** Clamp a candidate (left, top) into the viewport and write it as the
    *  container's transform — the single place the transform is set. */
   private place(left: number, top: number, boxWidth: number, boxHeight: number, vw: number, vh: number) {
@@ -559,9 +579,7 @@ export class ATooltipElement extends HTMLElementBase {
       if (this.#prefersLeft || this.#prefersRight) {
         const before = a.left - box.width - MARGIN
         const after = a.right + MARGIN
-        const left = this.#prefersRight
-          ? (after + box.width <= vw - MARGIN ? after : before)
-          : (before >= MARGIN ? before : after)
+        const left = this.flipHorizontal(before, after, box.width, vw, this.#prefersRight)
         const top = a.top + (a.height - box.height) / 2
         this.place(left, top, box.width, box.height, vw, vh)
         return
@@ -581,9 +599,7 @@ export class ATooltipElement extends HTMLElementBase {
       if (this.#prefersLeft || this.#prefersRight) {
         const before = e.clientX - box.width - MARGIN
         const after = e.clientX + CURSOR_SIZE
-        const left = this.#prefersRight
-          ? (after + box.width <= vw - MARGIN ? after : before)
-          : (before >= MARGIN ? before : after)
+        const left = this.flipHorizontal(before, after, box.width, vw, this.#prefersRight)
         this.place(left, e.clientY - box.height / 2, box.width, box.height, vw, vh)
         return
       }

@@ -216,6 +216,34 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
       assert.equal(await page.locator('.cursor-text').evaluate(n=>getComputedStyle(n).cursor),'text')
     }
   })
+  test.fast(`${name}: containment listeners are lazy, shared, and removed on disconnect`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.evaluate(()=>{
+      const add=EventTarget.prototype.addEventListener,remove=EventTarget.prototype.removeEventListener
+      window.containmentLog=[]
+      const record=(kind,target,type,listener)=>{
+        if(target instanceof Element && target.getAttribute('part')==='container' && !['mouseenter','mouseleave','focusin','focusout'].includes(type)) {
+          containmentLog.push({kind,id:target.getRootNode().host.id,type,listener})
+        }
+      }
+      EventTarget.prototype.addEventListener=function(type,listener,options){record('add',this,type,listener);return add.call(this,type,listener,options)}
+      EventTarget.prototype.removeEventListener=function(type,listener,options){record('remove',this,type,listener);return remove.call(this,type,listener,options)}
+    })
+    await mount(page,'<div class="anchor">Help<a-tooltip id="plain">Plain</a-tooltip><a-tooltip id="contained" contain-events>Contained</a-tooltip></div>')
+    const counts=()=>page.evaluate(()=>({plain:containmentLog.filter(x=>x.id==='plain').length,adds:containmentLog.filter(x=>x.kind==='add').length,removes:containmentLog.filter(x=>x.kind==='remove').length,handlers:new Set(containmentLog.map(x=>x.listener)).size}))
+    assert.deepEqual(await counts(),{plain:0,adds:22,removes:0,handlers:1})
+    await page.locator('#contained').evaluate(t=>t.setAttribute('contain-events',''))
+    assert.deepEqual(await counts(),{plain:0,adds:22,removes:0,handlers:1})
+    await page.locator('#contained').evaluate(t=>t.removeAttribute('contain-events'))
+    assert.deepEqual(await counts(),{plain:0,adds:22,removes:22,handlers:1})
+    await page.locator('#plain').evaluate(t=>t.setAttribute('contain-events',''))
+    await page.locator('#contained').evaluate(t=>t.setAttribute('contain-events',''))
+    assert.deepEqual(await counts(),{plain:22,adds:66,removes:22,handlers:1})
+    await page.locator('#contained').evaluate(t=>{const parent=t.parentNode;t.remove();parent.append(t)})
+    assert.deepEqual(await counts(),{plain:22,adds:88,removes:44,handlers:1})
+    await page.locator('#contained').evaluate(t=>t.remove())
+    assert.deepEqual(await counts(),{plain:22,adds:88,removes:66,handlers:1})
+  })
   test.fast(`${name}: contain-events preserves native scrolling and blocks bubbling parent handlers`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
     await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})

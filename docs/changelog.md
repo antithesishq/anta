@@ -7,7 +7,7 @@ changes are not listed.
 
 ### Added
 
-- [Tooltip](/tooltip/#scrollable-content) supports `containEvents` to keep pointer,
+- [Tooltip](/tooltip/#contain-events) supports `containEvents` to keep pointer,
   mouse, touch, click, context-menu, and wheel events from bubbling to parent handlers.
   It also enables interactive behavior.
 

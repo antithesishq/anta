@@ -23,7 +23,8 @@ export interface TooltipProps extends BaseProps {
    *  actions belong in a Menu or Dialog with an explicit trigger. */
   interactive?: boolean
   /** Stop pointer, mouse, touch, click, context-menu, and wheel events from
-   *  bubbling out of an interactive bubble. Preserves native behavior.
+   *  bubbling out of the bubble. Enables interactive behavior and preserves
+   *  native behavior.
    *  Ancestor capture listeners run first and can still cancel interactions. */
   containEvents?: boolean
   /** Only show when the target is actually truncated (its text overflows and is

@@ -352,7 +352,7 @@ export class ATooltipElement extends HTMLElementBase {
 
 
   get #isInteractive(): boolean {
-    return this.hasAttribute('interactive')
+    return this.hasAttribute('interactive') || this.hasAttribute('contain-events')
   }
 
   /** Pinned under the anchor (no cursor-following) — the DEFAULT. Following the

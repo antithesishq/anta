@@ -129,7 +129,7 @@ async function waitOpen(page,selector='a-tooltip',value=true) {
 const geometry=(page,selector='a-tooltip')=>page.locator(selector).evaluate(t=>{const b=t.shadowRoot.querySelector('[popover]').getBoundingClientRect(); const a=t.parentElement.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height,left:a.left,right:a.right,top:a.top,bottom:a.bottom,anchorHeight:a.height}})
 
 test.fast('React and Preact SSR keep Tooltip content authored without structural inline styles',()=>{
-  for(const render of renderers.values()) {const html=render({});assert.match(html,/<a-tooltip/);assert.match(html,/aria-description="Saves your work"/);assert.doesNotMatch(html,/style=|part=|popover=/);assert.match(render({interactive:true,containEvents:true}),/contain-events(?:="")?(?=[ >])/);assert.doesNotMatch(render({containEvents:false}),/contain-events/)}
+  for(const render of renderers.values()) {const html=render({});assert.match(html,/<a-tooltip/);assert.match(html,/aria-description="Saves your work"/);assert.doesNotMatch(html,/style=|part=|popover=/);assert.match(render({containEvents:true}),/contain-events(?:="")?(?=[ >])/);assert.doesNotMatch(render({containEvents:false}),/contain-events/)}
 })
 test.fast('React and Preact SSR render vertical Steps without structural inline styles',()=>{
   for(const render of stepsRenderers.values()) {
@@ -220,12 +220,14 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     const page=await pageFor(t,engine,mode);await register(page,mode)
     await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})
     await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/scroll.css')))
-    await mount(page,`<div id="outer"><div id="anchor" tabindex="0">Help<a-tooltip interactive contain-events delay="30"><div id="content">${'<p>Tooltip details</p>'.repeat(40)}<a href="#after">Guide</a></div></a-tooltip></div><div class="spacer"></div></div>`)
+    await mount(page,`<div id="outer"><div id="anchor" tabindex="0">Help<a-tooltip contain-events delay="30"><div id="content">${'<p>Tooltip details</p>'.repeat(40)}<a href="#after">Guide</a></div></a-tooltip></div><div class="spacer"></div></div>`)
     await page.evaluate(()=>{
       window.parentWheels=0
       document.querySelector('#outer').addEventListener('wheel',e=>{window.parentWheels++;e.preventDefault()},{passive:false})
     })
     await page.locator('#anchor').hover();await waitOpen(page);await page.locator('a-tooltip').locator('slot').hover()
+    assert.equal(await page.locator('a-tooltip').evaluate(t=>t.hasAttribute('interactive')),false)
+    assert.deepEqual(await page.locator('a-tooltip').locator('slot').evaluate(n=>{const s=getComputedStyle(n);return [s.overflow,s.cursor]}),['auto','auto'])
     await page.mouse.wheel(0,80)
     await page.waitForFunction(()=>document.querySelector('a-tooltip').shadowRoot.querySelector('slot').scrollTop>0)
     assert.equal(await page.evaluate(()=>window.parentWheels),0);assert.equal(await open(page),true)
@@ -245,8 +247,8 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
       const disabledCount=window.parentWheels
       tip.setAttribute('contain-events','');tip.removeAttribute('interactive')
       child.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true,cancelable:true}))
-      return {bubble,capture,local,cancelled,disabledCount,inactiveCount:window.parentWheels}
-    },events),{bubble:['keydown','focusin'],capture:[...events,'keydown','focusin'],local:[...events,'keydown','focusin'],cancelled:[],disabledCount:1,inactiveCount:2})
+      return {bubble,capture,local,cancelled,disabledCount,impliedCount:window.parentWheels}
+    },events),{bubble:['keydown','focusin'],capture:[...events,'keydown','focusin'],local:[...events,'keydown','focusin'],cancelled:[],disabledCount:1,impliedCount:1})
   })
   test.fast(`${name}: interactive overflow scrolls without dismissal or ancestor chaining`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)

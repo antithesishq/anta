@@ -150,7 +150,8 @@ scrolling the checklist. Scroll the checklist to dismiss it.
 ### Contain events
 
 Pass `containEvents` to stop pointer, mouse, touch, click, context-menu, and wheel
-events from bubbling to parent handlers. Scrolling and links keep their native
+events from bubbling to parent handlers. It also enables `interactive`.
+Scrolling and links keep their native
 behavior. Keyboard and focus events still propagate. Ancestor capture listeners
 can still cancel interactions.
 
@@ -308,7 +309,7 @@ is available on the next interaction. Use `round` for a softer shape.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `children?` | ReactNode | — | Supplementary text or markup. Content stays in light DOM for application CSS. |
-| `containEvents?` | boolean | — | Stop pointer, mouse, touch, click, context-menu, and wheel events from bubbling out of an interactive bubble. Preserves native behavior. Ancestor capture listeners run first and can still cancel interactions. |
+| `containEvents?` | boolean | — | Stop pointer, mouse, touch, click, context-menu, and wheel events from bubbling out of the bubble. Enables interactive behavior and preserves native behavior. Ancestor capture listeners run first and can still cancel interactions. |
 | `delay?` | number | 300 | Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay. |
 | `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is pinned (anchored beneath the target) by default; pass `follow` for the cursor-tracking behavior, which fades by distance as the cursor leaves. |
 | `interactive?` | boolean | — | Keep content available while the pointer or keyboard focus is inside it. Enables pointer events and pins the bubble even with `follow`. Essential actions belong in a Menu or Dialog with an explicit trigger. |

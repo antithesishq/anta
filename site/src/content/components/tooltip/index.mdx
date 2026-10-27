@@ -291,7 +291,8 @@ scrolling the checklist. Scroll the checklist to dismiss it.
 ### Contain events
 
 Pass `containEvents` to stop pointer, mouse, touch, click, context-menu, and wheel
-events from bubbling to parent handlers. Scrolling and links keep their native
+events from bubbling to parent handlers. It also enables `interactive`.
+Scrolling and links keep their native
 behavior. Keyboard and focus events still propagate. Ancestor capture listeners
 can still cancel interactions.
 

@@ -99,9 +99,9 @@
     transition: opacity 60ms linear;
   }
 
-  a-tooltip[interactive]::part(container) { pointer-events: auto; }
+  a-tooltip:is([interactive], [contain-events])::part(container) { pointer-events: auto; }
 
-  a-tooltip[interactive]::part(bubble) {
+  a-tooltip:is([interactive], [contain-events])::part(bubble) {
     cursor: auto;
     overflow: auto;
     overscroll-behavior: contain;

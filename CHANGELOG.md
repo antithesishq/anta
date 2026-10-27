@@ -9,6 +9,7 @@ changes are not listed.
 
 - [Tooltip](/tooltip/#scrollable-content) supports `containEvents` to keep pointer,
   mouse, touch, click, context-menu, and wheel events from bubbling to parent handlers.
+  It also enables interactive behavior.
 
 - [Tooltip](/tooltip/#placement) supports `placement="right"`, with automatic
   flipping to the left when space is limited.

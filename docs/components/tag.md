@@ -137,6 +137,7 @@ same size.
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Use `a-tag-label` for the key and `a-tag-value` for its value.
+Keys keep their full width. When the tag is width-constrained, its value truncates.
 
 ```html
 <a-tag tone="success">

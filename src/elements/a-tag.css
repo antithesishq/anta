@@ -91,9 +91,7 @@
     flex: none;
   }
 
-  /* label / value segments. Each ellipsizes independently if the pill is
-     width-constrained. */
-  a-tag a-tag-label,
+  /* Constrained tags truncate the value while keeping the key intact. */
   a-tag a-tag-value {
     display: inline-block;
     min-width: 0;
@@ -109,7 +107,10 @@
      with a value — the JSX wrapper drops a lone label into <a-tag-value>
      so a standalone tag keeps the default styling. No divider; the weight
      contrast does the separating. */
-  a-tag a-tag-label { font-weight: var(--tag-label-weight); }
+  a-tag a-tag-label {
+    flex: none;
+    font-weight: var(--tag-label-weight);
+  }
 
   /* Optical edge padding: an icon at an edge needs less room than a text
      edge, so trim ~2px on whichever side a leading / trailing icon sits.

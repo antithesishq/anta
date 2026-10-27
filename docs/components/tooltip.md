@@ -99,17 +99,11 @@ the outer container. Scroll the outer container to dismiss it.
 Interactive bubbles scroll when their content exceeds the available height.
 This example uses `::part(bubble)` to set a shorter height for comparison.
 
-Pass `containEvents` when parent handlers would take over interactions inside
-an interactive tooltip. Pointer, mouse, touch, click, context-menu, and wheel
-events stop bubbling at the bubble, preserving native scrolling and link behavior.
-Ancestor capture listeners still run first and can cancel those interactions.
-Keyboard and focus events continue to propagate.
-
 ```tsx
 <div className="tooltip-scroll-container">
   <div className="tooltip-scroll-body">
     <Button label="Scrollable help">
-      <Tooltip interactive containEvents className="tooltip-scroll-example">
+      <Tooltip interactive className="tooltip-scroll-example">
         <div>
           {Array.from({ length: 12 }, (_, index) => (
             <p>Setup note {index + 1}: Keep your project settings and dependencies up to date.</p>
@@ -153,6 +147,20 @@ Keyboard and focus events continue to propagate.
   max-height: 180px;
 }
 ```
+
+### Contain events
+
+Pass `containEvents` when parent handlers would take over interactions inside
+an interactive tooltip. Pointer, mouse, touch, click, context-menu, and wheel
+events stop bubbling at the bubble, preserving native scrolling and link behavior.
+Ancestor capture listeners still run first and can cancel those interactions.
+Keyboard and focus events continue to propagate.
+
+Hover **Event containment help**, enter the bubble, and scroll or select its
+link. With **Contain tooltip events** enabled, the parent counters stay unchanged
+and the bubble scrolls. Clear the checkbox to let the parent receive those events;
+its wheel handler calls `preventDefault()` and blocks scrolling inside the bubble.
+Scrolling over the parent itself always increments its wheel counter.
 
 ## Show only when truncated
 
@@ -321,6 +329,51 @@ function Demo() {
       <Button label="Hover me">
         <Tooltip delay={300}>Edit my props or code</Tooltip>
       </Button>
+    </div>
+  )
+}
+`
+
+export const containEventsDemoCode = `import { Tooltip, Button, Checkbox, Text } from '@antadesign/anta'
+import { useEffect, useRef, useState } from 'preact/hooks'
+
+function Demo() {
+  const parent = useRef(null)
+  const [contain, setContain] = useState(true)
+  const [wheels, setWheels] = useState(0)
+  const [clicks, setClicks] = useState(0)
+
+  useEffect(() => {
+    const element = parent.current
+    const onWheel = event => {
+      event.preventDefault()
+      setWheels(count => count + 1)
+    }
+    element.addEventListener('wheel', onWheel, { passive: false })
+    return () => element.removeEventListener('wheel', onWheel)
+  }, [])
+
+  return (
+    <div className="event-demo">
+      <Checkbox checked={contain} onStateChange={(_, { next }) => setContain(next === true)}>
+        Contain tooltip events
+      </Checkbox>
+      <div ref={parent} className="event-parent" onClick={() => setClicks(count => count + 1)}>
+        <Button label="Event containment help">
+          <Tooltip interactive containEvents={contain} className="event-tooltip">
+            <div>
+              <a href="#tooltip-end">Jump to the final note</a>
+              {Array.from({ length: 12 }, (_, index) => (
+                <p>{'Note ' + (index + 1) + ': Scroll inside this bubble to compare event containment.'}</p>
+              ))}
+              <p id="tooltip-end">You reached the final note.</p>
+            </div>
+          </Tooltip>
+        </Button>
+        <p>This parent cancels wheel events and counts clicks.</p>
+        <Text>Parent wheel events: {wheels}</Text>
+        <Text>Parent clicks: {clicks}</Text>
+      </div>
     </div>
   )
 }

@@ -10,7 +10,7 @@ import Disclosure from '../../../components/Disclosure.astro'
 import Preview from '../../../components/Preview.astro'
 import Playground from '../../../components/PlaygroundEmbed.astro'
 import { Tooltip, Button, Text, Icon } from '@antadesign/anta'
-import tooltipDemoCode from './tooltip.demo.ts'
+import tooltipDemoCode, { containEventsDemoCode } from './tooltip.demo.ts'
 
 # Tooltip
 
@@ -191,17 +191,11 @@ the outer container. Scroll the outer container to dismiss it.
 Interactive bubbles scroll when their content exceeds the available height.
 This example uses `::part(bubble)` to set a shorter height for comparison.
 
-Pass `containEvents` when parent handlers would take over interactions inside
-an interactive tooltip. Pointer, mouse, touch, click, context-menu, and wheel
-events stop bubbling at the bubble, preserving native scrolling and link behavior.
-Ancestor capture listeners still run first and can cancel those interactions.
-Keyboard and focus events continue to propagate.
-
 <Preview>
 <div className="tooltip-scroll-container">
   <div className="tooltip-scroll-body">
     <Button label="Scrollable help">
-      <Tooltip interactive containEvents className="tooltip-scroll-example">
+      <Tooltip interactive className="tooltip-scroll-example">
         <div>
           {Array.from({ length: 12 }, (_, index) => (
             <p>Setup note {index + 1}: Keep your project settings and dependencies up to date.</p>
@@ -247,7 +241,7 @@ Keyboard and focus events continue to propagate.
 <div className="tooltip-scroll-container">
   <div className="tooltip-scroll-body">
     <Button label="Scrollable help">
-      <Tooltip interactive containEvents className="tooltip-scroll-example">
+      <Tooltip interactive className="tooltip-scroll-example">
         <div>
           {Array.from({ length: 12 }, (_, index) => (
             <p>Setup note {index + 1}: Keep your project settings and dependencies up to date.</p>
@@ -293,6 +287,43 @@ Keyboard and focus events continue to propagate.
 ```
 
 </Disclosure>
+
+### Contain events
+
+Pass `containEvents` when parent handlers would take over interactions inside
+an interactive tooltip. Pointer, mouse, touch, click, context-menu, and wheel
+events stop bubbling at the bubble, preserving native scrolling and link behavior.
+Ancestor capture listeners still run first and can cancel those interactions.
+Keyboard and focus events continue to propagate.
+
+Hover **Event containment help**, enter the bubble, and scroll or select its
+link. With **Contain tooltip events** enabled, the parent counters stay unchanged
+and the bubble scrolls. Clear the checkbox to let the parent receive those events;
+its wheel handler calls `preventDefault()` and blocks scrolling inside the bubble.
+Scrolling over the parent itself always increments its wheel counter.
+
+<Playground
+  component="Tooltip"
+  layout="side"
+  codeInitiallyFolded
+  initialCode={containEventsDemoCode}
+  initialCss={`.event-demo {
+  display: grid;
+  gap: 16px;
+}
+.event-parent {
+  padding: 24px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+}
+.event-parent a-text {
+  display: block;
+}
+.event-tooltip::part(bubble) {
+  max-width: 280px;
+  max-height: 180px;
+}`}
+/>
 
 ## Show only when truncated
 

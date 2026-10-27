@@ -670,6 +670,7 @@ export class ATooltipElement extends HTMLElementBase {
     }
   }
 
+  // Native shadow scrolls stay in their root; slotted or forwarded scrolls can reach the document.
   private isInternalScroll = (event: Event) =>
     this.#isInteractive && event.composedPath().includes(this)
 

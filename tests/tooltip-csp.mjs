@@ -318,6 +318,50 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
       return {bubble,capture,local,cancelled,localContained,disabledCount,impliedCount:window.parentWheels}
     },events),{bubble:['keydown','focusin'],capture:[...events,'keydown','focusin'],local:[...events,'keydown','focusin'],cancelled:[],localContained:[],disabledCount:1,impliedCount:1})
   })
+  test.fast(`${name}: scroll dismissal distinguishes shadow, slotted, and retargeted paths`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/scroll.css')))
+    await page.evaluate(()=>{
+      window.documentScrolls=[];window.localScrolls=[]
+      window.addEventListener('scroll',event=>documentScrolls.push({
+        target:event.target.id,composed:event.composed,inside:event.composedPath().includes(document.querySelector('a-tooltip')),
+      }),true)
+    })
+    for(const kind of ['bubble','light','open-shadow','closed-shadow']) {
+      await page.mouse.move(10,10)
+      await mount(page,`<div id="outer"><div id="anchor" tabindex="0">Help<a-tooltip interactive delay="30"><div id="content">${kind==='bubble'?'<p>Tooltip note</p>'.repeat(40):kind==='light'?'<div id="inner">'+'<p>Tooltip note</p>'.repeat(40)+'</div>':'<div id="shadow-host"></div>'}</div></a-tooltip></div><div class="spacer"></div></div>`)
+      await page.evaluate(async kind=>{
+        const tooltip=document.querySelector('a-tooltip')
+        if(kind.endsWith('shadow')) {
+          const shadow=document.querySelector('#shadow-host').attachShadow({mode:kind==='closed-shadow'?'closed':'open'})
+          const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css'
+          const loaded=new Promise(resolve=>link.onload=resolve);shadow.append(link)
+          const inner=document.createElement('div');inner.id='inner';inner.innerHTML='<p>Tooltip note</p>'.repeat(40);shadow.append(inner)
+          window.scrollTarget=inner;await loaded
+        } else window.scrollTarget=kind==='bubble'?tooltip.shadowRoot.querySelector('slot'):document.querySelector('#inner')
+        scrollTarget.addEventListener('scroll',event=>localScrolls.push({composed:event.composed,inside:event.composedPath().includes(tooltip)}))
+      },kind)
+      await page.locator('#anchor').hover();await waitOpen(page);await frames(page)
+      // Change the offset even when the browser restores a previous scroll position.
+      await page.evaluate(()=>{documentScrolls=[];localScrolls=[];window.previousScrollTop=scrollTarget.scrollTop;scrollTarget.scrollTop=previousScrollTop>0?0:30})
+      await page.waitForFunction(()=>localScrolls.length>0)
+      await page.waitForTimeout(180)
+      assert.ok(await page.evaluate(()=>scrollTarget.scrollTop!==previousScrollTop))
+      assert.equal(await open(page),true)
+      assert.ok(await page.evaluate(light=>localScrolls.every(event=>event.composed===false && event.inside===light),kind==='light'),kind)
+      if(kind==='light') assert.ok(await page.evaluate(()=>documentScrolls.length>0 && documentScrolls.every(event=>event.target==='inner' && !event.composed && event.inside)))
+      else assert.deepEqual(await page.evaluate(()=>documentScrolls),[])
+      if(kind.endsWith('shadow')) {
+        await page.evaluate(()=>scrollTarget.dispatchEvent(new Event('scroll',{composed:true})))
+        await page.waitForTimeout(180);assert.equal(await open(page),true)
+        assert.deepEqual(await page.evaluate(()=>documentScrolls),[{target:'shadow-host',composed:true,inside:true}])
+      }
+      await page.evaluate(()=>{documentScrolls=[];document.querySelector('#outer').scrollTop+=20})
+      await waitOpen(page,'a-tooltip',false)
+      assert.deepEqual(await page.evaluate(()=>documentScrolls),[{target:'outer',composed:false,inside:false}])
+    }
+  })
   test.fast(`${name}: interactive overflow scrolls without dismissal or ancestor chaining`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
     await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})

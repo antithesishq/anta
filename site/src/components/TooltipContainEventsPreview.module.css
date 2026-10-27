@@ -1,0 +1,17 @@
+.demo {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+.parent {
+  padding: 24px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+}
+.parent a-text {
+  display: block;
+}
+.tooltip::part(bubble) {
+  max-width: 280px;
+  max-height: 180px;
+}

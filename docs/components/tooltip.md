@@ -33,7 +33,7 @@ follow the cursor, or enter the interactive bubble to use its link.
 ## Hover and keyboard focus
 
 Hover the button or reach it with Tab to show its explanation after a delay.
-Escape dismisses it. Leaving the anchor, moving focus away, or scrolling also
+Escape dismisses it. Leaving the anchor, moving focus away, or scrolling outside the tooltip also
 closes it. On touch screens, hold the anchor for 500ms; a quick tap does not open
 it. After release, a touch tooltip remains for 1.5 seconds.
 
@@ -88,6 +88,51 @@ that need an explicit trigger and popup semantics.
     Read the <a href="/install/">installation guide</a>.
   </Tooltip>
 </Button>
+```
+
+### Scrollable content
+
+Hover **Scrollable help**, move into the bubble, and scroll through the setup
+notes. The bubble stays open and scrolling stops at its edges without moving
+the outer container. Scroll the outer container to dismiss it.
+
+Interactive bubbles scroll when their content exceeds the available height.
+This example uses `::part(bubble)` to set a shorter height for comparison.
+
+```tsx
+<div className="tooltip-scroll-container">
+  <div className="tooltip-scroll-body">
+    <Button label="Scrollable help">
+      <Tooltip interactive className="tooltip-scroll-example">
+        <div>
+          {Array.from({ length: 12 }, (_, index) => (
+            <p>Setup note {index + 1}: Keep your project settings and dependencies up to date.</p>
+          ))}
+          <a href="/install/">Read the installation guide</a>
+        </div>
+      </Tooltip>
+    </Button>
+    <p>Scroll this container to dismiss the tooltip.</p>
+  </div>
+</div>
+```
+
+```css
+.tooltip-scroll-container {
+  width: 100%;
+  height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+}
+.tooltip-scroll-body {
+  min-height: 600px;
+  padding: 32px;
+}
+.tooltip-scroll-example::part(bubble) {
+  max-width: 300px;
+  max-height: 180px;
+}
 ```
 
 ## Show only when truncated

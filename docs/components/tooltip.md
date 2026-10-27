@@ -49,13 +49,14 @@ be available before opening on the trigger with authored ARIA. Here,
 
 ## Placement
 
-Choose `top` or `left` to prefer another side. Tooltip flips when that side has
-insufficient room and keeps the bubble within the viewport.
+Choose `top`, `left`, or `right` to prefer another side. Tooltip flips when
+that side has insufficient room and keeps the bubble within the viewport.
 
 ```tsx
 <Button label="Below"><Tooltip>Below the anchor</Tooltip></Button>
 <Button label="Above"><Tooltip placement="top">Above the anchor</Tooltip></Button>
-<Button label="Beside"><Tooltip placement="left">Beside the anchor</Tooltip></Button>
+<Button label="Left"><Tooltip placement="left">Left of the anchor</Tooltip></Button>
+<Button label="Right"><Tooltip placement="right">Right of the anchor</Tooltip></Button>
 ```
 
 ## Follow the cursor
@@ -174,7 +175,7 @@ is available on the next interaction. Use `round` for a softer shape.
 | `delay?` | number | 300 | Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay. |
 | `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is pinned (anchored beneath the target) by default; pass `follow` for the cursor-tracking behavior, which fades by distance as the cursor leaves. |
 | `interactive?` | boolean | — | Keep content available while the pointer or keyboard focus is inside it. Enables pointer events and pins the bubble even with `follow`. Essential actions belong in a Menu or Dialog with an explicit trigger. |
-| `placement?` | 'top' \| 'bottom' \| 'left' | bottom | Which side of the anchor the bubble prefers. Auto-flips to the other side when there isn't room. |
+| `placement?` | 'top' \| 'bottom' \| 'left' \| 'right' | bottom | Which side of the anchor the bubble prefers. Auto-flips to the other side when there isn't room. |
 | `round?` | boolean \| number \| string | — | Round the bubble to a 20px radius (matching a round menu). Pass a `number` (px) or a CSS length string for a custom radius. |
 | `truncatedOnly?` | boolean | — | Only show when the target is actually truncated (its text overflows and is ellipsized); a label that fits gets no tooltip. The check is a UI-thread layout read, re-measured on each show. By default it measures every Anta ellipsizing label part inside the anchor, then the anchor itself — override with `truncatedSelector`. |
 | `truncatedSelector?` | string | — | CSS selector (resolved within the anchor) for the element or elements whose overflow decides whether a `truncatedOnly` tooltip shows. |

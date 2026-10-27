@@ -249,15 +249,21 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.equal(await page.evaluate(()=>serverNodes.every((n,i)=>n===[...document.querySelector('#mount').querySelectorAll('*')][i])),true)
     await page.locator('a-button').hover();await waitOpen(page)
     await page.evaluate(()=>renderTooltip({content:'Updated help',placement:'top'}));await frames(page)
-    assert.equal(await page.locator('a-tooltip').textContent(),'Updated help');await waitOpen(page)
-    const box=await geometry(page);assert.ok(box.y+box.height<=box.top)
+    const topBox=await geometry(page);assert.ok(topBox.y+topBox.height<=topBox.top)
+    await page.evaluate(()=>renderTooltip({content:'Right help',placement:'right'}));await frames(page)
+    assert.equal(await page.locator('a-tooltip').textContent(),'Right help');await waitOpen(page)
+    const box=await geometry(page);assert.ok(Math.abs(box.x-(box.right+4))<=1)
+    assert.equal(await page.locator('a-tooltip').getAttribute('placement'),'right')
     await page.evaluate(()=>renderTooltip({content:''}));await waitOpen(page,'a-tooltip',false)
   })
-  test(`${name}: viewport flipping, left placement, content growth, and consumer overrides`,async t=>{
+  test(`${name}: viewport flipping, side placements, content growth, and consumer overrides`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page)
     await page.locator('a-tooltip').evaluate(n=>n.setAttribute('placement','left'));await show(page)
     let box=await geometry(page);assert.ok(Math.abs(box.x+box.width-(box.left-4))<=1)
     await page.locator('#anchor').evaluate(n=>n.className='anchor edge');await show(page);box=await geometry(page);assert.ok(box.x>=box.right)
+    await page.locator('#anchor').evaluate(n=>{n.className='anchor';n.style.left='740px'})
+    await page.locator('a-tooltip').evaluate(n=>n.setAttribute('placement','right'));await show(page);box=await geometry(page);assert.ok(Math.abs(box.x+box.width-(box.left-4))<=1)
+    await page.locator('#anchor').evaluate(n=>n.style.removeProperty('left'));await show(page);box=await geometry(page);assert.ok(Math.abs(box.x-(box.right+4))<=1)
     await page.locator('a-tooltip').evaluate(n=>{n.removeAttribute('placement');n.className='override';n.innerHTML='<span class="content">Styled content</span>'});await frames(page)
     assert.deepEqual(await page.locator('a-tooltip').evaluate(n=>{const c=getComputedStyle(n.shadowRoot.querySelector('slot'));return [c.backgroundColor,c.borderRadius,c.paddingTop]}),['rgb(30, 40, 50)','11px','12px'])
     await page.locator('#anchor').evaluate(n=>n.className='anchor bottom');await show(page);box=await geometry(page);assert.ok(box.y+box.height<=box.top)
@@ -335,7 +341,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
   test(`${name}: visual matrix retains initial hiding, typography, and bubble variants`,async t=>{
     const page=await pageFor(t,engine,mode)
     const output=resolve('tests/.test-output/tooltip');await mkdir(output,{recursive:true})
-    const variants=[['plain',''],['top','placement="top"'],['left','placement="left"'],['round','round'],['interactive','interactive'],['override','class="override"']]
+    const variants=[['plain',''],['top','placement="top"'],['left','placement="left"'],['right','placement="right"'],['round','round'],['interactive','interactive'],['override','class="override"']]
     for(const [variant,attrs] of variants) {
       await page.locator('#mount').evaluate((n,html)=>n.innerHTML=html,`<button class="anchor" aria-label="Save">Save<a-tooltip ${attrs}><strong>Release status</strong><br>Checked two minutes ago</a-tooltip></button>`)
       if(variant==='plain') {

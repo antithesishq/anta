@@ -121,19 +121,21 @@ be available before opening on the trigger with authored ARIA. Here,
 
 ## Placement
 
-Choose `top` or `left` to prefer another side. Tooltip flips when that side has
-insufficient room and keeps the bubble within the viewport.
+Choose `top`, `left`, or `right` to prefer another side. Tooltip flips when
+that side has insufficient room and keeps the bubble within the viewport.
 
 <Preview>
   <Button label="Below"><Tooltip>Below the anchor</Tooltip></Button>
   <Button label="Above"><Tooltip placement="top">Above the anchor</Tooltip></Button>
-  <Button label="Beside"><Tooltip placement="left">Beside the anchor</Tooltip></Button>
+  <Button label="Left"><Tooltip placement="left">Left of the anchor</Tooltip></Button>
+  <Button label="Right"><Tooltip placement="right">Right of the anchor</Tooltip></Button>
 </Preview>
 
 ```tsx folded
 <Button label="Below"><Tooltip>Below the anchor</Tooltip></Button>
 <Button label="Above"><Tooltip placement="top">Above the anchor</Tooltip></Button>
-<Button label="Beside"><Tooltip placement="left">Beside the anchor</Tooltip></Button>
+<Button label="Left"><Tooltip placement="left">Left of the anchor</Tooltip></Button>
+<Button label="Right"><Tooltip placement="right">Right of the anchor</Tooltip></Button>
 ```
 
 ## Follow the cursor

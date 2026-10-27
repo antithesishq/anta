@@ -103,3 +103,43 @@ test('left placement centers beside the anchor and flips at the viewport edge', 
   assert.ok(Math.abs(flipped.bubble.left - (flipped.anchor.right + 4)) <= 1)
   assert.ok(Math.abs(flipped.bubble.centerY - flipped.anchor.centerY) <= 1)
 })
+
+for (const follow of [false, true]) {
+  test(`right placement ${follow ? 'follows the cursor' : 'centers beside the anchor'} and flips at the viewport edge`, async t => {
+    const { chromium } = requireSite('playwright')
+    const browser = await chromium.launch({ headless: true, channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
+    t.after(() => browser.close())
+    const page = await browser.newPage({ viewport: { width: 900, height: 500 } })
+    const { script, css } = await tooltipBundle()
+    await page.setContent(`<style>${css}
+      .anchor { position: absolute; width: 160px; height: 40px; }
+      #center { left: 400px; top: 220px; }
+      #edge { right: 2px; top: 320px; }
+    </style>
+    <div class="anchor" id="center">Center<a-tooltip placement="right" ${follow ? 'follow' : ''}>Center tip</a-tooltip></div>
+    <div class="anchor" id="edge">Edge<a-tooltip placement="right" ${follow ? 'follow' : ''}>Edge tip</a-tooltip></div>`)
+    await page.addScriptTag({ content: script })
+
+    const geometry = async id => {
+      const anchor = page.locator(`#${id}`)
+      const rect = await anchor.boundingBox()
+      const cursor = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
+      await anchor.locator('a-tooltip').evaluate((tooltip, point) => {
+        tooltip.show(point ? new MouseEvent('mousemove', { clientX: point.x, clientY: point.y }) : undefined)
+      }, follow ? cursor : null)
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+      const bubble = await anchor.locator('a-tooltip').evaluate(tooltip => {
+        const box = tooltip.shadowRoot.querySelector('[popover]').getBoundingClientRect()
+        return { left: box.left, right: box.right, centerY: box.top + box.height / 2 }
+      })
+      return { rect, cursor, bubble }
+    }
+
+    const centered = await geometry('center')
+    assert.ok(Math.abs(centered.bubble.left - (follow ? centered.cursor.x + 16 : centered.rect.x + centered.rect.width + 4)) <= 1)
+    assert.ok(Math.abs(centered.bubble.centerY - centered.cursor.y) <= 1)
+    const flipped = await geometry('edge')
+    assert.ok(Math.abs(flipped.bubble.right - (follow ? flipped.cursor.x - 4 : flipped.rect.x - 4)) <= 1)
+    assert.ok(Math.abs(flipped.bubble.centerY - flipped.cursor.y) <= 1)
+  })
+}

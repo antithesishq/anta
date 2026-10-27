@@ -361,6 +361,10 @@ export class ATooltipElement extends HTMLElementBase {
     return this.getAttribute('placement') === 'left'
   }
 
+  get #prefersRight(): boolean {
+    return this.getAttribute('placement') === 'right'
+  }
+
   get #delay(): number {
     const attr = this.getAttribute('delay')
     if (attr == null) return DEFAULT_DELAY
@@ -541,11 +545,12 @@ export class ATooltipElement extends HTMLElementBase {
       const a = anchorRect(this.anchor)
       const box = this.container.getBoundingClientRect()
       const { innerWidth: vw, innerHeight: vh } = this.view
-      if (this.#prefersLeft) {
-        // `left` means centered beside the anchor. Flip to its right when the
-        // preferred side would clip, then clamp vertically at viewport edges.
-        const preferredLeft = a.left - box.width - MARGIN
-        const left = preferredLeft >= MARGIN ? preferredLeft : a.right + MARGIN
+      if (this.#prefersLeft || this.#prefersRight) {
+        const before = a.left - box.width - MARGIN
+        const after = a.right + MARGIN
+        const left = this.#prefersRight
+          ? (after + box.width <= vw - MARGIN ? after : before)
+          : (before >= MARGIN ? before : after)
         const top = a.top + (a.height - box.height) / 2
         this.place(left, top, box.width, box.height, vw, vh)
         return
@@ -562,9 +567,12 @@ export class ATooltipElement extends HTMLElementBase {
       if (!this.shown && !this.fading) return
       const box = this.container.getBoundingClientRect()
       const { innerWidth: vw, innerHeight: vh } = this.view
-      if (this.#prefersLeft) {
-        const preferredLeft = e.clientX - box.width - MARGIN
-        const left = preferredLeft >= MARGIN ? preferredLeft : e.clientX + CURSOR_SIZE
+      if (this.#prefersLeft || this.#prefersRight) {
+        const before = e.clientX - box.width - MARGIN
+        const after = e.clientX + CURSOR_SIZE
+        const left = this.#prefersRight
+          ? (after + box.width <= vw - MARGIN ? after : before)
+          : (before >= MARGIN ? before : after)
         this.place(left, e.clientY - box.height / 2, box.width, box.height, vw, vh)
         return
       }

@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- [Tooltip](/tooltip/#placement) supports `placement="right"`, with automatic
+  flipping to the left when space is limited.
+
 ## 0.3.36 — October 22, 2026
 
 ### Changed

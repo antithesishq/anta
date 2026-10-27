@@ -102,6 +102,7 @@
   a-tooltip[interactive]::part(container) { pointer-events: auto; }
 
   a-tooltip[interactive]::part(bubble) {
+    cursor: auto;
     overflow: auto;
     overscroll-behavior: contain;
   }

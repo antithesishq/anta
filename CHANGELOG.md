@@ -17,6 +17,7 @@ changes are not listed.
 
 - Interactive [Tooltip](/tooltip/) content scrolls within the bubble without
   dismissing it or scrolling the trigger’s container at the bubble’s edges.
+  The bubble also resets the trigger’s cursor while preserving cursors set by its content.
 
 ## 0.3.36 — October 22, 2026
 

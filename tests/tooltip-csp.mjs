@@ -87,6 +87,7 @@ before(async () => {
     assets.set(`/${framework}.js`, client.outputFiles.find(f=>f.path.endsWith('.js')).text)
   }
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
+  assets.set('/cursor.css', '#anchor{cursor:pointer} .cursor-text{cursor:text}')
   assets.set('/scroll.css', '#outer{height:260px;overflow:auto} #anchor{margin-top:150px} .spacer{height:1200px} a-tooltip::part(bubble){max-height:120px} #inner{height:80px;overflow:auto}')
   assets.set('/truncation.css', `.single-line-target{display:block;width:160px;font-family:system-ui;font-size:20px;line-height:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vertical-target{display:block;width:160px;height:12px;font-size:12px;line-height:12px;white-space:normal;overflow:hidden}`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .anchor{position:absolute;left:300px;top:180px;width:140px;height:40px} .second{left:450px} .third{left:600px} .edge{left:2px;top:2px} .bottom{top:440px} .clip,.clamp{display:block;width:130px;max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis} .override::part(bubble){background:rgb(30,40,50);color:white;padding:12px;border-radius:11px;box-shadow:none;backdrop-filter:none} .content{font-size:18px;font-weight:600} a-tooltip::part(container){z-index:1}`)
@@ -199,6 +200,21 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await page.mouse.move(10,10);await page.locator('#anchor').focus();await page.keyboard.press(engine===webkit?'Alt+Tab':'Tab');await page.waitForTimeout(180)
     assert.equal(await page.locator('#guide').evaluate(n=>n===document.activeElement),true);assert.equal(await open(page),true)
     await page.keyboard.press('Escape');assert.equal(await open(page),false)
+  })
+  test.fast(`${name}: interactive cursor resets the trigger cursor and respects content cursors`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/cursor.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/cursor.css')))
+    await mount(page,'<div class="anchor" id="anchor">Help<a-tooltip interactive delay="30"><span id="plain">Details</span><a id="link" href="#after">Guide</a><span class="cursor-text">Select text</span></a-tooltip></div>')
+    await page.locator('#anchor').hover();await waitOpen(page)
+    for(const contained of [false,true]) {
+      await page.locator('a-tooltip').evaluate((t,enabled)=>t.toggleAttribute('contain-events',enabled),contained)
+      assert.equal(await page.locator('#anchor').evaluate(n=>getComputedStyle(n).cursor),'pointer')
+      assert.equal(await page.locator('a-tooltip').locator('slot').evaluate(n=>getComputedStyle(n).cursor),'auto')
+      assert.equal(await page.locator('#plain').evaluate(n=>getComputedStyle(n).cursor),'auto')
+      assert.equal(await page.locator('#link').evaluate(n=>getComputedStyle(n).cursor),engine===webkit?'auto':'pointer')
+      assert.equal(await page.locator('.cursor-text').evaluate(n=>getComputedStyle(n).cursor),'text')
+    }
   })
   test.fast(`${name}: contain-events preserves native scrolling and blocks bubbling parent handlers`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)

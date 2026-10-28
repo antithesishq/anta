@@ -231,6 +231,7 @@ export type {
 } from './components/Toaster'
 export type { BaseProps, BaseAttributes, ToneScope } from './general_types'
 export { configure } from './jsx-runtime'
+export { isContainedEvent } from './event-containment'
 export type { AntaIntrinsicElements, RendererHooks, RendererOptions } from './jsx-runtime'
 
 /**

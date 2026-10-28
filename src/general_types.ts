@@ -592,13 +592,16 @@ export interface ATooltipAttributes extends BaseAttributes {
   /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 300. */
   delay?: number | string
   /** Preferred side; auto-flips when there's no room. Defaults to `'bottom'`. */
-  placement?: 'top' | 'bottom' | 'left'
+  placement?: 'top' | 'bottom' | 'left' | 'right'
   /** Follow the cursor instead of pinning under the anchor (pinned is the
    *  default). Presence-based (`''` on, omit off). */
   follow?: boolean | ''
   /** Make the bubble hoverable/clickable (pointer events on, stays open while
    *  hovered). Always pinned. Presence-based (`''` on, omit off). */
   interactive?: boolean | ''
+  /** Mark an input boundary respected by Capture and `isContainedEvent`.
+   *  Enables interactive behavior. The JSX wrapper also contains renderer events. */
+  'contain-events'?: boolean | ''
   /** Only show when the measured target is actually truncated/clipped (its text
    *  overflows). UI-thread layout read, re-measured per show. Defaults to the
    *  nearest Anta ellipsizing label part (`a-tab-label` / `a-button-label`) in the

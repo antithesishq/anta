@@ -33,7 +33,7 @@ follow the cursor, or enter the interactive bubble to use its link.
 ## Hover and keyboard focus
 
 Hover the button or reach it with Tab to show its explanation after a delay.
-Escape dismisses it. Leaving the anchor, moving focus away, or scrolling also
+Escape dismisses it. Leaving the anchor, moving focus away, or scrolling outside the tooltip also
 closes it. On touch screens, hold the anchor for 500ms; a quick tap does not open
 it. After release, a touch tooltip remains for 1.5 seconds.
 
@@ -49,13 +49,14 @@ be available before opening on the trigger with authored ARIA. Here,
 
 ## Placement
 
-Choose `top` or `left` to prefer another side. Tooltip flips when that side has
-insufficient room and keeps the bubble within the viewport.
+Choose `top`, `left`, or `right` to prefer another side. Tooltip flips when
+that side has insufficient room and keeps the bubble within the viewport.
 
 ```tsx
 <Button label="Below"><Tooltip>Below the anchor</Tooltip></Button>
 <Button label="Above"><Tooltip placement="top">Above the anchor</Tooltip></Button>
-<Button label="Beside"><Tooltip placement="left">Beside the anchor</Tooltip></Button>
+<Button label="Left"><Tooltip placement="left">Left of the anchor</Tooltip></Button>
+<Button label="Right"><Tooltip placement="right">Right of the anchor</Tooltip></Button>
 ```
 
 ## Follow the cursor
@@ -87,6 +88,146 @@ that need an explicit trigger and popup semantics.
     Read the <a href="/install/">installation guide</a>.
   </Tooltip>
 </Button>
+```
+
+### Scrollable content
+
+Interactive tooltips scroll when their content exceeds the bubble’s height.
+Use `::part(bubble)` to limit its height, as in this example.
+
+Hover **Scrollable help**, then scroll inside the bubble. It stays open without
+scrolling the checklist. Scroll the checklist to dismiss it.
+
+```tsx
+<div className="tooltip-scroll-container">
+  <div className="tooltip-scroll-body">
+    <Button label="Scrollable help">
+      <Tooltip interactive className="tooltip-scroll-example">
+        <div>
+          {Array.from({ length: 12 }, (_, index) => (
+            <p>Setup note {index + 1}: Keep your project settings and dependencies up to date.</p>
+          ))}
+          <a href="/install/">Read the installation guide</a>
+        </div>
+      </Tooltip>
+    </Button>
+    <p>Scroll this setup checklist to dismiss the tooltip.</p>
+    <ol className="tooltip-scroll-checklist">
+      <li>Install the package.</li>
+      <li>Import the component bundle.</li>
+      <li>Load your theme.</li>
+      <li>Add a button and tooltip.</li>
+      <li>Check keyboard navigation.</li>
+      <li>Try scrolling inside the tooltip.</li>
+      <li>Try scrolling this checklist.</li>
+      <li>Build your application.</li>
+    </ol>
+  </div>
+</div>
+```
+
+```css
+.tooltip-scroll-container {
+  width: 100%;
+  height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+}
+.tooltip-scroll-body {
+  padding: 32px;
+}
+.tooltip-scroll-checklist li {
+  padding-block: 12px;
+  border-top: 1px solid var(--border-2);
+}
+.tooltip-scroll-example::part(bubble) {
+  max-width: 300px;
+  max-height: 180px;
+}
+```
+
+### Contain events
+
+Pass `containEvents` to contain bubbling pointer, mouse, touch, click,
+context-menu, and wheel handlers in the JSX event system. It also enables
+`interactive`. Child handlers keep working; keyboard and focus events propagate.
+
+Capture respects this boundary automatically. Custom native parent handlers must
+check `isContainedEvent(event)` before consuming input, as in this example.
+Ancestor capture listeners still run first and must also respect the boundary.
+
+Hover **Event containment help** and scroll inside the bubble or select its link.
+Clear **Contain tooltip events** to let the parent count clicks and cancel
+scrolling. Scrolling over the parent always increases its wheel counter.
+
+```tsx
+import { Tooltip, Button, Checkbox, Text, isContainedEvent } from '@antadesign/anta'
+import { useEffect, useRef, useState } from 'preact/hooks'
+import styles from './TooltipContainEventsPreview.module.css'
+
+function Demo() {
+  const parent = useRef<HTMLDivElement>(null)
+  const [contain, setContain] = useState(true)
+  const [wheels, setWheels] = useState(0)
+  const [clicks, setClicks] = useState(0)
+
+  useEffect(() => {
+    const element = parent.current
+    if (!element) return
+    const onWheel = (event: WheelEvent) => {
+      if (isContainedEvent(event)) return
+      event.preventDefault()
+      setWheels(count => count + 1)
+    }
+    element.addEventListener('wheel', onWheel, { passive: false })
+    return () => element.removeEventListener('wheel', onWheel)
+  }, [])
+
+  return (
+    <div className={styles.demo}>
+      <Checkbox checked={contain} onStateChange={(_, { next }) => setContain(next === true)}>
+        Contain tooltip events
+      </Checkbox>
+      <div ref={parent} className={styles.parent} onClick={() => setClicks(count => count + 1)}>
+        <Button label="Event containment help">
+          <Tooltip interactive containEvents={contain} className={styles.tooltip}>
+            <div>
+              <a href="#tooltip-end">Jump to the final note</a>
+              {Array.from({ length: 12 }, (_, index) => (
+                <p>{'Note ' + (index + 1) + ': Scroll inside this bubble to compare event containment.'}</p>
+              ))}
+              <p id="tooltip-end">You reached the final note.</p>
+            </div>
+          </Tooltip>
+        </Button>
+        <p>This parent cancels wheel events and counts clicks.</p>
+        <Text>Parent wheel events: {wheels}</Text>
+        <Text>Parent clicks: {clicks}</Text>
+      </div>
+    </div>
+  )
+}
+```
+
+```css
+.demo {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+.parent {
+  padding: 24px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+}
+.parent a-text {
+  display: block;
+}
+.tooltip::part(bubble) {
+  max-width: 280px;
+  max-height: 180px;
+}
 ```
 
 ## Show only when truncated
@@ -171,10 +312,11 @@ is available on the next interaction. Use `round` for a softer shape.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `children?` | ReactNode | — | Supplementary text or markup. Content stays in light DOM for application CSS. |
+| `containEvents?` | boolean | — | Contain bubbling pointer, mouse, touch, click, context-menu, and wheel handlers in the JSX event system. Enables interactive behavior. Capture respects this boundary. Custom native parent handlers must check `isContainedEvent` before consuming input; ancestor capture handlers run first. |
 | `delay?` | number | 300 | Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay. |
 | `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is pinned (anchored beneath the target) by default; pass `follow` for the cursor-tracking behavior, which fades by distance as the cursor leaves. |
 | `interactive?` | boolean | — | Keep content available while the pointer or keyboard focus is inside it. Enables pointer events and pins the bubble even with `follow`. Essential actions belong in a Menu or Dialog with an explicit trigger. |
-| `placement?` | 'top' \| 'bottom' \| 'left' | bottom | Which side of the anchor the bubble prefers. Auto-flips to the other side when there isn't room. |
+| `placement?` | 'top' \| 'bottom' \| 'left' \| 'right' | bottom | Which side of the anchor the bubble prefers. Auto-flips to the other side when there isn't room. |
 | `round?` | boolean \| number \| string | — | Round the bubble to a 20px radius (matching a round menu). Pass a `number` (px) or a CSS length string for a custom radius. |
 | `truncatedOnly?` | boolean | — | Only show when the target is actually truncated (its text overflows and is ellipsized); a label that fits gets no tooltip. The check is a UI-thread layout read, re-measured on each show. By default it measures every Anta ellipsizing label part inside the anchor, then the anchor itself — override with `truncatedSelector`. |
 | `truncatedSelector?` | string | — | CSS selector (resolved within the anchor) for the element or elements whose overflow decides whether a `truncatedOnly` tooltip shows. |
@@ -205,10 +347,13 @@ description while its internal popover is hidden. Use an authored
 `aria-description`, or reference separate application-owned descriptive content
 that remains available to assistive technology.
 
-Raw attributes include `delay`, `placement`, `round`, `follow`, `interactive`,
+Raw attributes include `delay`, `placement`, `round`, `follow`, `interactive`, `contain-events`,
 `truncated-only`, and `truncated-selector`. Boolean attributes use presence.
 An anchor can implement `getAnchorRect(): DOMRect` to advertise a smaller
 positioning region; Input reports its field instead of its label and hint.
+
+In raw HTML, `contain-events` marks the boundary for Capture and
+`isContainedEvent`. It does not stop native propagation.
 
 Default styles load from the external component stylesheet. Under CSP, allow
 that same-origin stylesheet and the browser entry. Runtime positioning updates

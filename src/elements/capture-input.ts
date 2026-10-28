@@ -1,4 +1,5 @@
 import { finiteNumber } from '../anta_helpers'
+import { isContainedEvent } from '../event-containment'
 import type {
   CaptureInputCancelReason, CaptureInputGeometry, CaptureInputModifier, CapturePanInput,
   CapturePointerActivationReason, CapturePointerInput, CapturePointerStart,
@@ -270,6 +271,7 @@ function matchesModifier(event: MouseEvent, modifier: CaptureInputModifier) {
 }
 
 function ignoredTarget(surface: HTMLElement, event: Event, controls: string) {
+  if (isContainedEvent(event, surface)) return true
   const view = surface.ownerDocument.defaultView as View
   for (const target of event.composedPath()) {
     if (target === surface) break

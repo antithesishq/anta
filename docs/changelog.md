@@ -3,6 +3,26 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.37 — October 27, 2026
+
+### Added
+
+- [Tooltip](/tooltip/#contain-events) supports `containEvents` to contain bubbling JSX input
+  handlers while preserving child callbacks. It enables interactive behavior.
+  Capture respects the boundary; custom native parents can check `isContainedEvent`.
+
+- [Tooltip](/tooltip/#placement) supports `placement="right"`, with automatic
+  flipping to the left when space is limited.
+
+### Fixed
+
+- [Tag](/tag/) truncates values first in width-constrained tags. Keys truncate
+  only when they cannot fit on their own.
+
+- Interactive [Tooltip](/tooltip/) content scrolls within the bubble without
+  dismissing it or scrolling the trigger’s container at the bubble’s edges.
+  The bubble also resets the trigger’s cursor while preserving cursors set by its content.
+
 ## 0.3.36 — October 22, 2026
 
 ### Changed

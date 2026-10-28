@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/anta",
-  "version": "0.3.36",
+  "version": "0.3.37",
   "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
   "main": "dist/index.js",

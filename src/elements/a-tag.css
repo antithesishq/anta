@@ -91,8 +91,7 @@
     flex: none;
   }
 
-  /* label / value segments. Each ellipsizes independently if the pill is
-     width-constrained. */
+  /* Values yield space first; a key that cannot fit also ellipsizes. */
   a-tag a-tag-label,
   a-tag a-tag-value {
     display: inline-block;
@@ -103,13 +102,19 @@
   }
   /* `value` is the default, unmodified text — it just inherits the tag's
      color and base weight. */
-  a-tag a-tag-value { font-weight: 450; }
+  a-tag a-tag-value {
+    flex: 1 1 0px;
+    font-weight: 450;
+  }
   /* `label` is the bold "key" placed before the value: same color, just
      heavier (weight 600). It only renders as <a-tag-label> when paired
      with a value — the JSX wrapper drops a lone label into <a-tag-value>
      so a standalone tag keeps the default styling. No divider; the weight
      contrast does the separating. */
-  a-tag a-tag-label { font-weight: var(--tag-label-weight); }
+  a-tag a-tag-label {
+    flex: 0 1 auto;
+    font-weight: var(--tag-label-weight);
+  }
 
   /* Optical edge padding: an icon at an edge needs less room than a text
      edge, so trim ~2px on whichever side a leading / trailing icon sits.

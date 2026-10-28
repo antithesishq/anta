@@ -51,10 +51,10 @@ test('collection reads keep island and script styles on the pages that use them'
     const wheelStyles = styles.filter(path => path.includes('/WheelCapturePreview.'))
     assert.equal(wheelStyles.length, entry.path === '/capture/' ? 1 : 0,
       `${entry.path} must only load WheelCapturePreview CSS when rendering that demo`)
-    // Plot's processed script and the browser-only Box/Capture demos own this
+    // Plot's processed script and the browser-only Box/Capture/Tooltip demos own this
     // shared element chunk. Reading their metadata must not load it elsewhere.
     const elementStyles = styles.filter(path => path.includes('/a-tooltip.'))
-    assert.equal(elementStyles.length, ['/box/', '/capture/'].includes(entry.path) || entry.package === 'plot' ? 1 : 0,
+    assert.equal(elementStyles.length, ['/box/', '/capture/', '/tooltip/'].includes(entry.path) || entry.package === 'plot' ? 1 : 0,
       `${entry.path} must not inherit another collection entry's script CSS`)
   }
 })

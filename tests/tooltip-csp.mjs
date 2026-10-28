@@ -9,6 +9,7 @@ import { build } from 'esbuild'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const requirePlot = createRequire(new URL('../plot/package.json', import.meta.url))
+const requireReact = process.env.ANTA_TOOLTIP_REACT_ROOT ? createRequire(resolve(process.env.ANTA_TOOLTIP_REACT_ROOT,'package.json')) : requirePlot
 const requireRenderer = createRequire(requireSite.resolve('@astrojs/preact'))
 const { chromium, firefox, webkit } = requireSite('playwright')
 const engines = componentEngines([chromium, firefox, webkit])
@@ -19,16 +20,28 @@ const nodePaths = consumerRoot ? [resolve(consumerRoot, 'node_modules')] : [reso
 const jsxAlias = consumerRoot ? {} : { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime') }
 const preactCompat = consumerRoot ? 'preact/compat' : requireSite.resolve('preact/compat')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
-const browsers = new Map(), assets = new Map(), renderers = new Map(), stepsRenderers = new Map()
+const browsers = new Map(), assets = new Map(), renderers = new Map(), stepsRenderers = new Map(), containmentRenderers = new Map()
 let server, origin
-const components = consumerRoot ? "import {Tooltip, Button, Text, Steps, TabPanel, Select, SelectFaceted, configure} from '@antadesign/anta'" :
-  `import {Tooltip, Button, Text, Steps, TabPanel, Select, SelectFaceted, configure} from '${source}/index'`
+const components = consumerRoot ? "import {Tooltip, Button, Text, Steps, TabPanel, Select, SelectFaceted, Capture, isContainedEvent, configure} from '@antadesign/anta'" :
+  `import {Tooltip, Button, Text, Steps, TabPanel, Select, SelectFaceted, Capture, isContainedEvent, configure} from '${source}/index'`
 const factory = `const app = (props = {}) => React.createElement(Button, {label: 'Save', 'aria-label': 'Save', 'aria-description': 'Saves your work'},
   React.createElement(Tooltip, {id:'hint', delay:30, ...props}, props.content ?? 'Saves your work'))`
 const stepsFactory = `const stepsApp = (props = {}) => React.createElement(Steps, {
   orientation:'vertical', defaultValue:'1', label:'Release phases',
   options:Array.from({length:12},(_,i)=>({value:String(i),label:'Phase '+i,state:'completed'})), ...props,
 }, Array.from({length:12},(_,i)=>React.createElement(TabPanel,{key:i,value:String(i)},'Details for phase '+i)))`
+
+const containmentFactory = `const containmentApp = ({contain=true}={}) => {
+  const e=React.createElement, log=name=>window.containmentCounts[name]=(window.containmentCounts[name]??0)+1;
+  return e('div',{id:'outer',onClick:()=>log('parentClick'),onPointerDown:()=>log('parentPointer'),onWheel:()=>log('parentWheel'),onKeyDown:()=>log('parentKey')},
+    e(Capture,{id:'capture',wheelCapture:true,wheelActivation:'hover',pointerCapture:{includeInteractive:true,threshold:0}},
+      e('div',{id:'anchor',className:'anchor',tabIndex:0},'Help',
+        e(Tooltip,{id:'contained-hint',containEvents:contain,interactive:true,delay:30,onClick:()=>log('tooltipClick')},
+          e('div',{id:'content',onWheel:()=>log('childWheel'),onPointerDown:()=>log('childPointer'),onKeyDown:()=>log('childKey')},
+            e('button',{id:'save',onClick:()=>log('childClick')},'Save'),
+            e('a',{id:'contained-link',href:'#after',onClick:()=>log('linkClick')},'Guide'),
+            ...Array.from({length:30},(_,i)=>e('p',{key:i},'Tooltip note '+i)))))));
+}`
 
 function checkInstalled(result) {
   if (!consumerRoot) return
@@ -43,7 +56,7 @@ async function compile(options) {
 }
 before(async () => {
   for (const mode of ['granular', 'bundle']) {
-    const entries = ['a-tooltip', 'a-button', 'a-text', 'a-steps', 'a-tabs', 'a-tab', 'a-tabpanel', 'a-select', 'a-select-faceted', 'a-input', 'a-menu', 'a-menu-item', 'a-menu-group', 'a-menu-separator', 'a-icon', 'a-checkbox']
+    const entries = ['a-tooltip', 'a-capture', 'a-button', 'a-text', 'a-steps', 'a-tabs', 'a-tab', 'a-tabpanel', 'a-select', 'a-select-faceted', 'a-input', 'a-menu', 'a-menu-item', 'a-menu-group', 'a-menu-separator', 'a-icon', 'a-checkbox']
     const base = consumerRoot ? '@antadesign/anta' : source
     const contents = mode === 'bundle'
       ? `import '${base}/bundle'; ${consumerRoot || process.env.ANTA_TOOLTIP_PACKAGE_ROOT ? `import '${base}/bundle.css'` : ''}`
@@ -58,19 +71,24 @@ before(async () => {
   }
   for (const framework of ['React', 'Preact']) {
     const react = framework === 'React'
-    const alias = {...jsxAlias, ...(react ? consumerRoot ? {} : {react:resolve('node_modules/react')} : {react:preactCompat})}
+    const alias = {...jsxAlias, ...(react ? consumerRoot ? {} : {react:process.env.ANTA_TOOLTIP_REACT_ROOT?requireReact.resolve('react'):resolve('node_modules/react')} : {react:preactCompat})}
     const result = await compile({stdin:{contents:`import React from 'react'; ${components};
       ${react ? "import {renderToString} from 'react-dom/server'" : "import renderToString from 'preact-render-to-string'"};
-      ${factory}; ${stepsFactory}; export const render = props => renderToString(app(props));
-      export const renderSteps = props => renderToString(stepsApp(props));`, resolveDir}, platform:'node', format:'cjs',
-      jsx:'automatic', jsxImportSource:'@antadesign/anta', define:{'process.env.NODE_ENV':'"production"'}, alias:{...alias, ...(consumerRoot ? {} : react ? {'react-dom/server':requirePlot.resolve('react-dom/server')} : {'preact-render-to-string':requireRenderer.resolve('preact-render-to-string')})}})
+      ${factory}; ${stepsFactory}; ${containmentFactory}; export const render = props => renderToString(app(props));
+      export const renderSteps = props => renderToString(stepsApp(props));
+      export const renderContainment = props => renderToString(containmentApp(props));`, resolveDir}, platform:'node', format:'cjs',
+      jsx:'automatic', jsxImportSource:'@antadesign/anta', define:{'process.env.NODE_ENV':'"production"'}, alias:{...alias, ...(consumerRoot ? {} : react ? {'react-dom/server':requireReact.resolve('react-dom/server')} : {'preact-render-to-string':requireRenderer.resolve('preact-render-to-string')})}})
     const compiled = new Module(resolve(`tests/tooltip-${framework}-server.cjs`))
     compiled._compile(result.outputFiles[0].text, compiled.id)
     renderers.set(framework, compiled.exports.render)
     stepsRenderers.set(framework, compiled.exports.renderSteps)
+    containmentRenderers.set(framework, compiled.exports.renderContainment)
     const client = await compile({stdin:{contents:`import React from 'react'; ${components};
       ${react ? "import {createRoot, hydrateRoot} from 'react-dom/client'" : "import {render, hydrate} from 'preact'"};
-      ${factory}; ${stepsFactory}; let root; window.recoverableErrors=[];
+      ${factory}; ${stepsFactory}; ${containmentFactory}; let root; window.recoverableErrors=[];
+      window.containmentCounts={};window.isContainedEvent=isContainedEvent;
+      window.hydrateContainment = props => { configure(React.createElement,React.Fragment,React,{hydratingEvents:true}); ${react ? "root = hydrateRoot(document.querySelector('#mount'), containmentApp(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(containmentApp(props), document.querySelector('#mount'))"} };
+      window.renderContainment = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(containmentApp(props))" : "render(containmentApp(props), document.querySelector('#mount'))"} };
       window.hydrateSteps = props => { configure(React.createElement,React.Fragment,React,{hydratingEvents:true}); ${react ? "root = hydrateRoot(document.querySelector('#mount'), stepsApp(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(stepsApp(props), document.querySelector('#mount'))"} };
       window.renderSteps = props => { ${react ? "root.render(stepsApp(props))" : "render(stepsApp(props), document.querySelector('#mount'))"} };
       window.hydrateTooltip = props => { ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(app(props), document.querySelector('#mount'))"} };
@@ -83,17 +101,20 @@ before(async () => {
           e(SelectFaceted, {facets:[{key:'kind',label:'Kind',kind:'multiple',options:[{value:'a',label:'Alpha',tooltip:'Alpha details'}]}],placeholder:'Filter'});
         ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(node)" : "render(node, document.querySelector('#mount'))"}
       };`,resolveDir}, outfile:`${framework}.js`, format:'esm', jsx:'automatic', jsxImportSource:'@antadesign/anta',
-      define:{'process.env.NODE_ENV':'"production"'}, alias:{...alias, ...(react && !consumerRoot ? {'react-dom/client':requirePlot.resolve('react-dom/client')} : {})}})
+      define:{'process.env.NODE_ENV':'"production"'}, alias:{...alias, ...(react && !consumerRoot ? {'react-dom/client':requireReact.resolve('react-dom/client')} : {})}})
     assets.set(`/${framework}.js`, client.outputFiles.find(f=>f.path.endsWith('.js')).text)
   }
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
+  assets.set('/containment.css','#capture{display:block;width:700px;height:400px} #anchor{left:120px;top:110px} #content{width:260px} a-tooltip::part(bubble){max-height:140px}')
+  assets.set('/cursor.css', '#anchor{cursor:pointer} .cursor-text{cursor:text}')
+  assets.set('/scroll.css', '#outer{height:260px;overflow:auto} #anchor{margin-top:150px} .spacer{height:1200px} a-tooltip::part(bubble){max-height:120px} #inner{height:80px;overflow:auto}')
   assets.set('/truncation.css', `.single-line-target{display:block;width:160px;font-family:system-ui;font-size:20px;line-height:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vertical-target{display:block;width:160px;height:12px;font-size:12px;line-height:12px;white-space:normal;overflow:hidden}`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .anchor{position:absolute;left:300px;top:180px;width:140px;height:40px} .second{left:450px} .third{left:600px} .edge{left:2px;top:2px} .bottom{top:440px} .clip,.clamp{display:block;width:130px;max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis} .override::part(bubble){background:rgb(30,40,50);color:white;padding:12px;border-radius:11px;box-shadow:none;backdrop-filter:none} .content{font-size:18px;font-weight:600} a-tooltip::part(container){z-index:1}`)
   server = createServer((req,res) => {
     const url = new URL(req.url,'http://localhost'), mode = url.searchParams.get('mode') ?? 'granular'
     res.setHeader('Content-Security-Policy', policy)
     res.setHeader('Content-Type', `${url.pathname.endsWith('.js') ? 'text/javascript' : url.pathname.endsWith('.css') ? 'text/css' : 'text/html'}; charset=utf-8`)
-    const renderer = (url.searchParams.has('steps') ? stepsRenderers : renderers).get(url.searchParams.get('framework') ?? 'React')
+    const renderer = (url.searchParams.has('containment') ? containmentRenderers : url.searchParams.has('steps') ? stepsRenderers : renderers).get(url.searchParams.get('framework') ?? 'React')
     res.end(assets.get(url.pathname) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount">${url.searchParams.has('ssr') ? renderer({}) : ''}</main><a href="#after" id="after">After</a>`)
   })
   await new Promise(r=>server.listen(0,'127.0.0.1',r)); origin=`http://127.0.0.1:${server.address().port}`
@@ -127,7 +148,7 @@ async function waitOpen(page,selector='a-tooltip',value=true) {
 const geometry=(page,selector='a-tooltip')=>page.locator(selector).evaluate(t=>{const b=t.shadowRoot.querySelector('[popover]').getBoundingClientRect(); const a=t.parentElement.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height,left:a.left,right:a.right,top:a.top,bottom:a.bottom,anchorHeight:a.height}})
 
 test.fast('React and Preact SSR keep Tooltip content authored without structural inline styles',()=>{
-  for(const render of renderers.values()) {const html=render({});assert.match(html,/<a-tooltip/);assert.match(html,/aria-description="Saves your work"/);assert.doesNotMatch(html,/style=|part=|popover=/)}
+  for(const render of renderers.values()) {const html=render({});assert.match(html,/<a-tooltip/);assert.match(html,/aria-description="Saves your work"/);assert.doesNotMatch(html,/style=|part=|popover=/);assert.match(render({containEvents:true}),/contain-events(?:="")?(?=[ >])/);assert.doesNotMatch(render({containEvents:false}),/contain-events/)}
 })
 test.fast('React and Preact SSR render vertical Steps without structural inline styles',()=>{
   for(const render of stepsRenderers.values()) {
@@ -199,6 +220,167 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.equal(await page.locator('#guide').evaluate(n=>n===document.activeElement),true);assert.equal(await open(page),true)
     await page.keyboard.press('Escape');assert.equal(await open(page),false)
   })
+  test.fast(`${name}: interactive cursor resets the trigger cursor and respects content cursors`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/cursor.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/cursor.css')))
+    await mount(page,'<div class="anchor" id="anchor">Help<a-tooltip interactive delay="30"><span id="plain">Details</span><a id="link" href="#after">Guide</a><span class="cursor-text">Select text</span></a-tooltip></div>')
+    await page.locator('#anchor').hover();await waitOpen(page)
+    for(const contained of [false,true]) {
+      await page.locator('a-tooltip').evaluate((t,enabled)=>t.toggleAttribute('contain-events',enabled),contained)
+      assert.equal(await page.locator('#anchor').evaluate(n=>getComputedStyle(n).cursor),'pointer')
+      assert.equal(await page.locator('a-tooltip').locator('slot').evaluate(n=>getComputedStyle(n).cursor),'auto')
+      assert.equal(await page.locator('#plain').evaluate(n=>getComputedStyle(n).cursor),'auto')
+      assert.equal(await page.locator('#link').evaluate(n=>getComputedStyle(n).cursor),engine===webkit?'auto':'pointer')
+      assert.equal(await page.locator('.cursor-text').evaluate(n=>getComputedStyle(n).cursor),'text')
+    }
+  })
+  test.fast(`${name}: contained touch input does not restart the anchor hold`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<div class="anchor" id="anchor">Help<a-tooltip contain-events><div id="content">Touch content</div></a-tooltip></div>')
+    await show(page);const before=await geometry(page)
+    await page.locator('#content').dispatchEvent('pointerdown',{pointerType:'touch',pointerId:42,isPrimary:true})
+    await page.waitForTimeout(550);await frames(page)
+    assert.equal((await geometry(page)).y,before.y)
+    await page.locator('#content').dispatchEvent('pointerup',{pointerType:'touch',pointerId:42,isPrimary:true})
+    assert.equal(await open(page),true)
+  })
+  for(const framework of ['React','Preact']) for(const hydrate of [false,true]) test.fast(`${name} ${framework} ${hydrate?'hydrated':'client'}: contained children retain handlers inside Capture`,async t=>{
+    const page=await pageFor(t,engine,mode,hydrate?`&ssr&containment&framework=${framework}`:'');await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/containment.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/containment.css')))
+    await page.evaluate(framework=>import(`/${framework}.js`),framework)
+    await page.evaluate(hydrate=>hydrate?hydrateContainment({}):renderContainment({}),hydrate)
+    await page.waitForFunction(()=>document.querySelector('#contained-hint')?.listening)
+    await page.locator('#capture').evaluate(n=>{
+      window.captureEvents=[]
+      for(const type of ['wheelinput','pointerinput','paninput'])n.addEventListener(type,e=>captureEvents.push(e.type))
+    })
+    await show(page,'#contained-hint');await page.locator('#save').click()
+    assert.deepEqual(await page.evaluate(()=>containmentCounts),{childPointer:1,childClick:1,tooltipClick:1})
+    assert.deepEqual(await page.evaluate(()=>captureEvents),[])
+    await page.locator('#save').focus();await page.keyboard.press('a')
+    assert.equal(await page.evaluate(()=>containmentCounts.childKey),1)
+    assert.equal(await page.evaluate(()=>containmentCounts.parentKey),1)
+    await page.locator('#content').hover();await page.mouse.wheel(0,80)
+    await page.waitForFunction(()=>document.querySelector('#contained-hint').shadowRoot.querySelector('slot').scrollTop>0)
+    assert.ok(await page.evaluate(()=>containmentCounts.childWheel>0))
+    assert.equal(await page.evaluate(()=>containmentCounts.parentWheel??0),0)
+    assert.deepEqual(await page.evaluate(()=>captureEvents),[])
+    await page.evaluate(()=>renderContainment({contain:false}));await frames(page)
+    const slot=page.locator('#contained-hint').locator('slot'),before=await slot.evaluate(n=>n.scrollTop)
+    await slot.hover();await page.mouse.wheel(0,80);await page.waitForTimeout(100)
+    assert.equal(await slot.evaluate(n=>n.scrollTop),before)
+    assert.ok(await page.evaluate(()=>captureEvents.includes('wheelinput')))
+    await page.locator('#save').evaluate(n=>n.dispatchEvent(new MouseEvent('click',{bubbles:true,composed:true})))
+    assert.equal(await page.evaluate(()=>containmentCounts.parentClick),1)
+    assert.equal(await page.evaluate(()=>containmentCounts.childClick),2)
+    await page.evaluate(()=>renderContainment({contain:true}));await frames(page)
+    await show(page,'#contained-hint');await slot.evaluate(n=>{n.scrollTop=0});await frames(page)
+    await page.locator('#contained-link').click()
+    assert.equal(await page.evaluate(()=>containmentCounts.linkClick),1)
+    assert.equal(await page.evaluate(()=>containmentCounts.parentClick),1)
+    assert.equal(new URL(page.url()).hash,'#after')
+    assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+  })
+  test.fast(`${name}: contain-events marks native input for cooperative parent handlers`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/scroll.css')))
+    await mount(page,`<div id="outer"><div id="anchor" tabindex="0">Help<a-tooltip contain-events delay="30"><div id="content">${'<p>Tooltip details</p>'.repeat(40)}<a href="#after">Guide</a></div></a-tooltip></div><div class="spacer"></div></div>`)
+    await page.evaluate(()=>import('/React.js'))
+    await page.evaluate(()=>{
+      window.parentWheels=0
+      document.querySelector('#outer').addEventListener('wheel',e=>{if(isContainedEvent(e))return;window.parentWheels++;e.preventDefault()},{passive:false})
+    })
+    await page.locator('#anchor').hover();await waitOpen(page);await page.locator('a-tooltip').locator('slot').hover()
+    assert.equal(await page.locator('a-tooltip').evaluate(t=>t.hasAttribute('interactive')),false)
+    assert.deepEqual(await page.locator('a-tooltip').locator('slot').evaluate(n=>{const s=getComputedStyle(n);return [s.overflow,s.cursor]}),['auto','auto'])
+    await page.mouse.wheel(0,80)
+    await page.waitForFunction(()=>document.querySelector('a-tooltip').shadowRoot.querySelector('slot').scrollTop>0)
+    assert.equal(await page.evaluate(()=>window.parentWheels),0);assert.equal(await open(page),true)
+    const events=['pointerdown','pointerup','pointermove','pointercancel','pointerover','pointerout','gotpointercapture','lostpointercapture','mousedown','mouseup','mousemove','mouseover','mouseout','click','dblclick','auxclick','contextmenu','touchstart','touchmove','touchend','touchcancel','wheel']
+    assert.deepEqual(await page.evaluate(events=>{
+      const parent=document.querySelector('#outer'),tip=document.querySelector('a-tooltip'),child=document.querySelector('#content')
+      const bubble=[],capture=[],local=[],cancelled=[],localContained=[]
+      for(const type of [...events,'keydown','focusin']) {
+        const onBubble=e=>{if(!isContainedEvent(e))bubble.push(type)},onCapture=()=>capture.push(type),onLocal=e=>{local.push(type);if(isContainedEvent(e))localContained.push(type)}
+        parent.addEventListener(type,onBubble);parent.addEventListener(type,onCapture,true);child.addEventListener(type,onLocal)
+        const event=new Event(type,{bubbles:true,composed:true,cancelable:true});child.dispatchEvent(event)
+        if(event.defaultPrevented)cancelled.push(type)
+        parent.removeEventListener(type,onBubble);parent.removeEventListener(type,onCapture,true);child.removeEventListener(type,onLocal)
+      }
+      tip.removeAttribute('contain-events')
+      child.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true,cancelable:true}))
+      const disabledCount=window.parentWheels
+      tip.setAttribute('contain-events','');tip.removeAttribute('interactive')
+      child.dispatchEvent(new WheelEvent('wheel',{bubbles:true,composed:true,cancelable:true}))
+      return {bubble,capture,local,cancelled,localContained,disabledCount,impliedCount:window.parentWheels}
+    },events),{bubble:['keydown','focusin'],capture:[...events,'keydown','focusin'],local:[...events,'keydown','focusin'],cancelled:[],localContained:[],disabledCount:1,impliedCount:1})
+  })
+  test.fast(`${name}: scroll dismissal distinguishes shadow, slotted, and retargeted paths`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/scroll.css')))
+    await page.evaluate(()=>{
+      window.documentScrolls=[];window.localScrolls=[]
+      window.addEventListener('scroll',event=>documentScrolls.push({
+        target:event.target.id,composed:event.composed,inside:event.composedPath().includes(document.querySelector('a-tooltip')),
+      }),true)
+    })
+    for(const kind of ['bubble','light','open-shadow','closed-shadow']) {
+      await page.mouse.move(10,10)
+      await mount(page,`<div id="outer"><div id="anchor" tabindex="0">Help<a-tooltip interactive delay="30"><div id="content">${kind==='bubble'?'<p>Tooltip note</p>'.repeat(40):kind==='light'?'<div id="inner">'+'<p>Tooltip note</p>'.repeat(40)+'</div>':'<div id="shadow-host"></div>'}</div></a-tooltip></div><div class="spacer"></div></div>`)
+      await page.evaluate(async kind=>{
+        const tooltip=document.querySelector('a-tooltip')
+        if(kind.endsWith('shadow')) {
+          const shadow=document.querySelector('#shadow-host').attachShadow({mode:kind==='closed-shadow'?'closed':'open'})
+          const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css'
+          const loaded=new Promise(resolve=>link.onload=resolve);shadow.append(link)
+          const inner=document.createElement('div');inner.id='inner';inner.innerHTML='<p>Tooltip note</p>'.repeat(40);shadow.append(inner)
+          window.scrollTarget=inner;await loaded
+        } else window.scrollTarget=kind==='bubble'?tooltip.shadowRoot.querySelector('slot'):document.querySelector('#inner')
+        scrollTarget.addEventListener('scroll',event=>localScrolls.push({composed:event.composed,inside:event.composedPath().includes(tooltip)}))
+      },kind)
+      await page.locator('#anchor').hover();await waitOpen(page);await frames(page)
+      // Change the offset even when the browser restores a previous scroll position.
+      await page.evaluate(()=>{documentScrolls=[];localScrolls=[];window.previousScrollTop=scrollTarget.scrollTop;scrollTarget.scrollTop=previousScrollTop>0?0:30})
+      await page.waitForFunction(()=>localScrolls.length>0)
+      await page.waitForTimeout(180)
+      assert.ok(await page.evaluate(()=>scrollTarget.scrollTop!==previousScrollTop))
+      assert.equal(await open(page),true)
+      assert.ok(await page.evaluate(light=>localScrolls.every(event=>event.composed===false && event.inside===light),kind==='light'),kind)
+      if(kind==='light') assert.ok(await page.evaluate(()=>documentScrolls.length>0 && documentScrolls.every(event=>event.target==='inner' && !event.composed && event.inside)))
+      else assert.deepEqual(await page.evaluate(()=>documentScrolls),[])
+      if(kind.endsWith('shadow')) {
+        await page.evaluate(()=>scrollTarget.dispatchEvent(new Event('scroll',{composed:true})))
+        await page.waitForTimeout(180);assert.equal(await open(page),true)
+        assert.deepEqual(await page.evaluate(()=>documentScrolls),[{target:'shadow-host',composed:true,inside:true}])
+      }
+      await page.evaluate(()=>{documentScrolls=[];document.querySelector('#outer').scrollTop+=20})
+      await waitOpen(page,'a-tooltip',false)
+      assert.deepEqual(await page.evaluate(()=>documentScrolls),[{target:'outer',composed:false,inside:false}])
+    }
+  })
+  test.fast(`${name}: interactive overflow scrolls without dismissal or ancestor chaining`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/scroll.css';head.append(link)})
+    await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/scroll.css')))
+    for(const nested of [false,true]) {
+      await mount(page,`<div id="outer"><button id="anchor">Help<a-tooltip interactive delay="30"><div ${nested?'id="inner"':''}>${'<p>Tooltip details</p>'.repeat(40)}</div></a-tooltip></button><div class="spacer"></div></div>`)
+      await page.locator('#anchor').hover();await waitOpen(page)
+      const scroller=nested?page.locator('#inner'):page.locator('a-tooltip').locator('slot')
+      await scroller.hover();await page.waitForTimeout(180)
+      await page.mouse.wheel(0,80)
+      await page.waitForFunction(nested=>{const t=document.querySelector('a-tooltip');return (nested?document.querySelector('#inner'):t.shadowRoot.querySelector('slot')).scrollTop>0},nested)
+      await page.waitForTimeout(180);assert.equal(await open(page),true)
+      await scroller.evaluate(n=>{n.scrollTop=n.scrollHeight});await frames(page)
+      await page.mouse.wheel(0,150);await page.waitForTimeout(180)
+      assert.equal(await open(page),true)
+      assert.equal(await page.locator('#outer').evaluate(n=>n.scrollTop),0)
+      await page.locator('#outer').evaluate(n=>{n.scrollTop=20});await waitOpen(page,'a-tooltip',false)
+    }
+  })
   test.fast(`${name}: empty updates, truncation, explicit precedence, and fallback remain declarative`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
     await mount(page,'<div class="anchor clip" id="anchor">A long label '.repeat(1)+'with enough text to overflow<a-tooltip truncated-only data-anta-text-tooltip=""></a-tooltip><a-tooltip id="explicit"> </a-tooltip></div>')
@@ -249,15 +431,21 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.equal(await page.evaluate(()=>serverNodes.every((n,i)=>n===[...document.querySelector('#mount').querySelectorAll('*')][i])),true)
     await page.locator('a-button').hover();await waitOpen(page)
     await page.evaluate(()=>renderTooltip({content:'Updated help',placement:'top'}));await frames(page)
-    assert.equal(await page.locator('a-tooltip').textContent(),'Updated help');await waitOpen(page)
-    const box=await geometry(page);assert.ok(box.y+box.height<=box.top)
+    const topBox=await geometry(page);assert.ok(topBox.y+topBox.height<=topBox.top)
+    await page.evaluate(()=>renderTooltip({content:'Right help',placement:'right'}));await frames(page)
+    assert.equal(await page.locator('a-tooltip').textContent(),'Right help');await waitOpen(page)
+    const box=await geometry(page);assert.ok(Math.abs(box.x-(box.right+4))<=1)
+    assert.equal(await page.locator('a-tooltip').getAttribute('placement'),'right')
     await page.evaluate(()=>renderTooltip({content:''}));await waitOpen(page,'a-tooltip',false)
   })
-  test(`${name}: viewport flipping, left placement, content growth, and consumer overrides`,async t=>{
+  test(`${name}: viewport flipping, side placements, content growth, and consumer overrides`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode);await mount(page)
     await page.locator('a-tooltip').evaluate(n=>n.setAttribute('placement','left'));await show(page)
     let box=await geometry(page);assert.ok(Math.abs(box.x+box.width-(box.left-4))<=1)
     await page.locator('#anchor').evaluate(n=>n.className='anchor edge');await show(page);box=await geometry(page);assert.ok(box.x>=box.right)
+    await page.locator('#anchor').evaluate(n=>{n.className='anchor';n.style.left='740px'})
+    await page.locator('a-tooltip').evaluate(n=>n.setAttribute('placement','right'));await show(page);box=await geometry(page);assert.ok(Math.abs(box.x+box.width-(box.left-4))<=1)
+    await page.locator('#anchor').evaluate(n=>n.style.removeProperty('left'));await show(page);box=await geometry(page);assert.ok(Math.abs(box.x-(box.right+4))<=1)
     await page.locator('a-tooltip').evaluate(n=>{n.removeAttribute('placement');n.className='override';n.innerHTML='<span class="content">Styled content</span>'});await frames(page)
     assert.deepEqual(await page.locator('a-tooltip').evaluate(n=>{const c=getComputedStyle(n.shadowRoot.querySelector('slot'));return [c.backgroundColor,c.borderRadius,c.paddingTop]}),['rgb(30, 40, 50)','11px','12px'])
     await page.locator('#anchor').evaluate(n=>n.className='anchor bottom');await show(page);box=await geometry(page);assert.ok(box.y+box.height<=box.top)
@@ -335,7 +523,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
   test(`${name}: visual matrix retains initial hiding, typography, and bubble variants`,async t=>{
     const page=await pageFor(t,engine,mode)
     const output=resolve('tests/.test-output/tooltip');await mkdir(output,{recursive:true})
-    const variants=[['plain',''],['top','placement="top"'],['left','placement="left"'],['round','round'],['interactive','interactive'],['override','class="override"']]
+    const variants=[['plain',''],['top','placement="top"'],['left','placement="left"'],['right','placement="right"'],['round','round'],['interactive','interactive'],['override','class="override"']]
     for(const [variant,attrs] of variants) {
       await page.locator('#mount').evaluate((n,html)=>n.innerHTML=html,`<button class="anchor" aria-label="Save">Save<a-tooltip ${attrs}><strong>Release status</strong><br>Checked two minutes ago</a-tooltip></button>`)
       if(variant==='plain') {

@@ -1,7 +1,7 @@
-import type { BaseProps } from "../general_types"
+import type { BaseProps, DOMEventHandlers } from "../general_types"
 import { roundStyle, roundAttr } from "../anta_helpers"
 
-export interface TooltipProps extends BaseProps {
+export interface TooltipProps extends BaseProps, DOMEventHandlers {
   /** Supplementary text or markup. Content stays in light DOM for application CSS. */
   children?: React.ReactNode
   /** Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay.
@@ -10,7 +10,7 @@ export interface TooltipProps extends BaseProps {
   /** Which side of the anchor the bubble prefers. Auto-flips to the other
    *  side when there isn't room.
    *  @defaultValue bottom */
-  placement?: 'top' | 'bottom' | 'left'
+  placement?: 'top' | 'bottom' | 'left' | 'right'
   /** Round the bubble to a 20px radius (matching a round menu). Pass a `number`
    *  (px) or a CSS length string for a custom radius. */
   round?: boolean | number | string
@@ -22,6 +22,11 @@ export interface TooltipProps extends BaseProps {
    *  Enables pointer events and pins the bubble even with `follow`. Essential
    *  actions belong in a Menu or Dialog with an explicit trigger. */
   interactive?: boolean
+  /** Contain bubbling pointer, mouse, touch, click, context-menu, and wheel
+   *  handlers in the JSX event system. Enables interactive behavior.
+   *  Capture respects this boundary. Custom native parent handlers must check
+   *  `isContainedEvent` before consuming input; ancestor capture handlers run first. */
+  containEvents?: boolean
   /** Only show when the target is actually truncated (its text overflows and is
    *  ellipsized); a label that fits gets no tooltip. The check is a UI-thread
    *  layout read, re-measured on each show. By default it measures every Anta
@@ -31,6 +36,18 @@ export interface TooltipProps extends BaseProps {
   /** CSS selector (resolved within the anchor) for the element or elements
    *  whose overflow decides whether a `truncatedOnly` tooltip shows. */
   truncatedSelector?: string
+}
+
+const CONTAINED_HANDLERS = [
+  'onPointerDown', 'onPointerUp', 'onPointerMove', 'onPointerCancel', 'onPointerOver', 'onPointerOut',
+  'onGotPointerCapture', 'onLostPointerCapture',
+  'onMouseDown', 'onMouseUp', 'onMouseMove', 'onMouseOver', 'onMouseOut',
+  'onClick', 'onDoubleClick', 'onAuxClick', 'onContextMenu',
+  'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onTouchCancel', 'onWheel',
+] as const
+
+function stopPropagation(event: { stopPropagation(): void }) {
+  event.stopPropagation()
 }
 
 /**
@@ -80,6 +97,7 @@ export const Tooltip = ({
   round,
   follow,
   interactive,
+  containEvents,
   truncatedOnly,
   truncatedSelector,
   className,
@@ -87,20 +105,31 @@ export const Tooltip = ({
   children,
   ...rest
 }: TooltipProps) => {
+  const events: DOMEventHandlers = {}
+  if (containEvents) {
+    for (const name of CONTAINED_HANDLERS) {
+      const handler = rest[name]
+      events[name] = handler ? event => {
+        try { handler(event) } finally { event.stopPropagation() }
+      } : stopPropagation
+    }
+  }
   return (
     <a-tooltip
       delay={delay != null ? String(delay) : undefined}
       // 'bottom' is the implicit default — emit no DOM attribute for it.
-      placement={placement === 'top' || placement === 'left' ? placement : undefined}
+      placement={placement === 'top' || placement === 'left' || placement === 'right' ? placement : undefined}
       // Boolean attributes: presence form when on, omitted when off.
       round={roundAttr(round)}
       follow={follow ? '' : undefined}
       interactive={interactive ? '' : undefined}
+      contain-events={containEvents ? '' : undefined}
       truncated-only={truncatedOnly ? '' : undefined}
       truncated-selector={truncatedSelector || undefined}
       class={className}
       style={roundStyle(round, '--tooltip-round', style)}
       {...rest}
+      {...events}
     >
       {children}
     </a-tooltip>

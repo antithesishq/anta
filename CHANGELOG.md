@@ -3,6 +3,14 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- [Tooltip event containment](/tooltip/#contain-events) supports `containEvents="native"`
+  to stop bubbling in the web component while preserving browser defaults.
+  This mode can block delegated React child handlers; `true` retains JSX containment.
+
 ## 0.3.37 — October 27, 2026
 
 ### Added

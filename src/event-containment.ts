@@ -1,4 +1,5 @@
-const CONTAINED_EVENT_TYPES = new Set([
+/** @internal Input types shared by cooperative and native containment. */
+export const CONTAINED_EVENT_TYPES = new Set([
   'pointerdown', 'pointerup', 'pointermove', 'pointercancel', 'pointerover', 'pointerout',
   'gotpointercapture', 'lostpointercapture',
   'mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout',

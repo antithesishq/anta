@@ -23,9 +23,11 @@ export interface TooltipProps extends BaseProps, DOMEventHandlers {
    *  actions belong in a Menu or Dialog with an explicit trigger. */
   interactive?: boolean
   /** Contain bubbling pointer, mouse, touch, click, context-menu, and wheel
-   *  handlers. `true` contains JSX events while preserving child callbacks.
+   *  handlers. `true` contains JSX events while preserving Tooltip and child callbacks.
    *  `'native'` stops propagation at the web component, including to native
-   *  parents, but can block delegated React child handlers. Both enable
+   *  parents, but blocks delegated React handlers on the Tooltip and its children,
+   *  including `onClick`, `onPointerDown`, and `onWheel`. Use `true` when those
+   *  callbacks are needed. Native listeners inside the boundary still run. Both enable
    *  interactive behavior and preserve browser defaults, keyboard, and focus.
    *  Capture respects both modes. Custom native parents must check
    *  `isContainedEvent` with `true`; ancestor capture handlers must check it
@@ -110,7 +112,7 @@ export const Tooltip = ({
   ...rest
 }: TooltipProps) => {
   const events: DOMEventHandlers = {}
-  if (containEvents === true) {
+  if (containEvents && containEvents !== 'native') {
     for (const name of CONTAINED_HANDLERS) {
       const handler = rest[name]
       events[name] = handler ? event => {

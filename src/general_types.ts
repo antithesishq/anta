@@ -601,7 +601,8 @@ export interface ATooltipAttributes extends BaseAttributes {
   interactive?: boolean | ''
   /** Mark an input boundary respected by Capture and `isContainedEvent`.
    *  `'native'` also stops native bubbling at the host and can block delegated
-   *  React child handlers. Presence alone does not stop native propagation.
+   *  React handlers on the host and its children. Native listeners inside the
+   *  boundary still run. Presence alone does not stop native propagation.
    *  Both enable interactive behavior and preserve browser defaults, keyboard,
    *  and focus events. Ancestor capture handlers run before the boundary. */
   'contain-events'?: boolean | '' | 'native'

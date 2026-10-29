@@ -9,7 +9,7 @@ changes are not listed.
 
 - [Tooltip event containment](/tooltip/#contain-events) supports `containEvents="native"`
   to stop bubbling in the web component while preserving browser defaults.
-  This mode can block delegated React child handlers; `true` retains JSX containment.
+  This mode blocks delegated React callbacks on Tooltip and its children for the contained events; `true` preserves those callbacks.
 
 ## 0.3.37 — October 27, 2026
 

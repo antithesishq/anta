@@ -11,6 +11,7 @@ import {
 import { AMenuItemElement, MENU_ITEM_SELECTOR, isMenuItemEl, isCustomMenuItem, ensureMenuItemKeyListener } from './a-menu-item'
 import { activeFocus, cycleFocus, focusParent, tabStops } from './focus'
 import { emitCopyRequest } from './copy-behavior'
+import { createPropagationStopper } from '../event-containment'
 import './a-menu.css'
 
 /** Gap (px) the surface keeps from the anchor / viewport edge. */
@@ -381,8 +382,7 @@ export class AMenuElement extends HTMLElementBase {
   // Opt-in event containment (`stop-propagation`): event types whose bubbling out
   // of the surface is suppressed. Selecting an item is always contained (see
   // onSurfaceClick); this is the broad, configurable lever on top of that.
-  #stopEvents = new Set<string>()
-  #stopHandler = (e: Event) => e.stopPropagation()
+  #stopPropagation: ReturnType<typeof createPropagationStopper>
   // The vertical side chosen at open (true = flipped above the anchor). A re-anchor
   // (filtering changes height) keeps this side rather than re-deciding — a shrunk
   // menu shouldn't hop back under the trigger.
@@ -400,6 +400,7 @@ export class AMenuElement extends HTMLElementBase {
     } catch {}
     const shadow = this.attachShadow({ mode: 'open' })
     this.surface = this.doc.createElement('div')
+    this.#stopPropagation = createPropagationStopper(this.surface)
     this.surface.className = 'container'
     // Exposed as a shadow part so consumers can style the popover surface
     // (background, radius, shadow, padding) from plain CSS — `a-menu::part(menu)` —
@@ -496,6 +497,7 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    this.#stopPropagation([])
     this.#unwatchTrigger?.()
     this.#unwatchTrigger = undefined
     const oldView = this.#connectedDocument?.defaultView
@@ -1625,12 +1627,7 @@ export class AMenuElement extends HTMLElementBase {
    *  surface, so it never reaches an ancestor / document handler. Selecting an item
    *  is already contained by onSurfaceClick; this is the broad, opt-in lever. */
   #syncStopPropagation() {
-    const next = this.#parseStopEvents()
-    for (const type of this.#stopEvents)
-      if (!next.has(type)) this.surface.removeEventListener(type, this.#stopHandler)
-    for (const type of next)
-      if (!this.#stopEvents.has(type)) this.surface.addEventListener(type, this.#stopHandler)
-    this.#stopEvents = next
+    this.#stopPropagation(this.isConnected ? this.#parseStopEvents() : [])
   }
 
   /* ============================ keyboard ============================ */

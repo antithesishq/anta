@@ -22,6 +22,7 @@ const preactCompat = consumerRoot ? 'preact/compat' : requireSite.resolve('preac
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
 const browsers = new Map(), assets = new Map(), renderers = new Map(), stepsRenderers = new Map(), containmentRenderers = new Map()
 let server, origin
+const containmentEventTypes = []
 const components = consumerRoot ? "import {Tooltip, Button, Text, Steps, TabPanel, Select, SelectFaceted, Capture, isContainedEvent, configure} from '@antadesign/anta'" :
   `import {Tooltip, Button, Text, Steps, TabPanel, Select, SelectFaceted, Capture, isContainedEvent, configure} from '${source}/index'`
 const factory = `const app = (props = {}) => React.createElement(Button, {label: 'Save', 'aria-label': 'Save', 'aria-description': 'Saves your work'},
@@ -31,12 +32,12 @@ const stepsFactory = `const stepsApp = (props = {}) => React.createElement(Steps
   options:Array.from({length:12},(_,i)=>({value:String(i),label:'Phase '+i,state:'completed'})), ...props,
 }, Array.from({length:12},(_,i)=>React.createElement(TabPanel,{key:i,value:String(i)},'Details for phase '+i)))`
 
-const containmentFactory = `const containmentApp = ({contain=true}={}) => {
+const containmentFactory = `const containmentApp = ({contain=true,observeHost=false}={}) => {
   const e=React.createElement, log=name=>window.containmentCounts[name]=(window.containmentCounts[name]??0)+1;
   return e('div',{id:'outer',onClick:()=>log('parentClick'),onPointerDown:()=>log('parentPointer'),onWheel:()=>log('parentWheel'),onKeyDown:()=>log('parentKey')},
     e(Capture,{id:'capture',wheelCapture:true,wheelActivation:'hover',pointerCapture:{includeInteractive:true,threshold:0}},
       e('div',{id:'anchor',className:'anchor',tabIndex:0},'Help',
-        e(Tooltip,{id:'contained-hint',containEvents:contain,interactive:true,delay:30,onClick:()=>log('tooltipClick')},
+        e(Tooltip,{id:'contained-hint',containEvents:contain,interactive:true,delay:30,onClick:()=>log('tooltipClick'),onPointerDown:observeHost?()=>log('tooltipPointer'):undefined,onWheel:observeHost?()=>log('tooltipWheel'):undefined},
           e('div',{id:'content',onWheel:()=>log('childWheel'),onPointerDown:()=>log('childPointer'),onKeyDown:()=>log('childKey')},
             e('button',{id:'save',onClick:()=>log('childClick')},'Save'),
             e('a',{id:'contained-link',href:'#after',onClick:()=>log('linkClick')},'Guide'),
@@ -74,12 +75,14 @@ before(async () => {
     const alias = {...jsxAlias, ...(react ? consumerRoot ? {} : {react:process.env.ANTA_TOOLTIP_REACT_ROOT?requireReact.resolve('react'):resolve('node_modules/react')} : {react:preactCompat})}
     const result = await compile({stdin:{contents:`import React from 'react'; ${components};
       ${react ? "import {renderToString} from 'react-dom/server'" : "import renderToString from 'preact-render-to-string'"};
+      export {CONTAINED_EVENT_TYPES} from '${consumerRoot ? '@antadesign/anta/event-containment' : source+'/event-containment'}';
       ${factory}; ${stepsFactory}; ${containmentFactory}; export const render = props => renderToString(app(props));
       export const renderSteps = props => renderToString(stepsApp(props));
       export const renderContainment = props => renderToString(containmentApp(props));`, resolveDir}, platform:'node', format:'cjs',
       jsx:'automatic', jsxImportSource:'@antadesign/anta', define:{'process.env.NODE_ENV':'"production"'}, alias:{...alias, ...(consumerRoot ? {} : react ? {'react-dom/server':requireReact.resolve('react-dom/server')} : {'preact-render-to-string':requireRenderer.resolve('preact-render-to-string')})}})
     const compiled = new Module(resolve(`tests/tooltip-${framework}-server.cjs`))
     compiled._compile(result.outputFiles[0].text, compiled.id)
+    containmentEventTypes.push(compiled.exports.CONTAINED_EVENT_TYPES)
     renderers.set(framework, compiled.exports.render)
     stepsRenderers.set(framework, compiled.exports.renderSteps)
     containmentRenderers.set(framework, compiled.exports.renderContainment)
@@ -149,6 +152,14 @@ const geometry=(page,selector='a-tooltip')=>page.locator(selector).evaluate(t=>{
 
 test.fast('React and Preact SSR keep Tooltip content authored without structural inline styles',()=>{
   for(const render of renderers.values()) {const html=render({});assert.match(html,/<a-tooltip/);assert.match(html,/aria-description="Saves your work"/);assert.doesNotMatch(html,/style=|part=|popover=/);assert.match(render({containEvents:true}),/contain-events(?:="")?(?=[ >])/);assert.doesNotMatch(render({containEvents:false}),/contain-events/);assert.match(render({containEvents:'native'}),/contain-events="native"/)}
+})
+test.fast('exported containment event types resist mutation',()=>{
+  for(const types of containmentEventTypes) {
+    assert.ok(Object.isFrozen(types))
+    assert.throws(()=>types.push('keydown'),TypeError)
+    assert.throws(()=>types.splice(types.indexOf('wheel'),1),TypeError)
+    assert.ok(types.includes('wheel'));assert.equal(types.includes('keydown'),false)
+  }
 })
 test.fast('React and Preact SSR render vertical Steps without structural inline styles',()=>{
   for(const render of stepsRenderers.values()) {
@@ -288,7 +299,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await page.locator('head').evaluate(head=>{const link=document.createElement('link');link.rel='stylesheet';link.href='/containment.css';head.append(link)})
     await page.waitForFunction(()=>[...document.styleSheets].some(sheet=>sheet.href?.endsWith('/containment.css')))
     await page.evaluate(framework=>import(`/${framework}.js`),framework)
-    await page.evaluate(hydrate=>hydrate?hydrateContainment({contain:'native'}):renderContainment({contain:'native'}),hydrate)
+    await page.evaluate(hydrate=>hydrate?hydrateContainment({contain:'native',observeHost:true}):renderContainment({contain:'native',observeHost:true}),hydrate)
     await page.waitForFunction(()=>document.querySelector('#contained-hint')?.listening)
     assert.equal(await page.locator('a-tooltip').getAttribute('contain-events'),'native')
     await page.evaluate(()=>{
@@ -301,6 +312,8 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await show(page);await page.locator('#save').click()
     assert.deepEqual(await page.evaluate(()=>nativeCounts),{click:0,wheel:0,child:1})
     assert.equal(await page.evaluate(()=>containmentCounts.childClick??0),framework==='React'?0:1)
+    assert.equal(await page.evaluate(()=>containmentCounts.tooltipClick??0),framework==='React'?0:1)
+    assert.equal(await page.evaluate(()=>containmentCounts.tooltipPointer??0),framework==='React'?0:1)
     assert.equal(await page.evaluate(()=>containmentCounts.parentClick??0),0)
     await page.locator('#save').focus();await page.keyboard.press('a')
     assert.equal(await page.evaluate(()=>containmentCounts.childKey),1)
@@ -308,15 +321,18 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await page.locator('#content').hover();await page.mouse.wheel(0,80)
     await page.waitForFunction(()=>document.querySelector('a-tooltip').shadowRoot.querySelector('slot').scrollTop>0)
     assert.equal(await page.evaluate(()=>nativeCounts.wheel),0)
+    assert.equal(await page.evaluate(()=>containmentCounts.tooltipWheel??0)>0,framework!=='React')
     await page.locator('a-tooltip').locator('slot').evaluate(n=>{n.scrollTop=0});await frames(page)
     await page.locator('#contained-link').click()
     assert.equal(new URL(page.url()).hash,'#after')
     assert.equal(await page.evaluate(()=>nativeCounts.click),0)
     // JSX containment restores React child callbacks; Preact also stops native parents.
-    await page.evaluate(()=>renderContainment({contain:true}));await frames(page)
+    await page.evaluate(()=>renderContainment({contain:true,observeHost:true}));await frames(page)
     await show(page);await page.locator('#save').click()
     assert.equal(await page.evaluate(()=>nativeCounts.click),framework==='React'?1:0)
     assert.equal(await page.evaluate(()=>containmentCounts.childClick),framework==='React'?1:2)
+    assert.equal(await page.evaluate(()=>containmentCounts.tooltipClick),framework==='React'?1:3)
+    assert.equal(await page.evaluate(()=>containmentCounts.tooltipPointer),framework==='React'?1:3)
     assert.equal(await page.evaluate(()=>containmentCounts.parentClick??0),0)
     await page.evaluate(()=>renderContainment({contain:false}));await frames(page)
     await page.locator('#save').evaluate(n=>n.dispatchEvent(new MouseEvent('click',{bubbles:true,composed:true})))
@@ -325,6 +341,35 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await show(page);await page.locator('#save').click()
     assert.equal(await page.evaluate(()=>nativeCounts.click),framework==='React'?2:1)
     assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+  })
+  for(const framework of ['React','Preact']) test.fast(`${name} ${framework}: truthy JS containment values preserve JSX callbacks and boundaries`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await page.evaluate(framework=>import(`/${framework}.js`),framework)
+    for(const [index,contain] of [true,'true',1].entries()) {
+      await page.evaluate(contain=>renderContainment({contain}),contain);await frames(page)
+      assert.equal(await page.locator('a-tooltip').getAttribute('contain-events'),'')
+      await show(page);await page.locator('#save').click()
+      assert.equal(await page.evaluate(()=>containmentCounts.childClick),index+1)
+      assert.equal(await page.evaluate(()=>containmentCounts.tooltipClick),index+1)
+      assert.equal(await page.evaluate(()=>containmentCounts.parentClick??0),0)
+    }
+  })
+  test.fast(`${name}: native containment preserves anchor rearming and isolates nested bubble movement`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<div class="anchor" id="anchor">Help<a-tooltip contain-events="native" delay="30"><span id="content">Details</span></a-tooltip></div>')
+    await page.locator('#anchor').hover();await waitOpen(page)
+    const box=await page.locator('#anchor').boundingBox()
+    await page.keyboard.press('Escape');await waitOpen(page,'a-tooltip',false)
+    await page.mouse.move(box.x+box.width/2+5,box.y+box.height/2)
+    await waitOpen(page)
+    await mount(page,'<div class="anchor" id="outer">Outer<a-tooltip id="outer-tip" follow delay="30">Outer details</a-tooltip><span id="inner">Inner<a-tooltip id="inner-tip" contain-events="native" delay="30"><span id="content">Nested details</span></a-tooltip></span></div>')
+    await page.locator('#inner').hover();await waitOpen(page,'#inner-tip')
+    await page.locator('#content').hover()
+    const content=await page.locator('#content').boundingBox()
+    await page.mouse.move(content.x+content.width/2+2,content.y+content.height/2)
+    await page.waitForTimeout(180)
+    assert.equal(await open(page,'#inner-tip'),true)
+    assert.equal(await open(page,'#outer-tip'),false)
   })
   test.fast(`${name}: native containment covers input types, mode changes, and reconnection`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)

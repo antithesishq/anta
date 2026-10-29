@@ -149,21 +149,26 @@ scrolling the checklist. Scroll the checklist to dismiss it.
 
 ### Contain events
 
-Pass `containEvents` to contain bubbling pointer, mouse, touch, click,
-context-menu, and wheel handlers in the JSX event system. It also enables
-`interactive`. Child handlers keep working; keyboard and focus events propagate.
+Use `containEvents` to keep bubbling pointer, mouse, touch, click,
+context-menu, and wheel events within the tooltip. Choose the mode according
+to where your application handles events. Both modes enable `interactive` and
+preserve browser defaults, including scrolling, link navigation, and text
+selection. Keyboard and focus events continue propagating.
 
-Capture respects this boundary automatically. Custom native parent handlers must
-check `isContainedEvent(event)` before consuming input.
-Ancestor capture listeners still run first and must also respect the boundary.
+| Mode | Where containment happens | Callback behavior |
+| --- | --- | --- |
+| `containEvents={true}` | In the JSX event system. Capture also respects the boundary. | Callbacks on Tooltip and its children keep working. Custom native parent handlers must check `isContainedEvent(event)` before consuming input. |
+| `containEvents="native"` | At the web component host, before native bubble handlers on ancestors. | Native listeners on the host and inside the bubble keep working. Delegated React handlers for the contained events are blocked, including Tooltip's own `onClick`, `onPointerDown`, and `onWheel` props and handlers on its children. |
 
-Pass `containEvents="native"` to stop bubbling in the web component itself.
-Use this mode when native parent handlers cannot check `isContainedEvent` or
-when your JSX renderer handles events outside the browser. Browser defaults,
-including scrolling, link navigation, and text selection, remain available.
-Native child listeners keep working, but delegated React child handlers can be
-blocked because the event no longer reaches React's root. Ancestor capture
-handlers still need the guard in either mode.
+Use `true` when Tooltip or its children need React callbacks for these events.
+Use `"native"` when native parent handlers cannot check `isContainedEvent`, or
+when your JSX renderer handles events outside the browser. Native mode does
+not forward blocked callbacks through another event system.
+
+Ancestor capture listeners run before the tooltip in either mode. They must
+check `isContainedEvent(event)` before canceling or consuming contained input.
+Pointer movement inside a native-contained bubble also stays within that boundary,
+so it does not reach ancestor hover listeners, including those of outer tooltips.
 
 The example uses native containment with a parent that cancels wheel events
 without checking the boundary.
@@ -322,7 +327,7 @@ is available on the next interaction. Use `round` for a softer shape.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `children?` | ReactNode | — | Supplementary text or markup. Content stays in light DOM for application CSS. |
-| `containEvents?` | boolean \| 'native' | — | Contain bubbling pointer, mouse, touch, click, context-menu, and wheel handlers. `true` contains JSX events while preserving child callbacks. `'native'` stops propagation at the web component, including to native parents, but can block delegated React child handlers. Both enable interactive behavior and preserve browser defaults, keyboard, and focus. Capture respects both modes. Custom native parents must check `isContainedEvent` with `true`; ancestor capture handlers must check it in either mode because they run before the Tooltip. |
+| `containEvents?` | boolean \| 'native' | — | Contain bubbling pointer, mouse, touch, click, context-menu, and wheel handlers. `true` contains JSX events while preserving Tooltip and child callbacks. `'native'` stops propagation at the web component, including to native parents, but blocks delegated React handlers on the Tooltip and its children, including `onClick`, `onPointerDown`, and `onWheel`. Use `true` when those callbacks are needed. Native listeners inside the boundary still run. Both enable interactive behavior and preserve browser defaults, keyboard, and focus. Capture respects both modes. Custom native parents must check `isContainedEvent` with `true`; ancestor capture handlers must check it in either mode because they run before the Tooltip. |
 | `delay?` | number | 300 | Wait in milliseconds after hover or keyboard focus. Use `50` for a short delay. |
 | `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is pinned (anchored beneath the target) by default; pass `follow` for the cursor-tracking behavior, which fades by distance as the cursor leaves. |
 | `interactive?` | boolean | — | Keep content available while the pointer or keyboard focus is inside it. Enables pointer events and pins the bubble even with `follow`. Essential actions belong in a Menu or Dialog with an explicit trigger. |

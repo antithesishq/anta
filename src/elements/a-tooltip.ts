@@ -1,6 +1,6 @@
 import { HTMLElementBase, anchorRect, isMenuOpen, isInsideOpenMenu } from '../anta_helpers'
 import { debounce } from 'es-toolkit'
-import { CONTAINED_EVENT_TYPES, isContainedEvent } from '../event-containment'
+import { CONTAINED_EVENT_TYPES, createPropagationStopper, isContainedEvent } from '../event-containment'
 import './a-tooltip.css'
 
 /** Gap (px) the bubble keeps from the cursor / anchor / viewport edge. */
@@ -210,16 +210,10 @@ export class ATooltipElement extends HTMLElementBase {
   // with the new value instead of keeping the one captured at setup.
   static observedAttributes = ['delay', 'contain-events']
 
-  #nativeContainment = false
-  #stopContainedEvent = (event: Event) => event.stopPropagation()
+  #stopPropagation = createPropagationStopper(this)
 
   #setNativeContainment(enabled: boolean) {
-    if (enabled === this.#nativeContainment) return
-    this.#nativeContainment = enabled
-    for (const type of CONTAINED_EVENT_TYPES) {
-      if (enabled) this.addEventListener(type, this.#stopContainedEvent, { passive: true })
-      else this.removeEventListener(type, this.#stopContainedEvent)
-    }
+    this.#stopPropagation(enabled ? CONTAINED_EVENT_TYPES : [])
   }
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */

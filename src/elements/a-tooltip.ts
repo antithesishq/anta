@@ -1,6 +1,6 @@
 import { HTMLElementBase, anchorRect, isMenuOpen, isInsideOpenMenu } from '../anta_helpers'
 import { debounce } from 'es-toolkit'
-import { isContainedEvent } from '../event-containment'
+import { CONTAINED_EVENT_TYPES, createPropagationStopper, isContainedEvent } from '../event-containment'
 import './a-tooltip.css'
 
 /** Gap (px) the bubble keeps from the cursor / anchor / viewport edge. */
@@ -208,7 +208,13 @@ export class ATooltipElement extends HTMLElementBase {
   // Observe `delay` so changing it at runtime — e.g. the docs playground
   // patches the attribute on the live element — rebuilds the show debounce
   // with the new value instead of keeping the one captured at setup.
-  static observedAttributes = ['delay']
+  static observedAttributes = ['delay', 'contain-events']
+
+  #stopPropagation = createPropagationStopper(this)
+
+  #setNativeContainment(enabled: boolean) {
+    this.#stopPropagation(enabled ? CONTAINED_EVENT_TYPES : [])
+  }
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */
   private container!: HTMLDivElement
@@ -284,6 +290,7 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    this.#setNativeContainment(this.getAttribute('contain-events') === 'native')
     const parent = this.parentElement
     if (!parent) return
     this.anchor = parent
@@ -301,6 +308,7 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    this.#setNativeContainment(false)
     this.cleanup()
     const doc = this.#connectedDocument
     if (this.anchor && doc) {
@@ -326,6 +334,7 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   attributeChangedCallback(name: string) {
+    if (name === 'contain-events') this.#setNativeContainment(this.isConnected && this.getAttribute(name) === 'native')
     // `delay` is baked into the debounce, so rebuild it when the attribute
     // changes (only meaningful once listeners are wired).
     if (name === 'delay' && this.listening) this.makeDebouncedShow()

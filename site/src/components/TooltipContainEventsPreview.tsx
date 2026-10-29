@@ -1,4 +1,4 @@
-import { Tooltip, Button, Checkbox, Text, isContainedEvent } from '@antadesign/anta'
+import { Tooltip, Button, Checkbox, Text } from '@antadesign/anta'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import styles from './TooltipContainEventsPreview.module.css'
 import { useElements } from './useElements'
@@ -14,7 +14,6 @@ export function TooltipContainEventsPreview() {
     const element = parent.current
     if (!element) return
     const onWheel = (event: WheelEvent) => {
-      if (isContainedEvent(event)) return
       event.preventDefault()
       setWheels(count => count + 1)
     }
@@ -29,7 +28,7 @@ export function TooltipContainEventsPreview() {
       </Checkbox>
       <div ref={parent} className={styles.parent} onClick={() => setClicks(count => count + 1)}>
         <Button label="Event containment help">
-          <Tooltip interactive containEvents={contain} className={styles.tooltip}>
+          <Tooltip interactive containEvents={contain ? 'native' : false} className={styles.tooltip}>
             <div>
               <a href="#tooltip-end">Jump to the final note</a>
               {Array.from({ length: 12 }, (_, index) => (

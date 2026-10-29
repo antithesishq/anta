@@ -23,10 +23,16 @@ export interface TooltipProps extends BaseProps, DOMEventHandlers {
    *  actions belong in a Menu or Dialog with an explicit trigger. */
   interactive?: boolean
   /** Contain bubbling pointer, mouse, touch, click, context-menu, and wheel
-   *  handlers in the JSX event system. Enables interactive behavior.
-   *  Capture respects this boundary. Custom native parent handlers must check
-   *  `isContainedEvent` before consuming input; ancestor capture handlers run first. */
-  containEvents?: boolean
+   *  handlers. `true` contains JSX events while preserving Tooltip and child callbacks.
+   *  `'native'` stops propagation at the web component, including to native
+   *  parents, but blocks delegated React handlers on the Tooltip and its children,
+   *  including `onClick`, `onPointerDown`, and `onWheel`. Use `true` when those
+   *  callbacks are needed. Native listeners inside the boundary still run. Both enable
+   *  interactive behavior and preserve browser defaults, keyboard, and focus.
+   *  Capture respects both modes. Custom native parents must check
+   *  `isContainedEvent` with `true`; ancestor capture handlers must check it
+   *  in either mode because they run before the Tooltip. */
+  containEvents?: boolean | 'native'
   /** Only show when the target is actually truncated (its text overflows and is
    *  ellipsized); a label that fits gets no tooltip. The check is a UI-thread
    *  layout read, re-measured on each show. By default it measures every Anta
@@ -106,7 +112,7 @@ export const Tooltip = ({
   ...rest
 }: TooltipProps) => {
   const events: DOMEventHandlers = {}
-  if (containEvents) {
+  if (containEvents && containEvents !== 'native') {
     for (const name of CONTAINED_HANDLERS) {
       const handler = rest[name]
       events[name] = handler ? event => {
@@ -123,7 +129,7 @@ export const Tooltip = ({
       round={roundAttr(round)}
       follow={follow ? '' : undefined}
       interactive={interactive ? '' : undefined}
-      contain-events={containEvents ? '' : undefined}
+      contain-events={containEvents === 'native' ? 'native' : containEvents ? '' : undefined}
       truncated-only={truncatedOnly ? '' : undefined}
       truncated-selector={truncatedSelector || undefined}
       class={className}

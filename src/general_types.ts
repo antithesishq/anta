@@ -600,8 +600,12 @@ export interface ATooltipAttributes extends BaseAttributes {
    *  hovered). Always pinned. Presence-based (`''` on, omit off). */
   interactive?: boolean | ''
   /** Mark an input boundary respected by Capture and `isContainedEvent`.
-   *  Enables interactive behavior. The JSX wrapper also contains renderer events. */
-  'contain-events'?: boolean | ''
+   *  `'native'` also stops native bubbling at the host and can block delegated
+   *  React handlers on the host and its children. Native listeners inside the
+   *  boundary still run. Presence alone does not stop native propagation.
+   *  Both enable interactive behavior and preserve browser defaults, keyboard,
+   *  and focus events. Ancestor capture handlers run before the boundary. */
+  'contain-events'?: boolean | '' | 'native'
   /** Only show when the measured target is actually truncated/clipped (its text
    *  overflows). UI-thread layout read, re-measured per show. Defaults to the
    *  nearest Anta ellipsizing label part (`a-tab-label` / `a-button-label`) in the

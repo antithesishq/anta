@@ -13,6 +13,8 @@ export default defineConfig({
   compressHTML: true,
   devToolbar: { enabled: false },
   vite: {
+    optimizeDeps: { exclude: ['@hegeldev/hegel', '@hegeldev/hegel/generators'] },
+    build: { target: 'es2022' },
     resolve: { alias: monacoStyleAliases },
     server: {
       proxy: {

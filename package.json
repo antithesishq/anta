@@ -102,7 +102,6 @@
     "prepublishOnly": "pnpm run build",
     "prepack": "pnpm run build:docs",
     "test:fuzz_component": "node tests/pbt/run.ts",
-    "test:fixture": "node scripts/test-fixture.mjs",
     "test:consumers": "node tests/consumers/run.mjs",
     "test:input": "node --test tests/input-csp.mjs",
     "test:input:package": "node tests/input-package.mjs",
@@ -119,7 +118,9 @@
     "test:slider:package": "node tests/slider-package.mjs"
   },
   "devDependencies": {
-    "@antithesishq/bombadil": "0.7.5",
+    "@antadesign/plot": "workspace:*",
+    "@antithesishq/bombadil": "0.7.10",
+    "@hegeldev/hegel": "0.4.10",
     "@types/react": "19.3.0",
     "@typescript/native": "npm:typescript@7.0.2",
     "axe-core": "4.13.0",

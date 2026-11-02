@@ -36,7 +36,7 @@ function configureMonaco(monaco: typeof import('monaco-editor')) {
     .map((name) => `export const ${name}: any`)
     .join('\n')
   typescript.typescriptDefaults.addExtraLib(
-    `declare module '@antadesign/anta' { ${exports} } declare function h(...args: any[]): any; declare const Fragment: any;`,
+    `declare module '@antadesign/anta' { ${exports} } declare module '@fixtures' { export const AppFixture: any; } declare function h(...args: any[]): any; declare const Fragment: any;`,
     'file:///anta-harness.d.ts',
   )
   monacoConfigured = true

@@ -1,140 +1,106 @@
 # Interactive component fixtures
 
-Each fixture contains an authored TSX source string and a Bombadil specification. The harness sends the source through the `/test/` editor and compiler, then renders five independent component instances.
+The `/test/` harness renders `AppFixture`. Each fixture owns its component's
+state and exposes the values needed by its properties on `window`. Properties
+live beside their fixture; Bombadil's actions and exports are in
+`bombadil.spec.ts`.
 
-## Run a fixture
+Hegel starts with 6–12 distinct components and generates a new list when
+Bombadil dispatches `fixture:advance`. Each update changes one component's
+props, mounts a component not already present, or unmounts one. Surviving
+components keep their React key and state. Prop updates have weight 3; mounts
+and unmounts have weight 1 each, subject to the 6–12 limits. The seed and app
+revision determine each Hegel draw. Hegel does not shrink Bombadil failures.
 
-Start the development server from the repository root:
+| Fixture | Props varied while mounted |
+| --- | --- |
+| Button | disabled, loading |
+| Checkbox, RadioGroup, Switch, Slider, Tabs, Expander | disabled |
+| Calendar, with InputDate | disabled, locale (en-US / en-GB) |
+| Input | disabled, readOnly, clearable |
+| Select | disabled, clearable |
+| Dialog | persistent, closable |
+| Plot | zoomPan, height, points |
+
+Checkbox, Switch, RadioGroup, Tabs, and Calendar also vary their initial state.
+Slider's min, max, and step are chosen on mount and remain fixed. Labels, sizes,
+orientations, options, and titles are fixed. Disabled, loading, and readOnly start with a 10% true preference on mount.
+Prop updates toggle booleans and locale, and choose a different Plot height.
+This deliberately spends more time in blocked states than redrawing mostly-false
+props; it exercises both blocking and recovery while avoiding unchanged updates.
+
+Bombadil uses native clicks, typing, scrolling, keyboard actions, Slider drags,
+and Plot actions. Its custom advance action asks Hegel for the
+next app state. A drag is one action, so this setup does not change props during
+a drag. Properties include state agreement, disabled behavior, user-action
+transitions, and preservation across unrelated actions. Some checks compare
+coordinates, and passing runs do not prove every relevant action was attempted.
+
+The Calendar fixture also mounts an InputDate starting at July 4, 2026. Changing
+locale must preserve its date and display that date in the new format. The check
+starts from matching display/value snapshots, excluding uncommitted drafts.
+Run this property alone with the same harness URL and
+`fixtures/calendar/locale.spec.ts`.
+
+Plot viewport properties observe the latest callback, not canvas pixels. That
+callback can be stale after a data update. The disabled check compares the next
+snapshot and may miss a delayed effect. Plot pauses resize observation off screen.
+
+## Exploration rates
+
+The combined campaign gives clicks weight 10, Input editing weight 6, and each
+other group, including app updates, weight 3. With all groups eligible, app
+updates have 3 of 49 weight points, about 6.1%. Input editing favors typing over
+cursor and deletion keys at 3:1 once the field is focused. Empty action groups
+change the effective rate. These weights do not guarantee that a property was
+exercised.
+
+Hegel keeps prop/mount/unmount weights at 3:1:1, with invalid lifecycle choices
+removed at the 6–12 limits. Changing one existing prop leaves the other props and
+component state intact. A new seed does not replay Bombadil's action sequence.
+
+A local comparison over 4,000 updates and four seeds changed props in 728 of
+2,545 selected prop updates before this cleanup, and all 2,545 afterward. The
+same run spent about 48% of sampled named-control states blocked, versus 12%
+before. This favors transition checks over mostly-enabled operation; it is a
+starting distribution, not a measured optimum for finding bugs.
+
+## Selected findings
+
+The four selected findings concern these contracts:
+
+| Contract | Current coverage |
+| --- | --- |
+| Disabling an open Select preserves its selected value | `selectDisabledPreservesValue` |
+| A controlled React Input cannot submit an edit rejected by its parent | Separate React reproduction; this Preact fixture accepts edits and does not establish this finding |
+| Switching InputDate locale preserves its saved date and formats it correctly | `inputDateLocalePreservesDisplayAndValue` |
+| Disabled controls are absent from FormData | `disabledControlsAreExcludedFromSubmission`, including InputDate's hidden ISO field |
+
+These are findings to investigate, not library fixes in this PR. The fixture
+campaign is mounted through Preact compatibility; its results do not establish
+React-specific behavior.
+
+## Run
+
+Start `pnpm run dev` from the repository root, then use the displayed server port:
 
 ```sh
-pnpm run dev
+pnpm exec bombadil browser test --time-limit=1m \
+  'http://localhost:4321/test/?editor=off&seed=42' fixtures/bombadil.spec.ts
 ```
 
-Open a fixture in the TSX editor:
+Add `--headless` to hide the Chrome window. The combined campaign includes the
+Select disabled-after-open property; the product fix has not been applied.
+Run Plot alone with `?editor=off&only=plot&seed=42` and
+`fixtures/plot/bombadil.spec.ts`; this focused campaign also resizes the browser.
+Type-check with
+`pnpm exec tsc -p fixtures/tsconfig.json`.
 
-```text
-http://localhost:4321/test/?fixture=plot
-```
-
-Replace `plot` with `switch`, `checkbox`, `radio-group`, `input`, `calendar`, or `select-faceted`. Add `bombadil=true` to hide the editor and expose only the compiled fixture:
-
-```text
-http://localhost:4321/test/?fixture=plot&bombadil=true
-```
-
-Run the default five-minute campaign:
-
-```sh
-pnpm test:fixture plot
-```
-
-Run a 10-second smoke campaign:
-
-```sh
-BOMBADIL_TIME_LIMIT=10s pnpm test:fixture plot
-```
-
-Run every fixture:
-
-```sh
-for fixture in switch checkbox radio-group input calendar select-faceted plot; do
-  pnpm test:fixture "$fixture"
-done
-```
-
-Set `BOMBADIL_HEADLESS=true` to hide the managed browser. Set `ANTA_FIXTURE_ORIGIN` when the site uses another origin:
-
-```sh
-ANTA_FIXTURE_ORIGIN=http://localhost:4325 \
-BOMBADIL_HEADLESS=true \
-BOMBADIL_TIME_LIMIT=10s \
-pnpm test:fixture switch
-```
-
-Set `BOMBADIL_OUTPUT_PATH` to change the results directory. Otherwise, Bombadil writes to `fixtures/<fixture>/.test-output`. Inspect a saved run with:
-
-```sh
-bombadil browser inspect fixtures/switch/.test-output
-```
-
-## Shared properties
-
-Every fixture exports Bombadil's default browser properties:
-
-- `"noHttpErrorCodes"` requires the navigation response status to stay below 400.
-- `"noUncaughtExceptions"` rejects uncaught browser exceptions.
-- `"noUnhandledPromiseRejections"` rejects unhandled promise rejections.
-- `"noConsoleErrors"` rejects `console.error` entries.
-
-Every fixture also checks JavaScript heap, retained DOM nodes, event listeners, and layout objects. These resource properties ignore the first 30 seconds and require a complete 60-second observation window. A 10-second smoke campaign does not exercise them.
-
-## Switch
-
-Bombadil selects the Switch and fixture controls. `"switchKeyboardActions"` also focuses each enabled Switch and presses Space.
-
-- `"switchStateIsCoherent"` requires `.checked` to match `:state(checked)` and requires `tabIndex` to match the disabled state.
-- `"switchHasNoDomNodeLeak"` limits retained DOM-node growth.
-- `"switchHasNoEventListenerLeak"` limits event-listener growth.
-- `"switchHasNoHeapGrowth"` limits JavaScript heap growth.
-- `"switchHasNoLayoutObjectLeak"` limits layout-object growth.
-
-## Checkbox
-
-Bombadil selects the Checkbox and fixture controls. `"checkboxKeyboardActions"` also focuses each enabled Checkbox and presses Space.
-
-- `"checkboxStateIsCoherent"` requires the checked and indeterminate properties to match their custom states, prevents both states from being active, rejects a stale `state` attribute, and checks the disabled tab stop.
-- `"checkboxHasNoDomNodeLeak"` limits retained DOM-node growth.
-- `"checkboxHasNoEventListenerLeak"` limits event-listener growth.
-- `"checkboxHasNoHeapGrowth"` limits JavaScript heap growth.
-- `"checkboxHasNoLayoutObjectLeak"` limits layout-object growth.
-
-## RadioGroup
-
-Bombadil selects options and fixture controls. `"radioGroupKeyboardActions"` presses Space, Enter, and arrow keys. `"radioGroupRapidKeyboardActions"` repeats arrow navigation two, three, or five times.
-
-- `"radioGroupSelectionIsCoherent"` requires the group value, selected child, `:state(selected)`, and roving `tabIndex` to agree. A disabled group has no tab stop, and an enabled group has one.
-- `"radioGroupHasNoDomNodeLeak"` limits retained DOM-node growth.
-- `"radioGroupHasNoEventListenerLeak"` limits event-listener growth.
-- `"radioGroupHasNoHeapGrowth"` limits JavaScript heap growth.
-- `"radioGroupHasNoLayoutObjectLeak"` limits layout-object growth.
-
-## Input
-
-Bombadil enters text and selects the controlled update, enable or disable, editable or read-only, single-line or multiline, and mount or unmount controls.
-
-- `"inputStateIsCoherent"` requires the host and native control values to agree. It also checks `:state(filled)`, the native `input` or `textarea` choice, disabled state, and read-only state.
-- `"inputHasNoDomNodeLeak"` limits retained DOM-node growth.
-- `"inputHasNoEventListenerLeak"` limits event-listener growth.
-- `"inputHasNoHeapGrowth"` limits JavaScript heap growth.
-- `"inputHasNoLayoutObjectLeak"` limits layout-object growth.
-
-## Calendar
-
-Bombadil selects dates, month controls, and fixture controls. `"calendarKeyboardActions"` presses Space, Enter, arrow keys, Home, End, Page Up, Page Down, Shift+Page Up, and Shift+Page Down.
-
-- `"calendarSelectionIsCoherent"` requires the public value, reflected `value` attribute, and selected day to agree.
-- `"disabledCalendarHasNoEnabledDays"` requires every day in a disabled Calendar to be disabled.
-- `"calendarHasNoDomNodeLeak"` limits retained DOM-node growth.
-- `"calendarHasNoEventListenerLeak"` limits event-listener growth.
-- `"calendarHasNoHeapGrowth"` limits JavaScript heap growth.
-- `"calendarHasNoLayoutObjectLeak"` limits layout-object growth.
-
-## SelectFaceted
-
-Bombadil opens menus, selects and clears rows, enters search text, changes controlled values, enables and disables the component or an option, and mounts or unmounts each instance.
-
-- `"selectFacetedOpenStateIsCoherent"` requires `aria-expanded`, `.isOpen`, `:state(open)`, and the trigger tab stop to agree.
-- `"selectFacetedSelectionIndicatorsAreValid"` requires valid checkable-row roles and `aria-checked` values and prevents multiple checked rows in one radio section.
-- `"selectFacetedHasNoDomNodeLeak"` limits retained DOM-node growth.
-- `"selectFacetedHasNoEventListenerLeak"` limits event-listener growth.
-- `"selectFacetedHasNoHeapGrowth"` limits JavaScript heap growth.
-- `"selectFacetedHasNoLayoutObjectLeak"` limits layout-object growth.
-
-## Plot
-
-`"plotActions"` selects and double-selects canvas points, moves across nine plot positions, leaves the plot, performs Control-wheel zoom, changes data and viewport props, resizes plots, and occasionally mounts or unmounts all plots.
-
-- `"plotHasNoDomNodeLeak"` limits retained DOM-node growth with Plot's measured transient allowance.
-- `"plotHasNoEventListenerLeak"` limits event-listener growth with Plot's measured transient allowance.
-- `"plotHasNoHeapGrowth"` limits JavaScript heap growth with Plot's measured transient allowance.
-- `"plotHasNoLayoutObjectLeak"` limits layout-object growth with Plot's measured transient allowance.
+Named form controls share a form whose submission is prevented. The
+`disabledControlsAreExcludedFromSubmission` property checks real `FormData`
+entries against each disabled control's unique fixture name. InputDate's unnamed
+visible field carries `data-fixture-submission-name` to connect its disabled state
+to its separate hidden ISO field. The property covers Input, Checkbox, Switch,
+RadioGroup, Slider, Calendar, and InputDate. Select has no automatic form value.
+Run it alone with the same harness URL and `fixtures/form.spec.ts`. The known
+InputDate disabled-submission bug is expected to fail; no product fix is included.

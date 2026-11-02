@@ -188,21 +188,22 @@ export const InputDate = ({
 
   // `text` is what the field shows — a live draft while typing, canonicalized on
   // commit. `open` drives the calendar menu; `invalid` flags an unrecognized entry.
-  const [text, setText] = useState<string>(() => fmt(current))
+  const formatted = useMemo(() => fmt(current), [current, resolvedLocale, time, twelveHour])
+  const [text, setText] = useState(formatted)
   const [open, setOpen] = useState(false)
   const [invalid, setInvalid] = useState(false)
   // Bumped to move focus into the calendar grid on a keyboard open (ArrowDown) —
   // fed to `Calendar`'s `focusSignal`, which drives `<a-calendar>`'s `data-focus`.
   const [focusNonce, setFocusNonce] = useState(0)
 
-  // Reformat the field when the committed value changes from outside typing — a
-  // calendar pick, a controlled `value` update, or an accepted commit (React's
-  // "adjust state when a prop changes" pattern, guarded so it can't loop).
-  const [lastValue, setLastValue] = useState(current)
-  if (current !== lastValue) {
-    setLastValue(current)
-    setText(fmt(current))
-    setInvalid(false)
+  const [lastDisplay, setLastDisplay] = useState({ value: current, text: formatted })
+  if (current !== lastDisplay.value || formatted !== lastDisplay.text) {
+    setLastDisplay({ value: current, text: formatted })
+    // A format change refreshes committed text without discarding a typed draft.
+    if (current !== lastDisplay.value || text === lastDisplay.text) {
+      setText(formatted)
+      setInvalid(false)
+    }
   }
   const commit = (iso: string) => {
     if (!controlled) setInternal(iso || undefined)

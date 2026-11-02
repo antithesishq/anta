@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- InputDate reformats its committed date when the locale changes, so confirming the field preserves the saved date.
+
 ## 0.3.38 — October 29, 2026
 
 ### Added

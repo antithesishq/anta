@@ -11,7 +11,7 @@ const calendar = extract(state => {
   const grid = root.querySelector('a-calendar')! as HTMLElement & { value: string }
   return {
     ...record,
-    attributeValue: grid.getAttribute('value'),
+    attributeValue: grid.getAttribute('state'),
     elementValue: grid.value,
     disabled: grid.hasAttribute('disabled'),
     month: root.querySelector('[data-part="heading"]')!.textContent,

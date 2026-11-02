@@ -31,9 +31,11 @@ before(async () => {
             window.log = { requests: [], changes: [] }
             function App() {
               const [value, setValue] = React.useState(options.value)
+              const [locale, setLocale] = React.useState(options.locale ?? 'en-US')
+              window.setLocale = setLocale
               window.setValue = setValue
               window.ownerValue = value
-              const props = { value, defaultValue: options.defaultValue, name: 'date', locale: 'en-US' }
+              const props = { value, defaultValue: options.defaultValue, name: 'date', locale }
               const child = options.inputDate
                 ? React.createElement(InputDate, { ...props, time: options.time, onValueChange: next => {
                     window.log.requests.push(next)
@@ -213,6 +215,33 @@ for (const engine of engines) {
       await page.locator('a-calendar').evaluate(calendar => calendar.formStateRestoreCallback('2026-10-06'))
       await expectDate(page, '2026-10-06')
       assert.deepEqual(await page.evaluate(() => window.log.changes), ['2026-10-07', '2026-10-08', '2026-10-06'])
+    })
+
+    for (const controlled of [false, true]) {
+      test.fast(`${engine.name()}: ${framework} InputDate locale changes preserve the committed date (controlled: ${controlled})`, async t => {
+        const page = await pageFor(t, engine, framework, {
+          inputDate: true, ...(controlled ? { value: '2026-07-04' } : { defaultValue: '2026-07-04' }),
+        })
+        const input = page.locator('a-input input')
+        assert.equal(await input.inputValue(), '07/04/2026')
+        await page.evaluate(() => window.setLocale('en-GB'))
+        await page.waitForFunction(() => document.querySelector('a-input').value === '04/07/2026')
+        await input.press('Enter')
+        assert.equal(await input.inputValue(), '04/07/2026')
+        assert.equal((await snapshot(page)).form, '2026-07-04')
+        assert.deepEqual(await page.evaluate(() => window.log.requests), [])
+      })
+    }
+
+    test.fast(`${engine.name()}: ${framework} InputDate locale changes preserve an unfinished draft`, async t => {
+      const page = await pageFor(t, engine, framework, { inputDate: true, defaultValue: '2026-07-04' })
+      const input = page.locator('a-input input')
+      await input.fill('07/')
+      await page.evaluate(() => window.setLocale('en-GB'))
+      await page.waitForFunction(() => document.querySelector('a-input')?.getAttribute('placeholder') === 'DD/MM/YYYY')
+      assert.equal(await input.inputValue(), '07/')
+      assert.equal((await snapshot(page)).form, '2026-07-04')
+      assert.deepEqual(await page.evaluate(() => window.log.requests), [])
     })
 
     test.fast(`${engine.name()}: ${framework} controlled InputDate can select a previous date again`, async t => {

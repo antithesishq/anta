@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import { satteri, satteriHeadingIdsPlugin } from '@astrojs/markdown-satteri';
 import { monacoStyleAliases } from './lib/monaco-styles.mjs';
@@ -15,7 +16,11 @@ export default defineConfig({
   vite: {
     optimizeDeps: { exclude: ['@hegeldev/hegel', '@hegeldev/hegel/generators'] },
     build: { target: 'es2022' },
-    resolve: { alias: monacoStyleAliases },
+    resolve: { alias: {
+      ...monacoStyleAliases,
+      // Root-level fixtures use the site's Plot dependency without a root/Plot cycle.
+      '@antadesign/plot': fileURLToPath(new URL('../plot/dist', import.meta.url)),
+    } },
     server: {
       proxy: {
         '/api/search-answer': {

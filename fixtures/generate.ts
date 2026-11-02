@@ -11,7 +11,7 @@ function pick<T>(tc: TestCase, values: readonly T[]): T {
   return tc.draw(gs.sampledFrom(values))
 }
 
-// Keep most controls usable. These draws are generation preferences, not checks.
+// Start most controls usable. These draws are generation preferences, not checks.
 function occasionally(tc: TestCase): boolean {
   return tc.draw(gs.integers({ minValue: 0, maxValue: 9 })) === 0
 }

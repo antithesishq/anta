@@ -122,7 +122,6 @@
     "test:stickers:package": "node tests/stickers-package.mjs"
   },
   "devDependencies": {
-    "@antadesign/plot": "workspace:*",
     "@antithesishq/bombadil": "0.7.10",
     "@hegeldev/hegel": "0.4.10",
     "@types/react": "19.3.0",

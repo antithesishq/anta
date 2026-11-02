@@ -27,6 +27,7 @@ when editing package source.
 | Select / SelectFaceted | `pnpm test:select` | `pnpm test:select:package` |
 | Selection value inputs | `pnpm test:selection` | `pnpm test:selection:package` |
 | Slider | `pnpm test:slider` | `pnpm test:slider:package` |
+| Stickers | `pnpm test:stickers` | `pnpm test:stickers:package` |
 | Text | `pnpm test:text` | — |
 | Toast / Toaster | `pnpm test:toaster` | `pnpm test:toaster:package` |
 | Tooltip / Steps compositions | `pnpm test:tooltip` | `pnpm test:tooltip:package` |
@@ -75,6 +76,30 @@ CSP fixtures use HTTP response headers, including `style-src-attr 'none'`.
 Some WebKit screenshot captures use a separate permissive context for
 Playwright's synchronization stylesheet. Behavioral pages keep their test policy.
 For application configuration, see [Install and configure](../docs/install-config.md#content-security-policy).
+
+## Stickers CSP
+
+Run `pnpm test:stickers` for static and animated stickers in Chromium, Firefox,
+and WebKit with enforced CSP response headers. Run
+`pnpm test:stickers:package` to repeat the matrix with installed Anta and stickers
+tarballs in an isolated React/Preact consumer. Both full and granular entries,
+SSR, hydration, and the blocked SSR `size` style are covered.
+
+Compare bundled static poses and animated frames at 0.5 seconds with an
+immutable baseline commit:
+
+```sh
+ANTA_STICKERS_COMPARE_REF=aa014ae37fe99b91a422fa6827a9267d7f50ea3b pnpm test:stickers
+```
+
+The reference renders without CSP; the current gallery renders with strict CSP.
+Screenshots, Lottie style inventories, and tarball metadata remain in
+`tests/.test-output/stickers/`. The fast tier builds granular entries and only
+the artwork used by its layout, playback, worker, and hydration checks. Full
+entries, CSS-export checks, all-artwork galleries, and reference comparisons belong to the slow tier. Both tiers use the
+shipped Anta tokens for keyboard focus and public Node loading APIs for SSR.
+The worker case keeps strict style CSP and adds `worker-src blob:` for Lottie’s
+worker. Package checks always use installed artifacts for the current implementation.
 
 ## Temporary CI exclusions
 

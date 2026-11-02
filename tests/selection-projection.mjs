@@ -3,6 +3,7 @@ import { before } from 'node:test'
 import { Module } from 'node:module'
 import { resolve } from 'node:path'
 import { build } from 'esbuild'
+import ts from 'typescript'
 import { componentTest as test } from './component-tier.mjs'
 let runtime
 before(async()=>{
@@ -10,6 +11,15 @@ before(async()=>{
   const compiled=new Module(resolve('tests/selection-projection.cjs'));compiled._compile(result.outputFiles[0].text,compiled.id);runtime=compiled.exports
 })
 const find=(node,type)=>node?.type===type?node:(node?.children??[]).flat(Infinity).map(child=>find(child,type)).find(Boolean)
+test.fast('Calendar accepts nullable dates without widening date or callback types',()=>{
+  const config=ts.readConfigFile('src/tsconfig.json',ts.sys.readFile)
+  const parsed=ts.parseJsonConfigFileContent(config.config,ts.sys,resolve('src'))
+  const program=ts.createProgram(['tests/selection-types.fixture.tsx'],{...parsed.options,rootDir:resolve('.'),noEmit:true})
+  const diagnostics=ts.getPreEmitDiagnostics(program)
+  assert.equal(diagnostics.length,0,ts.formatDiagnosticsWithColorAndContext(diagnostics,{
+    getCanonicalFileName:file=>file,getCurrentDirectory:ts.sys.getCurrentDirectory,getNewLine:()=> '\n',
+  }))
+})
 for(const shim of [false,true])test.fast(`Selection value projection works without DOM access (window: ${shim})`,()=>{
   if(shim)globalThis.window={}
   try {
@@ -17,11 +27,11 @@ for(const shim of [false,true])test.fast(`Selection value projection works witho
     for(const [name,tag] of [['Calendar','a-calendar'],['RadioGroup','a-radio-group'],['Tabs','a-tabs']]) {
       const requests=[]
       const controlled=find(runtime[name]({value:'',options:[],locale:'en-US',onStateChange:(e,d)=>requests.push(d)}),tag)
-      const calendar=name==='Calendar',input=calendar?'VALUE':'state',initial=calendar?'defaultvalue':'default-state'
+      const input='state',initial='default-state'
       assert.equal(controlled.props[input],'')
       assert.equal(controlled.props[initial],undefined)
-      assert.equal((calendar?'state':'VALUE') in controlled.props,false)
-      assert.equal((calendar?'default-state':'defaultvalue') in controlled.props,false)
+      assert.equal('VALUE' in controlled.props,false)
+      assert.equal('defaultvalue' in controlled.props,false)
       assert.equal('value' in controlled.props,false)
       const detail={next:'b',prev:'',reason:'user'}
       controlled.props.onstatechange({nativeEvent:{detail}})

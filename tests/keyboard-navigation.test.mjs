@@ -105,7 +105,7 @@ for (const orientation of ['horizontal', 'vertical']) {
 test('RadioGroup and Slider preserve modified navigation and still respond to plain arrows', async t => {
   const page = await pageFor(t, `<a-radio-group default-state="one">
     <a-radio value="one" tabindex="0">One</a-radio><a-radio value="two" tabindex="-1">Two</a-radio>
-    </a-radio-group><a-slider defaultvalue="35" tabindex="0"></a-slider>`)
+    </a-radio-group><a-slider default-value="35" tabindex="0"></a-slider>`)
   await expectNativeShortcuts(page, page.locator('a-radio').first())
   await page.keyboard.press('ArrowRight')
   assert.equal(await page.locator('a-radio:state(selected)').getAttribute('value'), 'two')

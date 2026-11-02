@@ -17,7 +17,7 @@ before(async () => {
   const assets = new Map(result.outputFiles.map(file => [file.path.endsWith('.css') ? '/slider.css' : '/slider.js', file.text]))
   server = createServer((req, res) => {
     res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html')
-    res.end(assets.get(req.url) ?? '<!doctype html><link rel="stylesheet" href="/slider.css"><style>body{margin:40px}a-slider{display:block;width:240px}</style><a-slider id="slider" defaultvalue="35" tabindex="0" role="slider" aria-label="Volume"></a-slider><script type="module" src="/slider.js"></script>')
+    res.end(assets.get(req.url) ?? '<!doctype html><link rel="stylesheet" href="/slider.css"><style>body{margin:40px}a-slider{display:block;width:240px}</style><a-slider id="slider" default-value="35" tabindex="0" role="slider" aria-label="Volume"></a-slider><script type="module" src="/slider.js"></script>')
   })
   await new Promise((resolve, reject) => {
     server.once('error', reject)
@@ -176,7 +176,7 @@ test('Slider parses a space-separated range and exposes a sorted array value', a
     slider.removeAttribute('role')
     slider.removeAttribute('tabindex')
     slider.defaultValue = [70, 20]
-    const initial = { value: slider.value, attribute: slider.getAttribute('defaultvalue') }
+    const initial = { value: slider.value, attribute: slider.getAttribute('default-value') }
     slider.value = [85, 15]
     return { initial, controlled: { value: slider.value, attribute: slider.getAttribute('value') } }
   })
@@ -334,12 +334,12 @@ test('Range slider without a default resets to two bounds and keeps range events
     slider.setAttribute('name', 'price')
     slider.setAttribute('min', '10')
     slider.setAttribute('max', '90')
-    slider.removeAttribute('defaultvalue')
-    slider.setAttribute('defaultvalue', '20 80')
-    slider.removeAttribute('defaultvalue')
+    slider.removeAttribute('default-value')
+    slider.setAttribute('default-value', '20 80')
+    slider.removeAttribute('default-value')
     slider.formStateRestoreCallback('20 80')
     const defaultValue = slider.defaultValue
-    const hasDefaultAttribute = slider.hasAttribute('defaultvalue')
+    const hasDefaultAttribute = slider.hasAttribute('default-value')
     form.reset()
     const thumbs = [...slider.shadowRoot.querySelectorAll('[part~="thumb"]')]
     const reset = {

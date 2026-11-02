@@ -35,7 +35,10 @@ before(async () => {
               window.ownerValue = value
               const props = { value, defaultValue: options.defaultValue, name: 'date', locale: 'en-US' }
               const child = options.inputDate
-                ? React.createElement(InputDate, { ...props, onValueChange: next => setValue(next) })
+                ? React.createElement(InputDate, { ...props, time: options.time, onValueChange: next => {
+                    window.log.requests.push(next)
+                    if (options.accept !== false) setValue(next)
+                  } })
                 : React.createElement(Calendar, {
                     ...props,
                     onStateChange: (event, detail) => {
@@ -97,8 +100,8 @@ const snapshot = page => page.evaluate(() => {
   const calendar = document.querySelector('a-calendar')
   return {
     value: calendar.value,
-    state: calendar.getAttribute('value'),
-    legacy: calendar.getAttribute('state'),
+    state: calendar.getAttribute('state'),
+    legacy: calendar.getAttribute('value'),
     form: new FormData(document.querySelector('form')).get('date'),
     selected: calendar.querySelector('[data-part="day-cell"][selected]')?.getAttribute('data-date') ?? null,
     filled: calendar.matches(':state(filled)'),
@@ -131,10 +134,42 @@ for (const engine of engines) {
         assert.deepEqual(await page.evaluate(() => window.log.changes), ['2026-10-07', '2026-10-08'])
         assert.equal((await snapshot(page)).legacy, null)
         await page.evaluate(() => window.setValue(''))
-        await page.waitForFunction(() => document.querySelector('a-calendar').getAttribute('value') === '')
+        await page.waitForFunction(() => document.querySelector('a-calendar').getAttribute('state') === '')
         assert.deepEqual(await snapshot(page), { value: null, state: '', legacy: null, form: null, selected: null, filled: false })
       })
     }
+
+    test.fast(`${engine.name()}: ${framework} null Calendar default starts empty and resets without a selection`, async t => {
+      const page = await pageFor(t, engine, framework, { defaultValue: null })
+      const empty = { value: null, state: null, legacy: null, form: null, selected: null, filled: false }
+      assert.deepEqual(await snapshot(page), empty)
+      const date = await page.locator('a-calendar [data-part="day-cell"]:not([disabled])').nth(12).getAttribute('data-date')
+      await pick(page, date); await expectDate(page, date)
+      await page.evaluate(() => document.querySelector('form').reset())
+      await page.waitForFunction(() => document.querySelector('a-calendar').value === null)
+      assert.deepEqual(await snapshot(page), empty)
+    })
+
+    test.fast(`${engine.name()}: ${framework} null keeps Calendar controlled and empty through release`, async t => {
+      const page = await pageFor(t, engine, framework, { value: null, defaultValue: '2026-10-08' })
+      const empty = { value: null, state: '', legacy: null, form: null, selected: null, filled: false }
+      assert.deepEqual(await snapshot(page), empty)
+      const date = await page.locator('a-calendar [data-part="day-cell"]:not([disabled])').nth(12).getAttribute('data-date')
+      await pick(page, date)
+      assert.deepEqual(await snapshot(page), empty)
+      assert.deepEqual(await page.evaluate(() => window.log), { requests: [{ next: date, prev: null, reason: 'user' }], changes: [] })
+      await page.evaluate(() => window.setValue(undefined))
+      await page.waitForFunction(() => !document.querySelector('a-calendar').hasAttribute('state'))
+      assert.deepEqual(await snapshot(page), { ...empty, state: null })
+      await pick(page, date); await expectDate(page, date)
+      await page.evaluate(() => window.setValue(null))
+      await page.waitForFunction(() => document.querySelector('a-calendar').getAttribute('state') === '')
+      assert.deepEqual(await snapshot(page), empty)
+      await pick(page, date)
+      assert.deepEqual(await snapshot(page), empty)
+      await page.evaluate(date => window.setValue(date), date)
+      await expectDate(page, date)
+    })
 
     test.fast(`${engine.name()}: ${framework} controlled Calendar rejects repeated picks without changing its form value`, async t => {
       const page = await pageFor(t, engine, framework, { value: '2026-10-08', accept: false })
@@ -157,7 +192,7 @@ for (const engine of engines) {
       await page.evaluate(() => window.setValue('2026-10-07'))
       await expectDate(page, '2026-10-07')
       await page.evaluate(() => window.setValue(undefined))
-      await page.waitForFunction(() => !document.querySelector('a-calendar').hasAttribute('value'))
+      await page.waitForFunction(() => !document.querySelector('a-calendar').hasAttribute('state'))
       await expectDate(page, '2026-10-07')
       await pick(page, '2026-10-08')
       await expectDate(page, '2026-10-08')
@@ -188,12 +223,27 @@ for (const engine of engines) {
         await expectDate(page, date)
       }
     })
+    test.fast(`${engine.name()}: ${framework} InputDate time mode rejects picks and follows parent updates and clearing`, async t => {
+      const page = await pageFor(t, engine, framework, { inputDate: true, time: true, value: '2026-10-08T09:30', accept: false })
+      await page.waitForFunction(() => document.querySelector('a-calendar').value === '2026-10-08')
+      await pick(page, '2026-10-07')
+      assert.deepEqual(await page.evaluate(() => window.log.requests), ['2026-10-07T09:30'])
+      assert.equal((await snapshot(page)).value, '2026-10-08')
+      assert.equal((await snapshot(page)).form, '2026-10-08T09:30')
+      await page.evaluate(() => window.setValue('2026-10-07T09:30'))
+      await page.waitForFunction(() => document.querySelector('a-calendar').value === '2026-10-07')
+      assert.equal((await snapshot(page)).form, '2026-10-07T09:30')
+      await page.evaluate(() => window.setValue(''))
+      await page.waitForFunction(() => document.querySelector('a-calendar').getAttribute('state') === '')
+      assert.equal((await snapshot(page)).value, null)
+      assert.equal((await snapshot(page)).form, '')
+    })
   }
 
-  for (const attribute of ['value']) {
+  for (const attribute of ['state']) {
     test(`${engine.name()}: raw Calendar uses ${attribute} input and selection after removal or reconnection`, async t => {
       const page = await pageFor(t, engine)
-      await page.setContent(`<form><a-calendar name="date" ${attribute}="2026-10-08" defaultvalue="2026-10-06"><button type="button" data-part="day-cell" data-date="2026-10-07">7</button></a-calendar></form>`)
+      await page.setContent(`<form><a-calendar name="date" ${attribute}="2026-10-08" default-state="2026-10-06"><button type="button" data-part="day-cell" data-date="2026-10-07">7</button></a-calendar></form>`)
       const result = await page.locator('a-calendar').evaluate((calendar, attribute) => {
         const form = calendar.closest('form')
         const read = () => ({ value: calendar.value, form: new FormData(form).get('date') })
@@ -222,7 +272,7 @@ for (const engine of engines) {
       assert.deepEqual(result, {
         initial: date('2026-10-08'), updated: date('2026-10-07'), controlledReset: date('2026-10-07'), controlledRestore: date('2026-10-07'),
         removed: date('2026-10-07'), reconnected: date('2026-10-07'),
-        reset: date('2026-10-06'), restored: date('2026-10-08'), readonly: false, unchanged: true, picked: date('2026-10-07'),
+        reset: date('2026-10-06'), restored: date('2026-10-08'), readonly: true, unchanged: true, picked: date('2026-10-07'),
       })
     })
   }

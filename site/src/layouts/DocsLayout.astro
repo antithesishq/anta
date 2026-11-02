@@ -4,6 +4,7 @@
 // default unlayered tokens override the selected theme.
 import antaStylesheet from '@antadesign/anta/bundle.css?url'
 import '../styles/base.css'
+import '@antadesign/plot/plot.css'
 // Docs-site-only extra icon shapes (generated via Anta's generate-icons
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
 import '../icons/docs-icons.css'
@@ -12,9 +13,10 @@ import { Breadcrumbs, Button, Icon } from '@antadesign/anta'
 import { h } from 'preact'
 import PostHog from '../components/posthog.astro'
 import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
-import { getNavigationGroups } from '../../lib/content/catalog.mjs'
+import { getNavigationGroups, getNavigationTree } from '../../lib/content/catalog.mjs'
+import { addDocReviewMarker } from '../../lib/doc-review-heading.mjs'
 import SidebarSearch from '../components/SidebarSearch'
-import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
+import SidebarNavItem from '../components/SidebarNavItem.astro'
 import SearchDialog from '../components/SearchDialog.tsx'
 import AntaLogo from '../components/AntaLogo'
 import antaPackage from '../../../package.json'
@@ -33,6 +35,8 @@ interface Props {
 
 const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
 const author = Astro.props.author ?? Astro.props.frontmatter?.author
+const content = await Astro.slots.render('default')
+const pageContent = author ? content : addDocReviewMarker(content)
 const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
 const hideToc = Astro.props.hideToc ?? Astro.props.frontmatter?.hideToc ?? false
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
@@ -47,11 +51,6 @@ for (let parentKey = currentPage?.parentKey; parentKey;) {
   parentPages.unshift(parent)
   parentKey = parent.parentKey
 }
-const isCurrent = (href: string) => {
-  const h = href.replace(/\/+$/, '') || '/'
-  return h === path
-}
-
 // Show the version represented by this documentation build. Reading the
 // workspace manifest also lets release previews display the upcoming version
 // before it exists on npm.
@@ -227,7 +226,7 @@ if (hasStructuredBreadcrumbs && title) {
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
     <div class="navigation-progress" aria-hidden="true"></div>
-    <header class="topbar" style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
+    <header class:list={["topbar", { 'has-parent-breadcrumbs': parentPages.length > 0 }]} style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
       <div class="topbar-start">
         <div class="topbar-breadcrumbs">
           <Breadcrumbs
@@ -238,6 +237,7 @@ if (hasStructuredBreadcrumbs && title) {
               {
                 label: [h(Icon, { shape: 'menu', size: 16, className: 'mobile-menu-icon', 'aria-hidden': true }), h(AntaLogo, { size: 16, compact: true }), 'Anta'],
                 href: '/',
+                'aria-label': 'Anta',
                 current: !title,
                 tone: title ? 'brand' : 'neutral',
               },
@@ -301,13 +301,8 @@ if (hasStructuredBreadcrumbs && title) {
           <>
             {group.title && <h4>{group.title}</h4>}
             <menu>
-              {group.pages.map((page) => (
-                <li class={page.path === '/theming/' ? 'theming-nav-item' : undefined}>
-                  <a href={page.path} aria-current={isCurrent(page.path) ? 'page' : undefined}><Icon shape={page.nav.icon} size={18} />{' '}{page.label}</a>
-                  {page.path === '/theming/' && (
-                    <div class="theming-switcher"><ThemeSwitcher client:load /></div>
-                  )}
-                </li>
+              {getNavigationTree(group.pages).map((page) => (
+                <SidebarNavItem page={page} currentPath={path} />
               ))}
             </menu>
           </>
@@ -332,13 +327,7 @@ if (hasStructuredBreadcrumbs && title) {
             data-toc-pending
           />
         )}
-        {!author && (
-          <span class="doc-review-marker" tabindex="0" aria-label="Documentation has not yet been reviewed by a human" data-no-search>
-            ✦
-            <a-tooltip follow placement="top">Documentation has not yet been reviewed by a human.</a-tooltip>
-          </span>
-        )}
-        <slot />
+        <Fragment set:html={pageContent} />
       </main>
       {!hideToc && (
         <aside class="toc-rail">
@@ -347,17 +336,6 @@ if (hasStructuredBreadcrumbs && title) {
       )}
     </div>
     <div class="backdrop" aria-hidden="true"></div>
-
-    <script>
-      document.addEventListener('astro:page-load', () => {
-        const main = document.querySelector('#main-content[data-doc-review="pending"]')
-        const heading = main?.querySelector('h1')
-        const marker = main?.querySelector('.doc-review-marker')
-        if (heading && marker) {
-          heading.append(marker)
-        }
-      })
-    </script>
 
     <script>
       import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'
@@ -412,7 +390,7 @@ if (hasStructuredBreadcrumbs && title) {
       const isMobileBreadcrumb = (target: EventTarget | null) =>
         mobileNavigation.matches
         && target instanceof Element
-        && Boolean(target.closest('.header-breadcrumbs :is(a-button, a[data-anta])'))
+        && Boolean(target.closest('.header-breadcrumbs > :first-child'))
 
       // Capture before ClientRouter handles the breadcrumb's link.
       document.addEventListener('click', (e) => {
@@ -526,6 +504,13 @@ if (hasStructuredBreadcrumbs && title) {
           const linkPath = new URL(a.href).pathname.replace(/\/+$/, '') || '/'
           if (linkPath === here) a.setAttribute('aria-current', 'page')
           else a.removeAttribute('aria-current')
+        }
+        for (const branch of document.querySelectorAll<HTMLElement>('[data-nav-branch]')) {
+          const link = branch.querySelector<HTMLAnchorElement>(':scope > a')!
+          const children = branch.querySelector<HTMLUListElement>(':scope > .nav-children')!
+          const active = branch.querySelector('a[aria-current="page"]')
+          children.hidden = !active
+          link.toggleAttribute('data-active-parent', Boolean(active && active !== link))
         }
         syncSidebarSearch()
       })
@@ -689,28 +674,10 @@ if (hasStructuredBreadcrumbs && title) {
     margin-block-start: 12px;
   }
 
-  .sidebar menu li.theming-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5ch;
-    min-width: 0;
-  }
-  .sidebar menu li.theming-nav-item > a {
-    flex: 0 0 auto;
-    min-width: 0;
-  }
-  .theming-switcher {
-    flex: 1;
-    min-width: 0;
-  }
-  .theming-switcher :global(.theming-select::part(field)) {
-    background: transparent;
-  }
-
   /* Anta's global stylesheet already strips list-style, padding, and
      margin from `<menu>` and its items, so the sidebar only has to
      style its links. */
-  .sidebar menu li a {
+  .sidebar :global(menu li a) {
     display: flex;
     align-items: center;
     gap: 0.75ch;
@@ -726,33 +693,34 @@ if (hasStructuredBreadcrumbs && title) {
     text-decoration: none;
     transition: color 160ms ease-out;
   }
-  .sidebar menu li a > a-icon {
+  .sidebar :global(menu li a > a-icon) {
     color: var(--text-4-brand);
     flex-shrink: 0;
     transition: color 160ms ease-out;
   }
-  .sidebar menu li a > .icon-spacer {
+  .sidebar :global(menu li a > .icon-spacer) {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
   }
-  .sidebar menu li a:hover,
-  .sidebar menu li a[aria-current="page"] {
+  .sidebar :global(menu li a:hover),
+  .sidebar :global(menu li a[aria-current="page"]),
+  .sidebar :global(menu li a[data-active-parent]) {
     color: var(--text-1);
     text-decoration: none;
   }
   /* Sidebar navigation uses the same dotted underline as the in-page TOC. */
-  .sidebar menu li a:hover {
+  .sidebar :global(menu li a:hover) {
     text-decoration: underline dotted;
     text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;
   }
-  .sidebar menu li a:hover > a-icon,
-  .sidebar menu li a[aria-current="page"] > a-icon {
+  .sidebar :global(menu li a:hover > a-icon),
+  .sidebar :global(menu li a[aria-current="page"] > a-icon) {
     color: var(--text-1-brand);
   }
-  .sidebar a:focus-visible {
+  .sidebar :global(a:focus-visible) {
     outline: 1px solid var(--focus-ring);
     outline-offset: 2px;
   }
@@ -970,13 +938,22 @@ if (hasStructuredBreadcrumbs && title) {
       display: none;
     }
 
-    .topbar :global(.header-breadcrumbs > :not(:first-child)) {
+    .topbar:not(.has-parent-breadcrumbs) :global(.header-breadcrumbs > :not(:first-child)) {
       display: none;
     }
 
     .topbar-start {
       width: auto;
       min-width: 0;
+    }
+
+    .topbar.has-parent-breadcrumbs .topbar-start {
+      width: min(190px, 45vw);
+      flex-shrink: 0;
+    }
+
+    .topbar.has-parent-breadcrumbs :global(.header-breadcrumbs > :first-child > :not(.mobile-menu-icon)) {
+      display: none;
     }
 
     .content {

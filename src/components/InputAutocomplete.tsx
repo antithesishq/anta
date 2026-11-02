@@ -140,6 +140,7 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
         {...rest}
         value={text}
         defaultValue={defaultValue}
+        data-anta-value-mode={controlled ? 'controlled' : 'uncontrolled'}
         // `data-menu-search` makes the menu treat THIS anchor as its combobox
         // field (see a-menu's #comboAnchor). The ARIA combobox contract: the field
         // is the `combobox` controlling a `listbox` (the Menu below), with the

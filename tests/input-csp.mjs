@@ -20,7 +20,7 @@ const nodePaths = consumerRoot ? [resolve(consumerRoot, 'node_modules')] : [reso
 const jsxAlias = consumerRoot ? {} : { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime') }
 const preactCompat = consumerRoot ? 'preact/compat' : requireSite.resolve('preact/compat')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
-const browsers = new Map(), assets = new Map(), renderers = new Map(), staticRenderers = new Map(), pageErrors = new WeakMap()
+const browsers = new Map(), assets = new Map(), renderers = new Map(), staticRenderers = new Map(), buttonRenderers = new Map(), pageErrors = new WeakMap()
 let server, origin
 const components = consumerRoot ? "import {Input, Button, ButtonCopy, Tooltip, InputDate, InputAutocomplete, Select, SelectFaceted} from '@antadesign/anta'" :
   `import {Input, Button, ButtonCopy, Tooltip, InputDate, InputAutocomplete, Select, SelectFaceted} from '${source}/index'`
@@ -72,6 +72,23 @@ before(async () => {
     const result = await compile({stdin:{contents:`import React from 'react'; ${components};
       ${react ? "import {renderToString} from 'react-dom/server'" : "import renderToString from 'preact-render-to-string'"};
       ${factory}; export const render = props => renderToString(app(props));
+      export const renderButtonNames = () => {
+        const e=React.createElement,tooltip=e(Tooltip,{},'Help'),empty=[null,false,' ',NaN];
+        const Help=()=>tooltip;
+        const cases={
+          buttonTooltip:e(Button,{icon:'copy'},e(React.Fragment,{},false,tooltip)),
+          buttonCopyHelper:e(Button,{icon:'copy'},e('a-copy',{copy:'Draft'})),
+          copyTooltip:e(ButtonCopy,{copy:'Draft'},e(React.Fragment,{},false,tooltip)),
+          copyTrailingTooltip:e(ButtonCopy,{copy:'Draft',iconPlacement:'trailing'},tooltip),
+          copyTooltipExplicit:e(ButtonCopy,{copy:'Draft','aria-label':'Copy link'},tooltip),
+          buttonEmpty:e(Button,{icon:'copy'},empty),
+          copyEmpty:e(ButtonCopy,{copy:'Draft'},empty),
+          buttonZero:e(Button,{icon:'copy'},0),
+          copyZero:e(ButtonCopy,{copy:'Draft'},0),
+          customTooltipExplicit:e(Button,{icon:'copy','aria-label':'Copy link'},e(Help)),
+        };
+        return Object.fromEntries(Object.entries(cases).map(([name,node])=>[name,renderToString(node)]));
+      };
       import {configure} from '${consumerRoot ? '@antadesign/anta' : source+'/index'}';
       export const renderStatic = () => {
         configure(React.createElement,React.Fragment,{useState:()=>{throw new Error('Static Input must not use hooks')},useLayoutEffect:()=>{throw new Error('Static Input must not use hooks')}});
@@ -83,14 +100,16 @@ before(async () => {
     compiled._compile(result.outputFiles[0].text, compiled.id)
     renderers.set(framework, compiled.exports.render)
     staticRenderers.set(framework,compiled.exports.renderStatic)
+    buttonRenderers.set(framework,compiled.exports.renderButtonNames)
     const client = await compile({stdin:{contents:`import React from 'react'; ${components};
       import {configure} from '${consumerRoot ? '@antadesign/anta' : source+'/index'}';
       ${react ? "import {createRoot, hydrateRoot} from 'react-dom/client'" : "import {render, hydrate} from 'preact'"};
       ${factory}; let root; window.recoverableErrors=[];
       window.hydrateInput = props => { configure(React.createElement,React.Fragment,React,{hydratingEvents:true}); ${react ? "root = hydrateRoot(document.querySelector('#mount'), app(props), {onRecoverableError:e=>window.recoverableErrors.push(e.message)})" : "hydrate(app(props), document.querySelector('#mount'))"} };
       window.renderInput = props => { ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(app(props))" : "render(app(props), document.querySelector('#mount'))"} };
-      window.renderAction = (fieldProps, buttonProps, copy) => window.renderInput({
-        ...fieldProps, trailing:React.createElement(copy ? ButtonCopy : Button,buttonProps),
+      window.renderAction = (fieldProps, buttonProps, copy, tooltip) => window.renderInput({
+        ...fieldProps, trailing:React.createElement(copy ? ButtonCopy : Button,buttonProps,
+          tooltip?React.createElement(React.Fragment,{},false,React.createElement(Tooltip,{},'Help')):undefined),
       });
       window.renderAdornments = () => window.renderInput({
         leading:React.createElement('a-icon',{shape:'search'}),
@@ -165,6 +184,20 @@ test.fast('React and Preact SSR keep rich regions without fixed inline styles', 
     assert.doesNotMatch(html, /style=|<input|<textarea|part=/)
   }
 })
+
+test.fast('React and Preact SSR name tooltip-only buttons and preserve visible zero labels', () => {
+  for(const [framework,render] of buttonRenderers) {
+    const cases=render()
+    for(const name of ['buttonTooltip','buttonCopyHelper','buttonEmpty']) assert.match(cases[name],/aria-label="copy"/,`${framework}: ${name}`)
+    for(const name of ['copyTooltip','copyTrailingTooltip','copyEmpty']) assert.match(cases[name],/aria-label="Copy"/,`${framework}: ${name}`)
+    for(const name of ['copyTooltipExplicit','customTooltipExplicit']) assert.match(cases[name],/aria-label="Copy link"/,`${framework}: ${name}`)
+    for(const name of ['buttonZero','copyZero']) {
+      assert.doesNotMatch(cases[name],/aria-label=/,`${framework}: ${name}`)
+      assert.match(cases[name],/<a-button-label>0<\/a-button-label>/,`${framework}: ${name}`)
+    }
+    for(const name of ['buttonEmpty','copyEmpty']) assert.doesNotMatch(cases[name],/a-button-label/,`${framework}: ${name}`)
+  }
+})
 for (const engine of engines) for (const mode of ['granular','bundle']) {
   const name = `${engine.name()} ${mode}`
   test.fast(`${name}: initial metrics, native modes, and authored ownership`, async t => {
@@ -197,8 +230,8 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     for(const [size,height] of [['small',24],['medium',28],['large',32]]) {
       for(const direct of [false,true]) for(const attrs of ['', 'multiline', 'multiline rows="3"', 'rows="3"']) {
         const multiline=attrs!==''
-        const clear=`<a-button data-anta-icon-only role="button" tabindex="0" size="${size}" data-custom-event="clearrequest" ${direct?'slot="clear"':''}><a-icon shape="x"></a-icon></a-button>`
-        const trailing=`<a-button data-anta-icon-only role="button" ${direct?`slot="trailing" size="${size}"`:''}><a-icon shape="regex"></a-icon></a-button>`
+        const clear=`<a-button role="button" tabindex="0" size="${size}" data-custom-event="clearrequest" ${direct?'slot="clear"':''}><a-icon shape="x"></a-icon></a-button>`
+        const trailing=`<a-button role="button" ${direct?`slot="trailing" size="${size}"`:''}><a-icon shape="regex"></a-icon></a-button>`
         await mount(page,`<a-input size="${size}" value="Draft" ${attrs}>
           <a-icon slot="leading" shape="search"></a-icon>
           ${direct?clear:`<a-input-clear slot="clear">${clear}</a-input-clear>`}
@@ -252,14 +285,14 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.equal(labeled.height,20)
     assert.ok(labeled.width>32)
   })
-  test.fast(`${name}: Anta actions fit by height and text keeps its natural width`,async t=>{
+  test.fast(`${name}: single-icon actions are square and content elements keep natural width`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const [size,height,attrs] of [['small',24,''],['large',32,'rows="3"']]) {
       const actionSize=attrs&&size==='large'?26:height-4
       for(const tag of ['a-button','button','a']) for(const slot of ['clear','trailing']) for(const wrapped of [false,true]) {
         const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
-        for(const [content,iconOnly] of [['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon>',false],['<a-icon shape="search"></a-icon>Find matches',false],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
-          const action=`<${tag} ${extra} ${iconOnly?'data-anta-icon-only':''} ${wrapped?'':`slot="${slot}"`} size="large" data-action data-custom-event="clearrequest">${content}</${tag}>`
+        for(const [content,iconOnly] of [['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon><a-tooltip>Find matches</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches<a-tooltip>Help</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches',true],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['<a-icon shape="search"></a-icon><span>Find matches</span>',false],['<a-icon shape="search"></a-icon><a-icon shape="x"></a-icon>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
+          const action=`<${tag} ${extra} ${wrapped?'':`slot="${slot}"`} size="large" data-action data-custom-event="clearrequest">${content}</${tag}>`
           await mount(page,`<a-input size="${size}" ${attrs} value="Draft">${wrapped?`<a-input-${slot} slot="${slot}">${action}</a-input-${slot}>`:action}</a-input>`)
           const metrics=await page.locator('[data-action]').evaluate(node=>{
             const box=node.getBoundingClientRect(),host=node.closest('a-input'),field=host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect()
@@ -271,8 +304,9 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
           assert.ok(Math.abs(metrics.right-2)<0.05,context)
           assert.ok(metrics.width>=actionSize,context)
           if(iconOnly) assert.equal(metrics.width,actionSize,context)
+          else assert.ok(metrics.width>actionSize,context)
           if(content.includes('Copy')) assert.ok(metrics.paddingRight>2,context)
-          if(content.includes('Find matches')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
+          if(!iconOnly&&content.includes('Find matches')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
         }
       }
     }
@@ -518,15 +552,17 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       const page=await pageFor(t,engine,mode);await register(page,mode)
       await page.addScriptTag({url:`/${framework}.js`,type:'module'})
       for(const size of ['small','medium','large']) for(const href of [undefined,'#after']) {
-        for(const [label,copy] of [[undefined,false],['Copy',false],[undefined,true],['Copy',true]]) {
-          await page.evaluate(({size,href,label,copy})=>renderAction({size},{size:'large',icon:'copy',href,label,copy:'Draft'},copy),{size,href,label,copy});await frames(page)
+        for(const [label,copy,tooltip,ariaLabel] of [[undefined,false],['Copy',false],[undefined,true],['Copy',true],[undefined,false,true],['Copy',false,true],[undefined,true,true],['Copy',true,true],[undefined,true,true,'Copy link'],[undefined,false,true,'Use copy']]) {
+          await page.evaluate(({size,href,label,copy,tooltip,ariaLabel})=>renderAction({size},{size:'large',icon:'copy',href,label,copy:'Draft',...(ariaLabel?{'aria-label':ariaLabel}:{})},copy,tooltip),{size,href,label,copy,tooltip,ariaLabel});await frames(page)
           const metrics=await field(page).evaluate(host=>{
             const node=host.querySelector('[slot="trailing"]').firstElementChild,box=node.getBoundingClientRect(),icon=node.querySelector('a-icon').getBoundingClientRect(),clear=host.querySelector('[slot="clear"] a-button').getBoundingClientRect()
-            return {marked:node.hasAttribute('data-anta-icon-only'),width:box.width,height:box.height,clear:[clear.width,clear.height],paddingRight:parseFloat(getComputedStyle(node).paddingRight),center:(icon.top+icon.bottom-box.top-box.bottom)/2,contained:icon.left>=box.left&&icon.right<=box.right&&icon.top>=box.top&&icon.bottom<=box.bottom}
+            return {ariaLabel:node.getAttribute('aria-label'),width:box.width,height:box.height,clear:[clear.width,clear.height],paddingRight:parseFloat(getComputedStyle(node).paddingRight),center:(icon.top+icon.bottom-box.top-box.bottom)/2,contained:icon.left>=box.left&&icon.right<=box.right&&icon.top>=box.top&&icon.bottom<=box.bottom}
           })
-          const actionSize={small:20,medium:24,large:28}[size],context=JSON.stringify({size,href,label,copy,metrics})
+          const actionSize={small:20,medium:24,large:28}[size],context=JSON.stringify({size,href,label,copy,tooltip,metrics})
           assert.equal(metrics.height,actionSize,context)
-          assert.equal(metrics.marked,label===undefined,context)
+          assert.equal(metrics.ariaLabel,ariaLabel??(label===undefined?(copy?'Copy':'copy'):null),context)
+          const accessibleName=ariaLabel??label??(copy?'Copy':'copy')
+          assert.equal(await field(page).locator('[slot="trailing"]').getByRole('button',{name:accessibleName,exact:true}).count(),1,context)
           assert.deepEqual(metrics.clear,[actionSize,actionSize],context)
           assert.ok(metrics.paddingRight>2,context)
           assert.ok(Math.abs(metrics.center)<0.05&&metrics.contained,context)

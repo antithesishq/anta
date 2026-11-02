@@ -338,7 +338,7 @@
     height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
 
-  /* Anta actions fit the field height; text determines their width.
+  /* Anta actions fit the field height; labeled actions keep their natural width.
      Unmarked native buttons and other custom content keep their own sizing. */
   a-input > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
   a-input > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
@@ -352,9 +352,10 @@
     min-height: 0;
     justify-content: center;
 
-    /* JSX marks known icon-only buttons; raw markup can opt in explicitly.
-       Element-child selectors cannot distinguish an icon from icon + bare text. */
-    &[data-anta-icon-only] { width: var(--_input-action-size); }
+    /* One icon plus optional tooltip or copy helpers is an icon action. */
+    &:has(> a-icon:only-of-type):not(:has(> :not(a-icon, a-tooltip, a-copy))) {
+      width: var(--_input-action-size);
+    }
   }
 
   /* Defaults stay at use sites so inherited and local overrides both win. */

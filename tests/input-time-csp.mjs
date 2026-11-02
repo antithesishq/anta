@@ -38,7 +38,7 @@ async function compile(options) {
 const save=(result,name)=>{for(const file of result.outputFiles)assets.set(`/${name}.${file.path.endsWith('.css')?'css':'js'}`,file.text)}
 before(async()=>{
   for(const mode of ['granular','bundle']) {
-    const entries=['a-input-time','a-input','a-button','a-icon','a-input-date','a-calendar','a-menu','a-menu-item','a-menu-group','a-menu-separator']
+    const entries=['a-input-time','a-input','a-button','a-icon','a-tooltip','a-input-date','a-calendar','a-menu','a-menu-item','a-menu-group','a-menu-separator']
     const contents=mode==='bundle'?`import '${base}/bundle';${consumer?`import '${base}/bundle.css'`:''}`:
       `import '${base}/tokens.css';import '${base}/reset.css';${entries.map(e=>`import '${base}/elements/${e}';`).join('')}`
     save(await compile({stdin:{contents,resolveDir},outfile:`${mode}.js`,format:'esm',alias:{react:consumer?'preact/compat':requireSite.resolve('preact/compat')}}),mode)
@@ -365,6 +365,24 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await page.mouse.move(950,750);assert.equal(await host(page).locator('[part=trailing]').evaluate(el=>getComputedStyle(el).opacity),'0.6')
     await segment(page,'hour').focus();assert.equal(await host(page).locator('[part=trailing]').evaluate(el=>getComputedStyle(el).opacity),'1')
     assert.equal(await host(page).locator('[part=field]').evaluate(el=>getComputedStyle(el).transitionDuration),'0s')
+  })
+  test.fast(`${name}: single-icon actions are square and content elements keep natural width`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    for(const size of ['small','medium','large']) for(const tag of ['a-button','button','a']) for(const wrapped of [false,true]) {
+      const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
+      for(const text of ['', 'Find matches', '<a-button-label>Find matches</a-button-label>', '<span>Find matches</span>']) {
+        const action=`<${tag} ${extra} ${wrapped?'':'slot="trailing"'} size="large" data-action><a-icon shape="search"></a-icon>${text}<a-tooltip>Help</a-tooltip></${tag}>`
+        await mount(page,`<a-input-time size="${size}" locale="en-GB">${wrapped?`<a-input-time-trailing slot="trailing">${action}</a-input-time-trailing>`:action}</a-input-time>`)
+        const metrics=await page.locator('[data-action]').evaluate(node=>{
+          const box=node.getBoundingClientRect()
+          return {width:box.width,height:box.height,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}
+        })
+        const actionSize={small:20,medium:24,large:28}[size],context=JSON.stringify({size,tag,wrapped,text,metrics})
+        assert.equal(metrics.height,actionSize,context)
+        if(text.startsWith('<')) assert.ok(metrics.width>actionSize&&metrics.scrollWidth<=metrics.clientWidth,context)
+        else assert.equal(metrics.width,actionSize,context)
+      }
+    }
   })
   test(`${name}: InputDate time composition commits on blur under strict CSP`,async t=>{
     const page=await pageFor(t,engine,mode,'',{menu:true});await register(page,mode);await client(page,'Preact');await page.evaluate(()=>showDate());await frames(page)

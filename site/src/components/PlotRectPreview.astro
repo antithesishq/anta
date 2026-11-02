@@ -1,6 +1,6 @@
 ---
 interface Props {
-  example: 'heatmap' | 'intervals' | 'sized' | 'history'
+  example: 'heatmap' | 'intervals' | 'sized' | 'history' | 'bounds' | 'bands' | 'background'
 }
 const { example } = Astro.props
 ---
@@ -8,7 +8,9 @@ const { example } = Astro.props
 <a-plot
   data-rect-example={example}
   aria-label={{ heatmap: 'Categorical activity heatmap', intervals: 'Task durations with explicit bounds',
-    sized: 'Rectangles with fixed pixel sizes', history: 'Run history with passed and failed lanes over time' }[example]}
+    sized: 'Rectangles with fixed pixel sizes', history: 'Run history with passed and failed lanes over time',
+    bounds: 'Rectangles positioned by opposite corners', bands: 'Fixed-width rectangles aligned within category bands',
+    background: 'Background region spanning the plot width' }[example]}
 ></a-plot>
 
 <script>

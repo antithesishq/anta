@@ -42,7 +42,8 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
   /** Size variant. small=24px, medium=28px, large=32px tall.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
-  /** Controlled value — 24-hour `"HH:mm"`. Pair with `onValueChange`. */
+  /** Controlled value — 24-hour `"HH:mm"`. Pair with `onValueChange`. Reset and
+   * restoration preserve it; releasing control retains the current time. */
   value?: string
   /** Initial value for the uncontrolled case (24-hour `"HH:mm"`). */
   defaultValue?: string
@@ -185,6 +186,7 @@ export const InputTime = ({
     <a-input-time
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
+      data-anta-value-mode={value !== undefined ? 'controlled' : 'uncontrolled'}
       value={value}
       defaultvalue={defaultValue}
       locale={locale}

@@ -168,16 +168,12 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
 }
 
 .doc-review-marker {
-  display: inline-flex;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  margin-inline-start: 0.35em;
   color: var(--text-1-warning);
-  cursor: help;
-  vertical-align: baseline;
 }
-.doc-review-marker:focus-visible {
+[data-doc-review-heading] {
+  cursor: help;
+}
+[data-doc-review-heading]:focus-visible {
   outline: 2px solid var(--text-1-warning);
   outline-offset: 3px;
   border-radius: 2px;
@@ -192,7 +188,8 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
 }
 
 /* Anta's reset owns prose rhythm; the site owns `hr` and Expressive Code spacing. */
-hr, .expressive-code { margin: 0 0 1.5em; }
+hr:not(:where(a-tooltip *)),
+.expressive-code { margin: 0 0 1.5em; }
 
 /* Proximity: a paragraph that introduces a <Preview> hugs it (caption-to-
    figure), so the prose groups with the example it describes rather than the

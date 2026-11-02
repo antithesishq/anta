@@ -104,7 +104,7 @@ test('Autocomplete CI gate selects its source and test dependencies without unre
     for (const [path,wanted] of [
       ['src/components/InputAutocomplete.tsx',true],['src/components/select-options.tsx',true],
       ['src/components/Input.tsx',true],['src/elements/a-menu.ts',true],
-      ['src/anta_helpers.ts',true],['src/elements/input-trailing-actions.ts',true],
+      ['src/anta_helpers.ts',true],['src/button-content.ts',true],['src/elements/input-trailing-actions.ts',true],
       ['tests/input-autocomplete-csp.mjs',true],['tests/input-autocomplete-types.fixture.tsx',true],
       ['src/components/Calendar.tsx',false],['docs/components/input-autocomplete.md',false],
     ]) {
@@ -131,7 +131,7 @@ test('Panel CI gate selects its source and test dependencies without unrelated c
     for (const [path,wanted] of [
       ['src/components/Panel.tsx',true],['src/elements/a-panel.css',true],
       ['src/elements/a-panel.ts',true],['src/elements/panel-focus.ts',true],
-      ['src/anta_helpers.ts',true],['src/native-event-props.ts',true],
+      ['src/anta_helpers.ts',true],['src/button-content.ts',true],['src/native-event-props.ts',true],
       ['tests/panel-csp.mjs',true],['tests/panel-package.mjs',true],
       ['src/elements/a-button.ts',true],['src/elements/a-icon.css',true],
       ['src/elements/a-icon.shapes.css',true],['src/elements/a-input.ts',true],
@@ -166,7 +166,7 @@ test('Slider CI gate selects its source and test dependencies without unrelated 
     for (const [path,wanted] of [
       ['src/components/Slider.tsx',true],['src/elements/a-slider.css',true],
       ['src/elements/a-slider.ts',true],['src/elements/shadow-aria.ts',true],
-      ['src/anta_helpers.ts',true],['src/native-event-props.ts',true],
+      ['src/anta_helpers.ts',true],['src/button-content.ts',true],['src/native-event-props.ts',true],
       ['tests/slider-csp.mjs',true],['tests/slider-projection.mjs',true],
       ['src/components/Calendar.tsx',false],['docs/components/slider.md',false],
     ]) {
@@ -209,5 +209,51 @@ test('Selection CI gate covers Calendar, InputDate, RadioGroup, Tabs, and shared
     }
     const manual=parse(await readFile(new URL('../.github/workflows/component-tests.yml',import.meta.url),'utf8'))
     assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('selection'))
+  } finally {await rm(directory,{recursive:true})}
+})
+
+test('Plot CI gate includes input, measurement, focus, and copy dependencies', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-plot-gate-'))
+  const git = args => execFileSync('git', args, {cwd:directory, encoding:'utf8'})
+  try {
+    git(['init','-b','fixture']); git(['config','user.name','Fixture']); git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection = workflow.jobs.build.steps.find(step => step.id === 'component-tests').run
+    for (const [path, selected] of [
+      ['src/elements/capture-input.ts',true], ['src/box-observation.ts',true],
+      ['src/elements/focus.ts',true], ['src/elements/copy-behavior.ts',true],
+      ['src/elements/key-activation.ts',true], ['src/components/Calendar.tsx',false],
+    ]) {
+      const base = git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true})
+      await writeFile(join(directory,path),'fixture')
+      git(['add',path]); git(['commit','-m',path])
+      const output = join(directory,'outputs'); await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'), new RegExp(`^plot=${selected}$`,'m'), path)
+    }
+  } finally { await rm(directory,{recursive:true}) }
+})
+
+test('Stickers CI gate includes shipped tokens and component workflow dependencies', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-stickers-gate-'))
+  const git = args => execFileSync('git', args, {cwd:directory, encoding:'utf8', stdio:['ignore','pipe','pipe']})
+  try {
+    git(['init','-b','fixture']);git(['config','user.name','Fixture']);git(['config','user.email','fixture@example.test'])
+    git(['commit','--allow-empty','-m','Baseline'])
+    const selection = workflow.jobs.build.steps.find(step=>step.id==='component-tests').run
+    for (const [path,wanted] of [
+      ['src/tokens.css',true],['src/reset.css',true],['src/theme-antune.css',true],['src/theme-antithesis.css',true],
+      ['.github/workflows/component-tests.yml',true],['stickers/src/elements/a-sticker-animated.ts',true],
+      ['site/src/content/packages/plot/index.mdx',false],
+    ]) {
+      const base = git(['rev-parse','HEAD']).trim()
+      await mkdir(join(directory,path,'..'),{recursive:true})
+      await writeFile(join(directory,path),'fixture')
+      git(['add',path]);git(['commit','-m',path])
+      const output=join(directory,'outputs');await writeFile(output,'')
+      execFileSync('bash',['-e','-c',selection],{cwd:directory,env:{...process.env,TEST_BASE_SHA:base,GITHUB_OUTPUT:output}})
+      assert.match(await readFile(output,'utf8'),new RegExp(`^stickers=${wanted}$`,'m'),path)
+    }
   } finally {await rm(directory,{recursive:true})}
 })

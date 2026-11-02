@@ -55,5 +55,12 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 ## Packages
 
 - [Plot](./packages/plot.md)
+- [Scatter](./packages/plot/scatter.md)
+- [Line](./packages/plot/line.md)
+- [Bar](./packages/plot/bar.md)
+- [Area](./packages/plot/area.md)
+- [Rect](./packages/plot/rect.md)
+- [Rule](./packages/plot/rule.md)
+- [Custom](./packages/plot/custom.md)
 - [Table](./packages/table.md)
 - [Stickers](./packages/stickers.md)

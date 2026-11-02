@@ -54,7 +54,8 @@ remain visible and are skipped during keyboard navigation.
 Pass `value` and update it through `onValueChange` when another part of your
 application needs the text. Reset controlled text with `''`. For a field that
 keeps its own text, use `defaultValue`; a form reset restores that default without
-opening an unfocused field's suggestions or moving focus.
+opening an unfocused field's suggestions or moving focus. Controlled text stays
+unchanged through form reset and browser restoration; update `value` to reset it.
 
 ```tsx
 const [value, setValue] = useState('React')

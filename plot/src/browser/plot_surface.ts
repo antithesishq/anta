@@ -12,58 +12,6 @@ import type {
 } from '../core/presentation/surface'
 export type { PlotSurfacePresentation, PlotSurfaceCanvases, PlotSurfaceEventMap } from '../core/presentation/surface'
 
-// Light-DOM layout travels with each surface, including across document adoption.
-const SURFACE_STYLES = `
-a-plot-surface {
-    display: block;
-    position: relative;
-    width: 100%;
-    height: 100%;
-    /* Anta's theme classes also set typography; keep the plot's inherited font. */
-    font: inherit;
-    font-feature-settings: inherit;
-}
-
-a-plot-surface > a-box {
-    display: block;
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-a-plot-surface > canvas {
-    display: block;
-    position: absolute;
-    left: 0;
-    top: 0;
-}
-
-a-plot-surface > a-capture {
-    display: block;
-    position: absolute;
-}
-
-a-plot-surface > a-capture[pointer-capture] {
-    user-select: none;
-}
-
-a-plot-surface .plot-zoom-rectangle {
-    position: absolute;
-    pointer-events: none;
-    box-sizing: border-box;
-    border: 1px solid var(--border-3-brand);
-    background: color-mix(in oklch, var(--text-1-brand) 12%, transparent);
-}
-
-a-plot-surface > .plot-highlight {
-    pointer-events: none;
-}
-
-a-plot-surface [hidden] {
-    display: none !important;
-}
-`
-
 const CAPTURE_ATTRIBUTES = [
     'wheel-capture', 'wheel-modifier', 'wheel-activation', 'wheel-delay', 'wheel-tolerance', 'wheel-reset-on-move',
     'pointer-capture', 'pointer-buttons', 'pointer-threshold', 'pointer-modifier',
@@ -91,7 +39,6 @@ export function create_plot_surface_element(): CustomElementConstructor {
     return class PlotSurfaceElement extends HTMLElement implements APlotSurfaceElement {
         static observedAttributes = [...CAPTURE_ATTRIBUTES, 'presentation', 'cursor', 'canvas-owner', 'input-scope']
 
-        readonly #styles: HTMLStyleElement
         readonly #box: ABoxElement
         readonly canvas: HTMLCanvasElement
         readonly highlight: HTMLCanvasElement
@@ -122,8 +69,6 @@ export function create_plot_surface_element(): CustomElementConstructor {
         constructor() {
             super()
             const doc = this.ownerDocument
-            this.#styles = doc.createElement('style')
-            this.#styles.textContent = SURFACE_STYLES
             this.#box = doc.createElement('a-box') as ABoxElement
             this.#box.setAttribute('observe', 'all')
             this.canvas = doc.createElement('canvas')
@@ -140,7 +85,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.capture.append(this.#rectangle)
             this.#menuAnchor = doc.createElement('span')
             this.#menuAnchor.tabIndex = 0
-            this.#menuAnchor.style.cssText = 'position:absolute;inset:0;pointer-events:none'
+            this.#menuAnchor.className = 'plot-menu-anchor'
             this.#menuAnchor.setAttribute('role', 'group')
             this.#menuAnchor.setAttribute('aria-label', 'Plot zoom controls. Press Shift+F10 to open the zoom menu.')
             this.#menu = doc.createElement('a-menu') as AMenuElement
@@ -299,7 +244,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 }
             }, { signal })
             if (this.#box.parentNode !== this) {
-                this.append(this.#styles, this.#box, this.canvas, this.highlight, this.capture,
+                this.append(this.#box, this.canvas, this.highlight, this.capture,
                     this.#menuAnchor, this.#menu)
             }
 

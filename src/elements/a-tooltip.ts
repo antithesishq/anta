@@ -1,5 +1,6 @@
 import { HTMLElementBase, anchorRect, isMenuOpen, isInsideOpenMenu } from '../anta_helpers'
 import { debounce } from 'es-toolkit'
+import { CONTAINED_EVENT_TYPES, createPropagationStopper, isContainedEvent } from '../event-containment'
 import './a-tooltip.css'
 
 /** Gap (px) the bubble keeps from the cursor / anchor / viewport edge. */
@@ -207,7 +208,13 @@ export class ATooltipElement extends HTMLElementBase {
   // Observe `delay` so changing it at runtime — e.g. the docs playground
   // patches the attribute on the live element — rebuilds the show debounce
   // with the new value instead of keeping the one captured at setup.
-  static observedAttributes = ['delay']
+  static observedAttributes = ['delay', 'contain-events']
+
+  #stopPropagation = createPropagationStopper(this)
+
+  #setNativeContainment(enabled: boolean) {
+    this.#stopPropagation(enabled ? CONTAINED_EVENT_TYPES : [])
+  }
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */
   private container!: HTMLDivElement
@@ -283,6 +290,7 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    this.#setNativeContainment(this.getAttribute('contain-events') === 'native')
     const parent = this.parentElement
     if (!parent) return
     this.anchor = parent
@@ -300,6 +308,7 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    this.#setNativeContainment(false)
     this.cleanup()
     const doc = this.#connectedDocument
     if (this.anchor && doc) {
@@ -325,6 +334,7 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   attributeChangedCallback(name: string) {
+    if (name === 'contain-events') this.#setNativeContainment(this.isConnected && this.getAttribute(name) === 'native')
     // `delay` is baked into the debounce, so rebuild it when the attribute
     // changes (only meaningful once listeners are wired).
     if (name === 'delay' && this.listening) this.makeDebouncedShow()
@@ -341,7 +351,7 @@ export class ATooltipElement extends HTMLElementBase {
 
 
   get #isInteractive(): boolean {
-    return this.hasAttribute('interactive')
+    return this.hasAttribute('interactive') || this.hasAttribute('contain-events')
   }
 
   /** Pinned under the anchor (no cursor-following) — the DEFAULT. Following the
@@ -359,6 +369,10 @@ export class ATooltipElement extends HTMLElementBase {
 
   get #prefersLeft(): boolean {
     return this.getAttribute('placement') === 'left'
+  }
+
+  get #prefersRight(): boolean {
+    return this.getAttribute('placement') === 'right'
   }
 
   get #delay(): number {
@@ -450,7 +464,10 @@ export class ATooltipElement extends HTMLElementBase {
       // overflow, so consume the element's read-only UI-thread measurement first.
       if (reportsTruncation(target)) return target.isTruncated
       if (target.clientWidth === 0 && target.clientHeight === 0) return false
-      return target.scrollWidth - target.clientWidth > 1 || target.scrollHeight - target.clientHeight > 1
+      if (target.scrollWidth - target.clientWidth > 1) return true
+      // Tight line heights can produce vertical font overflow without an ellipsis.
+      if (this.view.getComputedStyle(target).whiteSpace === 'nowrap') return false
+      return target.scrollHeight - target.clientHeight > 1
     })
   }
 
@@ -521,6 +538,11 @@ export class ATooltipElement extends HTMLElementBase {
     return below + boxHeight > vh ? above : below
   }
 
+  private flipHorizontal(before: number, after: number, boxWidth: number, vw: number, preferRight: boolean): number {
+    if (preferRight) return after + boxWidth <= vw - MARGIN ? after : before
+    return before >= MARGIN ? before : after
+  }
+
   /** Clamp a candidate (left, top) into the viewport and write it as the
    *  container's transform — the single place the transform is set. */
   private place(left: number, top: number, boxWidth: number, boxHeight: number, vw: number, vh: number) {
@@ -538,11 +560,10 @@ export class ATooltipElement extends HTMLElementBase {
       const a = anchorRect(this.anchor)
       const box = this.container.getBoundingClientRect()
       const { innerWidth: vw, innerHeight: vh } = this.view
-      if (this.#prefersLeft) {
-        // `left` means centered beside the anchor. Flip to its right when the
-        // preferred side would clip, then clamp vertically at viewport edges.
-        const preferredLeft = a.left - box.width - MARGIN
-        const left = preferredLeft >= MARGIN ? preferredLeft : a.right + MARGIN
+      if (this.#prefersLeft || this.#prefersRight) {
+        const before = a.left - box.width - MARGIN
+        const after = a.right + MARGIN
+        const left = this.flipHorizontal(before, after, box.width, vw, this.#prefersRight)
         const top = a.top + (a.height - box.height) / 2
         this.place(left, top, box.width, box.height, vw, vh)
         return
@@ -559,9 +580,10 @@ export class ATooltipElement extends HTMLElementBase {
       if (!this.shown && !this.fading) return
       const box = this.container.getBoundingClientRect()
       const { innerWidth: vw, innerHeight: vh } = this.view
-      if (this.#prefersLeft) {
-        const preferredLeft = e.clientX - box.width - MARGIN
-        const left = preferredLeft >= MARGIN ? preferredLeft : e.clientX + CURSOR_SIZE
+      if (this.#prefersLeft || this.#prefersRight) {
+        const before = e.clientX - box.width - MARGIN
+        const after = e.clientX + CURSOR_SIZE
+        const left = this.flipHorizontal(before, after, box.width, vw, this.#prefersRight)
         this.place(left, e.clientY - box.height / 2, box.width, box.height, vw, vh)
         return
       }
@@ -631,9 +653,9 @@ export class ATooltipElement extends HTMLElementBase {
       this.container.showPopover()
       this.#globalDocument = this.doc
       // A fixed-position popover doesn't scroll with the page, so dismiss
-      // on any scroll (capture catches nested scroll containers too) rather
+      // on external scroll (capture catches nested scroll containers too) rather
       // than leaving the bubble orphaned over empty space.
-      this.view.addEventListener('scroll', this.hide, { capture: true, passive: true })
+      this.view.addEventListener('scroll', this.onScroll, { capture: true, passive: true })
       this.doc.addEventListener('keydown', this.onKeyDown, true)
       // Follow the cursor for the whole time it's shown — including after the
       // pointer has left the anchor (close pending) AND through the exit fade
@@ -655,6 +677,14 @@ export class ATooltipElement extends HTMLElementBase {
       this.pendingPosition = undefined
       initialPosition()
     }
+  }
+
+  // Native shadow scrolls stay in their root; slotted or forwarded scrolls can reach the document.
+  private isInternalScroll = (event: Event) =>
+    this.#isInteractive && event.composedPath().includes(this)
+
+  private onScroll = (event: Event) => {
+    if (!this.isInternalScroll(event)) this.hide()
   }
 
   hide = () => {
@@ -679,7 +709,7 @@ export class ATooltipElement extends HTMLElementBase {
     if (this.fadeTimer !== undefined) { clearTimeout(this.fadeTimer); this.fadeTimer = undefined }
     this.fading = false
     const doc = this.#globalDocument
-    doc?.defaultView?.removeEventListener('scroll', this.hide, { capture: true })
+    doc?.defaultView?.removeEventListener('scroll', this.onScroll, { capture: true })
     doc?.removeEventListener('keydown', this.onKeyDown, true)
     if (this.docMoveBound) {
       doc?.removeEventListener('mousemove', this.onDocMove)
@@ -816,7 +846,8 @@ export class ATooltipElement extends HTMLElementBase {
       }
     }
 
-    const onLeave = () => {
+    const onLeave = (event?: Event) => {
+      if (event?.type === 'scroll' && this.isInternalScroll(event)) return
       this.debouncedShow?.cancel()
       anchor.removeEventListener('pointermove', onPointerMove)
       anchor.removeEventListener('pointerleave', onLeave)
@@ -891,7 +922,7 @@ export class ATooltipElement extends HTMLElementBase {
     }
     const cancelPress = () => { clearPressTimer(); detachPress() }
     const onPointerDown = (e: PointerEvent) => {
-      if (e.pointerType === 'mouse') return // mouse uses the hover path above
+      if (e.pointerType === 'mouse' || isContainedEvent(e, anchor)) return
       clearPressTimer()
       pressStart = { x: e.clientX, y: e.clientY }
       anchor.addEventListener('pointermove', onPressMove)

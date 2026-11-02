@@ -18,7 +18,10 @@ const resolveDir = consumer ?? process.cwd(), base = consumer ? '@antadesign/ant
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
 const assets = new Map(), renderers = new Map(), browsers = new Map()
 const compareRef=process.env.ANTA_SLIDER_COMPARE_REF
-let server, origin
+const initialProps=(controlled,range=false)=>controlled
+  ? {value:range?[20,70]:0,defaultValue:range?[10,90]:70}
+  : {defaultValue:range?[20,70]:35}
+let server, origin, referenceDefaultAttribute
 async function compile(options) {
   const result = await build({absWorkingDir:resolveDir,bundle:true,write:false,metafile:true,nodePaths:[resolve(resolveDir,'node_modules'),resolve('site/node_modules')],target:'es2022',...options})
   if (consumer) {
@@ -43,6 +46,8 @@ before(async () => {
     save(await compile({stdin:{contents,resolveDir},outfile:`${mode}.js`,format:'esm',alias:{react:consumer?'preact/compat':requireSite.resolve('preact/compat')}}),mode)
   }
   if(compareRef && !consumer) {
+    const reference=execFileSync('git',['show',`${compareRef}:src/elements/a-slider.ts`],{encoding:'utf8'})
+    referenceDefaultAttribute=reference.includes("'default-value'")?'default-value':'defaultvalue'
     const original=await compile({stdin:{contents:`import '${base}/tokens.css';import '${base}/reset.css';import '${base}/elements/a-slider'`,resolveDir},outfile:'original.js',format:'esm',alias:{react:requireSite.resolve('preact/compat')},plugins:[{name:'original',setup(b){b.onLoad({filter:/\/src\/.*\.(ts|tsx|css)$/},({path})=>({contents:execFileSync('git',['show',`${compareRef}:${relative(process.cwd(),path)}`],{encoding:'utf8'}),loader:path.endsWith('.css')?'css':path.endsWith('.tsx')?'tsx':'ts'}))}}]})
     save(original,'original')
   }
@@ -63,6 +68,7 @@ before(async () => {
       const commit=node=>{${react?"root??=createRoot(document.querySelector('#mount'));root.render(node)":"render(node,document.querySelector('#mount'))"}};
       window.hydrateSlider=initial=>{props=initial;configure(h,React.Fragment,React,{hydratingEvents:true});${react?"root=hydrateRoot(document.querySelector('#mount'),app({...handlers(),...props}),{onRecoverableError:e=>recoverableErrors.push(e.message)})":"hydrate(app({...handlers(),...props}),document.querySelector('#mount'))"}};
       window.updateSlider=updates=>{props={...props,...updates};commit(app({...handlers(),...props}))};
+      window.releaseSlider=()=>{delete props.value;commit(app({...handlers(),...props}))};
       window.refreshCallbacks=()=>{version++;updateSlider({})};
     `,resolveDir},outfile:`${framework}.js`,format:'esm',jsx:'automatic',jsxImportSource:'@antadesign/anta',alias,define:{'process.env.NODE_ENV':'"production"'}}),framework)
   }
@@ -70,10 +76,10 @@ before(async () => {
   assets.set('/fixture.css',`body{margin:40px;font:14px/20px system-ui}a-slider{width:260px}.consumer::part(thumb){border-radius:3px}.consumer::part(fill){background:rgb(1,2,3)}.marker{--slider-marker-position:50%}.marker-start{--slider-marker-position:0%}.marker-end{--slider-marker-position:100%}.css-rtl{direction:rtl}`)
   server=createServer((req,res)=>{
     const url=new URL(req.url,'http://localhost'),mode=url.searchParams.get('mode')??'granular',framework=url.searchParams.get('framework')??'React'
-    const props=url.searchParams.has('controlled')?{value:0,defaultValue:70}:{defaultValue:35}
+    const props=initialProps(url.searchParams.has('controlled'),url.searchParams.has('range'))
     res.setHeader('Content-Security-Policy',url.searchParams.has('compare')?policy.replace("style-src 'self'","style-src 'self' 'unsafe-inline'"):policy)
     res.setHeader('Content-Type',`${url.pathname.endsWith('.js')?'text/javascript':url.pathname.endsWith('.css')?'text/css':'text/html'}; charset=utf-8`)
-    res.end(assets.get(url.pathname)??`<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><form id="form"><input id="before" aria-label="Before"><main id="mount">${url.searchParams.has('raw')?'<a-slider id="slider" defaultvalue="35" tabindex="0" aria-label="Volume" name="volume"><span slot="label">Volume</span></a-slider>':renderers.get(framework)(props)}</main><input id="after" aria-label="After"></form>`)
+    res.end(assets.get(url.pathname)??`<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><form id="form"><input id="before" aria-label="Before"><main id="mount">${url.searchParams.has('raw')?'<a-slider id="slider" default-value="35" tabindex="0" aria-label="Volume" name="volume"><span slot="label">Volume</span></a-slider>':renderers.get(framework)(props)}</main><input id="after" aria-label="After"></form>`)
   })
   await new Promise(r=>server.listen(0,'127.0.0.1',r));origin=`http://127.0.0.1:${server.address().port}`
   for (const engine of engines) browsers.set(engine,await engine.launch({headless:true,...(engine===chromium?{channel:process.env.ANTA_SLIDER_CHROMIUM_EXECUTABLE?undefined:process.env.CAPTURE_TEST_BROWSER_CHANNEL||undefined,executablePath:process.env.ANTA_SLIDER_CHROMIUM_EXECUTABLE||undefined}:{})}))
@@ -82,18 +88,18 @@ before(async () => {
 after(async()=>{await Promise.all([...browsers.values()].map(b=>b.close()));if(server)await new Promise(r=>server.close(r))})
 const settled=page=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))
 const value=page=>page.locator('#slider').evaluate(s=>s.value)
-async function pageFor(t,engine,mode,framework,controlled=false,upgrade=true) {
+async function pageFor(t,engine,mode,framework,controlled=false,upgrade=true,range=false) {
   const page=await browsers.get(engine).newPage();page.setDefaultTimeout(7000)
   const errors=[];page.on('pageerror',e=>errors.push(e.message))
-  const response=await page.goto(`${origin}/?mode=${mode}&framework=${framework??'React'}${controlled?'&controlled':''}${framework?'':'&raw'}`)
+  const response=await page.goto(`${origin}/?mode=${mode}&framework=${framework??'React'}${controlled?'&controlled':''}${range?'&range':''}${framework?'':'&raw'}`)
   assert.equal(response.headers()['content-security-policy'],policy)
   t.after(async()=>{try{assert.deepEqual(errors,[]);assert.deepEqual(await page.evaluate(()=>recoverableErrors),[]);assert.deepEqual(await page.evaluate(()=>violations),[])}finally{await page.close()}})
   if(!upgrade)return page
-  await page.evaluate(async({mode,framework,controlled})=>{
+  await page.evaluate(async({mode,framework,props})=>{
     window.originalSlider=document.querySelector('#slider');window.originalLabel=originalSlider.firstElementChild;
     await import(`/${mode}.js`)
-    if(framework){await import(`/${framework}.js`);hydrateSlider(controlled?{value:0,defaultValue:70}:{defaultValue:35})}
-  },{mode,framework,controlled})
+    if(framework){await import(`/${framework}.js`);hydrateSlider(props)}
+  },{mode,framework,props:initialProps(controlled,range)})
   await settled(page)
   assert.equal(await page.evaluate(()=>originalSlider===document.querySelector('#slider')&&originalLabel===originalSlider.firstElementChild),true)
   return page
@@ -107,7 +113,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     assert.deepEqual(initial,{styles:0,control:'relative',height:28})
     const result=await page.evaluate(()=>{
       const s=document.querySelector('#slider'),form=document.querySelector('form')
-      s.setAttribute('defaultvalue','70 20');s.setAttribute('value-prefix','$');s.setAttribute('value-suffix','%');s.setAttribute('value-display','thumb');s.className='consumer'
+      s.setAttribute('default-value','70 20');s.setAttribute('value-prefix','$');s.setAttribute('value-suffix','%');s.setAttribute('value-display','thumb');s.className='consumer'
       const m=document.createElement('span');m.slot='markers';m.className='marker';m.textContent='Middle';s.append(m)
       return {value:s.value,submission:new FormData(form).getAll('volume'),text:s.shadowRoot.querySelector('[part~=end-value]').textContent,thumb:getComputedStyle(s.shadowRoot.querySelector('[part~=thumb]')).borderRadius}
     })
@@ -176,6 +182,62 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await page.keyboard.press('ArrowRight');await settled(page)
     assert.deepEqual(await page.evaluate(()=>reports),[]);assert.equal(await value(page),0)
   })
+  for(const framework of ['React','Preact'])for(const range of [false,true])test(`${name} ${framework}: ${range?'range':'scalar'} value acquires and releases ownership at the applied value`,{tier:mode==='granular'?'fast':'slow'},async t=>{
+    const page=await pageFor(t,engine,mode,framework,true,true,range)
+    const original=range?[20,70]:0,changed=range?[21,70]:1
+    const serialized=range?'20 70':'0'
+    const submission=()=>page.evaluate(()=>new FormData(document.querySelector('form')).getAll('volume'))
+    const key=async()=>{await page.getByRole('slider').first().focus();await page.keyboard.press('ArrowRight');await settled(page)}
+    assert.deepEqual(await value(page),original)
+    assert.equal(await page.locator('#slider').getAttribute('value'),serialized)
+    assert.deepEqual(await submission(),range?['20','70']:['0'])
+    for(const release of ['undefined','null','omitted']) {
+      await page.evaluate(()=>{reports=[]})
+      if(release==='omitted'){await page.evaluate(()=>releaseSlider());await settled(page)}
+      else await update(page,{value:release==='null'?null:undefined})
+      assert.equal(await page.locator('#slider').getAttribute('value'),null,release)
+      assert.deepEqual(await value(page),original)
+      assert.deepEqual(await page.evaluate(()=>reports),[])
+      await update(page,{value:original})
+      assert.equal(await page.locator('#slider').getAttribute('value'),serialized,'Acquire control even when the applied value already matches')
+      await key();assert.deepEqual(await value(page),original,'Reject requests until the owner accepts them')
+      assert.deepEqual(await submission(),range?['20','70']:['0'])
+    }
+    await update(page,{value:undefined})
+    await key();assert.deepEqual(await value(page),changed,'Resume uncontrolled input after release')
+    assert.equal(await page.locator('#slider').getAttribute('value'),null)
+    assert.deepEqual(await submission(),range?['21','70']:['1'])
+    await page.evaluate(()=>document.querySelector('form').reset());await settled(page)
+    assert.deepEqual(await value(page),range?[10,90]:70)
+    assert.equal(await page.locator('#slider').getAttribute('value'),null)
+  })
+  for(const framework of ['React','Preact'])for(const range of [false,true])test(`${name} ${framework}: unchanged ${range?'range':'scalar'} inputs preserve rejected drag requests`,{tier:mode==='granular'?'fast':'slow'},async t=>{
+    const page=await pageFor(t,engine,mode,framework,true,true,range)
+    const original=range?[20,70]:50
+    await update(page,{value:original})
+    await page.evaluate(()=>{
+      reports=[];window.valueWrites=0
+      new MutationObserver(records=>valueWrites+=records.length).observe(document.querySelector('#slider'),{attributes:true,attributeFilter:['value']})
+    })
+    const thumb=await page.locator('#slider [part~=thumb-1]').boundingBox()
+    const width=await page.locator('#slider [part=rail-area]').evaluate(el=>el.getBoundingClientRect().width)
+    const x=thumb.x+thumb.width/2,y=thumb.y+thumb.height/2
+    const requested=()=>page.evaluate(()=>reports.filter(r=>r.kind==='value').map(r=>r.value))
+    const next=offset=>range?[20+offset,70]:50+offset
+    await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+width*.1,y);await settled(page)
+    assert.deepEqual(await requested(),[next(10)])
+    await update(page,{})
+    assert.equal(await page.evaluate(()=>valueWrites),0,'Unchanged renderer values must not rewrite the input attribute')
+    await page.mouse.move(x+width*.1,y);await settled(page)
+    assert.deepEqual(await requested(),[next(10)],'A repeated pointer position must not emit another input')
+    await page.mouse.move(x+width*.2,y);await settled(page)
+    assert.deepEqual(await requested(),[next(10),next(20)])
+    await page.locator('#slider').evaluate(s=>s.setAttribute('value',s.getAttribute('value')))
+    await page.mouse.move(x+width*.3,y);await page.mouse.up();await settled(page)
+    assert.deepEqual(await requested(),[next(10),next(20),next(30)],'Identical raw attribute writes must also preserve the drag origin')
+    assert.deepEqual(await value(page),original,'Rejected requests leave the applied value unchanged')
+    assert.deepEqual(await page.evaluate(()=>reports.filter(r=>r.kind==='commit').map(r=>r.value)),[next(30)])
+  })
   test.fast(`${name}: authored inputs own control and uncontrolled operations never rewrite attributes`,async t=>{
     const page=await pageFor(t,engine,mode)
     const result=await page.evaluate(()=>{
@@ -199,7 +261,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
       s.value=0;key();const zero=s.value
       s.value=null;const nullRelease=s.value
       observer.disconnect()
-      return {interactive,restored,reset,mutations,dirty,newDefault,rejected,assigned,released,retained,resumed,finalReset,resumedMutations,zero,nullRelease,defaultAttribute:s.getAttribute('defaultvalue'),events}
+      return {interactive,restored,reset,mutations,dirty,newDefault,rejected,assigned,released,retained,resumed,finalReset,resumedMutations,zero,nullRelease,defaultAttribute:s.getAttribute('default-value'),events}
     })
     assert.deepEqual(result,{interactive:36,restored:50,reset:35,mutations:[],dirty:50,newDefault:20,rejected:40,assigned:{value:65,attribute:'65'},released:65,retained:65,resumed:{value:66,submission:'66',attribute:null},finalReset:30,resumedMutations:[],zero:0,nullRelease:0,defaultAttribute:'30',events:[['input',36],['change',36],['input',35],['change',35],['input',20],['change',20],['input',41],['change',41],['input',66],['change',66],['input',30],['change',30],['input',1],['change',1]]})
   })
@@ -229,10 +291,10 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     const page=await pageFor(t,engine,mode,undefined,false,false)
     await page.locator('#slider').evaluate(s=>{s.value=30;s.defaultValue=40;window.detachedSlider=s.cloneNode(true);detachedSlider.removeAttribute('id');detachedSlider.value=[20,60];detachedSlider.defaultValue=[0,100]})
     await page.evaluate(mode=>import(`/${mode}.js`),mode)
-    assert.deepEqual(await page.evaluate(()=>{customElements.upgrade(detachedSlider);return {own:Object.hasOwn(detachedSlider,'value')||Object.hasOwn(detachedSlider,'defaultValue'),input:detachedSlider.getAttribute('value'),initial:detachedSlider.getAttribute('defaultvalue')}}),{own:false,input:'20 60',initial:'0 100'})
+    assert.deepEqual(await page.evaluate(()=>{customElements.upgrade(detachedSlider);return {own:Object.hasOwn(detachedSlider,'value')||Object.hasOwn(detachedSlider,'defaultValue'),input:detachedSlider.getAttribute('value'),initial:detachedSlider.getAttribute('default-value')}}),{own:false,input:'20 60',initial:'0 100'})
     assert.deepEqual(await page.evaluate(()=>{detachedSlider.value=[25,75];document.querySelector('form').append(detachedSlider);const value=detachedSlider.value;detachedSlider.remove();return value}),[25,75])
     assert.equal(await value(page),30)
-    assert.deepEqual(await page.locator('#slider').evaluate(s=>({own:Object.hasOwn(s,'value'),input:s.getAttribute('value'),initial:s.getAttribute('defaultvalue')})),{own:false,input:'30',initial:'40'})
+    assert.deepEqual(await page.locator('#slider').evaluate(s=>({own:Object.hasOwn(s,'value'),input:s.getAttribute('value'),initial:s.getAttribute('default-value')})),{own:false,input:'30',initial:'40'})
     await page.locator('#slider').evaluate(s=>{s.value=[20,60]})
     assert.deepEqual(await value(page),[20,60])
     await page.locator('#slider').evaluate(s=>{s.value=null;document.querySelector('form').reset()})
@@ -284,7 +346,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
   test.fast(`${name}: CSS-only direction centers thumbs, bubbles, and markers after changes`,async t=>{
     const page=await pageFor(t,engine,mode,undefined,false,false)
     await page.locator('#slider').evaluate(s=>{
-      s.setAttribute('defaultvalue','25');s.setAttribute('value-display','thumb');s.setAttribute('track-click','jump')
+      s.setAttribute('default-value','25');s.setAttribute('value-display','thumb');s.setAttribute('track-click','jump')
       const marker=document.createElement('span');marker.slot='markers';marker.className='marker';marker.textContent='Middle';s.append(marker)
       for(const edge of ['start','end']){const m=document.createElement('span');m.slot='markers';m.className='marker-'+edge;m.setAttribute('data-slider-marker-'+edge,'');m.textContent=edge;s.append(m)}
     })
@@ -408,7 +470,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
   })
   test(`${name}: names follow live labels and crossing retains focus and physical identity`,async t=>{
     const page=await pageFor(t,engine,mode)
-    await page.locator('#slider').evaluate(s=>{s.removeAttribute('aria-label');s.setAttribute('defaultvalue','20 70')})
+    await page.locator('#slider').evaluate(s=>{s.removeAttribute('aria-label');s.setAttribute('default-value','20 70')})
     const thumb=page.locator('#slider [part~=thumb-1]')
     const name=()=>thumb.evaluate(el=>el.ariaLabelledByElements.map(label=>label.textContent).join(' '))
     assert.equal(await name(),'Volume minimum')
@@ -464,13 +526,14 @@ if(compareRef && !consumer) for(const engine of engines) for(const mode of ['gra
     const directory=resolve('tests/.test-output/slider',`${engine.name()}-${browsers.get(engine).version()}`,mode)
     await mkdir(directory,{recursive:true})
     const metrics=[]
-    for(const [name,attrs] of Object.entries({scalar:{},small:{size:'small',tone:'info'},large:{size:'large',round:'4px'},range:{defaultvalue:'20 70'},inverted:{defaultvalue:'20 70',inverted:''},inline:{'value-display':'inline','value-prefix':'$','value-suffix':'%'},bubbles:{defaultvalue:'20 70','value-display':'thumb','thumb-fill':''}})) {
+    for(const [name,attrs] of Object.entries({scalar:{},small:{size:'small',tone:'info'},large:{size:'large',round:'4px'},range:{'default-value':'20 70'},inverted:{'default-value':'20 70',inverted:''},inline:{'value-display':'inline','value-prefix':'$','value-suffix':'%'},bubbles:{'default-value':'20 70','value-display':'thumb','thumb-fill':''}})) {
       const pair=[]
       for(const [index,page] of pages.entries()) {
-        await page.evaluate(attrs=>{
-          document.querySelector('#mount').innerHTML='<a-slider id="slider" defaultvalue="35" tabindex="0"><span slot="label">Volume</span></a-slider>'
-          const s=document.querySelector('#slider');for(const [key,value] of Object.entries(attrs))s.setAttribute(key,value)
-        },attrs)
+        await page.evaluate(({attrs,defaultAttribute})=>{
+          document.querySelector('#mount').innerHTML='<a-slider id="slider" tabindex="0"><span slot="label">Volume</span></a-slider>'
+          const s=document.querySelector('#slider');s.setAttribute(defaultAttribute,'35')
+          for(const [key,value] of Object.entries(attrs))s.setAttribute(key==='default-value'?defaultAttribute:key,value)
+        },{attrs,defaultAttribute:index?'default-value':referenceDefaultAttribute})
         await page.waitForTimeout(350)
         pair.push(await page.locator('#slider').evaluate(s=>[s,...s.shadowRoot.querySelectorAll('[part]')].filter(el=>getComputedStyle(el).display!=='none').map(el=>{
           const b=el.getBoundingClientRect(),cs=getComputedStyle(el)

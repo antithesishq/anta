@@ -3,6 +3,95 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.38 — October 29, 2026
+
+### Added
+
+- [Tooltip event containment](/tooltip/#contain-events) supports `containEvents="native"`
+  to stop bubbling in the web component while preserving browser defaults.
+  This mode blocks delegated React callbacks on Tooltip and its children for the contained events; `true` preserves those callbacks.
+
+## 0.3.37 — October 27, 2026
+
+### Added
+
+- [Tooltip](/tooltip/#contain-events) supports `containEvents` to contain bubbling JSX input
+  handlers while preserving child callbacks. It enables interactive behavior.
+  Capture respects the boundary; custom native parents can check `isContainedEvent`.
+
+- [Tooltip](/tooltip/#placement) supports `placement="right"`, with automatic
+  flipping to the left when space is limited.
+
+### Fixed
+
+- [Tag](/tag/) truncates values first in width-constrained tags. Keys truncate
+  only when they cannot fit on their own.
+
+- Interactive [Tooltip](/tooltip/) content scrolls within the bubble without
+  dismissing it or scrolling the trigger’s container at the bubble’s edges.
+  The bubble also resets the trigger’s cursor while preserving cursors set by its content.
+
+## 0.3.36 — October 22, 2026
+
+### Changed
+
+- [Steps](/steps/#priority) uses tighter marker-to-text spacing for tertiary
+  priority across all themes.
+- [Steps](/steps/#markers-and-hints) numbers incomplete and disabled phases by
+  their position. Loading, completed, and error phases retain their state
+  indicators, and custom markers take precedence.
+
+### Fixed
+
+- [Select](/select/#managing-the-value), [SelectFaceted](/select-faceted/),
+  [InputDate](/input-date/#manage-the-value), [Checkbox](/checkbox/#controlled),
+  and [Switch](/switch/#controlled) retain their latest applied value when control
+  is released. InputDate form reset restores its default date and time.
+- Checkbox and Switch become pristine after form reset, so later default changes
+  apply until the next interaction or restoration.
+
+- [Tooltip](/tooltip/#show-only-when-truncated) keeps truncated-only tooltips
+  closed for single-line labels and hints that fit, including text with a tight
+  line height. Multi-line clipping still shows the tooltip.
+
+- [Steps](/steps/#orientation) keeps vertical connectors aligned through active
+  panels. Nested Steps and Tabs retain their own orientation.
+
+- [Steps](/steps/#width) keeps text blocks at least `4ch` wide and scrolls narrow
+  sequences without overlapping markers. Empty text blocks have no minimum,
+  and layout respects customized tab padding.
+
+- Input and InputTime keep single-icon actions square with Tooltip content in
+  raw HTML and JSX.
+- Button and ButtonCopy preserve their fallback accessible names with only
+  Tooltip, copy helpers, or empty children, including fragments and conditional
+  children. Explicit accessible names continue to take precedence.
+
+### Breaking
+
+- [Input](/input/#controlled-and-uncontrolled), [InputTime](/input-time/#controlled-values-and-clearing),
+  and [InputAutocomplete](/input-autocomplete/#managing-the-value) preserve controlled
+  values through form reset and browser restoration; update `value` to reset them.
+  This includes raw `<a-input value="…">` and `<a-input-time value="…">` markup.
+  Use `defaultvalue` without `value` for raw fields that should reset to a default.
+  Uncontrolled Input and InputTime restoration now emits `input` and `change` so
+  composed fields follow the restored value.
+
+- [Raw Calendar inputs](/input-date/#raw-calendar-value-and-form-api) now use
+  `state` / `default-state` instead of `value` / `defaultvalue`. The element's
+  `.value` is read-only and `.defaultValue` is removed; public Calendar and
+  InputDate JSX props remain `value` / `defaultValue`. Calendar's JSX props now
+  accept `null` for no selected date.
+
+- [Slider](/slider/#web-component) renames raw HTML `defaultvalue` to
+  `default-value`, keeping JSX `defaultValue` and the element's `.defaultValue`
+  unchanged. Value bindings support renderers that preserve attribute-name casing
+  and keep active drags stable across unchanged parent updates.
+
+- Input and InputTime no longer use `data-anta-icon-only` for action sizing.
+  Set a custom SVG or image action's width with CSS. Wrap bare text beside an
+  icon in an element to keep the action's natural width.
+
 ## 0.3.35 — October 18, 2026
 
 ### Added

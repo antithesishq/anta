@@ -194,11 +194,17 @@ selection. Set it to `null` to clear a single selection while keeping control.
 The example's **Reset selection** button does this from application state.
 
 For a Select that manages its own selection, omit `value` or pass `undefined`.
-Use `defaultValue` to choose an initial option. Clear reports `null` for single
+Use `defaultValue` to choose an initial option. Omit `value` or pass `undefined`
+to release control while retaining the latest selection. Clear reports `null` for single
 selection and `[]` for multiple selection.
 
 Single selection uses one option value. Multiple selection uses an array of
 values. Keep each option's value unique across groups and submenus.
+
+Inline controlled arrays work correctly. If you derive a multiple-selection array
+during rendering, `useMemo` can avoid an extra component render when its inputs
+are unchanged. Pass arrays held in state directly. See the `value` prop's API
+reference for an example.
 
 Values can be strings, numbers, or booleans. Select preserves their types, so a
 numeric ID can remain a number in your application state. Use a stable primitive
@@ -596,7 +602,7 @@ the keyboard. Validate the query before offering to create an option.
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set. Each status has a default; pass a shape to override, or `false` to drop it. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone. An option's own `tone` wins. A named tone or a custom CSS color. Most visible with tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` / `'checkbox'` it also tones the indicator. |
 | `toneScope?` | 'all' \| 'selected' | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
-| `value?` | V \| null \| V[] | — | Controlled option value. Use `null` for an empty selection; clearing to `null` keeps the Select controlled. Omit or pass `undefined` for uncontrolled use. Empty strings, `0`, and `false` remain option values. |
+| `value?` | V \| null \| V[] | — | Controlled option value. Use `null` for an empty selection; clearing to `null` keeps the Select controlled. Omit or pass `undefined` for uncontrolled use; release retains the latest selection. Empty strings, `0`, and `false` remain option values. |
 | `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected: A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies to the multi-count case only: `All` stays `All`, a single pick stays its own label, and an empty selection stays the `placeholder`. The list flows into the default trigger's value, so it ellipsizes at the field's width when long (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
 
 ### Change details

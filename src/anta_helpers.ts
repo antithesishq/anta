@@ -18,17 +18,21 @@ export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
 }
 
-/** @internal Mirror selection for declarative rendering, retaining the latest
- * controlled value when ownership is released. Update the mirror only for
- * accepted uncontrolled changes. */
-export function useSelectionMirror(value: string | undefined, defaultValue?: string) {
-  const [internalValue, setInternalValue] = useState<string | undefined>(value ?? defaultValue)
-  const [lastValue, setLastValue] = useState(value)
+/** @internal Retain the latest controlled value when ownership is released.
+ * Update the mirror only for accepted uncontrolled changes. */
+export function useValueMirror<T>(value: T | undefined, defaultValue: T) {
+  const [internalValue, setInternalValue] = useState<T>(() => value !== undefined ? value : defaultValue)
+  const [lastValue, setLastValue] = useState<T | undefined>(() => value)
   if (value !== lastValue) {
-    setLastValue(value)
-    if (value !== undefined) setInternalValue(value)
+    setLastValue(() => value)
+    if (value !== undefined) setInternalValue(() => value)
   }
   return [value !== undefined ? value : internalValue, setInternalValue] as const
+}
+
+/** @internal String-selection specialization shared by selection wrappers. */
+export function useSelectionMirror(value: string | undefined, defaultValue?: string) {
+  return useValueMirror<string | undefined>(value, defaultValue)
 }
 
 /**
@@ -55,6 +59,13 @@ export function optionPresentationAttrs(
   return attrs as OptionPresentationProps
 }
 
+/** @internal Match primitive label values that produce no visible content. */
+export function isEmptyLabelValue(value: React.ReactNode): boolean {
+  return value == null || typeof value === 'boolean' ||
+    (typeof value === 'string' && value.trim() === '') ||
+    (typeof value === 'number' && Number.isNaN(value))
+}
+
 /**
  * Normalize a wrapper's label content the way `Button` / `Tabs` do: a bare string
  * or number becomes a `<tag>` — the ellipsis-capable label part (`a-button-label`,
@@ -68,9 +79,8 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
   if (kids == null) return kids
   const arr = Array.isArray(kids) ? kids : [kids]
   return arr.map((child, i) => {
-    if (typeof child === "string") return child.trim() === "" ? null : jsx(tag, { children: child }, i)
-    if (typeof child === "number") return Number.isNaN(child) ? null : jsx(tag, { children: child }, i)
-    if (child == null || typeof child === "boolean") return null
+    if (isEmptyLabelValue(child)) return null
+    if (typeof child === "string" || typeof child === "number") return jsx(tag, { children: child }, i)
     return child
   }) as React.ReactNode
 }
@@ -492,14 +502,3 @@ export class SelectableChildElement extends HTMLElementBase {
     applyAccessibilityRelations(this.internals, labels, descriptions)
   }
 }
-
-/** @internal Project value inputs through HTML attributes in every renderer.
- * HTML attribute names are case-insensitive. `VALUE` avoids React's property
- * assignment and Preact's special live-value comparison/removal, while producing
- * the ordinary `value` attribute in the DOM and parsed SSR HTML. In particular,
- * an empty-string option stays distinct from removing controlled ownership.
- * Keep this projection serializable for server and worker renderers. */
-export const valueAttributes = (value: string | undefined, defaultValue?: string) => ({
-  VALUE: value,
-  defaultvalue: value === undefined ? defaultValue : undefined,
-})

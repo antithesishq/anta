@@ -70,7 +70,10 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 ## Controlled values and clearing
 
 Update `value` from `onValueChange` to control the time. An incomplete time reports
-an empty string while the native segments retain the text being edited. Call
+an empty string while the native segments retain the text being edited.
+Omit `value` or pass `undefined` to release control and retain the current time.
+Form reset and browser restoration preserve a controlled value; an uncontrolled
+reset restores `defaultValue`. Call
 `preventDefault()` in `onClearClick` to keep a value when clearing is disallowed.
 
 ```tsx
@@ -117,13 +120,18 @@ const [keep, setKeep] = useState(false)
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph before the `hint` when `status` is set (per-status default; pass a shape to override, or `false` to drop it). |
 | `tone?` | string | — | Custom accent color — any literal CSS color tints the resting + hover border (focus ring stays `--focus-ring`); `status` overrides for validation. |
 | `trailing?` | ReactNode | — | Content pinned to the end of the field (after the clear button). |
-| `value?` | string | — | Controlled value — 24-hour `"HH:mm"`. Pair with `onValueChange`. |
+| `value?` | string | — | Controlled value — 24-hour `"HH:mm"`. Pair with `onValueChange`. Reset and restoration preserve it; releasing control retains the current time. |
 
 ## Web Component
 
 Use `<a-input-time>` directly outside JSX. Its `label`, `leading`, `clear`,
 `trailing`, and `hint` slots accept field content. Use the `hour`, `minute`, and
 `period` parts to style sections independently of their locale order.
+
+In raw HTML, a `value` attribute makes the field controlled, so form reset and
+browser restoration preserve its current time. Use `defaultvalue` without `value`
+for an uncontrolled field that resets to its initial time. Remove `value` to
+release control while retaining the current time.
 
 If existing selectors target JSX grouping spans, update them to the
 `a-input-time-label`, `a-input-time-leading`, `a-input-time-clear`,

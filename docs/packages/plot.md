@@ -2,7 +2,7 @@
 
 A canvas-based plotting library for React, Preact, and plain JavaScript.
 Compose plots using built-in and custom [series](#series), with configurable [axes](#axes), [scales](#scales), and [styles](#styling).
-Explore your data through [tooltip](#tooltips), [selection](#selection-callbacks), and [zoom](#zoom-and-pan) interactions.
+Explore your data through [tooltip](#tooltips), [selection](#selection), and [zoom](#zoom-and-pan) interactions.
 
 ## Series types
 
@@ -23,14 +23,8 @@ Combine multiple series in one plot to compare values, show trends, and add cont
 
 
 
-```ts
-import { area, line, rule, scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function overviewExample(): PlotArgs<Node> {
-  // Synthetic data, sampled every 15 minutes. No randomness: edits keep the same data.
-  const forecast = Array.from({ length: 97 }, (_, i) => {
+```js
+const forecast = Array.from({ length: 97 }, (_, i) => {
     const hour = i / 4
     const morning = 150 * Math.exp(-(((hour - 9) / 2.8) ** 2))
     const evening = 240 * Math.exp(-(((hour - 17) / 3.4) ** 2))
@@ -52,8 +46,8 @@ function overviewExample(): PlotArgs<Node> {
 
   const meanExpected = forecast.reduce((sum, point) => sum + point.expected, 0) / forecast.length
 
-  const series: PlotArgs<Node>['series'] = [
-    area({
+  const series = [
+    plot.area({
       data: forecast,
       x: 'hour',
       y: 'high',
@@ -61,39 +55,39 @@ function overviewExample(): PlotArgs<Node> {
       color: { light: '#ede9fe', dark: '#30274e' },
       hoverable: false,
     }),
-    rule({
+    plot.rule({
       y: meanExpected,
       color: { light: '#d97706', dark: '#fbbf24' },
       width: 2,
       dash: [8, 4],
       hoverable: false,
     }),
-    line({
+    plot.line({
       data: forecast,
       x: 'hour',
       y: 'expected',
       color: { light: '#8b5cf6', dark: '#c4b5fd' },
       width: 2,
       dash: [5, 5],
-      tooltip: ({ x, y }) => document.createTextNode('Forecast at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
+      tooltip: pure(({ x, y }) => h('span', {}, 'Forecast at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s')),
     }),
-    line({
+    plot.line({
       data: trend,
       x: 'hour',
       y: 'average',
       color: { light: '#0891b2', dark: '#67e8f9' },
       width: 3,
-      tooltip: ({ x, y }) => document.createTextNode('Trend at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
+      tooltip: pure(({ x, y }) => h('span', {}, 'Trend at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s')),
     }),
-    scatter({
+    plot.scatter({
       data: observations.filter(point => !point.outside),
       x: 'hour',
       y: 'actual',
       color: { light: '#0891b2', dark: '#67e8f9' },
       size: 4,
-      tooltip: ({ x, y }) => document.createTextNode('Observed at ' + x + 'h: ' + y + ' requests/s'),
+      tooltip: pure(({ x, y }) => h('span', {}, 'Observed at ' + x + 'h: ' + y + ' requests/s')),
     }),
-    scatter({
+    plot.scatter({
       data: observations.filter(point => point.outside),
       x: 'hour',
       y: 'actual',
@@ -101,59 +95,34 @@ function overviewExample(): PlotArgs<Node> {
       mark: 'diamond',
       size: 9,
       stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1 },
-      tooltip: ({ x, y }) => document.createTextNode('Outside forecast range: ' + x + 'h · ' + y + ' requests/s'),
+      tooltip: pure(({ x, y }) => h('span', {}, 'Outside forecast range: ' + x + 'h · ' + y + ' requests/s')),
     }),
   ]
 
-  const options = {
-
-    height: 400,
+  const request_volume = plot({
+    height: 280,
+    series,
+    axis: {
+      x: { min: 0, max: 24, label: 'Hour' },
+      y: { min: 0, max: 440, label: 'Requests/s' },
+    },
+    margin: { top: 12, right: 16, bottom: 42, left: 74 },
+    grid: false,
     border: false,
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     background: { light: '#ffffff', dark: '#151b28' },
-    theme_invert: false,
-  }
+    zoom_pan: false,
+  })
 
-  const axis = {
-
-    x: { min: 0, max: 24, label: 'Hour' },
-
-    y: { min: 0, max: 440, label: 'Requests/s' },
-
-  }
-
-  const margin = 12
-
-  const grid = false
-
-  const zoom_pan = { x: true, y: true }
-
-  // Replace the object to apply a change; Plot does not observe in-place mutation.
-  const plotArgs: PlotArgs<Node> = { ...options, series, axis, margin, grid, zoom_pan }
-
-  return plotArgs
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-const args = overviewExample()
-plot.plotArgs = {
-  ...args,
-  height: 280,
-  margin: { top: 12, right: 16, bottom: 42, left: 74 },
-  zoom_pan: false,
-}
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(request_volume)
+  // presentation.blank('Request volume').print(request_volume)
 ```
 
 
 
-```ts
-import { bar, scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function energyExample(): PlotArgs<Node> {
-  const data = [
+```js
+const data = [
     { x: 'A', solar: 28, wind: 35, demand: 72 },
     { x: 'B', solar: 48, wind: 18, demand: 54 },
     { x: 'C', solar: 19, wind: 25, demand: 62 },
@@ -163,213 +132,392 @@ function energyExample(): PlotArgs<Node> {
     { x: 'G', solar: 41, wind: 28, demand: 58 },
     { x: 'H', solar: 16, wind: 22, demand: 51 },
   ]
-  return {
+
+  const site_power = plot({
     series: [
-      bar({ data, y: ['solar', 'wind'],
-        color: [{ light: '#fbbf24', dark: '#d97706' }, { light: '#2dd4bf', dark: '#0d9488' }],
-        inset: 5, border_radius: 3,
-        tooltip: ({ x, y, label }) => document.createTextNode('Site ' + x + ' · ' + label + ': ' + y + ' kW') }),
-      scatter({ data, y: 'demand', mark: 'diamond', size: 7,
-        tooltip: ({ x, y }) => document.createTextNode('Site ' + x + ' · Demand: ' + y + ' kW'),
+      plot.bar({
+        data,
+        y: ['solar', 'wind'],
+        color: [
+          { light: '#fbbf24', dark: '#d97706' },
+          { light: '#2dd4bf', dark: '#0d9488' },
+        ],
+        inset: 5,
+        border_radius: 3,
+        tooltip: pure(({ x, y, label }) =>
+          h('span', {}, 'Site ' + x + ' · ' + label + ': ' + y + ' kW'),
+        ),
+      }),
+      plot.scatter({
+        data,
+        y: 'demand',
+        mark: 'diamond',
+        size: 7,
+        tooltip: pure(({ x, y }) => h('span', {}, 'Site ' + x + ' · Demand: ' + y + ' kW')),
         color: { light: '#7c3aed', dark: '#c4b5fd' },
-        stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } }),
+        stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 },
+      }),
     ],
     axis: { x: { label: 'Site' }, y: { min: 0, max: 90, label: 'Power (kW)' } },
     background: { light: '#ffffff', dark: '#151b28' },
     border: false,
     grid: false,
+    height: 280,
+    margin: { top: 12, right: 16, bottom: 42, left: 58 },
     zoom_pan: false,
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-const args = energyExample()
-plot.plotArgs = {
-  ...args,
-  height: 280,
-  margin: { top: 12, right: 16, bottom: 42, left: 58 },
-  zoom_pan: false,
-}
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(site_power)
+  // presentation.blank("Site power").print(site_power)
 ```
 
 
 
-```ts
-import { area, rect, line, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+```js
+const density = (x) =>
+    48 * Math.exp(-(((x - 65) / 24) ** 2)) + 19 * Math.exp(-(((x - 135) / 38) ** 2))
 
-function latencyExample(): PlotArgs<Node> {
-  const density = (x: number) => 48 * Math.exp(-(((x - 65) / 24) ** 2))
-    + 19 * Math.exp(-(((x - 135) / 38) ** 2))
   const bins = Array.from({ length: 24 }, (_, i) => {
     const x = i * 10
     return { x: x + 1, x2: x + 9, y: density(x + 5) * (0.8 + 0.3 * Math.sin(i * 2.3) ** 2), y2: 0 }
   })
-  const curve = Array.from({ length: 121 }, (_, i) => ({ x: i * 2, y: density(i * 2) }))
-  return {
-    series: [
-      area({ data: curve, y2: 0, color: { light: '#fce7f3', dark: '#452039' }, hoverable: false }),
-      rect({ data: bins, color: { light: '#f472b6', dark: '#be185d' },
-        tooltip: ({ row, y }) => document.createTextNode(
-          (Number(row.x) - 1) + '–' + (Number(row.x2) + 1) + ' ms · ' + Math.round(Number(y)) + ' requests',
-        ) }),
-      line({ data: curve, color: { light: '#9d174d', dark: '#fbcfe8' }, width: 2.5,
-        tooltip: ({ x, y }) => document.createTextNode('Distribution at ' + x + ' ms: ' + Number(y).toFixed(1) + ' requests') }),
 
+  const curve = Array.from({ length: 121 }, (_, i) => ({ x: i * 2, y: density(i * 2) }))
+
+  const latency_distribution = plot({
+    series: [
+      plot.area({
+        data: curve,
+        y2: 0,
+        color: { light: '#fce7f3', dark: '#452039' },
+        hoverable: false,
+      }),
+      plot.rect({
+        data: bins,
+        color: { light: '#f472b6', dark: '#be185d' },
+        tooltip: pure(({ row, y }) =>
+          h(
+            'span',
+            {},
+            Number(row.x) -
+              1 +
+              '–' +
+              (Number(row.x2) + 1) +
+              ' ms · ' +
+              Math.round(Number(y)) +
+              ' requests',
+          ),
+        ),
+      }),
+      plot.line({
+        data: curve,
+        color: { light: '#9d174d', dark: '#fbcfe8' },
+        width: 2.5,
+        tooltip: pure(({ x, y }) =>
+          h('span', {}, 'Distribution at ' + x + ' ms: ' + Number(y).toFixed(1) + ' requests'),
+        ),
+      }),
     ],
-    axis: { x: { min: 0, max: 240, label: 'Latency (ms)' }, y: { min: 0, max: 60, label: 'Requests' } },
+    axis: {
+      x: { min: 0, max: 240, label: 'Latency (ms)' },
+      y: { min: 0, max: 60, label: 'Requests' },
+    },
     background: { light: '#ffffff', dark: '#151b28' },
     border: false,
     grid: false,
+    height: 280,
+    margin: { top: 12, right: 16, bottom: 42, left: 58 },
     zoom_pan: false,
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-const args = latencyExample()
-plot.plotArgs = {
-  ...args,
-  height: 280,
-  margin: { top: 12, right: 16, bottom: 42, left: 58 },
-  zoom_pan: false,
-}
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(latency_distribution)
+  // presentation.blank("Latency distribution").print(latency_distribution)
 ```
 
 
 
-```ts
-import { area, rect, line, scatter, rule, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function mixedExample(): PlotArgs<Node> {
-  const points = [
-    { x: 12, y: 74 }, { x: 25, y: 57 }, { x: 39, y: 85 }, { x: 48, y: 18 },
-    { x: 62, y: 70 }, { x: 73, y: 37 }, { x: 86.5, y: 86 }, { x: 92, y: 22 },
-    { x: 15, y: 27 }, { x: 36, y: 64 }, { x: 57, y: 88 },
+```js
+const points = [
+    { x: 12, y: 74 },
+    { x: 25, y: 57 },
+    { x: 39, y: 85 },
+    { x: 48, y: 18 },
+    { x: 62, y: 70 },
+    { x: 73, y: 37 },
+    { x: 86.5, y: 86 },
+    { x: 92, y: 22 },
+    { x: 15, y: 27 },
+    { x: 36, y: 64 },
+    { x: 57, y: 88 },
   ]
+
   const paths = [
     [
-      { x: 25, y: 0 }, { x: 36, y: 19 }, { x: 41, y: 15 }, { x: 56, y: 37 },
-      { x: 65, y: 23 }, { x: 72, y: 48 }, { x: 76, y: 44 }, { x: 93, y: 63 }, { x: 100, y: 68 },
+      { x: 25, y: 0 },
+      { x: 36, y: 19 },
+      { x: 41, y: 15 },
+      { x: 56, y: 37 },
+      { x: 65, y: 23 },
+      { x: 72, y: 48 },
+      { x: 76, y: 44 },
+      { x: 93, y: 63 },
+      { x: 100, y: 68 },
     ],
     [
-      { x: 0, y: 73 }, { x: 9, y: 87 }, { x: 13, y: 84 }, { x: 20, y: 92 },
-      { x: 29, y: 79 }, { x: 39, y: 96 }, { x: 42, y: 93 }, { x: 48, y: 100 },
+      { x: 0, y: 73 },
+      { x: 9, y: 87 },
+      { x: 13, y: 84 },
+      { x: 20, y: 92 },
+      { x: 29, y: 79 },
+      { x: 39, y: 96 },
+      { x: 42, y: 93 },
+      { x: 48, y: 100 },
     ],
   ]
-  // Sample cosine transitions to round each turn without changing its height.
-  const smoothPaths = paths.map(path => path.flatMap((point, i) => {
-    const next = path[i + 1]
-    if (!next) return [point]
-    return Array.from({ length: 16 }, (_, j) => {
-      const t = j / 16
-      const blend = (1 - Math.cos(Math.PI * t)) / 2
-      return { x: point.x + (next.x - point.x) * t, y: point.y + (next.y - point.y) * blend }
-    })
-  }))
+
+  const smoothPaths = paths.map((path) =>
+    path.flatMap((point, i) => {
+      const next = path[i + 1]
+      if (!next) return [point]
+      return Array.from({ length: 16 }, (_, j) => {
+        const t = j / 16
+        const blend = (1 - Math.cos(Math.PI * t)) / 2
+        return { x: point.x + (next.x - point.x) * t, y: point.y + (next.y - point.y) * blend }
+      })
+    }),
+  )
+
   const colors = [
     { light: '#7c3aed', dark: '#c4b5fd' },
     { light: '#e11d48', dark: '#fda4af' },
     { light: '#0284c7', dark: '#7dd3fc' },
     { light: '#d97706', dark: '#fcd34d' },
   ]
-  return {
-    series: [
-      area({ data: Array.from({ length: 81 }, (_, i) => {
-        const x = i * 1.25
-        const center = 50 + 7 * Math.sin(i / 9) + 3 * Math.cos(i / 4)
-        const spread = 3 + 1.5 * Math.sin(i / 11) ** 2
-        return { x, y: center + spread, y2: center - spread }
-      }), color: { light: '#99f6e4', dark: '#115e59' },
-        stroke: { color: { light: '#14b8a6', dark: '#5eead4' }, width: 1 } }),
-      ...points.map((point, i) => scatter({ data: [point], size: [7, 12, 21, 10, 15, 9, 26, 13, 11, 8, 14][i],
-        mark: 'circle', color: colors[i % colors.length],
-        tooltip: ({ x, y }) => document.createTextNode('Point ' + (i + 1) + ' · (' + x + ', ' + y + ')'),
-        stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } })),
-      rect({ data: [{ x: 32, x2: 44, y: 31, y2: 47 }],
-        color: { light: '#ddd6fe', dark: '#5b21b6' },
-        stroke: { color: { light: '#8b5cf6', dark: '#c4b5fd' }, width: 1.5 } }),
-      rect({ data: [{ x: 76, x2: 97, y: 76, y2: 96 }],
-        color: { light: 'rgba(254, 215, 170, 0.55)', dark: 'rgba(154, 52, 18, 0.55)' },
-        stroke: { color: { light: '#f97316', dark: '#fdba74' }, width: 1.5 } }),
-      ...smoothPaths.map((data, i) => line({ data, width: 2.5, dash: i === 1 ? [7, 5] : [],
-        tooltip: ({ x, y }) => document.createTextNode(
-          'Line ' + (i + 1) + ' · (' + Number(x).toFixed(1) + ', ' + Number(y).toFixed(1) + ')',
-        ),
-        color: i % 2 === 0 ? { light: '#0d9488', dark: '#5eead4' }
-          : { light: '#f97316', dark: '#fdba74' },
-      })),
 
-      rule({ y: 10, color: { light: '#0284c7', dark: '#7dd3fc' }, width: 1.5, dash: [6, 4] }),
+  const mixed_series = plot({
+    series: [
+      plot.area({
+        data: Array.from({ length: 81 }, (_, i) => {
+          const x = i * 1.25
+          const center = 50 + 7 * Math.sin(i / 9) + 3 * Math.cos(i / 4)
+          const spread = 3 + 1.5 * Math.sin(i / 11) ** 2
+          return { x, y: center + spread, y2: center - spread }
+        }),
+        color: { light: '#99f6e4', dark: '#115e59' },
+        stroke: { color: { light: '#14b8a6', dark: '#5eead4' }, width: 1 },
+      }),
+      ...points.map((point, i) =>
+        plot.scatter({
+          data: [point],
+          size: [7, 12, 21, 10, 15, 9, 26, 13, 11, 8, 14][i],
+          mark: 'circle',
+          color: colors[i % colors.length],
+          tooltip: pure(
+            ({ x, y }) => h('span', {}, 'Point ' + (i + 1) + ' · (' + x + ', ' + y + ')'),
+            { i },
+          ),
+          stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 },
+        }),
+      ),
+      plot.rect({
+        data: [{ x: 32, x2: 44, y: 31, y2: 47 }],
+        color: { light: '#ddd6fe', dark: '#5b21b6' },
+        stroke: { color: { light: '#8b5cf6', dark: '#c4b5fd' }, width: 1.5 },
+      }),
+      plot.rect({
+        data: [{ x: 76, x2: 97, y: 76, y2: 96 }],
+        color: { light: 'rgba(254, 215, 170, 0.55)', dark: 'rgba(154, 52, 18, 0.55)' },
+        stroke: { color: { light: '#f97316', dark: '#fdba74' }, width: 1.5 },
+      }),
+      ...smoothPaths.map((data, i) =>
+        plot.line({
+          data,
+          width: 2.5,
+          dash: i === 1 ? [7, 5] : [],
+          tooltip: pure(
+            ({ x, y }) =>
+              h(
+                'span',
+                {},
+                'Line ' + (i + 1) + ' · (' + Number(x).toFixed(1) + ', ' + Number(y).toFixed(1) + ')',
+              ),
+            { i },
+          ),
+          color:
+            i % 2 === 0
+              ? { light: '#0d9488', dark: '#5eead4' }
+              : { light: '#f97316', dark: '#fdba74' },
+        }),
+      ),
+      plot.rule({ y: 10, color: { light: '#0284c7', dark: '#7dd3fc' }, width: 1.5, dash: [6, 4] }),
     ],
     axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
     background: { light: '#ffffff', dark: '#151b28' },
     border: false,
     grid: false,
+    height: 280,
+    margin: { top: 12, right: 16, bottom: 42, left: 58 },
     zoom_pan: false,
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-const args = mixedExample()
-plot.plotArgs = {
-  ...args,
-  height: 280,
-  margin: { top: 12, right: 16, bottom: 42, left: 58 },
-  zoom_pan: false,
-}
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(mixed_series)
+  // presentation.blank("Mixed series").print(mixed_series)
 ```
 
-## Install
+## Install and configure
 
-Install the package to use plots in React, Preact, or plain JavaScript.
+<a id="install"></a>
+
+Install `@antadesign/plot` alongside Anta and your renderer.
+
+These setup snippets are for web applications. Antithesis notebooks provide
+`plot` directly and do not need these imports or registration steps.
 
 ```sh
-npm install @antadesign/plot   # or pnpm / bun
+npm install @antadesign/plot @antadesign/anta react react-dom
 ```
 
-Import `Plot` and series factories from `@antadesign/plot`. These root component
-imports require version `0.1.3` or later. Anta `^0.3.30` and React `^19.0.0` are
-peer dependencies. For Preact, use `preact/compat` aliases.
+Plot requires Anta `^0.3.30`, React `^19.0.0`, and a bundler that supports ES
+modules and CSS imports. Preact applications use `preact/compat` aliases for
+React and React DOM. See Anta's [renderer setup](../install-config.md#preact-with-compat) for configuration.
+
+Load `@antadesign/plot/plot.css` once in your browser entry. The shared Plot
+stylesheet is required for JSX `Plot`, low-level
+`PlotSurface`, and standalone `<a-plot>`, including the `/browser` and `/auto`
+entries. Element registration loads the supporting Anta element styles.
+
+Anta's `tokens.css` is optional. Selection rectangles, tooltips, and menus use
+fallback colors when tokens are absent. When using Anta's theme colors, put
+tokens before the Plot stylesheet. Omit the tokens import if your application
+already loads Anta's full bundle:
+
+```ts
+import '@antadesign/anta/tokens.css'
+import '@antadesign/plot/plot.css'
+```
+
+Anta's `reset.css` and themes are also optional application-wide choices.
+
+### JSX plots
+
+Import the component, register its surface and tooltip elements in the browser,
+and load the Plot stylesheet:
 
 ```tsx
 import { Plot, line } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot-surface'
 import '@antadesign/anta/elements/a-tooltip'
-import '@antadesign/anta/theme-antune.css'
+import '@antadesign/plot/plot.css'
 
 const plotArgs = {
   height: 300,
   series: [line({ data: [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
 }
 
-function Example() {
+export function Chart() {
   return <Plot plotArgs={plotArgs} />
 }
 ```
 
-`Plot` is a function component that uses Anta's configured JSX factory and hooks.
-Importing it does not register browser elements. Import the surface and tooltip
-registration modules once in your browser entry; their elements install their
-base styles automatically. Load your application's Anta theme separately.
-`Plot` handles canvas setup, drawing, interactions, and cleanup.
+`Plot` uses Anta's configured JSX factory and hooks. Importing the root package
+does not register browser elements or load CSS. For server rendering, keep
+registration and stylesheet imports in your application's browser entry.
+Before hydrating, configure Anta with your renderer's hooks and
+`{ hydratingEvents: true }` as described in [SSR and hydration](../install-config.md#browser-hydration).
 
-By default, `Plot` fills its parent. Give the parent a height or set `plotArgs.height`,
-as above. Custom renderers supply their hooks through Anta's `configure()`.
-With a worker renderer and a DOM bridge that transfers the surface's canvases,
-`Plot` runs in the worker while `a-plot-surface` stays in the browser.
+By default, `Plot` fills its parent. Give the parent a height or set
+`plotArgs.height`, as above. Replace `plotArgs` to update the chart.
+`Plot` owns canvas rendering, interactions, tooltips, and cleanup.
 
-For plain JavaScript or TypeScript, import `@antadesign/plot/elements/a-plot`, then use `<a-plot>` and assign its `plotArgs` property.
+### Browser elements
 
-`Plot` owns canvas rendering, interactions, and cleanup. The package also exports
-`PlotSurface` as a low-level JSX wrapper, but controllers and drawing lifecycle
-helpers remain internal. Customize marks through `renderer` and
-`highlight_renderer`, and tooltips through the series or root tooltip callbacks.
+Register `<a-plot>` and assign its configuration through the `plotArgs` property:
+
+```ts
+import { scatter, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = {
+  height: 300,
+  series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
+}
+document.body.append(plot)
+```
+
+The registration import includes the surface and tooltip elements. To register
+programmatically, import and await `definePlotElement()` from
+`@antadesign/plot/browser`. Both paths require the shared stylesheet.
+
+### Low-level surfaces
+
+Use `PlotSurface` when your application owns drawing and supplies the surface's
+presentation and input handlers:
+
+```tsx
+import { PlotSurface } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/plot/plot.css'
+
+export function Surface() {
+  return <PlotSurface className="custom-surface" />
+}
+```
+
+Give the surface a height in your application's external stylesheet:
+
+```css
+.custom-surface {
+  width: 100%;
+  height: 300px;
+}
+```
+
+The wrapper measures its host and forwards input. Controllers and drawing
+lifecycle helpers remain internal. With a worker renderer and a DOM bridge that
+transfers the surface's canvases, `Plot` can run in the worker while the surface
+and browser registration stay in the UI thread.
+
+### Styles and content security policy
+
+Load an optional Anta theme after the base styles, for example
+`import '@antadesign/anta/theme-antune.css'`. Plot inherits the application's
+font and theme. Put broad application resets in `@layer base` so they do not
+unintentionally override the component rules in `anta.components`.
+
+For a strict content security policy (CSP), configure your bundler to extract
+Plot and Anta CSS imports into external stylesheets served from an allowed
+origin. For same-origin stylesheets, Plot supports:
+
+```text
+style-src 'self'; style-src-elem 'self'; style-src-attr 'none'
+```
+
+A stylesheet link to the published `dist/plot.css` asset also works alongside
+your application bundle. Load it in each destination document before adopting
+a plot there.
+
+Development CSS loaders that inject `<style>` elements are blocked by this
+policy. Configure CSS extraction or serve emitted CSS through stylesheet links.
+If your development server requires injected styles, its development CSP must
+explicitly permit that loader.
+
+Runtime dimensions, capture visibility, coordinates, cursor, and canvas filters
+use direct CSSOM updates. JSX `Plot` applies dimension and `style` props after
+commit, including after hydration, so its SSR markup has no inline styles.
+Use an external CSS class to reserve space before hydration and prevent layout
+shifts. Low-level `PlotSurface` style props and custom tooltip HTML still follow
+your renderer's normal serialization rules. Use external CSS for them under
+`style-src-attr 'none'`.
+
+Worker rendering requires `worker-src` to allow the worker script's origin.
+Use `worker-src 'self'` for same-origin worker scripts. If your renderer creates
+blob workers, also allow `blob:`, for example `worker-src 'self' blob:`. Plot
+does not create your renderer worker or its DOM bridge.
 
 ## Plot arguments
 
@@ -382,20 +530,25 @@ Title, background, and grid
 
 Set a title, reserve space with `margin`, and style the plot background and horizontal grid lines.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
+```js
 const examplePoints = [
-  { x: 8, y: 14 }, { x: 36, y: 40 }, { x: 52, y: 32 },
-  { x: 44, y: 59 }, { x: 64, y: 54 }, { x: 92, y: 86 },
-]
+    { x: 8, y: 14 },
+    { x: 36, y: 40 },
+    { x: 52, y: 32 },
+    { x: 44, y: 59 },
+    { x: 64, y: 54 },
+    { x: 92, y: 86 },
+  ]
 
-function presentation(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: examplePoints, size: 3,
-      color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+  const plot_configuration = plot({
+    series: [
+      plot.scatter({
+        data: examplePoints,
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     title: { text: 'Plot title', font: { size: 16, color: { light: '#374151', dark: '#e5e7eb' } } },
     height: 260,
     margin: { top: 38, right: 16, bottom: 42, left: 52 },
@@ -405,32 +558,36 @@ function presentation(): PlotArgs<Node> {
     border: true,
     axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     zoom_pan: false,
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = presentation()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(plot_configuration)
+  // presentation.blank("Plot configuration").print(plot_configuration)
 ```
 
 Border and spacing
 
 Set `border: true` and `grid: false` to frame the plot without grid lines. Use `margin` to reserve space around the axes and their labels.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
+```js
 const examplePoints = [
-  { x: 8, y: 14 }, { x: 36, y: 40 }, { x: 52, y: 32 },
-  { x: 44, y: 59 }, { x: 64, y: 54 }, { x: 92, y: 86 },
-]
+    { x: 8, y: 14 },
+    { x: 36, y: 40 },
+    { x: 52, y: 32 },
+    { x: 44, y: 59 },
+    { x: 64, y: 54 },
+    { x: 92, y: 86 },
+  ]
 
-function spacing(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: examplePoints, size: 3,
-      color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+  const plot_spacing = plot({
+    series: [
+      plot.scatter({
+        data: examplePoints,
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     height: 260,
     margin: { top: 40, right: 40, bottom: 68, left: 88 },
     background: { light: '#ffffff', dark: '#202124' },
@@ -439,37 +596,62 @@ function spacing(): PlotArgs<Node> {
     grid: false,
     axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     zoom_pan: false,
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = spacing()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(plot_spacing)
+  // presentation.blank("Plot spacing").print(plot_spacing)
 ```
+
+### PlotArgs
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| [`series`](#series) | `Series[]` | Required | What to draw, in paint order. Build each one with a factory. |
-| [`axis?`](#axes) | `{ x?: AxisArgs, y?: AxisArgs }` | Inferred from data | Per-axis scale, label, ticks, and domain. |
+| `series` | [`Series[]`](#series) | Required | What to draw, in paint order. Build each one with a factory. |
+| `axis?` | [`{ x?: AxisArgs, y?: AxisArgs }`](#axes) | Inferred from data | Per-axis scale, label, ticks, and domain. |
 | [`title?`](#title) | `string \| { text, font? }` | None | Plot title. |
-| [`font?`](#font) | `FontArg` | Role defaults | Shared font configuration. |
+| `font?` | [`FontArg`](#font) | [Role defaults](#font-role-defaults) | Shared font configuration. |
 | `width?` | `number` | Container width | Canvas width in pixels. Overrides the wrapper's CSS width. |
 | `height?` | `number` | Parent height for `Plot`; `300` for `<a-plot>` | Canvas height in pixels. Overrides the host's CSS height. |
 | [`margin?`](#margins) | `number \| { top?, right?, bottom?, left? }` | `60` per side; `2` without axes or title | Space reserved around the plot area for axes and title. |
 | `border?` | `boolean` | `true` | Draws a border around the plot area. |
 | [`grid?`](#grid) | `boolean \| { x?, y? }` | `false` | Grid lines, per axis. |
-| [`chrome_color?`](#theme-colors) | `string \| { light, dark }` | Theme defaults | Color for axis lines, tick marks, grid lines, and the plot border. Text colors are configured separately. |
-| [`background?`](#theme-colors) | `boolean \| string \| { light, dark }` | White | Plot fill. `false` paints none; `true` and an absent value use `#fff`. |
-| [`theme_invert?`](#theme-colors) | `boolean` | Automatic | Forces dark-mode inversion on or off. Absent means invert unless a series color or the background is a `{ light, dark }` pair. |
-| [`zoom_pan?`](#zoom-and-pan) | `boolean \| { x?, y?, menu_zoom_step? }` | Both continuous axes | Scroll to zoom and drag to pan. Scroll or drag on an axis to affect only that axis. Set both axes to `false` to disable zoom and pan. |
-| [`viewport?`](#viewport) | `{ x?, y?, key? }` | Full domain | Requested starting window per axis. Applied at mount and on each `key` change, clamped to the full domain. |
-| [`on_viewport_change?`](#viewport-changes) | `(change: ViewportChange) => void` | None | Fires with each axis's current window and full extent after a gesture or reset. |
+| `chrome_color?` | [Theme colors](#theme-colors) | Theme defaults | Color for axis lines, tick marks, grid lines, and the plot border. Text colors are configured separately. |
+| `background?` | `boolean` or [Theme colors](#theme-colors) | White | Plot fill. `false` paints none. `true` and an absent value use `#fff`. |
+| `theme_invert?` | `boolean` | Automatic | Forces dark-mode inversion on or off. When omitted, inversion is enabled unless any `{ light, dark }` color pair is passed to the plot. |
+| [`zoom_pan?`](#zoom-and-pan-options) | `boolean \| { x?, y?, menu_zoom_step? }` | `true` for continuous axes | Scroll to zoom and drag to pan. Scroll or drag on an axis to affect only that axis. Set both axes to `false` to disable zoom and pan. |
+| `viewport?` | [`{ x?, y?, key? }`](#viewport-options) | Full domain | Requested starting window per axis. Applied at mount and on each `key` change, clamped to the full domain. |
+| `on_viewport_change?` | [`(change: ViewportChange) => void`](#viewport-changes) | None | Fires with each axis's current window and full extent after a gesture or reset. |
 
-Right-click the plot for **Reset Zoom**, **Zoom Out**, and **Zoom In**.
-Unavailable actions stay visible and disabled. Reset restores the full viewport;
-double-clicking does not reset. Focus the plot zoom controls and press Shift+F10
-or the Context Menu key to open the menu from the keyboard. Ctrl-primary click
-is reserved for rectangle zoom on macOS too; use a secondary click for the menu.
+### Series
+
+A series describes a set of data and how to draw it. Pass one or more series
+in `plotArgs.series`; they are drawn in array order, with the last series on top.
+
+Each series type has its own function, such as `plot.line()`, `plot.scatter()`,
+or `plot.custom()`. Call the function with the data and
+options for that series, including which fields supply its coordinates, its
+colors, and its tooltip behavior. The function returns a series configuration.
+It does not display a plot by itself.
+
+Pass the returned configurations in the `series` array when calling `plot()`.
+The plot combines them on shared axes and applies plot-wide settings such as
+the title, dimensions, and zoom controls.
+
+In web applications, import the series functions from `@antadesign/plot` and
+pass their results in the plot's `series` array.
+
+- <a id="scatter"></a> [Scatter](./plot/scatter.md)
+- <a id="line"></a> [Line](./plot/line.md)
+- <a id="bar"></a> [Bar](./plot/bar.md)
+- <a id="area"></a> [Area](./plot/area.md)
+- <a id="rect"></a> [Rect](./plot/rect.md)
+- <a id="rule"></a> [Rule](./plot/rule.md)
+- <a id="custom"></a> [Custom](./plot/custom.md)
+- <a id="stacked-bars"></a> [Stacked bars](./plot/bar.md#stacked-bars)
+- <a id="size"></a> [Scatter size](./plot/scatter.md#size)
+- <a id="custom-rendering"></a> [Custom rendering](./plot/custom.md#custom-rendering)
+- <a id="custom-hover-highlights"></a> [Custom hover highlights](./plot/custom.md#custom-hover-highlights)
 
 ### Axes
 
@@ -481,2065 +663,140 @@ Logarithmic scale
 
 Use a logarithmic axis to compare values across orders of magnitude. Format large tick values with a `k` suffix.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
+```js
 const examplePoints = [
-  { x: 8, y: 14 }, { x: 36, y: 40 }, { x: 52, y: 32 },
-  { x: 44, y: 59 }, { x: 64, y: 54 }, { x: 92, y: 86 },
-]
+    { x: 8, y: 14 },
+    { x: 36, y: 40 },
+    { x: 52, y: 32 },
+    { x: 44, y: 59 },
+    { x: 64, y: 54 },
+    { x: 92, y: 86 },
+  ]
 
-function logarithmic(): PlotArgs<Node> {
   const data = examplePoints.map(({ x, y }) => ({ x, y: 10 ** (y / 20 - 1) }))
-  return {
-    series: [scatter({ data, size: 3,
-      color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+
+  const logarithmic_axes = plot({
+    series: [
+      plot.scatter({ data, size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false }),
+    ],
     height: 260,
     margin: { top: 12, right: 14, bottom: 44, left: 80 },
     axis: {
       x: { min: 0, max: 100, label: 'Batch' },
-      y: { scale: 'log', min: 0.1, max: 10000, label: 'Duration (ms)',
-        tick_label: { format: value => Number(value) >= 1000 ? Number(value) / 1000 + 'k' : String(value) } },
+      y: {
+        scale: 'log',
+        min: 0.1,
+        max: 10000,
+        label: 'Duration (ms)',
+        tick_label: {
+          format: pure((value) =>
+            Number(value) >= 1000 ? Number(value) / 1000 + 'k' : String(value),
+          ),
+        },
+      },
     },
     background: { light: '#ffffff', dark: '#151b28' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: { x: false, y: true },
     border: true,
     zoom_pan: false,
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = logarithmic()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(logarithmic_axes)
+  // presentation.blank("Logarithmic axes").print(logarithmic_axes)
 ```
 
 Time and tick formatting
 
-Plot timestamps on a UTC axis and format the horizontal ticks as hours and minutes. Add a percent suffix to the vertical ticks.
+Plot timestamps on a UTC axis and add a percent suffix to the vertical ticks.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
+```js
 const examplePoints = [
-  { x: 8, y: 14 }, { x: 36, y: 40 }, { x: 52, y: 32 },
-  { x: 44, y: 59 }, { x: 64, y: 54 }, { x: 92, y: 86 },
-]
+    { x: 8, y: 14 },
+    { x: 36, y: 40 },
+    { x: 52, y: 32 },
+    { x: 44, y: 59 },
+    { x: 64, y: 54 },
+    { x: 92, y: 86 },
+  ]
 
-function timeAxis(): PlotArgs<Node> {
-  const start = Date.UTC(2026, 0, 12)
-  const data = examplePoints.map(({ x, y }) => ({ x: start + x / 100 * 86400000, y }))
-  return {
-    series: [scatter({ data, size: 3,
-      color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+  const start = 1768176000000 // 2026-01-12T00:00:00Z
+
+  const data = examplePoints.map(({ x, y }) => ({ x: start + (x / 100) * 86400000, y }))
+
+  const time_axes = plot({
+    series: [
+      plot.scatter({ data, size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false }),
+    ],
     height: 260,
     margin: { top: 12, right: 16, bottom: 44, left: 76 },
     axis: {
-      x: { scale: 'utc', min: start, max: start + 86400000, label: 'Time (UTC)', padding: 8,
-        tick_label: { format: value => new Date(Number(value)).toISOString().slice(11, 16) } },
-      y: { min: 0, max: 100, label: 'Utilization', tick_mark: false,
-        tick_label: { format: value => value + '%' } },
+      x: {
+        scale: 'utc',
+        min: start,
+        max: start + 86400000,
+        label: 'Time (UTC)',
+        padding: 8,
+      },
+      y: {
+        min: 0,
+        max: 100,
+        label: 'Utilization',
+        tick_mark: false,
+        tick_label: { format: pure((value) => value + '%') },
+      },
     },
     background: { light: '#ffffff', dark: '#151b28' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: { x: true, y: false },
     border: true,
     zoom_pan: false,
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = timeAxis()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(time_axes)
+  // presentation.blank("Time axes").print(time_axes)
 ```
+
+#### AxisArgs
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| [`scale?`](#scales) | `'linear' \| 'log' \| 'category' \| 'time' \| 'utc'` | Inferred | Numeric data uses a linear scale; string data uses categories. Time scales take timestamps in milliseconds; `time` formats in local time and `utc` in UTC. |
-| [`label?`](#axis-labels) | `LabelArg` | Shared field name, if available | Axis name, as text or an object with presentation options. Use `''` to omit it. |
+| [`scale?`](#scales) | `'linear' \| 'log' \| 'category' \| 'time' \| 'utc'` | Inferred | Numeric data uses a linear scale. String data uses categories. Time scales take timestamps in milliseconds. `time` formats in local time and `utc` in UTC. |
+| `label?` | [`LabelArg`](#axis-labels) | Shared field name, if available | Axis name, as text or an object with presentation options. Use `''` to omit it. |
 | `min?` | `number` | Inferred from data | Lower continuous-domain bound. |
 | `max?` | `number` | Inferred from data | Upper continuous-domain bound. |
-| `categories?` | `string[]` | Inferred from data | Explicit category list and order; also declares a categorical axis. |
+| `categories?` | `string[]` | Inferred from data | Declares a categorical axis and sets its category list and order across all series. Series data with unlisted categories is omitted. Listed categories without data retain empty bands. If a name appears more than once in the `categories` list, only its first occurrence is used. |
 | `padding?` | `number` | `0` | Pixel padding at both ends of the axis, inside the plot area. |
-| `padding_left?` | `number` | `padding` | Left-end padding for `axis.x`. |
-| `padding_right?` | `number` | `padding` | Right-end padding for `axis.x`. |
-| `padding_top?` | `number` | `padding` | Top-end padding for `axis.y`. |
-| `padding_bottom?` | `number` | `padding` | Bottom-end padding for `axis.y`. |
-| `grid_align?` | `'center' \| 'edge'` | `'center'` | Position grid lines at category centers or boundaries. Categorical axes only. |
+| `padding_left?` | `number` | `0` | Pixel padding at the left end of `axis.x`. Inherits `axis.x.padding` when omitted. Set this field to override it for this end. |
+| `padding_right?` | `number` | `0` | Pixel padding at the right end of `axis.x`. Inherits `axis.x.padding` when omitted. Set this field to override it for this end. |
+| `padding_top?` | `number` | `0` | Pixel padding at the top end of `axis.y`. Inherits `axis.y.padding` when omitted. Set this field to override it for this end. |
+| `padding_bottom?` | `number` | `0` | Pixel padding at the bottom end of `axis.y`. Inherits `axis.y.padding` when omitted. Set this field to override it for this end. |
+| `grid_align?` | `'center' \| 'edge'` | `'center'` | Position grid lines at the centers or boundaries of category bands. Setting this option on a continuous axis produces an error. |
 | `line?` | `boolean` | `true` | Draw the axis line. |
 | `hidden?` | `boolean` | `false` | Hide the axis presentation while retaining its scale. |
-| [`tick_label?`](#tick-labels) | `TickLabelArg` | Automatic formatting | Tick text formatting, size, and color. |
+| `tick_label?` | [`TickLabelArg`](#tick-labels) | Automatic formatting | Tick text formatting, size, and color. |
 | `tick_mark?` | `boolean` | `true` | Draw tick marks. Does not hide tick labels. |
-
-### Series
-
-A series describes a set of data and how to draw it. Pass one or more series
-in `plotArgs.series`; they are drawn in array order. Import the series
-functions from `@antadesign/plot`.
-
-The default column describes omitted fields. Examples may override these defaults.
-See [Data fields](#data-fields), [Series colors](#series-colors), [Strokes](#strokes),
-and [Mark shapes](#mark-shapes) for shared configuration types.
-For callbacks, see [Tooltips](#tooltips) and [Selection callbacks](#selection-callbacks).
-
-#### Scatter
-
-Draw a mark at each data point. Use `size`, [`mark`](#mark-shapes), and [`stroke`](#strokes) to control
-its appearance. Set `tooltip: true` for a tooltip showing the point's values.
-
-Size and color from data
-
-Use a size accessor to vary mark diameter and a color accessor to highlight larger values. An outline keeps overlapping bubbles distinct.
-
-```ts
-import { scatter, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 24 }, (_, i) => ({
-  x: 12 + (i * 17 % 83),
-  y: 15 + (i * 31 % 72),
-  volume: 20 + (i * 43 % 180),
-}))
-
-plot.plotArgs = {
-  series: [scatter({
-    data,
-    size: row => (5 + Math.sqrt(Number(row.volume)) * 1.8) * 1.3,
-    color: row => Number(row.volume) > 120
-      ? { light: '#e76f51', dark: '#fda489' }
-      : { light: '#0891b2', dark: '#67e8f9' },
-    stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 2 },
-    tooltip: ({ row }) => document.createTextNode('Volume: ' + row.volume),
-  })],
-  height: 260,
-  margin: { top: 12, right: 12, bottom: 28, left: 36 },
-  axis: { x: { min: 0, max: 110, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Mark shapes and outlines
-
-Use different marks to distinguish groups without relying on color alone. Each series sets its own shape, size, and stroke.
-
-```ts
-import { scatter, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 18 }, (_, i) => ({
-  x: 10 + i * 4.5,
-  y: 18 + i * 2.5 + Math.sin(i * 2.1) * 12,
-}))
-
-plot.plotArgs = {
-  series: [
-    scatter({
-      data,
-      mark: 'square',
-      size: 11,
-      color: { light: '#c4b5fd', dark: '#8b5cf6' },
-      stroke: { color: { light: '#6d28d9', dark: '#ddd6fe' }, width: 2 },
-      tooltip: ({ x, y }) => document.createTextNode('Squares: ' + x + ', ' + Math.round(Number(y))),
-    }),
-    scatter({
-      data: data.map(point => ({ x: point.x + 5, y: 95 - point.y })),
-      mark: 'diamond',
-      size: 13,
-      color: { light: '#99f6e4', dark: '#0d9488' },
-      stroke: { color: { light: '#0f766e', dark: '#5eead4' }, width: 2 },
-      tooltip: ({ x, y }) => document.createTextNode('Diamonds: ' + x + ', ' + Math.round(Number(y))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 12, right: 12, bottom: 28, left: 36 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Scatter arguments
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
-| `x?` | [`FieldArg`](#data-fields) | `'x'` | Horizontal field name or accessor. |
-| `y?` | [`FieldArg`](#data-fields) | `'y'` | Vertical field name or accessor. |
-| `color?` | [`ColorArg`](#series-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
-| `size?` | `number \| ((row, index, viewport) => number)` | `5` | [Mark diameter](#size) in pixels, or a per-row accessor. A row’s `size` takes precedence. |
-| [`mark?`](#mark-shapes) | `MarkShape` | `'circle'` | Mark shape: circle, square, diamond, or triangle. |
-| [`stroke?`](#strokes) | `StrokeArg` | None | Outline color and optional width. |
-| [`tooltip?`](#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
-
-```ts
-import { scatter } from '@antadesign/plot'
-
-const series = [scatter({
-  data: [{ time: 1, value: 3 }, { time: 2, value: 5 }, { time: 3, value: 4 }],
-  x: 'time',
-  y: 'value',
-  color: (row) => Number(row.value) >= 5 ? 'coral' : 'steelblue',
-  size: (row) => Number(row.value) * 2,
-  mark: 'diamond',
-  stroke: { color: 'navy', width: 1 },
-  tooltip: ({ x, y }) => `(${x}, ${y})`,
-  on_select: ({ row }) => console.log('Selected row:', row),
-  hoverable: true,
-  highlight: true,
-})]
-```
-
-#### Line
-
-Connect points in data order. Set `width` and `dash` for the line, or add
-[`mark`](#mark-shapes) and `mark_size` to show the individual points.
-
-Solid and dashed lines
-
-Compare measured values with a forecast. A solid line follows each fluctuation, while a dashed line distinguishes the expected trend.
-
-```ts
-import { line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 97 }, (_, i) => ({
-  x: i / 4,
-  expected: 45 + 22 * Math.sin(i / 18) + 12 * Math.cos(i / 7),
-  measured: 45 + 22 * Math.sin(i / 18) + 12 * Math.cos(i / 7)
-    + 7 * Math.sin(i * 1.1) + 4 * Math.cos(i * 2.3),
-}))
-
-plot.plotArgs = {
-  series: [
-    line({
-      data,
-      y: 'expected',
-      color: { light: '#c2410c', dark: '#fdba74' },
-      width: 2,
-      dash: [7, 5],
-      tooltip: ({ y }) => document.createTextNode('Expected: ' + Math.round(Number(y))),
-    }),
-    line({
-      data,
-      y: 'measured',
-      color: { light: '#0891b2', dark: '#67e8f9' },
-      width: 2,
-      tooltip: ({ y }) => document.createTextNode('Measured: ' + Math.round(Number(y))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Point marks and outlines
-
-Show individual samples with diamond marks. Set the line width, mark size, and mark outline independently to keep each measurement visible.
-
-```ts
-import { line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 13 }, (_, i) => ({
-  x: i,
-  y: 35 + i * 2 + 18 * Math.sin(i * 0.8) + 8 * Math.cos(i * 1.7),
-}))
-
-plot.plotArgs = {
-  series: [line({
-    data,
-    color: { light: '#7c3aed', dark: '#c4b5fd' },
-    width: 3,
-    mark: 'diamond',
-    mark_size: 10,
-    mark_stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 2 },
-    tooltip: ({ x, y }) => document.createTextNode('Sample ' + x + ': ' + Math.round(Number(y))),
-  })],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: -0.5, max: 12.5, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Line arguments
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
-| `x?` | [`FieldArg`](#data-fields) | `'x'` | Horizontal field name or accessor. |
-| `y?` | [`FieldArg`](#data-fields) | `'y'` | Vertical field name or accessor. |
-| `color?` | [`ThemeColor`](#theme-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
-| `width?` | `number` | `2` | Line width in pixels. |
-| `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
-| [`mark?`](#mark-shapes) | `MarkShape` | None | Shape drawn at each point. |
-| `mark_size?` | `number` | `6` | Point marker diameter in pixels. |
-| [`mark_stroke?`](#strokes) | `StrokeArg` | None | Outline for the point markers. |
-| [`tooltip?`](#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
-
-```ts
-import { line } from '@antadesign/plot'
-
-const series = [line({
-  data: [{ time: 1, value: 3 }, { time: 2, value: 5 }, { time: 3, value: 4 }],
-  x: 'time',
-  y: 'value',
-  color: { light: 'steelblue', dark: 'lightskyblue' },
-  width: 2,
-  dash: [6, 3],
-  mark: 'circle',
-  mark_size: 8,
-  mark_stroke: { color: 'navy', width: 1 },
-  tooltip: ({ x, y }) => `(${x}, ${y})`,
-  on_select: ({ row }) => console.log('Selected row:', row),
-  hoverable: true,
-  highlight: true,
-})]
-```
-
-#### Bar
-
-Draw one bar per category. Use a categorical field on one axis and a numeric
-field on the other. Categories on `x` produce vertical bars; categories on
-`y` produce horizontal bars.
-
-Rounded bars and data colors
-
-Set corner rounding and spacing independently. A color accessor highlights days with more than 80 requests per second.
-
-```ts
-import { bar, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = [
-  { day: 'Mon', requests: 42 },
-  { day: 'Tue', requests: 68 },
-  { day: 'Wed', requests: 91 },
-  { day: 'Thu', requests: 57 },
-  { day: 'Fri', requests: 84 },
-  { day: 'Sat', requests: 36 },
-  { day: 'Sun', requests: 24 },
-]
-
-plot.plotArgs = {
-  series: [bar({
-    data,
-    x: 'day',
-    y: 'requests',
-    border_radius: 6,
-    inset: 5,
-    color: row => Number(row.requests) > 80
-      ? { light: '#c2410c', dark: '#fdba74' }
-      : { light: '#0891b2', dark: '#67e8f9' },
-    hover_span_x: true,
-    tooltip: ({ x, y }) => document.createTextNode(x + ': ' + y + ' requests/s'),
-  })],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Horizontal bars
-
-Place categories on the y-axis to leave room for their names. Hover anywhere along a category’s row to inspect its value.
-
-```ts
-import { bar, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = [
-  { service: 'Search', requests: 92 },
-  { service: 'Feed', requests: 78 },
-  { service: 'Checkout', requests: 64 },
-  { service: 'Profile', requests: 47 },
-  { service: 'Upload', requests: 31 },
-]
-
-plot.plotArgs = {
-  series: [bar({
-    data,
-    x: 'requests',
-    y: 'service',
-    border_radius: 4,
-    inset: 8,
-    color: { light: '#7c3aed', dark: '#c4b5fd' },
-    hover_span_y: true,
-    tooltip: ({ x, y }) => document.createTextNode(y + ': ' + x + ' requests/s'),
-  })],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 78 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: true, y: false },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Positive and negative values
-
-Bars extend from zero in either direction. Use a color accessor to distinguish monthly gains from losses.
-
-```ts
-import { bar, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = [
-  { month: 'Jan', change: 24 },
-  { month: 'Feb', change: -16 },
-  { month: 'Mar', change: 38 },
-  { month: 'Apr', change: 12 },
-  { month: 'May', change: -28 },
-  { month: 'Jun', change: -9 },
-  { month: 'Jul', change: 31 },
-]
-
-plot.plotArgs = {
-  series: [bar({
-    data,
-    x: 'month',
-    y: 'change',
-    inset: 6,
-    color: row => Number(row.change) >= 0
-      ? { light: '#0d9488', dark: '#5eead4' }
-      : { light: '#c2410c', dark: '#fdba74' },
-    hover_span_x: true,
-    tooltip: ({ x, y }) => document.createTextNode(x + ': ' + (Number(y) > 0 ? '+' : '') + y + '%'),
-  })],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { label: '' }, y: { min: -40, max: 40, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Custom category order
-
-Set `axis.x.categories` to order bars by severity, independently of the source row order.
-
-```ts
-import { bar, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function categoryOrder(): PlotArgs<Node> {
-  const data = [
-    { severity: 'High', count: 28 }, { severity: 'Low', count: 46 },
-    { severity: 'Critical', count: 12 }, { severity: 'Medium', count: 35 },
-  ]
-  return {
-    series: [bar({ data, x: 'severity', y: 'count', inset: 10, border_radius: 3,
-      color: { light: '#64748b', dark: '#94a3b8' },
-      tooltip: ({ x, y }) => document.createTextNode(x + ': ' + y + ' issues'),
-    })],
-    height: 260,
-    margin: { top: 5, right: 12, bottom: 24, left: 30 },
-    axis: {
-      x: { categories: ['Critical', 'High', 'Medium', 'Low'], label: '' },
-      y: { min: 0, max: 50, label: '' },
-    },
-    background: { light: '#ffffff', dark: '#151b28' },
-    chrome_color: { light: '#e2e8f0', dark: '#334155' },
-    grid: { x: false, y: true },
-    border: false,
-    zoom_pan: false,
-  }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = categoryOrder()
-document.body.append(plot)
-```
-
-Bar arguments
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
-| `x?` | [`FieldArg \| string[]`](#data-fields) | `'x'` | Category or value field. An array of value fields creates horizontal stacks. |
-| `y?` | [`FieldArg \| string[]`](#data-fields) | `'y'` | Category or value field. An array of value fields creates vertical stacks. |
-| `color?` | [`ColorArg`](#series-colors)` \| ``ThemeColor``[]` | Black | Uniform or per-row color; a color array maps to stacked fields in order. |
-| `border_radius?` | `number` | `0` | Bar corner radius in pixels. |
-| `inset?` | `number` | One sixth of band width | Inset on each side of a categorical band, in pixels. |
-| `min_size?` | `number` | `2` | Minimum rendered value length in pixels. |
-| `hover_span_x?` | `boolean` | `false` | Extend the horizontal hit region across the categorical band. |
-| `hover_span_y?` | `boolean` | `false` | Extend the vertical hit region across the categorical band. |
-| [`tooltip?`](#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
-
-```ts
-import { bar } from '@antadesign/plot'
-
-const series = [bar({
-  data: [{ group: 'A', count: 8 }, { group: 'B', count: 12 }],
-  x: 'group',
-  y: 'count',
-  color: { light: 'steelblue', dark: 'lightskyblue' },
-  border_radius: 3,
-  inset: 4,
-  min_size: 2,
-  hover_span_x: true,
-  hover_span_y: false,
-  tooltip: ({ x, y }) => `(${x}, ${y})`,
-  on_select: ({ row }) => console.log('Selected row:', row),
-  hoverable: true,
-  highlight: true,
-})]
-```
-
-##### Stacked bars
-
-Pass an array of value-field names to stack them within each category.
-Use `y` for vertical stacks or `x` for horizontal stacks. An array of
-colors assigns one color to each field, in the same order.
-
-Stacked values
-
-Pass multiple value fields to stack them within each category. Colors follow the field order; hover a segment to see its contribution.
-
-```ts
-import { bar, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = [
-  { day: 'Mon', network: 18, compute: 42, storage: 24 },
-  { day: 'Tue', network: 24, compute: 32, storage: 18 },
-  { day: 'Wed', network: 12, compute: 56, storage: 28 },
-  { day: 'Thu', network: 28, compute: 24, storage: 16 },
-  { day: 'Fri', network: 16, compute: 48, storage: 22 },
-]
-
-plot.plotArgs = {
-  series: [bar({
-    data,
-    x: 'day',
-    y: ['network', 'compute', 'storage'],
-    color: [
-      { light: '#0d9488', dark: '#5eead4' },
-      { light: '#6366f1', dark: '#a5b4fc' },
-      { light: '#d97706', dark: '#fcd34d' },
-    ],
-    inset: 8,
-    tooltip: ({ label, y }) => document.createTextNode(label + ': ' + y + ' ms'),
-  })],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Horizontal stacks
-
-Pass multiple fields to `x` and categories to `y` to compare contributions across services.
-
-```ts
-import { bar, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function stackedHorizontal(): PlotArgs<Node> {
-  const data = [
-    { service: 'Search', network: 18, compute: 46, storage: 14 },
-    { service: 'Feed', network: 26, compute: 28, storage: 22 },
-    { service: 'Upload', network: 42, compute: 16, storage: 32 },
-    { service: 'Export', network: 12, compute: 36, storage: 18 },
-  ]
-  return {
-    series: [bar({ data, x: ['network', 'compute', 'storage'], y: 'service',
-      color: [
-        { light: '#0d9488', dark: '#5eead4' },
-        { light: '#6366f1', dark: '#a5b4fc' },
-        { light: '#d97706', dark: '#fcd34d' },
-      ],
-      inset: 8, border_radius: 3,
-      tooltip: ({ label, x }) => document.createTextNode(label + ': ' + x + ' ms'),
-    })],
-    height: 260,
-    margin: { top: 5, right: 8, bottom: 20, left: 64 },
-    axis: { x: { min: 0, max: 100, label: '' }, y: { label: '' } },
-    background: { light: '#ffffff', dark: '#151b28' },
-    chrome_color: { light: '#e2e8f0', dark: '#334155' },
-    grid: { x: true, y: false },
-    border: false,
-    zoom_pan: false,
-  }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = stackedHorizontal()
-document.body.append(plot)
-```
-
-Positive and negative stacks
-
-Positive and negative values stack separately from zero. Each segment retains its sign and field label.
-
-```ts
-import { bar, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function stackedDiverging(): PlotArgs<Node> {
-  const data = [
-    { month: 'Jan', new: 28, expansion: 12, churn: -14, contraction: -6 },
-    { month: 'Feb', new: 18, expansion: 8, churn: -22, contraction: -10 },
-    { month: 'Mar', new: 36, expansion: 16, churn: -8, contraction: -4 },
-    { month: 'Apr', new: 24, expansion: 18, churn: -18, contraction: -12 },
-    { month: 'May', new: 32, expansion: 10, churn: -12, contraction: -8 },
-  ]
-  return {
-    series: [bar({ data, x: 'month', y: ['new', 'expansion', 'churn', 'contraction'],
-      color: [
-        { light: '#0d9488', dark: '#2dd4bf' },
-        { light: '#5eead4', dark: '#99f6e4' },
-        { light: '#ea580c', dark: '#fb923c' },
-        { light: '#fdba74', dark: '#fed7aa' },
-      ],
-      inset: 7,
-      tooltip: ({ label, y }) => document.createTextNode(label + ': ' + (Number(y) > 0 ? '+' : '') + y),
-    })],
-    height: 260,
-    margin: { top: 5, right: 8, bottom: 20, left: 36 },
-    axis: { x: { label: '' }, y: { min: -40, max: 60, label: '' } },
-    background: { light: '#ffffff', dark: '#151b28' },
-    chrome_color: { light: '#e2e8f0', dark: '#334155' },
-    grid: { x: false, y: true },
-    border: false,
-    zoom_pan: false,
-  }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = stackedDiverging()
-document.body.append(plot)
-```
-
-Full-stack tooltips
-
-Hover a segment to see every value in its stack. The callback reads the values from `row` and uses `label` to display the hovered segment’s name and value in bold.
-
-```ts
-import { bar, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function stackedTooltip(): PlotArgs<Node> {
-  const data = [
-    { day: 'Mon', network: 18, compute: 42, storage: 24 },
-    { day: 'Tue', network: 24, compute: 32, storage: 18 },
-    { day: 'Wed', network: 12, compute: 56, storage: 28 },
-    { day: 'Thu', network: 28, compute: 24, storage: 16 },
-    { day: 'Fri', network: 16, compute: 48, storage: 22 },
-  ]
-
-  return {
-    series: [bar({
-      data,
-      x: 'day',
-      y: ['network', 'compute', 'storage'],
-      color: [
-        { light: '#0d9488', dark: '#5eead4' },
-        { light: '#6366f1', dark: '#a5b4fc' },
-        { light: '#d97706', dark: '#fcd34d' },
-      ],
-      inset: 10,
-      hover_span_x: false,
-      hover_span_y: false,
-      tooltip: ({ label, row }) => {
-        const content = document.createElement('div')
-        const fields: (keyof typeof row)[] = ['network', 'compute', 'storage']
-        for (const field of fields) {
-          const entry = document.createElement('div')
-          const value = document.createElement(field === label ? 'strong' : 'span')
-          value.textContent = field + ': ' + row[field] + ' ms'
-          entry.append(value)
-          content.append(entry)
-        }
-        return content
-      },
-    })],
-    height: 260,
-    margin: { top: 5, right: 8, bottom: 20, left: 30 },
-    axis: { x: { label: '' }, y: { min: 0, max: 100, label: '' } },
-    background: { light: '#ffffff', dark: '#151b28' },
-    chrome_color: { light: '#e2e8f0', dark: '#334155' },
-    grid: { x: false, y: true },
-    border: false,
-    zoom_pan: false,
-  }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = stackedTooltip()
-document.body.append(plot)
-```
-
-```ts
-import { bar } from '@antadesign/plot'
-
-const series = [bar({
-  data: [
-    { group: 'A', passed: 8, failed: 2 },
-    { group: 'B', passed: 12, failed: 3 },
-  ],
-  x: 'group',
-  y: ['passed', 'failed'],
-  color: ['seagreen', 'coral'],
-  border_radius: 3,
-  inset: 4,
-  min_size: 2,
-  hover_span_x: true,
-  hover_span_y: false,
-  tooltip: ({ label, y }) => `${label}: ${y}`,
-  on_select: ({ label, row }) => console.log('Selected segment:', label, row),
-  hoverable: true,
-  highlight: true,
-})]
-```
-
-#### Area
-
-Fill the space between two boundaries. Set `y2` for a second vertical value
-or `x2` for a second horizontal value. The second boundary can be a field
-name or a constant, such as a zero baseline.
-
-Fill to a baseline
-
-Fill beneath a signal with a constant zero baseline. A stroke traces the area’s boundary.
-
-```ts
-import { area, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 97 }, (_, i) => ({
-  x: i / 4,
-  y: 28 + 42 * Math.exp(-(((i - 55) / 24) ** 2))
-    + 9 * Math.sin(i / 5) + 4 * Math.cos(i * 1.3),
-}))
-
-plot.plotArgs = {
-  series: [
-    area({
-      data,
-      y2: 0,
-      color: { light: '#99f6e4', dark: '#134e4a' },
-      stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
-      tooltip: ({ y }) => document.createTextNode('Load: ' + Math.round(Number(y))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-A range between fields
-
-Use two value fields to draw a changing interval. A dashed outline distinguishes its boundaries.
-
-```ts
-import { area, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 81 }, (_, i) => {
-  const center = 48 + 16 * Math.sin(i / 12) + 5 * Math.cos(i / 3)
-  const spread = 8 + 10 * Math.sin(i / 17) ** 2
-  return { x: i * 0.3, low: center - spread, high: center + spread }
-})
-
-plot.plotArgs = {
-  series: [
-    area({
-      data,
-      y: 'high',
-      y2: 'low',
-      color: { light: '#ddd6fe', dark: '#4c1d95' },
-      stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
-      dash: [5, 3],
-      tooltip: ({ row }) => document.createTextNode(Math.round(Number(row.low)) + '–' + Math.round(Number(row.high))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Layered contributions
-
-Compose adjacent areas with explicit cumulative bounds. Each band shows one contribution to the total.
-
-```ts
-import { area, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 97 }, (_, i) => {
-  const first = 18 + 7 * Math.sin(i / 13) + 3 * Math.cos(i / 4)
-  const second = first + 22 + 9 * Math.sin(i / 18 + 1)
-  const total = second + 16 + 6 * Math.cos(i / 9)
-  return { x: i / 4, first, second, total }
-})
-
-plot.plotArgs = {
-  series: [
-    area({
-      data,
-      y: 'first',
-      y2: 0,
-      color: { light: '#2dd4bf', dark: '#0d9488' },
-      tooltip: ({ row }) => document.createTextNode('Network: ' + Math.round(Number(row.first))),
-    }),
-    area({
-      data,
-      y: 'second',
-      y2: 'first',
-      color: { light: '#a5b4fc', dark: '#6366f1' },
-      tooltip: ({ row }) => document.createTextNode('Compute: ' + Math.round(Number(row.second) - Number(row.first))),
-    }),
-    area({
-      data,
-      y: 'total',
-      y2: 'second',
-      color: { light: '#fcd34d', dark: '#b45309' },
-      tooltip: ({ row }) => document.createTextNode('Storage: ' + Math.round(Number(row.total) - Number(row.second))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Horizontal intervals
-
-Use `x` and `x2` for horizontal bounds. The filled band shows how an interval shifts along the vertical axis.
-
-```ts
-import { area, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 81 }, (_, i) => {
-  const center = 46 + 18 * Math.sin(i / 16) + 4 * Math.cos(i / 4)
-  const spread = 9 + 6 * Math.cos(i / 11) ** 2
-  return { y: i * 0.3, low: center - spread, high: center + spread }
-})
-
-plot.plotArgs = {
-  series: [
-    area({
-      data,
-      x: 'low',
-      x2: 'high',
-      color: { light: '#fed7aa', dark: '#7c2d12' },
-      stroke: { color: { light: '#ea580c', dark: '#fdba74' }, width: 2 },
-      tooltip: ({ row }) => document.createTextNode(Math.round(Number(row.low)) + '–' + Math.round(Number(row.high))),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 24, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: true, y: false },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Area arguments
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
-| `x?` | [`FieldArg`](#data-fields) | `'x'` | Horizontal field name or accessor. |
-| `x2?` | [`FieldArg \| number`](#data-fields) | None | Second horizontal boundary, as a field, accessor, or constant. Use either `x2` or `y2`. |
-| `y?` | [`FieldArg`](#data-fields) | `'y'` | Vertical field name or accessor. |
-| `y2?` | [`FieldArg \| number`](#data-fields) | Zero baseline if neither bound is set | Second vertical boundary, as a field, accessor, or constant. |
-| `color?` | [`ThemeColor`](#theme-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
-| [`stroke?`](#strokes) | `StrokeArg` | None | Outline color and optional width. |
-| `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
-| [`tooltip?`](#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
-
-```ts
-import { area } from '@antadesign/plot'
-
-const series = [area({
-  data: [
-    { time: 1, low: 2, high: 4 },
-    { time: 2, low: 3, high: 6 },
-    { time: 3, low: 2, high: 5 },
-  ],
-  x: 'time',
-  y: 'high',
-  y2: 'low',
-  color: { light: 'lightsteelblue', dark: 'midnightblue' },
-  stroke: { color: 'steelblue', width: 2 },
-  dash: [6, 3],
-  tooltip: ({ x, y }) => `(${x}, ${y})`,
-  on_select: ({ row }) => console.log('Selected row:', row),
-  hoverable: true,
-  highlight: true,
-})]
-```
-For a horizontal area, use `x2` instead of `y2`:
-
-```ts
-import { area } from '@antadesign/plot'
-
-const series = [area({
-  data: [{ low: 2, high: 4, time: 1 }, { low: 3, high: 6, time: 2 }],
-  x: 'high',
-  x2: 'low',
-  y: 'time',
-  color: 'lightsteelblue',
-})]
-```
-
-#### Rect
-
-Draw rectangles with explicit bounds. Use `x`, `x2`, `y`, and `y2` to select
-the fields defining each rectangle's corners. Rectangles can represent
-intervals, regions, or cells in a grid.
-
-Categorical cells
-
-Combine two categorical axes to form a heatmap. Color each cell from its value and use `inset` to separate neighboring cells.
-
-```ts
-import { rect, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
-const hours = ['09', '11', '13', '15', '17', '19']
-const data = days.flatMap((day, d) => hours.map((hour, h) => ({
-  day, hour, activity: Math.round(20 + 75 * Math.sin(h * 0.8 + d * 0.5) ** 2),
-})))
-
-plot.plotArgs = {
-  series: [
-    rect({
-      data,
-      x: 'hour',
-      y: 'day',
-      inset: 2,
-      color: row => ({
-        light: 'hsl(174, 65%, ' + (94 - Number(row.activity) * 0.6) + '%)',
-        dark: 'hsl(174, 55%, ' + (16 + Number(row.activity) * 0.4) + '%)',
-      }),
-      tooltip: ({ row }) => document.createTextNode(row.day + ' ' + row.hour + ':00 · ' + row.activity + '%'),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 38 },
-  axis: { x: { categories: hours, label: '' }, y: { categories: days, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Intervals with explicit bounds
-
-Set `x` and `x2` to show durations within categorical rows. Each rectangle retains its start and end values as the plot resizes.
-
-```ts
-import { rect, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = [
-  { task: 'Fetch', start: 0.5, end: 3.2 },
-  { task: 'Parse', start: 2.8, end: 5.1 },
-  { task: 'Build', start: 4.5, end: 9.4 },
-  { task: 'Test', start: 7.8, end: 11.2 },
-  { task: 'Ship', start: 10.8, end: 12.5 },
-]
-
-plot.plotArgs = {
-  series: [
-    rect({
-      data,
-      x: 'start',
-      x2: 'end',
-      y: 'task',
-      inset: 9,
-      color: { light: '#c4b5fd', dark: '#6d28d9' },
-      stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 1 },
-      hover_span_y: true,
-      tooltip: ({ row }) => document.createTextNode(row.task + ': ' + row.start + '–' + row.end + ' s'),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 44 },
-  axis: { x: { min: 0, max: 14, label: '' }, y: { label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Fixed pixel dimensions
-
-Set `size` to draw rectangles with a consistent width and height at numeric coordinates. An outline keeps nearby marks distinct.
-
-```ts
-import { rect, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 32 }, (_, i) => ({
-  x: 8 + (i * 23 % 84),
-  y: 18 + (i * 13 % 65),
-  value: 20 + (i * 17 % 80),
-}))
-
-plot.plotArgs = {
-  series: [
-    rect({
-      data,
-      size: { width: 16, height: 9 },
-      color: row => Number(row.value) > 65
-        ? { light: '#c2410c', dark: '#fdba74' }
-        : { light: '#0891b2', dark: '#67e8f9' },
-      stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1 },
-      tooltip: ({ row }) => document.createTextNode('Value: ' + row.value),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Run history
-
-Place fixed-size rectangles on a time axis in Passed and Failed lanes. Use `band_align` to anchor both sets of marks to the shared divider, with passing runs above and failures below.
-
-```ts
-import { rect, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const start = Date.UTC(2026, 0, 1, 9)
-const data = Array.from({ length: 36 }, (_, i) => ({
-  run: i + 1,
-  end_ms: start + (i * 3 + (i % 3)) * 60_000,
-  lane: [5, 6, 14, 23, 24, 25, 32].includes(i) ? 'Failed' : 'Passed',
-}))
-
-plot.plotArgs = {
-  series: [
-    rect({
-      data: data.filter(row => row.lane === 'Passed'),
-      x: 'end_ms',
-      y: 'lane',
-      size: { width: 10, height: 40 },
-      band_align: 'end',
-      inset: 0,
-      color: { light: '#189e3e', dark: '#4ade80' },
-      stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 0.5 },
-      tooltip: ({ row }) => document.createTextNode('Run ' + row.run + ': ' + row.lane),
-    }),
-    rect({
-      data: data.filter(row => row.lane === 'Failed'),
-      x: 'end_ms',
-      y: 'lane',
-      size: { width: 10, height: 40 },
-      band_align: 'start',
-      inset: 0,
-      color: { light: '#c41e5e', dark: '#fb7185' },
-      stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 0.5 },
-      tooltip: ({ row }) => document.createTextNode('Run ' + row.run + ': ' + row.lane),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 24, left: 56 },
-  axis: {
-    x: {
-      scale: 'utc',
-      min: start - 5 * 60_000,
-      max: start + 115 * 60_000,
-      label: '',
-      line: false,
-      tick_label: { format: value => new Date(Number(value)).toISOString().slice(11, 16) },
-    },
-    y: { categories: ['Failed', 'Passed'], grid_align: 'edge', label: '', line: false },
-  },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: true,
-  border: false,
-  theme_invert: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Rect arguments
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `data` | `Record<string, unknown>[]` | Required | Rows used to build the series. |
-| `x?` | [`FieldArg`](#data-fields) | `'x'` | Horizontal field name or accessor. |
-| `x2?` | [`FieldArg`](#data-fields) | `'x2'` when present in data | Opposite horizontal corner. Numeric axes need a second corner or pixel size. |
-| `y?` | [`FieldArg`](#data-fields) | `'y'` | Vertical field name or accessor. |
-| `y2?` | [`FieldArg`](#data-fields) | `'y2'` when present in data | Opposite vertical corner. Numeric axes need a second corner or pixel size. |
-| `span?` | `'x' \| 'y'` | None | Stretch the rectangle across the full plot on this axis. |
-| `size?` | `number \| { width?: number; height?: number }` | Derived from bounds or band | Fixed pixel size, shared or per dimension. |
-| `band_align?` | `'center' \| 'start' \| 'end'` | `'center'` | Alignment of a fixed-size rectangle within a categorical band. |
-| `hover_span_x?` | `boolean` | `false` | Extend the horizontal hit region across the categorical band. |
-| `hover_span_y?` | `boolean` | `false` | Extend the vertical hit region across the categorical band. |
-| `inset?` | `number` | One sixth of band width | Inset on each side of a categorical band, in pixels. |
-| `min_size?` | `number` | `0` | Minimum pixel length for a rectangle defined by data bounds. |
-| `offset?` | `{ x?: number; y?: number }` | `{ x: 0, y: 0 }` | Pixel offsets applied to each rectangle. |
-| `color?` | [`ColorArg`](#series-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
-| [`stroke?`](#strokes) | `StrokeArg` | None | Outline color and optional width. |
-| [`tooltip?`](#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
-
-```ts
-import { rect } from '@antadesign/plot'
-
-const series = [rect({
-  data: [
-    { start: 1, end: 3, low: 2, high: 5 },
-    { start: 4, end: 6, low: 1, high: 4 },
-  ],
-  x: 'start',
-  x2: 'end',
-  y: 'low',
-  y2: 'high',
-  min_size: 2,
-  offset: { x: 0, y: 0 },
-  color: 'lightsteelblue',
-  stroke: { color: 'steelblue', width: 1 },
-  tooltip: ({ x, y }) => `(${x}, ${y})`,
-  on_select: ({ row }) => console.log('Selected row:', row),
-  hoverable: true,
-  highlight: true,
-})]
-```
-For fixed-size marks in categorical bands, use `size` and `band_align`.
-`inset` controls the space around a band when its size is not fixed:
-
-```ts
-import { rect } from '@antadesign/plot'
-
-const series = [rect({
-  data: [{ group: 'A', row: 'First' }, { group: 'B', row: 'Second' }],
-  x: 'group',
-  y: 'row',
-  size: { width: 12 },
-  band_align: 'start',
-  inset: 4,
-  offset: { x: 2, y: 0 },
-  hover_span_x: true,
-  hover_span_y: true,
-  color: 'steelblue',
-  tooltip: true,
-})]
-```
-
-Use `span` to fill one axis, leaving its coordinates unspecified. Add this
-series before the data series to draw a background region:
-
-```ts
-import { rect } from '@antadesign/plot'
-
-const series = [rect({
-  data: [{ low: 2, high: 5 }],
-  span: 'x',
-  y: 'low',
-  y2: 'high',
-  color: 'aliceblue',
-  hoverable: false,
-  highlight: false,
-})]
-```
-
-#### Rule
-
-Draw a reference line across the plot. Supply `x` for a vertical line or
-`y` for a horizontal line. A single rule needs no data array; add it to the
-same series array as the data it annotates.
-
-Horizontal reference values
-
-Use numeric `y` values for reference lines without a data array. A thin dashed target and a thick solid upper limit show how width and dash patterns distinguish reference values.
-
-```ts
-import { rule, line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 97 }, (_, i) => ({
-  x: i / 4,
-  y: 44 + 15 * Math.sin(i / 9) + 5 * Math.cos(i * 0.8)
-    + 38 * Math.exp(-(((i - 62) / 10) ** 2)),
-}))
-
-plot.plotArgs = {
-  series: [
-    line({
-      data,
-      color: { light: '#0891b2', dark: '#67e8f9' },
-      width: 2,
-    }),
-    rule({
-      y: 60,
-      color: { light: '#7c3aed', dark: '#c4b5fd' },
-      width: 1,
-      dash: [7, 4],
-      tooltip: () => document.createTextNode('Target: 60 ms'),
-    }),
-    rule({
-      y: 90,
-      color: { light: '#c2410c', dark: '#fdba74' },
-      width: 4,
-      tooltip: () => document.createTextNode('Upper limit: 90 ms'),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 110, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Vertical event markers
-
-Read `x` positions from data to mark events along a signal. A solid rule marks deployment; thinner dashed rules mark recovery events. Tooltips identify each event.
-
-```ts
-import { rule, line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = Array.from({ length: 97 }, (_, i) => ({
-  x: i / 4,
-  y: 35 + 12 * Math.sin(i / 11) + 4 * Math.cos(i * 0.7)
-    + (i >= 28 && i < 64 ? 30 : 0),
-}))
-const events = [
-  { hour: 7, name: 'Deploy', recovery: false },
-  { hour: 16, name: 'Rollback', recovery: true },
-  { hour: 21, name: 'Verified', recovery: true },
-]
-
-plot.plotArgs = {
-  series: [
-    line({
-      data,
-      color: { light: '#6366f1', dark: '#a5b4fc' },
-      width: 2,
-    }),
-    rule({
-      data: events.filter(event => !event.recovery),
-      x: 'hour',
-      color: { light: '#c2410c', dark: '#fdba74' },
-      width: 3,
-      tooltip: ({ row }) => document.createTextNode(row?.name + ' at hour ' + row?.hour),
-    }),
-    rule({
-      data: events.filter(event => event.recovery),
-      x: 'hour',
-      color: { light: '#0d9488', dark: '#5eead4' },
-      width: 2,
-      dash: [5, 4],
-      tooltip: ({ row }) => document.createTextNode(row?.name + ' at hour ' + row?.hour),
-    }),
-  ],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { min: 0, max: 24, label: '' }, y: { min: 0, max: 110, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Rule arguments
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `data?` | `Record<string, unknown>[]` | None | Optional rows for multiple reference lines. |
-| `x?` | [`number \| FieldArg`](#data-fields) | None | Vertical rule position, or a field/accessor when `data` is supplied. Set exactly one of `x` and `y`. |
-| `y?` | [`number \| FieldArg`](#data-fields) | None | Horizontal rule position, or a field/accessor when `data` is supplied. |
-| `color?` | [`ColorArg`](#series-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
-| `width?` | `number` | `1` | Rule width in pixels. |
-| `dash?` | `number[]` | Solid | Alternating dash and gap lengths in pixels. |
-| [`tooltip?`](#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-| `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
-
-```ts
-import { rule } from '@antadesign/plot'
-
-const series = [rule({
-  data: [{ threshold: 5 }, { threshold: 8 }],
-  y: 'threshold',
-  color: (row) => Number(row.threshold) >= 8 ? 'tomato' : 'steelblue',
-  width: 2,
-  dash: [6, 4],
-  tooltip: ({ x, y }) => `(${x}, ${y})`,
-  on_select: ({ row }) => console.log('Selected row:', row),
-  hoverable: true,
-  highlight: true,
-})]
-```
-For a single vertical reference line, supply a numeric `x` without `data`:
-
-```ts
-import { rule } from '@antadesign/plot'
-
-const series = [rule({
-  x: 3,
-  color: 'tomato',
-  width: 2,
-  hoverable: false,
-  highlight: false,
-})]
-```
-
-#### Custom
-
-Provide a [`renderer`](#custom-rendering) to draw directly on the canvas. Its second argument
-includes the canvas context, plot bounds, scales, and helpers that convert
-data positions into pixel coordinates.
-
-Confidence ellipses
-
-Overlay 95% contours for two specified Gaussian models on their sampled points. Draw the ellipse in data coordinates so its shape follows the axis scales.
-
-```ts
-import { custom, scatter, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const groups = [
-  { x: 32, y: 40, sx: 10, sy: 5, angle: 0.6 },
-  { x: 68, y: 62, sx: 8, sy: 5, angle: -0.8 },
-]
-const points = groups.flatMap((group, g) => Array.from({ length: 80 }, (_, i) => {
-  const radius = Math.sqrt(-2 * Math.log((i + 0.5) / 80))
-  const theta = i * 2.399963
-  const u = group.sx * radius * Math.cos(theta)
-  const v = group.sy * radius * Math.sin(theta)
-  return {
-    x: group.x + u * Math.cos(group.angle) - v * Math.sin(group.angle),
-    y: group.y + u * Math.sin(group.angle) + v * Math.cos(group.angle),
-    group: g,
-  }
-}))
-
-plot.plotArgs = {
-  series: [
-    scatter({
-      data: points,
-      size: 3,
-      color: row => Number(row.group) === 0
-        ? { light: '#0d9488', dark: '#5eead4' }
-        : { light: '#7c3aed', dark: '#c4b5fd' },
-      tooltip: ({ x, y }) => document.createTextNode(Number(x).toFixed(1) + ', ' + Number(y).toFixed(1)),
-    }),
-    custom({
-      data: groups,
-      x: 'x', y: 'y',
-      color: (_, i) => i === 0
-        ? { light: '#0f766e', dark: '#5eead4' }
-        : { light: '#6d28d9', dark: '#c4b5fd' },
-      hoverable: false,
-      renderer: (_, { ctx, x_scale, y_scale, color_at }) => {
-        ctx.save()
-        ctx.lineWidth = 2
-        groups.forEach((group, i) => {
-          ctx.strokeStyle = color_at(i)
-          ctx.beginPath()
-          // The 95% contour of the specified bivariate Gaussian model.
-          for (let step = 0; step <= 100; step++) {
-            const theta = step / 100 * Math.PI * 2
-            const u = Math.sqrt(5.991) * group.sx * Math.cos(theta)
-            const v = Math.sqrt(5.991) * group.sy * Math.sin(theta)
-            const x = Number(x_scale(group.x + u * Math.cos(group.angle) - v * Math.sin(group.angle)))
-            const y = Number(y_scale(group.y + u * Math.sin(group.angle) + v * Math.cos(group.angle)))
-            if (step === 0) ctx.moveTo(x, y)
-            else ctx.lineTo(x, y)
-          }
-          ctx.closePath()
-          ctx.stroke()
-        })
-        ctx.restore()
-      },
-    }),
-  ],
-  height: 260,
-  margin: { top: 8, right: 8, bottom: 24, left: 30 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Chord diagram
-
-Connect five groups with ribbons whose widths represent shared volume. The outer arcs use the same weights, showing each group’s total connections. Hover an outer arc to inspect its total.
-
-```ts
-import { custom, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-const names = ['A', 'B', 'C', 'D', 'E']
-const matrix = [
-  [0, 12, 8, 4, 16],
-  [12, 0, 18, 6, 3],
-  [8, 18, 0, 14, 7],
-  [4, 6, 14, 0, 11],
-  [16, 3, 7, 11, 0],
-]
-const gap = 0.08
-const total = matrix.flat().reduce((sum, value) => sum + value, 0)
-const unit = (Math.PI * 2 - gap * names.length) / total
-let angle = -Math.PI / 2
-const groups = matrix.map((row, i) => {
-  const start = angle
-  const segments = row.map(value => {
-    const from = angle
-    angle += value * unit
-    return { start: from, end: angle }
-  })
-  const end = angle
-  angle += gap
-  return { name: names[i], total: row.reduce((sum, value) => sum + value, 0), start, end, segments }
-})
-
-plot.plotArgs = {
-  series: [custom({
-    data: groups,
-    color: (_, i) => [
-      { light: '#0d9488', dark: '#5eead4' },
-      { light: '#7c3aed', dark: '#c4b5fd' },
-      { light: '#db2777', dark: '#f9a8d4' },
-      { light: '#d97706', dark: '#fcd34d' },
-      { light: '#2563eb', dark: '#93c5fd' },
-    ][i],
-    hit_test: (_, { cursor, inner }) => {
-      const cx = (inner.left + inner.right) / 2
-      const cy = (inner.top + inner.bottom) / 2
-      const radius = Math.min(inner.right - inner.left, inner.bottom - inner.top) / 2 - 32
-      const distance = Math.hypot(cursor.x - cx, cursor.y - cy)
-      if (Math.abs(distance - (radius + 7)) > 8) return null
-      let angle = Math.atan2(cursor.y - cy, cursor.x - cx)
-      if (angle < -Math.PI / 2) angle += Math.PI * 2
-      const index = groups.findIndex(group => angle >= group.start && angle <= group.end)
-      return index < 0 ? null : index
-    },
-    tooltip: ({ row }) => document.createTextNode('Group ' + row?.name + ': ' + row?.total + ' connections'),
-    highlight_renderer: (series, i, { ctx, inner, color_at, highlight_color_at }) => {
-      const rows = series.rows as typeof groups
-      const group = rows[i]
-      const cx = (inner.left + inner.right) / 2
-      const cy = (inner.top + inner.bottom) / 2
-      const radius = Math.min(inner.right - inner.left, inner.bottom - inner.top) / 2 - 32
-      const point = (a: number) => [cx + radius * Math.cos(a), cy + radius * Math.sin(a)]
-      // Match the main renderer: ribbons take the lower-index group's color.
-      ctx.fillStyle = color_at(i)
-      ctx.globalAlpha = 0.45
-      for (let j = i + 1; j < rows.length; j++) {
-        const source = group.segments[j]
-        const target = rows[j].segments[i]
-        const [sx, sy] = point(source.start)
-        const [tx, ty] = point(target.start)
-        ctx.beginPath()
-        ctx.moveTo(sx, sy)
-        ctx.arc(cx, cy, radius, source.start, source.end)
-        ctx.quadraticCurveTo(cx, cy, tx, ty)
-        ctx.arc(cx, cy, radius, target.start, target.end)
-        ctx.quadraticCurveTo(cx, cy, sx, sy)
-        ctx.closePath()
-        ctx.fill()
-      }
-      ctx.globalAlpha = 1
-      ctx.strokeStyle = highlight_color_at(i)
-      ctx.lineWidth = 13
-      ctx.beginPath()
-      ctx.arc(cx, cy, radius + 7, group.start, group.end)
-      ctx.stroke()
-    },
-    renderer: (_, { ctx, inner, color_at }) => {
-      const cx = (inner.left + inner.right) / 2
-      const cy = (inner.top + inner.bottom) / 2
-      const radius = Math.min(inner.right - inner.left, inner.bottom - inner.top) / 2 - 32
-      const point = (a: number) => [cx + radius * Math.cos(a), cy + radius * Math.sin(a)]
-      ctx.save()
-      // Allocate ribbon endpoints from the same weights as the outer arcs.
-      groups.forEach((group, i) => {
-        for (let j = i + 1; j < groups.length; j++) {
-          const source = group.segments[j]
-          const target = groups[j].segments[i]
-          const [sx, sy] = point(source.start)
-          const [tx, ty] = point(target.start)
-          ctx.fillStyle = color_at(i)
-          ctx.globalAlpha = 0.45
-          ctx.beginPath()
-          ctx.moveTo(sx, sy)
-          ctx.arc(cx, cy, radius, source.start, source.end)
-          ctx.quadraticCurveTo(cx, cy, tx, ty)
-          ctx.arc(cx, cy, radius, target.start, target.end)
-          ctx.quadraticCurveTo(cx, cy, sx, sy)
-          ctx.closePath()
-          ctx.fill()
-        }
-      })
-      ctx.globalAlpha = 1
-      ctx.font = '12px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      groups.forEach((group, i) => {
-        ctx.strokeStyle = color_at(i)
-        ctx.fillStyle = color_at(i)
-        ctx.lineWidth = 9
-        ctx.beginPath()
-        ctx.arc(cx, cy, radius + 7, group.start, group.end)
-        ctx.stroke()
-        const mid = (group.start + group.end) / 2
-        ctx.fillText(group.name, cx + (radius + 22) * Math.cos(mid), cy + (radius + 22) * Math.sin(mid))
-      })
-      ctx.restore()
-    },
-  })],
-  height: 260,
-  margin: 0,
-  axis: { x: { hidden: true, min: 0, max: 1 }, y: { hidden: true, min: 0, max: 1 } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Ridgeline distributions
-
-Compare six weekly distributions with overlapping density curves. Each ridge uses the same horizontal scale and density normalization, revealing shifts in location and spread. Hover a ridge to see its sample count and mean.
-
-```ts
-import { custom, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-// Test the same closed polygon used for drawing, including the spaces between sampled points.
-function containsPoint(points: number[][], x: number, y: number): boolean {
-  let inside = false
-  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-    const [xi, yi] = points[i]
-    const [xj, yj] = points[j]
-    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside
-  }
-  return inside
-}
-
-const data = Array.from({ length: 6 }, (_, i) => {
-  const values = Array.from({ length: 80 }, (_, j) => {
-    const z = Math.sqrt(-2 * Math.log((j + 0.5) / 80)) * Math.cos(j * 2.399963)
-    return 25 + i * 8 + z * [8, 5, 11, 4, 9, 6][i] + (j % 3 === 0 ? 14 : 0)
-  })
-  return {
-    group: 'Week ' + (i + 1),
-    mean: values.reduce((sum, value) => sum + value, 0) / values.length,
-    density: Array.from({ length: 101 }, (_, value) => ({
-      value,
-      density: values.reduce((sum, sample) => sum + Math.exp(-0.5 * ((value - sample) / 3) ** 2), 0)
-        / (values.length * 3 * Math.sqrt(2 * Math.PI)),
-    })),
-  }
-})
-const peak = Math.max(...data.flatMap(row => row.density.map(point => point.density)))
-
-plot.plotArgs = {
-  series: [custom({
-    data,
-    y: 'group',
-    color: (_, i) => ({ light: 'hsl(' + (175 + i * 15) + ', 55%, 55%)', dark: 'hsl(' + (175 + i * 15) + ', 50%, 45%)' }),
-    hit_test: (_, { cursor, x_scale, resolve_y, inner }) => {
-      const step = (inner.bottom - inner.top) / data.length
-      // Reverse paint order selects the foreground ridge where shapes overlap.
-      for (let i = data.length - 1; i >= 0; i--) {
-        const center = resolve_y(i)
-        if (center === undefined) continue
-        const baseline = center + step * 0.45
-        const points = [
-          [Number(x_scale(0)), baseline],
-          ...data[i].density.map(point => [
-            Number(x_scale(point.value)), baseline - point.density / peak * step * 1.9,
-          ]),
-          [Number(x_scale(100)), baseline],
-        ]
-        if (containsPoint(points, cursor.x, cursor.y)) return i
-      }
-      return null
-    },
-    tooltip: ({ row }) => document.createTextNode(row?.group + ' · 80 samples · mean ' + Number(row?.mean).toFixed(1)),
-    renderer: (series, { ctx, x_scale, resolve_y, color_at, inner }) => {
-      const step = (inner.bottom - inner.top) / data.length
-      ctx.save()
-      // Paint from the top row down, so foreground ridges cover the preceding tails.
-      const rows = series.rows as typeof data
-      rows.forEach((row, i) => {
-        const center = resolve_y(i)
-        if (center === undefined) return
-        const baseline = center + step * 0.45
-        ctx.fillStyle = color_at(i)
-        ctx.strokeStyle = '#334155'
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.moveTo(Number(x_scale(0)), baseline)
-        row.density.forEach(point => {
-          ctx.lineTo(Number(x_scale(point.value)), baseline - point.density / peak * step * 1.9)
-        })
-        ctx.lineTo(Number(x_scale(100)), baseline)
-        ctx.closePath()
-        ctx.globalAlpha = [1, 0.7, 0.85, 0.65, 0.8, 0.7][data.indexOf(row)]
-        ctx.fill()
-        ctx.globalAlpha = 1
-        ctx.stroke()
-      })
-      ctx.restore()
-    },
-  })],
-  height: 260,
-  margin: { top: 24, right: 8, bottom: 24, left: 52 },
-  axis: {
-    x: { min: 0, max: 100, label: '' },
-    y: { categories: data.map(row => row.group).reverse(), padding_top: 28, label: '' },
-  },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-Violin distributions
-
-Mirror a kernel density estimate around each group’s center. Wider sections contain more observations; the central segment shows the interquartile range and the white dot marks the median. Hover a violin to inspect its median and quartiles.
-
-```ts
-import { custom, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
-// Deterministic samples and a Gaussian kernel density estimate, used by the violin example.
-function distributions() {
-  return ['A', 'B', 'C'].map((group, g) => {
-    const values = Array.from({ length: 60 }, (_, i) => {
-      const z = Math.sqrt(-2 * Math.log((i + 0.5) / 60)) * Math.cos(i * 2.399963)
-      return 36 + g * 10 + z * (6 + g * 2) + (g === 2 && i % 2 === 0 ? 18 : 0)
-    }).sort((a, b) => a - b)
-    const density = Array.from({ length: 101 }, (_, value) => ({
-      value,
-      density: values.reduce((sum, sample) => sum + Math.exp(-0.5 * ((value - sample) / 4) ** 2), 0)
-        / (values.length * 4 * Math.sqrt(2 * Math.PI)),
-    }))
-    return { group, values, density, q1: values[15], median: (values[29] + values[30]) / 2, q3: values[44] }
-  })
-}
-
-// Test the same closed polygon used for drawing, including the spaces between sampled points.
-function containsPoint(points: number[][], x: number, y: number): boolean {
-  let inside = false
-  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-    const [xi, yi] = points[i]
-    const [xj, yj] = points[j]
-    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside
-  }
-  return inside
-}
-
-const data = distributions()
-const peak = Math.max(...data.flatMap(row => row.density.map(point => point.density)))
-
-plot.plotArgs = {
-  series: [custom({
-    data,
-    x: 'group',
-    color: (_, i) => [
-      { light: 'color-mix(in oklch, #0d9488 60%, transparent)', dark: 'color-mix(in oklch, #5eead4 60%, transparent)' },
-      { light: 'color-mix(in oklch, #7c3aed 60%, transparent)', dark: 'color-mix(in oklch, #c4b5fd 60%, transparent)' },
-      { light: 'color-mix(in oklch, #c2410c 60%, transparent)', dark: 'color-mix(in oklch, #fdba74 60%, transparent)' },
-    ][i],
-    hit_test: (_, { cursor, y_scale, resolve_x, inner }) => {
-      const width = Math.min(34, (inner.right - inner.left) / 9)
-      for (let i = data.length - 1; i >= 0; i--) {
-        const x = resolve_x(i)
-        if (x === undefined) continue
-        const points = [
-          ...data[i].density.map(point => [x + point.density / peak * width, Number(y_scale(point.value))]),
-          ...data[i].density.slice().reverse().map(point => [x - point.density / peak * width, Number(y_scale(point.value))]),
-        ]
-        if (containsPoint(points, cursor.x, cursor.y)) return i
-      }
-      return null
-    },
-    tooltip: ({ row }) => document.createTextNode('Group ' + row?.group
-      + ' · median ' + Number(row?.median).toFixed(1)
-      + ' · middle 50%: ' + Number(row?.q1).toFixed(1) + '–' + Number(row?.q3).toFixed(1)),
-    renderer: (series, { ctx, y_scale, resolve_x, color_at, inner }) => {
-      const width = Math.min(34, (inner.right - inner.left) / 9)
-      ctx.save()
-      const rows = series.rows as typeof data
-      rows.forEach((row, i) => {
-        const x = resolve_x(i)
-        if (x === undefined) return
-        ctx.fillStyle = color_at(i)
-        ctx.beginPath()
-        row.density.forEach((point, j) => {
-          const px = x + point.density / peak * width
-          const py = Number(y_scale(point.value))
-          if (j === 0) ctx.moveTo(px, py)
-          else ctx.lineTo(px, py)
-        })
-        row.density.slice().reverse().forEach(point => {
-          ctx.lineTo(x - point.density / peak * width, Number(y_scale(point.value)))
-        })
-        ctx.closePath()
-        ctx.fill()
-        ctx.strokeStyle = '#151b28'
-        ctx.lineWidth = 4
-        ctx.beginPath()
-        ctx.moveTo(x, Number(y_scale(row.q1)))
-        ctx.lineTo(x, Number(y_scale(row.q3)))
-        ctx.stroke()
-        ctx.fillStyle = '#ffffff'
-        ctx.beginPath()
-        ctx.arc(x, Number(y_scale(row.median)), 3, 0, Math.PI * 2)
-        ctx.fill()
-      })
-      ctx.restore()
-    },
-  })],
-  height: 260,
-  margin: { top: 8, right: 8, bottom: 24, left: 30 },
-  axis: { x: { categories: ['A', 'B', 'C'], label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
-##### Custom hover highlights
-
-Hover the points at x = 20 for the default single-point repaint, x = 50 for an explicit halo, and x = 80 for tooltips with highlighting disabled. Only the hovered point is repainted. Translucent fills strengthen when drawn again; an identical opaque fill may look unchanged.
-
-Without `highlight_renderer`, Anta calls `renderer` on the overlay with a single-point series view. The aligned `x`, `y`, `rows`, `colors`, `highlight_colors`, and `labels` arrays contain only that point at index 0; scales and bounds are unchanged. Render from the supplied series, not captured full-data arrays, to use this fallback. Set `highlight_color` to override the fallback's color without changing its geometry.
-
-For connected geometry or a different highlight, supply `highlight_renderer(series, point_index, context)`. It receives the full composed series, the original hovered index, and the normal render helpers plus `highlight_color_at(index)`. Anta handles DPR, clearing, clipping, and canvas-state isolation. Set `highlight: false` to disable either path. Both paths require data and hit testing.
-
-```ts
-import { custom, type PlotArgs, type CustomRendererFn, type CustomHitTestFn, type CustomHighlightRendererFn } from '@antadesign/plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-function highlights(): PlotArgs<Node> {
-  type Point = { x: number; y: number }
-  const renderer: CustomRendererFn<Point> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
-    for (let i = 0; i < series.x.length; i++) {
-      const x = resolve_x(i), y = resolve_y(i)
-      if (x === undefined || y === undefined) continue
-      ctx.fillStyle = color_at(i)
-      ctx.beginPath()
-      ctx.arc(x, y, 16, 0, Math.PI * 2)
-      ctx.fill()
-    }
-  }
-  const hit_test: CustomHitTestFn<Point> = (series, { cursor, resolve_x, resolve_y }) => {
-    for (let i = series.x.length - 1; i >= 0; i--) {
-      const x = resolve_x(i), y = resolve_y(i)
-      if (x !== undefined && y !== undefined && Math.hypot(cursor.x - x, cursor.y - y) <= 16) return i
-    }
-    return null
-  }
-  const highlight_renderer: CustomHighlightRendererFn<Point> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
-    const x = resolve_x(i), y = resolve_y(i)
-    if (x === undefined || y === undefined) return
-    ctx.strokeStyle = highlight_color_at(i)
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.arc(x, y, 22, 0, Math.PI * 2)
-    ctx.stroke()
-  }
-  return {
-    height: 260,
-    axis: { x: { min: 0, max: 100 }, y: { min: 0, max: 100 } },
-    margin: { top: 12, right: 12, bottom: 28, left: 32 },
-    grid: false, zoom_pan: false,
-    series: [
-      custom({
-        data: [{ x: 20, y: 35 }, { x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
-        color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
-      }),
-      custom({
-        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
-        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
-      }),
-      custom({
-        data: [{ x: 80, y: 35 }, { x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
-        color: '#94a3b8', highlight: false, tooltip: true,
-      }),
-    ],
-  }
-}
-
-plot.plotArgs = highlights()
-document.body.append(plot)
-```
-
-Custom arguments
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `data?` | `Record<string, unknown>[]` | None | Optional rows; required when using field selectors or hit testing. |
-| `x?` | [`FieldArg`](#data-fields) | Unclaimed | Horizontal field or accessor; omitted axes do not contribute data bounds. |
-| `y?` | [`FieldArg`](#data-fields) | Unclaimed | Vertical field or accessor; omitted axes do not contribute data bounds. |
-| [`renderer`](#custom-rendering) | `CustomRendererFn` | Required | Draw the series using its data and the supplied canvas context and pixel resolvers. |
-| `highlight_renderer?` | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
-| `highlight?` | `boolean` | `true` | Enable the custom callback or default single-point repaint. |
-| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
-| [`hit_test?`](#custom-hit-testing) | `CustomHitTestFn` | None | Return a row index for a hit, or `null`. Required for custom tooltips and selection. |
-| `color?` | [`ColorArg`](#series-colors) | Black | Color made available to the renderer, including optional per-row colors. |
-| `axis_range?` | `{ x?: number[]; y?: number[] }` | Data extent | Explicit `[low, high]` bounds for either axis. |
-| [`tooltip?`](#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
-| [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
-| `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
-
-This example draws a cross at each point and finds the nearest cross within
-eight pixels for tooltips and selection:
-
-```ts
-import { custom } from '@antadesign/plot'
-
-const series = [custom({
-  data: [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 4 }],
-  x: 'x',
-  y: 'y',
-  color: { light: 'steelblue', dark: 'lightskyblue' },
-  axis_range: { x: [0, 4], y: [0, 6] },
-  renderer: (series, { ctx, resolve_x, resolve_y, color_at }) => {
-    ctx.save()
-    ctx.lineWidth = 2
-    for (let i = 0; i < series.x.length; i++) {
-      const x = resolve_x(i)
-      const y = resolve_y(i)
-      if (x === undefined || y === undefined) continue
-      ctx.strokeStyle = color_at(i)
-      ctx.beginPath()
-      ctx.moveTo(x - 4, y)
-      ctx.lineTo(x + 4, y)
-      ctx.moveTo(x, y - 4)
-      ctx.lineTo(x, y + 4)
-      ctx.stroke()
-    }
-    ctx.restore()
-  },
-  hit_test: (series, { cursor, resolve_x, resolve_y }) => {
-    let nearest: number | null = null
-    let distance = 8
-    for (let i = 0; i < series.x.length; i++) {
-      const x = resolve_x(i)
-      const y = resolve_y(i)
-      if (x === undefined || y === undefined) continue
-      const candidate = Math.hypot(cursor.x - x, cursor.y - y)
-      if (candidate <= distance) {
-        nearest = i
-        distance = candidate
-      }
-    }
-    return nearest
-  },
-  tooltip: ({ x, y }) => `(${x}, ${y})`,
-  on_select: ({ row }) => console.log('Selected row:', row),
-  hoverable: true,
-})]
-```
-
-For tooltips or selection, also provide `data` and a [`hit_test`](#custom-hit-testing) that returns
-the matching row index, or `null` when there is no hit. Use `axis_range`
-to declare bounds when they cannot be inferred from the data.
 
 ## Interactions
 
+Interact with a plot to inspect data points, select them, or change the visible
+range. Configure these behaviors on the plot or its individual series:
+
+- [Hover highlights](#hover-highlights) change a point's appearance when you move the pointer over it.
+- [Tooltips](#tooltips) show details about the data under the pointer.
+- [Selection](#selection) executes the callback you provide when you select a data point.
+- [Zoom and pan](#zoom-and-pan) let you focus on a smaller range or move through the data. Use [`on_viewport_change`](#viewport-changes) to notify your application when the visible range changes.
+
 ### Hover highlights
 
-Bars A and B use the default highlight. Bar C uses an opaque orange `highlight_color`, and D uses a translucent magenta override. Bar E sets `highlight: false`, so its appearance stays unchanged. Bar F uses `hoverable: false`, so it does not participate in hit testing.
+When you move the pointer over a data point, a hover highlight temporarily
+changes its appearance to show which point you are hovering over. By default,
+Plot draws a highlight over the point using its series color. Opaque colors
+are darkened in light mode or lightened in dark mode and applied at 40% opacity.
+Colors that are already translucent keep their color and opacity, blending
+over the original point.
 
 Set `highlight_color` to a CSS color, a `{ light, dark }` pair, or a per-row accessor. Stacked bars also accept a color array with one entry per segment. Anta uses the resolved color without shading or changing its opacity. Translucent highlights blend over the original mark. Omit the property to keep the default highlight.
 
@@ -2547,140 +804,167 @@ For custom series, this property changes the fallback renderer's `color`, `color
 
 Hover feedback is temporary. For custom geometry, supply a [hit-testing callback](#custom-hit-testing).
 
-```ts
-import { bar, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
+- Bars A and B use the default highlight.
+- Bar C uses an opaque orange `highlight_color`.
+- Bar D uses a translucent magenta `highlight_color`.
+- Bar E sets `highlight: false`, so its appearance stays unchanged.
+- Bar F uses `hoverable: false`, so it does not participate in hit testing.
 
-const plot = document.createElement('a-plot') as APlotElement
-
+```js
 const data = [
-  { x: 'A', y: 64 }, { x: 'B', y: 82 },
-  { x: 'C', y: 53 }, { x: 'D', y: 71 },
-  { x: 'E', y: 44 }, { x: 'F', y: 61 },
-]
+    { x: 'A', y: 64 },
+    { x: 'B', y: 82 },
+    { x: 'C', y: 53 },
+    { x: 'D', y: 71 },
+    { x: 'E', y: 44 },
+    { x: 'F', y: 61 },
+  ]
 
-plot.plotArgs = {
-  series: [
-    bar({
-      data: data.slice(0, 2), inset: 7, border_radius: 4,
-      color: { light: 'rgba(13, 148, 136, 0.35)', dark: 'rgba(94, 234, 212, 0.35)' },
-    }),
-    bar({
-      data: data.slice(2, 4), inset: 7, border_radius: 4,
-      color: { light: '#0d9488', dark: '#5eead4' },
-      highlight_color: row => row.x === 'C'
-        ? { light: '#f97316', dark: '#fdba74' }
-        : 'color-mix(in oklch, magenta 50%, transparent)',
-    }),
-    bar({
-      data: data.slice(4, 5), inset: 7, border_radius: 4,
-      color: { light: '#7c3aed', dark: '#c4b5fd' },
-      highlight: false,
-    }),
-    bar({
-      data: data.slice(5), inset: 7, border_radius: 4,
-      color: { light: '#94a3b8', dark: '#64748b' },
-      hoverable: false,
-    }),
-  ],
-  height: 260,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { categories: data.map(row => row.x), label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
+  const hover_highlights = plot({
+    series: [
+      plot.bar({
+        data: data.slice(0, 2),
+        inset: 7,
+        border_radius: 4,
+        color: { light: 'rgba(13, 148, 136, 0.35)', dark: 'rgba(94, 234, 212, 0.35)' },
+      }),
+      plot.bar({
+        data: data.slice(2, 4),
+        inset: 7,
+        border_radius: 4,
+        color: { light: '#0d9488', dark: '#5eead4' },
+        highlight_color: pure((row) =>
+          row.x === 'C'
+            ? { light: '#f97316', dark: '#fdba74' }
+            : 'color-mix(in oklch, magenta 50%, transparent)',
+        ),
+      }),
+      plot.bar({
+        data: data.slice(4, 5),
+        inset: 7,
+        border_radius: 4,
+        color: { light: '#7c3aed', dark: '#c4b5fd' },
+        highlight: false,
+      }),
+      plot.bar({
+        data: data.slice(5),
+        inset: 7,
+        border_radius: 4,
+        color: { light: '#94a3b8', dark: '#64748b' },
+        hoverable: false,
+      }),
+    ],
+    height: 260,
+    margin: { top: 8, right: 12, bottom: 24, left: 32 },
+    axis: {
+      x: { categories: data.map((row) => row.x), label: '' },
+      y: { min: 0, max: 100, label: '' },
+    },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: false,
+    border: false,
+    zoom_pan: false,
+  })
 
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(hover_highlights)
+  // presentation.blank("Hover highlights").print(hover_highlights)
 ```
 
 #### Custom hit testing
 
-`CustomHitTestFn<Row>` receives a `CustomSeriesView<Row>` and a
-`HitContext`. Return the matching row index or `null` when there is no hit.
-Custom series need this callback for tooltips and selection.
+Hit testing determines which data point, if any, is under the pointer. Plot uses
+the result for hover highlights, tooltips, and selection. For custom shapes,
+provide a callback that checks whether the pointer is over your geometry.
 
-```ts
-import type { CustomSeriesView, HitContext } from '@antadesign/plot'
+The `hit_test` callback receives the series and a `HitContext` describing the
+pointer position and plot geometry. Return the matching item's index in `data`,
+or `null` when there is no hit. Custom series need this callback for tooltips
+and selection.
 
-type HitTest<Row> = (series: CustomSeriesView<Row>, context: HitContext) => number | null
-```
+##### HitContext
 
 | Context field | Type | Description |
 |---|---|---|
 | `cursor` | `{ x: number; y: number }` | Pointer position in the same pixel coordinates as the resolvers. |
-| `inner` | [`Rect`](#custom-rendering) | Plot bounds in pixels. |
-| `x_scale` | [`Scale`](#custom-rendering) | Composed horizontal scale. |
-| `y_scale` | [`Scale`](#custom-rendering) | Composed vertical scale. |
-| `resolve_x` | [`PixelResolver`](#custom-rendering) | Resolve a row index to its x position. |
-| `resolve_y` | [`PixelResolver`](#custom-rendering) | Resolve a row index to its y position. |
+| `inner` | [`Rect`](./plot/custom.md#custom-rendering) | Plot bounds in pixels. |
+| `x_scale` | [`Scale`](./plot/custom.md#custom-rendering) | Composed horizontal scale. |
+| `y_scale` | [`Scale`](./plot/custom.md#custom-rendering) | Composed vertical scale. |
+| `resolve_x` | [`PixelResolver`](./plot/custom.md#custom-rendering) | Resolve a row index to its x position. |
+| `resolve_y` | [`PixelResolver`](./plot/custom.md#custom-rendering) | Resolve a row index to its y position. |
 
 ### Tooltips
 
 Hover a rectangle to inspect its data. The series with `tooltip: true` shows the default tooltip. The series with a tooltip callback shows custom content describing its bounds. Where the two series overlap, both tooltip entries appear together, separated by a divider. The tooltip follows the pointer.
 
-Use `tooltip: true` for default content, or return a DOM node from the standalone host’s callback. React callbacks can return JSX. Both receive the [tooltip and selection callback parameters](#tooltip-and-selection-callback-parameters). Omit `tooltip` to keep hover feedback without a tooltip. See [Tooltip content](#tooltip-content) for the callback types.
+Use `tooltip: true` for default content. In Antithesis notebook, custom callbacks
+return a Printable using `h(...)`, as in the example. Standalone browser callbacks
+return a DOM node, and React callbacks can return JSX. All receive the
+[tooltip and selection callback parameters](#tooltip-and-selection-callback-parameters).
+Omit `tooltip` to keep hover feedback without a tooltip. See
+[Tooltip content](#tooltip-content) for the callback types.
 
-```ts
-import { rect, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-
+```js
 const data = [
-  { x: 8, x2: 38, y: 15, y2: 48, name: 'Window A' },
-  { x: 55, x2: 86, y: 48, y2: 82, name: 'Window B' },
-]
+    { x: 8, x2: 38, y: 15, y2: 48, name: 'Window A' },
+    { x: 55, x2: 86, y: 48, y2: 82, name: 'Window B' },
+  ]
 
-plot.plotArgs = {
-  series: [
-    rect({
-      data,
-      color: { light: 'rgba(13, 148, 136, 0.45)', dark: 'rgba(94, 234, 212, 0.45)' },
-      stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
-      tooltip: true,
-    }),
-    rect({
-      data: data.map(row => ({
-        ...row, x: row.x + 12, x2: row.x2 + 8, y: row.y + 12, y2: row.y2 + 10,
-      })),
-      color: { light: 'rgba(124, 58, 237, 0.45)', dark: 'rgba(196, 181, 253, 0.45)' },
-      stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
-      tooltip: ({ row }) => {
-        const content = document.createElement('div')
-        const title = document.createElement('strong')
-        title.textContent = String(row.name)
-        const value = document.createElement('div')
-        value.textContent = 'Bounds: x ' + row.x + '–' + row.x2 + ', y ' + row.y + '–' + row.y2
-        content.append(title, value)
-        return content
-      },
-    }),
-  ],
-  height: 260,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
+  const window_tooltips = plot({
+    series: [
+      plot.rect({
+        data,
+        color: { light: 'rgba(13, 148, 136, 0.45)', dark: 'rgba(94, 234, 212, 0.45)' },
+        stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
+        tooltip: true,
+      }),
+      plot.rect({
+        data: data.map((row) => ({
+          ...row,
+          x: row.x + 12,
+          x2: row.x2 + 8,
+          y: row.y + 12,
+          y2: row.y2 + 10,
+        })),
+        color: { light: 'rgba(124, 58, 237, 0.45)', dark: 'rgba(196, 181, 253, 0.45)' },
+        stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
+        tooltip: pure(({ row }) =>
+          h(
+            'div',
+            {},
+            h('strong', {}, String(row.name)),
+            h('div', {}, 'Bounds: x ' + row.x + '–' + row.x2 + ', y ' + row.y + '–' + row.y2),
+          ),
+        ),
+      }),
+    ],
+    height: 260,
+    margin: { top: 8, right: 12, bottom: 24, left: 32 },
+    axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: false,
+    border: false,
+    zoom_pan: false,
+  })
 
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(window_tooltips)
+  // presentation.blank("Window tooltips").print(window_tooltips)
 ```
 
 #### Tooltip content
 
-`TooltipArg<Row, TooltipContent>` accepts `true` or a `TooltipFn` callback.
+`tooltip` accepts `true` or a callback that returns tooltip content.
 Omit `tooltip` to show no tooltip for that series.
 
-| Option | Type | Description |
-|---|---|---|
-| Default tooltip | `true` | Enable the host's default presentation of the point's axis values. Omit `tooltip` to disable it; `false` is not accepted. |
-| Custom tooltip | [`(data: TooltipData<Row>) => TooltipContent`](#tooltip-and-selection-callback-parameters) | Return content for the hovered point. |
+#### TooltipArg
+
+- `true` shows the default tooltip with the point's axis values.
+- A callback, [`(data: TooltipData) => TooltipContent`](#tooltip-and-selection-callback-parameters), returns custom content for the hovered point.
+
+`false` is not accepted. Omit `tooltip` to disable it.
 
 With the React component, `TooltipContent` is a `ReactNode`, including strings
 and JSX. With the standalone browser host, return a DOM `Node`. The core
@@ -2688,338 +972,393 @@ leaves the content type to the host.
 
 #### Composing tooltips across series
 
-Set `tooltip` on the root plot config to compose one tooltip from all hovered series. The callback receives one slot per declared series, in declaration order. Each populated slot contains `{ series, data }`: `series` is the original factory arguments, and `data` contains the hovered point’s `x`, `y`, and optional `row` and `label`. A series with no hit leaves `undefined`. Destructure the array to match your series order. If you need identifiers, include them in your data rows.
+Set `tooltip` on the plot to combine information from multiple series into one
+tooltip. This callback overrides the individual series' tooltip callbacks.
 
-Use `hit.series.color` to read the original color option, including a color defined outside the data. Factory arguments are retained by reference, not copied or resolved; treat them as read-only. Color accessors remain functions, and theme colors remain light/dark pairs. Manually constructed series without factory arguments have `hit.series === undefined`.
+The callback receives an array in the same order as your `series` array:
 
-The root callback receives hits even when a series has no tooltip configured. Series with `hoverable: false` retain an empty slot. Per-series tooltip callbacks are not called while a root callback is configured. Returning `null` or `undefined` hides the tooltip without falling back; removing the root callback restores the existing stacked behavior. The callback is not called when there are no hits.
+- Each hovered series contributes `{ series, data }`, containing its original options and the hovered point's data.
+- A series with no point under the pointer contributes `undefined`.
 
-Hover the overlapping rectangles to compare baseline and current bounds under one window title. The tooltip matches hits by position, places the values side by side, and calculates the change for each bound. Outside the overlap, missing values appear as “—”.
+Return the combined tooltip content, or `null` to hide it.
 
-```ts
-import { rect, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
+In this example, hover the overlapping rectangles to compare baseline and
+current bounds side by side. The tooltip shows the difference between them
+and uses “—” where a value is missing.
 
-function windowRow(row: unknown) {
-  if (typeof row !== 'object' || row === null) return undefined
-  if (!('name' in row) || typeof row.name !== 'string'
-    || !('x' in row) || typeof row.x !== 'number'
-    || !('x2' in row) || typeof row.x2 !== 'number'
-    || !('y' in row) || typeof row.y !== 'number'
-    || !('y2' in row) || typeof row.y2 !== 'number') return undefined
-  return row
-}
-
-const plot = document.createElement('a-plot') as APlotElement
+```js
 const data = [
-  { x: 8, x2: 38, y: 15, y2: 48, name: 'Window A' },
-  { x: 55, x2: 86, y: 48, y2: 82, name: 'Window B' },
-]
+    { x: 8, x2: 38, y: 15, y2: 48, name: 'Window A' },
+    { x: 55, x2: 86, y: 48, y2: 82, name: 'Window B' },
+  ]
 
-plot.plotArgs = {
-  series: [
-    rect({
-      data, tooltip: true,
-      color: { light: 'rgba(13, 148, 136, 0.45)', dark: 'rgba(94, 234, 212, 0.45)' },
-      stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
+  const window_comparison = plot({
+    series: [
+      plot.rect({
+        data,
+        tooltip: true,
+        color: { light: 'rgba(13, 148, 136, 0.45)', dark: 'rgba(94, 234, 212, 0.45)' },
+        stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
+      }),
+      plot.rect({
+        data: data.map((row) => ({
+          ...row,
+          x: row.x + 12,
+          x2: row.x2 + 8,
+          y: row.y + 12,
+          y2: row.y2 + 10,
+        })),
+        color: { light: 'rgba(124, 58, 237, 0.45)', dark: 'rgba(196, 181, 253, 0.45)' },
+        stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
+        tooltip: pure(({ row }) =>
+          h(
+            'div',
+            {},
+            h('strong', {}, String(row.name)),
+            h('div', {}, 'Bounds: x ' + row.x + '–' + row.x2 + ', y ' + row.y + '–' + row.y2),
+          ),
+        ),
+      }),
+    ],
+    tooltip: pure(([baseline_hit, current_hit]) => {
+      const baseline = baseline_hit?.data.row
+      const current = current_hit?.data.row
+      const bounds = [
+        ['x', 'X start'],
+        ['x2', 'X end'],
+        ['y', 'Y start'],
+        ['y2', 'Y end'],
+      ]
+      return h(
+        'div',
+        {},
+        h('strong', {}, String((current ?? baseline)?.name ?? 'Window comparison')),
+        h(
+          'table',
+          {},
+          h(
+            'thead',
+            {},
+            h(
+              'tr',
+              {},
+              ...['Bound', 'Baseline', 'Current', 'Change'].map((label) =>
+                h('th', { scope: 'col' }, label),
+              ),
+            ),
+          ),
+          h(
+            'tbody',
+            {},
+            ...bounds.map(([field, label]) => {
+              const before = baseline?.[field]
+              const after = current?.[field]
+              const delta =
+                typeof before === 'number' && typeof after === 'number' ? after - before : undefined
+              return h(
+                'tr',
+                {},
+                h('th', { scope: 'row' }, label),
+                ...[
+                  before ?? '—',
+                  after ?? '—',
+                  delta === undefined ? '—' : (delta > 0 ? '+' : '') + delta,
+                ].map((value) => h('td', {}, String(value))),
+              )
+            }),
+          ),
+        ),
+      )
     }),
-    rect({
-      data: data.map(row => ({
-        ...row, x: row.x + 12, x2: row.x2 + 8, y: row.y + 12, y2: row.y2 + 10,
-      })),
-      color: { light: 'rgba(124, 58, 237, 0.45)', dark: 'rgba(196, 181, 253, 0.45)' },
-      stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
-      tooltip: ({ row }) => {
-        const content = document.createElement('div')
-        const title = document.createElement('strong')
-        title.textContent = String(row.name)
-        const value = document.createElement('div')
-        value.textContent = `Bounds: x ${row.x}–${row.x2}, y ${row.y}–${row.y2}`
-        content.append(title, value)
-        return content
-      },
-    }),
-  ],
-  tooltip: ([baseline_hit, current_hit]) => {
-    const baseline = windowRow(baseline_hit?.data.row)
-    const current = windowRow(current_hit?.data.row)
-    const content = document.createElement('div')
-    const title = document.createElement('strong')
-    title.textContent = String((current ?? baseline)?.name ?? 'Window comparison')
-    const table = document.createElement('table')
-    const header = table.createTHead().insertRow()
-    for (const label of ['Bound', 'Baseline', 'Current', 'Change']) {
-      const cell = document.createElement('th')
-      cell.scope = 'col'
-      cell.textContent = label
-      header.append(cell)
-    }
-    const body = table.createTBody()
-    const bounds: ['x' | 'x2' | 'y' | 'y2', string][] = [
-      ['x', 'X start'], ['x2', 'X end'], ['y', 'Y start'], ['y2', 'Y end'],
-    ]
-    for (const [field, label] of bounds) {
-      const before = baseline?.[field]
-      const after = current?.[field]
-      const delta = typeof before === 'number' && typeof after === 'number' ? after - before : undefined
-      const row = body.insertRow()
-      const heading = document.createElement('th')
-      heading.scope = 'row'
-      heading.textContent = label
-      row.append(heading)
-      for (const value of [before ?? '—', after ?? '—', delta === undefined ? '—' : `${delta > 0 ? '+' : ''}${delta}`]) {
-        row.insertCell().textContent = String(value)
-      }
-    }
-    content.append(title, table)
-    return content
-  },
-  height: 260,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false, border: false, zoom_pan: false,
-}
+    height: 260,
+    margin: { top: 8, right: 12, bottom: 24, left: 32 },
+    axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: false,
+    border: false,
+    zoom_pan: false,
+  })
 
-// Remove the root callback for stacked per-series tooltips:
-// plot.plotArgs = { ...plot.plotArgs, tooltip: undefined }
-// Suppress tooltips without falling back:
-// plot.plotArgs = { ...plot.plotArgs, tooltip: () => undefined }
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(window_comparison)
+  // presentation.blank("Window comparison").print(window_comparison)
 ```
-
-The callback type is `PlotTooltipFn<TooltipContent>`, receiving `PlotTooltipHit[]`. As with series callbacks, return a DOM `Node` for the standalone browser host or a `ReactNode` for React.
 
 ### Selection
 
-Select a point to display its source data in the preview’s text readout. `on_select` receives the selected point and its original row, so you can update a detail panel or application state.
+<a id="selection-callbacks"></a>
 
-The callback does not create persistent selection styling. This preview keeps the last selected value in a text readout. See [Selection callbacks](#selection-callbacks) for the payload.
+Select a point to display its source data in the preview’s text readout. `on_select` receives the selected point and its original row, so you can update a detail panel or application state. Its return value is ignored.
 
-```ts
-import { scatter, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
+The callback does not create persistent selection styling. This preview keeps the last selected value in a text readout. See [Tooltip and selection callback parameters](#tooltip-and-selection-callback-parameters) for the fields passed to the callback.
 
-const plot = document.createElement('a-plot') as APlotElement
-const output = document.createElement('output')
-output.setAttribute('aria-live', 'polite')
-output.style.display = 'block'
-output.textContent = 'Select a point to inspect its data.'
-
+```js
 const data = Array.from({ length: 24 }, (_, i) => ({
-  x: 8 + (i * 19 % 84),
-  y: 12 + (i * 29 % 76),
-  name: 'Sample ' + (i + 1),
-}))
+    x: 8 + ((i * 19) % 84),
+    y: 12 + ((i * 29) % 76),
+    name: 'Sample ' + (i + 1),
+  }))
 
-plot.plotArgs = {
-  series: [
-    scatter({
-      data, size: 13,
-      color: { light: '#0891b2', dark: '#67e8f9' },
-      tooltip: true,
-      on_select: ({ row, x, y }) => {
-        output.textContent = row.name + ' · x: ' + x + ' · y: ' + y
-      },
-    }),
-  ],
-  height: 260,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: false,
-}
+  const selected_point = new reactive.StateVar('Select a point to inspect its data.')
 
-document.body.append(plot, output)
+  const interactive_plot = plot({
+    series: [
+      plot.scatter({
+        data,
+        size: 13,
+        color: { light: '#0891b2', dark: '#67e8f9' },
+        tooltip: true,
+        on_select: pure(
+          ({ row, x, y }) => selected_point.set(row.name + ' · x: ' + x + ' · y: ' + y),
+          { selected_point },
+        ),
+      }),
+    ],
+    height: 260,
+    margin: { top: 8, right: 12, bottom: 24, left: 32 },
+    axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: false,
+    border: false,
+    zoom_pan: false,
+  })
+
+  const point_selection = h(
+    'div',
+    {},
+    interactive_plot,
+    h(
+      pure(({ selected_point }) =>
+        h('output', { 'aria-live': 'polite', style: { display: 'block' } }, selected_point.get()),
+      ),
+      { selected_point },
+    ),
+  )
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(point_selection)
+  // presentation.blank("Point selection").print(point_selection)
 ```
 
-#### Selection callbacks
+### Tooltip and selection callback parameters
 
-`SelectFn<Row>` is [`(data: TooltipData<Row>) => unknown`](#tooltip-and-selection-callback-parameters). Assign it to
-`on_select` to respond when a point is selected. Its return value is ignored.
+Tooltip and selection callbacks receive a `TooltipData` object with these fields:
 
-```ts
-import type { SelectFn } from '@antadesign/plot'
-
-const on_select: SelectFn = ({ x, y, row }) => {
-  console.log('Selected point:', x, y, row)
-}
-```
-
-##### Tooltip and selection callback parameters
-
-Tooltip and selection callbacks receive the same `TooltipData<Row>` shape:
+#### TooltipData
 
 | Field | Type | Description |
 |---|---|---|
 | `x` | `number \| string` | Point's x value, or category label. |
 | `y` | `number \| string` | Point's y value, or category label. |
-| `row` | `Row` | Source data row. May be `undefined` for rule or custom series without data. |
+| `row` | Data item or `undefined` | The original item from your `data` array. May be `undefined` for rule or custom series without data. |
 | `label?` | `string` | Point label when available, such as the field name of a stacked bar segment. |
-
-`Row` defaults to `Record<string, unknown>`. The related `PointData` type has
-the same fields with an optional `row`.
 
 ### Zoom and pan
 
-Zoom continuous axes with the scroll wheel and pan by dragging. Reset Zoom in the context menu restores the full extent after the view changes. Categorical axes do not zoom. See [Zoom and pan options](#zoom-and-pan-options).
+Zooming lets you inspect a smaller range of data in more detail. Panning moves
+the visible range so you can explore other parts of the plot. Scroll to zoom
+around the pointer, or click and drag to pan. Hold Ctrl while clicking and
+dragging to draw a rectangle. Releasing zooms into that region within each
+enabled axis's limits.
 
-Zoom and pan in the plot
+Zoom and pan apply to continuous axes. Categorical axes do not zoom. See
+[Zoom and pan options](#zoom-and-pan-options) to configure each axis.
 
-Scroll to zoom around the pointer, or drag to pan. Plain wheel zoom activates after the pointer settles over the plot; Ctrl-wheel and pinch activate immediately. Horizontal scrolling does not change the viewport. Hold Ctrl and drag inside the plot to draw a zoom rectangle. Releasing fits the viewport to the rectangle, subject to each enabled axis's limits.
+Right-click the plot to open a menu with **Zoom In**, **Zoom Out**, and
+**Reset Zoom**. Reset Zoom restores the full data range.
+Menu zoom anchors at the context-click position and applies the same factor to
+both enabled axes, with independent limits. Set
+`zoom_pan: { menu_zoom_step: 1.5 }` to change that factor from its default of `2`.
 
-Ctrl-wheel and pinch share the same browser signal. Small samples use higher sensitivity, while each sample is capped at a 1.2× change to keep physical mouse-wheel notches manageable. Switching between pinch and ordinary scrolling preserves the existing pointer dwell.
-
-Right-click for **Reset Zoom**, **Zoom Out**, and **Zoom In**. Menu zoom anchors at the context-click position and applies the same factor to both enabled axes, with independent limits. Set `zoom_pan: { menu_zoom_step: 1.5 }` to change that factor from its default of `2`. Zoom In divides each span by the factor; Zoom Out multiplies it. The value must be finite and greater than 1. It affects only menu actions; wheel and drag sensitivity stay fixed.
-
-```ts
-import { line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-const output = document.createElement('output')
-output.setAttribute('aria-live', 'polite')
-output.style.display = 'block'
-output.textContent = 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.'
-
+```js
 const data = Array.from({ length: 201 }, (_, i) => ({
-  x: i / 2,
-  y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
-}))
+    x: i / 2,
+    y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
+  }))
 
-plot.plotArgs = {
-  series: [
-    line({
-      data, width: 2,
-      color: { light: '#6366f1', dark: '#a5b4fc' },
-      tooltip: true,
-    }),
-  ],
-  height: 420,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: { x: true, y: true },
-  on_viewport_change: ({ x, y }) => {
-    const format = (axis: { window: number[] } | null) => axis
-      ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
-    output.textContent = 'Visible x: ' + format(x) + ' · y: ' + format(y)
-  },
-}
+  const viewport_report = new reactive.StateVar(
+    'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.',
+  )
 
-document.body.append(plot, output)
+  const interactive_plot = plot({
+    series: [
+      plot.line({
+        data,
+        width: 2,
+        color: { light: '#6366f1', dark: '#a5b4fc' },
+        tooltip: true,
+      }),
+    ],
+    height: 420,
+    margin: { top: 8, right: 12, bottom: 24, left: 32 },
+    axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: false,
+    border: false,
+    zoom_pan: { x: true, y: true },
+    on_viewport_change: pure(
+      ({ x, y }) => {
+        const format = (axis) =>
+          axis ? axis.window.map((value) => value.toFixed(1)).join('–') : 'categorical axis'
+        viewport_report.set('Visible x: ' + format(x) + ' · y: ' + format(y))
+      },
+      { viewport_report },
+    ),
+  })
+
+  const zoom_and_pan = h(
+    'div',
+    {},
+    interactive_plot,
+    h(
+      pure(({ viewport_report }) =>
+        h('output', { 'aria-live': 'polite', style: { display: 'block' } }, viewport_report.get()),
+      ),
+      { viewport_report },
+    ),
+  )
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(zoom_and_pan)
+  // presentation.blank("Zoom and pan").print(zoom_and_pan)
 ```
 
 Navigate an axis
 
 Scroll over an axis to zoom around the pointer, or drag on the axis to zoom around the value where the drag started. No modifier is needed. Enabled continuous axes show directional arrows on hover. Drag inside the plot to pan. Drag right on x or up on y to zoom in; drag the other way to zoom out. Moving a quarter of the full axis length halves or doubles the starting span, subject to zoom limits. The other axis keeps its viewport.
 
-```ts
-import { line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-const output = document.createElement('output')
-output.setAttribute('aria-live', 'polite')
-output.style.display = 'block'
-output.textContent = 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.'
-
+```js
 const data = Array.from({ length: 201 }, (_, i) => ({
-  x: i / 2,
-  y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
-}))
+    x: i / 2,
+    y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
+  }))
 
-plot.plotArgs = {
-  series: [
-    line({
-      data, width: 2,
-      color: { light: '#6366f1', dark: '#a5b4fc' },
-      tooltip: true,
-    }),
-  ],
-  height: 260,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: { x: true, y: true },
-  on_viewport_change: ({ x, y }) => {
-    const format = (axis: { window: number[] } | null) => axis
-      ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
-    output.textContent = 'Visible x: ' + format(x) + ' · y: ' + format(y)
-  },
-}
+  const viewport_report = new reactive.StateVar(
+    'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.',
+  )
 
-document.body.append(plot, output)
+  const interactive_plot = plot({
+    series: [
+      plot.line({
+        data,
+        width: 2,
+        color: { light: '#6366f1', dark: '#a5b4fc' },
+        tooltip: true,
+      }),
+    ],
+    height: 260,
+    margin: { top: 8, right: 12, bottom: 24, left: 32 },
+    axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: false,
+    border: false,
+    zoom_pan: { x: true, y: true },
+    on_viewport_change: pure(
+      ({ x, y }) => {
+        const format = (axis) =>
+          axis ? axis.window.map((value) => value.toFixed(1)).join('–') : 'categorical axis'
+        viewport_report.set('Visible x: ' + format(x) + ' · y: ' + format(y))
+      },
+      { viewport_report },
+    ),
+  })
+
+  const scrollable_plot = h(
+    'div',
+    {},
+    interactive_plot,
+    h(
+      pure(({ viewport_report }) =>
+        h('output', { 'aria-live': 'polite', style: { display: 'block' } }, viewport_report.get()),
+      ),
+      { viewport_report },
+    ),
+  )
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(scrollable_plot)
+  // presentation.blank("Scrollable plot").print(scrollable_plot)
 ```
 
 Zoom on one axis
 
 Scroll to zoom or drag to pan. Only the horizontal window changes; the vertical range stays fixed. Set `x: false, y: true` for vertical-only navigation.
 
-```ts
-import { line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-const output = document.createElement('output')
-output.setAttribute('aria-live', 'polite')
-output.style.display = 'block'
-output.textContent = 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.'
-
+```js
 const data = Array.from({ length: 201 }, (_, i) => ({
-  x: i / 2,
-  y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
-}))
+    x: i / 2,
+    y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
+  }))
 
-plot.plotArgs = {
-  series: [
-    line({
-      data, width: 2,
-      color: { light: '#6366f1', dark: '#a5b4fc' },
-      tooltip: true,
-    }),
-  ],
-  height: 260,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: { x: true, y: false },
-  on_viewport_change: ({ x, y }) => {
-    const format = (axis: { window: number[] } | null) => axis
-      ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
-    output.textContent = 'Visible x: ' + format(x) + ' · y: ' + format(y)
-  },
-}
+  const viewport_report = new reactive.StateVar(
+    'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.',
+  )
 
-document.body.append(plot, output)
+  const interactive_plot = plot({
+    series: [
+      plot.line({
+        data,
+        width: 2,
+        color: { light: '#6366f1', dark: '#a5b4fc' },
+        tooltip: true,
+      }),
+    ],
+    height: 260,
+    margin: { top: 8, right: 12, bottom: 24, left: 32 },
+    axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: false,
+    border: false,
+    zoom_pan: { x: true, y: false },
+    on_viewport_change: pure(
+      ({ x, y }) => {
+        const format = (axis) =>
+          axis ? axis.window.map((value) => value.toFixed(1)).join('–') : 'categorical axis'
+        viewport_report.set('Visible x: ' + format(x) + ' · y: ' + format(y))
+      },
+      { viewport_report },
+    ),
+  })
+
+  const horizontal_zoom = h(
+    'div',
+    {},
+    interactive_plot,
+    h(
+      pure(({ viewport_report }) =>
+        h('output', { 'aria-live': 'polite', style: { display: 'block' } }, viewport_report.get()),
+      ),
+      { viewport_report },
+    ),
+  )
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(horizontal_zoom)
+  // presentation.blank("Horizontal zoom").print(horizontal_zoom)
 ```
 
 #### Zoom and pan options
 
 `zoom_pan` accepts a boolean for both axes or this `ZoomPanArg` object:
 
+##### ZoomPanArg
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `x?` | `boolean` | `true` | Enable horizontal zoom and pan on a continuous axis. |
 | `y?` | `boolean` | `true` | Enable vertical zoom and pan on a continuous axis. |
-| `menu_zoom_step?` | `number` | `2` | Multiplicative menu zoom factor. Must be finite and greater than 1; does not affect wheel or drag sensitivity. |
+| `menu_zoom_step?` | `number` | `2` | Multiplicative menu zoom factor. Must be finite and greater than 1. Does not affect wheel or drag sensitivity. |
 
 Setting both axes to `false` disables zoom and pan. Categorical axes do not zoom.
 
-### Controlling the viewport
+<a id="controlling-the-viewport"></a>
+
+### Viewport
 
 Use the buttons to focus on a range or restore the full extent. You can still zoom and pan horizontally after a button sets the view.
 
@@ -3027,65 +1366,98 @@ Set `viewport` to control the visible range. Increment its `key` to apply a new 
 
 `on_viewport_change` reports the visible and full ranges. Keep this notification separate from viewport requests to avoid reapplying the view on every gesture. See [Viewport changes](#viewport-changes) for the callback parameters.
 
-```ts
-import { line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-import '@antadesign/anta/elements/a-button'
-
-const plot = document.createElement('a-plot') as APlotElement
-const output = document.createElement('output')
-output.setAttribute('aria-live', 'polite')
-output.style.display = 'block'
-output.textContent = 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.'
-
+```js
 const data = Array.from({ length: 201 }, (_, i) => ({
-  x: i / 2,
-  y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
-}))
+    x: i / 2,
+    y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
+  }))
 
-plot.plotArgs = {
-  series: [
-    line({
-      data, width: 2,
-      color: { light: '#6366f1', dark: '#a5b4fc' },
-      tooltip: true,
+  const viewport_report = new reactive.StateVar(
+    'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.',
+  )
+
+  const requested_viewport = new reactive.StateVar({ x: [20, 45], y: null, key: 0 })
+
+  const controlled_viewport = h(
+    pure(({ data, requested_viewport, viewport_report }) => {
+      const viewport_plot = plot({
+        series: [
+          plot.line({
+            data,
+            width: 2,
+            color: { light: '#6366f1', dark: '#a5b4fc' },
+            tooltip: true,
+          }),
+        ],
+        height: 260,
+        margin: { top: 8, right: 12, bottom: 24, left: 32 },
+        axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+        background: { light: '#ffffff', dark: '#151b28' },
+        chrome_color: { light: '#e2e8f0', dark: '#334155' },
+        grid: false,
+        border: false,
+        zoom_pan: { x: true, y: false },
+        viewport: requested_viewport.get(),
+        on_viewport_change: pure(
+          ({ x, y }) => {
+            const format = (axis) =>
+              axis ? axis.window.map((value) => value.toFixed(1)).join('–') : 'categorical axis'
+            viewport_report.set('Visible x: ' + format(x) + ' · y: ' + format(y))
+          },
+          { viewport_report },
+        ),
+      })
+      const windows = [
+        ['Focus 20–45', [20, 45]],
+        ['Focus 55–80', [55, 80]],
+        ['Full extent', null],
+      ]
+      const controls = h(
+        'div',
+        {},
+        ...windows.map(([label, x]) =>
+          h(
+            internal.anta.Button,
+            {
+              type: 'button',
+              onClick: pure(
+                () => {
+                  const current = requested_viewport.get()
+                  requested_viewport.set({ x, y: null, key: current.key + 1 })
+                },
+                { requested_viewport, x },
+              ),
+            },
+            label,
+          ),
+        ),
+      )
+      return h(
+        'div',
+        {},
+        viewport_plot,
+        controls,
+        h(
+          pure(({ viewport_report }) =>
+            h(
+              'output',
+              { 'aria-live': 'polite', style: { display: 'block' } },
+              viewport_report.get(),
+            ),
+          ),
+          { viewport_report },
+        ),
+      )
     }),
-  ],
-  height: 260,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: { x: true, y: false },
-  viewport: { x: [20, 45], y: null, key: 0 },
-  on_viewport_change: ({ x, y }) => {
-    const format = (axis: { window: number[] } | null) => axis
-      ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
-    output.textContent = 'Visible x: ' + format(x) + ' · y: ' + format(y)
-  },
-}
+    { data, requested_viewport, viewport_report },
+  )
 
-const controls = document.createElement('div')
-let key = 0
-const windows: [string, number[] | null][] = [
-  ['Focus 20–45', [20, 45]], ['Focus 55–80', [55, 80]], ['Full extent', null],
-]
-for (const [label, x] of windows) {
-  const button = document.createElement('a-button')
-  button.textContent = label
-  button.addEventListener('click', () => {
-    const args = plot.plotArgs
-    if (!args) return
-    plot.plotArgs = { ...args, viewport: { x, y: null, key: ++key } }
-  })
-  controls.append(button)
-}
-document.body.append(plot, controls, output)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(controlled_viewport)
+  // presentation.blank("Controlled viewport").print(controlled_viewport)
 ```
 
-#### Viewport
+#### Viewport options
 
 `viewport` requests a visible window within the full data domain. It applies
 at mount and when `key` changes; user gestures can then move away from it.
@@ -3100,17 +1472,24 @@ Changing only `x` or `y` with the same key does not reapply the request.
 At mount, an omitted axis starts at its full extent. Viewport windows apply
 to continuous axes.
 
-##### Viewport changes
+<a id="viewport-changes"></a>
 
-`on_viewport_change` receives a `ViewportChange` after a gesture or reset:
+#### ViewportChange
+
+`on_viewport_change` receives one `ViewportChange` object after a gesture or
+reset. Its fields describe both axes and their zoom magnification.
 
 | Field | Type | Description |
 |---|---|---|
-| `x` | `AxisViewport \| null` | Current horizontal viewport, or `null` for a categorical axis. |
-| `y` | `AxisViewport \| null` | Current vertical viewport, or `null` for a categorical axis. |
-| `zoom_factor` | `{ x: number; y: number }` | Per-axis gesture magnification, initially 1; preserved during pan, resize, and data-domain changes. |
+| `x` | [`AxisViewport`](#axisviewport) or `null` | Current horizontal viewport, or `null` for a categorical axis. |
+| `y` | [`AxisViewport`](#axisviewport) or `null` | Current vertical viewport, or `null` for a categorical axis. |
+| `zoom_factor` | `{ x: number; y: number }` | Per-axis gesture magnification, initially 1. Preserved during pan, resize, and data-domain changes. |
 
-Each `AxisViewport` contains:
+For a continuous axis, `ViewportChange.x` or `ViewportChange.y` contains an
+`AxisViewport` object with these fields. For a categorical axis, that field is
+`null`.
+
+##### AxisViewport
 
 | Field | Type | Description |
 |---|---|---|
@@ -3118,68 +1497,6 @@ Each `AxisViewport` contains:
 | `full` | `number[]` | Full unzoomed `[min, max]`. |
 
 ## Configuration details
-
-### Size
-
-Scatter `size` accepts a fixed pixel diameter or a pure accessor returning a number.
-The accessor receives `(row, index, viewport)`, so you can combine data and viewport
-without storing zoom in application state.
-
-Scroll near **50**. The first series stays at 4px. The other series
-alternate between 2px and 4px based on their data, then grow with horizontal zoom,
-at different rates, up to 16px. Drag to pan; **Reset Zoom** in the context menu restores
-the starting sizes.
-
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-export function viewportSizes(): PlotArgs<Node> {
-  const labels = ['Fixed 4px', 'Data + gradual zoom', 'Data + faster zoom']
-  const positions = [0, 10, 25, 40, 45, 48, 49, 49.5, 49.75, 50, 50.25, 50.5, 51, 52, 55, 60, 75, 90, 100]
-  const rows = (label: string) => positions.map((x, i) => ({ x, y: label, weight: i % 2 ? 4 : 2 }))
-  return {
-    height: 260,
-    margin: { top: 24, right: 20, bottom: 48, left: 160 },
-    axis: { x: { min: 0, max: 100, label: 'Zoom near 50' }, y: { categories: labels, label: '' } },
-    background: { light: '#ffffff', dark: '#202124' },
-    chrome_color: { light: '#64748b', dark: '#cbd5e1' },
-    grid: false,
-    zoom_pan: { x: true, y: false },
-    series: [
-      scatter({ data: rows(labels[0]), size: 4,
-        color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),
-      scatter({ data: rows(labels[1]),
-        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
-        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true }),
-      scatter({ data: rows(labels[2]),
-        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.5),
-        color: { light: '#c2410c', dark: '#fdba74' }, tooltip: true }),
-    ],
-  }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = viewportSizes()
-document.body.append(plot)
-```
-
-`viewport` has the same shape as [Viewport changes](#viewport-changes): `x` and `y`
-contain visible and full domains (`null` for a categorical axis), and `zoom_factor.x` and
-`zoom_factor.y` contain gesture magnification. Each starts at 1. Panning, resizing, and
-data-domain changes preserve magnification. Reset and new keyed viewport requests
-establish factor 1 on their affected axes. Zooming out beyond a requested initial
-window can yield factors below 1. Use `Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y)`
-to follow the more magnified axis.
-
-Size accessors run during composition, including zoom and pan, rather than when
-the series is constructed. Keep them pure and inexpensive. Existing accessors
-that only read the row or index remain valid. Returned sizes must be finite and
-non-negative; invalid results report a composition error and retain the previous
-plot. Numeric row `size` fields take precedence, and the index stays tied to the
-original input row after category filtering. Drawing, hit testing, and highlights
-reuse the composed sizes. Other series' size options and font sizes remain numeric.
 
 ### Font
 
@@ -3189,6 +1506,8 @@ accept local overrides. A string is shorthand for `{ family: string }`.
 Fields resolve individually from local settings, plot settings, and role defaults.
 Font assets are supplied by the application.
 
+#### FontConfig
+
 | Field | Type | Constraint |
 | --- | --- | --- |
 | `family?` | `string` | CSS font family or family list. |
@@ -3197,17 +1516,23 @@ Font assets are supplied by the application.
 | `color?` | [`ThemeColor`](#theme-colors) | Color string or light/dark pair. |
 | `italic?` | `boolean` | Select italic text. |
 | `condensed?` | `boolean` | Select condensed text. |
-| `letter_spacing?` | `number` | Finite CSS pixels; negative values are allowed. |
-| `word_spacing?` | `number` | Finite CSS pixels; negative values are allowed. |
-| `caps?` | `boolean \| FontCaps` | `true` means `all-small-caps`; `false` means `normal`. |
+| `letter_spacing?` | `number` | Finite CSS pixels. Negative values are allowed. |
+| `word_spacing?` | `number` | Finite CSS pixels. Negative values are allowed. |
+| `caps?` | `boolean \| FontCaps` | `true` means `all-small-caps`. `false` means `normal`. |
 
 `FontCaps` accepts `normal`, `small-caps`, `all-small-caps`, `petite-caps`,
 `all-petite-caps`, `unicase`, and `titling-caps`.
 
 Canvas drawing and text measurement use the same resolved font settings.
-Titles default to 14px and axis names to 12px, using the initially inherited
-CSS font family with a sans-serif fallback. Tick labels default to 10px monospace. The default weight is 400. Root settings override
-these role defaults; local settings override the root field by field.
+
+#### Font role defaults
+
+- Titles: 14px, using the inherited CSS font family with a sans-serif fallback.
+- Axis labels: 12px, using the inherited CSS font family with a sans-serif fallback.
+- Tick labels: 10px monospace.
+
+All roles default to a font weight of 400. Root settings override these role
+defaults, and local settings override the root field by field.
 
 Plots capture the inherited CSS font family once when they mount. Explicit
 plot-level and local families take precedence. Later CSS font changes and
@@ -3218,193 +1543,256 @@ Different fonts by role
 
 The title combines bold weight, condensed width, and tighter letters. The axes switch to italic serif and spaced monospace, with colors that adapt to the theme.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const font_roles = plot({
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
-
-function fontRoles(): PlotArgs<Node> {
-  return {
-    ...base(),
     margin: { top: 48, right: 20, bottom: 58, left: 72 },
-    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 13, weight: 450,
-      color: { light: '#713fff', dark: '#c4b5fd' } },
-    title: { text: '22px · bold · condensed',
-      font: { size: 22, weight: 750, condensed: true, letter_spacing: -0.35 } },
-    axis: {
-      x: { min: 0, max: 100,
-        label: { text: 'Serif · italic · 16px', font: { family: 'Georgia, serif', size: 16, italic: true,
-          color: { light: '#c2410c', dark: '#fdba74' } } } },
-      y: { min: 0, max: 100,
-        label: { text: 'Mono · +1px letters', font: { family: 'monospace', size: 12, letter_spacing: 1 } } },
+    font: {
+      family: '"TT Interphases Pro Variable", sans-serif',
+      size: 13,
+      weight: 450,
+      color: { light: '#713fff', dark: '#c4b5fd' },
     },
-  }
-}
+    title: {
+      text: '22px · bold · condensed',
+      font: { size: 22, weight: 750, condensed: true, letter_spacing: -0.35 },
+    },
+    axis: {
+      x: {
+        min: 0,
+        max: 100,
+        label: {
+          text: 'Serif · italic · 16px',
+          font: {
+            family: 'Georgia, serif',
+            size: 16,
+            italic: true,
+            color: { light: '#c2410c', dark: '#fdba74' },
+          },
+        },
+      },
+      y: {
+        min: 0,
+        max: 100,
+        label: {
+          text: 'Mono · +1px letters',
+          font: { family: 'monospace', size: 12, letter_spacing: 1 },
+        },
+      },
+    },
+  })
 
-await Promise.all([
-  document.fonts.load('750 22px "TT Interphases Pro Variable"'),
-  document.fonts.load('italic 600 20px "TT Interphases Pro Variable"'),
-])
-const plot = document.querySelector<APlotElement>('a-plot')!
-plot.plotArgs = fontRoles()
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(font_roles)
+  // presentation.blank("Font roles").print(font_roles)
 ```
 
 Shared settings and local overrides
 
 The title inherits italic small caps and expanded spacing. The horizontal label resets caps, italic, and both spacing values; the vertical label selects `small-caps` explicitly. Tick labels use compact monospace overrides.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const font_overrides = plot({
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
-
-function fontOverrides(): PlotArgs<Node> {
-  return {
-    ...base(),
     margin: { top: 48, right: 20, bottom: 58, left: 72 },
-    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 14, weight: 600,
-      italic: true, caps: true, letter_spacing: 1, word_spacing: 4,
-      color: { light: '#0f766e', dark: '#5eead4' } },
+    font: {
+      family: '"TT Interphases Pro Variable", sans-serif',
+      size: 14,
+      weight: 600,
+      italic: true,
+      caps: true,
+      letter_spacing: 1,
+      word_spacing: 4,
+      color: { light: '#0f766e', dark: '#5eead4' },
+    },
     title: { text: 'Small caps · +4px words', font: { size: 20 } },
     axis: {
-      x: { min: 0, max: 100,
-        label: { text: 'Normal caps · zero spacing', font: { caps: false, italic: false,
-          letter_spacing: 0, word_spacing: 0, color: { light: '#c2410c', dark: '#fdba74' } } },
-        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
-          caps: false, letter_spacing: 0, word_spacing: 0 } } },
-      y: { min: 0, max: 100,
-        label: { text: 'Italic · small caps', font: { caps: 'small-caps', letter_spacing: 0.5, word_spacing: 0 } },
-        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
-          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+      x: {
+        min: 0,
+        max: 100,
+        label: {
+          text: 'Normal caps · zero spacing',
+          font: {
+            caps: false,
+            italic: false,
+            letter_spacing: 0,
+            word_spacing: 0,
+            color: { light: '#c2410c', dark: '#fdba74' },
+          },
+        },
+        tick_label: {
+          font: {
+            family: 'monospace',
+            size: 10,
+            weight: 400,
+            italic: false,
+            caps: false,
+            letter_spacing: 0,
+            word_spacing: 0,
+          },
+        },
+      },
+      y: {
+        min: 0,
+        max: 100,
+        label: {
+          text: 'Italic · small caps',
+          font: { caps: 'small-caps', letter_spacing: 0.5, word_spacing: 0 },
+        },
+        tick_label: {
+          font: {
+            family: 'monospace',
+            size: 10,
+            weight: 400,
+            italic: false,
+            caps: false,
+            letter_spacing: 0,
+            word_spacing: 0,
+          },
+        },
+      },
     },
-  }
-}
+  })
 
-await Promise.all([
-  document.fonts.load('750 22px "TT Interphases Pro Variable"'),
-  document.fonts.load('italic 600 20px "TT Interphases Pro Variable"'),
-])
-const plot = document.querySelector<APlotElement>('a-plot')!
-plot.plotArgs = fontOverrides()
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(font_overrides)
+  // presentation.blank("Font overrides").print(font_overrides)
 ```
 
 ### Title
 
-Set the title text, size, and purple theme colors.
+Set the title text and font styles.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+The plot below uses a custom title size and purple colors for light and dark themes.
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const plot_title = plot({
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
     axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+    margin: { top: 44, right: 24, bottom: 48, left: 76 },
+    title: { text: 'Plot title', font: { size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } },
+  })
 
-function title(): PlotArgs<Node> {
-  return { ...base(), margin: { top: 44, right: 24, bottom: 48, left: 76 },
-    title: { text: 'Plot title', font: { size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } } }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = title()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(plot_title)
+  // presentation.blank("Plot title").print(plot_title)
 ```
 
 `title` accepts a string or a `TitleArg` object:
 
+#### TitleArg
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `text` | `string` | Required | Plot title text. |
-| `font?` | `FontArg` | Role default | Text styling; replaces the former `size` and `color` fields. |
+| `font?` | `string` \| [`FontConfig`](#fontconfig) | [Role defaults](#font-role-defaults) | Font family, size, weight, color, and other text styles. |
 
 ### Margins
 
-The canvas uses a gray CSS background. The plot background fills only the area inside the axes, making the margins visible.
+`margin` reserves space in pixels around the plot area for axis labels, tick labels,
+and the title. Set one number for all four sides, or an object with `top`, `right`,
+`bottom`, and `left` to adjust each side independently.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+The plot below uses different margins on each side. A gray canvas background
+makes the space around the plot area visible.
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const plot_margins = plot({
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
     axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
-    background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+    margin: { top: 40, right: 40, bottom: 64, left: 88 },
+    background: { light: 'white', dark: '#202124' },
+  })
 
-function margins(): PlotArgs<Node> {
-  return { ...base(), margin: { top: 40, right: 40, bottom: 64, left: 88 },
-    background: { light: 'white', dark: '#202124' } }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = margins()
-plot.style.background = 'color-mix(in srgb, var(--text-1, #111827) 18%, var(--bg-1, #ffffff))'
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(plot_margins)
+  // presentation.blank("Plot margins").print(plot_margins)
 ```
 
 `margin` accepts one number for all sides or a `SideMargins` object.
 Margins reserve space outside the plot area for labels and the title;
 axis padding adds space inside it.
+
+#### SideMargins
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -3418,177 +1806,143 @@ pixels instead. Explicit margins still apply.
 
 ### Grid
 
-Compare both grid directions, each direction separately, and no grid. Seven categories set the vertical grid positions; tick marks and labels are hidden.
+`grid` adds lines across the plot to help compare values against the axes.
+Enable both directions with `true`, or configure `x` and `y` independently.
+
+The plots below show both grid directions, each direction separately, and no
+grid. Seven categories determine the vertical grid positions.
 
 Both grid directions
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+```js
+const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+  const grid_both = plot({
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
-    grid: false,
     zoom_pan: false,
-  }
-}
+    height: 160,
+    margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    series: [
+      plot.scatter({
+        data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
+    axis: {
+      x: { categories, label: '', tick_mark: false, tick_label: { format: pure(() => '') } },
+      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: pure(() => '') } },
+    },
+    grid: { x: true, y: true },
+  })
 
-function grid(): PlotArgs<Node> {
-  const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-  return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
-      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
-      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
-    grid: { x: true, y: true } }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = grid()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(grid_both)
+  // presentation.blank("Grid both").print(grid_both)
 ```
 
 Vertical grid lines
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+```js
+const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+  const grid_x = plot({
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
-    grid: false,
     zoom_pan: false,
-  }
-}
+    height: 160,
+    margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    series: [
+      plot.scatter({
+        data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
+    axis: {
+      x: { categories, label: '', tick_mark: false, tick_label: { format: pure(() => '') } },
+      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: pure(() => '') } },
+    },
+    grid: { x: true, y: false },
+  })
 
-function grid(): PlotArgs<Node> {
-  const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-  return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
-      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
-      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
-    grid: { x: true, y: true } }
-}
-
-function gridX(): PlotArgs<Node> {
-  return { ...grid(), grid: { x: true, y: false } }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = gridX()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(grid_x)
+  // presentation.blank("Grid x").print(grid_x)
 ```
 
 Horizontal grid lines
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+```js
+const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+  const grid_y = plot({
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
-    grid: false,
     zoom_pan: false,
-  }
-}
+    height: 160,
+    margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    series: [
+      plot.scatter({
+        data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
+    axis: {
+      x: { categories, label: '', tick_mark: false, tick_label: { format: pure(() => '') } },
+      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: pure(() => '') } },
+    },
+    grid: { x: false, y: true },
+  })
 
-function grid(): PlotArgs<Node> {
-  const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-  return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
-      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
-      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
-    grid: { x: true, y: true } }
-}
-
-function gridY(): PlotArgs<Node> {
-  return { ...grid(), grid: { x: false, y: true } }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = gridY()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(grid_y)
+  // presentation.blank("Grid y").print(grid_y)
 ```
 
 No grid lines
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+```js
+const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+  const grid_none = plot({
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
-    grid: false,
     zoom_pan: false,
-  }
-}
+    height: 160,
+    margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    series: [
+      plot.scatter({
+        data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
+    axis: {
+      x: { categories, label: '', tick_mark: false, tick_label: { format: pure(() => '') } },
+      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: pure(() => '') } },
+    },
+    grid: false,
+  })
 
-function grid(): PlotArgs<Node> {
-  const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-  return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
-    series: [scatter({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
-      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
-      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
-    grid: { x: true, y: true } }
-}
-
-function gridNone(): PlotArgs<Node> {
-  return { ...grid(), grid: false }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = gridNone()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(grid_none)
+  // presentation.blank("Grid none").print(grid_none)
 ```
 
 `grid` accepts a boolean for both axes or this `GridSpec` object:
+
+#### GridSpec
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -3597,19 +1951,14 @@ document.body.append(plot)
 
 ### Theme colors
 
-The scatter marks use `tomato` in light mode and `lightskyblue` in dark mode, with `size: 18`. Switch the site theme to compare them.
+Theme colors let you use one CSS color in both themes or choose different
+colors with a `{ light, dark }` pair.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+The plot below uses `tomato` for scatter marks in light mode and `lightskyblue`
+in dark mode. Switch the site theme to compare them.
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const theme_colors = plot({
     height: 260,
     margin: { top: 20, right: 24, bottom: 48, left: 76 },
     axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
@@ -3618,23 +1967,29 @@ function base(): PlotArgs<Node> {
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+    series: [
+      plot.scatter({
+        data: [
+          { x: 20, y: 30 },
+          { x: 50, y: 65 },
+          { x: 80, y: 45 },
+        ],
+        size: 18,
+        color: { light: 'tomato', dark: 'lightskyblue' },
+        hoverable: false,
+      }),
+    ],
+  })
 
-function themeColors(): PlotArgs<Node> {
-  return { ...base(), series: [scatter({
-    data: [{ x: 20, y: 30 }, { x: 50, y: 65 }, { x: 80, y: 45 }],
-    size: 18, color: { light: 'tomato', dark: 'lightskyblue' }, hoverable: false,
-  })] }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = themeColors()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(theme_colors)
+  // presentation.blank("Theme colors").print(theme_colors)
 ```
 
 `ThemeColor` accepts a CSS color string or a `ColorPair`. Use a pair to choose
 separate colors for light and dark themes.
+
+#### ThemeColor
 
 | Form | Type | Example |
 |---|---|---|
@@ -3650,90 +2005,92 @@ Compare linear and logarithmic axes, then time and category axes. Each axis labe
 
 Linear and logarithmic scales
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const plot_scales = plot({
     height: 260,
     margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
-    grid: false,
     zoom_pan: false,
-  }
-}
-
-function scales(): PlotArgs<Node> {
-  return { ...base(),
-    series: [scatter({ data: [1, 10, 100, 1000, 10000].map((y, i) => ({ x: 10 + i * 20, y })),
-      size: 4, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    axis: { x: { scale: 'linear', min: 0, max: 100, label: 'Linear' },
-      y: { scale: 'log', min: 1, max: 10000, label: 'Logarithmic',
-        tick_label: { format: value => Number(value) >= 1000 ? Number(value) / 1000 + 'k' : String(value) } } },
+    series: [
+      plot.scatter({
+        data: [1, 10, 100, 1000, 10000].map((y, i) => ({ x: 10 + i * 20, y })),
+        size: 4,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
+    axis: {
+      x: { scale: 'linear', min: 0, max: 100, label: 'Linear' },
+      y: {
+        scale: 'log',
+        min: 1,
+        max: 10000,
+        label: 'Logarithmic',
+        tick_label: {
+          format: pure((value) =>
+            Number(value) >= 1000 ? Number(value) / 1000 + 'k' : String(value),
+          ),
+        },
+      },
+    },
     grid: { y: true },
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = scales()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(plot_scales)
+  // presentation.blank("Plot scales").print(plot_scales)
 ```
 
 Time and category scales
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+```js
+const start = 1768176000000 // 2026-01-12T00:00:00Z
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+  const time_categories = plot({
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
-
-function timeCategory(): PlotArgs<Node> {
-  const start = new Date(2026, 0, 12).getTime()
-  return { ...base(),
-    series: [scatter({ data: [
-      { x: start, y: 'Alpha' }, { x: start + 3600000, y: 'Beta' },
-      { x: start + 7200000, y: 'Alpha' }, { x: start + 10800000, y: 'Gamma' },
-      { x: start + 14400000, y: 'Beta' },
-    ], size: 4, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    series: [
+      plot.scatter({
+        data: [
+          { x: start, y: 'Alpha' },
+          { x: start + 3600000, y: 'Beta' },
+          { x: start + 7200000, y: 'Alpha' },
+          { x: start + 10800000, y: 'Gamma' },
+          { x: start + 14400000, y: 'Beta' },
+        ],
+        size: 4,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     margin: { top: 20, right: 24, bottom: 48, left: 94 },
-    axis: { x: { scale: 'time', min: start, max: start + 14400000, label: 'Time', padding: 8,
-      tick_label: { format: value => new Date(Number(value)).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) } },
-      y: { scale: 'category', categories: ['Alpha', 'Beta', 'Gamma'], label: 'Category' } },
-  }
-}
+    axis: {
+      x: {
+        scale: 'time',
+        min: start,
+        max: start + 14400000,
+        label: 'Time',
+        padding: 8,
+      },
+      y: { scale: 'category', categories: ['Alpha', 'Beta', 'Gamma'], label: 'Category' },
+    },
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = timeCategory()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(time_categories)
+  // presentation.blank("Time categories").print(time_categories)
 ```
 
 Set `axis.x.scale` or `axis.y.scale` to choose how data maps to positions.
 Plot uses [D3 scales](https://d3js.org/d3-scale) internally.
+
+#### Scale values
 
 | Value | D3 scale | Description |
 |---|---|---|
@@ -3746,152 +2103,215 @@ Plot uses [D3 scales](https://d3js.org/d3-scale) internally.
 Both time scales accept Unix timestamps in milliseconds. Use `categories`
 to set a category order, or `min` and `max` to set continuous-domain bounds.
 
+When `categories` is omitted, categories follow their first appearance across
+the series. An explicit list applies to all series on that axis: unlisted
+categories are omitted with a console warning, and listed categories without
+data retain empty bands. If a name appears more than once in the `categories`
+list, only its first occurrence is used. Providing `categories` implies
+`scale: 'category'`. Combining it with a continuous scale reports a configuration error.
+
 ### Axis labels
 
-Compare label positions, sizes, and colors: 18px and 12px labels aligned right and top, then 12px and 20px labels aligned left and bottom.
+`axis.x.label` and `axis.y.label` name the axes. Set the text directly, or use
+an object to configure the text, font styles, and position.
+
+The plots below show axis labels with different sizes and colors, aligned
+right and top in one plot and left and bottom in the other.
 
 Right and top labels
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const axis_labels = plot({
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+    margin: { top: 44, right: 28, bottom: 62, left: 94 },
+    axis: {
+      x: {
+        min: 0,
+        max: 100,
+        label: {
+          text: 'Time',
+          position: 'right',
+          font: { size: 18, color: { light: '#713fff', dark: '#c4b5fd' } },
+        },
+      },
+      y: {
+        min: 0,
+        max: 100,
+        label: {
+          text: 'Value',
+          position: 'top',
+          font: { size: 12, color: { light: '#c2410c', dark: '#fdba74' } },
+        },
+      },
+    },
+  })
 
-function axisLabels(): PlotArgs<Node> {
-  return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: { text: 'Time', position: 'right', font: { size: 18, color: { light: '#713fff', dark: '#c4b5fd' } } } },
-    y: { min: 0, max: 100, label: { text: 'Value', position: 'top', font: { size: 12, color: { light: '#c2410c', dark: '#fdba74' } } } },
-  } }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = axisLabels()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(axis_labels)
+  // presentation.blank("Axis labels").print(axis_labels)
 ```
 
 Left and bottom labels
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const opposite_axis_labels = plot({
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+    margin: { top: 44, right: 28, bottom: 62, left: 94 },
+    axis: {
+      x: {
+        min: 0,
+        max: 100,
+        label: {
+          text: 'Time',
+          position: 'left',
+          font: { size: 12, color: { light: '#c2410c', dark: '#fdba74' } },
+        },
+      },
+      y: {
+        min: 0,
+        max: 100,
+        label: {
+          text: 'Value',
+          position: 'bottom',
+          font: { size: 20, color: { light: '#713fff', dark: '#c4b5fd' } },
+        },
+      },
+    },
+  })
 
-function axisLabelsOpposite(): PlotArgs<Node> {
-  return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: { text: 'Time', position: 'left', font: { size: 12,
-      color: { light: '#c2410c', dark: '#fdba74' } } } },
-    y: { min: 0, max: 100, label: { text: 'Value', position: 'bottom', font: { size: 20,
-      color: { light: '#713fff', dark: '#c4b5fd' } } } },
-  } }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = axisLabelsOpposite()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(opposite_axis_labels)
+  // presentation.blank("Opposite axis labels").print(opposite_axis_labels)
 ```
 
 `LabelArg` accepts a string or this object at `axis.x.label` or `axis.y.label`:
 
+#### LabelArg
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `text` | `string` | Required | Axis label text. |
-| `font?` | `FontArg` | Role default | Text styling; replaces the former `size` and `color` fields. |
-| `position?` | `'center' \| 'left' \| 'right' \| 'top' \| 'bottom'` | `'center'` | Use `left` or `right` on x; `top` or `bottom` on y. |
+| `font?` | `string` \| [`FontConfig`](#fontconfig) | [Role defaults](#font-role-defaults) | Font family, size, weight, color, and other text styles. |
+| `position?` | `'center' \| 'left' \| 'right' \| 'top' \| 'bottom'` | `'center'` | Use `left` or `right` on x. Use `top` or `bottom` on y. |
 
 ### Tick labels
 
-Add units to tick labels with formatting callbacks. The horizontal ticks use 10px purple text; the vertical ticks use 15px orange text.
+`tick_label` controls the text at each axis tick. Use a formatting callback
+to add units or change how values appear, and `font` to style the text.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+The plot below adds units to the tick labels and uses purple text on the
+horizontal axis and larger orange text on the vertical axis.
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const tick_labels = plot({
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+    margin: { top: 44, right: 28, bottom: 62, left: 94 },
+    axis: {
+      x: {
+        min: 0,
+        max: 100,
+        label: 'Elapsed time',
+        tick_label: {
+          format: pure((value) => value + ' s'),
+          font: { size: 10, color: { light: '#713fff', dark: '#c4b5fd' } },
+        },
+      },
+      y: {
+        min: 0,
+        max: 100,
+        label: 'Utilization',
+        tick_label: {
+          format: pure((value) => value + '%'),
+          font: { size: 15, color: { light: '#c2410c', dark: '#fdba74' } },
+        },
+      },
+    },
+  })
 
-function tickLabels(): PlotArgs<Node> {
-  return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: 'Elapsed time', tick_label: { format: value => value + ' s', font: { size: 10, color: { light: '#713fff', dark: '#c4b5fd' } } } },
-    y: { min: 0, max: 100, label: 'Utilization', tick_label: { format: value => value + '%', font: { size: 15, color: { light: '#c2410c', dark: '#fdba74' } } } },
-  } }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = tickLabels()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(tick_labels)
+  // presentation.blank("Tick labels").print(tick_labels)
 ```
 
 Use `TickLabelArg` at `axis.x.tick_label` or `axis.y.tick_label`:
 
+#### TickLabelArg
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `format?` | `(value: number \| string, index: number) => string` | Scale-dependent | Format each tick value. Return `''` for an empty label. |
-| `font?` | `FontArg` | Role default | Text styling; replaces the former `size` and `color` fields. |
+| `font?` | `string` \| [`FontConfig`](#fontconfig) | [Role defaults](#font-role-defaults) | Font family, size, weight, color, and other text styles. |
 
 ### Series colors
 
-Use a color accessor to distinguish values at or above 60.
+`color` sets the color of a series. Series that support color accessors can
+also choose a color for each data point.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+The plot below uses a color accessor to highlight values at or above 60 in
+orange and show lower values in gray.
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const series_colors = plot({
     height: 260,
     margin: { top: 20, right: 24, bottom: 48, left: 76 },
     axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
@@ -3900,35 +2320,63 @@ function base(): PlotArgs<Node> {
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 8,
+        color: pure((row) =>
+          Number(row.y) >= 60
+            ? { light: '#c2410c', dark: '#fdba74' }
+            : { light: '#64748b', dark: '#94a3b8' },
+        ),
+        hoverable: false,
+      }),
+    ],
+  })
 
-function seriesColors(): PlotArgs<Node> {
-  return { ...base(), series: [scatter({
-    data: [{ x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 }, { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 }],
-    size: 8, color: row => Number(row.y) >= 60
-      ? { light: '#c2410c', dark: '#fdba74' } : { light: '#64748b', dark: '#94a3b8' },
-    hoverable: false,
-  })] }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = seriesColors()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(series_colors)
+  // presentation.blank("Series colors").print(series_colors)
 ```
 
 `ColorArg` adds a per-row accessor to [`ThemeColor`](#theme-colors). Scatter, bar, rect, rule,
 and custom series accept it; line and area use one `ThemeColor` per series.
 
+#### ColorArg
+
 | Form | Type | Description |
 |---|---|---|
 | Shared color | [`ThemeColor`](#theme-colors) | Apply one color or theme pair to the series. |
-| Accessor | [`(row: Row, index: number) => ThemeColor`](#theme-colors) | Choose a color or theme pair for each row. |
+| Accessor | [`(row, index) => ThemeColor`](#theme-colors) | Choose a color or theme pair for each data item. The callback receives the item and its zero-based index. |
 
-```ts
-import type { ColorArg } from '@antadesign/plot'
+```js
+const data = [
+    { x: 1, value: 6 },
+    { x: 2, value: 14 },
+    { x: 3, value: 9 },
+  ]
 
-const color: ColorArg<{ value: number }> = (row) => row.value >= 10 ? 'coral' : 'steelblue'
+  const data_colors = plot({
+    height: 280,
+    series: [
+      plot.scatter({
+        data,
+        y: 'value',
+        color: pure((row) => (row.value >= 10 ? 'coral' : 'steelblue')),
+      }),
+    ],
+  })
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(data_colors)
+  // presentation.blank("data colors").print(data_colors)
 ```
 
 For these series, a valid `color` on a data row takes precedence over the
@@ -3937,49 +2385,47 @@ one entry per stacked field.
 
 ### Mark shapes
 
-Set a different mark shape for each category.
+`mark` chooses the shape used for scatter points or point markers on a line.
+Use shapes to distinguish groups of data.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+The plot below assigns a circle, square, diamond, or triangle to each category.
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const marks = ['circle', 'square', 'diamond', 'triangle']
+
+  const mark_shapes = plot({
     height: 260,
-    margin: { top: 20, right: 24, bottom: 48, left: 76 },
-    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
-
-function markShapes(): PlotArgs<Node> {
-  const marks = ['circle', 'square', 'diamond', 'triangle'] as const
-  return { ...base(), series: marks.map((mark, i) => scatter({
-    data: [{ x: mark, y: 40 + i * 10 }], mark, size: 12,
-    color: [
-      { light: '#7c3aed', dark: '#c4b5fd' }, { light: '#db2777', dark: '#f9a8d4' },
-      { light: '#0891b2', dark: '#67e8f9' }, { light: '#ea580c', dark: '#fdba74' },
-    ][i], hoverable: false,
-  })), axis: { x: { categories: [...marks], label: '' }, y: { min: 0, max: 100, label: '' } },
+    series: marks.map((mark, i) =>
+      plot.scatter({
+        data: [{ x: mark, y: 40 + i * 10 }],
+        mark,
+        size: 12,
+        color: [
+          { light: '#7c3aed', dark: '#c4b5fd' },
+          { light: '#db2777', dark: '#f9a8d4' },
+          { light: '#0891b2', dark: '#67e8f9' },
+          { light: '#ea580c', dark: '#fdba74' },
+        ][i],
+        hoverable: false,
+      }),
+    ),
+    axis: { x: { categories: [...marks], label: '' }, y: { min: 0, max: 100, label: '' } },
     margin: { top: 20, right: 12, bottom: 32, left: 32 },
-  }
-}
+  })
 
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = markShapes()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(mark_shapes)
+  // presentation.blank("Mark shapes").print(mark_shapes)
 ```
 
-`MarkShape` controls [`scatter.mark`](#scatter) and [`line.mark`](#line):
+`MarkShape` controls [`scatter.mark`](./plot/scatter.md#scatter) and [`line.mark`](./plot/line.md#line):
+
+#### MarkShape
 
 | Value | Description |
 |---|---|
@@ -3992,19 +2438,14 @@ Scatter defaults to `'circle'`; line draws no marks unless `mark` is set.
 
 ### Strokes
 
-Compare outlines with widths of 1, 3, and 5 pixels on equal-sized circles.
+`stroke` sets the outline color and width for scatter, area, and rectangle
+series. Use `mark_stroke` to outline point markers on a line.
 
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
+The plot below compares outlines with widths of 1, 3, and 5 pixels on
+equal-sized circles.
 
-function base(): PlotArgs<Node> {
-  return {
-    series: [scatter({ data: [
-      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
-    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+```js
+const series_strokes = plot({
     height: 260,
     margin: { top: 20, right: 24, bottom: 48, left: 76 },
     axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
@@ -4013,136 +2454,140 @@ function base(): PlotArgs<Node> {
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+    series: [1, 3, 5].map((width, i) =>
+      plot.scatter({
+        data: [{ x: 25 + i * 25, y: 50 }],
+        size: 18,
+        color: { light: '#f0abfc', dark: '#c026d3' },
+        stroke: { color: { light: '#7e22ce', dark: '#f5d0fe' }, width },
+        hoverable: false,
+      }),
+    ),
+  })
 
-function strokes(): PlotArgs<Node> {
-  return { ...base(), series: [1, 3, 5].map((width, i) => scatter({
-    data: [{ x: 25 + i * 25, y: 50 }], size: 18,
-    color: { light: '#f0abfc', dark: '#c026d3' },
-    stroke: { color: { light: '#7e22ce', dark: '#f5d0fe' }, width }, hoverable: false,
-  })) }
-}
-
-const plot = document.createElement('a-plot') as APlotElement
-plot.plotArgs = strokes()
-document.body.append(plot)
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(series_strokes)
+  // presentation.blank("Series strokes").print(series_strokes)
 ```
 
 `StrokeArg` accepts a [`ThemeColor`](#theme-colors) or a `Stroke` object. Use it for `stroke`
 on scatter, area, and rect series, or `mark_stroke` on a line series.
+
+#### Stroke
 
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `color` | [`ThemeColor`](#theme-colors) | Required | Outline color or theme pair. |
 | `width?` | `number` | Series-dependent | Outline width in pixels. Mark outlines scale with mark size when omitted. |
 
-```ts
-import type { StrokeArg } from '@antadesign/plot'
+```js
+const stroke = { color: { light: 'navy', dark: 'lightsteelblue' }, width: 1 }
 
-const stroke: StrokeArg = {
-  color: { light: 'navy', dark: 'lightsteelblue' },
-  width: 1,
-}
+  const outlined_points = plot({
+    height: 280,
+    series: [
+      plot.scatter({
+        data: [
+          { x: 1, y: 4 },
+          { x: 2, y: 9 },
+        ],
+        size: 16,
+        color: 'lightblue',
+        stroke,
+      }),
+    ],
+  })
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(outlined_points)
+  // presentation.blank("outlined points").print(outlined_points)
 ```
 
 ### Data fields
 
-`FieldArg` selects a value from each data row. Use it for series coordinates
-such as `x` and `y`, or for a second boundary where the series supports one.
+Data fields such as `x` and `y` tell a series which values to plot. Supply a
+property name to read from your data, or an accessor function to compute a value.
+
+The example below reads horizontal values from `elapsed_ms` and converts
+`duration_ms` to seconds for the vertical axis.
+
+#### FieldArg
 
 | Form | Type | Description |
 |---|---|---|
-| Field name | `keyof Row & string` | Read the named property from each row. |
-| Accessor | `(row: Row, index: number) => number \| string` | Compute a value from the row and its zero-based index. Return numbers for continuous axes or strings for categories. |
+| Field name | `string` | Read the named property from each row. |
+| Accessor | `(row, index) => number \| string` | Compute a value from the data item and its zero-based index. Return numbers for continuous axes or strings for categories. |
 
-```ts
-import type { FieldArg } from '@antadesign/plot'
+```js
+const data = [
+    { elapsed_ms: 0, duration_ms: 250 },
+    { elapsed_ms: 100, duration_ms: 400 },
+    { elapsed_ms: 200, duration_ms: 300 },
+  ]
 
-type Timing = { elapsed_ms: number; duration_ms: number }
-const x: FieldArg<Timing> = 'elapsed_ms'
-const y: FieldArg<Timing> = (row) => row.duration_ms / 1000
+  const timing_fields = plot({
+    height: 280,
+    series: [
+      plot.line({
+        data,
+        x: 'elapsed_ms',
+        y: pure((row) => row.duration_ms / 1000),
+      }),
+    ],
+    axis: { x: { label: 'Elapsed (ms)' }, y: { label: 'Duration (s)' } },
+  })
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(timing_fields)
+  // presentation.blank("timing fields").print(timing_fields)
 ```
-
-### Custom rendering
-
-`CustomRendererFn<Row>` receives a `CustomSeriesView<Row>` and
-its drawing context:
-
-```ts
-import type { CustomSeriesView, CustomRenderContext } from '@antadesign/plot'
-
-type Renderer<Row> = (series: CustomSeriesView<Row>, context: CustomRenderContext) => void
-```
-
-The composed series contains resolved `x` and `y` columns, source `rows` when
-provided, and theme-resolved colors. Category coordinates are stored as
-indices; use the pixel resolvers to place them on the canvas.
-
-| Context field | Type | Description |
-|---|---|---|
-| `ctx` | `CanvasContext` | Main-thread or offscreen 2D canvas context. |
-| `inner` | `Rect` | Plot bounds in pixels: `left`, `right`, `top`, and `bottom`. |
-| `x_scale` | `Scale` | Composed horizontal D3 scale. |
-| `y_scale` | `Scale` | Composed vertical D3 scale. |
-| `color` | `string` | Resolved fallback series color. |
-| `x_categories?` | `string[]` | Horizontal category labels, when categorical. |
-| `y_categories?` | `string[]` | Vertical category labels, when categorical. |
-| `resolve_x` | `PixelResolver` | Resolve a row index to its x position in pixels. |
-| `resolve_y` | `PixelResolver` | Resolve a row index to its y position in pixels. |
-| `color_at` | `ColorResolver` | Resolve a row index to its color, including the series fallback. |
-
-`PixelResolver` is `(index: number) => number | undefined`; skip points whose
-position is `undefined`. `ColorResolver` is `(index: number) => string`.
-`CanvasContext` is `CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D`.
-`Scale` is a D3 linear, logarithmic, band, or time scale.
 
 ## Web Component
 
-`<a-plot>` is a light-DOM custom element that takes the same arguments
-as a property. Use it directly from plain JavaScript or TypeScript; it owns
-controller setup, drawing, and cleanup in the browser.
+Use `<a-plot>` directly from plain JavaScript or TypeScript. It handles setup,
+drawing, and cleanup in the browser. Set `element.plotArgs` to your
+[plot configuration object](#plot-arguments).
+
+Import `@antadesign/plot/elements/a-plot` to register `<a-plot>` and the supporting
+elements it needs. This import is safe to repeat and can be used during server
+rendering.
 
 ```ts
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 plot.plotArgs = { series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 3 }] })] }
 document.body.append(plot)
 ```
 
-[`plotArgs`](#plot-arguments) is a property, not an attribute — assign the object rather
-than serializing it. Import `@antadesign/plot/elements/a-plot` to register the standalone plot and its surface dependency.
-Registration skips existing definitions and does nothing when `customElements`
-is unavailable, including during server rendering.
-
 ## Styling
 
-The JSX `Plot` component fills its parent with `width: 100%` and `height: 100%`.
-Give its container a height, or set `width` and `height` in `plotArgs`. Removing
-those arguments restores parent-relative sizing. Use `className` and `style` to
-style the wrapper; inline `style` props can override its default dimensions.
+Use CSS to style the plot container, and `plotArgs` to configure the colors,
+lines, and text drawn inside it. JSX `Plot` fills its container, so give the
+container a height. The standalone `<a-plot>` defaults to a height of 300px.
 
-The standalone `<a-plot>` element has a 300px fallback height. The preview below
-uses that element. Configure canvas colors, lines, and text through `plotArgs`.
+The plot below has a rounded border, padding, and a responsive aspect ratio.
+It uses `background: false` so the container's background shows through.
 
-This preview uses CSS for the rounded container, padding, and responsive aspect
-ratio. It omits `width` and `height` from `plotArgs` so CSS controls the size.
-Set `background: false` to let the container background show through the canvas.
-
-```ts
-import { scatter, type PlotArgs } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
-import type { APlotElement } from '@antadesign/plot/browser'
-
-function stylingExample(): PlotArgs<Node> {
-  return {
-    series: [scatter({
-      data: [{ x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
-        { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 }],
-      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false,
-    })],
+```js
+const scatter_plot = plot({
+    series: [
+      plot.scatter({
+        data: [
+          { x: 12, y: 18 },
+          { x: 30, y: 42 },
+          { x: 48, y: 35 },
+          { x: 58, y: 64 },
+          { x: 76, y: 58 },
+          { x: 88, y: 82 },
+        ],
+        size: 3,
+        color: { light: '#9ca3af', dark: '#6b7280' },
+        hoverable: false,
+      }),
+    ],
     margin: { top: 16, right: 16, bottom: 40, left: 60 },
     axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
     background: false,
@@ -4150,17 +2595,28 @@ function stylingExample(): PlotArgs<Node> {
     border: true,
     grid: false,
     zoom_pan: false,
-  }
-}
+  })
 
-const container = document.createElement('div')
-container.className = 'plot-card'
-const plot = document.createElement('a-plot') as APlotElement
-plot.className = 'styled-plot'
-plot.setAttribute('aria-label', 'Scatter plot in a rounded container')
-plot.plotArgs = stylingExample()
-container.append(plot)
-document.body.append(container)
+  const styled_plot = h(
+    'div',
+    {
+      style: {
+        boxSizing: 'border-box',
+        width: '100%',
+        maxWidth: '460px',
+        marginInline: 'auto',
+        padding: '16px',
+        border: '1px solid #9ca3af',
+        borderRadius: '16px',
+        background: 'color-mix(in oklch, #9ca3af 12%, transparent)',
+      },
+    },
+    h('div', { style: { width: '100%', aspectRatio: '4 / 3' } }, scatter_plot),
+  )
+
+  // In Antithesis notebook, plot() returns a Printable. Uncomment below to display it:
+  // print(styled_plot)
+  // presentation.blank("Styled plot").print(styled_plot)
 ```
 
 ```css
@@ -4183,28 +2639,15 @@ document.body.append(container)
 }
 ```
 
-The `a-plot-surface` element installs its structural styles automatically,
-including canvas stacking and overlay positioning. It does not require a
-separate CSS import.
+Use `className` or `style` for a JSX plot's container, or CSS classes for `<a-plot>`.
+You can also set `width` and `height` in `plotArgs` for explicit dimensions.
 
-The complete `a-plot` host installs its base styles automatically too, giving it
-a width of `100%` and a fallback height of `300px`. No `plot.css` import is needed.
-Its sizing rule uses `:where()` with zero specificity, so your CSS can override
-it. Set `height: auto` when using `aspect-ratio` to replace the fixed fallback
-height, as this example does.
+Configure the drawing through these options:
 
-Alternatively, pass `width` and `height` to set inline styles on the host.
-These override stylesheet rules. Removing an argument restores the previous
-inline value, allowing stylesheet rules to apply when no inline value remains.
+- `chrome_color` sets axis lines, tick marks, grid lines, and the plot border.
+- `background` sets the plot fill, and each series' `color` sets its marks.
+- `font.color` sets text colors, with overrides for titles, axis labels, and tick labels.
 
-Inside the canvas, use [`chrome_color`](#theme-colors) for axis lines, tick marks,
-grid lines, and the plot border. Use `background` for the plot fill and each
-series’ `color` for its marks. These colors accept `{ light, dark }` pairs.
-Plain color strings remain subject to the plot’s `theme_invert` setting.
-
-Set text colors separately with `title.font.color`, `axis.x.label.font.color`,
-`axis.y.label.font.color`, `axis.x.tick_label.font.color`, and `axis.y.tick_label.font.color`.
-
-With the JSX `Plot` component, return content supported by your renderer from a
-series’ [`tooltip`](#tooltips) callback and style it like other markup. Anta’s
-`Tooltip` renders that content in the component tree. The zoom context menu uses Anta `Menu` and follows the application’s theme.
+Colors accept [theme colors](#theme-colors) for light and dark modes.
+For content security policy requirements, see
+[Styles and content security policy](#styles-and-content-security-policy).

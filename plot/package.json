@@ -1,9 +1,11 @@
 {
   "name": "@antadesign/plot",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "CSP.md",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {
@@ -53,7 +55,9 @@
     "test:components": "node --test tests/components.test.mjs",
     "test:browser": "node --test tests/components.browser.test.mjs",
     "test:viewport-size": "node tests/viewport-size.test.mjs",
-    "test:axes": "node --test tests/axes.test.mjs"
+    "test:axes": "node --test tests/axes.test.mjs",
+    "test:csp": "node --test tests/csp.test.mjs",
+    "test:csp:package": "node tests/csp-package.mjs"
   },
   "dependencies": {
     "@types/d3-scale": "4.0.9",

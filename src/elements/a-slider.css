@@ -635,8 +635,8 @@
     line-height: var(--slider-value-line-height);
     padding-inline-start: 1ch;
   }
-  a-slider[defaultvalue]:not([value]):not(:defined)::after {
-    content: attr(value-prefix) attr(defaultvalue) attr(value-suffix);
+  a-slider[default-value]:not([value]):not(:defined)::after {
+    content: attr(value-prefix) attr(default-value) attr(value-suffix);
   }
   a-slider[value]:not(:defined)::after {
     content: attr(value-prefix) attr(value) attr(value-suffix);
@@ -651,8 +651,8 @@
     display: block;
     white-space: nowrap;
   }
-  a-slider[value-display="inline"][defaultvalue]:not([value]):not(:defined)::after {
-    content: ': ' attr(value-prefix) attr(defaultvalue) attr(value-suffix);
+  a-slider[value-display="inline"][default-value]:not([value]):not(:defined)::after {
+    content: ': ' attr(value-prefix) attr(default-value) attr(value-suffix);
   }
   a-slider[value-display="inline"][value]:not(:defined)::after {
     content: ': ' attr(value-prefix) attr(value) attr(value-suffix);

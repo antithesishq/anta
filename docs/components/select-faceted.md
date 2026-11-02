@@ -210,7 +210,13 @@ depends on `kind`: an option value for `single`, an array for `multiple`, a
 string for `text`, and a value of type `V` for `custom`. A cleared facet is
 absent from the record, rather than set to `undefined`. The trigger badge counts
 the keys that remain. Use `value` with `onValueChange` to control the filter, or
-use `defaultValue` for the uncontrolled case.
+use `defaultValue` for the uncontrolled case. Omit `value` or pass `undefined` to
+release control while retaining the latest filter record.
+
+Inline controlled records work correctly. If you derive the record during
+rendering, `useMemo` can avoid an extra component render when its inputs are
+unchanged. Pass records held in state directly. See the `value` prop's API
+reference for an example.
 
 Because one control mixes facets that hold different value types, the record is typed
 `Record<string, unknown>`; narrow per facet when you read it.
@@ -459,7 +465,7 @@ const recency: SelectFacetCustom<Recency> = {
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Default trigger's button size. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone in facet flyouts. An option's own `tone` wins. |
 | `toneScope?` | 'all' \| 'selected' | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
-| `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through `onValueChange`. Leave it undefined for uncontrolled use. |
+| `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through `onValueChange`. Leave it undefined for uncontrolled use; releasing control retains the latest applied record. Inline records work correctly. For a derived record, `useMemo` can avoid an extra component render when the parent renders with unchanged inputs. Pass records held in state directly. |
 
 ### The `SelectFacet` type
 

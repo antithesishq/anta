@@ -592,13 +592,20 @@ export interface ATooltipAttributes extends BaseAttributes {
   /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 300. */
   delay?: number | string
   /** Preferred side; auto-flips when there's no room. Defaults to `'bottom'`. */
-  placement?: 'top' | 'bottom' | 'left'
+  placement?: 'top' | 'bottom' | 'left' | 'right'
   /** Follow the cursor instead of pinning under the anchor (pinned is the
    *  default). Presence-based (`''` on, omit off). */
   follow?: boolean | ''
   /** Make the bubble hoverable/clickable (pointer events on, stays open while
    *  hovered). Always pinned. Presence-based (`''` on, omit off). */
   interactive?: boolean | ''
+  /** Mark an input boundary respected by Capture and `isContainedEvent`.
+   *  `'native'` also stops native bubbling at the host and can block delegated
+   *  React handlers on the host and its children. Native listeners inside the
+   *  boundary still run. Presence alone does not stop native propagation.
+   *  Both enable interactive behavior and preserve browser defaults, keyboard,
+   *  and focus events. Ancestor capture handlers run before the boundary. */
+  'contain-events'?: boolean | '' | 'native'
   /** Only show when the measured target is actually truncated/clipped (its text
    *  overflows). UI-thread layout read, re-measured per show. Defaults to the
    *  nearest Anta ellipsizing label part (`a-tab-label` / `a-button-label`) in the
@@ -719,8 +726,9 @@ export interface ASwitchAttributes extends BaseAttributes {
  * Direct trailing buttons and buttons-only `<a-input-trailing slot="trailing">`
  * groups use compact spacing. Other wrappers keep the text inset. Override
  * either inset with the `--input-trailing-inset` CSS property. Anta buttons
- * fit the field height and keep their padding. Mark a raw icon-only action with
- * `data-anta-icon-only` for a square box; unmarked content keeps its natural width.
+ * fit the field height and keep their padding. CSS makes actions with one direct
+ * icon and only optional tooltip or copy helpers square. Other element children
+ * keep their natural width. Wrap visible text beside an icon in `a-button-label`.
  * Other controls keep their own sizing.
  * The element exposes `::part(field | input | label | leading | clear | trailing | hint)`
  * for styling, and `:state(filled)` / `:state(invalid)` as CSS hooks.
@@ -808,7 +816,7 @@ export interface ASliderAttributes extends BaseAttributes {
   /** Controlled numeric input. A range uses two space-separated numbers. */
   value?: number | string
   /** Uncontrolled initial value and reset baseline. */
-  defaultvalue?: number | string
+  'default-value'?: number | string
   /** Lowest permitted value. Defaults to 0. */
   min?: number | string
   /** Highest permitted value. Defaults to 100. */
@@ -921,8 +929,8 @@ export interface AInputTimeAttributes extends BaseAttributes {
  * wrapper. It does **not** build or mutate its own contents: whoever renders into
  * it (the `Calendar` JSX wrapper, or a vanilla consumer using the exported
  * `buildMonth` engine) fills it with day cells and *re-renders on its events* —
- * the `<a-radio-group>` model. Controlled by the presence of `value` (a pick only
- * requests a change); uncontrolled with `defaultvalue` (a pick self-applies).
+ * the `<a-radio-group>` model. Controlled by the presence of `state` (a pick only
+ * requests a change); uncontrolled with `default-state` (a pick self-applies).
  * For the typed, batteries-included wrapper use `Calendar` from `@antadesign/anta`.
  *
  * `:state(filled)` is the styling hook for "has a selection".
@@ -930,9 +938,9 @@ export interface AInputTimeAttributes extends BaseAttributes {
 export interface ACalendarAttributes extends BaseAttributes {
   /** Controlled selected date — ISO `YYYY-MM-DD`. Present → controlled (a pick
    *  only requests a change). Mirrored to the owning form via `ElementInternals`. */
-  value?: string
+  state?: string
   /** Uncontrolled initial date / reset baseline — ISO `YYYY-MM-DD`. */
-  defaultvalue?: string
+  'default-state'?: string
   /** Form field name — the selected ISO date submits under this key. */
   name?: string
   /** Disable the whole calendar. Presence-based (`''` on, omit off). */

@@ -185,6 +185,10 @@ Use `defaultValue` when the field can manage its own value. Use `value` with
 `onInput` or `onValueChange` when your application needs to keep track of every
 edit, such as updating a search or showing a character count.
 
+Omit `value` or pass `undefined` to release control and retain the current text.
+Form reset and browser restoration preserve controlled text; reset it by updating
+`value`. An uncontrolled reset restores `defaultValue`.
+
 Read the current text from `e.target.value`, or use the value provided by
 `onValueChange`. Use `onChange` for edits that are committed, such as when the
 field loses focus.
@@ -257,7 +261,7 @@ function Demo() {
 
 Input submits its value under `name` with the surrounding form, and
 `new FormData(form)` includes it. Native constraints such as `required` block
-normal submission while invalid. A reset button restores `defaultValue`.
+normal submission while invalid. A reset button restores `defaultValue` on uncontrolled fields.
 
 ## Types and validation
 
@@ -473,11 +477,16 @@ Narrow the preview to see the layout adjust.
 | `trailing?` | ReactNode | — | Content at the end of the field, after the clear button. Anta buttons fit the field height and keep their padding. Icon-only Buttons are square; text buttons keep their natural width. Pass buttons directly or in a fragment for compact spacing. Other wrapping elements keep the text inset. Override either inset with the `--input-trailing-inset` CSS property. |
 | `truncate?` | boolean | true | Ellipsize an overflowing single-line value. Read-only inputs already do this; pass `false` when an editable field should show the full value. |
 | `type?` | 'text' \| 'search' \| 'email' \| 'password' \| 'tel' \| 'url' \| 'number' | text | Choose the kind of information to enter. Ignored for multiline fields. `search` adds a search icon and clear button. Replace the icon with `leading` or hide the button with `clearable={false}`. |
-| `value?` | string | — | Controlled value. Update it with `onInput` or `onValueChange` for live editing. |
+| `value?` | string | — | Controlled value. Update it with `onInput` or `onValueChange` for live editing. Form reset and restoration preserve controlled text; release retains the current text. |
 
 ## Web Component
 
 Use `<a-input>` directly outside React or Preact.
+
+In raw HTML, a `value` attribute makes the field controlled, so form reset and
+browser restoration preserve its current text. Use `defaultvalue` without `value`
+for an uncontrolled field that resets to its initial text. Remove `value` to
+release control while retaining the current text.
 
 Slots accept content; shadow parts expose regions for CSS. The `label`,
 `leading`, `clear`, `trailing`, and `hint` slots are independent of the parts
@@ -487,10 +496,14 @@ Group trailing buttons in `<a-input-trailing slot="trailing">` to use compact
 action spacing. Mixed content keeps the text inset. The grouping tag needs no
 JavaScript registration.
 
-Anta buttons fit the field height and keep their own padding. Add
-`data-anta-icon-only` to a raw icon-only button for a square box. Text buttons
-keep their natural width. The JSX Button and ButtonCopy wrappers mark their
-icon-only actions automatically.
+Anta buttons fit the field height and keep their own padding. A button with one
+direct icon child and only optional Tooltip or copy helpers is square. Other
+element children keep their natural width. For a raw button with an icon
+and visible text, wrap the text in `<a-button-label>` to keep its natural width.
+The JSX Button wrapper does this for plain text automatically.
+
+The `data-anta-icon-only` sizing override has been removed. For a custom SVG or
+image action, set its width with CSS to match the field's action height.
 
 Set `role` and `aria-*` on `<a-input>` to describe the field to assistive
 technology. Input applies them to the control that receives focus. Explicit

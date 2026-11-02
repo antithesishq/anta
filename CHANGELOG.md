@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Select disables open menu options, filtering, and bulk actions when the whole control becomes disabled, preserving its selection.
+
 ## 0.3.38 — October 29, 2026
 
 ### Added

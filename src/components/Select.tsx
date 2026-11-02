@@ -615,6 +615,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   }
 
   const choose = (o: SelectOption<V>, e?: any) => {
+    if (disabled) return
     if (multiple) {
       // Alt/Option-click clears every other selection and selects this row. The
       // default row tooltip describes the shortcut. It is available only when
@@ -645,6 +646,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   const allSelected = enabledValues.length > 0 && enabledSelected.length === enabledValues.length
   const someSelected = enabledSelected.length > 0 && !allSelected
   const toggleAll = () => {
+    if (disabled) return
     const keep = selectedValues.filter((v) => !enabledValues.includes(v))
     const next = allSelected ? keep : [...keep, ...enabledValues]
     if (!controlled) setInternal(next)
@@ -653,15 +655,17 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // Empty selections stay controlled: null for single, [] for multiple.
   // An empty string remains a valid option value.
   const clear = () => {
+    if (disabled) return
     const next = multiple ? [] : null
     if (!controlled) setInternal(next)
     emit?.(next, { all: true, selected: false })
   }
 
-  // One option row. `disabled` is the leaf's *effective* disabled (cascaded).
-  const renderOptionRow = (o: SelectOption<V>, disabled: boolean) => {
+  // Option availability includes both the whole control and its containing branch.
+  const renderOptionRow = (o: SelectOption<V>, optionDisabled: boolean) => {
+    const rowDisabled = disabled || optionDisabled
     const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(o, true)
-    const optState: OptionState<V> = { value: o.value, selected: isSelected(o.value), disabled }
+    const optState: OptionState<V> = { value: o.value, selected: isSelected(o.value), disabled: rowDisabled }
     const custom = renderOption?.(o, optState)
     const customMark = renderIndicator?.(optState)
     // Default single-select (`indicator="none"`) has no checkable role, so expose the
@@ -675,7 +679,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     // menu, on an enabled row — the default Alt/Option-click isolate hint. A
     // `tooltip=""` stays empty (falsy → no bubble), which is how a consumer opts a
     // row out of the default hint.
-    const isolateHint = multiple && selectAll && !disabled ? ISOLATE_HINT : undefined
+    const isolateHint = multiple && selectAll && !rowDisabled ? ISOLATE_HINT : undefined
     const tip = o.tooltip ?? isolateHint
     const hintOnly = o.tooltip == null && isolateHint != null
     return (
@@ -691,7 +695,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         tone={o.tone ?? tone}
         toneScope={o.toneScope ?? toneScope}
         selected={isSelected(o.value)}
-        disabled={disabled || undefined}
+        disabled={rowDisabled || undefined}
         data-menu-open={multiple ? '' : undefined}
         onSelect={(e: any) => choose(o, e)}
         className={optionClassName}
@@ -717,7 +721,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         submenu
         label={node.source.label}
         icon={node.source.icon}
-        disabled={node.disabled || undefined}
+        disabled={disabled || node.disabled || undefined}
         data-menu-open={multiple ? '' : undefined}
       >
         <Menu>{inner}</Menu>
@@ -802,6 +806,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
           // mode — it focuses this field on open and drives an active-option cursor.
           <a-select-header slot="header" data-menu-open="">
             <Input
+              disabled={disabled}
               data-menu-search=""
               size="small"
               value={query}
@@ -823,6 +828,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
               // Keep the combobox's typed-query cursor off this action row — it
               // seats on the first real option instead (still arrow-reachable).
               data-menu-skip-active=""
+              disabled={disabled}
               onSelect={toggleAll}
             />
             <MenuSeparator />
@@ -846,6 +852,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
                 label={clearLabel}
                 role={filtering ? 'button' : undefined}
                 data-menu-open=""
+                disabled={disabled}
                 onSelect={clear}
               />
             </a-select-footer>

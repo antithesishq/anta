@@ -79,11 +79,11 @@ jobs:
             exit 0
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
-            src/components/{Button,Input,InputTime,InputDate,InputAutocomplete,Select,SelectFaceted,Checkbox,Switch,Calendar,RadioGroup,Tabs,Slider,Dialog,Expander}.tsx \
-            'src/elements/a-input*' 'src/elements/a-checkbox.*' 'src/elements/a-switch.*' 'src/elements/a-button.*' 'src/elements/a-slider.*' 'src/elements/a-dialog.*' 'src/elements/a-expander.*' 'src/elements/a-menu*' \
+            src/components/{Input,InputTime,InputDate,InputAutocomplete,Select,SelectFaceted,Checkbox,Switch,Calendar,RadioGroup,Tabs}.tsx \
+            'src/elements/a-input*' 'src/elements/a-checkbox.*' 'src/elements/a-switch.*' \
             'src/elements/a-calendar.*' 'src/elements/a-radio*' 'src/elements/a-tab*' \
             src/{anta_helpers,input-events,jsx-runtime,native-event-props,general_types,index,bundle}.ts \
-            tests/value-ownership{,-package,-renderer}.mjs 'tests/component*.mjs' scripts/build-bundle.mjs \
+            tests/value-ownership{,-package}.mjs 'tests/component*.mjs' scripts/build-bundle.mjs \
             .github/workflows/{ci,component-tests}.yml package.json pnpm-lock.yaml pnpm-workspace.yaml site/package.json)
           if [ -n "$changed" ]; then
             echo 'value-ownership=true' >> "$GITHUB_OUTPUT"

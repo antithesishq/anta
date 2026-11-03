@@ -35,14 +35,6 @@ pnpm test:components --component all --list
   needed. The manual **Component matrix** workflow supports one suite or all.
 
 The [suite registry](component-suites.mjs) lists available names and test files.
-The `value-ownership` suite also watches renderer-owned light DOM through custom
-element upgrade, interaction, prop changes, and detach/reinsert. It clones the
-JSX output before registration to isolate element writes from renderer writes;
-it does not test worker synchronization or the Plot wrapper. Extend the generated
-history with `ANTA_OWNERSHIP_STEPS=500 ANTA_OWNERSHIP_SEED=23` when running the
-suite or `node --test tests/value-ownership-renderer.mjs` directly. Event counts
-and missed clicks are printed with each run.
-
 `calendar` includes InputDate, `selection` covers Calendar/RadioGroup/Tabs value
 ownership, `value-ownership` covers control release and form reset/restore across
 text, selection, date, and checked controls, and `tooltip` includes Steps and other

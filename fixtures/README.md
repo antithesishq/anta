@@ -64,10 +64,14 @@ RadioGroup, Slider, Calendar, and InputDate; Select has no automatic form value.
 InputDate's visible field uses `data-fixture-submission-name` to associate its
 disabled state with its separate hidden ISO field.
 
-For a resource-growth run, use the same URL with `fixtures/resources.spec.ts`.
-This focused campaign advances fixture configuration on every action, exercising
+For a resource-growth run, first build and start a production preview with
+`pnpm --filter anta-site build` and `pnpm --filter anta-site preview`. Use the
+reported preview URL with `fixtures/resources.spec.ts`. The development server
+loads Preact refresh bookkeeping that retains old component trees and can produce
+misleading growth reports. This focused campaign advances fixture configuration on every action, exercising
 mounts, unmounts, and prop changes faster than the combined campaign. It checks
 60-second increases in used JS heap (100 MiB), DOM nodes (4,000), and event
 listeners (1,600). These are exploratory limits, including startup allocations;
-a violation is a signal to investigate, not proof of a leak. The property uses
+a violation is a signal to investigate, not proof of a leak. Temporary growth
+from rapid mounting can trigger it before garbage collection. The property uses
 Bombadil's browser resource metrics and does not force garbage collection.

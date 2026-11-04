@@ -76,6 +76,10 @@ run `ANTA_HARNESS_ORIGIN=<preview-url> pnpm test:fuzz_component`. To check one
 case, add `ANTA_HARNESS_SHARD=22905 ANTA_HARNESS_CASES=1` (replace `22905` with
 the case ID). Failures and screenshots go to `tests/pbt/.runs/`.
 
+The authored Hegel/Bombadil fixture campaign runs separately from `pnpm test`.
+See [`fixtures/README.md`](fixtures/README.md) for setup, properties, and focused runs.
+The saved Button property harness above remains available with `?model=Button`.
+
 CI's `pnpm install --frozen-lockfile` runs the workspace `prepare` scripts to
 build Anta, stickers, and Plot. Do not repeat those builds in the same job or
 disable install scripts without providing an explicit replacement build stage.

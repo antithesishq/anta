@@ -63,3 +63,11 @@ submission is prevented. The form property checks Input, Checkbox, Switch,
 RadioGroup, Slider, Calendar, and InputDate; Select has no automatic form value.
 InputDate's visible field uses `data-fixture-submission-name` to associate its
 disabled state with its separate hidden ISO field.
+
+For a resource-growth run, use the same URL with `fixtures/resources.spec.ts`.
+This focused campaign advances fixture configuration on every action, exercising
+mounts, unmounts, and prop changes faster than the combined campaign. It checks
+60-second increases in used JS heap (100 MiB), DOM nodes (4,000), and event
+listeners (1,600). These are exploratory limits, including startup allocations;
+a violation is a signal to investigate, not proof of a leak. The property uses
+Bombadil's browser resource metrics and does not force garbage collection.

@@ -219,7 +219,7 @@ export const InputTime = ({
         // The UI element handles the clear lifecycle before framework hydration.
         <a-input-time-clear slot="clear">
           <Button
-            priority="tertiary"
+            priority="quaternary"
             size={size}
             round={!!round}
             icon="x"

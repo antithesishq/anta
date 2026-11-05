@@ -346,7 +346,7 @@ export const Input = ({
         // The UI element handles the clear lifecycle before framework hydration.
         <a-input-clear slot="clear">
           <Button
-            priority="tertiary"
+            priority="quaternary"
             size={size}
             round={!!round}
             icon="x"

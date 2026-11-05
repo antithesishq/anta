@@ -1678,7 +1678,7 @@
       [type="color"], [type="file"], [type="button"], [type="reset"],
       [type="submit"], [type="image"], [type="hidden"]),
       textarea[data-anta], select[data-anta]):not([round]) {
-    --native-field-round: 0px;
+    --native-field-round: 1px;
   }
 
   a-tag {

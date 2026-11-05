@@ -1576,6 +1576,11 @@
     --focus-field-border: var(--input-border);
   }
 
+  /* Field labels use the primary text colour. Disabled fields keep the
+     component's dimmed label. */
+  a-input:not(:disabled) { --input-label: var(--text-1); }
+  a-input-time:not(:disabled) { --input-time-label: var(--text-1); }
+
   a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
     --input-border: var(--stroke-1-hover);
     --input-border-width: 1px;

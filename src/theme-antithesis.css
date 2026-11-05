@@ -1538,7 +1538,7 @@
 
   a-input:not([round])::part(field),
   a-input:not([round]):not(:defined)::after {
-    border-radius: 0;
+    border-radius: 1px;
   }
 
   /* Fields share the interactive stroke: stroke-1 at rest, stroke-1-hover on
@@ -1622,11 +1622,11 @@
     }
   }
 
-  /* Time fields match the text fields above: square corners, a 1px stroke,
+  /* Time fields match the text fields above: 1px corners, a 1px stroke,
      and the same pulsing 2px ring across the field edge. */
   a-input-time:not([round])::part(field),
   a-input-time:not([round]):not(:defined)::after {
-    border-radius: 0;
+    border-radius: 1px;
   }
 
   a-input-time:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {

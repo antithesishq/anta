@@ -143,7 +143,7 @@ const [reveal, setReveal] = useState(false)
   dimActions
   trailing={
     <Button
-      priority="tertiary"
+      priority="quaternary"
       icon={reveal ? 'eye-closed' : 'eye'}
       aria-label={reveal ? 'Hide password' : 'Show password'}
       onClick={() => setReveal(v => !v)}

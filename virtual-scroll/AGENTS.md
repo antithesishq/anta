@@ -5,11 +5,15 @@ writing conventions. This package owns the virtualized list, not the notebook
 adapter. The table will follow as its own package and build on this one.
 
 - `src/core/` is DOM-free. `model.ts` holds the anchor-model scroll math,
-  `source.ts` the renderer-free typed helpers, and `types.ts` the shared types.
-  Keep `core/` free of DOM, Anta, and renderer imports; `model.test.mjs` runs it
-  directly in Node.
-- `src/elements/` holds `<a-virtual-scroll>`, its stylesheet, and its attribute
-  types. `attributes.ts` registers the tag with Anta's JSX types.
+  `source-helpers.ts` the renderer-free typed helpers, and
+  `virtual-scroll-types.ts` the shared types. Keep `core/` free of DOM, Anta, and
+  renderer imports; `model.test.mjs` runs it directly in Node.
+- `src/elements/` holds `<a-virtual-scroll>` (`virtual-scroll-element.ts`), its
+  stylesheet, and its attribute types. `attributes.ts` registers the tag with
+  Anta's JSX types.
+- Give new files names that are unique across the repository, apart from
+  conventional names such as `index.ts`, `package.json`, and `README.md`. Entry
+  files keep the name of their export subpath.
 - `src/components/` holds the `VirtualScroll` JSX wrapper. It uses Anta's
   configured hooks and never registers elements or touches the DOM.
 - `src/entries/` defines the package exports. `source` must stay renderer-free

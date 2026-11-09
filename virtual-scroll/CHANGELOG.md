@@ -15,3 +15,9 @@ Changes that ship in `@antadesign/virtual-scroll`.
 - `item-height-fixed` skips row measurement for rows pinned to one height.
 - `intercept-keys` lets the application own shortcuts such as `Mod+f`; every
   key the list does not use keeps its browser default.
+- `@antadesign/virtual-scroll/bundle` registers the element, loads its
+  stylesheet, and exports everything the root entry does, in one import.
+- `VirtualScroll` accepts standard DOM handlers, such as `onKeyDown` and
+  `onClick`, and passes them to the element.
+- The mounted window is always `4 × ceil(height / item-min-height) + 1` rows,
+  shifted below the anchor so late rows have room in both scroll directions.

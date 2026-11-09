@@ -10,6 +10,10 @@
       "types": "./dist/types/entries/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./bundle": {
+      "types": "./dist/types/entries/bundle.d.ts",
+      "import": "./dist/bundle.js"
+    },
     "./source": {
       "types": "./dist/types/entries/source.d.ts",
       "import": "./dist/source.js"
@@ -25,10 +29,12 @@
     "./virtual-scroll.css": "./dist/virtual-scroll.css"
   },
   "sideEffects": [
+    "./dist/bundle.js",
     "./dist/elements.js",
     "./dist/elements/*.js",
     "./dist/*.css",
     "./dist/chunks/*.js",
+    "./src/entries/bundle.ts",
     "./src/entries/elements.ts",
     "./src/entries/elements/*.ts",
     "./src/elements/*.css"

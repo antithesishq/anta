@@ -26,7 +26,7 @@ export interface VirtualScrollConfig {
   heightPx: number
   /** Width of the area the rows are clipped to. */
   rowsWidth: number
-  /** Width of the widest row, or the width a consumer declared for every row. */
+  /** Width every row shares: `content-width`, or the rows' own width when that is wider or unset. */
   contentWidth: number
   /** Vertical scrollbar width; also the horizontal scrollbar thickness. */
   scrollbarWidth: number
@@ -67,9 +67,10 @@ export function initialState(config: Pick<VirtualScrollConfig, 'count' | 'follow
 }
 
 /**
- * Rows mounted on each side of the anchor. Twice a page is the minimum window, not
- * slack: the anchor is only re-seated once `deltaPixels` drifts past a full
- * viewport, so the visible rows can sit a whole viewport away from the anchor.
+ * Twice the rows a viewport can show; the window is this many rows on each side of
+ * the anchor, plus the anchor. That size is the minimum, not slack: the anchor is
+ * only re-seated once `deltaPixels` drifts past a full viewport, so the visible
+ * rows can sit a whole viewport away from the anchor.
  */
 export function itemsPerPage(config: Pick<VirtualScrollConfig, 'heightPx' | 'itemMinHeight'>): number {
   return 2 * Math.ceil(config.heightPx / config.itemMinHeight)
@@ -135,13 +136,18 @@ function atLeastMin(heights: Heights, index: number, config: VirtualScrollConfig
   return Math.max(heights.get(index) || 0, config.itemMinHeight)
 }
 
-/** Window bounds around the anchor: `[start, end)`. */
+/**
+ * Window bounds around the anchor: `[start, end)`, always `2 * itemsPerPage + 1` rows
+ * when the list has that many. The anchor sits near the top edge, so the window is
+ * shifted down by half a viewport of rows to leave about the same room for late rows
+ * in both scroll directions. At either end of the list it slides instead of shrinking.
+ */
 export function windowBounds(state: VirtualScrollState, config: VirtualScrollConfig): { start: number, end: number } {
   const perPage = itemsPerPage(config)
-  return {
-    start: Math.max(state.anchorIndex - perPage, 0),
-    end: Math.min(state.anchorIndex + 1 + perPage, config.count),
-  }
+  const size = 2 * perPage + 1
+  const above = perPage - Math.floor(perPage / 4)
+  const start = Math.max(Math.min(state.anchorIndex - above, config.count - size), 0)
+  return { start, end: Math.min(start + size, config.count) }
 }
 
 /** Rows the consumer should mount: the anchor window, or every row below the non-virtual threshold. */
@@ -299,11 +305,11 @@ export function correctOnce(state: VirtualScrollState, config: VirtualScrollConf
       if (next.atEnd) next = { ...next, atEnd: false }
       return toEdge(next, config, true, 0)
     }
-    if (next.anchorIndex <= perPage && next.deltaPixels > above && !next.stickToBottom) {
+    if (start === 0 && next.deltaPixels > above && !next.stickToBottom) {
       if (next.atEnd) next = { ...next, atEnd: false }
       return toEdge(next, config, true, 0)
     }
-    if (next.anchorIndex + perPage >= count && visibleBelow > below && !next.stickToBottom) {
+    if (end === count && visibleBelow > below && !next.stickToBottom) {
       const lastHeight = heightOf(heights, count - 1, config)
       return sameOr(next, {
         ...next,
@@ -456,7 +462,8 @@ export function knownContentHeight(config: VirtualScrollConfig, heights: Heights
 export function showVerticalScrollbar(state: VirtualScrollState, config: VirtualScrollConfig, heights: Heights): boolean {
   if (state.small) return false
   const known = knownContentHeight(config, heights)
-  return known.height + (config.count - known.recorded) * config.itemMinHeight > config.heightPx
+  // Against the height the rows get, so content hidden behind the horizontal scrollbar still counts.
+  return known.height + (config.count - known.recorded) * config.itemMinHeight > scrollableHeight(config)
 }
 
 /** Maps a fractional row index to the scrollbar track, leaving half a thumb at either end. */

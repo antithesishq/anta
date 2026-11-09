@@ -51,7 +51,49 @@ test('short lists mount every row; long lists mount a window around the anchor',
   const cfg = config()
   const perPage = itemsPerPage(cfg)
   const range = renderRange({ ...initialState(cfg), anchorIndex: 5000 }, cfg)
-  assert.deepEqual(range, { start: 5000 - perPage, end: 5001 + perPage })
+  // A 400px list of 20px rows: a page is 40 rows, and the window is shifted down by 10.
+  assert.equal(perPage, 40)
+  assert.deepEqual(range, { start: 5000 - 30, end: 5000 + 51 })
+})
+
+test('the window keeps its size and slides at either end of the list', () => {
+  const cfg = config()
+  const size = 2 * itemsPerPage(cfg) + 1
+  for (const anchorIndex of [0, 1, 29, 30, 31, 5000, cfg.count - 52, cfg.count - 51, cfg.count - 1]) {
+    const { start, end } = renderRange({ ...initialState(cfg), anchorIndex }, cfg)
+    assert.equal(end - start, size, `anchor ${anchorIndex}`)
+    assert.ok(start <= anchorIndex && anchorIndex < end, `anchor ${anchorIndex} in ${start} to ${end}`)
+  }
+  assert.deepEqual(renderRange({ ...initialState(cfg), anchorIndex: 0 }, cfg), { start: 0, end: size })
+  assert.deepEqual(renderRange({ ...initialState(cfg), anchorIndex: cfg.count - 1 }, cfg), { start: cfg.count - size, end: cfg.count })
+  // Shorter than a window but still virtual: every row.
+  const short = config({ count: 60, maxNonVirtualItems: 50 })
+  assert.deepEqual(renderRange({ ...initialState(short), anchorIndex: 30 }, short), { start: 0, end: 60 })
+})
+
+test('a re-seat leaves mounted rows beyond the viewport in both directions', () => {
+  // Every row at the minimum height is the worst case. When the range changes, the old
+  // rows must still cover the viewport with room to spare while the new rows render.
+  const cfg = config()
+  const heights = fixedHeights(cfg.count, cfg.itemMinHeight)
+  for (const step of [20, -20]) {
+    let state = settled(cfg, heights, { ...initialState(cfg), anchorIndex: 5000 })
+    let range = renderRange(state, cfg)
+    let changes = 0
+    for (let i = 0; i < 400; i++) {
+      const next = correct(scrollByPixels(state, step), cfg, heights)
+      const nextRange = renderRange(next, cfg)
+      if (nextRange.start !== range.start) {
+        changes++
+        const top = offsetOf(next, heights)
+        const room = step > 0 ? prefix(heights, range.end) - top - cfg.heightPx : top - prefix(heights, range.start)
+        assert.ok(room > 150, `step ${step}: only ${room}px mounted beyond the viewport`)
+      }
+      state = next
+      range = nextRange
+    }
+    assert.ok(changes > 10, `step ${step}: ${changes} range changes`)
+  }
 })
 
 test('re-anchoring never moves content on screen', () => {
@@ -235,4 +277,12 @@ test('rows without a height count at the minimum, so a partly measured list keep
   // 300px measured plus 7 rows at 20px is 440px, taller than the 400px list.
   assert.equal(showVerticalScrollbar({ ...initialState(cfg), small: false }, cfg, heights), true)
   assert.equal(showVerticalScrollbar({ ...initialState(cfg), small: false }, cfg, new Map([[0, 100]])), false)
+})
+
+test('content hidden behind the horizontal scrollbar still shows the vertical scrollbar', () => {
+  const heights = new Map(Array.from({ length: 10 }, (_, i) => [i, 39]))
+  const state = { ...initialState(config({ count: 10 })), small: false }
+  // 390px of rows fit the 400px list, but not the 384px left above a 16px horizontal scrollbar.
+  assert.equal(showVerticalScrollbar(state, config({ count: 10 }), heights), false)
+  assert.equal(showVerticalScrollbar(state, config({ count: 10, contentWidth: 1200 }), heights), true)
 })

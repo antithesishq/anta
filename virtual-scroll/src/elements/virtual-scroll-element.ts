@@ -12,9 +12,9 @@ import {
   thumbDragTarget, trackPressTarget, verticalThumb, visibleIndices, windowBounds,
   type VirtualScrollConfig, type VirtualScrollState,
 } from '../core/model'
-import type { VirtualScrollContentSize, VirtualScrollPosition, VirtualScrollRange } from '../core/types'
+import type { VirtualScrollContentSize, VirtualScrollPosition, VirtualScrollRange } from '../core/virtual-scroll-types'
 
-export type { VirtualScrollContentSize, VirtualScrollPosition, VirtualScrollRange } from '../core/types'
+export type { VirtualScrollContentSize, VirtualScrollPosition, VirtualScrollRange } from '../core/virtual-scroll-types'
 
 const SETTLE_MS = 150
 const PAGE_THROTTLE_MS = 60
@@ -88,18 +88,16 @@ const SHADOW_STYLE = `
     overflow: hidden;
     overflow: clip;
   }
-  /* Rows share one width: the list's, or the widest row's unbreakable content when that is wider. */
+  /* Rows share one width, fixed by configuration rather than by the rows mounted: the list's, or
+     content-width (--_cw) when that is wider. Content wraps; what cannot wrap is clipped. */
   .rows > slot:not([name]) {
     display: block;
     position: absolute;
     top: 0;
     left: 0;
-    width: fit-content;
-    min-width: max(100%, var(--_cw, 0px));
+    width: max(100%, var(--_cw, 0px));
+    overflow-wrap: anywhere;
     transform: translate(calc(-1 * var(--virtual-scroll-x, 0px)), var(--_y, 0px));
-  }
-  :host(:hover) .rows > slot:not([name]) {
-    will-change: transform;
   }
   slot[name="empty"] {
     display: none;
@@ -190,7 +188,7 @@ const SHADOW_STYLE = `
     flex-grow: 1;
     background: var(--virtual-scroll-thumb);
     box-shadow: var(--virtual-scroll-thumb-shadow);
-    border-radius: 24px;
+    border-radius: 2px;
     transition: background-color 0.2s ease-out;
   }
   .thumb:hover > .thumb-fill {
@@ -354,7 +352,6 @@ export class AVirtualScrollElement extends HTMLElementBase {
 
   #state: VirtualScrollState | undefined
   #heights = new Map<number, number>()
-  #widths = new Map<number, number>()
   #rows = new Map<number, Element>()
   #observed = new Set<Element>()
   #measuredSize = 0
@@ -514,7 +511,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
     }
     if (name === 'scrollbar-hint') this.#syncHints()
     if (name === 'intercept-keys') this.#interceptKeys = parseKeyCombos(value)
-    if (name === 'item-height-fixed' || name === 'content-width') this.#syncChildren()
+    if (name === 'item-height-fixed') this.#syncChildren()
     this.#configCache = undefined
     this.#schedule()
   }
@@ -549,10 +546,8 @@ export class AVirtualScrollElement extends HTMLElementBase {
   #config(): VirtualScrollConfig {
     if (this.#configCache) return this.#configCache
     const scrollbarWidth = this.#number('scrollbar-width', DEFAULT_SCROLLBAR_WIDTH)
-    const contentWidthAttr = this.#optionalNumber('content-width')
-    let measuredWidth = 0
-    for (const index of this.#rows.keys()) measuredWidth = Math.max(measuredWidth, this.#widths.get(index) ?? 0)
-    const contentWidth = contentWidthAttr ?? (measuredWidth || this.#rowsWidth)
+    // Only content-width scrolls sideways, so the horizontal range never depends on which rows are mounted.
+    const contentWidth = Math.max(this.#optionalNumber('content-width') ?? 0, this.#rowsWidth)
     const base = {
       count: Math.max(0, Math.floor(this.#number('count', 0))),
       itemMinHeight: Math.max(1, this.#number('item-min-height', DEFAULT_ITEM_MIN_HEIGHT)),
@@ -598,9 +593,9 @@ export class AVirtualScrollElement extends HTMLElementBase {
     return config.itemHeightFixed ? fixedHeights(config.count, config.itemMinHeight) : this.#heights
   }
 
-  /** Fixed-height rows are only observed when their width still has to be measured. */
+  /** Rows are observed only for their heights; their width never comes from measurement. */
   #observesRows(): boolean {
-    return !this.hasAttribute('item-height-fixed') || !this.hasAttribute('content-width')
+    return !this.hasAttribute('item-height-fixed')
   }
 
   #schedule() {
@@ -643,7 +638,6 @@ export class AVirtualScrollElement extends HTMLElementBase {
       // `clientHeight` would snap against the row's own offset and drift as rows stack.
       const size = entry.borderBoxSize?.[0]
       this.#heights.set(index, size?.blockSize ?? entry.contentRect.height)
-      this.#widths.set(index, size?.inlineSize ?? entry.contentRect.width)
     }
     this.#configCache = undefined
     this.#render()

@@ -16,12 +16,12 @@ use their React compatibility aliases.
 
 ## Use in React
 
-Register the element and render rows from an array or a source that builds
-rows on demand. The row type flows from `items` to `renderItem`:
+Import from the full bundle, which registers the element and loads its
+stylesheet. Render rows from an array or a source that builds rows on demand.
+The row type flows from `items` to `renderItem`:
 
 ```tsx
-import { VirtualScroll } from '@antadesign/virtual-scroll'
-import '@antadesign/virtual-scroll/elements/a-virtual-scroll'
+import { VirtualScroll } from '@antadesign/virtual-scroll/bundle'
 
 type LogLine = { text: string }
 
@@ -58,5 +58,5 @@ renderer and no DOM. `mapVirtualScrollRange(source, range, render)` renders the
 rows of a `rangechange` range from an array or any source with a `length` and a
 `slice(start, end).toArray()`.
 
-See the documentation site's Virtual Scroll page for every attribute, event,
+See the documentation site's Virtual scroll page for every attribute, event,
 and input rule.

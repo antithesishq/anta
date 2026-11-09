@@ -47,9 +47,9 @@ for (const input of inputs('dist/index.js')) {
     assert.doesNotMatch(input, /^src\/elements\/a-virtual-scroll\.ts$|^@antadesign\/anta\/elements/, `dist/index.js must not register elements, but loads ${input}`)
 }
 
-// Element entries register the element and bring its stylesheet.
-for (const [entry, stylesheet] of [['dist/elements.js', './virtual-scroll.css'], ['dist/elements/a-virtual-scroll.js', '../virtual-scroll.css']]) {
-    assert.ok(inputs(entry).includes('src/elements/a-virtual-scroll.ts'), `${entry} must register the element`)
+// The bundle and the element entries register the element and bring its stylesheet.
+for (const [entry, stylesheet] of [['dist/bundle.js', './virtual-scroll.css'], ['dist/elements.js', './virtual-scroll.css'], ['dist/elements/a-virtual-scroll.js', '../virtual-scroll.css']]) {
+    assert.ok(inputs(entry).includes('src/elements/virtual-scroll-element.ts'), `${entry} must register the element`)
     assert.ok((await readFile(resolve(root, entry), 'utf8')).startsWith(`import ${JSON.stringify(stylesheet)};`), `${entry} must import ${stylesheet}`)
 }
 assert.match(await readFile(resolve(root, 'dist/virtual-scroll.css'), 'utf8'), /a-virtual-scroll/)

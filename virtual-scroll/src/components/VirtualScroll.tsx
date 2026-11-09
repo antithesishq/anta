@@ -1,14 +1,14 @@
 import { customEventHandler } from '@antadesign/anta/anta_helpers'
 import { useState } from '@antadesign/anta/jsx-runtime'
-import type { BaseProps } from '@antadesign/anta/general_types'
+import type { BaseProps, DOMEventHandlers } from '@antadesign/anta/general_types'
 import type {
   VirtualScrollContentSize, VirtualScrollPosition, VirtualScrollRange, VirtualScrollRestorePosition,
   VirtualScrollRevealX, VirtualScrollSource, VirtualScrollWheelActivation,
-} from '../core/types'
+} from '../core/virtual-scroll-types'
 import {
   initialVirtualScrollRange, mapVirtualScrollRange, virtualScrollMarksAttribute,
   virtualScrollPositionAttribute, virtualScrollRevealXAttribute,
-} from '../core/source'
+} from '../core/source-helpers'
 
 // Re-exporting the attribute type also registers `<a-virtual-scroll>` with Anta's JSX types.
 export type { AVirtualScrollAttributes } from '../elements/attributes'
@@ -24,8 +24,8 @@ export interface VirtualScrollReveal {
   x?: VirtualScrollRevealX
 }
 
-/** Props shared by both ways of supplying rows. */
-export interface VirtualScrollBaseProps extends BaseProps {
+/** Props shared by both ways of supplying rows. Standard DOM handlers, such as `onKeyDown`, go to the element. */
+export interface VirtualScrollBaseProps extends BaseProps, DOMEventHandlers {
   /** Minimum row height in pixels; rows not measured yet are assumed to be this tall.
    * @defaultValue 22 */
   itemMinHeight?: number
@@ -35,7 +35,7 @@ export interface VirtualScrollBaseProps extends BaseProps {
   /** Vertical scrollbar width and horizontal scrollbar thickness, in pixels.
    * @defaultValue 16 */
   scrollbarWidth?: number
-  /** Width every row shares. Omit to measure the widest mounted row. */
+  /** Width every row shares, and the only source of horizontal scrolling. Omit to wrap rows at the list's width. */
   contentWidth?: number
   /** Height in pixels. Without `height` or `maxHeight` the list is 500px tall, or shorter when its rows fit. */
   height?: number

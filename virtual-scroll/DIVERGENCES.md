@@ -8,7 +8,7 @@ Add an entry whenever a change makes the two differ, and say why. A difference t
 entry here. Behavior kept identical on purpose, where someone might expect a change, goes in its own section, and the
 manual checks that cover what the browser tests cannot are at the end.
 
-Star baseline: `main` at `c5a390b13ad` (2026-10-14).
+Star baseline: `main` at `35d696ea0ce` (2026-11-03).
 
 ## Architecture
 
@@ -77,46 +77,56 @@ Star baseline: `main` at `c5a390b13ad` (2026-10-14).
     transform. Star uses `overflow: hidden`.
 22. **The horizontal offset is a CSS variable** (`--virtual-scroll-x`) that rows and the `header` slot inherit, so
     pinned cells follow in the same frame. Star round-trips it through `on_scroll_x` and the table's `table_scroll_x`.
-23. **`item-height-fixed` still observes rows for their width** when `content-width` is not set. Star never measures
-    rows when heights are fixed, so a fixed-height list without `item_width` clips wide rows and shows no horizontal
-    scrollbar; only the table, which always passes `item_width`, avoids it. With both attributes set, the port observes
-    no rows.
-24. **Thumbs stay inside their scrollbars** (bug fix). Star lays the thumb out over the list's full height, but the
+23. **Thumbs stay inside their scrollbars** (bug fix). Star lays the thumb out over the list's full height, but the
     vertical bar is inset 1px at each end and the thumb's 2px padding is added outside its computed size, so at the end
     of the list the thumb's fill runs 4px past the bar and its rounded end is cut off. The horizontal thumb does the
     same at the far right. The port measures both bars and lays thumbs, marks, and pointer input out on the track inside
     the padding. The thumb keeps Star's look everywhere else.
-25. **The vertical scrollbar disappears when there is nothing to scroll**, and its column goes with it: rows and the
+24. **The vertical scrollbar disappears when there is nothing to scroll**, and its column goes with it: rows and the
     horizontal scrollbar take the full width. Star hides only the thumb and keeps drawing an empty bar in a reserved
     column. Rows reflow once when the bar appears or disappears, because their width changes by the scrollbar width; the
     table port must size its columns against the space it actually gets rather than subtracting a fixed scrollbar.
-26. **Rows share one width.** The row slot is as wide as the list, or as the widest mounted row's unbreakable content
-    (`white-space: pre`, wide cells) when that is wider, and at least `content-width`. Every row fills it, so borders,
-    backgrounds, and hover styles line up across the list. Star lays rows out at the list's width and lets wide content
-    overflow each row, so every row's background stops at the list edge, or at its own width when the row is sized to
-    its content.
+25. **Row width comes only from `content-width`.** Every row is exactly as wide as the list, or `content-width` when
+    that is wider, so borders, backgrounds, and hover styles line up. The element never sizes rows from their content,
+    so the horizontal scrollbar keeps its size and position while scrolling vertically. Without `content-width` there is
+    no horizontal scrolling: rows wrap at the list's width (`overflow-wrap: anywhere`) and content that cannot wrap is
+    clipped. Star, without `item_width`, takes its content width from whichever row it measured last, so its horizontal
+    scrollbar resizes and jumps as rows mount, and lays rows out at the list's width with wide content overflowing them.
+
+26. **Hovering never moves rows** (bug fix). Star sets `will-change: contents, transform` on its content while the list
+    is hovered, which moves the rows onto their own layer. At a fractional offset, which measured row heights produce,
+    that layer lands on a different pixel, so every row shifts by about a pixel when the pointer enters or leaves. The
+    port never changes its layering on hover.
+27. **The render window is shifted down and slides at the ends.** It keeps Star's size, a page on each side of the
+    anchor plus the anchor, but holds a page minus a quarter page above the anchor and a page plus a quarter page below.
+    At either end of the list it slides to stay full size. Star centers it and clamps it, so it shrinks to half at the
+    top and bottom. The anchor sits near the top edge, so a centered window leaves most spare rows above the screen:
+    with rows at the minimum height, scrolling down asked for new rows with only 23 to 38px still mounted below the
+    screen (about 300px above when scrolling up), and a worker renderer flashed placeholders. Shifted, both directions
+    keep about 150 to 190px. The mounted row count is now constant, and the first re-seat from either end fires no
+    event.
 
 ## API
 
-27. **Position reporting.** `positionchange` fires once scrolling settles (150ms) and `initial-position` restores it on
+28. **Position reporting.** `positionchange` fires once scrolling settles (150ms) and `initial-position` restores it on
     connect. Star writes its whole state to `vscroll_backup_sv` on every render.
-28. **Content height** arrives as `contentsizechange` (`null` until every row is measured). Star calls
+29. **Content height** arrives as `contentsizechange` (`null` until every row is measured). Star calls
     `on_visible_content_height_change` during render.
-29. **Sizing** comes from `height` / `max-height` attributes and an intrinsic sizer, and honors a host sized by CSS.
+30. **Sizing** comes from `height` / `max-height` attributes and an intrinsic sizer, and honors a host sized by CSS.
     Star takes the same props but cannot be sized from outside. `max-height` alone only caps the list, as in CSS, so a
     short list shrinks to its rows; Star stays at `max_height`. The table, which renders rows directly by default and
     takes this list as an option, keeps the same height in both modes.
-30. **Row selection and highlighting belong to the consumer.** Star's list owns `selected_sv` (click, Ctrl + click,
+31. **Row selection and highlighting belong to the consumer.** Star's list owns `selected_sv` (click, Ctrl + click,
     and Shift + click ranges), `highlight_items`, and the `_selected` / `_highlighted` classes. The port renders none
     of it, so selection lives in the table and works the same whether its rows are virtualized or not.
 
 ## Kept identical on purpose
 
 - The anchor model and its corrections: re-anchoring, overscroll at both ends, following the end, and the 2× render
-  window (`items_per_page`).
+  window size (`items_per_page`). Only the window's placement differs (27).
 - The non-virtual threshold rule, including the silent fallback to 500 when the configured value is at or below a page
   window.
-- Scrollbar colors, widths, and the thumb's padded "pill" look.
+- Scrollbar colors (Anta's `--border-1` to `--border-4` tokens), widths, the padded thumb, and the 2px corners.
 - The fractional visible-bottom index from `get_visible_indices`, which reads about half a row high; nothing consumes
   it.
 - Pixel wheels outside macOS move a third of their delta.
@@ -134,7 +144,9 @@ scroll model; these cover what only a person can judge.
 - [ ] **Large list:** wheel, thumb drag, track click, and Shift + click on the track all scroll; scrolling up never
       makes the top row jump.
 - [ ] **Horizontal scrolling:** Shift + wheel, swipes, the horizontal thumb, and Left and Right scroll sideways; the
-      vertical scrollbar still works; every row's border and hover background reach the far right.
+      vertical scrollbar still works; every row's border and hover background reach the far right; scrolling vertically
+      never changes the horizontal thumb's size or position. A list without `content-width` wraps its rows and shows
+      no horizontal scrollbar.
 - [ ] **Growing list:** the newest row stays on the bottom edge; scrolling up holds the view; scrolling back down by
       hand follows again.
 - [ ] **Scrollbar marks:** marks line up with matching rows; Next and Previous center the highlighted word; scrolling

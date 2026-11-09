@@ -1,6 +1,6 @@
 import { VirtualScroll } from '../src/components/VirtualScroll'
-import { mapVirtualScrollRange, readVirtualScrollRange, virtualScrollPositionAttribute } from '../src/core/source'
-import type { VirtualScrollItem, VirtualScrollSource } from '../src/core/types'
+import { mapVirtualScrollRange, readVirtualScrollRange, virtualScrollPositionAttribute } from '../src/core/source-helpers'
+import type { VirtualScrollItem, VirtualScrollSource } from '../src/core/virtual-scroll-types'
 
 type LogEvent = { text: string, at: number }
 

@@ -50,7 +50,7 @@
   color: var(--text-1);
 }
 
-/* The demo's own highlighter. Virtual Scroll never styles row content. */
+/* The demo's own highlighter. The virtual scroll never styles row content. */
 .hit {
   padding-inline: 1px;
   border-radius: 2px;
@@ -63,7 +63,7 @@
   outline: 1px solid var(--text-1-warning);
 }
 
-/* The demo's own bookmark style. Virtual Scroll only draws the bookmarks on its track. */
+/* The demo's own bookmark style. The virtual scroll only draws the bookmarks on its track. */
 .bookmarked {
   box-shadow: inset 3px 0 0 color-mix(in oklch, var(--text-3) 60%, transparent);
   background: color-mix(in oklch, var(--text-3) 8%, transparent);

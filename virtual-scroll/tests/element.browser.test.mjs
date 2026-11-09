@@ -81,8 +81,8 @@ function shadow(page, selector, read) {
 test('mounts the window it asks for and fills the viewport', async t => {
   const page = await pageFor(t)
   const ranges = await page.evaluate(() => window.ranges)
-  assert.deepEqual(ranges[0], { start: 0, end: 47 })
-  assert.deepEqual(await page.evaluate(() => window.rendered().length), 47)
+  assert.deepEqual(ranges[0], { start: 0, end: 93 })
+  assert.deepEqual(await page.evaluate(() => window.rendered().length), 93)
   assert.equal(await shadow(page, '.gap.shown', 'el'), null)
   assert.equal((await topRow(page)).index, 0)
 })
@@ -117,7 +117,9 @@ test('rows measured late above the anchor do not move the anchor row', async t =
   await page.evaluate(() => window.frames(2))
   const anchor = await page.evaluate(() => window.ranges.at(-1))
   await settle(page, 600)
-  const target = Math.round((anchor.start + anchor.end) / 2)
+  // The window is a page on each side of the anchor, shifted down by a quarter page.
+  const perPage = (anchor.end - anchor.start - 1) / 2
+  const target = anchor.start + perPage - Math.floor(perPage / 4)
   const first = await topRow(page)
   assert.ok(Math.abs(first.index - target) <= 1, `jumped near ${target}, top row is ${first.index}`)
   assert.ok(Math.abs(first.offset) < 1, `anchor row sits at the top edge, offset ${first.offset}`)
@@ -367,35 +369,60 @@ test('max-height caps the list, and a short list still shrinks to its rows', asy
   assert.ok(Math.abs((await sizes()).host - 160) < 1, 'a long list stops at max-height')
 })
 
-test('rows share one width: the list, the widest unbreakable row, or content-width', async t => {
-  const page = await pageFor(t, { count: 40, delay: 0 })
-  const widths = () => page.evaluate(() => {
+// Reads the horizontal scrollbar and the widths of the mounted rows.
+function horizontal(page) {
+  return page.evaluate(() => {
+    const thumb = window.list.shadowRoot.querySelector('.bar.h .thumb').getBoundingClientRect()
     const rows = [...window.list.querySelectorAll('[data-index]')].map(row => Math.round(row.getBoundingClientRect().width))
-    const list = Math.round(window.list.shadowRoot.querySelector('.rows').getBoundingClientRect().width)
-    return { list, min: Math.min(...rows), max: Math.max(...rows) }
-  })
-  const narrow = await widths()
-  assert.equal(narrow.min, narrow.list, 'wrapping rows fill the list')
-  assert.equal(narrow.max, narrow.list, 'wrapping rows wrap at the list width')
-
-  await page.evaluate(() => {
-    for (const [index, repeat] of [[2, 40], [5, 80]]) {
-      const row = window.list.querySelector(`[data-index="${index}"]`)
-      row.style.whiteSpace = 'pre'
-      row.textContent = 'unbreakable '.repeat(repeat)
+    return {
+      list: Math.round(window.list.shadowRoot.querySelector('.rows').getBoundingClientRect().width),
+      scrollable: window.list.matches(':state(scrollable-x)'),
+      thumb: [Math.round(thumb.left), Math.round(thumb.width)],
+      rows: [Math.min(...rows), Math.max(...rows)],
     }
   })
-  await settle(page)
-  const wide = await widths()
-  assert.ok(wide.max > wide.list, JSON.stringify(wide))
-  assert.equal(wide.min, wide.max, 'every row takes the widest row width')
+}
 
-  await page.evaluate(() => window.mountList({ count: 40, delay: 0 }))
+test('without content-width, rows take the list width and an unbreakable row is clipped, not scrolled', async t => {
+  const page = await pageFor(t, { count: 40, delay: 0 })
+  await page.evaluate(() => {
+    const row = window.list.querySelector('[data-index="2"]')
+    row.style.whiteSpace = 'pre'
+    row.textContent = 'unbreakable '.repeat(80)
+  })
   await settle(page)
+  const state = await horizontal(page)
+  assert.equal(state.scrollable, false, JSON.stringify(state))
+  assert.deepEqual(state.rows, [state.list, state.list], 'every row is exactly the list width')
+})
+
+test('with content-width, the horizontal scrollbar keeps its size and position while scrolling vertically', async t => {
+  const page = await pageFor(t, { count: 1_000, delay: 0 })
   await page.evaluate(() => window.list.setAttribute('content-width', '2000'))
   await settle(page)
-  const fixed = await widths()
-  assert.deepEqual([fixed.min, fixed.max], [2000, 2000])
+  const fixed = await horizontal(page)
+  assert.ok(fixed.scrollable, JSON.stringify(fixed))
+  assert.deepEqual(fixed.rows, [2000, 2000], 'every row is exactly content-width')
+
+  // A row wider than content-width is clipped; it never widens the range.
+  await page.evaluate(() => {
+    const row = window.list.querySelector('[data-index="2"]')
+    row.style.whiteSpace = 'pre'
+    row.textContent = 'unbreakable '.repeat(400)
+  })
+  await settle(page)
+  assert.deepEqual(await horizontal(page), fixed)
+
+  await page.locator('a-virtual-scroll').focus()
+  await page.keyboard.press('ArrowRight')
+  await settle(page)
+  const scrolled = await horizontal(page)
+  assert.notDeepEqual(scrolled.thumb, fixed.thumb, 'ArrowRight moves the thumb')
+  for (const key of ['PageDown', 'PageDown', 'End', 'Home']) {
+    await page.keyboard.press(key)
+    await settle(page)
+    assert.deepEqual(await horizontal(page), scrolled, `${key} leaves the horizontal scrollbar alone`)
+  }
 })
 
 test('secondary marks draw in their own muted layer under the primary marks', async t => {
@@ -524,4 +551,28 @@ test('the vertical scrollbar and its column appear only while there is something
   }))
   assert.equal(horizontal.vbarHidden, true)
   assert.ok(Math.abs(horizontal.hbar - horizontal.host) < 1, JSON.stringify(horizontal))
+})
+
+test('hovering the list does not move its rows', async t => {
+  const page = await pageFor(t, { count: 1000, delay: 0, height: 300 })
+  // Fractional row heights put the rows at a fractional offset, where a change of layer shows.
+  await page.addStyleTag({ content: '.demo-row { padding-top: 0.3px; }' })
+  await page.mouse.move(300, 300)
+  await page.mouse.wheel(0, 517)
+  await settle(page)
+  const box = await page.evaluate(() => {
+    const host = window.list.getBoundingClientRect()
+    const bar = window.list.shadowRoot.querySelector('.bar.v').getBoundingClientRect()
+    return { x: host.left + 1, y: host.top + 1, width: bar.left - host.left - 2, height: host.height - 2, barX: bar.left + bar.width / 2, barY: bar.top + 4 }
+  })
+  const clip = { x: box.x, y: box.y, width: box.width, height: box.height }
+
+  // Off the list, then on its scrollbar: the host is hovered but no row is.
+  await page.mouse.move(box.x + box.width + 200, box.y + box.height + 200)
+  await page.evaluate(() => window.frames(3))
+  const outside = await page.screenshot({ clip })
+  await page.mouse.move(box.barX, box.barY)
+  await page.evaluate(() => window.frames(3))
+  const hovered = await page.screenshot({ clip })
+  assert.ok(outside.equals(hovered), 'rows render the same with and without hover')
 })

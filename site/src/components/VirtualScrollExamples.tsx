@@ -2,34 +2,24 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { ComponentChildren } from 'preact'
 import { Button, Input, Tag } from '@antadesign/anta'
 import { VirtualScroll } from '@antadesign/virtual-scroll'
-import type { VirtualScrollRange, VirtualScrollRangeSource } from '@antadesign/virtual-scroll'
+import type { VirtualScrollPosition, VirtualScrollRange, VirtualScrollRestorePosition } from '@antadesign/virtual-scroll'
 import styles from './VirtualScrollDemo.module.css'
-import {
-  VirtualScrollElement, rowText, rowsFor, useRemoteRows, useVirtualScrollElement,
-  type Position,
-} from './virtual-scroll-kit'
+import { rowText, useVirtualScrollElement } from './virtual-scroll-kit'
 
 export type VirtualScrollExampleName = 'large' | 'wide' | 'growing' | 'marks' | 'restore' | 'sizes' | 'inputs'
 
-function TextRow({ index, text, className, onClick }: { index: number, text?: ComponentChildren, className?: string, onClick?: () => void }) {
-  return (
-    <div key={index} data-index={index} className={className ? `${styles.row} ${className}` : styles.row} onClick={onClick}>
-      <b className={styles.index}>{index}</b> {text ?? rowText(index)}
-    </div>
-  )
+const rowClass = () => styles.row
+const wideRowClass = () => `${styles.row} ${styles.wide}`
+
+function IndexedText({ index, text }: { index: number, text?: ComponentChildren }) {
+  return <><b className={styles.index}>{index}</b> {text ?? rowText(index)}</>
 }
 
 type LogLine = { id: number, text: string }
 
-/** 1,000 log lines built on demand: only a sliced range is ever created. */
-const LOG_LINES: VirtualScrollRangeSource<LogLine> = {
-  length: 1_000,
-  slice: (start, end) => ({
-    toArray: () => Array.from({ length: Math.max(0, end - start) }, (_, i) => ({ id: start + i, text: rowText(start + i) })),
-  }),
-}
+const LOG_LINES: LogLine[] = Array.from({ length: 1_000 }, (_, id) => ({ id, text: rowText(id) }))
 
-/** 1. A large static list with the typed wrapper: `renderItem` receives `LogLine` rows. */
+/** 1. A large list of typed rows: `renderItem` receives `LogLine` rows. */
 function LargeExample() {
   useVirtualScrollElement()
   const [range, setRange] = useState<VirtualScrollRange>({ start: 0, end: 0 })
@@ -40,8 +30,8 @@ function LargeExample() {
         aria-label="1,000 rows"
         items={LOG_LINES}
         height={300}
-        rowClassName={() => styles.row}
-        renderItem={line => <><b className={styles.index}>{line.id}</b> {line.text}</>}
+        rowClassName={rowClass}
+        renderItem={line => <IndexedText index={line.id} text={line.text} />}
         onRangeChange={(_, detail) => setRange(detail)}
       />
       <div className={styles.readout}>
@@ -52,24 +42,20 @@ function LargeExample() {
   )
 }
 
-/** 2. A larger list whose rows are wider than the list, so it scrolls in both directions. */
+/** 2. A larger list with a fixed row width wider than the list, so it scrolls in both directions. */
 function WideExample() {
   useVirtualScrollElement()
   const count = 10_000
-  const remote = useRemoteRows()
+  const [range, setRange] = useState<VirtualScrollRange>({ start: 0, end: 0 })
   return (
     <div className={styles.demo}>
-      <VirtualScrollElement className={styles.list} tabIndex={0} aria-label="10,000 wide rows" count={count} height={300}
-        onrangechange={remote.onRangeChange}>
-        {rowsFor(remote.range, count, index => (
-          <div key={index} data-index={index} className={`${styles.row} ${styles.wide}`}>
-            <b className={styles.index}>{index}</b> {rowText(index, 36)}
-          </div>
-        ))}
-      </VirtualScrollElement>
+      <VirtualScroll className={styles.list} aria-label="10,000 wide rows" count={count} height={300} contentWidth={2400}
+        rowClassName={wideRowClass}
+        renderItem={index => <IndexedText index={index} text={rowText(index, 36)} />}
+        onRangeChange={(_, detail) => setRange(detail)} />
       <div className={styles.readout}>
         <Tag size="small" label="Rows" value={count.toLocaleString()} />
-        <Tag size="small" label="Mounted" value={`${remote.range.start} to ${remote.range.end}`} />
+        <Tag size="small" label="Mounted" value={`${range.start} to ${range.end}`} />
       </div>
     </div>
   )
@@ -80,14 +66,12 @@ function GrowingExample() {
   useVirtualScrollElement()
   const [count, setCount] = useState(120)
   const [running, setRunning] = useState(true)
-  const [position, setPosition] = useState<Position | undefined>(undefined)
-  const remote = useRemoteRows()
+  const [following, setFollowing] = useState(true)
   useEffect(() => {
     if (!running) return
     const id = setInterval(() => setCount(n => n + 1), 200)
     return () => clearInterval(id)
   }, [running])
-  const following = position ? position.stickToBottom : true
   return (
     <div className={styles.demo}>
       <div className={styles.toolbar}>
@@ -95,10 +79,10 @@ function GrowingExample() {
         <Tag size="small" tone={following ? 'success' : 'warning'} label="Following" value={following ? 'yes' : 'no, scrolled away'} />
         <Tag size="small" label="Rows" value={String(count)} />
       </div>
-      <VirtualScrollElement className={styles.list} tabIndex={0} aria-label="Growing list" count={count} height={260} follow=""
-        onrangechange={remote.onRangeChange} onpositionchange={(event: CustomEvent<Position>) => setPosition(event.detail)}>
-        {rowsFor(remote.range, count, index => <TextRow index={index} />)}
-      </VirtualScrollElement>
+      <VirtualScroll className={styles.list} aria-label="Growing list" count={count} height={260} follow
+        rowClassName={rowClass}
+        renderItem={index => <IndexedText index={index} />}
+        onPositionChange={(_, position) => setFollowing(position.stickToBottom)} />
     </div>
   )
 }
@@ -119,6 +103,12 @@ function highlight(text: string, query: string, active: boolean): ComponentChild
   return parts
 }
 
+/** The row a click landed in, from the `data-index` the list puts on every row. */
+function clickedIndex(event: MouseEvent): number | undefined {
+  const row = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-index]') : null
+  return row ? Number(row.dataset.index) : undefined
+}
+
 /**
  * 4. Scrollbar marks. The application decides which rows match and highlights
  * words inside them; the list only draws `marks` on its track and brings a row into view.
@@ -135,7 +125,6 @@ function MarksExample() {
     if (!next.delete(index)) next.add(index)
     return next
   })
-  const remote = useRemoteRows()
   const needle = query.trim().toLowerCase()
   const matches = useMemo(() => {
     if (needle.length < 2) return []
@@ -161,16 +150,16 @@ function MarksExample() {
         {active !== undefined && <Tag size="small" label="Active" value={`row ${active}`} />}
         <Tag size="small" label="Bookmarks" value={String(bookmarks.size)} />
       </div>
-      <VirtualScrollElement className={styles.list} tabIndex={0} aria-label="Searchable list" count={count} height={300}
-        marks={matches.join(' ') || undefined}
-        secondary-marks={[...bookmarks].sort((a, b) => a - b).join(' ') || undefined}
-        reveal-index={active} reveal-key={active === undefined ? undefined : `match:${active}`} reveal-target="mark[data-active]"
-        onrangechange={remote.onRangeChange}>
-        {rowsFor(remote.range, count, index => (
-          <TextRow index={index} text={highlight(rowText(index), needle, index === active)}
-            className={bookmarks.has(index) ? styles.bookmarked : undefined} onClick={() => toggleBookmark(index)} />
-        ))}
-      </VirtualScrollElement>
+      <VirtualScroll className={styles.list} aria-label="Searchable list" count={count} height={300}
+        marks={matches}
+        secondaryMarks={bookmarks}
+        reveal={active === undefined ? undefined : { index: active, key: `match:${active}`, target: 'mark[data-active]' }}
+        rowClassName={index => bookmarks.has(index) ? `${styles.row} ${styles.bookmarked}` : styles.row}
+        renderItem={index => <IndexedText index={index} text={highlight(rowText(index), needle, index === active)} />}
+        onClick={(event: MouseEvent) => {
+          const index = clickedIndex(event)
+          if (index !== undefined) toggleBookmark(index)
+        }} />
     </div>
   )
 }
@@ -180,14 +169,13 @@ function RestoreExample() {
   useVirtualScrollElement()
   const count = 500
   const [generation, setGeneration] = useState(0)
-  const [initial, setInitial] = useState<string | undefined>(undefined)
+  const [initial, setInitial] = useState<VirtualScrollRestorePosition | undefined>(undefined)
   const [row, setRow] = useState('250')
-  const [position, setPosition] = useState<Position | undefined>(undefined)
+  const [position, setPosition] = useState<VirtualScrollPosition | undefined>(undefined)
   const [jump, setJump] = useState<{ index: number, key: number } | undefined>(undefined)
-  const remote = useRemoteRows()
-  const reopen = (value: string) => {
+  const reopen = (saved: VirtualScrollPosition) => {
     setJump(undefined)
-    setInitial(value)
+    setInitial({ ...saved, stickToBottom: false })
     setGeneration(g => g + 1)
   }
   const index = Number(row)
@@ -202,39 +190,39 @@ function RestoreExample() {
         <Button size="small" priority="secondary" label="Jump to row" disabled={!validRow}
           onClick={() => setJump(previous => ({ index, key: (previous?.key ?? 0) + 1 }))} />
         <Button size="small" priority="secondary" label="Reopen where I left off" disabled={!position}
-          onClick={() => position && reopen(`${position.anchorIndex} ${position.deltaPixels} ${position.scrollX} 0`)} />
+          onClick={() => position && reopen(position)} />
         <Tag size="small" label="Last position" value={position ? `row ${position.anchorIndex}, ${position.deltaPixels.toFixed(1)}px` : 'scroll first'} />
       </div>
-      <VirtualScrollElement key={generation} className={styles.list} tabIndex={0} aria-label="Restorable list" count={count} height={260}
-        initial-position={initial} reveal-index={jump?.index} reveal-key={jump && `jump:${jump.key}`}
-        onrangechange={remote.onRangeChange} onpositionchange={(event: CustomEvent<Position>) => setPosition(event.detail)}>
-        {rowsFor(remote.range, count, index => <TextRow index={index} />)}
-      </VirtualScrollElement>
+      <VirtualScroll key={generation} className={styles.list} aria-label="Restorable list" count={count} height={260}
+        initialPosition={initial}
+        reveal={jump && { index: jump.index, key: `jump:${jump.key}` }}
+        rowClassName={rowClass}
+        renderItem={index => <IndexedText index={index} />}
+        onPositionChange={(_, detail) => setPosition(detail)} />
     </div>
   )
 }
 
-function SizedList({ count, label, ...attributes }: { count: number, label: string } & Record<string, unknown>) {
-  const remote = useRemoteRows()
+function SizedList({ count, label, height, maxHeight }: { count: number, label: string, height?: number, maxHeight?: number }) {
   return (
     <div>
       <p className={styles.caption}>{label}</p>
-      <VirtualScrollElement className={styles.list} tabIndex={0} aria-label={label} count={count} onrangechange={remote.onRangeChange} {...attributes}>
-        <div slot="empty">No data to display</div>
-        {rowsFor(remote.range, count, index => <TextRow index={index} />)}
-      </VirtualScrollElement>
+      <VirtualScroll className={styles.list} aria-label={label} count={count} height={height} maxHeight={maxHeight}
+        empty="No data to display"
+        rowClassName={rowClass}
+        renderItem={index => <IndexedText index={index} />} />
     </div>
   )
 }
 
-/** 6. How `height` and `max-height` size short, long, and empty lists. */
+/** 6. How `height` and `maxHeight` size short, long, and empty lists. */
 function SizesExample() {
   useVirtualScrollElement()
   return (
     <div className={styles.columns}>
       <SizedList count={3} label="3 rows, no height: fits its rows" />
-      <SizedList count={3} height={160} label='3 rows, height="160"' />
-      <SizedList count={40} max-height={160} label='40 rows, max-height="160"' />
+      <SizedList count={3} height={160} label="3 rows, height={160}" />
+      <SizedList count={40} maxHeight={160} label="40 rows, maxHeight={160}" />
       <SizedList count={0} label="0 rows: the empty slot" />
     </div>
   )
@@ -266,13 +254,12 @@ function describeWheel(event: WheelEvent): string {
 
 /**
  * 7. Input. Each key press and wheel gesture over the list is logged with who
- * handled it: the list, the application through `intercept-keys`, or nobody,
+ * handled it: the list, the application through `interceptKeys`, or nobody,
  * in which case the browser's default action runs.
  */
 function InputsExample() {
   useVirtualScrollElement()
   const count = 1_000
-  const remote = useRemoteRows()
   const [log, setLog] = useState<LogEntry[]>([])
   const nextId = useRef(0)
   const lastWheel = useRef('')
@@ -312,19 +299,15 @@ function InputsExample() {
 
   return (
     <div className={styles.demo} ref={container}>
-      <VirtualScrollElement className={styles.list} tabIndex={0} aria-label="Keyboard and wheel test" count={count} height={240}
-        intercept-keys="Mod+f"
+      <VirtualScroll className={styles.list} aria-label="Keyboard and wheel test" count={count} height={240}
+        contentWidth={2000}
+        interceptKeys="Mod+f"
         onKeyDown={(event: KeyboardEvent) => {
-          // The application's own shortcut. `intercept-keys` keeps the browser's find bar closed.
+          // The application's own shortcut. `interceptKeys` keeps the browser's find bar closed.
           if (event.key.toLowerCase() === 'f' && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) handledByApp.current = true
         }}
-        onrangechange={remote.onRangeChange}>
-        {rowsFor(remote.range, count, index => (
-          <div key={index} data-index={index} className={`${styles.row} ${styles.wide}`}>
-            <b className={styles.index}>{index}</b> {rowText(index, 30)}
-          </div>
-        ))}
-      </VirtualScrollElement>
+        rowClassName={wideRowClass}
+        renderItem={index => <IndexedText index={index} text={rowText(index, 30)} />} />
       <div className={styles.log} aria-label="Input log" aria-live="polite">
         {log.length === 0
           ? <span>Click the list, then press keys or scroll. Try Ctrl+F, Alt+Left, Shift+Down, and Ctrl + wheel.</span>

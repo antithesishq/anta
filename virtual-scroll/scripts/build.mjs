@@ -51,7 +51,7 @@ async function declarations(directory) {
 }
 await declarations(resolve(output, 'types'))
 
-const ENTRIES = ['index', 'source', 'elements', 'elements/a-virtual-scroll']
+const ENTRIES = ['index', 'bundle', 'source', 'elements', 'elements/a-virtual-scroll']
 const result = await build({
     absWorkingDir: root,
     entryPoints: Object.fromEntries(ENTRIES.map(name => [name, `src/entries/${name}.ts`])),
@@ -81,7 +81,11 @@ await build({
 })
 
 // Registering the element brings its tokens and host styles, as Anta's own element entries do.
-const STYLED_ENTRIES = { 'elements.js': './virtual-scroll.css', 'elements/a-virtual-scroll.js': '../virtual-scroll.css' }
+const STYLED_ENTRIES = {
+    'bundle.js': './virtual-scroll.css',
+    'elements.js': './virtual-scroll.css',
+    'elements/a-virtual-scroll.js': '../virtual-scroll.css',
+}
 for (const [entry, stylesheet] of Object.entries(STYLED_ENTRIES)) {
     const path = resolve(output, entry)
     await writeFile(path, `import ${JSON.stringify(stylesheet)};\n${await readFile(path, 'utf8')}`)

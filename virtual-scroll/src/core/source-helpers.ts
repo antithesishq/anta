@@ -9,7 +9,7 @@ import {
 import type {
   VirtualScrollPositionAttribute, VirtualScrollRange, VirtualScrollRestorePosition, VirtualScrollRevealX,
   VirtualScrollRevealXAttribute, VirtualScrollSource,
-} from './types'
+} from './virtual-scroll-types'
 
 /** Reads rows `start` to `end - 1`, clamped to the source, as one range. */
 export function readVirtualScrollRange<T>(source: VirtualScrollSource<T>, start: number, end: number): readonly T[] {

@@ -1,5 +1,5 @@
 ---
-title: Virtual Scroll
+title: Virtual scroll
 nav:
   icon: scroll-text
   order: 15
@@ -7,175 +7,117 @@ nav:
 import Disclosure from '../../../components/Disclosure.astro'
 import VirtualScrollDemo from '../../../components/VirtualScrollDemo.astro'
 
-# Virtual Scroll
+# Virtual scroll
 
-`<a-virtual-scroll>` shows lists of any length by mounting only the rows near
-the viewport. It owns scrolling, row measurement, and its scrollbars on the
-browser thread. The application mounts the rows the element asks for, so the
-renderer can run in a worker and scrolling never waits for it.
-
-`@antadesign/virtual-scroll` is a separate package that builds on Anta. Install
-it with its peers, Anta `^0.3.30` and React `^19.0.0`, then register the element
-and import the component. Registering the element loads its stylesheet.
-
-```sh
-npm install @antadesign/virtual-scroll
-```
-
-```ts
-import '@antadesign/virtual-scroll/elements/a-virtual-scroll'
-import { VirtualScroll } from '@antadesign/virtual-scroll'
-```
-
-| Entry | Contents |
-| --- | --- |
-| `@antadesign/virtual-scroll` | The `VirtualScroll` component, the typed helpers, and the types. |
-| `@antadesign/virtual-scroll/source` | The typed helpers and types alone, with no renderer or DOM, for worker-side renderers. |
-| `@antadesign/virtual-scroll/elements/a-virtual-scroll` | Registers `<a-virtual-scroll>`. `/elements` registers every element in the package. |
-| `@antadesign/virtual-scroll/virtual-scroll.css` | The element's stylesheet, for setups that load CSS separately. |
-
+`VirtualScroll` shows lists of any length by mounting only the rows near the
+viewport. Scrolling, row measurement, and the scrollbars stay on the browser
+thread, so the rows can render in a worker and scrolling never waits for them.
+Render [typed rows](#typed-rows), scroll [sideways](#horizontal-scrolling),
+[follow a growing list](#growing-list), [mark rows on the
+scrollbar](#scrollbar-marks), and [restore a position](#restoring-a-position).
 The package is experimental.
 
-## How rows get mounted
+## Basic usage
 
-The element and the application talk through attributes and events. Every event
-detail is plain data, so the renderer can be a worker that reconciles the DOM
-from another thread.
-
-1. The application sets `count`.
-2. The element measures itself and fires `rangechange` with `{ start, end }`.
-3. The application mounts rows `start` to `end - 1` as direct children, in
-   order, each with a `data-index` attribute.
-4. The element measures the rows and places them.
-
-Input never leaves the browser thread. A wheel turn moves the mounted rows on the
-same frame, and the element fires `rangechange` again only when it needs
-different rows. Until those arrive, the gap shows faint placeholder lines.
-
-```tsx
-const [range, setRange] = useState({ start: 0, end: 0 })
-
-<a-virtual-scroll tabIndex={0} count={rows.length} height={300} onrangechange={event => setRange(event.detail)}>
-  {rows.slice(range.start, range.end).map((row, i) => (
-    <div key={range.start + i} data-index={range.start + i}>{row}</div>
-  ))}
-</a-virtual-scroll>
-```
-
-`VirtualScroll` does this for you: it keeps the range as state and calls
-`renderItem` for those rows only.
-
-## Typed rows
-
-Pass the rows as `items` and `VirtualScroll` infers their type, so `renderItem`
-and `rowClassName` receive typed rows. `items` takes an array or a
-`VirtualScrollRangeSource`: an object with a `length` and a `slice(start, end)`
-that returns something with `toArray()`, for rows that are built or fetched on
-demand. Only the mounted range is read, in one `slice`, never row by row.
-
-```tsx
-type LogLine = { text: string, level: 'info' | 'error' }
-declare const lines: LogLine[]
-
-<VirtualScroll
-  items={lines}
-  height={300}
-  rowClassName={line => line.level === 'error' ? 'error-row' : undefined}
-  renderItem={(line, index) => <><b>{index}</b> {line.text}</>}
-/>
-
-// Does not compile: LogLine has no `message`.
-<VirtualScroll items={lines} renderItem={line => line.message} />
-```
-
-When the application looks rows up itself, pass `count` instead, and
-`renderItem` receives the index. A list takes `items` or `count`, not both.
-
-```tsx
-<VirtualScroll count={rows.length} height={300} renderItem={index => rows[index]} />
-```
-
-A renderer that drives `<a-virtual-scroll>` directly, such as a worker that
-cannot use the JSX wrapper, gets the same typing from helpers that import no
-renderer and touch no DOM:
-
-| Helper | Returns |
-| --- | --- |
-| `mapVirtualScrollRange(source, range, render)` | `render(item, index)` for each row in a `rangechange` range. |
-| `readVirtualScrollRange(source, start, end)` | The rows from `start` up to `end`, clamped to the source. |
-| `initialVirtualScrollRange(options)` | The rows to mount before the first `rangechange`. |
-| `virtualScrollPositionAttribute(position)` | An `initial-position` value. |
-| `virtualScrollRevealXAttribute(target)` | A `reveal-x` value. |
-| `virtualScrollMarksAttribute(indices)` | A `marks` value, or `undefined` when there are none. |
-
-```ts
-import {
-  mapVirtualScrollRange, type VirtualScrollRange, type VirtualScrollRangeSource,
-} from '@antadesign/virtual-scroll/source'
-
-function rows(lines: VirtualScrollRangeSource<LogLine>, range: VirtualScrollRange) {
-  return mapVirtualScrollRange(lines, range, (line, index) =>
-    h('div', { key: index, 'data-index': index }, line.text))
-}
-```
-
-`VirtualScrollItem<S>` names the row type of a source, and the element's
-attributes are typed: `initial-position` and `reveal-x` only accept four numbers,
-and event handlers receive typed details.
-
-## Large list
-
-1,000 rows of mixed height, about 30 mounted at a time. Scroll, drag the thumb,
-or click the track. The **Mounted** tag shows the window the element asked for.
-The rows come from a range source that builds lines only when they are sliced,
-and `VirtualScroll` types each one as a `LogLine`.
+Pass the rows as `items` and render each one with `renderItem`. This list has
+1,000 rows of mixed height and mounts about 30 at a time. Scroll, drag the
+thumb, or click the track; the **Mounted** tag shows the rows in the DOM.
 
 <VirtualScrollDemo example="large" minHeight={360} />
 
-```tsx folded title="1,000 typed rows from a lazy source"
+```tsx
+import { VirtualScroll } from '@antadesign/virtual-scroll/bundle'
+
 type LogLine = { id: number, text: string }
 
-const lines: VirtualScrollRangeSource<LogLine> = {
-  length: 1_000,
-  slice: (start, end) => ({ toArray: () => buildLines(start, end) }),
+export function Log({ lines }: { lines: LogLine[] }) {
+  return (
+    <VirtualScroll
+      items={lines}
+      height={300}
+      renderItem={line => <><b>{line.id}</b> {line.text}</>}
+    />
+  )
 }
-
-<VirtualScroll
-  items={lines}
-  height={300}
-  renderItem={line => <><b>{line.id}</b> {line.text}</>}
-/>
 ```
 
 Rows are measured as they mount. A row that turns out taller than estimated
 pushes the rows above it up and leaves the row at the top edge where it is, so
 scrolling up through unmeasured rows does not jump.
 
+<Disclosure title="Install and configure">
+
+`@antadesign/virtual-scroll` is a separate package that builds on Anta. Install
+it alongside its peers, Anta `^0.3.30` and React `^19.0.0`:
+
+```sh
+npm install @antadesign/virtual-scroll @antadesign/anta react
+```
+
+### Full bundle
+
+Use the full bundle as the default setup. One import registers
+`<a-virtual-scroll>`, loads its stylesheet, and exports the `VirtualScroll`
+component, the typed helpers, and the types:
+
+```ts
+import { VirtualScroll } from '@antadesign/virtual-scroll/bundle'
+```
+
+### Granular entries (advanced)
+
+Use these only to keep the element out of a server or worker build, or to load
+the stylesheet yourself.
+
+| Entry | Contents |
+| --- | --- |
+| `@antadesign/virtual-scroll` | The `VirtualScroll` component, the typed helpers, and the types. It does not register the element, so it is safe to import on a server. |
+| `@antadesign/virtual-scroll/source` | The typed helpers and types alone, with no renderer or DOM, for worker-side renderers. |
+| `@antadesign/virtual-scroll/elements/a-virtual-scroll` | Registers `<a-virtual-scroll>` and loads its stylesheet. `/elements` registers every element in the package. |
+| `@antadesign/virtual-scroll/virtual-scroll.css` | The element's stylesheet, for setups that load CSS separately. |
+
+With the root entry, register the element once in the browser:
+
+```ts
+import '@antadesign/virtual-scroll/elements/a-virtual-scroll'
+import { VirtualScroll } from '@antadesign/virtual-scroll'
+```
+
+</Disclosure>
+
 ## Horizontal scrolling
 
-10,000 rows, each wider than the list. When the widest mounted row is wider
-than the list, the horizontal scrollbar appears. Scroll sideways with a
-trackpad swipe, Shift + wheel, the horizontal scrollbar, or the Left and Right
-arrows.
+Set `contentWidth` wider than the list to scroll sideways: with a trackpad
+swipe, Shift + wheel, the horizontal scrollbar, or the Left and Right arrows.
+This list has 10,000 rows.
 
 <VirtualScrollDemo example="wide" minHeight={360} />
 
 ```tsx folded title="10,000 wide rows"
-<a-virtual-scroll tabIndex={0} count={10_000} height={300} onrangechange={event => setRange(event.detail)}>
-  {indices(range.start, range.end).map(index => (
-    <div key={index} data-index={index} style={{ whiteSpace: 'pre' }}>
-      <b>{index}</b> {longText(index)}
-    </div>
-  ))}
-</a-virtual-scroll>
+import { VirtualScroll } from '@antadesign/virtual-scroll/bundle'
+
+export function WideLog({ rows }: { rows: string[] }) {
+  return (
+    <VirtualScroll
+      count={rows.length}
+      height={300}
+      contentWidth={2400}
+      renderItem={index => <div style={{ whiteSpace: 'pre' }}><b>{index}</b> {rows[index]}</div>}
+    />
+  )
+}
 ```
 
 The list has no height limit. Its position is a row index plus a pixel offset,
 and the vertical scrollbar maps to row indices, so it never needs a total pixel
-height. Rows share one width: the list's, or the widest mounted row's when its
-content cannot wrap, so borders and backgrounds line up. When the width is known
-up front, such as a table's column total, set `content-width` instead of letting
-the element measure the widest mounted row.
+height. Every row is one width: `contentWidth` when it is set and wider than the
+list, otherwise the list's. The list never sizes rows from their content, so the
+horizontal scrollbar keeps its size and position while scrolling vertically.
+
+Without `contentWidth` there is no horizontal scrolling: rows wrap at the list's
+width, long words break, and content that cannot wrap, such as
+`white-space: pre`, is clipped. Set `contentWidth` when rows need more room, for
+example to a table's column total.
 
 ## Growing list
 
@@ -190,18 +132,25 @@ keeps the newest row on the bottom edge.
 <VirtualScrollDemo example="growing" minHeight={320} />
 
 ```tsx folded title="Follow a growing list"
-<a-virtual-scroll
-  tabIndex={0}
-  count={rows.length}
-  height={260}
-  follow=""
-  onrangechange={event => setRange(event.detail)}
-  onpositionchange={event => setFollowing(event.detail.stickToBottom)}
->
-  {indices(range.start, range.end).map(index => (
-    <div key={index} data-index={index}>{rows[index]}</div>
-  ))}
-</a-virtual-scroll>
+import { useState } from 'react'
+import { Tag } from '@antadesign/anta/bundle'
+import { VirtualScroll } from '@antadesign/virtual-scroll/bundle'
+
+export function LiveLog({ rows }: { rows: string[] }) {
+  const [following, setFollowing] = useState(true)
+  return (
+    <>
+      <Tag label="Following" value={following ? 'yes' : 'no'} />
+      <VirtualScroll
+        count={rows.length}
+        height={260}
+        follow
+        renderItem={index => rows[index]}
+        onPositionChange={(_, position) => setFollowing(position.stickToBottom)}
+      />
+    </>
+  )
+}
 ```
 
 While following, the mounted rows are aligned to the bottom edge, so a new row
@@ -209,45 +158,44 @@ that has not been rendered yet never opens a gap under the last one.
 
 ## Scrollbar marks
 
-`marks` takes space-separated row indices and draws them on the vertical track.
-`reveal-index` brings a row to the middle of the viewport; change `reveal-key`
-to reveal again. `reveal-target` names an element inside the row to center
-instead of the row's top, which matters for rows taller than the viewport.
+`marks` draws row indices on the vertical track, and `secondaryMarks` draws a
+second set in a muted color under them, for rows the application flags for
+another reason, such as bookmarks. A row in both sets shows the `marks` color.
+`reveal` brings a row to the middle of the viewport.
 
-`secondary-marks` draws a second set in a muted color under `marks`, for rows
-the application flags for another reason, such as bookmarks or log lines from a
-fault window. A row in both sets shows the `marks` color.
-
-Virtual Scroll does not search, bookmark, or style row content. In this demo the
-application finds matching rows and passes their indices to `marks`, keeps its
-own bookmarks and passes them to `secondary-marks`, and draws the highlighted
-words and bookmarked rows with its own elements and CSS. Only the marks on the
-track come from the list. Click a row to bookmark it.
+The list does not search, bookmark, or style row content. In this demo the
+application finds matching rows and passes them to `marks`, keeps its own
+bookmarks and passes them to `secondaryMarks`, and draws the highlighted words
+and bookmarked rows with its own elements and CSS. Click a row to bookmark it.
 
 <VirtualScrollDemo example="marks" minHeight={360} />
 
 ```tsx folded title="Marks from the application's search"
-// The application's search: which rows match, and which one is active.
-const matches = rows.flatMap((row, index) => row.includes(query) ? [index] : [])
+import { VirtualScroll } from '@antadesign/virtual-scroll/bundle'
 
-<a-virtual-scroll
-  tabIndex={0}
-  count={rows.length}
-  height={300}
-  marks={matches.join(' ')}
-  secondary-marks={[...bookmarks].join(' ')}
-  reveal-index={active}
-  reveal-key={`match:${active}`}
-  reveal-target="mark[data-active]"
-  onrangechange={event => setRange(event.detail)}
->
-  {indices(range.start, range.end).map(index => (
-    <div key={index} data-index={index}>
-      {/* The application's own highlighter; the list never touches row content. */}
-      {highlight(rows[index], query, index === active)}
-    </div>
-  ))}
-</a-virtual-scroll>
+// The application's own highlighter; the list never touches row content.
+function highlight(text: string, query: string, active: boolean) {
+  const at = query ? text.indexOf(query) : -1
+  if (at === -1) return text
+  return <>{text.slice(0, at)}<mark data-active={active ? '' : undefined}>{query}</mark>{text.slice(at + query.length)}</>
+}
+
+export function SearchableLog({ rows, query, active, bookmarks }: {
+  rows: string[], query: string, active?: number, bookmarks: Set<number>,
+}) {
+  // The application's search: which rows match.
+  const matches = rows.flatMap((row, index) => row.includes(query) ? [index] : [])
+  return (
+    <VirtualScroll
+      count={rows.length}
+      height={300}
+      marks={matches}
+      secondaryMarks={bookmarks}
+      reveal={active === undefined ? undefined : { index: active, key: `match:${active}`, target: 'mark[data-active]' }}
+      renderItem={index => highlight(rows[index], query, index === active)}
+    />
+  )
+}
 ```
 
 A reveal runs once per key. When the reader scrolls away, later renders with the
@@ -257,60 +205,78 @@ instead of a pile of overlapping marks.
 
 ## Restoring a position
 
-`initial-position` opens the list at a row: `anchor delta x stick`, where
-`anchor` is the row index, `delta` the pixels from the top edge to that row,
-`x` the horizontal offset, and `stick` is `1` to keep following. The element
-reads it once, when it connects.
-
-`positionchange` fires 150ms after scrolling settles. Pass its detail back
-through `initial-position` to reopen a list where the reader left it, for
+`initialPosition` opens the list at a row. The list reads it once, on mount.
+`onPositionChange` fires 150ms after scrolling settles; pass its detail back
+through `initialPosition` to reopen a list where the reader left it, for
 example after moving it into a maximized panel.
 
-To jump to a row in a list that is already open, set `reveal-index` instead.
-The row lands in the middle of the viewport, placed from its measured height.
+To jump to a row in a list that is already open, set `reveal` instead. The row
+lands in the middle of the viewport, placed from its measured height.
 
 <VirtualScrollDemo example="restore" minHeight={320} />
 
 ```tsx folded title="Jump to a row, or reopen where the reader left off"
-// Jump to a row and center it. A new reveal-key repeats the jump to the same row.
-<a-virtual-scroll count={rows.length} height={260} reveal-index={jump.index} reveal-key={`jump:${jump.key}`} />
+import { useState } from 'react'
+import { Button } from '@antadesign/anta/bundle'
+import { VirtualScroll, type VirtualScrollPosition } from '@antadesign/virtual-scroll/bundle'
 
-// Reopen where the last element settled.
-<a-virtual-scroll
-  key={generation}
-  count={rows.length}
-  height={260}
-  initial-position={`${saved.anchorIndex} ${saved.deltaPixels} ${saved.scrollX} 0`}
-  onpositionchange={event => setSaved(event.detail)}
-/>
+export function RestorableLog({ rows }: { rows: string[] }) {
+  const [saved, setSaved] = useState<VirtualScrollPosition>()
+  const [generation, setGeneration] = useState(0)
+  const [jump, setJump] = useState<{ index: number, key: number }>()
+  return (
+    <>
+      {/* A new key repeats the jump to the same row. */}
+      <Button label="Jump to row 250" onClick={() => setJump(previous => ({ index: 250, key: (previous?.key ?? 0) + 1 }))} />
+      {/* A new list opens where the last one settled. */}
+      <Button label="Reopen" onClick={() => { setJump(undefined); setGeneration(g => g + 1) }} />
+      <VirtualScroll
+        key={generation}
+        count={rows.length}
+        height={260}
+        initialPosition={saved}
+        reveal={jump && { index: jump.index, key: `jump:${jump.key}` }}
+        renderItem={index => rows[index]}
+        onPositionChange={(_, position) => setSaved(position)}
+      />
+    </>
+  )
+}
 ```
 
 ## Sizing
 
-| Attributes | Rows fit | Rows do not fit |
+| Props | Rows fit | Rows do not fit |
 | --- | --- | --- |
-| Neither `height` nor `max-height` | Height of the rows | 500px |
+| Neither `height` nor `maxHeight` | Height of the rows | 500px |
 | `height` | `height`, or the rows if taller | `height` |
-| `max-height` | Height of the rows | `max-height` |
-| Both | Rows, at least `height`, at most `max-height` | `height`, at most `max-height` |
+| `maxHeight` | Height of the rows | `maxHeight` |
+| Both | Rows, at least `height`, at most `maxHeight` | `height`, at most `maxHeight` |
 
 The vertical scrollbar appears only while the rows are taller than the list.
 Without it, the rows and the horizontal scrollbar take its column.
 
-CSS can also size the host, for example `height: 100%` in a flex layout. When the
-host's measured height differs from the height the element asked for, the element
-uses the measured height. An empty list shows the `empty` slot at the minimum row
-height.
+CSS can also size the list, for example `height: 100%` in a flex layout. When
+the measured height differs from the height the list asked for, the list uses
+the measured height. An empty list shows `empty` at the minimum row height.
 
 <VirtualScrollDemo example="sizes" minHeight={300} />
 
 ```tsx folded title="Short, long, and empty lists"
-<a-virtual-scroll count={3} />
-<a-virtual-scroll count={3} height={160} />
-<a-virtual-scroll count={40} max-height={160} />
-<a-virtual-scroll count={0}>
-  <div slot="empty">No data to display</div>
-</a-virtual-scroll>
+import { VirtualScroll } from '@antadesign/virtual-scroll/bundle'
+
+const renderRow = (index: number) => `Row ${index}`
+
+export function Sizes() {
+  return (
+    <>
+      <VirtualScroll count={3} renderItem={renderRow} />
+      <VirtualScroll count={3} height={160} renderItem={renderRow} />
+      <VirtualScroll count={40} maxHeight={160} renderItem={renderRow} />
+      <VirtualScroll count={0} empty="No data to display" renderItem={renderRow} />
+    </>
+  )
+}
 ```
 
 ## Input
@@ -329,10 +295,10 @@ switching, find, and zoom.
 | Ctrl + Up, Ctrl + Down | Scroll one row. |
 | Page Up, Page Down | Scroll 90% of the list's height. |
 | Home, End | Go to the first row, or to the end of the last row. |
-| Left, Right | Scroll 60px sideways, when rows are wider than the list. |
+| Left, Right | Scroll 60px sideways, when `contentWidth` is wider than the list. |
 | Click the track | Jump there. Keep dragging to move from the new position. |
 | Shift + click the track | Page toward the pointer every 200ms until the thumb reaches it. |
-| Drag the thumb | Up to `max-non-virtual` rows, the thumb follows the pointer; beyond that, it maps to row indices. |
+| Drag the thumb | Up to `maxNonVirtualItems` rows, the thumb follows the pointer; beyond that, it maps to row indices. |
 
 Everything else passes through:
 
@@ -347,9 +313,9 @@ Everything else passes through:
   scroll, as in a native scroller. A table can use this to move a selection with
   the arrow keys.
 
-For shortcuts the application owns, list them in `intercept-keys`, for example
+For shortcuts the application owns, list them in `interceptKeys`, for example
 `Mod+f` to open the application's own search instead of the browser's find bar.
-`Mod` is Cmd on macOS and Ctrl elsewhere. The element prevents only the browser
+`Mod` is Cmd on macOS and Ctrl elsewhere. The list prevents only the browser
 default for those combinations; the event still reaches the application's
 listeners, and the list does not scroll.
 
@@ -359,30 +325,307 @@ wheel.
 
 <VirtualScrollDemo example="inputs" minHeight={460} />
 
-```tsx folded title="An application shortcut with intercept-keys"
-<a-virtual-scroll
-  tabIndex={0}
-  count={rows.length}
-  height={240}
-  intercept-keys="Mod+f"
-  onKeyDown={event => {
-    if (event.key === 'f' && (event.ctrlKey || event.metaKey)) openSearch()
-  }}
-  onrangechange={event => setRange(event.detail)}
->
-  {indices(range.start, range.end).map(index => (
-    <div key={index} data-index={index}>{rows[index]}</div>
-  ))}
-</a-virtual-scroll>
+```tsx folded title="An application shortcut with interceptKeys"
+import { VirtualScroll } from '@antadesign/virtual-scroll/bundle'
+
+export function SearchableList({ rows, openSearch }: { rows: string[], openSearch: () => void }) {
+  return (
+    <VirtualScroll
+      count={rows.length}
+      height={240}
+      interceptKeys="Mod+f"
+      onKeyDown={(event: KeyboardEvent) => {
+        if (event.key === 'f' && (event.ctrlKey || event.metaKey)) openSearch()
+      }}
+      renderItem={index => rows[index]}
+    />
+  )
+}
 ```
 
-`wheel-activation` decides when an unmodified wheel starts scrolling the list
-instead of the page: `hover` (immediately), `settled` (after the pointer rests
-150ms), `focus`, or `settled-or-focus`.
+## Typed rows
 
-<Disclosure title="Element reference" level={2} open>
+`VirtualScroll` infers the row type from `items`, so `renderItem` and
+`rowClassName` receive typed rows. `items` takes an array or a
+`VirtualScrollRangeSource`: an object with a `length` and a `slice(start, end)`
+that returns something with `toArray()`, for rows that are built or fetched on
+demand. Only the mounted range is read, in one `slice`, never row by row.
+
+```tsx
+import { VirtualScroll, type VirtualScrollRangeSource } from '@antadesign/virtual-scroll/bundle'
+
+type LogLine = { text: string, level: 'info' | 'error' }
+
+const buildLine = (index: number): LogLine =>
+  ({ text: `Line ${index}`, level: index % 50 === 0 ? 'error' : 'info' })
+
+// A million rows, built only when they are sliced.
+const lines: VirtualScrollRangeSource<LogLine> = {
+  length: 1_000_000,
+  slice: (start, end) => ({ toArray: () => Array.from({ length: end - start }, (_, i) => buildLine(start + i)) }),
+}
+
+export function Log() {
+  return (
+    <VirtualScroll
+      items={lines}
+      height={300}
+      rowClassName={line => line.level === 'error' ? 'error-row' : undefined}
+      renderItem={(line, index) => <><b>{index}</b> {line.text}</>}
+    />
+  )
+}
+
+// Does not compile: LogLine has no `message`.
+<VirtualScroll items={lines} renderItem={line => line.message} />
+```
+
+When the application looks rows up itself, pass `count` instead, and
+`renderItem` receives the index. A list takes `items` or `count`, not both.
+
+```tsx
+<VirtualScroll count={rows.length} height={300} renderItem={index => rows[index]} />
+```
+
+A renderer in a worker gets the same typing from helpers with no renderer or
+DOM; see [Browser element and workers](#browser-element-and-workers).
+
+<Disclosure title="Props" level={2}>
+
+Each prop links to the section that demonstrates it. `className`, `style`,
+`aria-*` and `data-*` attributes, and standard DOM handlers such as `onKeyDown`
+pass through to the element.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| [`items`](#typed-rows) | `VirtualScrollSource<T>` | | The rows, as an array or a range source with a `length` and a `slice(start, end)` that returns something with `toArray()`. Sets `T`. Only the mounted range is read. Use `items` or `count`. |
+| [`count`](#typed-rows) | number | | Number of rows, when the application looks rows up by index. |
+| [`renderItem`](#typed-rows) | `(item: T, index) => ReactNode` with `items`; `(index) => ReactNode` with `count` | | Renders one mounted row. |
+| [`rowClassName`](#typed-rows) | `(item: T, index) => string` with `items`; `(index) => string` with `count` | | Class for each row's wrapper. |
+| [`height`](#sizing) | number | | Height in pixels. Without `height` or `maxHeight`, the list is 500px tall, or shorter when its rows fit. |
+| [`maxHeight`](#sizing) | number | | Maximum height in pixels. |
+| [`empty`](#sizing) | ReactNode | | Shown at the minimum row height when there are no rows. |
+| [`itemMinHeight`](#sizing) | number | `22` | Minimum row height in pixels; also the estimate for rows not measured yet. |
+| [`itemHeightFixed`](#sizing) | boolean | | Every row is exactly `itemMinHeight` tall, so rows are not measured and the scrollbar is exact from the first frame. Pin the row height with CSS. |
+| [`maxNonVirtualItems`](#sizing) | number | `500` | Up to this many rows, every row stays mounted, the scrollbar uses real heights, and the dragged thumb follows the pointer. Ignored when smaller than a page window. |
+| [`contentWidth`](#horizontal-scrolling) | number | | Width every row shares, and the only source of horizontal scrolling. Without it, rows take the list's width and wrap. |
+| [`header`](#horizontal-scrolling) | ReactNode | | Content above the rows that scrolls sideways with them, such as a table header. |
+| [`follow`](#growing-list) | boolean | | Start at the end and keep following new rows until the reader scrolls up. Scrolling back to the bottom follows again. |
+| [`contentKey`](#growing-list) | string | | Change when sorting, filtering, or new content moves rows to different indices. It clears the measured heights of rows that are not mounted; mounted rows report their new height on their own. Without `follow`, it also stops treating the list as scrolled to its end. Appending rows needs no change. |
+| [`marks`](#scrollbar-marks) | `Iterable<number>` | | Row indices to mark on the vertical track. Marks that touch merge into one. |
+| [`secondaryMarks`](#scrollbar-marks) | `Iterable<number>` | | Row indices to mark in a muted color under `marks`. A row in both sets shows the `marks` color. |
+| [`reveal`](#scrollbar-marks) | `{ index, key?, target?, x? }` | | Brings row `index` to the middle of the viewport, once per `key`, which defaults to the index; change `key` to reveal the same row again. `target` is a selector for an element inside the row to center instead of the row's top. `x` is `{ left, width, insetStart, insetEnd }`, a horizontal span in content pixels to bring into view clear of insets such as pinned columns. |
+| [`initialPosition`](#restoring-a-position) | `{ anchorIndex, deltaPixels, scrollX, stickToBottom }` | | Position to open at, read once on mount: the anchor row, the pixels from the top edge to that row (negative once its top has scrolled past), the horizontal offset, and whether to keep following. Usually the last `onPositionChange` detail. |
+| [`onPositionChange`](#restoring-a-position) | `(event, detail) => void` | | Fires 150ms after scrolling settles. The detail has the `initialPosition` fields, `maxScrollX`, `atEnd` (the end of the last row is in view), and `firstVisibleIndex` (the fractional index of the row at the top edge). `stickToBottom` is `true` while the list follows. |
+| [`onRangeChange`](#events) | `(event, detail) => void` | | Fires with `{ start, end }` when the mounted rows change; `end` is exclusive. The wrapper already renders the range. |
+| [`onContentSizeChange`](#events) | `(event, detail) => void` | | Fires with `{ height, width }` when the measured content size changes. `height` is `null` until every row is measured. |
+| [`interceptKeys`](#input) | string | | Space-separated combinations, such as `Mod+f Alt+r`, whose browser default the list prevents so the application can handle them. `Mod` is Cmd on macOS and Ctrl elsewhere. |
+| [`wheelActivation`](#input) | `hover`, `settled`, `focus`, `settled-or-focus` | `hover` | When an unmodified wheel starts scrolling the list instead of the page: `hover` at once, `settled` after the pointer rests 150ms, `focus` once the list has focus, or `settled-or-focus` on either. |
+| [`scrollbarHint`](#input) | boolean | | Show the keyboard-shortcut hint on the scrollbars. |
+| [`scrollbarWidth`](#styling) | number | `16` | Vertical scrollbar width and horizontal scrollbar thickness, in pixels. |
+
+</Disclosure>
+
+<Disclosure title="Browser element and workers" level={2}>
+
+`VirtualScroll` renders `<a-virtual-scroll>`. Drive the element directly from
+plain JavaScript, or from a renderer that cannot use the JSX wrapper, such as
+one running in a worker.
+
+### How rows get mounted
+
+The element and the application talk through attributes and events. Every event
+detail is plain data, so the renderer can be a worker that reconciles the DOM
+from another thread.
+
+1. The application sets `count`.
+2. The element measures itself and fires `rangechange` with `{ start, end }`.
+3. The application mounts rows `start` to `end - 1` as direct children, in
+   order, each with a `data-index` attribute.
+4. The element measures the rows and places them.
+
+Input never leaves the browser thread. A wheel turn moves the mounted rows on the
+same frame, and the element fires `rangechange` again only when it needs
+different rows. Until those arrive, the gap shows faint placeholder lines.
+
+```ts
+import '@antadesign/virtual-scroll/elements/a-virtual-scroll'
+
+const lines = Array.from({ length: 10_000 }, (_, i) => `Line ${i}`)
+
+const list = document.createElement('a-virtual-scroll')
+list.tabIndex = 0
+list.setAttribute('count', String(lines.length))
+list.setAttribute('height', '300')
+list.addEventListener('rangechange', event => {
+  const { start, end } = event.detail
+  list.replaceChildren(...lines.slice(start, end).map((line, i) => {
+    const row = document.createElement('div')
+    row.dataset.index = String(start + i)
+    row.textContent = line
+    return row
+  }))
+})
+document.body.append(list)
+```
+
+### When the range changes
+
+The element tracks its position as a row, the anchor, plus `deltaPixels`: the
+distance from the list's top edge to the anchor row's top. `deltaPixels` is
+negative once the anchor's top has scrolled above the edge.
+
+The range is always `2 × page + 1` rows, where a page is
+`2 × ceil(height / item-min-height)` rows. The anchor sits near the top edge,
+so the range is shifted down: it holds a page minus a quarter page above the
+anchor, and a page plus a quarter page below it. That leaves about the same
+room for late rows in both scroll directions. At either end of the list the
+range slides instead of shrinking: it starts at row 0, or ends at the last row.
+
+A wheel turn changes only `deltaPixels`, and the element moves the rows it
+already has. Once the anchor's top is more than a viewport above or below the
+edge, the element re-seats the anchor:
+
+1. It walks from the anchor toward the content on screen, one row at a time,
+   adding up row heights until the total reaches a viewport. Rows shorter than
+   `item-min-height` count as `item-min-height`. The walk stops early at the
+   first row without a measured height, so an estimate never moves content.
+2. The row it reaches becomes the anchor. `deltaPixels` gains the heights of the
+   rows walked over when moving down, or loses them when moving up, so nothing
+   moves on screen.
+3. The element recomputes the range around the new anchor and fires
+   `rangechange` only if the range differs from the last one.
+
+A few cases work differently:
+
+- An anchor row taller than the viewport stays the anchor until it has scrolled
+  fully past, then the anchor steps one row at a time.
+- Scrolling past either end of the list puts row 0 at the top edge, or the last
+  row at the bottom edge.
+- Jumps set the anchor directly, with no walk.
+- Near either end, the range has slid against the end of the list, so a re-seat
+  can leave it unchanged and fire nothing.
+
+When the range changes, the application only needs to add the new rows and
+remove the old ones. Rows in both ranges can stay mounted, with their measured
+heights. `VirtualScroll` keys each row by its index, so its renderer reuses them.
+
+Take 10,000 rows in a list with `height="300"` and the default `item-min-height`
+of 22, with every row exactly 22px tall. A page is `2 × ceil(300 / 22)` = 28
+rows, so the range is 57 rows: 21 above the anchor, the anchor, and 35 below it.
+Scrolling down 15px per wheel tick goes like this, at selected ticks:
+
+| Scrolled | Anchor | `deltaPixels` | Rows on screen | Event | Mounted |
+| --- | --- | --- | --- | --- | --- |
+| 0px | 0 | 0 | 0 to 13 | `{ 0, 57 }` | 0 to 56 |
+| 15px | 0 | −15 | 0 to 14 | none | 0 to 56 |
+| 30px | 0 | −30 | 1 to 14 | none | 0 to 56 |
+| 45px | 0 | −45 | 2 to 15 | none | 0 to 56 |
+| 150px | 0 | −150 | 6 to 20 | none | 0 to 56 |
+| 285px | 0 | −285 | 12 to 26 | none | 0 to 56 |
+| 300px | 0 | −300 | 13 to 27 | none | 0 to 56 |
+| 315px | 0, then 14 | −315, then −7 | 14 to 27 | none | 0 to 56 |
+| 330px | 14 | −22 | 15 to 28 | none | 0 to 56 |
+| 450px | 14 | −142 | 20 to 34 | none | 0 to 56 |
+| 600px | 14 | −292 | 27 to 40 | none | 0 to 56 |
+| 615px | 14, then 28 | −307, then +1 | 27 to 41 | `{ 7, 64 }` | 7 to 63 |
+| 630px | 28 | −14 | 28 to 42 | none | 7 to 63 |
+| 915px | 28 | −299 | 41 to 55 | none | 7 to 63 |
+| 930px | 28, then 42 | −314, then −6 | 42 to 55 | `{ 21, 78 }` | 21 to 77 |
+| 945px | 42 | −21 | 42 to 56 | none | 21 to 77 |
+| 1230px | 42, then 56 | −306, then +2 | 55 to 69 | `{ 35, 92 }` | 35 to 91 |
+
+The anchor re-seats about once per viewport of scrolling: here every 20 or 21
+ticks. The first re-seat at 315px fires nothing, because the range is still slid
+against row 0. From 615px on, each event drops about 14 rows at the top and asks
+for about 14 new rows at the bottom. With rows of mixed height, the walk sums their measured
+heights, so each step still covers about a viewport, in fewer rows when they
+are tall.
+
+When an event fires, the rows already mounted cover the screen while the new
+rows render. With every row at the minimum height, the worst case, about 180px
+of mounted rows remain below the screen when scrolling down, and about 150px
+above it when scrolling up. Taller rows leave more. A renderer that falls
+further behind than that, as on a fast fling, shows placeholder lines until
+it catches up.
+
+The range also changes when:
+
+- The anchor jumps far away: dragging the thumb, clicking the track, Home or End,
+  `reveal`, and `initialPosition`. The whole range changes in one event, and
+  placeholder lines show until the new rows arrive.
+- `count` changes near the end of the list, since the range ends at the last
+  row. With `follow`, the anchor is the last row, so every appended row fires
+  an event.
+- The height changes, since a page depends on it.
+
+### How many rows get mounted
+
+A list with up to `max-non-virtual` rows (500 by default) mounts every row, and
+its range changes only with `count`. A longer list always mounts:
+
+```text
+4 × ceil(height / item-min-height) + 1
+```
+
+That's two pages plus the anchor, at every scroll position, including both ends
+of the list. With the default `item-min-height` of 22:
+
+| `height` | Page | Rows mounted |
+| --- | --- | --- |
+| 100 | 10 | 21 |
+| 300 | 28 | 57 |
+| 600 | 56 | 113 |
+| 1000 | 92 | 185 |
+
+The count depends only on `height` and `item-min-height`, not on how tall the rows
+are. Taller rows cover more pixels with the same count. At most about
+`ceil(height / item-min-height) + 1` rows are on screen, so the list mounts about
+four times what it shows. A two-page window is the minimum: the anchor re-seats
+only after the content on screen is a full viewport away from it, so a smaller
+window would leave blank rows. Set `item-min-height` close to the real smallest
+row: at 11, a 300px list mounts up to 113 rows.
+
+### Worker helpers
+
+`@antadesign/virtual-scroll/source` exports typed helpers that import no
+renderer and touch no DOM:
+
+| Helper | Returns |
+| --- | --- |
+| `mapVirtualScrollRange(source, range, render)` | `render(item, index)` for each row in a `rangechange` range. |
+| `readVirtualScrollRange(source, start, end)` | The rows from `start` up to `end`, clamped to the source. |
+| `initialVirtualScrollRange(options)` | The rows to mount before the first `rangechange`. |
+| `virtualScrollPositionAttribute(position)` | An `initial-position` value. |
+| `virtualScrollRevealXAttribute(target)` | A `reveal-x` value. |
+| `virtualScrollMarksAttribute(indices)` | A `marks` value, or `undefined` when there are none. |
+
+```ts
+import {
+  mapVirtualScrollRange, type VirtualScrollRange, type VirtualScrollRangeSource,
+} from '@antadesign/virtual-scroll/source'
+
+type LogLine = { text: string }
+
+function rows(lines: VirtualScrollRangeSource<LogLine>, range: VirtualScrollRange) {
+  return mapVirtualScrollRange(lines, range, (line, index) =>
+    h('div', { key: index, 'data-index': index }, line.text))
+}
+```
+
+`VirtualScrollItem<S>` names the row type of a source, and the element's
+attributes are typed: `initial-position` and `reveal-x` only accept four numbers,
+and event handlers receive typed details.
+
+</Disclosure>
+
+<Disclosure title="Element reference" level={2}>
 
 ### Attributes
+
+Each attribute matches the `VirtualScroll` prop of the same name in camel case,
+except `max-non-virtual` (`maxNonVirtualItems`) and the `reveal-*` attributes
+(`reveal`).
 
 | Attribute | Value | Default | Description |
 | --- | --- | --- | --- |
@@ -390,19 +633,19 @@ instead of the page: `hover` (immediately), `settled` (after the pointer rests
 | `item-min-height` | number | `22` | Minimum row height in pixels; also the estimate for rows not measured yet. |
 | `max-non-virtual` | number | `500` | Up to this many rows, every row stays mounted and the scrollbar uses real heights. Ignored when smaller than a page window. |
 | `scrollbar-width` | number | `16` | Vertical scrollbar width and horizontal scrollbar thickness, in pixels. |
-| `content-width` | number | widest mounted row | Width every row shares. |
+| `content-width` | number | | Width every row shares, and the only source of horizontal scrolling. Without it, rows take the list's width and wrap. |
 | `height` | number | | Height in pixels. See [Sizing](#sizing). |
 | `max-height` | number | | Maximum height in pixels. See [Sizing](#sizing). |
 | `follow` | boolean | | Start at the end and keep following new rows until the reader scrolls up. |
-| `content-key` | string | | Change when sorting, filtering, or new content moves rows to different indices. It clears the measured heights of rows that are not mounted; mounted rows report their new height on their own. Without `follow`, it also stops treating the list as scrolled to its end. Appending rows needs no change. |
-| `initial-position` | `anchor delta x stick` | | Position to open at, read on first connect. |
+| `content-key` | string | | Change when rows move to different indices. See [Props](#props). |
+| `initial-position` | `anchor delta x stick` | | Position to open at, read on first connect. `stick` is `1` to keep following. |
 | `reveal-index` | number | | Row to bring to the middle of the viewport. |
 | `reveal-key` | string | the index | Reveal again when this changes. |
 | `reveal-target` | selector | | Element inside the revealed row to center. |
 | `reveal-x` | `left width insetStart insetEnd` | | Horizontal span to bring into view, in content pixels, clear of insets on either side. |
 | `marks` | indices | | Space-separated row indices to mark on the vertical track. |
 | `secondary-marks` | indices | | Row indices to mark in a muted color under `marks`. |
-| `item-height-fixed` | boolean | | Every row is exactly `item-min-height` tall, so rows are not measured and the scrollbar is exact from the first frame. Pin the row height with CSS. Rows are still observed for their width unless `content-width` is set. |
+| `item-height-fixed` | boolean | | Every row is exactly `item-min-height` tall, so rows are not measured. Pin the row height with CSS. |
 | `intercept-keys` | key combinations | | Space-separated combinations, such as `Mod+f Alt+r`, whose browser default the element prevents for the application. |
 | `wheel-activation` | `hover`, `settled`, `focus`, `settled-or-focus` | `hover` | When an unmodified wheel starts scrolling the list. |
 | `scrollbar-hint` | boolean | | Show the shortcut hint on the scrollbars. |
@@ -439,19 +682,6 @@ Events do not bubble.
 | `:state(hidden-end-x)` | Content is hidden past the right edge. |
 | `:state(empty)` | `count` is `0`. |
 
-Rows and the `header` slot inherit `--virtual-scroll-x`, the horizontal offset.
-A pinned cell can use one rule that also works when the same rows render in a
-native scroller, where `position: sticky` does the pinning and the variable is
-unset:
-
-```css
-.pinned {
-  position: sticky;
-  left: 0;
-  translate: var(--virtual-scroll-x, 0px) 0;
-}
-```
-
 ### Parts
 
 `viewport`, `header`, `rows`, `empty`, `scrollbar` (vertical), and `scrollbar-x`
@@ -459,43 +689,11 @@ unset:
 
 </Disclosure>
 
-<Disclosure title="VirtualScroll props" level={2}>
-
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `items` | `VirtualScrollSource<T>` | | The rows, as an array or a range source. Sets `T`. Use `items` or `count`. |
-| `count` | number | | Number of rows, when the application looks rows up by index. |
-| `renderItem` | `(item: T, index) => ReactNode` with `items`; `(index) => ReactNode` with `count` | | Renders one mounted row. |
-| `rowClassName` | `(item: T, index) => string` with `items`; `(index) => string` with `count` | | Class for each row's wrapper. |
-| `itemMinHeight` | number | `22` | Same as `item-min-height`. |
-| `maxNonVirtualItems` | number | `500` | Same as `max-non-virtual`. |
-| `scrollbarWidth` | number | `16` | Same as `scrollbar-width`. |
-| `contentWidth` | number | | Same as `content-width`. |
-| `height`, `maxHeight` | number | | See [Sizing](#sizing). |
-| `follow` | boolean | | Same as `follow`. |
-| `contentKey` | string | | Same as `content-key`. |
-| `initialPosition` | `{ anchorIndex, deltaPixels, scrollX, stickToBottom }` | | Position to open at, usually the last `onPositionChange` detail. |
-| `reveal` | `{ index, key?, target?, x? }` | | Same as the `reveal-*` attributes. |
-| `marks` | `Iterable<number>` | | Row indices to mark on the track. |
-| `secondaryMarks` | `Iterable<number>` | | Same as `secondary-marks`. |
-| `itemHeightFixed` | boolean | | Same as `item-height-fixed`. |
-| `interceptKeys` | string | | Same as `intercept-keys`. |
-| `wheelActivation` | `hover`, `settled`, `focus`, `settled-or-focus` | `hover` | Same as `wheel-activation`. |
-| `scrollbarHint` | boolean | | Same as `scrollbar-hint`. |
-| `header` | ReactNode | | Rendered into the `header` slot. |
-| `empty` | ReactNode | | Rendered into the `empty` slot. |
-| `onRangeChange`, `onPositionChange`, `onContentSizeChange` | `(event, detail) => void` | | Event handlers. The wrapper already renders the requested range. |
-
-The table is written by hand because `VirtualScroll` has two overloads, one per
-way of supplying rows.
-
-</Disclosure>
-
 <Disclosure title="Styling" level={2}>
 
-Size the list with `height` and `max-height`, or with CSS on the host. Rows are
-your own light-DOM elements; style them with plain CSS. The scrollbar is in the
-shadow root and takes these colors:
+Size the list with `height` and `maxHeight`, or with CSS on the host. Rows are
+your own light-DOM elements; style them with plain CSS. `scrollbarWidth` sets
+the scrollbar size. The scrollbar is in the shadow root and takes these colors:
 
 - `--virtual-scroll-thumb`, `--virtual-scroll-thumb-hover`, and
   `--virtual-scroll-thumb-active` color the thumb.
@@ -511,6 +709,19 @@ a-virtual-scroll.log {
 }
 a-virtual-scroll.log:not(:state(scrolling)) > :hover {
   background: color-mix(in oklch, var(--text-1-brand) 5%, transparent);
+}
+```
+
+Rows and the `header` inherit `--virtual-scroll-x`, the horizontal offset. A
+pinned cell can use one rule that also works when the same rows render in a
+native scroller, where `position: sticky` does the pinning and the variable is
+unset:
+
+```css
+.pinned {
+  position: sticky;
+  left: 0;
+  translate: var(--virtual-scroll-x, 0px) 0;
 }
 ```
 

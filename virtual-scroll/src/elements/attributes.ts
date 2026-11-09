@@ -2,7 +2,7 @@ import type { BaseAttributes } from '@antadesign/anta/general_types'
 import type {
   VirtualScrollContentSize, VirtualScrollPosition, VirtualScrollPositionAttribute, VirtualScrollRange,
   VirtualScrollRevealXAttribute, VirtualScrollWheelActivation,
-} from '../core/types'
+} from '../core/virtual-scroll-types'
 
 /**
  * Attributes for the virtualized list. Rows are its direct children, each with

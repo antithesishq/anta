@@ -2,10 +2,10 @@
 export {
   initialVirtualScrollRange, mapVirtualScrollRange, readVirtualScrollRange, virtualScrollMarksAttribute,
   virtualScrollPositionAttribute, virtualScrollRevealXAttribute,
-} from '../core/source'
-export type { InitialRangeOptions } from '../core/source'
+} from '../core/source-helpers'
+export type { InitialRangeOptions } from '../core/source-helpers'
 export type {
   VirtualScrollContentSize, VirtualScrollItem, VirtualScrollPosition, VirtualScrollPositionAttribute,
   VirtualScrollRange, VirtualScrollRangeSource, VirtualScrollRestorePosition, VirtualScrollRevealX,
   VirtualScrollRevealXAttribute, VirtualScrollSource, VirtualScrollWheelActivation,
-} from '../core/types'
+} from '../core/virtual-scroll-types'

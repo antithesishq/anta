@@ -8,7 +8,7 @@ before(async () => {
   // ESBUILD_PATH lets the test run outside a pnpm install.
   const { build } = await import(process.env.ESBUILD_PATH ?? 'esbuild')
   const result = await build({
-    entryPoints: [fileURLToPath(new URL('../src/core/source.ts', import.meta.url))], bundle: true, write: false,
+    entryPoints: [fileURLToPath(new URL('../src/core/source-helpers.ts', import.meta.url))], bundle: true, write: false,
     format: 'esm', platform: 'neutral', target: 'es2022',
   })
   source = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`)
@@ -59,5 +59,6 @@ test('attribute formatters produce what the element parses', () => {
 test('the first range matches the element: the start, or the end when following', () => {
   assert.deepEqual(source.initialVirtualScrollRange({ count: 100 }), { start: 0, end: 100 })
   const following = source.initialVirtualScrollRange({ count: 100_000, follow: true, height: 220, itemMinHeight: 22 })
-  assert.deepEqual(following, { start: 100_000 - 1 - 20, end: 100_000 })
+  // A page is 20 rows, so the window is the last 2 * 20 + 1 rows.
+  assert.deepEqual(following, { start: 100_000 - 41, end: 100_000 })
 })

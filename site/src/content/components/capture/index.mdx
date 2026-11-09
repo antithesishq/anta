@@ -26,7 +26,9 @@ Each capability is opt-in; handlers alone enable nothing. Choose by interaction:
 | Touchscreen drag to scroll | `pan` | Scroll offsets from pan deltas |
 | Drag to select, resize, or draw | `pointerCapture` | Raw pointer samples |
 
-Disabled Capture surfaces add no input state or listeners.
+Disabled Capture surfaces add no input state or listeners. Tooltips with
+`containEvents` keep their input, even when nested interactive controls are
+otherwise included.
 
 Capture cancels accepted native input on the browser thread, then sends plain data
 to your handler. Your component performs the action. Forward the serializable

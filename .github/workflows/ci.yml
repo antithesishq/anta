@@ -317,6 +317,7 @@ jobs:
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-tooltip.*' 'src/elements/a-text.*' 'src/elements/a-button.*' \
+            src/event-containment.ts src/elements/capture-input.ts 'src/elements/a-capture.*' src/components/Capture.tsx \
             'src/elements/a-menu*' 'src/elements/a-input*' 'src/elements/a-tab*' \
             src/components/{Tooltip,Text,Button,Steps,Tabs,TabPanel,Select,SelectFaceted,Menu,MenuItem,Input}.tsx \
             src/{jsx-runtime,native-event-props,input-events,anta_helpers,button-content,element-base,general_types,index,bundle}.ts \

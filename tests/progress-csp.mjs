@@ -370,7 +370,7 @@ for (const engine of engines) {
         await page.evaluate(() => history.replaceState(null,'',location.pathname))
         await page.locator('a-progress > a').focus()
         await page.keyboard.press('Enter')
-        assert.equal(new URL(page.url()).hash,'#linked')
+        await page.waitForURL(url=>url.hash==='#linked')
       }
     })
   }

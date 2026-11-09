@@ -137,6 +137,23 @@ for(const engine of engines)for(const mode of ['granular','bundle']){
     await page.locator('#trigger').click();await shown(page);await page.keyboard.press('Escape');await shown(page,false);assert.equal(await page.evaluate(()=>document.activeElement.id),'trigger')
     await page.locator('#trigger').click();await shown(page);await page.locator('#outside').click();await shown(page,false)
   })
+  test.fast(`${name}: native propagation stopping reconciles types and releases on disconnect`,async t=>{
+    const page=await pageFor(t,engine,mode);await mount(page,raw('stop-propagation="click wheel"'));await register(page,mode)
+    assert.deepEqual(await page.locator('#menu').evaluate(menu=>{
+      const root=document.querySelector('#mount'),surface=menu.surface,types=['click','wheel','pointerdown']
+      const results=[],cancelled=[]
+      for(const type of types)root.addEventListener(type,()=>results.push(type))
+      const dispatch=()=>{for(const type of types){const event=new Event(type,{bubbles:true,composed:true,cancelable:true});surface.dispatchEvent(event);if(event.defaultPrevented)cancelled.push(type)}}
+      dispatch()
+      menu.setAttribute('stop-propagation','pointerdown');dispatch()
+      menu.setAttribute('stop-propagation','');dispatch()
+      menu.removeAttribute('stop-propagation');dispatch()
+      menu.setAttribute('stop-propagation','wheel')
+      root.remove();dispatch()
+      document.body.append(root);dispatch()
+      return {results,cancelled}
+    }),{results:['pointerdown','click','wheel','wheel','pointerdown','click','wheel','pointerdown','click','wheel','pointerdown','click','pointerdown'],cancelled:[]})
+  })
   test.fast(`${name}: preserve initially offscreen open requests`,async t=>{
     for(const controlled of [false,true]){
       const page=await pageFor(t,engine,mode);await register(page,mode)

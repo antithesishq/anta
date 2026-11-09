@@ -1,0 +1,8 @@
+---
+import Preview from './Preview.astro'
+import { TooltipContainEventsPreview } from './TooltipContainEventsPreview'
+---
+
+<Preview align="stretch" minHeight={240}>
+  <TooltipContainEventsPreview client:only="preact" />
+</Preview>

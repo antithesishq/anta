@@ -10,7 +10,7 @@ import { directionAttribute, panAttributes, pointerCaptureAttributes, wheelSettl
 export interface CaptureProps extends BaseProps {
   /** Capture wheel input in the enabled directions and emit `onWheelInput`.
    * `true` accepts all directions. Omit or pass `false` to leave wheel input alone.
-   * Nested native wheel controls and Anta menus are excluded.
+   * Nested native wheel controls, Anta menus, and contained tooltips are excluded.
    * All-false direction bounds preserve pointer settling while declining input.
    * A listener alone never enables capture. */
   wheelCapture?: CaptureInputDirections
@@ -29,7 +29,7 @@ export interface CaptureProps extends BaseProps {
   onWheelInput?: (event: CustomEvent<CaptureWheelInput>, detail: CaptureWheelInput) => void
   /** Emit raw data for a primary pointer until release or cancellation. An options object
    * filters devices/buttons and configures activation. Nested interactive controls
-   * are excluded unless explicitly included. A listener alone enables nothing. */
+   * are excluded unless explicitly included. Contained tooltips are always excluded. A listener alone enables nothing. */
   pointerCapture?: boolean | CapturePointerCapture
   /** Start, movement, end, and cancellation of an opted-in pointer session. */
   onPointerInput?: (event: CustomEvent<CapturePointerInput>, detail: CapturePointerInput) => void

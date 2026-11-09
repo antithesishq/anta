@@ -115,6 +115,25 @@ test('bare and handler-only Capture surfaces add no input listeners or touch own
   assert.deepEqual(await page.evaluate(() => [pointer('pointerdown'), pointer('pointermove', { clientX: 80 }), pointer('pointerup')]), [false, false, false])
 })
 
+test('contained Tooltip input bypasses outer Capture but leaves nested Capture enabled', async t => {
+  const page = await pageFor(t)
+  await mount(page, { 'wheel-capture': '', 'wheel-activation': 'hover', 'pointer-capture': '', 'pointer-include-interactive': '' })
+  await page.locator('#surface').evaluate(surface => {
+    surface.innerHTML = '<a-tooltip contain-events><span id="protected">Tooltip content</span><a-capture id="inner" wheel-capture wheel-activation="hover">Inner capture</a-capture></a-tooltip>'
+    document.querySelector('#inner').addEventListener('wheelinput', event => log.push({ type: 'inner-wheel' }))
+  })
+  assert.equal(await wheel(page, {}, '#protected'), false)
+  assert.deepEqual(await page.evaluate(() => log), [])
+  await syntheticCapture(page)
+  assert.equal(await page.evaluate(() => pointer('pointerdown', {}, document.querySelector('#protected'))), false)
+  assert.deepEqual(await page.evaluate(() => log), [])
+  assert.equal(await wheel(page, { clientX: 20, clientY: 30 }, '#inner'), true)
+  assert.deepEqual(await page.evaluate(() => log.map(event => event.type)), ['inner-wheel'])
+  await page.locator('a-tooltip').evaluate(tip => tip.removeAttribute('contain-events'))
+  assert.equal(await wheel(page, {}, '#protected'), true)
+  assert.equal(await page.evaluate(() => log.at(-1).type), 'wheelinput')
+})
+
 test('configuration and explicit false values leave all Capture capabilities disabled', async t => {
   const page = await pageFor(t)
   for (const capabilities of [{}, { wheelCapture: false, pointerCapture: false, pan: false }]) {

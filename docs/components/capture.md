@@ -13,7 +13,9 @@ Each capability is opt-in; handlers alone enable nothing. Choose by interaction:
 | Touchscreen drag to scroll | `pan` | Scroll offsets from pan deltas |
 | Drag to select, resize, or draw | `pointerCapture` | Raw pointer samples |
 
-Disabled Capture surfaces add no input state or listeners.
+Disabled Capture surfaces add no input state or listeners. Tooltips with
+`containEvents` keep their input, even when nested interactive controls are
+otherwise included.
 
 Capture cancels accepted native input on the browser thread, then sends plain data
 to your handler. Your component performs the action. Forward the serializable
@@ -213,9 +215,9 @@ native text selection or touch gestures.
 | `onPointerInput?` | (event, detail) => void | — | Start, movement, end, and cancellation of an opted-in pointer session. |
 | `onWheelInput?` | (event, detail) => void | — | Accepted wheel input, with a serialized original event, Capture-relative geometry, focus state, and activation reason. Cancellation is already complete. |
 | `pan?` | boolean \| CapturePan | — | Emit custom pan motion. `true` enables touch panning on both axes without momentum. Options select devices, axes, bounds directions, and optional inertia. Captures the pointer internally; `pointerCapture` is not required. Sets CSS touch-action through attributes before the gesture starts. |
-| `pointerCapture?` | boolean \| CapturePointerCapture | — | Emit raw data for a primary pointer until release or cancellation. An options object filters devices/buttons and configures activation. Nested interactive controls are excluded unless explicitly included. A listener alone enables nothing. |
+| `pointerCapture?` | boolean \| CapturePointerCapture | — | Emit raw data for a primary pointer until release or cancellation. An options object filters devices/buttons and configures activation. Nested interactive controls are excluded unless explicitly included. Contained tooltips are always excluded. A listener alone enables nothing. |
 | `wheelActivation?` | 'hover' \| 'settled' \| 'focus' \| 'settled-or-focus' | settled | Pointer or focus condition required before wheel input can be captured. Focus applies only to input targeted within this Capture. |
-| `wheelCapture?` | CaptureInputDirections | — | Capture wheel input in the enabled directions and emit `onWheelInput`. `true` accepts all directions. Omit or pass `false` to leave wheel input alone. Nested native wheel controls and Anta menus are excluded. All-false direction bounds preserve pointer settling while declining input. A listener alone never enables capture. |
+| `wheelCapture?` | CaptureInputDirections | — | Capture wheel input in the enabled directions and emit `onWheelInput`. `true` accepts all directions. Omit or pass `false` to leave wheel input alone. Nested native wheel controls, Anta menus, and contained tooltips are excluded. All-false direction bounds preserve pointer settling while declining input. A listener alone never enables capture. |
 | `wheelModifier?` | 'none' \| 'any' \| 'alt' \| 'ctrl' \| 'meta' \| 'shift' | none | Required modifier for wheel capture. `none` preserves browser Ctrl/pinch zoom. |
 | `wheelSettle?` | CaptureWheelSettle | { delay: 150, tolerance: 5, resetOnMove: false } | Dwell delay, movement tolerance, and whether movement resets eligibility. |
 

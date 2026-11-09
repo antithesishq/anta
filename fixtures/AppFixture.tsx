@@ -89,7 +89,7 @@ export default function AppFixture() {
     return () => window.removeEventListener('fixture:advance', advance)
   }, [])
 
-  return <main data-app-fixture data-app-revision={state.revision}>
+  return <div data-app-fixture data-app-revision={state.revision}>
     <header>
       <h1>Component fixtures</h1>
       <output>Seed: {state.seed} · App updates: {state.revision}</output>
@@ -102,5 +102,5 @@ export default function AppFixture() {
         </article>)}
       </div>
     </form>
-  </main>
+  </div>
 }

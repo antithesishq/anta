@@ -1,7 +1,6 @@
 import { Component, Fragment, h, type ComponentChildren, type ComponentType } from 'preact'
 import { useEffect, useState } from 'preact/hooks'
 import * as Anta from '@antadesign/anta'
-import * as AntaPlot from '@antadesign/plot'
 import HarnessEditor from './HarnessEditor'
 import AppFixture from '../../../fixtures/AppFixture'
 import { caseCount, decode } from '../../../tests/pbt/axes'
@@ -59,11 +58,10 @@ async function compileTSX(source: string): Promise<CompiledApp> {
   const esbuild = await getEsbuild()
   const executable = source
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antadesign\/anta['"]\s*;?/g, '')
-    .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antadesign\/plot['"]\s*;?/g, '')
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]react['"]\s*;?/g, '')
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]@fixtures['"]\s*;?/g, '')
     .replace(/export\s+default\s+function\s+App\b/, 'function App')
-  if (/^\s*import\s/m.test(executable)) throw new Error('Only @fixtures, @antadesign/anta, @antadesign/plot and react imports are supported.')
+  if (/^\s*import\s/m.test(executable)) throw new Error('Only @fixtures, @antadesign/anta and react imports are supported.')
   const result = await esbuild.transform(executable, {
     loader: 'tsx',
     sourcefile: 'generated.tsx',
@@ -73,7 +71,7 @@ async function compileTSX(source: string): Promise<CompiledApp> {
     jsxFactory: 'h',
     jsxFragment: 'Fragment',
   })
-  const entries = Object.entries({ ...Anta, ...AntaPlot }).filter(([name]) => name !== 'default' && /^[A-Za-z_$][\w$]*$/.test(name))
+  const entries = Object.entries(Anta).filter(([name]) => name !== 'default' && /^[A-Za-z_$][\w$]*$/.test(name))
   const names = ['h', 'Fragment', 'useEffect', 'useState', 'AppFixture', ...entries.map(([name]) => name)]
   const values = [h, Fragment, useEffect, useState, AppFixture, ...entries.map(([, value]) => value)]
   const App = new Function(...names, `"use strict";${result.code}\nreturn App`)(...values)
@@ -103,7 +101,6 @@ export default function Harness() {
   const [compileError, setCompileError] = useState<string | null>(null)
   const [compiling, setCompiling] = useState(true)
   const editorEnabled = new URLSearchParams(location.search).get('editor') !== 'off'
-    && new URLSearchParams(location.search).get('bombadil') !== 'true'
   const [editorOpen, setEditorOpen] = useState(() => editorEnabled && window.matchMedia('(min-width: 721px)').matches)
 
   useEffect(() => {
@@ -162,7 +159,6 @@ export default function Harness() {
       data-compile-status={compileStatus}
       data-model={current ? 'Button' : undefined}
       data-case={current?.caseId}
-      data-fixture-preview={current ? undefined : ''}
     >
       {compileError
         ? <pre className={styles.compileError}>{compileError}</pre>

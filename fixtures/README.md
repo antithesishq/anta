@@ -57,6 +57,12 @@ Add `--headless` to hide Chrome. For a focused run, use the same URL with
 campaign also resizes the browser. Type-check with
 `pnpm exec tsc -p fixtures/tsconfig.json`.
 
+For Plot heap checks, use a production preview and run the Plot-only campaign
+for at least two minutes. The development server can retain old component
+trees through hot reload. The property flags more than 100 MiB of browser
+JavaScript heap growth over 60 seconds. Growth can reflect allocations before garbage
+collection, so a violation is a starting point for investigating a leak.
+
 The combined campaign includes known failure cases, including disabled
 InputDate values appearing in FormData. Named controls share a form whose
 submission is prevented. The form property checks Input, Checkbox, Switch,

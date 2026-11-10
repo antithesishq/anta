@@ -265,7 +265,7 @@ switching, find, and zoom.
 
 | Input | Action |
 | --- | --- |
-| Wheel or trackpad, no modifier | Scroll. Outside macOS, pixel wheels move a third of their delta. |
+| Wheel or trackpad, no modifier | Scroll. Outside macOS, pixel wheels move a third of their delta. A notched mouse wheel glides over about 100ms; trackpads, macOS, and reduced motion move at once. |
 | Shift + wheel | Scroll sideways. |
 | Touch drag | Scroll, with inertia after release. |
 | Up, Down | Scroll 60px. |
@@ -417,8 +417,8 @@ from another thread.
    order, each with a `data-index` attribute.
 4. The element measures the rows and places them.
 
-Input never leaves the browser thread. A wheel turn moves the mounted rows on the
-same frame, and the element fires `rangechange` again only when it needs
+Input never leaves the browser thread. A wheel turn starts moving the mounted rows
+on the same frame, and the element fires `rangechange` again only when it needs
 different rows. Until those arrive, the gap shows faint placeholder lines.
 
 ```ts
@@ -526,7 +526,9 @@ The range also changes when:
 
 - The anchor jumps far away: dragging the thumb, clicking the track, Home or End,
   `reveal`, and `initialPosition`. The whole range changes in one event, and
-  placeholder lines show until the new rows arrive.
+  placeholder lines show until the new rows arrive. For a click on the track or
+  a thumb drag, the list first keeps the old rows on screen for up to 150ms, so
+  rows that render in a worker replace them in one step. The thumb moves at once.
 - `count` changes near the end of the list, since the range ends at the last
   row. With `follow`, the anchor is the last row, so every appended row fires
   an event.

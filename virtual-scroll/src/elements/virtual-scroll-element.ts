@@ -23,6 +23,14 @@ const REVEAL_X_BUFFER = 16
 // The thumb's padding (shadow style `.thumb`), which frames its fill inside the bar.
 const THUMB_PADDING = 2
 const KEY_STEP = 60
+// Notched mouse wheels glide instead of jumping: each frame applies this time constant's share of the
+// distance left, so a notch settles in about 100ms and a flick of notches blends into one motion.
+const WHEEL_GLIDE_MS = 32
+// Pixel-mode wheel deltas at least this large are mouse notches; trackpads send smaller, steadier deltas.
+const WHEEL_NOTCH_PX = 50
+// A scrollbar seek keeps the last frame on screen for up to this long while the rows it lands on arrive,
+// so rows mounted asynchronously (e.g. by a worker) replace the old ones in one step instead of after placeholders.
+const SEEK_HOLD_MS = 150
 const INTERACTIVE_TARGETS = 'input, textarea, select, button, a[href], [contenteditable]:not([contenteditable="false"]), [role~="textbox"], a-input, a-button, a-menu, a-select'
 
 type KeyCombo = { key: string, ctrl: boolean, meta: boolean, alt: boolean, shift: boolean }
@@ -367,6 +375,12 @@ export class AVirtualScrollElement extends HTMLElementBase {
   #size = 0
   #range: VirtualScrollRange | undefined
   #frame: number | undefined
+  #wheelRemaining = 0
+  #wheelFrame: number | undefined
+  #wheelTime = 0
+  #wheelGliding = false
+  #holdUntil = 0
+  #holdTimer: ReturnType<typeof setTimeout> | undefined
   #settleTimer: ReturnType<typeof setTimeout> | undefined
   #scrollingTimer: ReturnType<typeof setTimeout> | undefined
   #lastPosition = ''
@@ -492,6 +506,8 @@ export class AVirtualScrollElement extends HTMLElementBase {
     this.#stopDrag()
     if (this.#frame !== undefined) this.view.cancelAnimationFrame(this.#frame)
     this.#frame = undefined
+    this.#stopWheelGlide()
+    this.#endHold()
     clearTimeout(this.#settleTimer)
     clearTimeout(this.#scrollingTimer)
   }
@@ -650,7 +666,38 @@ export class AVirtualScrollElement extends HTMLElementBase {
   #onSlotChange() {
     this.#syncChildren()
     this.#configCache = undefined
-    this.#schedule()
+    // Rows a seek is waiting for go on screen in the frame they arrive.
+    if (this.#holdUntil) this.#render()
+    else this.#schedule()
+  }
+
+  /** Starts holding the last frame for a scrollbar seek, unless a hold is already running. */
+  #holdForSeek() {
+    if (!this.#holdUntil) this.#holdUntil = this.view.performance.now() + SEEK_HOLD_MS
+  }
+
+  /** Whether to keep the last frame: a seek is holding and the rows it shows are not all mounted yet. */
+  #holding(state: VirtualScrollState, config: VirtualScrollConfig): boolean {
+    if (!this.#holdUntil) return false
+    const [first, last] = visibleIndices(state, config, this.#rowHeights(config))
+    const covered = this.#renderedStart <= Math.floor(first) && this.#renderedEnd >= Math.min(Math.ceil(last), config.count)
+    const remaining = this.#holdUntil - this.view.performance.now()
+    if (covered || remaining <= 0) {
+      this.#endHold()
+      return false
+    }
+    // Show placeholders when the hold runs out, even if nothing else renders by then.
+    this.#holdTimer ??= setTimeout(() => {
+      this.#holdTimer = undefined
+      this.#render()
+    }, remaining)
+    return true
+  }
+
+  #endHold() {
+    this.#holdUntil = 0
+    clearTimeout(this.#holdTimer)
+    this.#holdTimer = undefined
   }
 
   /** Tracks the mounted rows. Re-observing a row makes the observer report its size again. */
@@ -722,6 +769,13 @@ export class AVirtualScrollElement extends HTMLElementBase {
     this.#hbar.style.setProperty('--_sb', `${config.scrollbarWidth}px`)
     this.#hbar.style.setProperty('--_vbar', `${vbar}px`)
 
+    if (!this.#holding(state, config)) this.#placeRows(state, config, viewport)
+    this.#sizeHost(state, config, hbar)
+  }
+
+  /** Positions the mounted rows for `state`, with placeholder stripes where rows are not mounted. */
+  #placeRows(state: VirtualScrollState, config: VirtualScrollConfig, viewport: number) {
+    const style = this.#viewport.style
     let renderedHeight = 0
     for (let i = this.#renderedStart; i < this.#renderedEnd; i++) renderedHeight += this.#rowHeights(config).get(i) || config.itemMinHeight
     const hasRows = this.#renderedEnd > this.#renderedStart
@@ -742,6 +796,9 @@ export class AVirtualScrollElement extends HTMLElementBase {
       this.#setGap(this.#gapStart, 0, this.#renderedStart > 0 ? Math.min(top, viewport) : 0)
       this.#setGap(this.#gapEnd, Math.max(bottom, 0), this.#renderedEnd < config.count ? viewport : 0)
     }
+  }
+
+  #sizeHost(state: VirtualScrollState, config: VirtualScrollConfig, hbar: number) {
 
     // Size the host: rows when they all fit and no height was asked for, else the requested height.
     // `max-height` only caps, as in CSS, so a short list still shrinks to its rows.
@@ -927,6 +984,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
           measured = true
         }
       }
+      this.#stopWheelGlide()
       this.#state = revealState(state, config, this.#rowHeights(config), { index: reveal.index, targetTop })
       reveal.revealed = measured
     }
@@ -965,6 +1023,8 @@ export class AVirtualScrollElement extends HTMLElementBase {
   }
 
   #update(next: VirtualScrollState, vertical = true) {
+    // Any other vertical scroll takes over from a gliding wheel.
+    if (vertical && !this.#wheelGliding) this.#stopWheelGlide()
     if (!this.#state || next === this.#state) return
     if (vertical && (next.anchorIndex !== this.#state.anchorIndex || next.deltaPixels !== this.#state.deltaPixels)) this.#userScrolled()
     this.#state = next
@@ -993,8 +1053,64 @@ export class AVirtualScrollElement extends HTMLElementBase {
     const dy = e.deltaY * scale
     const dx = e.deltaX * scale
     this.#markScrolling()
-    if (dy !== 0 && !state.small) this.#update(scrollByPixels(state, dy))
+    if (dy !== 0 && !state.small) {
+      if (this.#glides(e)) this.#glideWheel(dy)
+      else this.#update(scrollByPixels(state, dy))
+    }
     if (dx !== 0 && showHorizontalScrollbar(config)) this.#update(scrollXBy(this.#state!, config, dx), false)
+  }
+
+  /** Mouse wheels glide; trackpads and macOS, whose wheels already carry momentum, move at once. */
+  #glides(e: { deltaMode: number, deltaY: number }): boolean {
+    if (this.view.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return false
+    if (e.deltaMode !== 0) return true
+    return !IS_MAC && Math.abs(e.deltaY) >= WHEEL_NOTCH_PX
+  }
+
+  #glideWheel(dy: number) {
+    // A notch against the current glide reverses it rather than finishing the old one first.
+    if (Math.sign(dy) !== Math.sign(this.#wheelRemaining)) this.#wheelRemaining = 0
+    this.#wheelRemaining += dy
+    if (this.#wheelFrame !== undefined) return
+    // The first share moves on this frame, so a notch never waits for the next one.
+    this.#wheelTime = this.view.performance.now()
+    this.#stepWheelGlide(1000 / 60)
+  }
+
+  #stepWheelGlide(elapsed: number) {
+    const state = this.#state
+    if (!state || !this.isConnected) return this.#stopWheelGlide()
+    let step = this.#wheelRemaining * (1 - Math.exp(-elapsed / WHEEL_GLIDE_MS))
+    // Finish once less than a pixel is left, rather than creeping through an invisible tail.
+    if (Math.abs(this.#wheelRemaining - step) < 1) step = this.#wheelRemaining
+    const next = scrollByPixels(state, step)
+    // At either edge the position stops moving; drop the rest instead of pushing into it.
+    if (!moved(state, next)) return this.#stopWheelGlide()
+    this.#wheelGliding = true
+    this.#update(next)
+    this.#wheelGliding = false
+    this.#markScrolling()
+    this.#wheelRemaining -= step
+    if (this.#wheelRemaining === 0) return this.#stopWheelGlide()
+    this.#wheelFrame = this.view.requestAnimationFrame(now => {
+      this.#wheelFrame = undefined
+      // A frame's timestamp can precede the wheel event that started the glide; clamp to sane frame times.
+      const since = Math.min(Math.max(now - this.#wheelTime, 4), 64)
+      this.#wheelTime = now
+      this.#stepWheelGlide(since)
+      // Render in this frame: a render scheduled from inside a frame callback would wait for the next one.
+      if (this.#frame !== undefined) {
+        this.view.cancelAnimationFrame(this.#frame)
+        this.#frame = undefined
+        this.#render()
+      }
+    })
+  }
+
+  #stopWheelGlide() {
+    this.#wheelRemaining = 0
+    if (this.#wheelFrame !== undefined) this.view.cancelAnimationFrame(this.#wheelFrame)
+    this.#wheelFrame = undefined
   }
 
   #onPan(detail: CapturePanInput) {
@@ -1135,8 +1251,10 @@ export class AVirtualScrollElement extends HTMLElementBase {
       }
       const target = trackPressTarget(config, this.#rowHeights(config), y, track)
       if ('edge' in target) {
+        this.#holdForSeek()
         this.#update(target.edge === 'start' ? scrollToStart(state) : scrollToEnd(state, config, this.#rowHeights(config)))
       } else {
+        this.#holdForSeek()
         this.#update({
           ...state,
           anchorIndex: target.index,
@@ -1155,6 +1273,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
     if (drag?.axis !== 'y') return
     const target = thumbDragTarget(config, this.#rowHeights(config), drag.startCenter + detail.movementY, this.#verticalTrack(config))
     this.#userScrolled()
+    this.#holdForSeek()
     if (target.index === config.count - 1 && target.deltaPixels === 0) {
       this.#update(scrollToEnd(state, config, this.#rowHeights(config)))
     } else {

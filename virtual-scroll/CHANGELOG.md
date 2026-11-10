@@ -21,3 +21,8 @@ Changes that ship in `@antadesign/virtual-scroll`.
   `onClick`, and passes them to the element.
 - The mounted window is always `4 × ceil(height / item-min-height) + 1` rows,
   shifted below the anchor so late rows have room in both scroll directions.
+- Notched mouse wheels glide over about 100ms instead of jumping a notch at a
+  time. Trackpads, macOS, and `prefers-reduced-motion` scroll at once.
+- A track press or thumb drag that lands outside the mounted rows keeps the
+  last frame for up to 150ms while the new rows arrive, instead of flashing
+  placeholder lines.

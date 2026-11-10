@@ -60,44 +60,50 @@ Star baseline: `main` at `35d696ea0ce` (2026-11-03).
     during a drag, and the 60ms throttle on Page Up/Down. The throttle stays for Shift + click paging on the track.
 15. **Thumb drag mapping.** Below the non-virtual threshold the thumb follows the pointer in pixels; above it, grabbing
     keeps the fractional row so the view does not jump. Star maps every drag to a rounded row index.
+16. **Mouse wheels glide.** A notched wheel (line or page mode, or a pixel delta of 50px or more outside macOS) moves a
+    share of its distance each frame, settling in about 100ms, so a flick reads as one motion instead of a run of jumps.
+    The first share moves on the wheel event's own frame. Trackpads, macOS, and `prefers-reduced-motion` move at once,
+    and any other vertical scroll or a reveal takes over from a glide. Star applies every wheel delta at once.
 
 ## Display
 
-16. **Placeholder lines** fill the space of rows that exist but are not mounted yet
-    (`--virtual-scroll-placeholder-line`). Star never scrolls ahead of its rows, so it has no such state.
-17. **The vertical scrollbar appears from the row count** before any row is measured. Star waits for measured content to
+17. **Placeholder lines** fill the space of rows that exist but are not mounted yet
+    (`--virtual-scroll-placeholder-line`). Star never scrolls ahead of its rows, so it has no such state. A track
+    press or thumb drag that lands outside the mounted rows keeps the last frame for up to 150ms first, so a worker
+    renderer's rows replace the old ones in one step, as in Star, instead of flashing placeholders.
+18. **The vertical scrollbar appears from the row count** before any row is measured. Star waits for measured content to
     exceed the height (it now also counts unmeasured rows at the minimum, which the port adopted).
-18. **Touching marks merge**, in both layers, so DOM nodes are bounded by track pixels. Star draws one node per mark and
+19. **Touching marks merge**, in both layers, so DOM nodes are bounded by track pixels. Star draws one node per mark and
     caps `marked_items` at 500 in the sequence printer only.
-19. **`secondary-marks` is generic.** Star's `marked_items` is named for one sequence-printer use (black-hole logs). The
+20. **`secondary-marks` is generic.** Star's `marked_items` is named for one sequence-printer use (black-hole logs). The
     500 cap and the filter remap stay on the consumer side.
-20. **A horizontal reveal keeps a 16px buffer on both sides** of the target. Star applies it to the left edge only, so a
+21. **A horizontal reveal keeps a 16px buffer on both sides** of the target. Star applies it to the left edge only, so a
     match at the right edge lands 16px short (bug fix).
-21. **`overflow: clip` on the clip boxes**, so `focus()` or find in page inside a row cannot scroll them behind the
+22. **`overflow: clip` on the clip boxes**, so `focus()` or find in page inside a row cannot scroll them behind the
     transform. Star uses `overflow: hidden`.
-22. **The horizontal offset is a CSS variable** (`--virtual-scroll-x`) that rows and the `header` slot inherit, so
+23. **The horizontal offset is a CSS variable** (`--virtual-scroll-x`) that rows and the `header` slot inherit, so
     pinned cells follow in the same frame. Star round-trips it through `on_scroll_x` and the table's `table_scroll_x`.
-23. **Thumbs stay inside their scrollbars** (bug fix). Star lays the thumb out over the list's full height, but the
+24. **Thumbs stay inside their scrollbars** (bug fix). Star lays the thumb out over the list's full height, but the
     vertical bar is inset 1px at each end and the thumb's 2px padding is added outside its computed size, so at the end
     of the list the thumb's fill runs 4px past the bar and its rounded end is cut off. The horizontal thumb does the
     same at the far right. The port measures both bars and lays thumbs, marks, and pointer input out on the track inside
     the padding. The thumb keeps Star's look everywhere else.
-24. **The vertical scrollbar disappears when there is nothing to scroll**, and its column goes with it: rows and the
+25. **The vertical scrollbar disappears when there is nothing to scroll**, and its column goes with it: rows and the
     horizontal scrollbar take the full width. Star hides only the thumb and keeps drawing an empty bar in a reserved
     column. Rows reflow once when the bar appears or disappears, because their width changes by the scrollbar width; the
     table port must size its columns against the space it actually gets rather than subtracting a fixed scrollbar.
-25. **Row width comes only from `content-width`.** Every row is exactly as wide as the list, or `content-width` when
+26. **Row width comes only from `content-width`.** Every row is exactly as wide as the list, or `content-width` when
     that is wider, so borders, backgrounds, and hover styles line up. The element never sizes rows from their content,
     so the horizontal scrollbar keeps its size and position while scrolling vertically. Without `content-width` there is
     no horizontal scrolling: rows wrap at the list's width (`overflow-wrap: anywhere`) and content that cannot wrap is
     clipped. Star, without `item_width`, takes its content width from whichever row it measured last, so its horizontal
     scrollbar resizes and jumps as rows mount, and lays rows out at the list's width with wide content overflowing them.
 
-26. **Hovering never moves rows** (bug fix). Star sets `will-change: contents, transform` on its content while the list
+27. **Hovering never moves rows** (bug fix). Star sets `will-change: contents, transform` on its content while the list
     is hovered, which moves the rows onto their own layer. At a fractional offset, which measured row heights produce,
     that layer lands on a different pixel, so every row shifts by about a pixel when the pointer enters or leaves. The
     port never changes its layering on hover.
-27. **The render window is shifted down and slides at the ends.** It keeps Star's size, a page on each side of the
+28. **The render window is shifted down and slides at the ends.** It keeps Star's size, a page on each side of the
     anchor plus the anchor, but holds a page minus a quarter page above the anchor and a page plus a quarter page below.
     At either end of the list it slides to stay full size. Star centers it and clamps it, so it shrinks to half at the
     top and bottom. The anchor sits near the top edge, so a centered window leaves most spare rows above the screen:
@@ -108,22 +114,22 @@ Star baseline: `main` at `35d696ea0ce` (2026-11-03).
 
 ## API
 
-28. **Position reporting.** `positionchange` fires once scrolling settles (150ms) and `initial-position` restores it on
+29. **Position reporting.** `positionchange` fires once scrolling settles (150ms) and `initial-position` restores it on
     connect. Star writes its whole state to `vscroll_backup_sv` on every render.
-29. **Content height** arrives as `contentsizechange` (`null` until every row is measured). Star calls
+30. **Content height** arrives as `contentsizechange` (`null` until every row is measured). Star calls
     `on_visible_content_height_change` during render.
-30. **Sizing** comes from `height` / `max-height` attributes and an intrinsic sizer, and honors a host sized by CSS.
+31. **Sizing** comes from `height` / `max-height` attributes and an intrinsic sizer, and honors a host sized by CSS.
     Star takes the same props but cannot be sized from outside. `max-height` alone only caps the list, as in CSS, so a
     short list shrinks to its rows; Star stays at `max_height`. The table, which renders rows directly by default and
     takes this list as an option, keeps the same height in both modes.
-31. **Row selection and highlighting belong to the consumer.** Star's list owns `selected_sv` (click, Ctrl + click,
+32. **Row selection and highlighting belong to the consumer.** Star's list owns `selected_sv` (click, Ctrl + click,
     and Shift + click ranges), `highlight_items`, and the `_selected` / `_highlighted` classes. The port renders none
     of it, so selection lives in the table and works the same whether its rows are virtualized or not.
 
 ## Kept identical on purpose
 
 - The anchor model and its corrections: re-anchoring, overscroll at both ends, following the end, and the 2× render
-  window size (`items_per_page`). Only the window's placement differs (27).
+  window size (`items_per_page`). Only the window's placement differs (28).
 - The non-virtual threshold rule, including the silent fallback to 500 when the configured value is at or below a page
   window.
 - Scrollbar colors (Anta's `--border-1` to `--border-4` tokens), widths, the padded thumb, and the 2px corners.

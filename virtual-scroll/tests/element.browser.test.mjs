@@ -106,6 +106,33 @@ test('wheel scrolling moves content in the same frame, before slow rows arrive',
   assert.equal(await shadow(page, '.gap.shown', 'el'), null)
 })
 
+test('a mouse wheel notch glides to the full distance instead of jumping', async t => {
+  const page = await pageFor(t)
+  await page.mouse.move(300, 300)
+  const before = await rowTop(page, 0)
+  // 300px is a pixel-mode notch; outside macOS it moves a third, 100px.
+  await page.mouse.wheel(0, 300)
+  await page.evaluate(() => window.frames(1))
+  const early = before - await rowTop(page, 0)
+  assert.ok(early > 0 && early < 100, `moved ${early}px by the first frame, of 100`)
+  await settle(page, 300)
+  const total = before - await rowTop(page, 0)
+  assert.ok(Math.abs(total - 100) < 1, `glided ${total}px, the wheel asked for 100`)
+})
+
+test('a key press takes over from a gliding wheel', async t => {
+  const page = await pageFor(t)
+  await page.mouse.move(300, 300)
+  await page.mouse.click(300, 300)
+  const before = await rowTop(page, 0)
+  await page.mouse.wheel(0, 3000)
+  await page.keyboard.press('ArrowDown')
+  await settle(page, 300)
+  const total = before - await rowTop(page, 0)
+  // The wheel asked for 1000px; the key stops the glide short of it and adds its own 60px step.
+  assert.ok(total > 0 && total < 900, `moved ${total}px after the key press`)
+})
+
 test('rows measured late above the anchor do not move the anchor row', async t => {
   const page = await pageFor(t, { delay: 400 })
   // A track press jumps to an index; nothing around it is mounted or measured yet.
@@ -132,6 +159,33 @@ test('rows measured late above the anchor do not move the anchor row', async t =
   assert.ok(Math.abs(moved - top - 30) < 1.5, `row moved by ${moved - top}, wheel asked for 30`)
 })
 
+async function pressTrackMiddle(page) {
+  const box = await page.evaluate(() => {
+    const bar = window.list.shadowRoot.querySelector('.bar.v').getBoundingClientRect()
+    return { x: bar.left + bar.width / 2, y: bar.top + bar.height / 2 }
+  })
+  await page.mouse.click(box.x, box.y)
+}
+
+test('a track press keeps the last frame until the rows it lands on arrive', async t => {
+  const page = await pageFor(t, { delay: 60 })
+  await pressTrackMiddle(page)
+  await page.evaluate(() => window.frames(2))
+  // The old rows stay where they were instead of giving way to placeholders.
+  assert.equal((await topRow(page)).index, 0)
+  assert.equal(await shadow(page, '.gap.shown', 'el'), null)
+  await settle(page, 300)
+  assert.ok((await topRow(page)).index > 1000)
+  assert.equal(await shadow(page, '.gap.shown', 'el'), null)
+})
+
+test('a track press shows placeholders once slow rows outlast the hold', async t => {
+  const page = await pageFor(t, { delay: 1500 })
+  await pressTrackMiddle(page)
+  await settle(page, 250)
+  assert.notEqual(await shadow(page, '.gap.shown', 'el'), null)
+})
+
 test('a following list sticks to the newest row and stops following when scrolled up', async t => {
   const page = await pageFor(t, { count: 2000, follow: true })
   const listBottom = () => page.evaluate(() => window.list.getBoundingClientRect().bottom)
@@ -152,7 +206,8 @@ test('a following list sticks to the newest row and stops following when scrolle
 
   await page.mouse.move(300, 300)
   await page.mouse.wheel(0, -300)
-  await settle(page)
+  // Long enough for the wheel's glide to finish before reading the position it held.
+  await settle(page, 300)
   const held = await topRow(page)
   await settle(page, 400)
   assert.deepEqual(await topRow(page), held, 'new rows no longer pull the view down')

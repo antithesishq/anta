@@ -640,11 +640,27 @@ hr:not(:where(a-tooltip *)),
   pointer-events: auto;
 }
 .content .expressive-code [data-code-toggle] {
-  padding: 0.45rem 1rem;
-  border: 0;
-  background: var(--bg-pane);
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--border-5);
+  border-radius: 6px;
+  background: var(--bg-canvas);
   color: var(--text-2-brand);
   cursor: pointer;
+}
+.content .expressive-code [data-code-toggle]::after {
+  content: '';
+  inline-size: 1em;
+  block-size: 1em;
+  background: currentColor;
+  mask: var(--fold-chevron) center / contain no-repeat;
+}
+.content .expressive-code [data-code-toggle][aria-expanded='true']::after {
+  transform: rotate(180deg);
 }
 .content .expressive-code [data-code-toggle]:hover {
   background: var(--bg-3);

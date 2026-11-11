@@ -105,16 +105,16 @@ export default function Demo() {
     <div style={{ overflowX: 'auto' }}>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, max-content)',
-        gap: '8px 20px',
+        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+        gap: '12px 16px',
+        minWidth: '28rem',
         alignItems: 'baseline',
       }}>
         {tones.map(([label, tone]) => (
           <div key={label} style={{ display: 'contents' }}>
-            <strong>{label}</strong>
             {priorities.map(([name, priority]) => (
               <Title key={priority} level={3} tone={tone} priority={priority}>
-                {name}
+                {label} {name}
               </Title>
             ))}
           </div>

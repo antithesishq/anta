@@ -617,10 +617,11 @@ hr:not(:where(a-tooltip *)),
 
 /* Keep an excerpt and its copy button visible when the full source is folded. */
 .content .expressive-code .frame[data-code-excerpt] {
-  grid-template-rows: var(--fold-header-h) auto auto;
+  grid-template-rows: var(--fold-header-h) auto;
   background: var(--bg-pane);
 }
 .content .expressive-code .frame[data-code-excerpt] > .header {
+  grid-area: 1 / 1;
   cursor: default;
   border-end-start-radius: 0;
   border-end-end-radius: 0;
@@ -642,15 +643,21 @@ hr:not(:where(a-tooltip *)),
 .content .expressive-code [data-code-toggle] {
   display: inline-flex;
   align-items: center;
-  justify-self: center;
+  grid-area: 1 / 1;
+  justify-self: end;
+  align-self: stretch;
+  z-index: 1;
   gap: 0.4rem;
-  margin: 0.25rem 0 0.75rem;
-  padding: 0.25rem 0.65rem;
-  border: 1px solid var(--border-5);
-  border-radius: 6px;
-  background: var(--bg-canvas);
-  color: var(--text-2-brand);
+  margin-inline-end: var(--fold-header-h);
+  padding-inline: 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 0.8125rem;
   cursor: pointer;
+}
+.content .expressive-code [data-code-toggle]:focus-visible {
+  outline-offset: -3px;
 }
 .content .expressive-code [data-code-toggle]::after {
   content: '';

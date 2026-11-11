@@ -647,7 +647,7 @@ hr:not(:where(a-tooltip *)),
   cursor: pointer;
 }
 .content .expressive-code [data-code-toggle]:hover {
-  text-decoration: underline;
+  background: var(--bg-3);
 }
 
 

@@ -1,7 +1,6 @@
 # Title
 
-Use `Title` for headings. Anta’s CSS reset, included in `bundle.css`,
-gives HTML headings (`<h1>`–`<h6>`) the same sizes as `Title`.
+Use `Title` for page and section headings.
 
 ## Levels
 

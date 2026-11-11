@@ -180,10 +180,39 @@ test('a track press keeps the last frame until the rows it lands on arrive', asy
 })
 
 test('a track press shows placeholders once slow rows outlast the hold', async t => {
-  const page = await pageFor(t, { delay: 1500 })
+  const page = await pageFor(t, { delay: 16 })
+  await page.evaluate(() => window.setDelay(3000))
   await pressTrackMiddle(page)
   await settle(page, 250)
+  assert.equal(await shadow(page, '.gap.shown', 'el'), null, 'still holding')
+  await settle(page, 1000)
   assert.notEqual(await shadow(page, '.gap.shown', 'el'), null)
+})
+
+test('dragging the thumb over a slow renderer shows rows the whole way', async t => {
+  const page = await pageFor(t, { delay: 16, throttle: true })
+  await page.evaluate(() => window.setDelay(300))
+  const thumb = await page.evaluate(() => {
+    const rect = window.list.shadowRoot.querySelector('.bar.v .thumb').getBoundingClientRect()
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+  })
+  await page.mouse.move(thumb.x, thumb.y)
+  await page.mouse.down()
+  const tops = []
+  for (let step = 1; step <= 20; step++) {
+    await page.mouse.move(thumb.x, thumb.y + step * 10)
+    await page.waitForTimeout(30)
+    await page.evaluate(() => window.frames(1))
+    assert.equal(await shadow(page, '.gap.shown', 'el'), null, `placeholders at step ${step}`)
+    tops.push((await topRow(page)).index)
+  }
+  // The rows trail the thumb rather than waiting for it to stop.
+  assert.ok(tops[10] > 0 && tops[19] > tops[10], `rows on screen during the drag: ${tops.join(' ')}`)
+  await page.mouse.up()
+  await settle(page, 700)
+  const top = await topRow(page)
+  assert.ok(top.index > 30_000 && top.index < 50_000, `thumb drag landed on ${top.index}`)
+  assert.equal(await shadow(page, '.gap.shown', 'el'), null)
 })
 
 test('a following list sticks to the newest row and stops following when scrolled up', async t => {
@@ -286,6 +315,22 @@ test('Home and End jump to either end', async t => {
   await page.keyboard.press('Home')
   await settle(page)
   assert.deepEqual(await topRow(page), { index: 0, offset: 0 })
+})
+
+test('a page header with the same z-index covers the scrollbars', async t => {
+  const page = await pageFor(t, { wide: true })
+  // Like the docs site's sticky header: z-index 10, earlier in the DOM, over both scrollbars.
+  const covered = await page.evaluate(() => {
+    const vbar = window.list.shadowRoot.querySelector('.bar.v').getBoundingClientRect()
+    const hbar = window.list.shadowRoot.querySelector('.bar.h').getBoundingClientRect()
+    const header = document.createElement('div')
+    header.style.cssText = 'position: fixed; inset: 0; z-index: 10;'
+    document.body.prepend(header)
+    window.list.focus()
+    const points = [[vbar.left + vbar.width / 2, vbar.top + 10], [hbar.left + 10, hbar.top + hbar.height / 2]]
+    return points.map(([x, y]) => document.elementFromPoint(x, y) === header)
+  })
+  assert.deepEqual(covered, [true, true])
 })
 
 test('dragging the thumb scrolls and keeps the thumb inside the track', async t => {
@@ -596,7 +641,7 @@ test('the vertical scrollbar and its column appear only while there is something
   assert.equal(now.barHidden, true)
   assert.ok(Math.abs(now.rowsRight - now.hostRight) < 1)
 
-  // A wide list with nothing to scroll vertically: the horizontal bar runs the full width.
+  // A wide list with nothing to scroll vertically: the horizontal bar runs the full width, inside the 1px outline.
   await page.evaluate(() => window.mountList({ count: 3, delay: 0, height: 300, wide: true }))
   await settle(page)
   const horizontal = await page.evaluate(() => ({
@@ -605,7 +650,7 @@ test('the vertical scrollbar and its column appear only while there is something
     vbarHidden: window.list.shadowRoot.querySelector('.bar.v').hidden,
   }))
   assert.equal(horizontal.vbarHidden, true)
-  assert.ok(Math.abs(horizontal.hbar - horizontal.host) < 1, JSON.stringify(horizontal))
+  assert.ok(Math.abs(horizontal.hbar - (horizontal.host - 1)) < 0.5, JSON.stringify(horizontal))
 })
 
 test('hovering the list does not move its rows', async t => {

@@ -97,6 +97,9 @@ export type VirtualScrollProps<T = unknown> = VirtualScrollItemsProps<T> | Virtu
  * A virtualized list. The element owns scrolling and tells this wrapper which
  * rows to mount; the wrapper keeps that range as state and renders only those rows.
  *
+ * Renders `<a-virtual-scroll>`; its custom states, custom properties, and parts
+ * are listed on `AVirtualScrollElement`.
+ *
  * @example
  * ```tsx
  * <VirtualScroll items={events} follow renderItem={(event, index) => <code>{event.text}</code>} />

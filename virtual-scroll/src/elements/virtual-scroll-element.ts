@@ -28,9 +28,12 @@ const KEY_STEP = 60
 const WHEEL_GLIDE_MS = 32
 // Pixel-mode wheel deltas at least this large are mouse notches; trackpads send smaller, steadier deltas.
 const WHEEL_NOTCH_PX = 50
-// A scrollbar seek keeps the last frame on screen for up to this long while the rows it lands on arrive,
-// so rows mounted asynchronously (e.g. by a worker) replace the old ones in one step instead of after placeholders.
-const SEEK_HOLD_MS = 150
+// During a scrollbar seek the rows show the newest position whose rows have arrived, so rows mounted asynchronously
+// (e.g. by a worker) trail the thumb instead of leaving placeholders. Placeholders show only once no rows have come
+// for this long after the last seek input.
+const SEEK_HOLD_MS = 1000
+// Positions remembered during a seek, newest last, for the rows that arrive late to match.
+const SEEK_HOLD_STATES = 64
 const INTERACTIVE_TARGETS = 'input, textarea, select, button, a[href], [contenteditable]:not([contenteditable="false"]), [role~="textbox"], a-input, a-button, a-menu, a-select'
 
 type KeyCombo = { key: string, ctrl: boolean, meta: boolean, alt: boolean, shift: boolean }
@@ -67,6 +70,8 @@ const SHADOW_STYLE = `
   :host {
     display: block;
     position: relative;
+    /* Keeps the scrollbars' and focus ring's z-index inside the list, below page headers and popovers. */
+    isolation: isolate;
     overflow: hidden;
     box-sizing: border-box;
   }
@@ -152,10 +157,11 @@ const SHADOW_STYLE = `
     border-top-right-radius: var(--virtual-scroll-radius);
     border-bottom-right-radius: var(--virtual-scroll-radius);
   }
+  /* Both bars sit 1px inside the edges, where the host's outline is drawn. */
   .bar.h {
-    left: 0;
-    right: var(--_vbar, 0px);
-    bottom: 0;
+    left: 1px;
+    right: calc(var(--_vbar, 0px) + 1px);
+    bottom: 1px;
     height: var(--_sb, 16px);
     flex-direction: row;
   }
@@ -196,7 +202,7 @@ const SHADOW_STYLE = `
     flex-grow: 1;
     background: var(--virtual-scroll-thumb);
     box-shadow: var(--virtual-scroll-thumb-shadow);
-    border-radius: 2px;
+    border-radius: 999px;
     transition: background-color 0.2s ease-out;
   }
   .thumb:hover > .thumb-fill {
@@ -217,6 +223,7 @@ const SHADOW_STYLE = `
     left: 0;
     right: 0;
     min-height: 2px;
+    border-radius: 1px;
     background: var(--virtual-scroll-mark-bg);
     box-shadow: var(--virtual-scroll-mark-shadow);
   }
@@ -335,6 +342,26 @@ function hintContent(doc: Document, vertical: boolean): HTMLElement {
  * handles wheel, touch, keyboard, and scrollbar input on the browser thread, so
  * scrolling never waits for whoever renders the rows (for example a worker).
  * Position is an anchor row plus a pixel offset; see `core/model.ts`.
+ *
+ * Styling. Rows are light DOM; style them with plain CSS.
+ *
+ * Custom states, for host selectors such as `a-virtual-scroll:state(scrolling) > :hover`:
+ * - `:state(scrolling)`: wheel or touch input arrived in the last 150ms.
+ * - `:state(scrollable-y)`, `:state(scrollable-x)`: the vertical or horizontal scrollbar is shown.
+ * - `:state(following)`: the list follows its last row.
+ * - `:state(at-start)`: the first row is at the top edge.
+ * - `:state(at-end)`: the end of the last row is in view.
+ * - `:state(hidden-start-x)`, `:state(hidden-end-x)`: content is hidden past the left or right edge.
+ * - `:state(empty)`: `count` is `0`.
+ *
+ * Custom properties, set on the host:
+ * - `--virtual-scroll-thumb`, `--virtual-scroll-thumb-hover`, `--virtual-scroll-thumb-active`: thumb colors.
+ * - `--virtual-scroll-bar-bg`: scrollbar background.
+ * - `--virtual-scroll-mark-bg`, `--virtual-scroll-secondary-mark-bg`: mark colors.
+ * - `--virtual-scroll-placeholder-line`: placeholder lines for rows not mounted yet; `transparent` hides them.
+ * - `--virtual-scroll-x` (read only): the horizontal offset, inherited by rows and the `header` slot.
+ *
+ * Parts: `viewport`, `header`, `rows`, `empty`, `scrollbar` (vertical), and `scrollbar-x` (horizontal).
  */
 export class AVirtualScrollElement extends HTMLElementBase {
   static observedAttributes = OBSERVED
@@ -381,6 +408,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
   #wheelGliding = false
   #holdUntil = 0
   #holdTimer: ReturnType<typeof setTimeout> | undefined
+  #heldStates: VirtualScrollState[] = []
   #settleTimer: ReturnType<typeof setTimeout> | undefined
   #scrollingTimer: ReturnType<typeof setTimeout> | undefined
   #lastPosition = ''
@@ -671,33 +699,51 @@ export class AVirtualScrollElement extends HTMLElementBase {
     else this.#schedule()
   }
 
-  /** Starts holding the last frame for a scrollbar seek, unless a hold is already running. */
+  /** Starts or extends the hold for a scrollbar seek: it lasts until `SEEK_HOLD_MS` after the last seek input. */
   #holdForSeek() {
-    if (!this.#holdUntil) this.#holdUntil = this.view.performance.now() + SEEK_HOLD_MS
+    this.#holdUntil = this.view.performance.now() + SEEK_HOLD_MS
+    clearTimeout(this.#holdTimer)
+    this.#holdTimer = undefined
   }
 
-  /** Whether to keep the last frame: a seek is holding and the rows it shows are not all mounted yet. */
-  #holding(state: VirtualScrollState, config: VirtualScrollConfig): boolean {
-    if (!this.#holdUntil) return false
+  /** Whether the mounted rows cover every row `state` shows. */
+  #covers(state: VirtualScrollState, config: VirtualScrollConfig): boolean {
     const [first, last] = visibleIndices(state, config, this.#rowHeights(config))
-    const covered = this.#renderedStart <= Math.floor(first) && this.#renderedEnd >= Math.min(Math.ceil(last), config.count)
+    return this.#renderedStart <= Math.floor(first) && this.#renderedEnd >= Math.min(Math.ceil(last), config.count)
+  }
+
+  /**
+   * The position to place the rows at: `state` itself, or during a seek whose rows have not all arrived, the newest
+   * earlier position the mounted rows cover. `undefined` keeps the last frame.
+   */
+  #shownState(state: VirtualScrollState, config: VirtualScrollConfig): VirtualScrollState | undefined {
+    if (!this.#holdUntil) return state
     const remaining = this.#holdUntil - this.view.performance.now()
-    if (covered || remaining <= 0) {
+    if (this.#covers(state, config) || remaining <= 0) {
       this.#endHold()
-      return false
+      return state
     }
     // Show placeholders when the hold runs out, even if nothing else renders by then.
     this.#holdTimer ??= setTimeout(() => {
       this.#holdTimer = undefined
       this.#render()
     }, remaining)
-    return true
+    const held = this.#heldStates
+    if (held.at(-1) !== state) held.push(state)
+    if (held.length > SEEK_HOLD_STATES) held.shift()
+    for (let i = held.length - 2; i >= 0; i--) {
+      if (!this.#covers(held[i], config)) continue
+      held.splice(0, i)
+      return held[0]
+    }
+    return undefined
   }
 
   #endHold() {
     this.#holdUntil = 0
     clearTimeout(this.#holdTimer)
     this.#holdTimer = undefined
+    this.#heldStates = []
   }
 
   /** Tracks the mounted rows. Re-observing a row makes the observer report its size again. */
@@ -769,7 +815,8 @@ export class AVirtualScrollElement extends HTMLElementBase {
     this.#hbar.style.setProperty('--_sb', `${config.scrollbarWidth}px`)
     this.#hbar.style.setProperty('--_vbar', `${vbar}px`)
 
-    if (!this.#holding(state, config)) this.#placeRows(state, config, viewport)
+    const shown = this.#shownState(state, config)
+    if (shown) this.#placeRows(shown, config, viewport)
     this.#sizeHost(state, config, hbar)
   }
 

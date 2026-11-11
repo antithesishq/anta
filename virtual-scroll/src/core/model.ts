@@ -54,6 +54,13 @@ export const DEFAULT_MAX_NON_VIRTUAL_ITEMS = 500
 export const DEFAULT_SCROLLBAR_WIDTH = 16
 export const DEFAULT_HEIGHT = 500
 
+/**
+ * The anchor re-seats once the view drifts this share of a viewport from it. Each re-seat moves the window, so
+ * half a viewport asks for new rows while about a viewport of mounted rows is still ahead, giving an asynchronous
+ * renderer that long to deliver them. A full viewport, as in Star, leaves half that.
+ */
+const REANCHOR_DRIFT = 0.5
+
 /** A state with nothing scrolled, anchored to the end when following. */
 export function initialState(config: Pick<VirtualScrollConfig, 'count' | 'follow'>): VirtualScrollState {
   return {
@@ -68,9 +75,8 @@ export function initialState(config: Pick<VirtualScrollConfig, 'count' | 'follow
 
 /**
  * Twice the rows a viewport can show; the window is this many rows on each side of
- * the anchor, plus the anchor. That size is the minimum, not slack: the anchor is
- * only re-seated once `deltaPixels` drifts past a full viewport, so the visible
- * rows can sit a whole viewport away from the anchor.
+ * the anchor, plus the anchor. The visible rows can sit up to `REANCHOR_DRIFT` of a
+ * viewport away from the anchor, and the rest is room for rows that arrive late.
  */
 export function itemsPerPage(config: Pick<VirtualScrollConfig, 'heightPx' | 'itemMinHeight'>): number {
   return 2 * Math.ceil(config.heightPx / config.itemMinHeight)
@@ -253,11 +259,14 @@ export function correctOnce(state: VirtualScrollState, config: VirtualScrollConf
     return next
   }
 
+  // The last row sits up to a viewport below the top when the list is bottom aligned.
+  const bottomAligned = next.anchorIndex === count - 1 && next.deltaPixels > 0
+  const drift = bottomAligned ? viewport : viewport * REANCHOR_DRIFT
   const drifted = measured
     ? next.deltaPixels > 0
-      ? next.deltaPixels > viewport
-      : Math.abs(next.deltaPixels) > Math.max(viewport, anchorHeight || 0)
-    : Math.abs(next.deltaPixels) > viewport
+      ? next.deltaPixels > drift
+      : Math.abs(next.deltaPixels) > Math.max(drift, anchorHeight || 0)
+    : Math.abs(next.deltaPixels) > drift
 
   if (drifted) {
     if (next.anchorIndex === count - 1 && next.deltaPixels < 0) {
@@ -266,12 +275,12 @@ export function correctOnce(state: VirtualScrollState, config: VirtualScrollConf
       return toEdge(next, config, false, viewport - Math.abs(anchorHeight || config.itemMinHeight))
     }
     if (Math.abs(anchorHeight || config.itemMinHeight) <= viewport) {
-      // Walk about a viewport towards the content on screen. Stop at the first row
+      // Walk the drift distance towards the content on screen. Stop at the first row
       // with no recorded height: re-seating then sums only real heights, so a wrong
       // estimate cannot make the content jump.
       let travelled = 0
       let index = next.anchorIndex
-      while (travelled < viewport) {
+      while (travelled < drift) {
         index += next.deltaPixels < 0 ? 1 : -1
         const h = heights.get(index)
         if (h === undefined) break

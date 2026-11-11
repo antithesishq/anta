@@ -68,9 +68,11 @@ Star baseline: `main` at `35d696ea0ce` (2026-11-03).
 ## Display
 
 17. **Placeholder lines** fill the space of rows that exist but are not mounted yet
-    (`--virtual-scroll-placeholder-line`). Star never scrolls ahead of its rows, so it has no such state. A track
-    press or thumb drag that lands outside the mounted rows keeps the last frame for up to 150ms first, so a worker
-    renderer's rows replace the old ones in one step, as in Star, instead of flashing placeholders.
+    (`--virtual-scroll-placeholder-line`). Star never scrolls ahead of its rows, so it has no such state. During a
+    track press or thumb drag, the rows instead show the newest position whose rows have arrived, while the thumb
+    follows the pointer, so a worker renderer's rows trail the thumb as in Star. Placeholders show only after 1 second
+    with no rows since the last drag move or press. A 150ms limit counted from the first move left a drag over 20,000
+    rows showing placeholders until it stopped, because each answer covered a position the thumb had already left.
 18. **The vertical scrollbar appears from the row count** before any row is measured. Star waits for measured content to
     exceed the height (it now also counts unmeasured rows at the minimum, which the port adopted).
 19. **Touching marks merge**, in both layers, so DOM nodes are bounded by track pixels. Star draws one node per mark and
@@ -87,7 +89,9 @@ Star baseline: `main` at `35d696ea0ce` (2026-11-03).
     vertical bar is inset 1px at each end and the thumb's 2px padding is added outside its computed size, so at the end
     of the list the thumb's fill runs 4px past the bar and its rounded end is cut off. The horizontal thumb does the
     same at the far right. The port measures both bars and lays thumbs, marks, and pointer input out on the track inside
-    the padding. The thumb keeps Star's look everywhere else.
+    the padding. Thumbs are also fully rounded, and marks have 1px rounded ends; Star's thumbs have 2px corners.
+    The horizontal bar sits 1px inside the edges like the vertical one, so it no longer covers the list's outline
+    along the bottom and left, as Star's does.
 25. **The vertical scrollbar disappears when there is nothing to scroll**, and its column goes with it: rows and the
     horizontal scrollbar take the full width. Star hides only the thumb and keeps drawing an empty bar in a reserved
     column. Rows reflow once when the bar appears or disappears, because their width changes by the scrollbar width; the
@@ -111,28 +115,34 @@ Star baseline: `main` at `35d696ea0ce` (2026-11-03).
     screen (about 300px above when scrolling up), and a worker renderer flashed placeholders. Shifted, both directions
     keep about 150 to 190px. The mounted row count is now constant, and the first re-seat from either end fires no
     event.
+29. **The anchor re-seats after half a viewport of drift.** Star re-seats after a full viewport, so the window moves,
+    and asks for new rows, only when about half a viewport of mounted rows is left beyond the screen. A wheel flick on a
+    large log covered that before a worker renderer answered, and showed placeholder lines. At half a viewport the
+    window moves twice as often, with about a full viewport left: in a 300px list of 22px rows, about 330px below when
+    scrolling down and 300px above when scrolling up, up from 180px and 150px. The last row keeps the full viewport,
+    since it sits up to a viewport below the top when the list is bottom aligned.
 
 ## API
 
-29. **Position reporting.** `positionchange` fires once scrolling settles (150ms) and `initial-position` restores it on
+30. **Position reporting.** `positionchange` fires once scrolling settles (150ms) and `initial-position` restores it on
     connect. Star writes its whole state to `vscroll_backup_sv` on every render.
-30. **Content height** arrives as `contentsizechange` (`null` until every row is measured). Star calls
+31. **Content height** arrives as `contentsizechange` (`null` until every row is measured). Star calls
     `on_visible_content_height_change` during render.
-31. **Sizing** comes from `height` / `max-height` attributes and an intrinsic sizer, and honors a host sized by CSS.
+32. **Sizing** comes from `height` / `max-height` attributes and an intrinsic sizer, and honors a host sized by CSS.
     Star takes the same props but cannot be sized from outside. `max-height` alone only caps the list, as in CSS, so a
     short list shrinks to its rows; Star stays at `max_height`. The table, which renders rows directly by default and
     takes this list as an option, keeps the same height in both modes.
-32. **Row selection and highlighting belong to the consumer.** Star's list owns `selected_sv` (click, Ctrl + click,
+33. **Row selection and highlighting belong to the consumer.** Star's list owns `selected_sv` (click, Ctrl + click,
     and Shift + click ranges), `highlight_items`, and the `_selected` / `_highlighted` classes. The port renders none
     of it, so selection lives in the table and works the same whether its rows are virtualized or not.
 
 ## Kept identical on purpose
 
 - The anchor model and its corrections: re-anchoring, overscroll at both ends, following the end, and the 2× render
-  window size (`items_per_page`). Only the window's placement differs (28).
+  window size (`items_per_page`). Only the window's placement (28) and the re-seat distance (29) differ.
 - The non-virtual threshold rule, including the silent fallback to 500 when the configured value is at or below a page
   window.
-- Scrollbar colors (Anta's `--border-1` to `--border-4` tokens), widths, the padded thumb, and the 2px corners.
+- Scrollbar colors (Anta's `--border-1` to `--border-4` tokens), widths, the padded thumb, and the list's 2px corners.
 - The fractional visible-bottom index from `get_visible_indices`, which reads about half a row high; nothing consumes
   it.
 - Pixel wheels outside macOS move a third of their delta.

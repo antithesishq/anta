@@ -17,6 +17,11 @@ type Options = {
   streamChunk: number
   /** `initial-position`, applied before the element connects. */
   initialPosition?: string
+  /**
+   * Render like a busy worker: start on the newest range, answer `delay` ms later even if newer ranges came in
+   * meanwhile, then start on the newest one. Without it, a new range cancels the pending answer.
+   */
+  throttle?: boolean
 }
 
 const WORDS = 'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua error'.split(' ')
@@ -54,6 +59,7 @@ declare global {
 
 let options: Options
 let pending: ReturnType<typeof setTimeout> | undefined
+let latest = { start: 0, end: 0 }
 let streamTimer: ReturnType<typeof setInterval> | undefined
 let activeMatch = -1
 
@@ -142,15 +148,26 @@ window.mountList = (overrides = {}) => {
   list.addEventListener('rangechange', event => {
     const { start, end } = (event as CustomEvent<{ start: number, end: number }>).detail
     window.ranges.push({ start, end })
+    latest = { start, end }
+    if (options.throttle && options.delay > 0 && pending !== undefined) return
     clearTimeout(pending)
+    pending = undefined
     if (options.delay <= 0) renderRange(start, end)
-    else pending = setTimeout(() => renderRange(start, end), options.delay)
+    else answer(latest)
   })
   list.addEventListener('positionchange', event => window.positions.push((event as CustomEvent).detail))
   list.addEventListener('contentsizechange', event => window.contentSizes.push((event as CustomEvent).detail))
   window.list = list
   document.querySelector('#mount')!.append(list)
   return list
+}
+
+function answer(range: { start: number, end: number }) {
+  pending = setTimeout(() => {
+    pending = undefined
+    renderRange(range.start, range.end)
+    if (options.throttle && latest !== range) answer(latest)
+  }, options.delay)
 }
 
 window.rendered = () => Array.from(window.list.children)

@@ -17,6 +17,12 @@ Render [typed rows](#typed-rows), scroll [sideways](#horizontal-scrolling),
 scrollbar](#scrollbar-marks), and [restore a position](#restoring-a-position).
 The package is experimental.
 
+The list is not a browser scroll container. It draws its own scrollbars and
+moves the mounted rows with a transform, so it has no `scrollTop` and fires no
+`scroll` events. Browser scrolling features do not reach it: `scrollIntoView()`
+and find in page do not scroll it, and scroll snapping and scroll anchoring do
+not apply. To bring a row into view, use [`reveal`](#scrollbar-marks).
+
 ## Basic usage
 
 Pass the rows as `items` and render each one with `renderItem`. This list has
@@ -113,6 +119,10 @@ and the vertical scrollbar maps to row indices, so it never needs a total pixel
 height. Every row is one width: `contentWidth` when it is set and wider than the
 list, otherwise the list's. The list never sizes rows from their content, so the
 horizontal scrollbar keeps its size and position while scrolling vertically.
+
+Only rows are virtualized. Horizontal scrolling translates the mounted rows
+sideways and mounts nothing new, so every mounted row renders at its full
+`contentWidth`, including the parts out of view.
 
 Without `contentWidth` there is no horizontal scrolling: rows wrap at the list's
 width, long words break, and content that cannot wrap, such as
@@ -256,9 +266,12 @@ export function RestorableLog({ rows }: { rows: string[] }) {
 The vertical scrollbar appears only while the rows are taller than the list.
 Without it, the rows and the horizontal scrollbar take its column.
 
-CSS can also size the list, for example `height: 100%` in a flex layout. When
-the measured height differs from the height the list asked for, the list uses
-the measured height. An empty list shows `empty` at the minimum row height.
+The list does not size itself from its container. Its height comes from these
+props and its rows, and its width is the host's, as for any block element. To
+fill a container, size the host with CSS, for example `height: 100%` in a flex
+layout. When the measured height differs from the height the list asked for,
+the list uses the measured height. An empty list shows `empty` at the minimum
+row height.
 
 <VirtualScrollDemo example="sizes" minHeight={300} />
 
@@ -388,51 +401,15 @@ When the application looks rows up itself, pass `count` instead, and
 ```
 
 A renderer in a worker gets the same typing from helpers with no renderer or
-DOM; see [Browser element and workers](#browser-element-and-workers).
+DOM; see [Worker helpers](#worker-helpers).
 
-<Disclosure title="Props" level={2}>
-
-Each prop links to the section that demonstrates it. `className`, `style`,
-`aria-*` and `data-*` attributes, and standard DOM handlers such as `onKeyDown`
-pass through to the element.
-
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| [`items`](#typed-rows) | `VirtualScrollSource<T>` | | The rows, as an array or a range source with a `length` and a `slice(start, end)` that returns something with `toArray()`. Sets `T`. Only the mounted range is read. Use `items` or `count`. |
-| [`count`](#typed-rows) | number | | Number of rows, when the application looks rows up by index. |
-| [`renderItem`](#typed-rows) | `(item: T, index) => ReactNode` with `items`; `(index) => ReactNode` with `count` | | Renders one mounted row. |
-| [`rowClassName`](#typed-rows) | `(item: T, index) => string` with `items`; `(index) => string` with `count` | | Class for each row's wrapper. |
-| [`height`](#sizing) | number | | Height in pixels. Without `height` or `maxHeight`, the list is 500px tall, or shorter when its rows fit. |
-| [`maxHeight`](#sizing) | number | | Maximum height in pixels. |
-| [`empty`](#sizing) | ReactNode | | Shown at the minimum row height when there are no rows. |
-| [`itemMinHeight`](#sizing) | number | `22` | Minimum row height in pixels; also the estimate for rows not measured yet. |
-| [`itemHeightFixed`](#sizing) | boolean | | Every row is exactly `itemMinHeight` tall, so rows are not measured and the scrollbar is exact from the first frame. Pin the row height with CSS. |
-| [`maxNonVirtualItems`](#sizing) | number | `500` | Up to this many rows, every row stays mounted, the scrollbar uses real heights, and the dragged thumb follows the pointer. Ignored when smaller than a page window. |
-| [`contentWidth`](#horizontal-scrolling) | number | | Width every row shares, and the only source of horizontal scrolling. Without it, rows take the list's width and wrap. |
-| [`header`](#horizontal-scrolling) | ReactNode | | Content above the rows that scrolls sideways with them, such as a table header. |
-| [`follow`](#growing-list) | boolean | | Start at the end and keep following new rows until the reader scrolls up. Scrolling back to the bottom follows again. |
-| [`contentKey`](#growing-list) | string | | Change when sorting, filtering, or new content moves rows to different indices. It clears the measured heights of rows that are not mounted; mounted rows report their new height on their own. Without `follow`, it also stops treating the list as scrolled to its end. Appending rows needs no change. |
-| [`marks`](#scrollbar-marks) | `Iterable<number>` | | Row indices to mark on the vertical track. Marks that touch merge into one. |
-| [`secondaryMarks`](#scrollbar-marks) | `Iterable<number>` | | Row indices to mark in a muted color under `marks`. A row in both sets shows the `marks` color. |
-| [`reveal`](#scrollbar-marks) | `{ index, key?, target?, x? }` | | Brings row `index` to the middle of the viewport, once per `key`, which defaults to the index; change `key` to reveal the same row again. `target` is a selector for an element inside the row to center instead of the row's top. `x` is `{ left, width, insetStart, insetEnd }`, a horizontal span in content pixels to bring into view clear of insets such as pinned columns. |
-| [`initialPosition`](#restoring-a-position) | `{ anchorIndex, deltaPixels, scrollX, stickToBottom }` | | Position to open at, read once on mount: the anchor row, the pixels from the top edge to that row (negative once its top has scrolled past), the horizontal offset, and whether to keep following. Usually the last `onPositionChange` detail. |
-| [`onPositionChange`](#restoring-a-position) | `(event, detail) => void` | | Fires 150ms after scrolling settles. The detail has the `initialPosition` fields, `maxScrollX`, `atEnd` (the end of the last row is in view), and `firstVisibleIndex` (the fractional index of the row at the top edge). `stickToBottom` is `true` while the list follows. |
-| [`onRangeChange`](#events) | `(event, detail) => void` | | Fires with `{ start, end }` when the mounted rows change; `end` is exclusive. The wrapper already renders the range. |
-| [`onContentSizeChange`](#events) | `(event, detail) => void` | | Fires with `{ height, width }` when the measured content size changes. `height` is `null` until every row is measured. |
-| [`interceptKeys`](#input) | string | | Space-separated combinations, such as `Mod+f Alt+r`, whose browser default the list prevents so the application can handle them. `Mod` is Cmd on macOS and Ctrl elsewhere. |
-| [`wheelActivation`](#input) | `hover`, `settled`, `focus`, `settled-or-focus` | `hover` | When an unmodified wheel starts scrolling the list instead of the page: `hover` at once, `settled` after the pointer rests 150ms, `focus` once the list has focus, or `settled-or-focus` on either. |
-| [`scrollbarHint`](#input) | boolean | | Show the keyboard-shortcut hint on the scrollbars. |
-| [`scrollbarWidth`](#styling) | number | `16` | Vertical scrollbar width and horizontal scrollbar thickness, in pixels. |
-
-</Disclosure>
-
-<Disclosure title="Browser element and workers" level={2}>
+<Disclosure title="How rows are mounted" level={2}>
 
 `VirtualScroll` renders `<a-virtual-scroll>`. Drive the element directly from
 plain JavaScript, or from a renderer that cannot use the JSX wrapper, such as
 one running in a worker.
 
-### How rows get mounted
+### Driving the element directly
 
 The element and the application talk through attributes and events. Every event
 detail is plain data, so the renderer can be a worker that reconciles the DOM
@@ -483,11 +460,13 @@ room for late rows in both scroll directions. At either end of the list the
 range slides instead of shrinking: it starts at row 0, or ends at the last row.
 
 A wheel turn changes only `deltaPixels`, and the element moves the rows it
-already has. Once the anchor's top is more than a viewport above or below the
-edge, the element re-seats the anchor:
+already has. Once the anchor's top is more than half a viewport above or below
+the edge, the element re-seats the anchor. The last row is the exception: it
+sits up to a viewport below the edge when the list is bottom aligned, so it
+re-seats only past a full viewport.
 
 1. It walks from the anchor toward the content on screen, one row at a time,
-   adding up row heights until the total reaches a viewport. Rows shorter than
+   adding up row heights until the total reaches half a viewport. Rows shorter than
    `item-min-height` count as `item-min-height`. The walk stops early at the
    first row without a measured height, so an estimate never moves content.
 2. The row it reaches becomes the anchor. `deltaPixels` gains the heights of the
@@ -520,32 +499,30 @@ Scrolling down 15px per wheel tick goes like this, at selected ticks:
 | 0px | 0 | 0 | 0 to 13 | `{ 0, 57 }` | 0 to 56 |
 | 15px | 0 | −15 | 0 to 14 | none | 0 to 56 |
 | 30px | 0 | −30 | 1 to 14 | none | 0 to 56 |
-| 45px | 0 | −45 | 2 to 15 | none | 0 to 56 |
 | 150px | 0 | −150 | 6 to 20 | none | 0 to 56 |
-| 285px | 0 | −285 | 12 to 26 | none | 0 to 56 |
-| 300px | 0 | −300 | 13 to 27 | none | 0 to 56 |
-| 315px | 0, then 14 | −315, then −7 | 14 to 27 | none | 0 to 56 |
-| 330px | 14 | −22 | 15 to 28 | none | 0 to 56 |
-| 450px | 14 | −142 | 20 to 34 | none | 0 to 56 |
-| 600px | 14 | −292 | 27 to 40 | none | 0 to 56 |
-| 615px | 14, then 28 | −307, then +1 | 27 to 41 | `{ 7, 64 }` | 7 to 63 |
+| 165px | 0, then 7 | −165, then −11 | 7 to 21 | none | 0 to 56 |
+| 180px | 7 | −26 | 8 to 21 | none | 0 to 56 |
+| 315px | 7, then 14 | −161, then −7 | 14 to 27 | none | 0 to 56 |
+| 465px | 14, then 21 | −157, then −3 | 21 to 34 | none | 0 to 56 |
+| 600px | 21 | −138 | 27 to 40 | none | 0 to 56 |
+| 615px | 21, then 28 | −153, then +1 | 27 to 41 | `{ 7, 64 }` | 7 to 63 |
 | 630px | 28 | −14 | 28 to 42 | none | 7 to 63 |
-| 915px | 28 | −299 | 41 to 55 | none | 7 to 63 |
-| 930px | 28, then 42 | −314, then −6 | 42 to 55 | `{ 21, 78 }` | 21 to 77 |
-| 945px | 42 | −21 | 42 to 56 | none | 21 to 77 |
-| 1230px | 42, then 56 | −306, then +2 | 55 to 69 | `{ 35, 92 }` | 35 to 91 |
+| 765px | 28 | −149 | 34 to 48 | none | 7 to 63 |
+| 780px | 28, then 35 | −164, then −10 | 35 to 49 | `{ 14, 71 }` | 14 to 70 |
+| 795px | 35 | −25 | 36 to 49 | none | 14 to 70 |
+| 930px | 35, then 42 | −160, then −6 | 42 to 55 | `{ 21, 78 }` | 21 to 77 |
 
-The anchor re-seats about once per viewport of scrolling: here every 20 or 21
-ticks. The first re-seat at 315px fires nothing, because the range is still slid
-against row 0. From 615px on, each event drops about 14 rows at the top and asks
-for about 14 new rows at the bottom. With rows of mixed height, the walk sums their measured
-heights, so each step still covers about a viewport, in fewer rows when they
-are tall.
+The anchor re-seats about once per half viewport of scrolling: here every 10 or
+11 ticks. The first three re-seats, at 165px, 315px, and 465px, fire nothing,
+because the range is still slid against row 0. From 615px on, each event drops
+about 7 rows at the top and asks for about 7 new rows at the bottom. With rows
+of mixed height, the walk sums their measured heights, so each step still covers
+about half a viewport, in fewer rows when they are tall.
 
 When an event fires, the rows already mounted cover the screen while the new
-rows render. With every row at the minimum height, the worst case, about 180px
-of mounted rows remain below the screen when scrolling down, and about 150px
-above it when scrolling up. Taller rows leave more. A renderer that falls
+rows render. With every row at the minimum height, the worst case, about 330px
+of mounted rows remain below the screen when scrolling down, and about 300px
+above it when scrolling up: about a viewport either way. Taller rows leave more. A renderer that falls
 further behind than that, as on a fast fling, shows placeholder lines until
 it catches up.
 
@@ -553,9 +530,10 @@ The range also changes when:
 
 - The anchor jumps far away: dragging the thumb, clicking the track, Home or End,
   `reveal`, and `initialPosition`. The whole range changes in one event, and
-  placeholder lines show until the new rows arrive. For a click on the track or
-  a thumb drag, the list first keeps the old rows on screen for up to 150ms, so
-  rows that render in a worker replace them in one step. The thumb moves at once.
+  placeholder lines show until the new rows arrive. A click on the track or a
+  thumb drag is different: the thumb moves at once, and the rows show the newest
+  position whose rows have arrived, so rows that render in a worker trail the
+  thumb. Placeholders show only after 1 second without new rows.
 - `count` changes near the end of the list, since the range ends at the last
   row. With `follow`, the anchor is the last row, so every appended row fires
   an event.
@@ -583,9 +561,10 @@ of the list. With the default `item-min-height` of 22:
 The count depends only on `height` and `item-min-height`, not on how tall the rows
 are. Taller rows cover more pixels with the same count. At most about
 `ceil(height / item-min-height) + 1` rows are on screen, so the list mounts about
-four times what it shows. A two-page window is the minimum: the anchor re-seats
-only after the content on screen is a full viewport away from it, so a smaller
-window would leave blank rows. Set `item-min-height` close to the real smallest
+four times what it shows. The content on screen can be half a viewport away
+from the anchor, and the rest of the window is room for late rows: about a
+viewport beyond the screen, in the direction of scrolling, when the range
+changes. Set `item-min-height` close to the real smallest
 row: at 11, a 300px list mounts up to 113 rows.
 
 ### Worker helpers
@@ -618,6 +597,42 @@ function rows(lines: VirtualScrollRangeSource<LogLine>, range: VirtualScrollRang
 `VirtualScrollItem<S>` names the row type of a source, and the element's
 attributes are typed: `initial-position` and `reveal-x` only accept four numbers,
 and event handlers receive typed details.
+
+</Disclosure>
+
+<Disclosure title="Props" level={2}>
+
+Each prop links to the section that demonstrates it. `className`, `style`,
+`aria-*` and `data-*` attributes, and standard DOM handlers such as `onKeyDown`
+pass through to the element.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| [`items`](#typed-rows) | `VirtualScrollSource<T>` | | The rows, as an array or a range source with a `length` and a `slice(start, end)` that returns something with `toArray()`. Sets `T`. Only the mounted range is read. Use `items` or `count`. |
+| [`count`](#typed-rows) | number | | Number of rows, when the application looks rows up by index. |
+| [`renderItem`](#typed-rows) | `(item: T, index) => ReactNode` with `items`; `(index) => ReactNode` with `count` | | Renders one mounted row. |
+| [`rowClassName`](#typed-rows) | `(item: T, index) => string` with `items`; `(index) => string` with `count` | | Class for each row's wrapper. |
+| [`height`](#sizing) | number | | Height in pixels. Without `height` or `maxHeight`, the list is 500px tall, or shorter when its rows fit. |
+| [`maxHeight`](#sizing) | number | | Maximum height in pixels. |
+| [`empty`](#sizing) | ReactNode | | Shown at the minimum row height when there are no rows. |
+| [`itemMinHeight`](#sizing) | number | `22` | Minimum row height in pixels; also the estimate for rows not measured yet. |
+| [`itemHeightFixed`](#sizing) | boolean | | Every row is exactly `itemMinHeight` tall, so rows are not measured and the scrollbar is exact from the first frame. Pin the row height with CSS. |
+| [`maxNonVirtualItems`](#sizing) | number | `500` | Up to this many rows, every row stays mounted, the scrollbar uses real heights, and the dragged thumb follows the pointer. Ignored when smaller than a page window. |
+| [`contentWidth`](#horizontal-scrolling) | number | | Width every row shares, and the only source of horizontal scrolling. Without it, rows take the list's width and wrap. |
+| [`header`](#horizontal-scrolling) | ReactNode | | Content above the rows that scrolls sideways with them, such as a table header. |
+| [`follow`](#growing-list) | boolean | | Start at the end and keep following new rows until the reader scrolls up. Scrolling back to the bottom follows again. |
+| [`contentKey`](#growing-list) | string | | Change when sorting, filtering, or new content moves rows to different indices. It clears the measured heights of rows that are not mounted; mounted rows report their new height on their own. Without `follow`, it also stops treating the list as scrolled to its end. Appending rows needs no change. |
+| [`marks`](#scrollbar-marks) | `Iterable<number>` | | Row indices to mark on the vertical track. Marks that touch merge into one. |
+| [`secondaryMarks`](#scrollbar-marks) | `Iterable<number>` | | Row indices to mark in a muted color under `marks`. A row in both sets shows the `marks` color. |
+| [`reveal`](#scrollbar-marks) | `{ index, key?, target?, x? }` | | Brings row `index` to the middle of the viewport, once per `key`, which defaults to the index; change `key` to reveal the same row again. `target` is a selector for an element inside the row to center instead of the row's top. `x` is `{ left, width, insetStart, insetEnd }`, a horizontal span in content pixels to bring into view clear of insets such as pinned columns. |
+| [`initialPosition`](#restoring-a-position) | `{ anchorIndex, deltaPixels, scrollX, stickToBottom }` | | Position to open at, read once on mount: the anchor row, the pixels from the top edge to that row (negative once its top has scrolled past), the horizontal offset, and whether to keep following. Usually the last `onPositionChange` detail. |
+| [`onPositionChange`](#restoring-a-position) | `(event, detail) => void` | | Fires 150ms after scrolling settles. The detail has the `initialPosition` fields, `maxScrollX`, `atEnd` (the end of the last row is in view), and `firstVisibleIndex` (the fractional index of the row at the top edge). `stickToBottom` is `true` while the list follows. |
+| [`onRangeChange`](#events) | `(event, detail) => void` | | Fires with `{ start, end }` when the mounted rows change; `end` is exclusive. The wrapper already renders the range. |
+| [`onContentSizeChange`](#events) | `(event, detail) => void` | | Fires with `{ height, width }` when the measured content size changes. `height` is `null` until every row is measured. |
+| [`interceptKeys`](#input) | string | | Space-separated combinations, such as `Mod+f Alt+r`, whose browser default the list prevents so the application can handle them. `Mod` is Cmd on macOS and Ctrl elsewhere. |
+| [`wheelActivation`](#input) | `hover`, `settled`, `focus`, `settled-or-focus` | `hover` | When an unmodified wheel starts scrolling the list instead of the page: `hover` at once, `settled` after the pointer rests 150ms, `focus` once the list has focus, or `settled-or-focus` on either. |
+| [`scrollbarHint`](#input) | boolean | | Show the keyboard-shortcut hint on the scrollbars. |
+| [`scrollbarWidth`](#styling) | number | `16` | Vertical scrollbar width and horizontal scrollbar thickness, in pixels. |
 
 </Disclosure>
 
@@ -670,40 +685,15 @@ Events do not bubble.
 | `header` | Content above the rows that scrolls sideways with them. |
 | `empty` | Shown when `count` is `0`. |
 
-### CSS states
-
-| State | Meaning |
-| --- | --- |
-| `:state(scrolling)` | Wheel or touch input arrived in the last 150ms. |
-| `:state(scrollable-y)` | The vertical scrollbar is shown. |
-| `:state(scrollable-x)` | The horizontal scrollbar is shown. |
-| `:state(following)` | The list follows its last row. |
-| `:state(at-start)` | The first row is at the top edge. |
-| `:state(at-end)` | The end of the last row is in view. |
-| `:state(hidden-start-x)` | Content is hidden past the left edge. |
-| `:state(hidden-end-x)` | Content is hidden past the right edge. |
-| `:state(empty)` | `count` is `0`. |
-
-### Parts
-
-`viewport`, `header`, `rows`, `empty`, `scrollbar` (vertical), and `scrollbar-x`
-(horizontal).
-
 </Disclosure>
 
 <Disclosure title="Styling" level={2}>
 
 Size the list with `height` and `maxHeight`, or with CSS on the host. Rows are
 your own light-DOM elements; style them with plain CSS. `scrollbarWidth` sets
-the scrollbar size. The scrollbar is in the shadow root and takes these colors:
-
-- `--virtual-scroll-thumb`, `--virtual-scroll-thumb-hover`, and
-  `--virtual-scroll-thumb-active` color the thumb.
-- `--virtual-scroll-bar-bg` colors the scrollbar background.
-- `--virtual-scroll-mark-bg` colors the marks.
-- `--virtual-scroll-secondary-mark-bg` colors the secondary marks.
-- `--virtual-scroll-placeholder-line` draws the placeholder lines. Set it to
-  `transparent` to hide them.
+the scrollbar size. Custom states such as `:state(scrolling)`, the scrollbar and
+mark color properties, and the parts are documented on `AVirtualScrollElement`,
+so your editor shows them on hover.
 
 ```css folded
 a-virtual-scroll.log {

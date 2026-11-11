@@ -73,7 +73,7 @@ test('the window keeps its size and slides at either end of the list', () => {
 
 test('a re-seat leaves mounted rows beyond the viewport in both directions', () => {
   // Every row at the minimum height is the worst case. When the range changes, the old
-  // rows must still cover the viewport with room to spare while the new rows render.
+  // rows must still cover about a viewport beyond the screen while the new rows render.
   const cfg = config()
   const heights = fixedHeights(cfg.count, cfg.itemMinHeight)
   for (const step of [20, -20]) {
@@ -87,7 +87,7 @@ test('a re-seat leaves mounted rows beyond the viewport in both directions', () 
         changes++
         const top = offsetOf(next, heights)
         const room = step > 0 ? prefix(heights, range.end) - top - cfg.heightPx : top - prefix(heights, range.start)
-        assert.ok(room > 150, `step ${step}: only ${room}px mounted beyond the viewport`)
+        assert.ok(room > cfg.heightPx - 2 * cfg.itemMinHeight, `step ${step}: only ${room}px mounted beyond the viewport`)
       }
       state = next
       range = nextRange

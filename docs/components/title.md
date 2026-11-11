@@ -24,6 +24,17 @@ export default function Demo() {
 }
 ```
 
+## Level reference
+
+| level | font-size | line-height |
+|------:|----------:|------------:|
+| 1     | 28px      | 32px        |
+| 2     | 24px      | 28px        |
+| 3     | 20px      | 24px        |
+| 4     | 17px      | 22px        |
+| 5     | 15px      | 20px        |
+| 6     | 13px      | 16px        |
+
 ## Tone × priority
 
 Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
@@ -94,17 +105,6 @@ export default function Demo() {
   )
 }
 ```
-
-## Level reference
-
-| level | font-size | line-height |
-|------:|----------:|------------:|
-| 1     | 28px      | 32px        |
-| 2     | 24px      | 28px        |
-| 3     | 20px      | 24px        |
-| 4     | 17px      | 22px        |
-| 5     | 15px      | 20px        |
-| 6     | 13px      | 16px        |
 
 ## Typeface
 

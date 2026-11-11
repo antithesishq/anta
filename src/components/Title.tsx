@@ -16,11 +16,10 @@ export interface TitleProps extends BaseProps {
    *  cards and panels, or `monospace` for identifiers like run IDs.
    *  Omit `font` to use the theme's default for the heading level. */
   font?: 'serif' | 'sans-serif' | 'monospace'
-  /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
-   *  single line; any integer ≥ 2 clamps to that many lines; `0` or a
-   *  negative value means no truncation. A clipped JSX `Title` shows its
-   *  text content in a tooltip by default. Nest a `<Tooltip>` to provide
-   *  your own tooltip instead.
+  /** Adds an ellipsis when the title exceeds the line limit. Use `true` for
+   *  one line or a positive integer for the line count. Use `false` or `0`
+   *  to disable truncation. Clipped titles show their full text in a tooltip.
+   *  Nest a `<Tooltip>` to customize it.
    * @author Vlad Korobov
    */
   truncate?: boolean | number

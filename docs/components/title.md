@@ -133,7 +133,7 @@ export default function Demo() {
 | `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Sets the heading level and its font size. See [Level reference](#level-reference). |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Sets the title’s emphasis. See [Colors](../colors.md#text). |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. Pass a CSS color to create a custom tone. See [Tone × priority](#tone--priority). |
-| `truncate?` | boolean \| number | — | Truncate with a trailing ellipsis. `true` (or `1`) clamps to a single line; any integer ≥ 2 clamps to that many lines; `0` or a negative value means no truncation. A clipped JSX `Title` shows its text content in a tooltip by default. Nest a `<Tooltip>` to provide your own tooltip instead. |
+| `truncate?` | boolean \| number | — | Adds an ellipsis when the title exceeds the line limit. Use `true` for one line or a positive integer for the line count. Use `false` or `0` to disable truncation. Clipped titles show their full text in a tooltip. Nest a `<Tooltip>` to customize it. |
 
 ## Web Component
 

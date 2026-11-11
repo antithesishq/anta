@@ -132,7 +132,7 @@ export default function Demo() {
 Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
 
 <Preview align="stretch">
-  <div style={{ overflowX: 'auto', width: '100%' }}>
+  <div style={{ overflowX: 'auto', overflowY: 'hidden', width: '100%' }}>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '12px 16px', minWidth: '28rem', alignItems: 'baseline' }}>
       <Title level={3} priority="primary">Neutral{' '}<br />Primary</Title>
       <Title level={3} priority="secondary">Neutral{' '}<br />Secondary</Title>
@@ -184,7 +184,7 @@ const priorities = [
 
 export default function Demo() {
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div style={{ overflowX: 'auto', overflowY: 'hidden' }}>
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',

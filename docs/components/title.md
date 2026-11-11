@@ -1,6 +1,6 @@
 # Title
 
-Use Title for page, section, and component headings. Choose a heading level,
+Use Title for page, section, and component headings. Choose a `level`,
 then adjust its emphasis with `priority` and `tone`.
 
 Title has no margins. Use the parent's `gap` or padding to space it within a

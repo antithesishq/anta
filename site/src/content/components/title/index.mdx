@@ -58,75 +58,6 @@ export default function Demo() {
 }
 ```
 
-## Typeface
-
-Set `font` to `serif`, `sans-serif`, or `monospace`. Omit it to use the theme’s default.
-
-<Preview direction="column" align="stretch" gap="16px">
-  <Title level={2}>Recent runs</Title>
-  <Title level={2} font="sans-serif">Run 4821: 12 failures</Title>
-  <Title level={2} font="monospace">checkout-service/run_4821</Title>
-</Preview>
-
-```tsx title="Demo.tsx" excerpt
-import '@antadesign/anta/bundle.css'
-import { Title } from '@antadesign/anta/bundle'
-
-export default function Demo() {
-  return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      <Title level={2}>Recent runs</Title>
-      <Title level={2} font="sans-serif">Run 4821: 12 failures</Title>
-      <Title level={2} font="monospace">checkout-service/run_4821</Title>
-    </div>
-  )
-}
-```
-
-## Truncation
-
-Use `truncate` for one line or pass a number to limit the lines. Hover over a clipped title to read the full text.
-
-<Preview direction="column" align="center" gap="16px">
-  <Title truncate style={{ width: '100%', maxWidth: 320 }}>
-    A long workspace heading that stays on one line in a compact layout
-  </Title>
-  <Title truncate={2} style={{ width: '100%', maxWidth: 320 }}>
-    A long workspace heading that wraps onto a second line before it gets cut off
-  </Title>
-</Preview>
-
-```tsx title="Demo.tsx" excerpt
-import '@antadesign/anta/bundle.css'
-import { Title } from '@antadesign/anta/bundle'
-
-export default function Demo() {
-  return (
-    <div style={{ display: 'grid', gap: 16, maxWidth: 320 }}>
-      <Title truncate>
-        A long workspace heading that stays on one line in a compact layout
-      </Title>
-      <Title truncate={2}>
-        A long workspace heading that wraps onto a second line before it gets cut off
-      </Title>
-    </div>
-  )
-}
-```
-
-<Disclosure title="Level reference">
-
-| level | font-size | line-height |
-|------:|----------:|------------:|
-| 1     | 28px      | 32px        |
-| 2     | 24px      | 28px        |
-| 3     | 20px      | 24px        |
-| 4     | 17px      | 22px        |
-| 5     | 15px      | 20px        |
-| 6     | 13px      | 16px        |
-
-</Disclosure>
-
 ## Tone × priority
 
 Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
@@ -202,6 +133,75 @@ export default function Demo() {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+```
+
+## Truncation
+
+Use `truncate` for one line or pass a number to limit the lines. Hover over a clipped title to read the full text.
+
+<Preview direction="column" align="center" gap="16px">
+  <Title truncate style={{ width: '100%', maxWidth: 320 }}>
+    A long workspace heading that stays on one line in a compact layout
+  </Title>
+  <Title truncate={2} style={{ width: '100%', maxWidth: 320 }}>
+    A long workspace heading that wraps onto a second line before it gets cut off
+  </Title>
+</Preview>
+
+```tsx title="Demo.tsx" excerpt
+import '@antadesign/anta/bundle.css'
+import { Title } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <div style={{ display: 'grid', gap: 16, maxWidth: 320 }}>
+      <Title truncate>
+        A long workspace heading that stays on one line in a compact layout
+      </Title>
+      <Title truncate={2}>
+        A long workspace heading that wraps onto a second line before it gets cut off
+      </Title>
+    </div>
+  )
+}
+```
+
+<Disclosure title="Level reference">
+
+| level | font-size | line-height |
+|------:|----------:|------------:|
+| 1     | 28px      | 32px        |
+| 2     | 24px      | 28px        |
+| 3     | 20px      | 24px        |
+| 4     | 17px      | 22px        |
+| 5     | 15px      | 20px        |
+| 6     | 13px      | 16px        |
+
+</Disclosure>
+
+## Typeface
+
+Set `font` to `serif`, `sans-serif`, or `monospace`. Omit it to use the theme’s default.
+
+<Preview direction="column" align="stretch" gap="16px">
+  <Title level={2}>Recent runs</Title>
+  <Title level={2} font="sans-serif">Run 4821: 12 failures</Title>
+  <Title level={2} font="monospace">checkout-service/run_4821</Title>
+</Preview>
+
+```tsx title="Demo.tsx" excerpt
+import '@antadesign/anta/bundle.css'
+import { Title } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <Title level={2}>Recent runs</Title>
+      <Title level={2} font="sans-serif">Run 4821: 12 failures</Title>
+      <Title level={2} font="monospace">checkout-service/run_4821</Title>
     </div>
   )
 }

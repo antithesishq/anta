@@ -1,6 +1,6 @@
 # Title
 
-Use `Title` for page and section headings.
+Use `Title` for page and section headings. It has no margins by default.
 
 ## Levels
 

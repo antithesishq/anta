@@ -75,7 +75,7 @@ export default function Demo() {
 
 ## Truncation
 
-Use `truncate` for one line or pass a number to limit the lines. Hover over a clipped title to read the full text.
+Use `truncate` for one line or pass a number to limit the lines. Hover over a clipped title to see the full text in a tooltip.
 
 ```tsx title="Demo.tsx" excerpt
 import '@antadesign/anta/bundle.css'

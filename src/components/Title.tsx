@@ -6,7 +6,7 @@ export interface TitleProps extends BaseProps {
   /** Sets the heading level and its font size. See [Level reference](#level-reference).
    *  @defaultValue 2 */
   level?: 1 | 2 | 3 | 4 | 5 | 6
-  /** Visual priority. Maps to text-1..text-4 (`primary` = text-1).
+  /** Sets the title’s emphasis. See [Colors](/colors/#text).
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a

@@ -33,6 +33,7 @@ export default function ecFoldable() {
     name: 'anta-foldable',
     hooks: {
       postprocessRenderedBlock(context) {
+        const excerpt = context.codeBlock.metaOptions.getBoolean('excerpt') === true
         const folded = context.codeBlock.metaOptions.getBoolean('folded') === true
         const root = context.renderData.blockAst
 
@@ -40,6 +41,17 @@ export default function ecFoldable() {
           ? root
           : findElement(root, (el) => classesOf(el).includes('frame'))
         if (!frame) return
+
+        if (excerpt) {
+          frame.properties = { ...frame.properties, dataCodeExcerpt: '', dataFolded: '' }
+          frame.children.push({
+            type: 'element',
+            tagName: 'button',
+            properties: { type: 'button', dataCodeToggle: '', ariaExpanded: 'false' },
+            children: [{ type: 'text', value: 'Expand code' }],
+          })
+          return
+        }
 
         const frameClasses = classesOf(frame)
         const hasHeaderBar =

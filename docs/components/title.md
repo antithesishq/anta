@@ -1,74 +1,69 @@
 # Title
 
-Use Title for page, section, and component headings. Choose a `level`,
-then adjust its emphasis with `priority` and `tone`.
-
-Title has no margins. For native HTML heading elements, use `<h1>`–`<h6>` with
-Anta's reset.
+Use `Title` for headings and set their rank with `level`. For native headings, use
+`<h1>`–`<h6>` with Anta’s reset.
 
 ## Levels
 
-Choose `level` to match the heading hierarchy. It sets the type scale and the
-heading level announced by screen readers. This example uses a parent `gap`
-to space the titles.
+Set `level` to match the heading’s place in the page hierarchy.
+
+```tsx title="Demo.tsx" excerpt
+import '@antadesign/anta/bundle.css'
+import { Title } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <Title level={1}>Level 1: Workspace settings</Title>
+      <Title level={2}>Level 2: Recent activity</Title>
+      <Title level={3}>Level 3: Security alerts</Title>
+      <Title level={4}>Level 4: Sign-in policy</Title>
+      <Title level={5}>Level 5: Session timeout</Title>
+      <Title level={6}>Level 6: Updated five minutes ago</Title>
+    </div>
+  )
+}
+```
 
 ## Typeface
 
-Use `serif` for page and section titles, `sans-serif` for cards, panels, and
-metrics, and `monospace` for identifiers such as run IDs and file paths.
+Set `font` to `serif`, `sans-serif`, or `monospace`. Omit it to use the theme’s default.
 
-Omit `font` to use the theme's choice. The Antithesis theme uses serif for
-levels 1–3 and sans serif for levels 4–6. Other themes use sans serif throughout.
-Changing `font` preserves the heading's size and line height.
+```tsx title="Demo.tsx" excerpt
+import '@antadesign/anta/bundle.css'
+import { Title } from '@antadesign/anta/bundle'
 
-```tsx
-<Title level={2}>Recent runs</Title>
-<Title level={2} font="sans-serif">Run 4821: 12 failures</Title>
-<Title level={2} font="monospace">checkout-service/run_4821</Title>
+export default function Demo() {
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <Title level={2}>Recent runs</Title>
+      <Title level={2} font="sans-serif">Run 4821: 12 failures</Title>
+      <Title level={2} font="monospace">checkout-service/run_4821</Title>
+    </div>
+  )
+}
 ```
-
-Each typeface covers all six levels.
-
-```tsx
-<Title level={1} font="serif">Serif 1</Title>
-<Title level={1} font="sans-serif">Sans serif 1</Title>
-<Title level={1} font="monospace">Monospace 1</Title>
-```
-
-A string `header` on a [Card](./card.md) renders a sans-serif title at every card
-size.
-
-## Inline content
-
-Pass icons and inline elements as children. Icons are optically aligned with
-the title text.
-
-```tsx
-<Title level={3}>
-  <Icon shape="book-open" /> Saved items{' '}
-  <span style={{ color: 'var(--text-1-brand)' }}>(3)</span>
-</Title>
-```
-
-Use a span for a small inline accent. Don't nest `<Text>` or `<a-text>` inside a
-title: they are block containers, while heading content should remain inline.
 
 ## Truncation
 
-Pass `truncate` for a single-line ellipsis or a positive number to clamp to that
-many lines. When the title is clipped, JSX `Title` shows its full text in a
-tooltip. A nested `<Tooltip>` overrides that automatic tooltip.
+Use `truncate` for one line or pass a number to limit the lines. Hover over a clipped title to read the full text.
 
-```tsx
-<Title truncate style={{ maxWidth: '320px' }}>
-  A long workspace heading that stays on one line in a compact layout
-</Title>
-```
+```tsx title="Demo.tsx" excerpt
+import '@antadesign/anta/bundle.css'
+import { Title } from '@antadesign/anta/bundle'
 
-Use a number for multi-line titles.
-
-```tsx
-<Title truncate={2}>A long heading clamped after its second line</Title>
+export default function Demo() {
+  return (
+    <div style={{ display: 'grid', gap: 16, maxWidth: 320 }}>
+      <Title truncate>
+        A long workspace heading that stays on one line in a compact layout
+      </Title>
+      <Title truncate={2}>
+        A long workspace heading that wraps onto a second line before it gets cut off
+      </Title>
+    </div>
+  )
+}
 ```
 
 ## Level reference
@@ -84,48 +79,52 @@ Use a number for multi-line titles.
 
 ## Tone × priority
 
-Use `priority` to choose emphasis, from `primary` through `quaternary`.
-Use `tone` for a named color or a custom CSS color. Omit it for neutral text.
-The examples compare every named tone at `level={3}`.
+Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
 
+```tsx title="Demo.tsx" excerpt
+import '@antadesign/anta/bundle.css'
+import { Title } from '@antadesign/anta/bundle'
 
-    Neutral primary
-    Secondary
-    Tertiary
-    Quaternary
+const tones = [
+  ['Neutral', undefined],
+  ['Brand', 'brand'],
+  ['Success', 'success'],
+  ['Critical', 'critical'],
+  ['Warning', 'warning'],
+  ['Info', 'info'],
+] as const
 
-    Brand primary
-    Secondary
-    Tertiary
-    Quaternary
+const priorities = [
+  ['Primary', 'primary'],
+  ['Secondary', 'secondary'],
+  ['Tertiary', 'tertiary'],
+  ['Quaternary', 'quaternary'],
+] as const
 
-    Success primary
-    Secondary
-    Tertiary
-    Quaternary
-
-    Critical primary
-    Secondary
-    Tertiary
-    Quaternary
-
-    Warning primary
-    Secondary
-    Tertiary
-    Quaternary
-
-    Info primary
-    Secondary
-    Tertiary
-    Quaternary
-
-
-## Accessibility
-
-Title exposes `role="heading"` and an `aria-level` matching `level`. Choose
-levels that follow the page's heading hierarchy. When your integration requires
-native HTML headings, use `<h1>`–`<h6>` with Anta's reset for the same type scale
-and document margins.
+export default function Demo() {
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, max-content)',
+        gap: '8px 20px',
+        alignItems: 'baseline',
+      }}>
+        {tones.map(([label, tone]) => (
+          <div key={label} style={{ display: 'contents' }}>
+            <strong>{label}</strong>
+            {priorities.map(([name, priority]) => (
+              <Title key={priority} level={3} tone={tone} priority={priority}>
+                {name}
+              </Title>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
 
 ## Component props
 
@@ -139,33 +138,48 @@ and document margins.
 
 ## Web Component
 
-Use `<a-title>` directly outside JSX. Set both `role="heading"` and
-`aria-level` to describe its place in the heading hierarchy.
+In plain HTML, set `role="heading"` and match `aria-level` to `level`. This example uses Vite to load the stylesheet.
 
-```html
-<a-title level="2" tone="brand" role="heading" aria-level="2">
-  Release notes
-</a-title>
+```html title="index.html" excerpt
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Anta Title demo</title>
+    <script type="module">
+      import '@antadesign/anta/bundle.css'
+    </script>
+  </head>
+  <body>
+    <a-title level="2" tone="brand" role="heading" aria-level="2">
+      Release notes
+    </a-title>
+  </body>
+</html>
 ```
 
 ## Styling
 
-Start with `priority` and `tone` for emphasis and color:
+Use your own CSS class to override the heading’s typography.
 
-```tsx
-<Title priority="secondary">Supporting heading</Title>
-<Title tone="#0d9488">Custom-tone heading</Title>
-```
+```tsx title="Demo.tsx" excerpt
+import '@antadesign/anta/bundle.css'
+import { Title } from '@antadesign/anta/bundle'
 
-Target `a-title` with ordinary CSS to adjust its typography. The
-`.release-heading` class scopes this example. Replace it with your own selector.
-
-```css
-a-title.release-heading {
-  font-size: 18px;
-  line-height: 24px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+export default function Demo() {
+  return (
+    <>
+      <Title className="release-heading" level={3}>Release notes</Title>
+      <style>{`
+        a-title.release-heading {
+          font-size: 18px;
+          line-height: 24px;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+        }
+      `}</style>
+    </>
+  )
 }
 ```
 

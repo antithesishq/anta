@@ -276,25 +276,6 @@ hr:not(:where(a-tooltip *)),
   border-top-right-radius: 0;
 }
 
-/* Tone × priority demo on the Title docs page. Scrolls horizontally
-   when the columns don't fit; titles inside the grid drop their
-   per-level margins so cell heights are uniform. */
-.title-tone-grid {
-  overflow-x: auto;
-  overflow-y: hidden;
-  margin: 0 0 1em;
-}
-.title-tone-grid-inner {
-  display: grid;
-  grid-template-columns: repeat(4, max-content);
-  column-gap: 32px;
-  row-gap: 8px;
-  min-width: max-content;
-}
-.title-tone-grid a-title {
-  margin: 0;
-}
-
 /* Anta styles code; the site adds the copy affordance below. */
 
 /* Font, size, line-height, weight and padding are set via Expressive Code's
@@ -633,6 +614,42 @@ hr:not(:where(a-tooltip *)),
     transition: none;
   }
 }
+
+/* Keep an excerpt and its copy button visible when the full source is folded. */
+.content .expressive-code .frame[data-code-excerpt] {
+  grid-template-rows: var(--fold-header-h) auto auto;
+  background: var(--bg-pane);
+}
+.content .expressive-code .frame[data-code-excerpt] > .header {
+  cursor: default;
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+.content .expressive-code .frame[data-code-excerpt] > .header::before {
+  display: none;
+}
+.content .expressive-code .frame[data-code-excerpt][data-folded] > pre {
+  max-block-size: 7.5rem;
+  mask-image: linear-gradient(black 55%, transparent);
+}
+.content .expressive-code .frame[data-code-excerpt] .copy,
+.content .expressive-code .frame[data-code-excerpt][data-folded] .copy,
+.content .expressive-code .frame[data-code-excerpt] .copy button {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.content .expressive-code [data-code-toggle] {
+  padding: 0.45rem 1rem;
+  border: 0;
+  background: var(--bg-pane);
+  color: var(--text-2-brand);
+  cursor: pointer;
+}
+.content .expressive-code [data-code-toggle]:hover {
+  text-decoration: underline;
+}
+
 
 /* Replace expressive-code's "Copied!" tooltip with an icon swap: on a
    successful copy our script (DocsLayout) sets [data-anta-copied] on the

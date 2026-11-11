@@ -9,7 +9,7 @@ export interface TitleProps extends BaseProps {
   /** Sets the title’s emphasis. See [Colors](/colors/#text).
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
-  /** Selects a text palette. Pass a CSS color to create a custom tone. See [Colors](/colors/#text) for named palettes.
+  /** Selects a text palette. Pass a CSS color to create a custom tone. See [Tone × priority](#tone--priority).
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Typeface. Serif names the page and its parts; sans serif names objects on

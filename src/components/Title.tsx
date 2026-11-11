@@ -12,11 +12,7 @@ export interface TitleProps extends BaseProps {
   /** Selects a text palette. Pass a CSS color to create a custom tone. See [Tone × priority](#tone--priority).
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Typeface. Serif names the page and its parts; sans serif names objects on
-   *  the page, such as cards, panels, and metrics; monospace names technical
-   *  identifiers, such as run IDs, hashes, and file paths. Omit it to let the
-   *  theme choose by level: the Antithesis theme sets levels 1–3 in serif and
-   *  4–6 in sans serif, and other themes use sans serif throughout. */
+  /** Sets the typeface. Omit it to use the theme's default. */
   font?: 'serif' | 'sans-serif' | 'monospace'
   /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
    *  single line; any integer ≥ 2 clamps to that many lines; `0` or a

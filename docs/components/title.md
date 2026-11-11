@@ -129,7 +129,7 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `font?` | 'serif' \| 'sans-serif' \| 'monospace' | — | Typeface. Serif names the page and its parts; sans serif names objects on the page, such as cards, panels, and metrics; monospace names technical identifiers, such as run IDs, hashes, and file paths. Omit it to let the theme choose by level: the Antithesis theme sets levels 1–3 in serif and 4–6 in sans serif, and other themes use sans serif throughout. |
+| `font?` | 'serif' \| 'sans-serif' \| 'monospace' | — | Sets the typeface. Omit it to use the theme's default. |
 | `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Sets the heading level and its font size. See [Level reference](#level-reference). |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Sets the title’s emphasis. See [Colors](../colors.md#text). |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. Pass a CSS color to create a custom tone. See [Tone × priority](#tone--priority). |

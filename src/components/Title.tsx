@@ -9,10 +9,7 @@ export interface TitleProps extends BaseProps {
   /** Sets the title’s emphasis. See [Colors](/colors/#text).
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
-  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
-   *  named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
-   *  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
-   *  kept while lightness/chroma are pinned per priority in oklch.
+  /** Use a named tone or a CSS color. See [Colors](/colors/#text).
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Typeface. Serif names the page and its parts; sans serif names objects on

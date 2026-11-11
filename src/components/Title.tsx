@@ -12,7 +12,9 @@ export interface TitleProps extends BaseProps {
   /** Selects a text palette. Pass a CSS color to create a custom tone. See [Tone × priority](#tone--priority).
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Sets the typeface. Omit it to use the theme's default. */
+  /** Use `serif` for page and section headings, `sans-serif` for headings in
+   *  cards and panels, or `monospace` for identifiers like run IDs.
+   *  Omit `font` to use the theme's default for the heading level. */
   font?: 'serif' | 'sans-serif' | 'monospace'
   /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
    *  single line; any integer ≥ 2 clamps to that many lines; `0` or a

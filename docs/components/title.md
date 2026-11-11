@@ -114,7 +114,7 @@ export default function Demo() {
           <div key={label} style={{ display: 'contents' }}>
             {priorities.map(([name, priority]) => (
               <Title key={priority} level={3} tone={tone} priority={priority}>
-                {label} {name}
+                {label}{' '}<br />{name}
               </Title>
             ))}
           </div>

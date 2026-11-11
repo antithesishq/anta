@@ -134,30 +134,30 @@ Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
 <Preview align="stretch">
   <div style={{ overflowX: 'auto', width: '100%' }}>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '12px 16px', minWidth: '28rem', alignItems: 'baseline' }}>
-      <Title level={3} priority="primary">Neutral Primary</Title>
-      <Title level={3} priority="secondary">Neutral Secondary</Title>
-      <Title level={3} priority="tertiary">Neutral Tertiary</Title>
-      <Title level={3} priority="quaternary">Neutral Quaternary</Title>
-      <Title level={3} tone="brand" priority="primary">Brand Primary</Title>
-      <Title level={3} tone="brand" priority="secondary">Brand Secondary</Title>
-      <Title level={3} tone="brand" priority="tertiary">Brand Tertiary</Title>
-      <Title level={3} tone="brand" priority="quaternary">Brand Quaternary</Title>
-      <Title level={3} tone="success" priority="primary">Success Primary</Title>
-      <Title level={3} tone="success" priority="secondary">Success Secondary</Title>
-      <Title level={3} tone="success" priority="tertiary">Success Tertiary</Title>
-      <Title level={3} tone="success" priority="quaternary">Success Quaternary</Title>
-      <Title level={3} tone="critical" priority="primary">Critical Primary</Title>
-      <Title level={3} tone="critical" priority="secondary">Critical Secondary</Title>
-      <Title level={3} tone="critical" priority="tertiary">Critical Tertiary</Title>
-      <Title level={3} tone="critical" priority="quaternary">Critical Quaternary</Title>
-      <Title level={3} tone="warning" priority="primary">Warning Primary</Title>
-      <Title level={3} tone="warning" priority="secondary">Warning Secondary</Title>
-      <Title level={3} tone="warning" priority="tertiary">Warning Tertiary</Title>
-      <Title level={3} tone="warning" priority="quaternary">Warning Quaternary</Title>
-      <Title level={3} tone="info" priority="primary">Info Primary</Title>
-      <Title level={3} tone="info" priority="secondary">Info Secondary</Title>
-      <Title level={3} tone="info" priority="tertiary">Info Tertiary</Title>
-      <Title level={3} tone="info" priority="quaternary">Info Quaternary</Title>
+      <Title level={3} priority="primary">Neutral{' '}<br />Primary</Title>
+      <Title level={3} priority="secondary">Neutral{' '}<br />Secondary</Title>
+      <Title level={3} priority="tertiary">Neutral{' '}<br />Tertiary</Title>
+      <Title level={3} priority="quaternary">Neutral{' '}<br />Quaternary</Title>
+      <Title level={3} tone="brand" priority="primary">Brand{' '}<br />Primary</Title>
+      <Title level={3} tone="brand" priority="secondary">Brand{' '}<br />Secondary</Title>
+      <Title level={3} tone="brand" priority="tertiary">Brand{' '}<br />Tertiary</Title>
+      <Title level={3} tone="brand" priority="quaternary">Brand{' '}<br />Quaternary</Title>
+      <Title level={3} tone="success" priority="primary">Success{' '}<br />Primary</Title>
+      <Title level={3} tone="success" priority="secondary">Success{' '}<br />Secondary</Title>
+      <Title level={3} tone="success" priority="tertiary">Success{' '}<br />Tertiary</Title>
+      <Title level={3} tone="success" priority="quaternary">Success{' '}<br />Quaternary</Title>
+      <Title level={3} tone="critical" priority="primary">Critical{' '}<br />Primary</Title>
+      <Title level={3} tone="critical" priority="secondary">Critical{' '}<br />Secondary</Title>
+      <Title level={3} tone="critical" priority="tertiary">Critical{' '}<br />Tertiary</Title>
+      <Title level={3} tone="critical" priority="quaternary">Critical{' '}<br />Quaternary</Title>
+      <Title level={3} tone="warning" priority="primary">Warning{' '}<br />Primary</Title>
+      <Title level={3} tone="warning" priority="secondary">Warning{' '}<br />Secondary</Title>
+      <Title level={3} tone="warning" priority="tertiary">Warning{' '}<br />Tertiary</Title>
+      <Title level={3} tone="warning" priority="quaternary">Warning{' '}<br />Quaternary</Title>
+      <Title level={3} tone="info" priority="primary">Info{' '}<br />Primary</Title>
+      <Title level={3} tone="info" priority="secondary">Info{' '}<br />Secondary</Title>
+      <Title level={3} tone="info" priority="tertiary">Info{' '}<br />Tertiary</Title>
+      <Title level={3} tone="info" priority="quaternary">Info{' '}<br />Quaternary</Title>
     </div>
   </div>
 </Preview>
@@ -196,7 +196,7 @@ export default function Demo() {
           <div key={label} style={{ display: 'contents' }}>
             {priorities.map(([name, priority]) => (
               <Title key={priority} level={3} tone={tone} priority={priority}>
-                {label} {name}
+                {label}{' '}<br />{name}
               </Title>
             ))}
           </div>

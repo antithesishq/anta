@@ -1,7 +1,7 @@
 # Title
 
 Use `Title` for headings and set their rank with `level`. For native headings, use
-`<h1>`–`<h6>` with Anta’s reset.
+`<h1>`–`<h6>` with Anta’s CSS reset.
 
 ## Levels
 

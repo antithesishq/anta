@@ -652,8 +652,9 @@ hr:not(:where(a-tooltip *)),
   padding-inline: 0.5rem;
   border: 0;
   background: transparent;
-  color: var(--text-2);
-  font-size: 0.8125rem;
+  color: var(--text-4);
+  font: inherit;
+  font-weight: 450;
   cursor: pointer;
 }
 .content .expressive-code [data-code-toggle]:focus-visible {
@@ -670,7 +671,7 @@ hr:not(:where(a-tooltip *)),
   transform: rotate(180deg);
 }
 .content .expressive-code [data-code-toggle]:hover {
-  background: var(--bg-3);
+  color: var(--text-2);
 }
 
 

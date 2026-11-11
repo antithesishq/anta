@@ -617,7 +617,7 @@ hr:not(:where(a-tooltip *)),
 
 /* Keep an excerpt and its copy button visible when the full source is folded. */
 .content .expressive-code .frame[data-code-excerpt] {
-  grid-template-rows: var(--fold-header-h) auto;
+  grid-template-rows: var(--fold-header-h) auto auto;
   background: var(--bg-pane);
 }
 .content .expressive-code .frame[data-code-excerpt] > .header {
@@ -643,16 +643,12 @@ hr:not(:where(a-tooltip *)),
 .content .expressive-code [data-code-toggle] {
   display: inline-flex;
   align-items: center;
-  grid-area: 1 / 1;
-  justify-self: end;
-  align-self: stretch;
-  z-index: 1;
+  justify-self: center;
   gap: 0.4rem;
-  margin-inline-end: var(--fold-header-h);
-  padding-inline: 0.5rem;
+  padding: 0.45rem 0.75rem;
   border: 0;
   background: transparent;
-  color: var(--text-4);
+  color: var(--text-1-info);
   font: inherit;
   font-weight: 450;
   cursor: pointer;
@@ -671,7 +667,7 @@ hr:not(:where(a-tooltip *)),
   transform: rotate(180deg);
 }
 .content .expressive-code [data-code-toggle]:hover {
-  color: var(--text-2);
+  background: var(--bg-3);
 }
 
 

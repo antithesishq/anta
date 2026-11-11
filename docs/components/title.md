@@ -3,8 +3,8 @@
 Use Title for page, section, and component headings. Choose a `level`,
 then adjust its emphasis with `priority` and `tone`.
 
-Title has no margins. Use the parent's `gap` or padding to space it within a
-layout. For native HTML heading elements, use `<h1>`–`<h6>` with Anta's reset.
+Title has no margins. For native HTML heading elements, use `<h1>`–`<h6>` with
+Anta's reset.
 
 ## Levels
 

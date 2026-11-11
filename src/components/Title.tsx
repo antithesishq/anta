@@ -3,9 +3,7 @@ import { lineClamp, neutralToneAttr, toneStyle } from "../anta_helpers"
 import { Tooltip } from "./Tooltip"
 
 export interface TitleProps extends BaseProps {
-  /** Heading level, 1–6. Sets the type scale and the
-   *  `aria-level` exposed to assistive technology
-   *  (h1 is typically reserved for the page title).
+  /** Sets the heading level and its font size. See [Level reference](#level-reference).
    *  @defaultValue 2 */
   level?: 1 | 2 | 3 | 4 | 5 | 6
   /** Visual priority. Maps to text-1..text-4 (`primary` = text-1).

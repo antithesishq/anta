@@ -88,8 +88,9 @@ Star baseline: `main` at `35d696ea0ce` (2026-11-03).
 24. **Thumbs stay inside their scrollbars** (bug fix). Star lays the thumb out over the list's full height, but the
     vertical bar is inset 1px at each end and the thumb's 2px padding is added outside its computed size, so at the end
     of the list the thumb's fill runs 4px past the bar and its rounded end is cut off. The horizontal thumb does the
-    same at the far right. The port measures both bars and lays thumbs, marks, and pointer input out on the track inside
-    the padding. Thumbs are also fully rounded, and marks have 1px rounded ends; Star's thumbs have 2px corners.
+    same at the far right. The port measures both bars and counts the padding inside the thumb's length, so the thumb
+    never leaves its bar and the shortest one, a bar width long, has a round fill; Star's shortest fill is 4px longer
+    than it is wide. Thumbs are also fully rounded, and marks have 1px rounded ends; Star's thumbs have 2px corners.
     The horizontal bar sits 1px inside the edges like the vertical one, so it no longer covers the list's outline
     along the bottom and left, as Star's does.
 25. **The vertical scrollbar disappears when there is nothing to scroll**, and its column goes with it: rows and the

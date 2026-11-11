@@ -277,6 +277,46 @@ test('the user scrolling away stops the reveal from snapping back', async t => {
   assert.deepEqual(await topRow(page), away)
 })
 
+test('the wheel scrolls the list over either scrollbar, not the page', async t => {
+  const page = await pageFor(t, { wide: true })
+  const center = selector => shadow(page, selector, `(r => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 }))(el.getBoundingClientRect())`)
+  const scrollX = () => shadow(page, '.viewport', `parseFloat(el.style.getPropertyValue('--virtual-scroll-x')) || 0`)
+  await page.evaluate(() => {
+    window.prevented = []
+    // Read defaultPrevented after dispatch finishes, so every listener has run.
+    window.addEventListener('wheel', event => setTimeout(() => window.prevented.push(event.defaultPrevented)), { capture: true, passive: true })
+  })
+
+  const vbar = await center('.bar.v')
+  await page.mouse.move(vbar.x, vbar.y)
+  const before = (await topRow(page)).index
+  await page.mouse.wheel(0, 900)
+  await settle(page, 300)
+  assert.ok((await topRow(page)).index > before, 'rows moved under the vertical scrollbar')
+
+  const hbar = await center('.bar.h')
+  await page.mouse.move(hbar.x, hbar.y)
+  await page.mouse.wheel(300, 0)
+  await settle(page)
+  const x = await scrollX()
+  assert.ok(x > 0, `scrolled ${x}px across under the horizontal scrollbar`)
+  await page.keyboard.down('Shift')
+  await page.mouse.wheel(0, 300)
+  await page.keyboard.up('Shift')
+  await settle(page)
+  assert.ok(await scrollX() > x, 'Shift + wheel scrolls across under the horizontal scrollbar')
+  assert.deepEqual(await page.evaluate(() => window.prevented), [true, true, true], 'the page never got the wheel')
+})
+
+test('the shortest thumb is round, one scrollbar width long', async t => {
+  // 100,000 rows put the vertical thumb at its minimum length.
+  const page = await pageFor(t)
+  const fill = await shadow(page, '.bar.v .thumb-fill', `(r => ({ width: r.width, height: r.height }))(el.getBoundingClientRect())`)
+  const thumb = await shadow(page, '.bar.v .thumb', `el.getBoundingClientRect().height`)
+  assert.ok(Math.abs(fill.width - fill.height) < 0.5, `fill is ${fill.width}x${fill.height}`)
+  assert.ok(Math.abs(thumb - 16) < 0.5, `thumb is ${thumb}px long, the scrollbar is 16px wide`)
+})
+
 test('horizontal scrolling keeps pinned cells in place and reveals a column clear of them', async t => {
   const page = await pageFor(t, { wide: true })
   const pinnedLeft = () => page.evaluate(() => window.list.querySelector('.pinned').getBoundingClientRect().left - window.list.getBoundingClientRect().left)

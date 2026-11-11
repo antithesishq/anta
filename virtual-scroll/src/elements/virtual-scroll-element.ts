@@ -20,7 +20,7 @@ const SETTLE_MS = 150
 const PAGE_THROTTLE_MS = 60
 const PAGE_REPEAT_MS = 200
 const REVEAL_X_BUFFER = 16
-// The thumb's padding (shadow style `.thumb`), which frames its fill inside the bar.
+// The thumb's padding (shadow style `.thumb`), which frames its fill inside the bar. Marks keep the same inset.
 const THUMB_PADDING = 2
 const KEY_STEP = 60
 // Notched mouse wheels glide instead of jumping: each frame applies this time constant's share of the
@@ -183,7 +183,9 @@ const SHADOW_STYLE = `
     background: var(--virtual-scroll-track-hover-bg);
     box-shadow: var(--virtual-scroll-track-hover-shadow);
   }
+  /* The padding counts toward the thumb's length, so the shortest thumb, one bar width, has a round fill. */
   .thumb {
+    box-sizing: border-box;
     position: absolute;
     display: flex;
     align-items: stretch;
@@ -491,13 +493,16 @@ export class AVirtualScrollElement extends HTMLElementBase {
     shadow.append(style, this.#sizer, this.#viewport, this.#vbar, this.#hbar, div('ring'))
 
     this.#rowsSlot.addEventListener('slotchange', () => this.#onSlotChange())
-    this.#viewport.addEventListener('wheelinput', event => this.#onWheel((event as CustomEvent<CaptureWheelInput>).detail))
+    // The scrollbars take the same wheel input as the rows, so the page never scrolls under them.
+    for (const surface of [this.#viewport, this.#vbar, this.#hbar]) {
+      surface.addEventListener('wheelinput', event => this.#onWheel((event as CustomEvent<CaptureWheelInput>).detail))
+      surface.addEventListener('wheel', event => this.#onShiftWheel(event), { passive: false })
+    }
     this.#viewport.addEventListener('paninput', event => this.#onPan((event as CustomEvent<CapturePanInput>).detail))
     this.#vbar.addEventListener('pointerinput', event => this.#onVerticalBar((event as CustomEvent<CapturePointerInput>).detail))
     this.#hbar.addEventListener('pointerinput', event => this.#onHorizontalBar((event as CustomEvent<CapturePointerInput>).detail))
     this.#vbar.setAttribute('pointer-capture', 'mouse pen touch')
     this.#hbar.setAttribute('pointer-capture', 'mouse pen touch')
-    this.#viewport.addEventListener('wheel', event => this.#onShiftWheel(event), { passive: false })
     this.#viewport.setAttribute('pan-inertia', '')
     // Capture phase on the target runs before listeners a consumer added first,
     // including ones that stop immediate propagation. Keys pressed inside a row
@@ -620,16 +625,14 @@ export class AVirtualScrollElement extends HTMLElementBase {
     return this.#hostHeight > 0 && Math.abs(this.#hostHeight - this.#measuredSize) > 0.5
   }
 
-  // Thumb geometry runs on a track the thumb's padded box fits inside, so the thumb
-  // never reaches past either end of its bar. Pointer and drawing coordinates are
-  // offset by the padding to match. Before the bars are measured, their CSS insets
-  // give the length: the vertical bar is inset 1px at each end.
+  // Thumb geometry runs on the bar's full length. Before the bars are measured, their
+  // CSS insets give the length: the vertical bar is inset 1px at each end.
   #verticalTrack(config: VirtualScrollConfig): number {
-    return (this.#vbarLength || config.heightPx + this.#headerHeight - 2) - 2 * THUMB_PADDING
+    return this.#vbarLength || config.heightPx + this.#headerHeight - 2
   }
 
   #horizontalTrack(config: VirtualScrollConfig): number {
-    return (this.#hbarLength || config.rowsWidth) - 2 * THUMB_PADDING
+    return this.#hbarLength || config.rowsWidth
   }
 
   /** Measured heights, or every row at the minimum height when `item-height-fixed` is set. */
@@ -866,7 +869,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
 
   /** Redraws one mark layer when its positions change; returns the positions' key. */
   #drawMarks(layer: HTMLDivElement, attribute: string, lastKey: string, state: VirtualScrollState, config: VirtualScrollConfig): string {
-    const positions = markPositions(config, state, this.#rowHeights(config), numberList(this.getAttribute(attribute)), this.#verticalTrack(config))
+    const positions = markPositions(config, state, this.#rowHeights(config), numberList(this.getAttribute(attribute)), this.#verticalTrack(config) - 2 * THUMB_PADDING)
     const key = positions.join(';')
     if (key === lastKey) return key
     const doc = this.doc
@@ -894,7 +897,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
     this.#vbar.hidden = !showV
     if (showV) {
       const thumb = verticalThumb(state, config, this.#rowHeights(config), this.#verticalTrack(config))
-      this.#vTrackStart.style.height = `${thumb.top + THUMB_PADDING + config.scrollbarWidth / 2}px`
+      this.#vTrackStart.style.height = `${thumb.top + config.scrollbarWidth / 2}px`
       this.#vThumb.style.top = `${thumb.top}px`
       this.#vThumb.style.height = `${thumb.height}px`
       this.#vThumb.style.minHeight = `${config.scrollbarWidth}px`
@@ -905,7 +908,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
     this.#hbar.hidden = !showH
     if (showH) {
       const thumb = horizontalThumb(state, config, this.#horizontalTrack(config))
-      this.#hTrackStart.style.width = `${thumb.left + THUMB_PADDING + config.scrollbarWidth / 2}px`
+      this.#hTrackStart.style.width = `${thumb.left + config.scrollbarWidth / 2}px`
       this.#hThumb.style.left = `${thumb.left}px`
       this.#hThumb.style.width = `${thumb.width}px`
       this.#hThumb.style.minWidth = `${config.scrollbarWidth}px`
@@ -938,17 +941,18 @@ export class AVirtualScrollElement extends HTMLElementBase {
     const vertical = !state.small && config.count > 0
     const horizontal = showHorizontalScrollbar(config)
     const directions = [vertical ? 'up down' : '', horizontal ? 'left right' : ''].filter(Boolean).join(' ')
-    const viewport = this.#viewport
     const activation = this.getAttribute('wheel-activation') ?? 'hover'
     // a-capture re-reads its options when one of these attributes changes, so write only changes.
-    const set = (name: string, value: string | null) => {
-      if (viewport.getAttribute(name) === value) return
-      if (value === null) viewport.removeAttribute(name)
-      else viewport.setAttribute(name, value)
+    const set = (surface: HTMLElement, name: string, value: string | null) => {
+      if (surface.getAttribute(name) === value) return
+      if (value === null) surface.removeAttribute(name)
+      else surface.setAttribute(name, value)
     }
-    set('wheel-capture', directions || null)
-    set('wheel-activation', activation)
-    set('pan', vertical && horizontal ? 'both' : vertical ? 'y' : horizontal ? 'x' : null)
+    for (const surface of [this.#viewport, this.#vbar, this.#hbar]) {
+      set(surface, 'wheel-capture', directions || null)
+      set(surface, 'wheel-activation', activation)
+    }
+    set(this.#viewport, 'pan', vertical && horizontal ? 'both' : vertical ? 'y' : horizontal ? 'x' : null)
     // Touch panning owns only the axes this list scrolls; the page keeps the others.
     this.#viewport.style.touchAction = vertical && horizontal ? 'none' : vertical ? 'pan-x' : horizontal ? 'pan-y' : 'auto'
   }
@@ -1278,10 +1282,10 @@ export class AVirtualScrollElement extends HTMLElementBase {
     if (detail.phase === 'start') {
       this.#userScrolled()
       const track = this.#verticalTrack(config)
-      const y = detail.localY - THUMB_PADDING
+      const y = detail.localY
       const thumb = verticalThumb(state, config, this.#rowHeights(config), track)
       const shift = detail.start.pointerEvent.shiftKey
-      if (y >= thumb.top - THUMB_PADDING && y <= thumb.top + thumb.height + THUMB_PADDING) {
+      if (y >= thumb.top && y <= thumb.top + thumb.height) {
         this.#vThumb.classList.add('dragging')
         this.#drag = { axis: 'y', startCenter: this.#verticalThumbCenter() }
         return
@@ -1352,9 +1356,9 @@ export class AVirtualScrollElement extends HTMLElementBase {
     }
     if (detail.phase === 'start') {
       const track = this.#horizontalTrack(config)
-      const x = detail.localX - THUMB_PADDING
+      const x = detail.localX
       const thumb = horizontalThumb(state, config, track)
-      if (x < thumb.left - THUMB_PADDING || x > thumb.left + thumb.width + THUMB_PADDING) {
+      if (x < thumb.left || x > thumb.left + thumb.width) {
         this.#update(scrollXTo(state, config, horizontalTrackPressTarget(config, x, track)), false)
         this.#renderNow()
       }

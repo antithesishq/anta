@@ -109,6 +109,7 @@ export default function Demo() {
     <a-text priority="secondary">
       Read the <a href="https://anta.design/colors/">color guidance</a>.
     </a-text>
+    <a-text priority="primary" tone="success">Your changes have been saved.</a-text>
   </body>
 </html>
 ```

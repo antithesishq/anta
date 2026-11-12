@@ -133,7 +133,7 @@ export default function Demo() {
 |------|------|---------|-------------|
 | `font?` | 'serif' \| 'sans-serif' \| 'monospace' | — | Selects the typeface. Serif suits page and section headings, sans serif suits headings in cards and panels, and monospace suits identifiers like run IDs. The default comes from the theme and heading level. |
 | `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Sets the heading level and its font size. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Sets the title’s emphasis. See [Colors](../colors.md#text). |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Sets the title’s emphasis. For neutral text, `primary` through `quaternary` use `--text-1` through `--text-4`. See [Colors](../colors.md#text). |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. A CSS color defines a custom tone. See [Tone × priority](#tone--priority). |
 | `truncate?` | boolean \| number | — | Adds an ellipsis when the title exceeds the line limit. `true` limits it to one line, and a positive integer sets the line count. `false` and numbers below `1` disable truncation. A clipped title shows its full text in a tooltip. A nested `<Tooltip>` replaces the default tooltip. |
 

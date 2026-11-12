@@ -1,6 +1,7 @@
 packages:
   - "stickers"
   - "plot"
+  - "virtual-scroll"
   - "typedoc-theme"
   - "site"
 

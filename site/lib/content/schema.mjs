@@ -49,6 +49,7 @@ export const standaloneSchema = z.object({
 export const COLLECTIONS = [
   { name: 'components', directory: 'src/content/components', kind: 'component' },
   { name: 'plotDocs', directory: 'src/content/packages/plot', kind: 'package', package: 'plot' },
+  { name: 'virtualScrollDocs', directory: 'src/content/packages/virtual-scroll', kind: 'package', package: 'virtual-scroll' },
   { name: 'tableDocs', directory: 'src/content/packages/table', kind: 'package', package: 'table' },
   { name: 'stickersDocs', directory: 'src/content/packages/stickers', kind: 'package', package: 'stickers' },
 ]

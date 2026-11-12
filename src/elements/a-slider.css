@@ -357,13 +357,15 @@
     a-slider::part(thumb) { transition: none; }
   }
   a-slider:defined > [slot="label"] { display: contents; }
-  a-slider:not(:state(has-header))::part(header),
-  a-slider:not(:state(has-markers))::part(markers),
-  a-slider:not(:state(has-extras))::part(extras),
-  a-slider:not(:state(has-fill))::part(fill-start),
-  a-slider:not(:state(has-fill-end))::part(fill-end),
-  a-slider:not(:state(range))::part(thumb-2),
-  a-slider:not(:state(has-thumb-value))::part(thumb-value-1),
+  /* Keep these rules separate. Lightning CSS can wrap a selector list in
+     :is(), which cannot match ::part() pseudo-elements. */
+  a-slider:not(:state(has-header))::part(header) { display: none; }
+  a-slider:not(:state(has-markers))::part(markers) { display: none; }
+  a-slider:not(:state(has-extras))::part(extras) { display: none; }
+  a-slider:not(:state(has-fill))::part(fill-start) { display: none; }
+  a-slider:not(:state(has-fill-end))::part(fill-end) { display: none; }
+  a-slider:not(:state(range))::part(thumb-2) { display: none; }
+  a-slider:not(:state(has-thumb-value))::part(thumb-value-1) { display: none; }
   a-slider:not(:state(has-thumb-value-end))::part(thumb-value-2) { display: none; }
 
   /* Native ranges retain their native form and keyboard semantics. Chromium

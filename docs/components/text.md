@@ -6,9 +6,9 @@ Text also styles any links inside it.
 ## Link behavior
 
 Links follow the surrounding text's emphasis and color. In supporting text,
-they stay muted. The explorer shows how links and inline code look at each `priority` and `tone`.
+they stay muted. The examples show how links and inline code look at each `priority` and `tone`.
 
-## Tone explorer
+## Tones
 
 ```tsx
 import '@antadesign/anta/bundle.css'
@@ -21,7 +21,7 @@ export default function Demo() {
     <>
       {priorities.map(priority => (
         <Text key={priority} tone="brand" priority={priority}>
-          The <a href="https://anta.design/install/">installation guide</a> covers <code>npm install</code>.
+          The <a href="https://anta.design/install/">installation guide</a> covers <code>npm install</code> and setup.
         </Text>
       ))}
     </>

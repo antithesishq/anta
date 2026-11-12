@@ -144,7 +144,7 @@ export default function Demo() {
 
 ## Web Component
 
-In plain HTML, `role="heading"` identifies `<a-title>` as a heading, and `aria-level` gives it the same rank as `level`. This example uses Vite to load the stylesheet.
+In plain HTML, `role="heading"` identifies `<a-title>` as a heading, and `aria-level` gives it the same rank as `level`. The stylesheet loads from jsDelivr.
 
 ```html
 <!doctype html>
@@ -152,9 +152,7 @@ In plain HTML, `role="heading"` identifies `<a-title>` as a heading, and `aria-l
   <head>
     <meta charset="utf-8" />
     <title>Anta Title demo</title>
-    <script type="module">
-      import '@antadesign/anta/bundle.css'
-    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css" />
   </head>
   <body>
     <a-title level="2" tone="brand" role="heading" aria-level="2">

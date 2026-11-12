@@ -9,58 +9,36 @@ import { Tooltip } from "./Tooltip"
 export type ExpandMode =
   | { expandable?: never; expandableInert?: never; collapsible?: never }
   | {
-      /** Show a fade and expansion control when truncated text overflows.
-       *  Select the control or focus it and press Enter or Space to reveal all
-       *  content. Expansion is one-way: the control hides once expanded.
-       *  Add `collapsible` to allow refolding. Requires `truncate`; disables the
-       *  automatic tooltip. The control comes first in Tab order. By default,
-       *  folded text stays selectable and its links remain focusable and clickable.
-       *  Single-line text fades at the inline end with an inline-end target;
-       *  multiline text fades over its last line with a full-width target.
-       *  Folded content clips without scrolling or extra padding, and expansion
-       *  preserves its width. */
+      /** Shows a fade and a **Show more** control when truncated text overflows.
+       *  Requires `truncate` and replaces the automatic tooltip. */
       expandable: boolean
-      /** Make the entire folded, overflowing preview an expand target.
-       *  JSX applies `inert` to its content, blocking focus, clicks, and text
-       *  selection and removing it from the accessibility tree until expanded.
-       *  Fitting text stays interactive, as does server-rendered content before
-       *  browser measurement. Requires `expandable`. */
+      /** Makes the whole clipped preview an expansion target. Links and text
+       *  selection become available after expansion. Requires `expandable`. */
       expandableInert?: boolean
-      /** Allow refolding after expansion. The control stays visible, rotates
-       *  its chevron, and switches between "Show more" and "Show less".
-       *  Requires `expandable`. The expanded collapse target spans the full
-       *  width over 16px of bottom padding; removing that padding with custom
-       *  CSS allows it to overlap content. */
+      /** Keeps the control visible after expansion so readers can collapse
+       *  the text again. Requires `expandable`. */
       collapsible?: boolean
     }
 
 export type TextProps = BaseProps & {
-  /** Text emphasis, from `primary` (`--text-1`, strongest) to `quaternary`
-   *  (`--text-4`). `secondary` uses `--text-2`; `tertiary` uses `--text-3`.
-   *  Neutral primary/secondary links use `--link-color` and `--link-color-hover`.
-   *  Tertiary/quaternary links inherit the text color, with `--text-2` and
-   *  `--text-3` respectively on hover.
+  /** Controls text emphasis, from `primary` (strongest) to `quaternary`.
+   *  See [Tones](#tones) for examples.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
-  /** Color tint. `neutral` uses `--text-{N}`; named tones use
-   *  `--text-{N}-{tone}`. A CSS color such as `rebeccapurple` keeps its hue,
-   *  with lightness and chroma set per priority in oklch. With named tones,
-   *  links inherit the text color and hover uses the next-stronger tone level;
-   *  at `primary`, hover changes only the underline.
+  /** Selects a text palette. A CSS color defines a custom tone.
+   *  See [Tones](#tones) for examples.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Font size / line height in pixels: `small` = 13/16, `medium` = 15/20,
-   *  `large` = 17/24.
+  /** Sets font size and line height: `small` 13/16 px, `medium` 15/20 px,
+   *  and `large` 17/24 px.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
-  /** Render as inline-block instead of the default block element. */
+  /** Lets Text sit within a line as an inline block. */
   inline?: boolean
-  /** Clamp with a trailing ellipsis: `true` or `1` selects one line, integers
-   *  ≥ 2 select that many lines, and `0` or negative values disable truncation.
-   *  Clipped, non-expandable Text shows its content in an automatic tooltip.
-   *  Nest `<Tooltip>` to replace it or an empty tooltip to suppress it.
-   *  Uses CSS `-webkit-line-clamp` in `display: -webkit-box`, with `min-width: 0`
-   *  for flex and grid layouts. */
+  /** Adds an ellipsis at the line limit. `true` limits text to one line,
+   *  a positive integer sets the line count, and `false` or numbers below `1`
+   *  disable truncation. Clipped text shows a tooltip when expansion is off.
+   *  A nested `<Tooltip>` replaces it, and an empty tooltip suppresses it. */
   truncate?: boolean | number
 } & ExpandMode
 

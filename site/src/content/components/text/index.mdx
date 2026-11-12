@@ -66,43 +66,61 @@ export default function Demo() {
 <Columns>
 <Col>
 
-Use `truncate` to keep long text compact. Pass a number to choose how many lines
-to show. Readers can hover over shortened text to read the full content in a tooltip.
+`truncate` limits text to one line with `true` or to a specific line count with a number.
+Clipped text shows its full content in a tooltip on hover.
 
 <TruncateDemo client:load />
 
 ```tsx folded
-{/* Single line */}
-<Text truncate>{longSentence}</Text>
+import '@antadesign/anta/bundle.css'
+import { Text } from '@antadesign/anta/bundle'
 
-{/* Multi-line: pass the line count */}
-<Text truncate={2}>{longSentence}</Text>
-<Text truncate={3}>{longSentence}</Text>
+const longText = 'The quick brown fox jumps over the lazy dog repeatedly while the morning sun rises over a sleepy town that nobody has visited in years and years.'
+
+export default function Demo() {
+  return (
+    <div style={{ maxWidth: 320, display: 'grid', gap: 12 }}>
+      <Text truncate>{longText}</Text>
+      <Text truncate={2}>{longText}</Text>
+      <Text truncate={3}>{longText}</Text>
+    </div>
+  )
+}
 ```
 
 </Col>
 <Col>
 
-Add `expandable` to let readers reveal long text when they need it. The **Show more**
-icon button appears only when the text does not fit. Add `collapsible` to let them fold it again.
+`expandable` shows a **Show more** control when the text overflows.
+`collapsible` lets readers fold the text again.
 
 <ExpandableDemo client:load />
 
 ```tsx folded
-{/* One-way: the chevron is hidden once expanded */}
-<Text truncate expandable>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
-<Text truncate={3} expandable>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+import '@antadesign/anta/bundle.css'
+import { Text } from '@antadesign/anta/bundle'
 
-{/* Two-way: the reader can collapse it back */}
-<Text truncate={3} expandable collapsible>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+const longText = 'The quick brown fox jumps over the lazy dog repeatedly while the morning sun rises over a sleepy town that nobody has visited in years and years.'
 
-{/* Make the folded preview a single expansion target */}
-<Text truncate={3} expandable collapsible expandableInert>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+const content = (
+  <>
+    {longText} <a href="https://anta.design/text/#link-behavior">Link guidance</a>.
+  </>
+)
+
+export default function Demo() {
+  return (
+    <div style={{ maxWidth: 320, display: 'grid', gap: 12 }}>
+      <Text truncate expandable>{content}</Text>
+      <Text truncate={3} expandable>{content}</Text>
+      <Text truncate={3} expandable collapsible>{content}</Text>
+      <Text truncate={3} expandable collapsible expandableInert>{content}</Text>
+    </div>
+  )
+}
 ```
 
-Use `expandableInert` when readers should expand the text before following its
-links. Selecting anywhere in the folded preview expands it; its links become
-available after expansion.
+`expandableInert` makes the whole folded preview an expansion target. Links become available after expansion.
 
 </Col>
 </Columns>
@@ -115,22 +133,31 @@ available after expansion.
 
 <Disclosure title="Web Component">
 
-Use `<a-text>` directly for text priority and tone.
+`<a-text>` supports priority and tone in plain HTML. The stylesheet handles basic text styling.
 
 <Preview>
   <a-text priority="secondary">Read the <a href="/colors/">color guidance</a>.</a-text>
 </Preview>
 
-```html
-<a-text priority="secondary">
-  Read the <a href="/colors/">color guidance</a>.
-</a-text>
+```html folded
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Anta Text</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+  </head>
+  <body>
+    <a-text priority="secondary">
+      Read the <a href="https://anta.design/colors/">color guidance</a>.
+    </a-text>
+  </body>
+</html>
 ```
 
 ### Use a tooltip with the web component
 
-Raw Text has no automatic tooltip. Nest `<a-tooltip truncated-only>` with the
-full text:
+A nested `<a-tooltip truncated-only>` shows the full text on hover when the text is clipped.
 
 <Preview>
   <a-text truncate="1" style={{ maxWidth: '260px', cursor: 'help' }}>
@@ -141,81 +168,104 @@ full text:
   </a-text>
 </Preview>
 
-```html
-<a-text truncate="1" style="max-width: 260px; cursor: help">
-  A long status message that is clipped until you hover it.
-  <a-tooltip truncated-only>
-    A long status message that is clipped until you hover it.
-  </a-tooltip>
-</a-text>
+```html folded
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Text tooltip</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+    <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
+  </head>
+  <body>
+    <a-text truncate="1" style="max-width: 260px; cursor: help">
+      A long status message that is clipped until you hover it.
+      <a-tooltip truncated-only>
+        A long status message that is clipped until you hover it.
+      </a-tooltip>
+    </a-text>
+  </body>
+</html>
 ```
 
-Read `a-text.isTruncated` on the UI thread to check whether the clamp hides content.
-This read-only layout measurement does not change markup or accessibility.
+The read-only `isTruncated` property reports whether the text is clipped.
 
 ### Expand raw HTML
 
-Place a direct `a-button` before `a-text-content` to put expansion first in Tab
-order. No application toggle handler is needed. Load both entries alongside your
-shared tokens and styles:
+The expansion control comes before `<a-text-content>` in the markup and in Tab order.
+Anta handles expansion and supplies the button labels. An explicit `aria-expanded`
+overrides Anta’s value and needs to stay in sync with the button.
 
-```ts
-import '@antadesign/anta/elements/a-text'
-import '@antadesign/anta/elements/a-button'
+```html folded
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Expandable text</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+    <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
+  </head>
+  <body>
+    <a-text truncate="1" expandable collapsible style="max-width: 260px">
+      <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+      <a-text-content>The project settings apply to every workspace in the organization. Changes take effect the next time a workspace opens.</a-text-content>
+    </a-text>
+  </body>
+</html>
 ```
 
-```html
-<a-text truncate="1" expandable collapsible>
-  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
-  <a-text-content>A long description that needs more than one line.</a-text-content>
-</a-text>
-```
+For multiple lines, `--line-clamp` sets the line limit.
 
-Expansion and accessible button labels work automatically. Your attributes and
-children stay unchanged. Explicit button ARIA overrides the defaults;
-synchronize any authored `aria-expanded` yourself.
-
-Migrate flat expandable raw markup to these two children. JSX supplies them for
-you; plain Text needs no content wrapper.
-
-For multiline raw Text, set `--line-clamp` in your stylesheet. JSX sets the line
-count through the `truncate` prop:
-
-```html
-<a-text class="summary" truncate="3" expandable collapsible>
-  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
-  <a-text-content>A longer description to show across three lines.</a-text-content>
-</a-text>
-```
-
-```css
-a-text.summary { --line-clamp: 3; }
+```html folded
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Expandable multiline text</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+    <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
+    <style>.summary { max-width: 260px; --line-clamp: 3; }</style>
+  </head>
+  <body>
+    <a-text class="summary" truncate="3" expandable collapsible>
+      <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+      <a-text-content>The project settings apply to every workspace in the organization. Changes take effect the next time a workspace opens. The project settings apply to every workspace in the organization. Changes take effect the next time a workspace opens.</a-text-content>
+    </a-text>
+  </body>
+</html>
 ```
 
 ### Make folded content inert
 
-Raw authors manage `inert` on `a-text-content`. Add `expandable-inert` for a
-full-preview expand target, and update `inert` from `textpresentationchange`:
+`expandable-inert` makes the whole folded preview an expansion target. In plain HTML,
+the `textpresentationchange` event reports when to make the folded content inert.
+The event also gives late listeners the current state.
 
-```html
-<a-text id="summary" truncate="1" expandable collapsible expandable-inert>
-  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
-  <a-text-content>A long description with <a href="/text/">a link</a>.</a-text-content>
-</a-text>
+```html folded
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Expandable text with an inert preview</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+    <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
+  </head>
+  <body>
+    <a-text id="summary" truncate="1" expandable collapsible expandable-inert style="max-width: 260px">
+      <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+      <a-text-content>The project settings apply to every workspace in the organization. Changes take effect the next time a workspace opens. <a href="https://anta.design/text/">Text docs</a>.</a-text-content>
+    </a-text>
+    <script type="module">
+      const text = document.querySelector('#summary')
+      const content = text.querySelector('a-text-content')
+
+      text.addEventListener('textpresentationchange', ({ detail }) => {
+        content.inert = detail.overflowing && !detail.expanded
+      })
+    </script>
+  </body>
+</html>
 ```
-
-```js
-const text = document.querySelector('#summary')
-const content = text.querySelector(':scope > a-text-content')
-text.addEventListener('textpresentationchange', ({ detail }) => {
-  content.inert = detail.overflowing && !detail.expanded
-})
-```
-
-This non-bubbling notification reports `{ expanded, overflowing }` after
-measurement or expansion. Late listeners receive the current snapshot
-asynchronously. `overflowing` describes the folded preview, retained while
-expanded. The element leaves `inert` to you.
 
 </Disclosure>
 

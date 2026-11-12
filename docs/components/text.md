@@ -21,7 +21,7 @@ export default function Demo() {
     <>
       {priorities.map(priority => (
         <Text key={priority} tone="brand" priority={priority}>
-          For <code>npm install</code> steps, see the <a href="https://anta.design/install/">setup guide</a>.
+          For <code>npm install</code> steps, see the <a href="https://anta.design/install/">full setup guide</a>.
         </Text>
       ))}
     </>

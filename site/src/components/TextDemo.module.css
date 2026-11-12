@@ -27,6 +27,10 @@
 }
 
 @media (max-width: 550px) {
+  .explorer {
+    padding-inline: 8px;
+  }
+
   .sample {
     grid-template-columns: 1fr;
   }

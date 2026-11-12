@@ -25,7 +25,7 @@ export default function TextDemo() {
             <dt><code>{priority}</code></dt>
             <dd>
               <Text tone={tone} priority={priority}>
-                The <a href="#link-behavior">link behavior section</a> shows how links look alongside commands like <code>npm install</code>.
+                The <a href="#link-behavior">link behavior section</a> shows links next to code like <code>npm install</code>.
               </Text>
             </dd>
           </div>

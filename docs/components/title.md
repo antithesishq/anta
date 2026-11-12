@@ -7,7 +7,6 @@
 `level` sets the heading’s rank and font size. It defaults to `2`.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
 export default function Demo() {
@@ -29,7 +28,6 @@ export default function Demo() {
 `tone` selects the text palette, and `priority` selects a shade within it. The default tone is `neutral`.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
 const tones = [
@@ -78,7 +76,6 @@ export default function Demo() {
 Inline elements inside `Title` flow with the text without forcing a line break.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Icon, Title } from '@antadesign/anta/bundle'
 
 export default function Demo() {
@@ -96,7 +93,6 @@ export default function Demo() {
 `truncate` limits the title to one line when set to `true`. A positive integer sets the line limit. A clipped title shows its full text in a tooltip on hover.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
 export default function Demo() {
@@ -118,7 +114,6 @@ export default function Demo() {
 `font` selects `serif`, `sans-serif`, or `monospace`. By default, the theme chooses the typeface for each heading level.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
 export default function Demo() {
@@ -167,7 +162,6 @@ In plain HTML, `role="heading"` identifies `<a-title>` as a heading, and `aria-l
 A CSS class can override the heading’s typography.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
 export default function Demo() {

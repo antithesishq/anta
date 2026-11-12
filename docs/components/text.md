@@ -1,7 +1,6 @@
 # Text
 
-`Text` is for paragraphs and descriptions under headings.
-Text also styles any links inside it.
+`Text` is for paragraphs.
 
 ## Link behavior
 

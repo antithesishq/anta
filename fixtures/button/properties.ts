@@ -9,9 +9,17 @@ const button = extract(state => {
   const target = state.document.getElementById(counter.id)!
   return {
     ...counter,
-    blocked: target.hasAttribute('disabled') || target.hasAttribute('loading'),
+    renderedDisabled: target.hasAttribute('disabled'),
+    renderedLoading: target.hasAttribute('loading'),
+    blocked: counter.requestedDisabled || counter.requestedLoading,
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
   }
+})
+
+export const buttonBlockingPropsMatchDOM = always(() => {
+  const current = button.current
+  return !current || (current.requestedDisabled === current.renderedDisabled
+    && current.requestedLoading === current.renderedLoading)
 })
 
 export const buttonDisabledOrLoadingDoesNotActivate = always(() => {

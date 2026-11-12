@@ -16,7 +16,7 @@ const select = extract(state => {
     ...record,
     display: trigger.value,
     label: button.querySelector('[part="input-label"]')!.textContent,
-    disabled: trigger.hasAttribute('disabled'),
+    renderedDisabled: trigger.hasAttribute('disabled'),
     open: menu.isOpen,
     expanded: button.getAttribute('aria-expanded') === 'true',
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
@@ -28,6 +28,12 @@ const select = extract(state => {
     })),
     clear: rect ? { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom } : null,
   }
+})
+
+export const selectDisabledPropMatchesDOM = always(() => {
+  const current = select.current
+  return !current || (current.requestedDisabled === current.renderedDisabled
+    && current.options.every(option => option.disabled === (current.disabledOptions.includes(option.value))))
 })
 
 export const selectSelectionMatchesDisplay = always(() => {
@@ -42,7 +48,7 @@ export const selectSelectionMatchesDisplay = always(() => {
 
 export const selectDisabledPreservesValue = always(() => {
   const before = select.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = select.current
     return after?.id !== before.id || after.value === before.value
@@ -59,14 +65,14 @@ export const selectOptionClickChoosesValue = always(() => {
     const option = before.options.find(option => option.testId === testId)
     if (!option) return true
     const after = select.current!
-    if (before.disabled || before.modalOpen || option.disabled) return after.value === before.value
+    if (before.requestedDisabled || before.modalOpen || before.disabledOptions.includes(option.value)) return after.value === before.value
     return after.value === option.value && !after.open
   })
 })
 
 export const selectClearResetsValue = always(() => {
   const before = select.current
-  if (!before?.clear || before.disabled || before.modalOpen) return true
+  if (!before?.clear || before.requestedDisabled || before.modalOpen) return true
   return next(() => {
     const action = lastAction.current
     if (!action || typeof action !== 'object' || !('Click' in action)) return true

@@ -13,13 +13,15 @@ const calendar = extract(state => {
     ...record,
     attributeValue: grid.getAttribute('state'),
     elementValue: grid.value,
-    disabled: grid.hasAttribute('disabled'),
+    renderedDisabled: grid.hasAttribute('disabled'),
     month: root.querySelector('[data-part="heading"]')!.textContent,
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
     days: Array.from(grid.querySelectorAll('[data-part="day-cell"]'), day => {
       const rect = day.getBoundingClientRect()
+      const date = day.getAttribute('data-date')!
       return {
-        date: day.getAttribute('data-date')!,
+        date,
+        expectedDisabled: record.requestedDisabled || date < record.min || date > record.max,
         selected: day.hasAttribute('selected'),
         disabled: day.hasAttribute('disabled'),
         hittable: day.contains(state.document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)),
@@ -29,9 +31,15 @@ const calendar = extract(state => {
   }
 })
 
+export const calendarDisabledPropMatchesDOM = always(() => {
+  const current = calendar.current
+  return !current || (current.requestedDisabled === current.renderedDisabled
+    && current.days.every(day => day.disabled === day.expectedDisabled))
+})
+
 export const calendarDisabledPreservesVisibleMonth = always(() => {
   const before = calendar.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = calendar.current
     return after?.id !== before.id || after.month === before.month
@@ -46,12 +54,12 @@ export const calendarSelectionMatchesState = always(() => {
 
 export const calendarSelectionStaysInRange = always(() => {
   const current = calendar.current
-  return !current || (current.value >= '2026-06-05' && current.value <= '2026-08-25')
+  return !current || (current.value >= current.min && current.value <= current.max)
 })
 
 export const calendarDisabledDoesNotChange = always(() => {
   const before = calendar.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = calendar.current
     return after?.id !== before.id
@@ -71,7 +79,7 @@ export const calendarDayClickSelectsOnce = always(() => {
     const { x, y } = action.Click.point
     const day = before.days.find(day => x >= day.left && x <= day.right && y >= day.top && y <= day.bottom)
     if (!day || !day.hittable) return true
-    const changes = !before.disabled && !before.modalOpen && !day.disabled && day.date !== before.value ? 1 : 0
+    const changes = !before.modalOpen && !day.expectedDisabled && day.date !== before.value ? 1 : 0
     return after.value === (changes ? day.date : before.value)
       && after.changes === before.changes + changes
   })
@@ -102,9 +110,17 @@ const inputDate = extract(state => {
   const [year, month, day] = record.value.split('-')
   return {
     ...record,
+    renderedDisabled: host.hasAttribute('disabled'),
+    nativeDisabled: control.disabled,
     text: control.value,
     expectedText: !record.value ? '' : (record.locale === 'en-US' ? [month, day, year] : [day, month, year]).join('/'),
   }
+})
+
+export const inputDateDisabledPropMatchesDOM = always(() => {
+  const current = inputDate.current
+  return !current || (current.requestedDisabled === current.renderedDisabled
+    && current.renderedDisabled === current.nativeDisabled)
 })
 
 export const inputDateLocalePreservesDisplayAndValue = always(() => {

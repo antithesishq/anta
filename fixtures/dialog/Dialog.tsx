@@ -3,7 +3,7 @@ import { Dialog as AntaDialog, Button } from '@antadesign/anta'
 
 declare global {
   interface Window {
-    __antaDialog?: { id: string; open: boolean; closable: boolean }
+    __antaDialog?: { id: string; open: boolean; closable: boolean; requestedPersistent: boolean }
   }
 }
 
@@ -12,13 +12,14 @@ export function Dialog({ id, persistent = false, closable = true }: {
 }) {
   const [open, setOpen] = useState(false)
   useLayoutEffect(() => {
-    window.__antaDialog = { id, open: false, closable }
+    window.__antaDialog = { id, open: false, closable, requestedPersistent: persistent }
     return () => { delete window.__antaDialog }
   }, [id])
 
   useLayoutEffect(() => {
     window.__antaDialog!.closable = closable
-  }, [closable])
+    window.__antaDialog!.requestedPersistent = persistent
+  }, [id, closable, persistent])
 
   function updateOpen(next: boolean) {
     window.__antaDialog!.open = next

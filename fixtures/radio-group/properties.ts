@@ -11,7 +11,7 @@ const radio = extract(state => {
   const group = state.document.getElementById(record.id)! as ARadioGroupElement
   return {
     ...record,
-    disabled: group.hasAttribute('disabled'),
+    renderedDisabled: group.hasAttribute('disabled'),
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
     focused: group.contains(state.document.activeElement) ? state.document.activeElement!.getAttribute('value') : null,
     groupValue: group.value,
@@ -24,14 +24,20 @@ const radio = extract(state => {
   }
 })
 
+export const radioDisabledPropMatchesDOM = always(() => {
+  const current = radio.current
+  return !current || (current.requestedDisabled === current.renderedDisabled
+    && current.options.every(option => option.disabled === (current.disabledOptions.includes(option.value))))
+})
+
 export const radioKeyboardFollowsFocus = always(() => {
   const before = radio.current
-  if (!before?.focused || before.disabled || before.modalOpen) return true
+  if (!before?.focused || before.requestedDisabled || before.modalOpen) return true
   return next(() => {
     const action = lastAction.current
     const after = radio.current
     if (!after || after.id !== before.id || !action || typeof action !== 'object' || !('PressKey' in action)) return true
-    const enabled = before.options.filter(option => !option.disabled)
+    const enabled = before.options.filter(option => !before.disabledOptions.includes(option.value))
     const index = enabled.findIndex(option => option.value === before.focused)
     if (index < 0) return true
     const key = action.PressKey.code
@@ -54,7 +60,7 @@ export const radioSelectionMatchesState = always(() => {
 
 export const radioDisabledDoesNotChange = always(() => {
   const before = radio.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = radio.current
     return after?.id !== before.id
@@ -76,7 +82,7 @@ export const radioActionsChangeOnlyTheirSelection = always(() => {
       ? (action.Click.fingerprint as typeof action.Click.fingerprint & { test_id: string | null }).test_id
       : null
     const picked = before.options.find(option => option.testId === testId)
-    const changes = picked && !before.modalOpen && !before.disabled && !picked.disabled && picked.value !== before.value ? 1 : 0
+    const changes = picked && !before.modalOpen && !before.requestedDisabled && !before.disabledOptions.includes(picked.value) && picked.value !== before.value ? 1 : 0
     return after.value === (changes ? picked!.value : before.value)
       && after.changes === before.changes + changes
   })

@@ -3,7 +3,7 @@ import { Checkbox as AntaCheckbox, type CheckboxValue } from '@antadesign/anta'
 
 declare global {
   interface Window {
-    __antaCheckbox?: { id: string; value: CheckboxValue; changes: number }
+    __antaCheckbox?: { id: string; value: CheckboxValue; changes: number; requestedDisabled: boolean }
   }
 }
 
@@ -17,9 +17,13 @@ export function Checkbox({ id, defaultChecked = false, disabled = false }: Check
   const [checked, setChecked] = useState<CheckboxValue>(defaultChecked)
 
   useLayoutEffect(() => {
-    window.__antaCheckbox = { id, value: defaultChecked, changes: 0 }
+    window.__antaCheckbox = { id, value: defaultChecked, changes: 0, requestedDisabled: disabled }
     return () => { delete window.__antaCheckbox }
   }, [id])
+
+  useLayoutEffect(() => {
+    window.__antaCheckbox!.requestedDisabled = disabled
+  }, [id, disabled])
 
   return <AntaCheckbox name={id}
       id={id}

@@ -10,10 +10,15 @@ const control = extract(state => {
   const target = state.document.getElementById(record.id)! as ASwitchElement
   return {
     ...record,
-    disabled: target.hasAttribute('disabled'),
+    renderedDisabled: target.hasAttribute('disabled'),
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
     renderedValue: target.checked,
   }
+})
+
+export const switchDisabledPropMatchesDOM = always(() => {
+  const current = control.current
+  return !current || current.requestedDisabled === current.renderedDisabled
 })
 
 export const switchDOMMatchesState = always(() => {
@@ -23,7 +28,7 @@ export const switchDOMMatchesState = always(() => {
 
 export const switchDisabledDoesNotChange = always(() => {
   const before = control.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = control.current
     return after?.id !== before.id
@@ -40,7 +45,7 @@ export const switchActionsChangeOnlyItsValue = always(() => {
     const action = lastAction.current
     if (!action || typeof action !== 'object') return true
     if (!('Click' in action || 'ScrollUp' in action || 'ScrollDown' in action || 'Custom' in action)) return true
-    const toggles = 'Click' in action && action.Click.fingerprint.id === before.id && !before.disabled && !before.modalOpen
+    const toggles = 'Click' in action && action.Click.fingerprint.id === before.id && !before.requestedDisabled && !before.modalOpen
     return after.changes === before.changes + (toggles ? 1 : 0)
       && after.value === (toggles ? !before.value : before.value)
   })

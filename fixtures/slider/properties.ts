@@ -15,7 +15,7 @@ const slider = extract(state => {
     min: Number(target.getAttribute('min')),
     max: Number(target.getAttribute('max')),
     step: Number(target.getAttribute('step')),
-    disabled: target.hasAttribute('disabled'),
+    renderedDisabled: target.hasAttribute('disabled'),
     dragging: target.shadowRoot!.querySelector('[part~="control"]')!.hasAttribute('data-dragging'),
     focused: state.document.activeElement === target,
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
@@ -24,9 +24,14 @@ const slider = extract(state => {
   }
 })
 
+export const sliderDisabledPropMatchesDOM = always(() => {
+  const current = slider.current
+  return !current || current.requestedDisabled === current.renderedDisabled
+})
+
 export const sliderEnabledDragChangesValue = always(() => {
   const before = slider.current
-  if (!before || before.disabled || before.modalOpen || !before.thumbHittable) return true
+  if (!before || before.requestedDisabled || before.modalOpen || !before.thumbHittable) return true
   return next(() => {
     const action = lastAction.current
     const after = slider.current
@@ -53,7 +58,7 @@ export const sliderStateMatchesDOM = always(() => {
 
 export const sliderDisabledDoesNotChange = always(() => {
   const before = slider.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = slider.current
     return after?.id !== before.id
@@ -63,7 +68,7 @@ export const sliderDisabledDoesNotChange = always(() => {
 
 export const sliderDisabledEndsDrag = always(() => {
   const current = slider.current
-  return !current || !current.disabled || !current.dragging
+  return !current || !current.requestedDisabled || !current.dragging
 })
 
 export const sliderUnrelatedActionsPreserveValue = always(() => {
@@ -82,7 +87,7 @@ export const sliderUnrelatedActionsPreserveValue = always(() => {
 
 export const sliderKeyboardChangesValue = always(() => {
   const before = slider.current
-  if (!before || !before.focused || before.disabled || before.modalOpen) return true
+  if (!before || !before.focused || before.requestedDisabled || before.modalOpen) return true
   return next(() => {
     const action = lastAction.current
     if (!action || typeof action !== 'object' || !('PressKey' in action)) return true

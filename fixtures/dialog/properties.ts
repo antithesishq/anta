@@ -18,7 +18,7 @@ const dialog = extract(state => {
     ...record,
     state: host.getAttribute('state'),
     nativeOpen: native.open,
-    persistent: host.hasAttribute('persistent'),
+    renderedPersistent: host.hasAttribute('persistent'),
     close: close ? rect(close) : null,
     done: rect(host.querySelector('[slot="footer"] a-button')!),
     bounds: rect(native),
@@ -34,6 +34,11 @@ export const dialogOpenStatesAgree = always(() => {
   return !current || (current.state === (current.open ? 'open' : 'closed') && current.nativeOpen === current.open)
 })
 
+export const dialogPersistentPropMatchesDOM = always(() => {
+  const current = dialog.current
+  return !current || current.requestedPersistent === current.renderedPersistent
+})
+
 export const dialogDismissalFollowsPersistent = always(() => {
   const before = dialog.current
   if (!before?.open) return true
@@ -44,7 +49,7 @@ export const dialogDismissalFollowsPersistent = always(() => {
     if (!action || typeof action !== 'object') return true
     const escape = 'PressKey' in action && action.PressKey.code === 27
     const backdrop = 'Click' in action && !contains(before.bounds, action.Click.point)
-    return !(escape || backdrop) || after.open === before.persistent
+    return !(escape || backdrop) || after.open === before.requestedPersistent
   })
 })
 

@@ -11,10 +11,15 @@ const checkbox = extract(state => {
   }
   return {
     ...record,
-    disabled: target.hasAttribute('disabled'),
+    renderedDisabled: target.hasAttribute('disabled'),
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
     renderedValue: target.indeterminate ? 'indeterminate' : target.checked,
   }
+})
+
+export const checkboxDisabledPropMatchesDOM = always(() => {
+  const current = checkbox.current
+  return !current || current.requestedDisabled === current.renderedDisabled
 })
 
 export const checkboxDOMMatchesState = always(() => {
@@ -24,7 +29,7 @@ export const checkboxDOMMatchesState = always(() => {
 
 export const checkboxDisabledDoesNotChange = always(() => {
   const before = checkbox.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = checkbox.current
     return after?.id !== before.id
@@ -41,7 +46,7 @@ export const checkboxActionsChangeOnlyItsValue = always(() => {
     const action = lastAction.current
     if (!action || typeof action !== 'object') return true
     if (!('Click' in action || 'ScrollUp' in action || 'ScrollDown' in action || 'Custom' in action)) return true
-    const toggles = 'Click' in action && action.Click.fingerprint.id === before.id && !before.disabled && !before.modalOpen
+    const toggles = 'Click' in action && action.Click.fingerprint.id === before.id && !before.requestedDisabled && !before.modalOpen
     return after.changes === before.changes + (toggles ? 1 : 0)
       && after.value === (toggles ? before.value !== true : before.value)
   })

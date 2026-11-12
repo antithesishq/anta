@@ -11,7 +11,7 @@ const tabs = extract(state => {
     ...record,
     attributeValue: strip.getAttribute('state'),
     elementValue: strip.value,
-    disabled: strip.hasAttribute('disabled'),
+    renderedDisabled: strip.hasAttribute('disabled'),
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
     focused: strip.contains(state.document.activeElement)
       ? state.document.activeElement!.getAttribute('value') : null,
@@ -26,6 +26,12 @@ const tabs = extract(state => {
   }
 })
 
+export const tabsDisabledPropMatchesDOM = always(() => {
+  const current = tabs.current
+  return !current || (current.requestedDisabled === current.renderedDisabled
+    && current.options.every(option => option.disabled === (current.requestedDisabled || current.disabledOptions.includes(option.value))))
+})
+
 export const tabsSelectionMatchesState = always(() => {
   const current = tabs.current
   if (!current) return true
@@ -37,7 +43,7 @@ export const tabsSelectionMatchesState = always(() => {
 
 export const tabsDisabledDoesNotChange = always(() => {
   const before = tabs.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = tabs.current
     return after?.id !== before.id
@@ -58,11 +64,11 @@ export const tabsActionsChangeOnlyTheirSelection = always(() => {
       // Bombadil 0.7.10 uses snake_case in recorded fingerprints.
       const testId = (action.Click.fingerprint as typeof action.Click.fingerprint & { test_id: string | null }).test_id
       const picked = before.options.find(tab => tab.testId === testId)
-      if (picked && !picked.disabled && !before.disabled && !before.modalOpen) expected = picked.value
+      if (picked && !before.disabledOptions.includes(picked.value) && !before.requestedDisabled && !before.modalOpen) expected = picked.value
     } else if ('PressKey' in action) {
       if (!before.focused) return true
-      if (!before.disabled && !before.modalOpen) {
-        const enabled = before.options.filter(tab => !tab.disabled)
+      if (!before.requestedDisabled && !before.modalOpen) {
+        const enabled = before.options.filter(tab => !before.disabledOptions.includes(tab.value))
         const index = enabled.findIndex(tab => tab.value === before.focused)
         switch (action.PressKey.code) {
           case 37: expected = enabled[(index - 1 + enabled.length) % enabled.length].value; break

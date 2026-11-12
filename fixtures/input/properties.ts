@@ -14,7 +14,7 @@ const input = extract(state => {
     ...record,
     elementValue: host.value,
     nativeValue: control.value,
-    blocked: host.hasAttribute('disabled') || host.hasAttribute('readonly'),
+    blocked: record.requestedDisabled || record.requestedReadOnly,
     disabled: host.hasAttribute('disabled'),
     readOnly: host.hasAttribute('readonly'),
     nativeDisabled: control.disabled,
@@ -29,7 +29,8 @@ const input = extract(state => {
 
 export const inputBlockingPropsMatchNativeControl = always(() => {
   const current = input.current
-  return !current || (current.disabled === current.nativeDisabled && current.readOnly === current.nativeReadOnly)
+  return !current || (current.requestedDisabled === current.disabled && current.disabled === current.nativeDisabled
+    && current.requestedReadOnly === current.readOnly && current.readOnly === current.nativeReadOnly)
 })
 
 export const inputValuesAgree = always(() => {

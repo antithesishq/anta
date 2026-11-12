@@ -15,11 +15,16 @@ const expander = extract(state => {
     state: host.getAttribute('state'),
     expanded: summary.getAttribute('aria-expanded') === 'true',
     inert: region.inert,
-    disabled: host.hasAttribute('disabled'),
+    renderedDisabled: host.hasAttribute('disabled'),
     focused: state.document.activeElement === host && host.shadowRoot!.activeElement === summary,
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
     summary: { left, right, top, bottom },
   }
+})
+
+export const expanderDisabledPropMatchesDOM = always(() => {
+  const current = expander.current
+  return !current || current.requestedDisabled === current.renderedDisabled
 })
 
 export const expanderOpenStatesAgree = always(() => {
@@ -30,7 +35,7 @@ export const expanderOpenStatesAgree = always(() => {
 
 export const expanderDisabledPreservesState = always(() => {
   const before = expander.current
-  if (!before?.disabled) return true
+  if (!before?.requestedDisabled) return true
   return next(() => {
     const after = expander.current
     return after?.id !== before.id || (after.open === before.open && after.changes === before.changes)
@@ -39,7 +44,7 @@ export const expanderDisabledPreservesState = always(() => {
 
 export const expanderActivationToggles = always(() => {
   const before = expander.current
-  if (!before || before.disabled || before.modalOpen) return true
+  if (!before || before.requestedDisabled || before.modalOpen) return true
   return next(() => {
     const after = expander.current
     if (after?.id !== before.id) return true

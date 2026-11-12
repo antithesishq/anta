@@ -1,5 +1,6 @@
 import { actions, extract, registerCustomAction, weighted } from '@antithesishq/bombadil/browser'
 import { clicks, inputs, scroll } from '@antithesishq/bombadil/browser/defaults/actions'
+import { checkboxKeyboard } from './checkbox/actions.ts'
 import { sliderDrag, sliderKeyboard } from './slider/actions.ts'
 import { radioKeyboard } from './radio-group/actions.ts'
 import { tabsKeyboard } from './tabs/actions.ts'
@@ -33,6 +34,7 @@ const choices = weighted([
   [10, clicks],
   [3, inputs],
   [3, scroll],
+  [3, checkboxKeyboard],
   [3, sliderKeyboard],
   [3, sliderDrag],
   [3, radioKeyboard],

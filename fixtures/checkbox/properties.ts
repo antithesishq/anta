@@ -11,6 +11,7 @@ const checkbox = extract(state => {
   }
   return {
     ...record,
+    focused: state.document.activeElement === target,
     renderedDisabled: target.hasAttribute('disabled'),
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
     renderedValue: target.indeterminate ? 'indeterminate' : target.checked,
@@ -45,8 +46,12 @@ export const checkboxActionsChangeOnlyItsValue = always(() => {
     if (after?.id !== before.id) return true
     const action = lastAction.current
     if (!action || typeof action !== 'object') return true
-    if (!('Click' in action || 'ScrollUp' in action || 'ScrollDown' in action || 'Custom' in action)) return true
-    const toggles = 'Click' in action && action.Click.fingerprint.id === before.id && !before.requestedDisabled && !before.modalOpen
+    if (!('Click' in action || 'PressKey' in action || 'ScrollUp' in action
+      || 'ScrollDown' in action || 'Custom' in action)) return true
+    if ('PressKey' in action && action.PressKey.code === 9 && before.requestedDisabled && after.focused) return false
+    const clicked = 'Click' in action && action.Click.fingerprint.id === before.id
+    const pressedSpace = 'PressKey' in action && action.PressKey.code === 32 && before.focused
+    const toggles = (clicked || pressedSpace) && !before.requestedDisabled && !before.modalOpen
     return after.changes === before.changes + (toggles ? 1 : 0)
       && after.value === (toggles ? before.value !== true : before.value)
   })

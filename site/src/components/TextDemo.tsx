@@ -25,7 +25,7 @@ export default function TextDemo() {
             <dt><code>{priority}</code></dt>
             <dd>
               <Text tone={tone} priority={priority}>
-                The <a href="/install/">installation guide</a> covers <code>npm install</code> and setup.
+                For <code>npm install</code> steps, see the <a href="/install/">setup guide</a>.
               </Text>
             </dd>
           </div>

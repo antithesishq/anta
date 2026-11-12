@@ -24,17 +24,6 @@ export default function Demo() {
 }
 ```
 
-## Level reference
-
-| level | font-size | line-height |
-|------:|----------:|------------:|
-| 1     | 28px      | 32px        |
-| 2     | 24px      | 28px        |
-| 3     | 20px      | 24px        |
-| 4     | 17px      | 22px        |
-| 5     | 15px      | 20px        |
-| 6     | 13px      | 16px        |
-
 ## Tone × priority
 
 Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
@@ -130,7 +119,7 @@ export default function Demo() {
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `font?` | 'serif' \| 'sans-serif' \| 'monospace' | — | Use `serif` for page and section headings, `sans-serif` for headings in cards and panels, or `monospace` for identifiers like run IDs. Omit `font` to use the theme's default for the heading level. |
-| `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Sets the heading level and its font size. See [Level reference](#level-reference). |
+| `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Sets the heading level and its font size. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Sets the title’s emphasis. See [Colors](../colors.md#text). |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. Pass a CSS color to create a custom tone. See [Tone × priority](#tone--priority). |
 | `truncate?` | boolean \| number | — | Adds an ellipsis when the title exceeds the line limit. Use `true` for one line or a positive integer for the line count. Use `false` or `0` to disable truncation. Clipped titles show their full text in a tooltip. Nest a `<Tooltip>` to customize it. |

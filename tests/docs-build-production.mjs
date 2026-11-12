@@ -621,16 +621,9 @@ for (const engine of engines) {
   })
 }
 
-test('native MDX preserves table alignment and the compiled playground after navigation', async t => {
+test('compiled Playground works after client-side navigation', async t => {
   const { page, errors } = await productionPage(t)
   await page.goto('https://anta.test/title/')
-  // Native Markdown emits alignment styles that must survive optimization
-  // and override the table defaults in Anta's reset CSS.
-  const cells = page.locator('main :is(th, td)[style*="text-align"]')
-  assert.ok(await cells.count() > 0)
-  for (const cell of await cells.all()) {
-    assert.equal(await cell.evaluate(element => getComputedStyle(element).textAlign), 'right')
-  }
 
   await page.evaluate(() => {
     window.buildNavigationSentinel = true

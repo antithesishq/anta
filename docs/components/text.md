@@ -6,8 +6,7 @@ Text also styles any links inside it.
 ## Link behavior
 
 Links follow the surrounding text's emphasis and color. In supporting text,
-they stay muted; hover makes them easier to identify. The examples show how
-links look at each priority and tone.
+they stay muted. The examples show how links look at each priority and tone.
 
 ## Demo
 

@@ -6,8 +6,7 @@ export interface TitleProps extends BaseProps {
   /** Sets the heading level and its font size.
    *  @defaultValue 2 */
   level?: 1 | 2 | 3 | 4 | 5 | 6
-  /** Sets the title’s emphasis. For neutral text, `primary` through
-   *  `quaternary` use `--text-1` through `--text-4`. See [Colors](/colors/#text).
+  /** Neutral emphasis uses `--text-1` through `--text-4`. See [Colors](/colors/#text).
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Selects a text palette. A CSS color defines a custom tone. See [Tone × priority](#tone--priority).

@@ -75,7 +75,7 @@ export default function Demo() {
 
 ## Truncation
 
-Use `truncate` for one line or pass a number to limit the lines. Hover over a clipped title to see the full text in a tooltip.
+Use `truncate` for one line or pass a number to limit the lines. A clipped title shows its full text in a tooltip on hover.
 
 ```tsx
 import '@antadesign/anta/bundle.css'

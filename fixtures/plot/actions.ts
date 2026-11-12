@@ -53,3 +53,26 @@ export const plotViewportSizes = actions(() => [
   { SetViewport: { width: 800, height: 700 } },
   { SetViewport: { width: 1280, height: 900 } },
 ])
+
+const plotMenu = extract(state => {
+  const record = state.window.__antaPlot
+  if (!record?.zoomPan || state.document.querySelector('a-dialog[state="open"]')) return null
+  const root = state.document.getElementById(record.id)!
+  const anchor = root.querySelector('.plot-menu-anchor')
+  const capture = root.querySelector('a-capture')
+  const menu = root.querySelector('a-menu') as (HTMLElement & { isOpen: boolean }) | null
+  if (!anchor || !menu || !capture?.checkVisibility()) return null
+  return { open: menu.isOpen, anchorFocused: state.document.activeElement === anchor }
+})
+
+const focusPlotMenu = registerCustomAction('focusPlotMenu', async (document, window) => {
+  document.getElementById(window.__antaPlot!.id)!
+    .querySelector<HTMLElement>('.plot-menu-anchor')!.focus()
+})
+
+export const plotKeyboard = actions(() => {
+  const current = plotMenu.current
+  if (!current) return []
+  if (current.open) return [{ PressKey: { code: 27 } }]
+  return current.anchorFocused ? [{ PressKey: { code: 93 } }] : [focusPlotMenu()]
+})

@@ -14,6 +14,10 @@ const select = extract(state => {
   const rect = clear?.checkVisibility() ? clear.getBoundingClientRect() : null
   return {
     ...record,
+    triggerFocused: trigger.shadowRoot!.activeElement === button,
+    menuFocused: menu.contains(state.document.activeElement),
+    focusedOption: menu.contains(state.document.activeElement)
+      ? state.document.activeElement?.getAttribute('data-testid') ?? null : null,
     display: trigger.value,
     label: button.querySelector('[part="input-label"]')!.textContent,
     renderedDisabled: trigger.hasAttribute('disabled'),
@@ -99,5 +103,29 @@ export const selectBrowsingPreservesValue = always(() => {
       if (rect && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) return true
     } else if (!('ScrollUp' in action || 'ScrollDown' in action || 'Custom' in action)) return true
     return after.value === before.value
+  })
+})
+
+export const selectKeyboardOpensNavigatesAndSelects = always(() => {
+  const before = select.current
+  if (!before || before.requestedDisabled || before.modalOpen) return true
+  return next(() => {
+    const after = select.current
+    const action = lastAction.current
+    if (after?.id !== before.id || !action || typeof action !== 'object' || !('PressKey' in action)) return true
+    const key = action.PressKey.code
+    if (!before.open && before.triggerFocused && (key === 38 || key === 40)) {
+      return after.open && !!after.focusedOption && after.value === before.value
+    }
+    if (!before.open || !before.menuFocused) return true
+    if (key === 36) {
+      const first = before.options.find(option => !before.disabledOptions.includes(option.value))
+      return after.open && after.focusedOption === first?.testId && after.value === before.value
+    }
+    const option = before.options.find(option => option.testId === before.focusedOption)
+    if ((key === 13 || key === 32) && option && !before.disabledOptions.includes(option.value)) {
+      return !after.open && after.value === option.value
+    }
+    return true
   })
 })

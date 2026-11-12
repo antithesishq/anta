@@ -9,6 +9,7 @@ const button = extract(state => {
   const target = state.document.getElementById(counter.id)!
   return {
     ...counter,
+    focused: state.document.activeElement === target,
     renderedDisabled: target.hasAttribute('disabled'),
     renderedLoading: target.hasAttribute('loading'),
     blocked: counter.requestedDisabled || counter.requestedLoading,
@@ -39,8 +40,10 @@ export const buttonActionsChangeOnlyItsCounter = always(() => {
     if (after?.id !== before.id) return true
     const action = lastAction.current
     if (!action || typeof action !== 'object') return true
-    if (!('Click' in action || 'ScrollUp' in action || 'ScrollDown' in action || 'Custom' in action)) return true
-    const activates = 'Click' in action && action.Click.fingerprint.id === before.id && !before.blocked && !before.modalOpen
+    if (!('Click' in action || 'PressKey' in action || 'ScrollUp' in action || 'ScrollDown' in action || 'Custom' in action)) return true
+    const clicked = 'Click' in action && action.Click.fingerprint.id === before.id
+    const pressedActivationKey = 'PressKey' in action && before.focused && (action.PressKey.code === 13 || action.PressKey.code === 32)
+    const activates = (clicked || pressedActivationKey) && !before.blocked && !before.modalOpen
     return after.activations === before.activations + (activates ? 1 : 0)
   })
 })

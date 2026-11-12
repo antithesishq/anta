@@ -1,6 +1,6 @@
 import { actions, extract, registerCustomAction, weighted } from '@antithesishq/bombadil/browser'
 import { noResourceLeak } from '@antithesishq/bombadil/browser/extras/resources'
-import { plotActions, plotViewportSizes } from './actions.ts'
+import { plotActions, plotKeyboard, plotViewportSizes } from './actions.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export * from './properties.ts'
@@ -15,5 +15,5 @@ const revision = extract(state => state.document.querySelector('[data-app-fixtur
 const advance = registerCustomAction('advanceAppFixture', async (_document, window) => {
   window.dispatchEvent(new Event('fixture:advance'))
 })
-const choices = weighted([[6, plotActions], [2, actions(() => [advance()])], [1, plotViewportSizes]])
+const choices = weighted([[6, plotActions], [2, plotKeyboard], [2, actions(() => [advance()])], [1, plotViewportSizes]])
 export const interactions = actions(() => revision.current === null ? ['Wait'] : choices.generate())

@@ -1,4 +1,4 @@
-import { actions, extract, getFingerprint } from '@antithesishq/bombadil/browser'
+import { actions, extract, getFingerprint, registerCustomAction } from '@antithesishq/bombadil/browser'
 import type {} from './Select'
 
 const options = extract(state => {
@@ -16,3 +16,30 @@ const options = extract(state => {
 })
 
 export const selectOptions = actions(() => options.current.map(option => ({ Click: option })))
+
+const keyboardTarget = extract(state => {
+  const record = state.window.__antaSelect
+  if (!record || record.requestedDisabled || state.document.querySelector('a-dialog[state="open"]')) return null
+  const root = state.document.getElementById(record.id)!
+  const trigger = root.querySelector('a-input')!
+  const menu = root.querySelector('a-menu')! as HTMLElement & { isOpen: boolean }
+  return {
+    open: menu.isOpen,
+    triggerFocused: state.document.activeElement === trigger,
+    optionFocused: menu.contains(state.document.activeElement) && state.document.activeElement!.hasAttribute('data-testid'),
+  }
+})
+
+const focusSelect = registerCustomAction('focusSelect', async (document, window) => {
+  document.getElementById(window.__antaSelect!.id)!
+    .querySelector('a-input')!.shadowRoot!.querySelector('button')!.focus()
+})
+
+export const selectKeyboard = actions(() => {
+  const current = keyboardTarget.current
+  if (!current) return []
+  if (current.open) {
+    return (current.optionFocused ? [36, 13, 27] : [36, 27]).map(code => ({ PressKey: { code } }))
+  }
+  return current.triggerFocused ? [{ PressKey: { code: 40 } }] : [focusSelect()]
+})

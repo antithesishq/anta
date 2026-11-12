@@ -8,6 +8,8 @@ const plot = extract(state => {
   const lateCallback = state.window.__antaPlotLateCallback ?? null
   if (!record) return { current: null, lateCallback }
   const surface = state.document.getElementById(record.id)!.querySelector('a-plot-surface')
+  const menu = surface?.querySelector('a-menu') as (HTMLElement & { isOpen: boolean }) | null
+  const active = state.document.activeElement
   const capture = surface?.querySelector('a-capture')
   const box = capture?.getBoundingClientRect()
   const surfaceWidth = surface?.getBoundingClientRect().width ?? 0
@@ -15,7 +17,12 @@ const plot = extract(state => {
   const visible = !!rect && rect.bottom > 0 && rect.right > 0 && rect.top < state.window.innerHeight && rect.left < state.window.innerWidth
   const presentation = surface?.getAttribute('presentation')
   return {
-    current: { ...record, surfaceWidth, visible, presentation: presentation ? JSON.parse(presentation) as { width: number; height: number } : null,
+    current: { ...record, surfaceWidth, visible,
+      menuOpen: !!menu?.isOpen,
+      menuFocused: !!menu?.contains(active),
+      hasEnabledMenuItem: !!menu?.querySelector('[data-zoom-action]:not([disabled])'),
+      menuAnchorFocused: !!active?.classList.contains('plot-menu-anchor') && !!surface?.contains(active),
+      modalOpen: !!state.document.querySelector('a-dialog[state="open"]'), presentation: presentation ? JSON.parse(presentation) as { width: number; height: number } : null,
       capture: box ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom, wheel: capture!.getAttribute('wheel-capture') } : null },
     lateCallback,
   }
@@ -117,3 +124,21 @@ export const plotUnrelatedActionsPreserveViewport = always(() => {
 export const plotUnmountStopsCallbacks = always(() =>
   plot.current.lateCallback === null
 )
+
+export const plotKeyboardOpensAndDismissesZoomMenu = always(() => {
+  const before = plot.current.current
+  if (!before?.zoomPan || before.modalOpen) return true
+  return next(() => {
+    const after = plot.current.current
+    const action = lastAction.current
+    if (after?.id !== before.id || !action || typeof action !== 'object' || !('PressKey' in action)) return true
+    const key = action.PressKey.code
+    if (!before.menuOpen && before.menuAnchorFocused && key === 93) {
+      return after.menuOpen && (!before.hasEnabledMenuItem || after.menuFocused)
+    }
+    if (before.menuOpen && before.menuFocused && key === 27) {
+      return !after.menuOpen && after.menuAnchorFocused
+    }
+    return true
+  })
+})

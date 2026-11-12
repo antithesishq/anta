@@ -75,7 +75,7 @@ export default function Demo() {
 
 ## Inline content
 
-Pass icons and inline elements as children. Icons are optically aligned with the title text.
+Icons and inline elements flow with the title text. Icons are visually aligned with the lettering.
 
 ```tsx
 import '@antadesign/anta/bundle.css'

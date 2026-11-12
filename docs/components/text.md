@@ -1,6 +1,6 @@
 # Text
 
-`Text` is for paragraphs, descriptions under headings, and help text next to settings.
+`Text` is for paragraphs and descriptions under headings.
 Text also styles any links inside it.
 
 ## Link behavior

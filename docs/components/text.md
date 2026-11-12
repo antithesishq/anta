@@ -1,8 +1,6 @@
 # Text
 
-Use Text for body copy, descriptions, and supporting information. Set `priority`
-to emphasize important content or soften secondary details, and use `tone` to
-add color. Text also styles any links inside it.
+`Text` is for paragraphs, descriptions under headings, and help text next to settings.
 
 ## Link behavior
 

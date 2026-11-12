@@ -224,8 +224,17 @@ Use `priority`, `tone`, and `size` for emphasis, color, and type scale. Shared
 pass `tone` or set `--text-tone-source`.
 
 ```tsx
-<Text priority="secondary" tone="brand">Tinted secondary text</Text>
-<Text tone="#0d9488">Custom-tone body copy</Text>
+import '@antadesign/anta/bundle.css'
+import { Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <>
+      <Text priority="secondary" tone="brand">Tinted secondary text</Text>
+      <Text tone="#0d9488">Custom-tone body copy</Text>
+    </>
+  )
+}
 ```
 
 Style the light-DOM host, content, control, and links with plain CSS. The `.fancy`

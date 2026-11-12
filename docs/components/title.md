@@ -1,10 +1,10 @@
 # Title
 
-Use `Title` for page and section headings. It has no margins by default.
+`Title` renders page and section headings with no margins by default.
 
 ## Levels
 
-Set `level` to match the heading’s place in the page hierarchy.
+`level` sets the heading’s rank and font size. It defaults to `2`.
 
 ```tsx
 import '@antadesign/anta/bundle.css'
@@ -26,7 +26,7 @@ export default function Demo() {
 
 ## Tone × priority
 
-Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
+`tone` selects the text palette, and `priority` selects a shade within it. The default tone is `neutral`.
 
 ```tsx
 import '@antadesign/anta/bundle.css'
@@ -93,7 +93,7 @@ export default function Demo() {
 
 ## Truncation
 
-Use `truncate` for one line or pass a number to limit the lines. A clipped title shows its full text in a tooltip on hover.
+`truncate` limits the title to one line when set to `true`. A positive integer sets the line limit. A clipped title shows its full text in a tooltip on hover.
 
 ```tsx
 import '@antadesign/anta/bundle.css'
@@ -115,7 +115,7 @@ export default function Demo() {
 
 ## Typeface
 
-Set `font` to `serif`, `sans-serif`, or `monospace`. Omit it to use the theme’s default.
+`font` selects `serif`, `sans-serif`, or `monospace`. By default, the theme chooses the typeface for each heading level.
 
 ```tsx
 import '@antadesign/anta/bundle.css'
@@ -136,15 +136,15 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `font?` | 'serif' \| 'sans-serif' \| 'monospace' | — | Use `serif` for page and section headings, `sans-serif` for headings in cards and panels, or `monospace` for identifiers like run IDs. Omit `font` to use the theme's default for the heading level. |
+| `font?` | 'serif' \| 'sans-serif' \| 'monospace' | — | Selects the typeface. Serif suits page and section headings, sans serif suits headings in cards and panels, and monospace suits identifiers like run IDs. The default comes from the theme and heading level. |
 | `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Sets the heading level and its font size. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Sets the title’s emphasis. See [Colors](../colors.md#text). |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. Pass a CSS color to create a custom tone. See [Tone × priority](#tone--priority). |
-| `truncate?` | boolean \| number | — | Adds an ellipsis when the title exceeds the line limit. Use `true` for one line or a positive integer for the line count. Use `false` or `0` to disable truncation. Clipped titles show their full text in a tooltip. Nest a `<Tooltip>` to customize it. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. A CSS color defines a custom tone. See [Tone × priority](#tone--priority). |
+| `truncate?` | boolean \| number | — | Adds an ellipsis when the title exceeds the line limit. `true` limits it to one line, and a positive integer sets the line count. `false` and numbers below `1` disable truncation. A clipped title shows its full text in a tooltip. A nested `<Tooltip>` replaces the default tooltip. |
 
 ## Web Component
 
-In plain HTML, set `role="heading"` and match `aria-level` to `level`. This example uses Vite to load the stylesheet.
+In plain HTML, `role="heading"` identifies `<a-title>` as a heading, and `aria-level` gives it the same rank as `level`. This example uses Vite to load the stylesheet.
 
 ```html
 <!doctype html>
@@ -166,7 +166,7 @@ In plain HTML, set `role="heading"` and match `aria-level` to `level`. This exam
 
 ## Styling
 
-Use your own CSS class to override the heading’s typography.
+A CSS class can override the heading’s typography.
 
 ```tsx
 import '@antadesign/anta/bundle.css'

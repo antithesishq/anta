@@ -14,7 +14,7 @@ import titleDemoCode from './title.demo.ts'
 
 # Title
 
-Use `Title` for page and section headings. It has no margins by default.
+`Title` renders page and section headings with no margins by default.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -29,7 +29,7 @@ Use `Title` for page and section headings. It has no margins by default.
 
 ## Levels
 
-Set `level` to match the heading’s place in the page hierarchy.
+`level` sets the heading’s rank and font size. It defaults to `2`.
 
 <Preview direction="column" align="stretch" gap="16px">
   <Title level={1}>Level 1: Workspace settings</Title>
@@ -60,7 +60,7 @@ export default function Demo() {
 
 ## Tone × priority
 
-Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
+`tone` selects the text palette, and `priority` selects a shade within it. The default tone is `neutral`.
 
 <Preview align="stretch">
   <div style={{ overflowX: 'auto', overflowY: 'hidden', width: '100%' }}>
@@ -165,7 +165,7 @@ export default function Demo() {
 
 ## Truncation
 
-Use `truncate` for one line or pass a number to limit the lines. A clipped title shows its full text in a tooltip on hover.
+`truncate` limits the title to one line when set to `true`. A positive integer sets the line limit. A clipped title shows its full text in a tooltip on hover.
 
 <Preview direction="column" align="center" gap="16px">
   <Title truncate style={{ width: '100%', maxWidth: 320 }}>
@@ -196,7 +196,7 @@ export default function Demo() {
 
 ## Typeface
 
-Set `font` to `serif`, `sans-serif`, or `monospace`. Omit it to use the theme’s default.
+`font` selects `serif`, `sans-serif`, or `monospace`. By default, the theme chooses the typeface for each heading level.
 
 <Preview direction="column" align="stretch" gap="16px">
   <Title level={2}>Recent runs</Title>
@@ -227,7 +227,7 @@ export default function Demo() {
 
 <Disclosure title="Web Component">
 
-In plain HTML, set `role="heading"` and match `aria-level` to `level`. This example uses Vite to load the stylesheet.
+In plain HTML, `role="heading"` identifies `<a-title>` as a heading, and `aria-level` gives it the same rank as `level`. This example uses Vite to load the stylesheet.
 
 <Preview>
   <a-title level="2" tone="brand" role="heading" aria-level="2">Release notes</a-title>
@@ -255,7 +255,7 @@ In plain HTML, set `role="heading"` and match `aria-level` to `level`. This exam
 
 <Disclosure title="Styling">
 
-Use your own CSS class to override the heading’s typography.
+A CSS class can override the heading’s typography.
 
 <Preview>
   <Title className="release-heading" level={3}>Release notes</Title>

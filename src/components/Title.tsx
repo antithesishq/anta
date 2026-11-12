@@ -9,17 +9,17 @@ export interface TitleProps extends BaseProps {
   /** Sets the title’s emphasis. See [Colors](/colors/#text).
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
-  /** Selects a text palette. Pass a CSS color to create a custom tone. See [Tone × priority](#tone--priority).
+  /** Selects a text palette. A CSS color defines a custom tone. See [Tone × priority](#tone--priority).
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Use `serif` for page and section headings, `sans-serif` for headings in
-   *  cards and panels, or `monospace` for identifiers like run IDs.
-   *  Omit `font` to use the theme's default for the heading level. */
+  /** Selects the typeface. Serif suits page and section headings, sans serif
+   *  suits headings in cards and panels, and monospace suits identifiers like
+   *  run IDs. The default comes from the theme and heading level. */
   font?: 'serif' | 'sans-serif' | 'monospace'
-  /** Adds an ellipsis when the title exceeds the line limit. Use `true` for
-   *  one line or a positive integer for the line count. Use `false` or `0`
-   *  to disable truncation. Clipped titles show their full text in a tooltip.
-   *  Nest a `<Tooltip>` to customize it.
+  /** Adds an ellipsis when the title exceeds the line limit. `true` limits it
+   *  to one line, and a positive integer sets the line count. `false` and
+   *  numbers below `1` disable truncation. A clipped title shows its full text
+   *  in a tooltip. A nested `<Tooltip>` replaces the default tooltip.
    * @author Vlad Korobov
    */
   truncate?: boolean | number

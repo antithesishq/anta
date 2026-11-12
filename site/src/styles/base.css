@@ -615,62 +615,6 @@ hr:not(:where(a-tooltip *)),
   }
 }
 
-/* Keep an excerpt and its copy button visible when the full source is folded. */
-.content .expressive-code .frame[data-code-excerpt] {
-  grid-template-rows: var(--fold-header-h) auto auto;
-  background: var(--bg-pane);
-}
-.content .expressive-code .frame[data-code-excerpt] > .header {
-  grid-area: 1 / 1;
-  cursor: default;
-  border-end-start-radius: 0;
-  border-end-end-radius: 0;
-}
-.content .expressive-code .frame[data-code-excerpt] > .header::before {
-  display: none;
-}
-.content .expressive-code .frame[data-code-excerpt][data-folded] > pre {
-  max-block-size: 7.5rem;
-  mask-image: linear-gradient(black 55%, transparent);
-}
-.content .expressive-code .frame[data-code-excerpt] .copy,
-.content .expressive-code .frame[data-code-excerpt][data-folded] .copy,
-.content .expressive-code .frame[data-code-excerpt] .copy button {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-.content .expressive-code [data-code-toggle] {
-  display: inline-flex;
-  align-items: center;
-  justify-self: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.75rem;
-  border: 0;
-  background: transparent;
-  color: var(--text-1-info);
-  font: inherit;
-  font-weight: 450;
-  cursor: pointer;
-}
-.content .expressive-code [data-code-toggle]:focus-visible {
-  outline-offset: -3px;
-}
-.content .expressive-code [data-code-toggle]::after {
-  content: '';
-  inline-size: 1em;
-  block-size: 1em;
-  background: currentColor;
-  mask: var(--fold-chevron) center / contain no-repeat;
-}
-.content .expressive-code [data-code-toggle][aria-expanded='true']::after {
-  transform: rotate(180deg);
-}
-.content .expressive-code [data-code-toggle]:hover {
-  background: var(--bg-3);
-}
-
-
 /* Replace expressive-code's "Copied!" tooltip with an icon swap: on a
    successful copy our script (DocsLayout) sets [data-anta-copied] on the
    button for a moment, turning the copy glyph into a green check. EC's

@@ -6,7 +6,7 @@ Use `Title` for page and section headings. It has no margins by default.
 
 Set `level` to match the heading’s place in the page hierarchy.
 
-```tsx title="Demo.tsx" excerpt
+```tsx
 import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
@@ -28,7 +28,7 @@ export default function Demo() {
 
 Set `tone` for color and `priority` for emphasis. Omit `tone` for neutral text.
 
-```tsx title="Demo.tsx" excerpt
+```tsx
 import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
@@ -77,7 +77,7 @@ export default function Demo() {
 
 Use `truncate` for one line or pass a number to limit the lines. Hover over a clipped title to see the full text in a tooltip.
 
-```tsx title="Demo.tsx" excerpt
+```tsx
 import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
@@ -99,7 +99,7 @@ export default function Demo() {
 
 Set `font` to `serif`, `sans-serif`, or `monospace`. Omit it to use the theme’s default.
 
-```tsx title="Demo.tsx" excerpt
+```tsx
 import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 
@@ -128,7 +128,7 @@ export default function Demo() {
 
 In plain HTML, set `role="heading"` and match `aria-level` to `level`. This example uses Vite to load the stylesheet.
 
-```html title="index.html" excerpt
+```html
 <!doctype html>
 <html lang="en">
   <head>
@@ -150,7 +150,7 @@ In plain HTML, set `role="heading"` and match `aria-level` to `level`. This exam
 
 Use your own CSS class to override the heading’s typography.
 
-```tsx title="Demo.tsx" excerpt
+```tsx
 import '@antadesign/anta/bundle.css'
 import { Title } from '@antadesign/anta/bundle'
 

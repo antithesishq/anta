@@ -559,7 +559,7 @@ if (hasStructuredBreadcrumbs && title) {
       // the header's tabindex/role/aria-expanded. `.copy` is a sibling of
       // `.header`, not a descendant, so copy clicks never fold.
       const FOLD_SEL =
-        '.expressive-code .frame:is(.has-title, .is-terminal, [data-foldable]):not([data-code-excerpt]) > .header'
+        '.expressive-code .frame.has-title > .header, .expressive-code .frame.is-terminal > .header, .expressive-code .frame[data-foldable] > .header'
       const toggleFold = (header: HTMLElement) => {
         const frame = header.closest('.frame') as HTMLElement | null
         if (!frame) return
@@ -567,13 +567,6 @@ if (hasStructuredBreadcrumbs && title) {
         header.setAttribute('aria-expanded', folded ? 'false' : 'true')
       }
       document.addEventListener('click', (e) => {
-        const button = (e.target as HTMLElement)?.closest?.<HTMLButtonElement>('[data-code-toggle]')
-        if (button) {
-          const folded = button.closest('[data-code-excerpt]')?.toggleAttribute('data-folded')
-          button.setAttribute('aria-expanded', folded ? 'false' : 'true')
-          button.textContent = folded ? 'Expand code' : 'Collapse code'
-          return
-        }
         const header = (e.target as HTMLElement)?.closest?.(FOLD_SEL) as HTMLElement | null
         if (header) toggleFold(header)
       })

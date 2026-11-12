@@ -5,7 +5,7 @@ nav:
   group: content
   order: 10
 ---
-import { Title } from '@antadesign/anta'
+import { Icon, Title } from '@antadesign/anta'
 import Playground from '../../../components/PlaygroundEmbed.astro'
 import Preview from '../../../components/Preview.astro'
 import PropsTable from '../../../components/PropsTable.astro'
@@ -134,6 +134,31 @@ export default function Demo() {
         ))}
       </div>
     </div>
+  )
+}
+```
+
+## Inline content
+
+Pass icons and inline elements as children. Icons are optically aligned with the title text.
+
+<Preview>
+  <Title level={3}>
+    <Icon shape="book-open" /> Saved items{' '}
+    <span style={{ color: 'var(--text-1-brand)' }}>(3)</span>
+  </Title>
+</Preview>
+
+```tsx folded
+import '@antadesign/anta/bundle.css'
+import { Icon, Title } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Title level={3}>
+      <Icon shape="book-open" /> Saved items{' '}
+      <span style={{ color: 'var(--text-1-brand)' }}>(3)</span>
+    </Title>
   )
 }
 ```

@@ -73,6 +73,24 @@ export default function Demo() {
 }
 ```
 
+## Inline content
+
+Pass icons and inline elements as children. Icons are optically aligned with the title text.
+
+```tsx
+import '@antadesign/anta/bundle.css'
+import { Icon, Title } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Title level={3}>
+      <Icon shape="book-open" /> Saved items{' '}
+      <span style={{ color: 'var(--text-1-brand)' }}>(3)</span>
+    </Title>
+  )
+}
+```
+
 ## Truncation
 
 Use `truncate` for one line or pass a number to limit the lines. A clipped title shows its full text in a tooltip on hover.

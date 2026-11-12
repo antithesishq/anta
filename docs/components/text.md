@@ -11,7 +11,6 @@ they stay muted. The examples show how links and inline code look at each `prior
 ## Tones
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Text } from '@antadesign/anta/bundle'
 
 const priorities = ['primary', 'secondary', 'tertiary', 'quaternary'] as const
@@ -35,7 +34,6 @@ export default function Demo() {
 Clipped text shows its full content in a tooltip on hover.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Text } from '@antadesign/anta/bundle'
 
 const longText = 'The quick brown fox jumps over the lazy dog repeatedly while the morning sun rises over a sleepy town that nobody has visited in years and years.'
@@ -55,7 +53,6 @@ export default function Demo() {
 `collapsible` lets readers fold the text again.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Text } from '@antadesign/anta/bundle'
 
 const longText = 'The quick brown fox jumps over the lazy dog repeatedly while the morning sun rises over a sleepy town that nobody has visited in years and years.'
@@ -224,7 +221,6 @@ Use `priority`, `tone`, and `size` for emphasis, color, and type scale. Shared
 pass `tone` or set `--text-tone-source`.
 
 ```tsx
-import '@antadesign/anta/bundle.css'
 import { Text } from '@antadesign/anta/bundle'
 
 export default function Demo() {

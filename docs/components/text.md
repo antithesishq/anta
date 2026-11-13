@@ -91,7 +91,7 @@ export default function Demo() {
 
 ## Web Component
 
-`<a-text>` supports priority and tone in plain HTML. The stylesheet handles basic text styling.
+Use `<a-text>` directly for text priority and tone.
 
 ```html
 <!doctype html>
@@ -112,7 +112,8 @@ export default function Demo() {
 
 ### Use a tooltip with the web component
 
-A nested `<a-tooltip truncated-only>` shows the full text on hover when the text is clipped.
+Raw Text has no automatic tooltip. Nest `<a-tooltip truncated-only>` with the
+full text:
 
 ```html
 <!doctype html>

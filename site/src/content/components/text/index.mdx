@@ -129,7 +129,7 @@ export default function Demo() {
 
 <Disclosure title="Web Component">
 
-`<a-text>` supports priority and tone in plain HTML. The stylesheet handles basic text styling.
+Use `<a-text>` directly for text priority and tone.
 
 <Preview direction="column">
   <a-text priority="secondary">Read the <a href="/colors/">color guidance</a>.</a-text>
@@ -155,7 +155,8 @@ export default function Demo() {
 
 ### Use a tooltip with the web component
 
-A nested `<a-tooltip truncated-only>` shows the full text on hover when the text is clipped.
+Raw Text has no automatic tooltip. Nest `<a-tooltip truncated-only>` with the
+full text:
 
 <Preview>
   <a-text truncate="1" style={{ maxWidth: '260px', cursor: 'help' }}>

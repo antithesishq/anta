@@ -126,7 +126,7 @@ when the text is clipped.
     <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
   </head>
   <body>
-    <a-text id="status-message" truncate="1" style="max-width: 260px; cursor: help">
+    <a-text truncate="1" style="max-width: 260px; cursor: help">
       A long status message that is clipped until you hover it.
       <a-tooltip truncated-only>
         A long status message that is clipped until you hover it.
@@ -136,7 +136,7 @@ when the text is clipped.
 </html>
 ```
 
-`document.querySelector('#status-message').isTruncated` is `true` when the text is clipped.
+In the standalone example, `document.querySelector('a-text').isTruncated` is `true` when the text is clipped.
 
 ### Use expand with the web component
 

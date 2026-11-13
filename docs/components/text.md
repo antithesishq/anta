@@ -82,7 +82,7 @@ export default function Demo() {
 |------|------|---------|-------------|
 | `collapsible?` | boolean | — | Keeps the control visible after expansion so readers can collapse the text again. Requires `expandable`. |
 | `expandable?` | boolean | — | Shows a fade and a **Show more** control when truncated text overflows. Requires `truncate` and replaces the automatic tooltip. |
-| `expandableInert?` | boolean | — | Makes the whole clipped preview an expansion target. Links and text selection become available after expansion. Requires `expandable`. |
+| `expandableInert?` | boolean | — | Lets readers click anywhere in the preview to expand the text. Links and text selection become available after expansion. Requires `expandable`. |
 | `inline?` | boolean | — | Lets Text sit within a line as an inline block. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Controls text emphasis, from `primary` (strongest) to `quaternary`. See [Tones × priorities](#tones--priorities) for examples. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Sets font size and line height: `small` 13/16 px, `medium` 15/20 px, and `large` 17/24 px. |

@@ -12,8 +12,8 @@ export type ExpandMode =
       /** Shows a fade and a **Show more** control when truncated text overflows.
        *  Requires `truncate` and replaces the automatic tooltip. */
       expandable: boolean
-      /** Makes the whole clipped preview an expansion target. Links and text
-       *  selection become available after expansion. Requires `expandable`. */
+      /** Lets readers click anywhere in the preview to expand the text. Links
+       *  and text selection become available after expansion. Requires `expandable`. */
       expandableInert?: boolean
       /** Keeps the control visible after expansion so readers can collapse
        *  the text again. Requires `expandable`. */

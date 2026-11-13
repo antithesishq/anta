@@ -1,0 +1,17 @@
+{
+  "extends": "../src/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "jsxImportSource": "react",
+    "paths": {
+      "@antadesign/plot": ["../plot/dist/types/entries/index.d.ts"],
+      "@antithesishq/bombadil/browser/extras/resources": ["../node_modules/@antithesishq/bombadil/dist/browser/extras/resources.d.ts"]
+    },
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx"
+  ]
+}

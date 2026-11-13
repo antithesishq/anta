@@ -276,25 +276,6 @@ hr:not(:where(a-tooltip *)),
   border-top-right-radius: 0;
 }
 
-/* Tone × priority demo on the Title docs page. Scrolls horizontally
-   when the columns don't fit; titles inside the grid drop their
-   per-level margins so cell heights are uniform. */
-.title-tone-grid {
-  overflow-x: auto;
-  overflow-y: hidden;
-  margin: 0 0 1em;
-}
-.title-tone-grid-inner {
-  display: grid;
-  grid-template-columns: repeat(4, max-content);
-  column-gap: 32px;
-  row-gap: 8px;
-  min-width: max-content;
-}
-.title-tone-grid a-title {
-  margin: 0;
-}
-
 /* Anta styles code; the site adds the copy affordance below. */
 
 /* Font, size, line-height, weight and padding are set via Expressive Code's

@@ -127,7 +127,7 @@
 
 .dark {
   --bg-1: #0b0409;
-  --bg-2: #170812;
+  --bg-2: #1a0915;
   --bg-3: #1e0b18;
   --bg-4: #250e1e;
   --bg-5: #2c1124;
@@ -193,10 +193,10 @@
   --text-4-info: #7db6e8ab;
   --text-5-info: #7db6e882;
 
-  --border-1: #725769;
-  --border-2: #533c4b;
-  --border-3: #442e3d;
-  --border-4: #2a1824;
+  --border-1: #7c6e78;
+  --border-2: #614657;
+  --border-3: #533c4b;
+  --border-4: #3b2734;
   --border-5: #250e1e;
 
   --border-1-brand: #d03711;
@@ -537,6 +537,13 @@
 
   a-tag[allcaps] {
     letter-spacing: 0.08ch;
+  }
+
+  /* Sans serif titles use DemiBold so they sit closer to the light serif.
+     The serif rule below overrides this weight and must stay after it. */
+  :is(h1, h2, h3, h4, h5, h6),
+  a-title {
+    font-weight: 520;
   }
 
   /* Serif names the page and its parts: levels 1–3 by default. A `font`
@@ -1538,7 +1545,7 @@
 
   a-input:not([round])::part(field),
   a-input:not([round]):not(:defined)::after {
-    border-radius: 0;
+    border-radius: 1px;
   }
 
   /* Fields share the interactive stroke: stroke-1 at rest, stroke-1-hover on
@@ -1575,6 +1582,11 @@
   a-input {
     --focus-field-border: var(--input-border);
   }
+
+  /* Field labels use the primary text colour. Disabled fields keep the
+     component's dimmed label. */
+  a-input:not(:disabled) { --input-label: var(--text-1); }
+  a-input-time:not(:disabled) { --input-time-label: var(--text-1); }
 
   a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
     --input-border: var(--stroke-1-hover);
@@ -1617,11 +1629,11 @@
     }
   }
 
-  /* Time fields match the text fields above: square corners, a 1px stroke,
+  /* Time fields match the text fields above: 1px corners, a 1px stroke,
      and the same pulsing 2px ring across the field edge. */
   a-input-time:not([round])::part(field),
   a-input-time:not([round]):not(:defined)::after {
-    border-radius: 0;
+    border-radius: 1px;
   }
 
   a-input-time:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
@@ -1673,7 +1685,7 @@
       [type="color"], [type="file"], [type="button"], [type="reset"],
       [type="submit"], [type="image"], [type="hidden"]),
       textarea[data-anta], select[data-anta]):not([round]) {
-    --native-field-round: 0px;
+    --native-field-round: 1px;
   }
 
   a-tag {

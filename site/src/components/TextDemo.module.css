@@ -1,0 +1,37 @@
+.explorer {
+  min-inline-size: 0;
+  padding: clamp(12px, 3vw, 24px);
+  border: 1px solid var(--border-5);
+  border-radius: 6px;
+  background: var(--bg-canvas);
+}
+
+.samples {
+  margin: 12px 0 0;
+}
+
+.sample {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px 16px;
+  padding-block: 12px;
+}
+
+.sample + .sample {
+  border-block-start: 1px solid var(--border-5);
+}
+
+.sample dd {
+  margin: 0;
+}
+
+@media (max-width: 550px) {
+  .explorer {
+    padding-inline: 8px;
+  }
+
+  .sample {
+    grid-template-columns: 1fr;
+  }
+}

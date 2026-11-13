@@ -141,9 +141,9 @@ The read-only property `textElement.isTruncated` is `true` when the text is clip
 
 ### Expand raw HTML
 
-The expansion control comes before `<a-text-content>` in the markup and in Tab order.
-Anta handles expansion and supplies the button labels. An explicit `aria-expanded`
-overrides Anta’s value and needs to stay in sync with the button.
+The `<a-button>` goes before `<a-text-content>` so it receives keyboard focus
+before any links in the text. Anta labels the button and updates its expanded
+state. If you set `aria-expanded` yourself, update it when the text opens or closes.
 
 ```html
 <!doctype html>

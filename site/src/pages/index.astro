@@ -5,7 +5,7 @@ import '@antadesign/anta/theme-antithesis.css'
 import '../styles/fonts-antithesis.css'
 
 const sections = [
-  { title: 'Get started', href: '/install/', image: 'get-started.png', description: 'Install Anta, configure your runtime, and render your first component.' },
+  { title: 'Get started', href: '/install/', cardTitle: 'For your agents', cardHref: '/llms.txt', image: 'get-started.png', description: 'Our design system has been fine tuned for agentic use. Try it out.' },
   { title: 'Foundations', href: '/theming/', image: 'foundations.png', description: 'Explore the design tokens, color scales, and themes behind Anta.' },
   { title: 'Components', href: '/button/', image: 'components.png', description: 'Browse components, try their states, and see how to use them.' },
 ]
@@ -27,7 +27,7 @@ const sections = [
   </head>
   <body>
     <header class="landing-header">
-      <a href="/" class="brand"><img src="/landing/brand.svg" alt="Anta Design System" width="220" height="54" /></a>
+      <a href="/" class="brand"><img src="/anta-logo.svg" alt="" width="48" height="48" />Anta Design System</a>
       <nav aria-label="Main navigation">
         {sections.map(({ title, href }) => <a href={href}>{title}</a>)}
       </nav>
@@ -64,10 +64,13 @@ const sections = [
 
         <ul class="section-cards">
           <li class="floating-check" aria-hidden="true"><img src="/landing/check.svg" alt="" /></li>
-          {sections.map(({ title, href, image, description }) => (
+          {sections.map(({ title, href, cardTitle, cardHref, image, description }) => (
             <li>
-              <a class="section-card" href={href}>
-                <img class="card-cover" src={`/landing/${image}`} alt={title} width="398" height="198" />
+              <a class="section-card" href={cardHref ?? href}>
+                <div class:list={['card-art', { 'card-art-with-title': cardTitle }]}>
+                  <img class="card-cover" src={`/landing/${image}`} alt={cardTitle ? '' : title} width="398" height="198" />
+                  {cardTitle && <span class="card-title">{cardTitle}</span>}
+                </div>
                 <p>{description}</p>
               </a>
             </li>
@@ -75,7 +78,6 @@ const sections = [
         </ul>
 
         <footer>
-          <a class="readme" href="/llms.txt"><img src="/landing/folder.png" alt="" width="84" height="70" />Docs for AI</a>
           <small>© 2026 Antithesis</small>
         </footer>
       </div>
@@ -128,7 +130,18 @@ const sections = [
     min-height: 90px;
   }
 
-  .brand { margin-inline-end: auto; }
+  .brand {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+    margin-inline-end: auto;
+    color: inherit;
+    font-size: clamp(16px, 1.8vw, 24px);
+    font-weight: 650;
+    text-decoration: none;
+    white-space: nowrap;
+  }
 
   nav,
   .theme-picker {
@@ -179,10 +192,6 @@ const sections = [
       radial-gradient(ellipse at 96% 0%, var(--bg-4-brand), transparent 58%),
       radial-gradient(ellipse at 32% 83%, var(--bg-5-brand), transparent 65%),
       var(--bg-2);
-  }
-
-  :global(.dark) .brand img {
-    filter: invert(1);
   }
 
   .hero {
@@ -379,6 +388,29 @@ const sections = [
     border-radius: 12px;
   }
 
+  .card-art {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  .card-art-with-title {
+    aspect-ratio: 398 / 198;
+  }
+
+  .card-art-with-title .card-cover {
+    width: 130%;
+    max-width: none;
+  }
+
+  .card-title {
+    position: absolute;
+    inset: auto 12px 8px;
+    color: white;
+    font-size: clamp(17px, 1.8vw, 28px);
+    font-weight: 650;
+  }
+
   .section-card p {
     margin: 20px 0 26px;
     font-size: clamp(15px, 1.15vw, 17px);
@@ -386,20 +418,8 @@ const sections = [
   }
 
   footer {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 16px;
     padding-block: clamp(32px, 4vw, 66px) 48px;
-  }
-
-  .readme {
-    display: flex;
-    align-items: end;
-    gap: 12px;
-    color: inherit;
-    font-size: clamp(18px, 2vw, 28px);
-    font-weight: 650;
+    text-align: end;
   }
 
   footer small { color: var(--text-3); }
@@ -411,14 +431,14 @@ const sections = [
     .hero h1 { max-width: 56%; }
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 820px) {
     .landing-header {
       flex-wrap: wrap;
       padding-block: 14px;
     }
 
     .brand img {
-      width: 165px;
+      width: 34px;
       height: auto;
     }
 
@@ -440,6 +460,5 @@ const sections = [
 
     .section-card { padding-top: 14%; }
 
-    footer { align-items: center; }
   }
 </style>

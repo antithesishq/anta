@@ -1,41 +1,36 @@
-import { useEffect } from 'preact/hooks'
-import { Text } from '@antadesign/anta'
+import { useState } from 'preact/hooks'
+import { Tabs, Text } from '@antadesign/anta'
+import { isTone, TONES } from './ToneTabs'
+import styles from './TextDemo.module.css'
 
 const priorities = ['primary', 'secondary', 'tertiary', 'quaternary'] as const
-const tones = ['brand', 'success', 'critical', 'warning', 'info'] as const
 
 export default function TextDemo() {
-  useEffect(() => {
-    import('@antadesign/anta/elements')
-  }, [])
+  const [tone, setTone] = useState<(typeof TONES)[number]['value']>('neutral')
 
   return (
-    <div class="demoStack">
-      <section class="demoSection">
-        <h4 style={{ margin: 0 }}>Priority — neutral</h4>
-        {priorities.map((p) => (
-          <div key={p} class="demoRow">
-            <span class="demoLabel upper">priority="{p}"</span>
-            <Text priority={p}>
-              The quick brown fox jumps over the lazy dog with a <code>code pill</code> and a <a href="#">link inside</a> the sentence.
-            </Text>
+    <div class={styles.explorer}>
+      <Tabs
+        label="Text tones"
+        options={TONES}
+        value={tone}
+        onStateChange={(_event, { next }) => {
+          if (isTone(next)) setTone(next)
+        }}
+      />
+
+      <dl class={styles.samples} aria-label={`${tone} text priorities`}>
+        {priorities.map((priority) => (
+          <div key={priority} class={styles.sample}>
+            <dt>{priority}</dt>
+            <dd>
+              <Text tone={tone} priority={priority}>
+                The <a href="#link-behavior">link behavior section</a> shows links next to code like <code>npm install</code>.
+              </Text>
+            </dd>
           </div>
         ))}
-      </section>
-
-      {tones.map((tone) => (
-        <section key={tone} class="demoSection">
-          <h4 style={{ margin: 0 }}>Priority — tone="{tone}"</h4>
-          {priorities.map((p) => (
-            <div key={`${tone}-${p}`} class="demoRow">
-              <span class="demoLabel upper">priority="{p}"</span>
-              <Text tone={tone} priority={p}>
-                The quick brown fox jumps over the lazy dog with a <code>code pill</code> and a <a href="#">link inside</a> the sentence.
-              </Text>
-            </div>
-          ))}
-        </section>
-      ))}
+      </dl>
     </div>
   )
 }

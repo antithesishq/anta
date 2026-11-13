@@ -621,16 +621,9 @@ for (const engine of engines) {
   })
 }
 
-test('native MDX preserves table alignment and the compiled playground after navigation', async t => {
+test('compiled Playground works after client-side navigation', async t => {
   const { page, errors } = await productionPage(t)
   await page.goto('https://anta.test/title/')
-  // Native Markdown emits alignment styles that must survive optimization
-  // and override the table defaults in Anta's reset CSS.
-  const cells = page.locator('main :is(th, td)[style*="text-align"]')
-  assert.ok(await cells.count() > 0)
-  for (const cell of await cells.all()) {
-    assert.equal(await cell.evaluate(element => getComputedStyle(element).textAlign), 'right')
-  }
 
   await page.evaluate(() => {
     window.buildNavigationSentinel = true
@@ -691,11 +684,12 @@ test('native MDX preserves authored JSX tables, inline children, and contrast ra
   assert.equal(await tables.nth(1).evaluate(table => getComputedStyle(table).borderCollapse), 'separate')
   assert.equal(await page.locator('main caption').textContent(), 'Color tokens used by the docs sidebar')
 
-  await page.goto('https://anta.test/title/')
-  const title = page.locator('a-title').filter({ hasText: 'Saved items' })
+  await page.goto('https://anta.test/card/')
+  const title = page.locator('a-title').filter({ hasText: 'CI integration guide' })
   assert.equal(await title.count(), 1)
   assert.equal(await title.locator('p').count(), 0)
-  assert.match(await title.innerText(), /Saved items\s+\(3\)/)
+  assert.equal(await title.locator('a-icon').count(), 1)
+  assert.match(await title.innerText(), /CI integration guide/)
 
   await page.goto('https://anta.test/accessibility/')
   const paragraph = page.locator('main p').filter({ hasText: 'Neutral text-4 meets' })

@@ -4,21 +4,17 @@ import type { CaptureInputModifier, CapturePanInput, CapturePointerInput, Captur
 
 /** Common props for JSX component wrappers. */
 export interface BaseProps {
-  /** CSS class on the component's root element (merged with the component's own
-   *  classes). Use it directly for layout and positioning — grid/flex placement,
-   *  margins, alignment — rather than wrapping the component in a `<div>`/`<span>`. */
+  /** Adds CSS classes to the root element and preserves its existing classes. */
   className?: string
-  /** Inline styles on the component's root element. Set layout/positioning here
-   *  (or via `className`) directly on the component instead of adding a wrapper. */
+  /** Inline CSS styles on the root element. */
   style?: React.CSSProperties
-  /** Child elements. When provided, replaces the component's default label/content. */
+  /** Content to render in place of any default content. */
   children?: React.ReactNode
   /** HTML `id` attribute. */
   id?: string
-  /** HTML `title` attribute — native browser tooltip on hover. */
+  /** HTML `title` attribute, shown as a browser tooltip on hover. */
   title?: string
-  /** Assigns the element to a named `<slot>` of a parent web component (e.g.
-   *  `slot="header"` inside a `<Dialog>`, `slot="footer"` inside a `<Dialog>`). */
+  /** Named slot in a parent web component, such as `slot="header"` in a `<Dialog>`. */
   slot?: string
   /** Tab order. Set to `-1` to skip the element when tabbing. */
   tabIndex?: number

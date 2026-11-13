@@ -7,7 +7,7 @@
 Links follow the surrounding text's emphasis and color. In supporting text,
 they stay muted. The examples show how links and inline code look at each `priority` and `tone`.
 
-## Tones
+## Tones × priorities
 
 ```tsx
 import { Text } from '@antadesign/anta/bundle'
@@ -84,9 +84,9 @@ export default function Demo() {
 | `expandable?` | boolean | — | Shows a fade and a **Show more** control when truncated text overflows. Requires `truncate` and replaces the automatic tooltip. |
 | `expandableInert?` | boolean | — | Makes the whole clipped preview an expansion target. Links and text selection become available after expansion. Requires `expandable`. |
 | `inline?` | boolean | — | Lets Text sit within a line as an inline block. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Controls text emphasis, from `primary` (strongest) to `quaternary`. See [Tones](#tones) for examples. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Controls text emphasis, from `primary` (strongest) to `quaternary`. See [Tones × priorities](#tones--priorities) for examples. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Sets font size and line height: `small` 13/16 px, `medium` 15/20 px, and `large` 17/24 px. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. A CSS color defines a custom tone. See [Tones](#tones) for examples. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. A CSS color defines a custom tone. See [Tones × priorities](#tones--priorities) for examples. |
 | `truncate?` | boolean \| number | — | Adds an ellipsis at the line limit. `true` limits text to one line, a positive integer sets the line count, and `false` or numbers below `1` disable truncation. Clipped text shows a tooltip when expansion is off. A nested `<Tooltip>` replaces it, and an empty tooltip suppresses it. |
 
 ## Web Component

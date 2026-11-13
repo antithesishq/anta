@@ -22,11 +22,11 @@ export type ExpandMode =
 
 export type TextProps = BaseProps & {
   /** Controls text emphasis, from `primary` (strongest) to `quaternary`.
-   *  See [Tones](#tones) for examples.
+   *  See [Tones × priorities](#tones--priorities) for examples.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Selects a text palette. A CSS color defines a custom tone.
-   *  See [Tones](#tones) for examples.
+   *  See [Tones × priorities](#tones--priorities) for examples.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Sets font size and line height: `small` 13/16 px, `medium` 15/20 px,

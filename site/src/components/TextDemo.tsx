@@ -22,7 +22,7 @@ export default function TextDemo() {
       <dl class={styles.samples} aria-label={`${tone} text priorities`}>
         {priorities.map((priority) => (
           <div key={priority} class={styles.sample}>
-            <dt><code>{priority}</code></dt>
+            <dt>{priority}</dt>
             <dd>
               <Text tone={tone} priority={priority}>
                 The <a href="#link-behavior">link behavior section</a> shows links next to code like <code>npm install</code>.

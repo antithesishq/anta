@@ -112,8 +112,9 @@ Use `<a-text>` directly for text priority and tone.
 
 ### Use a tooltip with the web component
 
-Raw Text has no automatic tooltip. Nest `<a-tooltip truncated-only>` with the
-full text:
+To use a tooltip inside the `<a-text>` web component, nest an
+`<a-tooltip truncated-only>` containing the full text. It appears on hover
+when the text is clipped.
 
 ```html
 <!doctype html>

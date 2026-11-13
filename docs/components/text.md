@@ -142,10 +142,7 @@ The read-only property `textElement.isTruncated` is `true` when the text is clip
 ### Use expand with the web component
 
 To expand clipped text inside the `<a-text>` web component, add `expandable`
-and place an `<a-button>` before `<a-text-content>`. The button comes first in
-Tab order and reveals the full text when activated. Anta supplies the button
-label and updates `aria-expanded`. If you set `aria-expanded` yourself, keep
-it in sync with whether the text is expanded.
+and place an `<a-button>` before `<a-text-content>`.
 
 ```html
 <!doctype html>

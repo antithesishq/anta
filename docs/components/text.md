@@ -139,11 +139,13 @@ when the text is clipped.
 In JavaScript, `textElement` refers to the `<a-text>` element.
 The read-only property `textElement.isTruncated` is `true` when the text is clipped.
 
-### Expand raw HTML
+### Use expand with the web component
 
-The `<a-button>` goes before `<a-text-content>` so it receives keyboard focus
-before any links in the text. Anta labels the button and updates its expanded
-state. If you set `aria-expanded` yourself, update it when the text opens or closes.
+To expand clipped text inside the `<a-text>` web component, add `expandable`
+and place an `<a-button>` before `<a-text-content>`. The button comes first in
+Tab order and reveals the full text when activated. Anta supplies the button
+label and updates `aria-expanded`. If you set `aria-expanded` yourself, keep
+it in sync with whether the text is expanded.
 
 ```html
 <!doctype html>

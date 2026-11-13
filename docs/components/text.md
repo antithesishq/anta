@@ -185,9 +185,9 @@ For multiple lines, `--line-clamp` sets the line limit.
 
 ### Make folded content inert
 
-`expandable-inert` makes the whole folded preview an expansion target. In plain HTML,
-the `textpresentationchange` event reports when to make the folded content inert.
-The event also gives late listeners the current state.
+With `expandable-inert`, clicking anywhere in the collapsed preview expands
+the text. The example uses `textpresentationchange` to disable links inside
+`<a-text-content>` while the text is clipped and re-enable them when it expands.
 
 ```html
 <!doctype html>

@@ -30,7 +30,7 @@ test('production search answers use Expressive Code highlighting and working cop
     contentType: 'text/event-stream',
     body: `event: delta\ndata: ${JSON.stringify({ text: answer })}\n\nevent: done\ndata: {}\n\n`,
   }))
-  await page.goto('https://anta.test/theming/')
+  await page.goto('https://anta.test/')
   await page.locator('astro-island[component-export="default"]:not([ssr]) a-dialog').waitFor({ state: 'attached' })
   await page.evaluate(() => {
     Object.defineProperty(navigator.clipboard, 'writeText', { value: async text => { window.copiedCode = text } })

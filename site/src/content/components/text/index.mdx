@@ -189,12 +189,13 @@ when the text is clipped.
 </html>
 ```
 
-In the standalone example, `document.querySelector('a-text').isTruncated` is `true` when the text is clipped.
+In JavaScript, `textElement` refers to the `<a-text>` element.
+The read-only property `textElement.isTruncated` is `true` when the text is clipped.
 
 ### Use expand with the web component
 
 To expand clipped text inside the `<a-text>` web component, add `expandable`
-as an attribute and place an `<a-button>` before `<a-text-content>`.
+and place an `<a-button>` before `<a-text-content>`.
 
 ```html folded
 <!doctype html>

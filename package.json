@@ -122,6 +122,8 @@
     "test:stickers:package": "node tests/stickers-package.mjs"
   },
   "devDependencies": {
+    "@antithesishq/bombadil": "0.7.10",
+    "@hegeldev/hegel": "0.4.10",
     "@types/react": "19.3.0",
     "@typescript/native": "npm:typescript@7.0.2",
     "axe-core": "4.13.0",

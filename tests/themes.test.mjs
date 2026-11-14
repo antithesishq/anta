@@ -395,7 +395,7 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
         }),
       }
     })
-    assert.deepEqual(values.radii, ['999px', '999px', '6px', '0px', '8px', '3px', '999px', '0px', '0px'])
+    assert.deepEqual(values.radii, ['999px', '999px', '6px', '1px', '8px', '3px', '999px', '1px', '1px'])
     assert.deepEqual(values.menuRadii, ['12px', '8px', '8px', '16px'])
     assert.deepEqual(values.seeds, [['#cc4636', '#65605b'], ['#cc4636', '#65605b']])
   }

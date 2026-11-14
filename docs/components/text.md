@@ -1,153 +1,219 @@
 # Text
 
-Use Text for body copy, descriptions, and supporting information. Set `priority`
-to emphasize important content or soften secondary details, and use `tone` to
-add color. Text also styles any links inside it.
+`Text` is for paragraphs.
 
 ## Link behavior
 
 Links follow the surrounding text's emphasis and color. In supporting text,
-they stay muted; hover makes them easier to identify. The examples show how
-links look at each priority and tone.
+they stay muted. The examples show how links and inline code look at each `priority` and `tone`.
 
-## Demo
+## Tones × priorities
+
+```tsx
+import { Text } from '@antadesign/anta/bundle'
+
+const priorities = ['primary', 'secondary', 'tertiary', 'quaternary'] as const
+
+export default function Demo() {
+  return (
+    <>
+      {priorities.map(priority => (
+        <Text key={priority} tone="brand" priority={priority}>
+          The <a href="#link-behavior">link behavior section</a> shows links next to code like <code>npm install</code>.
+        </Text>
+      ))}
+    </>
+  )
+}
+```
 
 ## Truncation and expansion
 
-Use `truncate` to keep long text compact. Pass a number to choose how many lines
-to show. Readers can hover over shortened text to read the full content in a tooltip.
+`truncate` limits text to one line with `true` or to a specific line count with a number.
+Clipped text shows its full content in a tooltip on hover.
 
 ```tsx
-{/* Single line */}
-<Text truncate>{longSentence}</Text>
+import { Text } from '@antadesign/anta/bundle'
 
-{/* Multi-line: pass the line count */}
-<Text truncate={2}>{longSentence}</Text>
-<Text truncate={3}>{longSentence}</Text>
+const longText = 'The quick brown fox jumps over the lazy dog repeatedly while the morning sun rises over a sleepy town that nobody has visited in years and years.'
+
+export default function Demo() {
+  return (
+    <div style={{ maxWidth: 320, display: 'grid', gap: 12 }}>
+      <Text truncate>{longText}</Text>
+      <Text truncate={2}>{longText}</Text>
+      <Text truncate={3}>{longText}</Text>
+    </div>
+  )
+}
 ```
 
-Add `expandable` to let readers reveal long text when they need it. The **Show more**
-icon button appears only when the text does not fit. Add `collapsible` to let them fold it again.
+`expandable` shows a **Show more** control when the text overflows.
+`collapsible` lets readers fold the text again.
 
 ```tsx
-{/* One-way: the chevron is hidden once expanded */}
-<Text truncate expandable>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
-<Text truncate={3} expandable>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+import { Text } from '@antadesign/anta/bundle'
 
-{/* Two-way: the reader can collapse it back */}
-<Text truncate={3} expandable collapsible>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+const longText = 'The quick brown fox jumps over the lazy dog repeatedly while the morning sun rises over a sleepy town that nobody has visited in years and years.'
 
-{/* Make the folded preview a single expansion target */}
-<Text truncate={3} expandable collapsible expandableInert>{longSentence} <a href="/text/#link-behavior">Link guidance</a>.</Text>
+const content = (
+  <>
+    {longText} <a href="https://anta.design/text/#link-behavior">Link guidance</a>.
+  </>
+)
+
+export default function Demo() {
+  return (
+    <div style={{ maxWidth: 320, display: 'grid', gap: 12 }}>
+      <Text truncate expandable>{content}</Text>
+      <Text truncate={3} expandable>{content}</Text>
+      <Text truncate={3} expandable collapsible>{content}</Text>
+      <Text truncate={3} expandable collapsible expandableInert>{content}</Text>
+    </div>
+  )
+}
 ```
 
-Use `expandableInert` when readers should expand the text before following its
-links. Selecting anywhere in the folded preview expands it; its links become
-available after expansion.
+`expandableInert` makes the whole folded preview an expansion target. Links become available after expansion.
 
 ## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `collapsible?` | boolean | — | Allow refolding after expansion. The control stays visible, rotates its chevron, and switches between "Show more" and "Show less". Requires `expandable`. The expanded collapse target spans the full width over 16px of bottom padding; removing that padding with custom CSS allows it to overlap content. |
-| `expandable?` | boolean | — | Show a fade and expansion control when truncated text overflows. Select the control or focus it and press Enter or Space to reveal all content. Expansion is one-way: the control hides once expanded. Add `collapsible` to allow refolding. Requires `truncate`; disables the automatic tooltip. The control comes first in Tab order. By default, folded text stays selectable and its links remain focusable and clickable. Single-line text fades at the inline end with an inline-end target; multiline text fades over its last line with a full-width target. Folded content clips without scrolling or extra padding, and expansion preserves its width. |
-| `expandableInert?` | boolean | — | Make the entire folded, overflowing preview an expand target. JSX applies `inert` to its content, blocking focus, clicks, and text selection and removing it from the accessibility tree until expanded. Fitting text stays interactive, as does server-rendered content before browser measurement. Requires `expandable`. |
-| `inline?` | boolean | — | Render as inline-block instead of the default block element. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Text emphasis, from `primary` (`--text-1`, strongest) to `quaternary` (`--text-4`). `secondary` uses `--text-2`; `tertiary` uses `--text-3`. Neutral primary/secondary links use `--link-color` and `--link-color-hover`. Tertiary/quaternary links inherit the text color, with `--text-2` and `--text-3` respectively on hover. |
-| `size?` | 'small' \| 'medium' \| 'large' | medium | Font size / line height in pixels: `small` = 13/16, `medium` = 15/20, `large` = 17/24. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` uses `--text-{N}`; named tones use `--text-{N}-{tone}`. A CSS color such as `rebeccapurple` keeps its hue, with lightness and chroma set per priority in oklch. With named tones, links inherit the text color and hover uses the next-stronger tone level; at `primary`, hover changes only the underline. |
-| `truncate?` | boolean \| number | — | Clamp with a trailing ellipsis: `true` or `1` selects one line, integers ≥ 2 select that many lines, and `0` or negative values disable truncation. Clipped, non-expandable Text shows its content in an automatic tooltip. Nest `<Tooltip>` to replace it or an empty tooltip to suppress it. Uses CSS `-webkit-line-clamp` in `display: -webkit-box`, with `min-width: 0` for flex and grid layouts. |
+| `collapsible?` | boolean | — | Keeps the control visible after expansion so readers can collapse the text again. Requires `expandable`. |
+| `expandable?` | boolean | — | Shows a fade and a **Show more** control when truncated text overflows. Requires `truncate` and replaces the automatic tooltip. |
+| `expandableInert?` | boolean | — | Lets readers click anywhere in the preview to expand the text. Links and text selection become available after expansion. Requires `expandable`. |
+| `inline?` | boolean | — | Lets Text sit within a line as an inline block. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Controls text emphasis, from `primary` (strongest) to `quaternary`. See [Tones × priorities](#tones--priorities) for examples. |
+| `size?` | 'small' \| 'medium' \| 'large' | medium | Sets font size and line height: `small` 13/16 px, `medium` 15/20 px, and `large` 17/24 px. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Selects a text palette. A CSS color defines a custom tone. See [Tones × priorities](#tones--priorities) for examples. |
+| `truncate?` | boolean \| number | — | Adds an ellipsis at the line limit. `true` limits text to one line, a positive integer sets the line count, and `false` or numbers below `1` disable truncation. Clipped text shows a tooltip when expansion is off. A nested `<Tooltip>` replaces it, and an empty tooltip suppresses it. |
 
 ## Web Component
 
 Use `<a-text>` directly for text priority and tone.
 
 ```html
-<a-text priority="secondary">
-  Read the <a href="/colors/">color guidance</a>.
-</a-text>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Anta Text</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+  </head>
+  <body>
+    <a-text priority="secondary">
+      Read the <a href="https://anta.design/colors/">color guidance</a>.
+    </a-text>
+    <a-text priority="primary" tone="success">Your changes have been saved.</a-text>
+  </body>
+</html>
 ```
 
 ### Use a tooltip with the web component
 
-Raw Text has no automatic tooltip. Nest `<a-tooltip truncated-only>` with the
-full text:
+To use a tooltip inside the `<a-text>` web component, nest an
+`<a-tooltip truncated-only>` containing the full text. It appears on hover
+when the text is clipped.
 
 ```html
-<a-text truncate="1" style="max-width: 260px; cursor: help">
-  A long status message that is clipped until you hover it.
-  <a-tooltip truncated-only>
-    A long status message that is clipped until you hover it.
-  </a-tooltip>
-</a-text>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Text tooltip</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+    <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
+  </head>
+  <body>
+    <a-text truncate="1" style="max-width: 260px; cursor: help">
+      A long status message that is clipped until you hover it.
+      <a-tooltip truncated-only>
+        A long status message that is clipped until you hover it.
+      </a-tooltip>
+    </a-text>
+  </body>
+</html>
 ```
 
-Read `a-text.isTruncated` on the UI thread to check whether the clamp hides content.
-This read-only layout measurement does not change markup or accessibility.
+In JavaScript, `textElement` refers to the `<a-text>` element.
+The read-only property `textElement.isTruncated` is `true` when the text is clipped.
 
-### Expand raw HTML
+### Use expand with the web component
 
-Place a direct `a-button` before `a-text-content` to put expansion first in Tab
-order. No application toggle handler is needed. Load both entries alongside your
-shared tokens and styles:
-
-```ts
-import '@antadesign/anta/elements/a-text'
-import '@antadesign/anta/elements/a-button'
-```
+To expand clipped text inside the `<a-text>` web component, add `expandable`
+and place an `<a-button>` before `<a-text-content>`.
 
 ```html
-<a-text truncate="1" expandable collapsible>
-  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
-  <a-text-content>A long description that needs more than one line.</a-text-content>
-</a-text>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Expandable text</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+    <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
+  </head>
+  <body>
+    <a-text truncate="1" expandable collapsible style="max-width: 260px">
+      <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+      <a-text-content>The project settings apply to every workspace in the organization. Changes take effect the next time a workspace opens.</a-text-content>
+    </a-text>
+  </body>
+</html>
 ```
 
-Expansion and accessible button labels work automatically. Your attributes and
-children stay unchanged. Explicit button ARIA overrides the defaults;
-synchronize any authored `aria-expanded` yourself.
-
-Migrate flat expandable raw markup to these two children. JSX supplies them for
-you; plain Text needs no content wrapper.
-
-For multiline raw Text, set `--line-clamp` in your stylesheet. JSX sets the line
-count through the `truncate` prop:
+For multiple lines, `--line-clamp` sets the line limit.
 
 ```html
-<a-text class="summary" truncate="3" expandable collapsible>
-  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
-  <a-text-content>A longer description to show across three lines.</a-text-content>
-</a-text>
-```
-
-```css
-a-text.summary { --line-clamp: 3; }
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Expandable multiline text</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+    <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
+    <style>.summary { max-width: 260px; --line-clamp: 3; }</style>
+  </head>
+  <body>
+    <a-text class="summary" truncate="3" expandable collapsible>
+      <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+      <a-text-content>The project settings apply to every workspace in the organization. Changes take effect the next time a workspace opens. The project settings apply to every workspace in the organization. Changes take effect the next time a workspace opens.</a-text-content>
+    </a-text>
+  </body>
+</html>
 ```
 
 ### Make folded content inert
 
-Raw authors manage `inert` on `a-text-content`. Add `expandable-inert` for a
-full-preview expand target, and update `inert` from `textpresentationchange`:
+With `expandable-inert`, clicking anywhere in the collapsed preview expands
+the text. The example uses `textpresentationchange` to disable links inside
+`<a-text-content>` while the text is clipped and re-enable them when it expands.
 
 ```html
-<a-text id="summary" truncate="1" expandable collapsible expandable-inert>
-  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
-  <a-text-content>A long description with <a href="/text/">a link</a>.</a-text-content>
-</a-text>
-```
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Expandable text with an inert preview</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antadesign/anta@0.3.38/dist/bundle.css">
+    <script type="module" src="https://esm.sh/@antadesign/anta@0.3.38/bundle?bundle"></script>
+  </head>
+  <body>
+    <a-text id="summary" truncate="1" expandable collapsible expandable-inert style="max-width: 260px">
+      <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+      <a-text-content>The project settings apply to every workspace in the organization. Changes take effect the next time a workspace opens. <a href="https://anta.design/text/">Text docs</a>.</a-text-content>
+    </a-text>
+    <script type="module">
+      const text = document.querySelector('#summary')
+      const content = text.querySelector('a-text-content')
 
-```js
-const text = document.querySelector('#summary')
-const content = text.querySelector(':scope > a-text-content')
-text.addEventListener('textpresentationchange', ({ detail }) => {
-  content.inert = detail.overflowing && !detail.expanded
-})
+      text.addEventListener('textpresentationchange', ({ detail }) => {
+        content.inert = detail.overflowing && !detail.expanded
+      })
+    </script>
+  </body>
+</html>
 ```
-
-This non-bubbling notification reports `{ expanded, overflowing }` after
-measurement or expansion. Late listeners receive the current snapshot
-asynchronously. `overflowing` describes the folded preview, retained while
-expanded. The element leaves `inert` to you.
 
 ## Styling
 
@@ -156,8 +222,16 @@ Use `priority`, `tone`, and `size` for emphasis, color, and type scale. Shared
 pass `tone` or set `--text-tone-source`.
 
 ```tsx
-<Text priority="secondary" tone="brand">Tinted secondary text</Text>
-<Text tone="#0d9488">Custom-tone body copy</Text>
+import { Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <>
+      <Text priority="secondary" tone="brand">Tinted secondary text</Text>
+      <Text tone="#0d9488">Custom-tone body copy</Text>
+    </>
+  )
+}
 ```
 
 Style the light-DOM host, content, control, and links with plain CSS. The `.fancy`

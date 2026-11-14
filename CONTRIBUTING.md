@@ -20,9 +20,12 @@ If you are outside the maintainer group, open an issue for a bug or question.
    by Git. Package builds regenerate it.
 5. Open a pull request against `main`. Explain the problem, resulting behavior,
    and validation. Include limitations that affect review.
-6. Request review from Vlad Korobov ([@terpimost](https://github.com/terpimost)),
-   as specified in [CODEOWNERS](.github/CODEOWNERS). Do not merge without his
-   explicit approval.
+6. Request review from the owners specified in
+   [CODEOWNERS](.github/CODEOWNERS): Fernando Oliveros (`@fernoliveros`) for
+   `plot/`, Pranav Srivatsa (`@pranavsrivatsa`) for `virtual-scroll/`, and
+   Vlad Korobov (`@terpimost`) for everything else. Changes spanning multiple
+   owners require approval for each affected area. The ruleset restricts merges
+   to its trusted bypass list.
 7. Wait for required CI checks to pass. Follow the
    [human review marker rules](WRITING.md#human-review-markers) for documentation.
    The `review-docs` label is required when changed documentation retains or adds

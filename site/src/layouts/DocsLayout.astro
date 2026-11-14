@@ -193,13 +193,13 @@ if (hasStructuredBreadcrumbs && title) {
     <link
       rel="stylesheet"
       id="palette-link"
-      href="/themes/antune.css"
+      href="/themes/antithesis.css"
       data-astro-transition-persist="palette"
     />
     <link
       rel="stylesheet"
       id="palette-fonts-link"
-      href="/themes/fonts-antune.css"
+      href="/themes/fonts-antithesis.css"
       data-astro-transition-persist="palette-fonts"
     />
     <script is:inline>
@@ -208,13 +208,14 @@ if (hasStructuredBreadcrumbs && title) {
       // flashes the default palette. Keep URLs in sync with ThemeSwitcher.tsx.
       try {
         const stored = localStorage.getItem('anta-palette')
-        const palette = stored === 'anta' ? 'antune' : stored
+        const preference = stored === 'anta' ? 'antune' : stored
         const hrefs = {
           none: '/themes/default.css',
           antune: '/themes/antune.css',
           antithesis: '/themes/antithesis.css',
         }
-        document.getElementById('palette-link').href = Object.hasOwn(hrefs, palette) ? hrefs[palette] : hrefs.antune
+        const palette = Object.hasOwn(hrefs, preference) ? preference : 'antithesis'
+        document.getElementById('palette-link').href = hrefs[palette]
         document.getElementById('palette-fonts-link').href = palette === 'none'
           ? hrefs.none : `/themes/fonts-${palette === 'antithesis' ? 'antithesis' : 'antune'}.css`
         if (stored === 'anta') localStorage.setItem('anta-palette', 'antune')

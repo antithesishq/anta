@@ -1,42 +1,21 @@
 ---
 import DocsLayout from '../layouts/DocsLayout.astro'
-import AntaLogo from '../components/AntaLogo'
-import { Text, Tooltip } from '@antadesign/anta'
-import { StickerThumbsUpAnimated } from '@antadesign/stickers'
+import { Text } from '@antadesign/anta'
+import { Code } from 'astro-expressive-code/components'
 ---
 
 <DocsLayout title="Overview" author="Vlad Korobov">
-  <h1>Overview</h1>
+  <h1>A customizable design system for web applications</h1>
 
-  <div class="overview-intro">
-    <Text size="large" className="overview-copy">
-      <p><AntaLogo size={28} style={{ marginRight: 4, marginTop: -5 }} /><b>Anta</b> is an opinionated design system.</p>
-      <ul>
-        <li>it's carefully made <dfn>for web apps<Tooltip follow>Import the whole library (~200kb gzipped)<br />or selected components to minimize your bundle.<br />There is <b>no CSS-in-JS runtime</b>.</Tooltip></dfn></li>
-        <li>it has a <dfn>clean, attribute-driven DOM<Tooltip follow><b>No piles of utility classes and wrapping containers</b>.<br />Variants, tones, and behavior are attributes: <code>tone="critical"</code>, <code>size="large"</code>.</Tooltip></dfn></li>
-        <li>it's <dfn>easy to override<Tooltip follow>Global CSS tokens (auto-switching default light/dark styles) with <b>an optional theme</b>.<br />Customizable with attributes or plain CSS at the per-component level.</Tooltip></dfn></li>
-        <li>it has framework-agnostic <dfn>web components<Tooltip follow>The web components are fully declarative: they never change their own attributes<br />(a requirement for worker-thread UI rendering).</Tooltip></dfn></li>
-        <li>it uses <dfn>JSX wrappers<Tooltip follow>For dynamic state and conditional composition.</Tooltip></dfn> for <dfn>React or Preact<Tooltip>React is a default runtime.<br />Preact works via compat.<br />Use custom runtime via <code>configure()</code>.</Tooltip></dfn></li>
-        <li>it's well documented, typed, and AI-ready</li>
-      </ul>
-    </Text>
-    <StickerThumbsUpAnimated size={256} delay={0.5} playOnce replayOnClick label="Replay thumbs-up animation" className="overview-sticker" />
-  </div>
+  <Text>
+    <p>Built and used at <a href="https://antithesis.com">Antithesis</a>, with opinionated defaults and flexible customization.</p>
+    <p>Themed with plain CSS, classes, or inline styles. No CSS-in-JS runtime.</p>
+    <p>Architected with Web Components and typed React/Preact wrappers.</p>
+  </Text>
+  <h2>Use with an AI assistant</h2>
+  <Code
+    lang="text"
+    code="Use Anta (@antadesign/anta) for the UI. Read https://anta.design/llms.txt, then follow the installation guide and relevant component docs. Use the documented APIs and styling conventions."
+    wrap
+  />
 </DocsLayout>
-
-<style>
-  h1,
-  .overview-intro { max-width: 640px; }
-  .overview-intro {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-  .overview-sticker { flex: none; transform: scaleX(-1); }
-  .overview-copy { flex: 1 1 auto; min-width: min(100%, 33ch); max-width: 33ch; }
-  .overview-copy ul { padding-left: 2.25ch; }
-  @media (max-width: 640px) {
-    .overview-intro { flex-direction: column; align-items: flex-start; }
-    .overview-sticker { order: -1; }
-  }
-</style>

@@ -1,8 +1,6 @@
-# Every change in this repo requires a review from Vlad Korobov before
-# it can merge. See CONTRIBUTING.md for the full workflow.
-#
-# CODEOWNERS works in tandem with branch protection: with "require
-# review from code owners" enabled on `main`, GitHub will block merges
-# until @terpimost approves regardless of who else has reviewed.
+# The last matching pattern determines the required code owner.
+# Main's ruleset requires code-owner approval unless the merger has bypass access.
 
 * @terpimost
+/plot/ @fernoliveros
+/virtual-scroll/ @pranavsrivatsa

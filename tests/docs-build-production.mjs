@@ -162,7 +162,7 @@ for (const engine of engines) {
     await heading.focus()
     await page.waitForFunction(() => document.querySelector('h1 > a-tooltip')?.shadowRoot?.querySelector(':popover-open'))
     await page.keyboard.press('Escape')
-    await page.goto('https://anta.test/')
+    await page.goto('https://anta.test/text/')
     assert.equal(await page.locator('main h1 .doc-review-marker').count(), 0)
     await page.locator(`.sidebar a[href="${unreviewed.path}"]`).click()
     await page.waitForURL(`https://anta.test${unreviewed.path}`)

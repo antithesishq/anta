@@ -136,13 +136,12 @@ when the text is clipped.
 </html>
 ```
 
-In JavaScript, `textElement` refers to the `<a-text>` element.
-The read-only property `textElement.isTruncated` is `true` when the text is clipped.
+In the standalone example, `document.querySelector('a-text').isTruncated` is `true` when the text is clipped.
 
 ### Use expand with the web component
 
 To expand clipped text inside the `<a-text>` web component, add `expandable`
-and place an `<a-button>` before `<a-text-content>`.
+as an attribute and place an `<a-button>` before `<a-text-content>`.
 
 ```html
 <!doctype html>

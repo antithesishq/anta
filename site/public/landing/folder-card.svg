@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="437" height="381" viewBox="0 0 437 381" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<foreignObject x="-34" y="-34" width="505" height="449"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(17px);clip-path:url(#bgblur_0_0_25_clip_path);height:100%;width:100%"></div></foreignObject><g id="Union" data-figma-bg-blur-radius="34">
+<use xlink:href="#stroke0_0_25" fill="white" fill-opacity="0.3"/>
+<mask id="stroke1_0_25" fill="white">
+<use xlink:href="#stroke0_0_25"/>
+</mask>
+<path d="M427 0C432.523 0 437 4.47715 437 10V60C437 60.2936 436.984 60.5839 436.959 60.8711C436.985 61.2441 437 61.6204 437 62V365C437 373.837 429.837 381 421 381H16C7.16345 381 6.84569e-08 373.837 0 365V62C1.41746e-06 53.1634 7.16345 46 16 46H279V10C279 4.47715 283.477 5.63725e-08 289 0H427Z" stroke-width="2" stroke="white" mask="url(#stroke1_0_25)"/>
+</g>
+<defs>
+<clipPath id="bgblur_0_0_25_clip_path" transform="translate(34 34)"><path d="M427 0C432.523 0 437 4.47715 437 10V60C437 60.2936 436.984 60.5839 436.959 60.8711C436.985 61.2441 437 61.6204 437 62V365C437 373.837 429.837 381 421 381H16C7.16345 381 6.84569e-08 373.837 0 365V62C1.41746e-06 53.1634 7.16345 46 16 46H279V10C279 4.47715 283.477 5.63725e-08 289 0H427Z"/>
+</clipPath><path id="stroke0_0_25" d="M427 0C432.523 0 437 4.47715 437 10V60C437 60.2936 436.984 60.5839 436.959 60.8711C436.985 61.2441 437 61.6204 437 62V365C437 373.837 429.837 381 421 381H16C7.16345 381 6.84569e-08 373.837 0 365V62C1.41746e-06 53.1634 7.16344 46 16 46H279V10C279 4.47715 283.477 5.63725e-08 289 0H427Z"/>
+</defs>
+</svg>

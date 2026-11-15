@@ -32,12 +32,14 @@ before(async () => {
             function App() {
               const [value, setValue] = React.useState(options.value)
               const [locale, setLocale] = React.useState(options.locale ?? 'en-US')
+              const [hour12, setHour12] = React.useState(options.hour12)
+              window.setHour12 = setHour12
               window.setLocale = setLocale
               window.setValue = setValue
               window.ownerValue = value
               const props = { value, defaultValue: options.defaultValue, name: 'date', locale }
               const child = options.inputDate
-                ? React.createElement(InputDate, { ...props, time: options.time, onValueChange: next => {
+                ? React.createElement(InputDate, { ...props, time: options.time, hour12, onValueChange: next => {
                     window.log.requests.push(next)
                     if (options.accept !== false) setValue(next)
                   } })
@@ -243,6 +245,42 @@ for (const engine of engines) {
       assert.equal((await snapshot(page)).form, '2026-07-04')
       assert.deepEqual(await page.evaluate(() => window.log.requests), [])
     })
+
+    test.fast(`${engine.name()}: ${framework} InputDate reformats committed time without changing its value`, async t => {
+      const page = await pageFor(t, engine, framework, { inputDate: true, time: true, value: '2026-07-04T14:30' })
+      const input = page.locator('a-input input')
+      assert.equal(await input.inputValue(), '07/04/2026 02:30 PM')
+      await page.evaluate(() => window.setHour12(false))
+      await page.waitForFunction(() => document.querySelector('a-input').value === '07/04/2026 14:30')
+      await page.evaluate(() => window.setLocale('en-GB'))
+      await page.waitForFunction(() => document.querySelector('a-input').value === '04/07/2026 14:30')
+      await input.press('Enter')
+      assert.equal((await snapshot(page)).form, '2026-07-04T14:30')
+      assert.deepEqual(await page.evaluate(() => window.log.requests), [])
+    })
+
+    for (const accept of [false, true]) {
+      test.fast(`${engine.name()}: ${framework} InputDate draft follows controlled acceptance (accept: ${accept})`, async t => {
+        const page = await pageFor(t, engine, framework, { inputDate: true, value: '2026-07-04', accept })
+        const input = page.locator('a-input input')
+        await input.fill('07/05/2026')
+        await input.press('Enter')
+        assert.equal((await snapshot(page)).form, accept ? '2026-07-05' : '2026-07-04')
+        assert.deepEqual(await page.evaluate(() => window.log.requests), ['2026-07-05'])
+        await page.evaluate(() => window.setLocale('en-GB'))
+        await page.waitForFunction(() => document.querySelector('a-input').getAttribute('placeholder') === 'DD/MM/YYYY')
+        assert.equal(await input.inputValue(), accept ? '05/07/2026' : '07/05/2026')
+        await input.fill('')
+        assert.equal(await input.inputValue(), '')
+        await page.evaluate(() => window.setValue('2026-08-09'))
+        await page.waitForFunction(() => document.querySelector('a-input').value === '09/08/2026')
+        await input.fill('9/8/2026')
+        await input.press('Enter')
+        assert.equal(await input.inputValue(), '09/08/2026')
+        await page.evaluate(() => window.setLocale('en-US'))
+        await page.waitForFunction(() => document.querySelector('a-input').value === '08/09/2026')
+      })
+    }
 
     test.fast(`${engine.name()}: ${framework} controlled InputDate can select a previous date again`, async t => {
       const page = await pageFor(t, engine, framework, { inputDate: true, value: '2026-10-08' })

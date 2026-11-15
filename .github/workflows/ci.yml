@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
+      # Workspace prepare scripts build Anta, stickers, Plot, Virtual Scroll, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
         timeout-minutes: 10
         run: pnpm install --frozen-lockfile
@@ -383,7 +383,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
+      # Workspace prepare scripts build Anta, stickers, Plot, Virtual Scroll, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
         timeout-minutes: 10
         run: pnpm install --frozen-lockfile
@@ -419,6 +419,14 @@ jobs:
         run: pnpm --filter @antadesign/plot run typecheck
       - name: Verify plot package
         run: pnpm --filter @antadesign/plot run check:package
+      - name: Typecheck virtual scroll
+        run: pnpm --filter @antadesign/virtual-scroll run typecheck
+      - name: Verify virtual scroll package
+        run: pnpm --filter @antadesign/virtual-scroll run check:package
+      - name: Test virtual scroll
+        run: pnpm --filter @antadesign/virtual-scroll test && pnpm --filter @antadesign/virtual-scroll run test:browser
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Verify TypeDoc theme package
         run: pnpm --filter @antadesign/typedoc-theme exec npm pack --dry-run
       - name: Lint site CSS

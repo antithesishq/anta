@@ -3,31 +3,23 @@ import { lineClamp, neutralToneAttr, toneStyle } from "../anta_helpers"
 import { Tooltip } from "./Tooltip"
 
 export interface TitleProps extends BaseProps {
-  /** Heading level, 1–6. Sets the type scale and the
-   *  `aria-level` exposed to assistive technology
-   *  (h1 is typically reserved for the page title).
+  /** Sets the heading level and its font size.
    *  @defaultValue 2 */
   level?: 1 | 2 | 3 | 4 | 5 | 6
-  /** Visual priority. Maps to text-1..text-4 (`primary` = text-1).
+  /** Neutral emphasis uses `--text-1` through `--text-4`. See [Colors](/colors/#text).
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
-  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
-   *  named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
-   *  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
-   *  kept while lightness/chroma are pinned per priority in oklch.
+  /** Selects a text palette. A CSS color defines a custom tone. See [Tone × priority](#tone--priority).
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Typeface. Serif names the page and its parts; sans serif names objects on
-   *  the page, such as cards, panels, and metrics; monospace names technical
-   *  identifiers, such as run IDs, hashes, and file paths. Omit it to let the
-   *  theme choose by level: the Antithesis theme sets levels 1–3 in serif and
-   *  4–6 in sans serif, and other themes use sans serif throughout. */
+  /** Selects the typeface. Serif suits page and section headings, sans serif
+   *  suits headings in cards and panels, and monospace suits identifiers like
+   *  run IDs. The default comes from the theme and heading level. */
   font?: 'serif' | 'sans-serif' | 'monospace'
-  /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
-   *  single line; any integer ≥ 2 clamps to that many lines; `0` or a
-   *  negative value means no truncation. A clipped JSX `Title` shows its
-   *  text content in a tooltip by default. Nest a `<Tooltip>` to provide
-   *  your own tooltip instead.
+  /** Adds an ellipsis when the title exceeds the line limit. `true` limits it
+   *  to one line, and a positive integer sets the line count. `false` and
+   *  numbers below `1` disable truncation. A clipped title shows its full text
+   *  in a tooltip. A nested `<Tooltip>` replaces the default tooltip.
    * @author Vlad Korobov
    */
   truncate?: boolean | number

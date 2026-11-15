@@ -2,16 +2,17 @@ import { Component, Fragment, h, type ComponentChildren, type ComponentType } fr
 import { useEffect, useState } from 'preact/hooks'
 import * as Anta from '@antadesign/anta'
 import HarnessEditor from './HarnessEditor'
+import AppFixture from '../../../fixtures/AppFixture'
 import { caseCount, decode } from '../../../tests/pbt/axes'
 import button from '../../../tests/pbt/components/button'
 import styles from './Harness.module.css'
 
 const { Button } = Anta
 const themeStorageKey = 'anta-harness-theme'
-const initialSource = `import { Button } from '@antadesign/anta'
+const initialSource = `import { AppFixture } from '@fixtures'
 
 export default function App() {
-  return <Button label="Hello, Anta" />
+  return <AppFixture />
 }
 `
 
@@ -58,8 +59,9 @@ async function compileTSX(source: string): Promise<CompiledApp> {
   const executable = source
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antadesign\/anta['"]\s*;?/g, '')
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]react['"]\s*;?/g, '')
-    .replace(/export\s+default\s+function\s+App/, 'function App')
-  if (/^\s*import\s/m.test(executable)) throw new Error('Only @antadesign/anta and react imports are supported.')
+    .replace(/import\s*\{[^}]*\}\s*from\s*['"]@fixtures['"]\s*;?/g, '')
+    .replace(/export\s+default\s+function\s+App\b/, 'function App')
+  if (/^\s*import\s/m.test(executable)) throw new Error('Only @fixtures, @antadesign/anta and react imports are supported.')
   const result = await esbuild.transform(executable, {
     loader: 'tsx',
     sourcefile: 'generated.tsx',
@@ -70,8 +72,8 @@ async function compileTSX(source: string): Promise<CompiledApp> {
     jsxFragment: 'Fragment',
   })
   const entries = Object.entries(Anta).filter(([name]) => name !== 'default' && /^[A-Za-z_$][\w$]*$/.test(name))
-  const names = ['h', 'Fragment', 'useEffect', 'useState', ...entries.map(([name]) => name)]
-  const values = [h, Fragment, useEffect, useState, ...entries.map(([, value]) => value)]
+  const names = ['h', 'Fragment', 'useEffect', 'useState', 'AppFixture', ...entries.map(([name]) => name)]
+  const values = [h, Fragment, useEffect, useState, AppFixture, ...entries.map(([, value]) => value)]
   const App = new Function(...names, `"use strict";${result.code}\nreturn App`)(...values)
   if (typeof App !== 'function') throw new Error('Generated source must export default function App().')
   return App as CompiledApp
@@ -98,7 +100,8 @@ export default function Harness() {
   const [compiledSource, setCompiledSource] = useState('')
   const [compileError, setCompileError] = useState<string | null>(null)
   const [compiling, setCompiling] = useState(true)
-  const [editorOpen, setEditorOpen] = useState(() => window.matchMedia('(min-width: 721px)').matches)
+  const editorEnabled = new URLSearchParams(location.search).get('editor') !== 'off'
+  const [editorOpen, setEditorOpen] = useState(() => editorEnabled && window.matchMedia('(min-width: 721px)').matches)
 
   useEffect(() => {
     let cancelled = false
@@ -149,7 +152,7 @@ export default function Harness() {
     setSource(sourceFromLocation())
   }
 
-  return <main className={styles.harness}>
+  return <main className={styles.harness} data-editor-hidden={editorEnabled ? undefined : ''}>
     <section
       className={`${styles.stage} ${styles.preview}`}
       aria-busy={compileStatus === 'compiling'}
@@ -170,7 +173,7 @@ export default function Harness() {
       onThemeChange={() => setIsDark((value) => !value)}
       onClose={() => setEditorOpen(false)}
     />}
-    {!editorOpen && <Button
+    {editorEnabled && !editorOpen && <Button
       className={styles.showEditorButton}
       icon="braces"
       priority="tertiary"

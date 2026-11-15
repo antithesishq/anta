@@ -268,7 +268,8 @@ to explain validation or feedback. `statusIcon` lets you replace the status icon
 or hide it with `false`.
 
 A `critical` status also marks the control as invalid for assistive technology.
-Use `disabled` when the whole Select is unavailable.
+Use `disabled` when the whole Select is unavailable. This also disables options,
+filtering, and bulk actions in an already open menu without changing the selection.
 
 ### Using Select in forms
 

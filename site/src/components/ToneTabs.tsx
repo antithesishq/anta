@@ -3,7 +3,7 @@ import { Tabs } from '@antadesign/anta'
 
 type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'critical' | 'warning'
 
-const TONES: { value: Tone; label: string }[] = [
+export const TONES: { value: Tone; label: string }[] = [
   { value: 'neutral', label: 'Neutral' },
   { value: 'brand', label: 'Brand' },
   { value: 'info', label: 'Info' },
@@ -12,7 +12,7 @@ const TONES: { value: Tone; label: string }[] = [
   { value: 'warning', label: 'Warning' },
 ]
 
-const isTone = (v: string | null): v is Tone => TONES.some((t) => t.value === v)
+export const isTone = (v: string | null): v is Tone => TONES.some((t) => t.value === v)
 
 /**
  * Tone switcher for the Colors page. Picking a tab is client state: the

@@ -6,6 +6,16 @@
   background: var(--bg-0);
 }
 
+.harness[data-editor-hidden] {
+  position: static;
+  min-height: 100vh;
+}
+
+.harness[data-editor-hidden] .stage {
+  overflow: visible;
+  padding: 0;
+}
+
 .showEditorButton {
   position: absolute;
   top: 0;

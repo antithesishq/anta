@@ -1,0 +1,47 @@
+html:has([data-app-fixture]) {
+  scroll-behavior: auto;
+}
+
+[data-app-fixture] {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+[data-app-fixture] header,
+[data-app-fixture] article,
+[data-app-fixture] section {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+[data-app-fixture] h1,
+[data-app-fixture] h2 {
+  margin: 0;
+}
+
+[data-app-fixture] h1 { font-size: 18px; }
+[data-app-fixture] h2 { font-size: 14px; }
+
+[data-app-fixture] [data-fixture-list] {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+[data-app-fixture] article {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+}
+
+[data-app-fixture] article[data-fixture-type="calendar"],
+[data-app-fixture] article[data-fixture-type="plot"] {
+  order: -1;
+}
+
+@media (max-width: 850px) {
+  [data-app-fixture] article[data-fixture-type="calendar"] > div { zoom: .7; }
+}

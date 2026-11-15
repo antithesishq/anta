@@ -8,6 +8,7 @@ changes are not listed.
 ### Fixed
 
 - InputDate reformats its committed date when the locale changes, so confirming the field preserves the saved date.
+- Select disables open menu options, filtering, and bulk actions when the whole control becomes disabled, preserving its selection.
 
 ## 0.3.38 — October 29, 2026
 

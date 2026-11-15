@@ -30,8 +30,8 @@ importers:
         specifier: 0.7.10
         version: 0.7.10
       '@hegeldev/hegel':
-        specifier: 0.5.1
-        version: 0.5.1
+        specifier: 0.4.10
+        version: 0.4.10
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -997,38 +997,38 @@ packages:
   '@gerrit0/mini-shiki@3.23.0':
     resolution: {integrity: sha512-bEMORlG0cqdjVyCEuU0cDQbORWX+kYCeo0kV1lbxF5bt4r7SID2l9bqsxJEM0zndaxpOUT7riCyIVEuqq/Ynxg==}
 
-  '@hegeldev/hegel-darwin-arm64@0.5.1':
-    resolution: {integrity: sha512-mb6T64UzoIwdRVdqBTP0JsOoESphGtXDcZhrnZq32EYwd9pci5HhNbyLq0TJz4mm8UDOygNtLjbKcMj28T4A3w==}
+  '@hegeldev/hegel-darwin-arm64@0.4.10':
+    resolution: {integrity: sha512-5v+F/aGdNnmqd8lcyQNC6eWcJqZyzs0r2gnvtHnSAoHLg2f06grcwi73e0gh6xgb2IL5MpP4Zfh0e91FF276xQ==}
     engines: {node: '>=20.11.0'}
     cpu: [arm64]
     os: [darwin]
 
-  '@hegeldev/hegel-linux-arm64@0.5.1':
-    resolution: {integrity: sha512-gyzMhPFrQO3GjGTWO8dSNdaNDtHDIAW/4AOL8L2MGlyNMIlTmfoAbPbaQ7YbJ5uOtc/v8xUoJxQyjI8FASRbCw==}
+  '@hegeldev/hegel-linux-arm64@0.4.10':
+    resolution: {integrity: sha512-eqGsyA/X9OwjN1lqaV82NMeDhmtGXx/gHKvMZ9OjyoAVPeozDn1xDOIUlzcRUm9c7TyX5lVuW+d5SA+0R3kgyg==}
     engines: {node: '>=20.11.0'}
     cpu: [arm64]
     os: [linux]
 
-  '@hegeldev/hegel-linux-x64@0.5.1':
-    resolution: {integrity: sha512-zJjYi/0Ocf+qIuiRyJm3oR/GEBXJUytH7OYKR+qjShQUxJzWQyzs+Gz6A7oRqEekQEAh0zbmrSUnnV2CBgsk+A==}
+  '@hegeldev/hegel-linux-x64@0.4.10':
+    resolution: {integrity: sha512-0Xxq8hDbaY3l63pe6lAvXmeMwJwPZvo5Lv4eFJHZLFJPNn45ReyLw5dp2Sn/eMNE/mN7ofzvcLs8Nh1M0SgRrQ==}
     engines: {node: '>=20.11.0'}
     cpu: [x64]
     os: [linux]
 
-  '@hegeldev/hegel-win32-arm64@0.5.1':
-    resolution: {integrity: sha512-TsdywEkuifXME3lMZbJfq1G+Bdic2MEvZv4kjrgISv6EbDXXWy3IXAhOe/jzjk4XozGR8G5umTHOppvG799NnA==}
+  '@hegeldev/hegel-win32-arm64@0.4.10':
+    resolution: {integrity: sha512-YZ0n5F1I4Reqa+xa+YWNPj56IigGWr2mEOKi0GLl3Fry+eC0fz7Bc6KtcKpGF95Xclm3gzU1Poym6XjXR7q27A==}
     engines: {node: '>=20.11.0'}
     cpu: [arm64]
     os: [win32]
 
-  '@hegeldev/hegel-win32-x64@0.5.1':
-    resolution: {integrity: sha512-BTo5jKbP/nkI2/t2FALvG0fpBuFGXK4fKuBtH5xbn5hRJ783gKoxl5bWalxIPiR1wMGQWHb8TuaHLoEjFdjdXQ==}
+  '@hegeldev/hegel-win32-x64@0.4.10':
+    resolution: {integrity: sha512-1qGFbMaN1izPniNXqxKi6mo+L2F7sJdNDlcROIgUZ9ocu+YC15yQ1k9NlU5Vqj3wPdYQRc35M3NOCt/2QgN+3Q==}
     engines: {node: '>=20.11.0'}
     cpu: [x64]
     os: [win32]
 
-  '@hegeldev/hegel@0.5.1':
-    resolution: {integrity: sha512-Ltrysorpve7hrwEw6Tut2tvmbk8eEYVjI1wCtF952RYOIX0VV5Hy61l8kC3+DU4ifiXwbF8H93opko63VQY4pQ==}
+  '@hegeldev/hegel@0.4.10':
+    resolution: {integrity: sha512-tSmWDDv/mQjc5Xn6aKjxWePGWUQH9yH6ZhNcXbFt10VyrxX7bDxYKWhIUT/uH1SyZaitAQ/Pwlk9P0jsCDaQBQ==}
     engines: {node: '>=20.11.0'}
 
   '@img/colour@1.1.0':
@@ -4421,30 +4421,30 @@ snapshots:
       '@shikijs/types': 3.23.0
       '@shikijs/vscode-textmate': 10.0.2
 
-  '@hegeldev/hegel-darwin-arm64@0.5.1':
+  '@hegeldev/hegel-darwin-arm64@0.4.10':
     optional: true
 
-  '@hegeldev/hegel-linux-arm64@0.5.1':
+  '@hegeldev/hegel-linux-arm64@0.4.10':
     optional: true
 
-  '@hegeldev/hegel-linux-x64@0.5.1':
+  '@hegeldev/hegel-linux-x64@0.4.10':
     optional: true
 
-  '@hegeldev/hegel-win32-arm64@0.5.1':
+  '@hegeldev/hegel-win32-arm64@0.4.10':
     optional: true
 
-  '@hegeldev/hegel-win32-x64@0.5.1':
+  '@hegeldev/hegel-win32-x64@0.4.10':
     optional: true
 
-  '@hegeldev/hegel@0.5.1':
+  '@hegeldev/hegel@0.4.10':
     dependencies:
       koffi: 3.3.3
     optionalDependencies:
-      '@hegeldev/hegel-darwin-arm64': 0.5.1
-      '@hegeldev/hegel-linux-arm64': 0.5.1
-      '@hegeldev/hegel-linux-x64': 0.5.1
-      '@hegeldev/hegel-win32-arm64': 0.5.1
-      '@hegeldev/hegel-win32-x64': 0.5.1
+      '@hegeldev/hegel-darwin-arm64': 0.4.10
+      '@hegeldev/hegel-linux-arm64': 0.4.10
+      '@hegeldev/hegel-linux-x64': 0.4.10
+      '@hegeldev/hegel-win32-arm64': 0.4.10
+      '@hegeldev/hegel-win32-x64': 0.4.10
 
   '@img/colour@1.1.0': {}
 

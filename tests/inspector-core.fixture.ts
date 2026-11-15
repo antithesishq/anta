@@ -54,19 +54,26 @@ export function leaves({ hostile = false, cycles = true }: LeafOptions = {}) {
   return gs.oneOf(...parts)
 }
 
-export function recipes(options: LeafOptions = {}) {
-  return gs.recursive(
-    leaves(options),
-    children => gs.oneOf(
-      gs.arrays(gs.optional(children), { maxSize: 5 }).map(items => ({ t: 'arr', items }) as Recipe),
-      gs.tuples(gs.arrays(gs.optional(children), { maxSize: 5 }), children)
-        .map(([items, named]) => ({ t: 'arr', items, named }) as Recipe),
-      gs.arrays(gs.tuples(shortText, children), { maxSize: 4 }).map(entries => ({ t: 'obj', entries }) as Recipe),
-      gs.arrays(gs.tuples(shortText, children), { maxSize: 4 }).map(entries => ({ t: 'map', entries }) as Recipe),
-      gs.arrays(children, { maxSize: 4 }).map(items => ({ t: 'set', items }) as Recipe),
-    ),
-    { maxDepth: 4, maxLeaves: 30 },
+// Containers whose children come from `children`.
+function containers(children: gs.Generator<Recipe>) {
+  return gs.oneOf(
+    gs.arrays(gs.optional(children), { maxSize: 5 }).map(items => ({ t: 'arr', items }) as Recipe),
+    gs.tuples(gs.arrays(gs.optional(children), { maxSize: 5 }), children)
+      .map(([items, named]) => ({ t: 'arr', items, named }) as Recipe),
+    gs.arrays(gs.tuples(shortText, children), { maxSize: 4 }).map(entries => ({ t: 'obj', entries }) as Recipe),
+    gs.arrays(gs.tuples(shortText, children), { maxSize: 4 }).map(entries => ({ t: 'map', entries }) as Recipe),
+    gs.arrays(children, { maxSize: 4 }).map(items => ({ t: 'set', items }) as Recipe),
   )
+}
+
+// Nested recipes up to four containers deep. Each level is a leaf or a
+// container of the level below, listed leaf first so failures shrink toward
+// leaves.
+export function recipes(options: LeafOptions = {}) {
+  const leaf = leaves(options)
+  let level: gs.Generator<Recipe> = leaf
+  for (let depth = 0; depth < 4; depth++) level = gs.oneOf(leaf, containers(level))
+  return level
 }
 
 export const primitives = gs.oneOf<unknown>(
@@ -74,7 +81,7 @@ export const primitives = gs.oneOf<unknown>(
   gs.bigIntegers({ minValue: -(2n ** 70n), maxValue: 2n ** 70n }),
   gs.text({ maxSize: 6 }),
   gs.booleans(),
-  gs.none(),
+  gs.just(null),
   gs.just(undefined),
 )
 

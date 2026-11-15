@@ -59,7 +59,7 @@ checks, browser overrides, and appearance comparisons.
 | Production docs site | See [site build and browser checks](../site/AGENTS.md#build-preparation) |
 
 The Capture, Slider pointer, Panel, and Inspector core regressions are also included in `pnpm test`.
-The Inspector core's properties use Hegel. Set `CI=1` to use its deterministic `ci` profile;
+The Inspector core's properties use Hegel. Set `CI=1` to turn on its `derandomize` setting, so runs repeat;
 failing examples are saved in `.hegel/`, which Git ignores.
 Consumer fixtures and the Button harness run separately on request.
 

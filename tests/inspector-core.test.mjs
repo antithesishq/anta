@@ -8,8 +8,8 @@ import { build, leaves, primitives, recipes, reprOptions } from './inspector-cor
 const repr = (value, options) => core.repr(value, options)
 const make = recipe => build(recipe, { toRepr: core.to_repr })
 
-// The ci profile derives each run's seed from the test, so CI results repeat.
-const settings = process.env.CI ? { profile: 'ci' } : {}
+// Derandomized runs derive each run's seed from the test, so CI results repeat.
+const settings = process.env.CI ? { derandomize: true } : {}
 
 test('formats primitives', () => {
   assert.equal(repr(1), '1')

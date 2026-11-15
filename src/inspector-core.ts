@@ -2,7 +2,9 @@
  * Value representation core for the Inspector. `describe()` turns any
  * JavaScript value into a lazy tree of nodes made of typed tokens and groups of
  * children; `serialize()` renders a node as tokens within a character budget,
- * and `repr()` joins them into a string. No DOM or framework imports.
+ * and `repr()` joins them into a string. `visibleRows()` lists the lines the
+ * Inspector shows for a display state. No DOM or framework imports, so all of it
+ * can run next to the value, including in a worker.
  *
  * Derived from the Antithesis notebook's `repr()`, whose string output it
  * reproduces. It never throws: a read that fails, such as a hostile Proxy trap,
@@ -684,6 +686,157 @@ export function serialize(root: InspectNode, options: Options = {}): Token[] {
 
   visit(root)
   return out
+}
+
+// ---------------------------------------------------------------------------
+// Rows: the visible lines of a node tree, for the Inspector to render. A pure
+// function of the tree and the display state, so it runs wherever the value
+// lives, including a worker.
+
+/**
+ * One visible line of the tree. Row ids are strings that follow the tree's
+ * structure, so an ancestor's id is a prefix of its descendants' ids
+ * (`r`, `r:1.0`, `r:1.0:1.2`), and they can travel in serializable events.
+ *
+ * - `node`: a value, open or closed. A closed node shows its summary; an open
+ *   node shows its header and the opening bracket of its first group.
+ * - `close`: closing brackets of an open node, and any tokens between its groups.
+ * - `more`: the end of a group that has more children than are shown.
+ */
+export type InspectRow =
+  | {
+    type: 'node'
+    id: string
+    depth: number
+    /** Key and colon, empty for array elements and the root. */
+    key: Token[]
+    tokens: Token[]
+    kind: NodeKind
+    path: readonly unknown[]
+    /** Element count of an array, typed array, Set, or Map. */
+    size: number | undefined
+    expandable: boolean
+    open: boolean
+    /** For a circular node, the id of the ancestor row it refers to. */
+    target?: string
+  }
+  | { type: 'close'; id: string; depth: number; tokens: Token[] }
+  | {
+    type: 'more'
+    id: string
+    depth: number
+    /** The group to page further, as a key of `RowState.pages`. */
+    group: string
+    /** Children shown so far. */
+    shown: number
+  }
+
+/** Display state for `visibleRows`. Every field is serializable. */
+export type RowState = {
+  /** Nodes shallower than this depth start open. Defaults to 0. */
+  expandDepth?: number
+  /** Ids of nodes whose open state is the opposite of their default. */
+  toggled?: ReadonlySet<string>
+  /** Pages shown per group id, from `more` rows. Groups default to one page. */
+  pages?: ReadonlyMap<string, number>
+  /** Children per page. Defaults to 100. */
+  pageSize?: number
+  /** Characters in a closed node's summary. Defaults to 80. */
+  previewBudget?: number
+}
+
+const LEAF_KINDS: ReadonlySet<NodeKind> = new Set([
+  'string', 'number', 'bigint', 'boolean', 'null', 'undefined', 'symbol', 'circular', 'empty-slots', 'inaccessible',
+])
+
+function is_expandable(node: InspectNode): boolean {
+  if (LEAF_KINDS.has(node.kind)) return false
+  return node.parts.some(part => part.type === 'value' || (part.type === 'group' && part.group.childAt(0) !== undefined))
+}
+
+/**
+ * Lists the visible rows of `root` for the given display state. A closed node
+ * is read only as far as its summary needs, so opening a node is what reads its
+ * children. Repeated references expand in place; only cycles become `circular`
+ * rows, whose `target` names an open ancestor. With every node open, the rows'
+ * text joined in order is the `repr()` text without deduplication.
+ */
+export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow[] {
+  const expand_depth = state.expandDepth ?? 0
+  const toggled = state.toggled ?? new Set<string>()
+  const pages = state.pages ?? new Map<string, number>()
+  const page_size = state.pageSize ?? 100
+  const budget = state.previewBudget ?? 80
+  const rows: InspectRow[] = []
+  type Open = { identity: object | symbol | undefined; id: string }
+
+  const visit = (node: InspectNode, id: string, depth: number, key: Token[], ancestors: Open[]) => {
+    const expandable = is_expandable(node)
+    const open = expandable && ((depth < expand_depth) !== toggled.has(id))
+    const row: InspectRow = {
+      type: 'node', id, depth, key, tokens: [], kind: node.kind, path: node.path, size: node.size, expandable, open,
+    }
+    if (node.kind === 'circular') {
+      for (let a = ancestors.length - 1; a >= 0; a--) {
+        if (ancestors[a].identity === node.identity) { row.target = ancestors[a].id; break }
+      }
+    }
+    rows.push(row)
+    if (!open) {
+      row.tokens = node.summary(budget)
+      return
+    }
+
+    // `line` collects tokens for the current line: the node row, then a close
+    // row created when the first token after a group or inline value arrives.
+    let line: Token[] | undefined = row.tokens
+    let closes = 0
+    const append = (...tokens: Token[]) => {
+      if (!line) {
+        const close: InspectRow = { type: 'close', id: `${id}>${closes++}`, depth, tokens: [] }
+        rows.push(close)
+        line = close.tokens
+      }
+      line.push(...tokens)
+    }
+    const inner = [...ancestors, { identity: node.identity, id }]
+
+    node.parts.forEach((part, p) => {
+      if (part.type === 'tokens') {
+        append(...part.tokens)
+      } else if (part.type === 'value') {
+        visit(part.node, `${id}:${p}`, depth + 1, [], inner)
+        line = undefined
+      } else {
+        const group = part.group
+        const open_token: Token = { text: group.open, type: 'open_bracket' }
+        const close_token: Token = { text: group.close, type: 'close_bracket' }
+        if (group.childAt(0) === undefined) {
+          if (!group.hideWhenEmpty) append(open_token, close_token)
+          return
+        }
+        append(open_token)
+        line = undefined
+        const group_id = `${id}:${p}`
+        const shown = Math.max(1, pages.get(group_id) ?? 1) * page_size
+        const { items, more } = group.children(0, shown)
+        items.forEach((child, i) => {
+          const child_key: Token[] = child.key === undefined ? []
+            : [...(Array.isArray(child.key) ? child.key : (child.key as InspectNode).summary(budget)), { text: ':', type: 'field_colon' }]
+          visit(child.value, `${group_id}.${i}`, depth + 1, child_key, inner)
+          if (i < items.length - 1 || more) {
+            const last = rows.at(-1)!
+            if (last.type !== 'more') last.tokens.push({ text: ',', type: 'comma' })
+          }
+        })
+        if (more) rows.push({ type: 'more', id: `${group_id}+`, depth: depth + 1, group: group_id, shown: items.length })
+        append(close_token)
+      }
+    })
+  }
+
+  visit(root, 'r', 0, [], [])
+  return rows
 }
 
 export const DEFAULT_REPR_CHAR_LIMIT = 50000

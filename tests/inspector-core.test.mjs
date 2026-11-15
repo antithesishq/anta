@@ -1,34 +1,9 @@
-import { after, before, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
-import { build as esbuild } from 'esbuild'
+import { test } from 'node:test'
 import * as hegel from '@hegeldev/hegel'
 import * as gs from '@hegeldev/hegel/generators'
+import * as core from '../src/inspector-core.ts'
 import { build, leaves, primitives, recipes, reprOptions } from './inspector-core.fixture.ts'
-
-let core
-let directory
-
-// The bundle is written to a file, not imported from a data: URL, so stack
-// traces show a short path instead of the whole encoded module.
-before(async () => {
-  directory = await mkdtemp(join(tmpdir(), 'anta-inspector-core-'))
-  const outfile = join(directory, 'inspector-core.mjs')
-  await esbuild({
-    entryPoints: ['src/inspector-core.ts'],
-    bundle: true,
-    outfile,
-    platform: 'node',
-    format: 'esm',
-    target: 'es2022',
-  })
-  core = await import(pathToFileURL(outfile).href)
-})
-
-after(() => rm(directory, { recursive: true, force: true }))
 
 const repr = (value, options) => core.repr(value, options)
 const make = recipe => build(recipe, { toRepr: core.to_repr })
@@ -378,4 +353,171 @@ test('the node API never throws, even on hostile values', () =>
       node.summary(40)
       void node.header, node.size, node.target
     }
+  }, settings))
+
+// Rows: visibleRows() lists the lines the Inspector renders for a display state.
+
+const line = row => row.type === 'more' ? '' : text([...(row.key ?? []), ...row.tokens])
+const lines = rows => rows.map(row => ({ id: row.id, line: line(row) }))
+const inSubtree = (row, id) => row.id === id || row.id.startsWith(`${id}:`) || row.id.startsWith(`${id}>`)
+
+// The node a node row's id names: `:p.i` is child i of the group in part p,
+// and a bare `:p` is the inline value in part p.
+function nodeAt(root, id) {
+  let node = root
+  for (const [, part, index] of id.slice(1).matchAll(/:(\d+)(?:\.(\d+))?/g)) {
+    const found = node.parts[Number(part)]
+    node = index === undefined ? found.node : found.group.childAt(Number(index)).value
+  }
+  return node
+}
+
+// Opens a few closed rows chosen by Hegel, one at a time, as a reader would.
+function openSome(tc, root, state = {}, skip = () => false) {
+  const toggled = new Set(state.toggled ?? [])
+  const steps = tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'opens')
+  for (let step = 0; step < steps; step++) {
+    const closed = core.visibleRows(root, { ...state, toggled })
+      .filter(row => row.type === 'node' && row.expandable && !row.open && !skip(row))
+    if (!closed.length) break
+    const { id } = closed[tc.draw(gs.integers({ minValue: 0, maxValue: closed.length - 1 }), 'open')]
+    if (toggled.has(id)) toggled.delete(id)
+    else toggled.add(id)
+  }
+  return toggled
+}
+
+test('lists open nodes as header, children, and closing rows', () => {
+  const value = { tags: ['a', 'b'], n: 1 }
+  const rows = core.visibleRows(core.describe(value), { expandDepth: 2 })
+  assert.deepEqual(rows.map(row => [row.type, row.depth, line(row)]), [
+    ['node', 0, '{'],
+    ['node', 1, 'tags:['],
+    ['node', 2, '"a",'],
+    ['node', 2, '"b"'],
+    ['close', 1, '],'],
+    ['node', 1, 'n:1'],
+    ['close', 0, '}'],
+  ])
+  assert.deepEqual(rows[1], { ...rows[1], id: 'r:1.0', expandable: true, open: true, size: 2 })
+})
+
+test('closed nodes show their summary, and toggling flips the default', () => {
+  const root = core.describe({ tags: ['a', 'b'] })
+  const closed = core.visibleRows(root)
+  assert.deepEqual(closed.map(line), ['{tags:["a","b"]}'])
+  assert.equal(closed[0].open, false)
+  const opened = core.visibleRows(root, { toggled: new Set(['r']) })
+  assert.deepEqual(opened.map(line), ['{', 'tags:["a","b"]', '}'])
+})
+
+test('wide groups end in a more row until every page is shown', () => {
+  const root = core.describe(Array.from({ length: 5 }, (_, i) => i))
+  const first = core.visibleRows(root, { expandDepth: 1, pageSize: 2 })
+  assert.deepEqual(first.map(line), ['[', '0,', '1,', '', ']'])
+  assert.deepEqual(first[3], { type: 'more', id: 'r:1+', depth: 1, group: 'r:1', shown: 2 })
+  const all = core.visibleRows(root, { expandDepth: 1, pageSize: 2, pages: new Map([['r:1', 3]]) })
+  assert.deepEqual(all.map(line), ['[', '0,', '1,', '2,', '3,', '4', ']'])
+})
+
+test('cycles link to their open ancestor and repeats expand in place', () => {
+  const shared = { x: 1 }
+  const value = { a: shared, b: shared }
+  value.self = value
+  const rows = core.visibleRows(core.describe(value), { expandDepth: 2 })
+  assert.deepEqual(rows.map(line), ['{', 'a:{', 'x:1', '},', 'b:{', 'x:1', '},', 'self:circular_ref[]', '}'])
+  assert.equal(rows.at(-2).target, 'r')
+})
+
+test('with every node open, the rows spell out repr without deduplication', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
+    const { char_limit: _limit, deduplicate_references: _dedupe, ...options } = tc.draw(reprOptions, 'options')
+    const { value } = make(recipe)
+    const rows = core.visibleRows(core.describe(value, options), { expandDepth: Infinity, pageSize: Infinity, previewBudget: Infinity })
+    assert.equal(rows.map(line).join(''), repr(value, { ...options, deduplicate_references: false, char_limit: Infinity }))
+  }, settings))
+
+test('closing a node hides only its descendants', () =>
+  hegel.test(tc => {
+    const root = core.describe(make(tc.draw(recipes(), 'recipe')).value)
+    const toggled = openSome(tc, root, { expandDepth: 1 })
+    const open = core.visibleRows(root, { expandDepth: 1, toggled }).filter(row => row.type === 'node' && row.open)
+    tc.assume(open.length > 0)
+    const { id } = open[tc.draw(gs.integers({ minValue: 0, maxValue: open.length - 1 }), 'close')]
+    const flipped = new Set(toggled)
+    if (flipped.has(id)) flipped.delete(id)
+    else flipped.add(id)
+    const before = core.visibleRows(root, { expandDepth: 1, toggled })
+    const after = core.visibleRows(root, { expandDepth: 1, toggled: flipped })
+    assert.deepEqual(lines(after.filter(row => !inSubtree(row, id))), lines(before.filter(row => !inSubtree(row, id))))
+    assert.deepEqual(after.filter(row => inSubtree(row, id)).map(row => row.id), [id])
+  }, settings))
+
+test('showing every page gives the same rows as one unbounded page', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
+    const pageSize = tc.draw(gs.integers({ minValue: 1, maxValue: 3 }), 'pageSize')
+    const root = core.describe(make(recipe).value)
+    const pages = new Map()
+    let rows
+    for (let round = 0; round < 100; round++) {
+      rows = core.visibleRows(root, { expandDepth: Infinity, pageSize, pages })
+      const more = rows.filter(row => row.type === 'more')
+      for (const row of more) assert.equal(row.shown, (pages.get(row.group) ?? 1) * pageSize, 'a page showed the wrong number of children')
+      if (!more.length) break
+      for (const row of more) pages.set(row.group, (pages.get(row.group) ?? 1) + 1)
+    }
+    const whole = core.visibleRows(core.describe(make(recipe).value), { expandDepth: Infinity, pageSize: Infinity })
+    assert.deepEqual(lines(rows), lines(whole))
+  }, settings))
+
+test('closed nodes are not read past their summary', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes(), 'recipe')
+    const position = tc.draw(gs.integers({ minValue: 0, maxValue: 3 }), 'position')
+    const { state, proxy } = tripwire()
+    const siblings = [make(recipe).value, make(recipe).value, make(recipe).value]
+    siblings.splice(position, 0, { wire: proxy })
+    const root = core.describe(siblings)
+    // A 3-character summary prints only the first token of a closed node.
+    const display = { expandDepth: 1, previewBudget: 3 }
+    const isHolder = row => row.type === 'node' && row.depth === 1 && row.path.length === 1 && row.path[0] === position
+    const toggled = openSome(tc, root, display, isHolder)
+    const rows = core.visibleRows(root, { ...display, toggled })
+    assert.equal(state.touched, false, 'a closed node was read')
+    core.visibleRows(root, { ...display, toggled: new Set([...toggled, rows.find(isHolder).id]) })
+    assert.equal(state.touched, true, 'opening a node did not read its children')
+  }, settings))
+
+test('circular rows link to an open ancestor', () =>
+  hegel.test(tc => {
+    const root = core.describe(make(tc.draw(recipes(), 'recipe')).value)
+    const expandDepth = tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth')
+    const toggled = openSome(tc, root, { expandDepth })
+    const rows = core.visibleRows(root, { expandDepth, toggled })
+    rows.forEach((row, index) => {
+      if (row.type !== 'node' || row.kind !== 'circular') return
+      assert.ok(row.target !== undefined, `circular row ${row.id} has no target`)
+      const target = rows.findIndex(other => other.id === row.target)
+      assert.ok(target >= 0 && target < index, `target ${row.target} is not an earlier row`)
+      assert.equal(rows[target].open, true)
+      assert.ok(row.id.startsWith(`${row.target}:`), `${row.target} is not an ancestor of ${row.id}`)
+      assert.deepEqual(rows[target].path, nodeAt(root, row.id).target, `${row.target} is not the ancestor ${row.id} refers to`)
+    })
+  }, settings))
+
+test('rows never throw and keep ids unique, even on hostile values', () =>
+  hegel.test(tc => {
+    const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
+    const display = {
+      expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth'),
+      pageSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'pageSize'),
+      previewBudget: tc.draw(gs.integers({ minValue: 3, maxValue: 80 }), 'previewBudget'),
+    }
+    const rows = core.visibleRows(root, { ...display, toggled: openSome(tc, root, display) })
+    assert.equal(new Set(rows.map(row => row.id)).size, rows.length, 'duplicate row id')
+    rows.forEach((row, index) => {
+      if (index) assert.ok(row.depth <= rows[index - 1].depth + 1, `row ${row.id} skips a depth`)
+    })
   }, settings))

@@ -53,11 +53,14 @@ checks, browser overrides, and appearance comparisons.
 | Capture input | `pnpm test:capture-input` |
 | Slider pointer input | `node --test tests/slider-input.test.mjs` |
 | Panel focus and maximization | `node --test tests/panel.test.mjs` |
+| Inspector core | `node --test tests/inspector-core.test.mjs` |
 | Next.js and Preact consumers | `pnpm test:consumers`; see [consumer validation](consumers/README.md) |
 | Button property harness | See [repository verification](../AGENTS.md#verification) for preview setup and case selection |
 | Production docs site | See [site build and browser checks](../site/AGENTS.md#build-preparation) |
 
-The Capture, Slider pointer, and Panel regressions are also included in `pnpm test`.
+The Capture, Slider pointer, Panel, and Inspector core regressions are also included in `pnpm test`.
+The Inspector core's properties use Hegel. Set `CI=1` to use its deterministic `ci` profile;
+failing examples are saved in `.hegel/`, which Git ignores.
 Consumer fixtures and the Button harness run separately on request.
 
 ## Plot

@@ -119,9 +119,9 @@ MDX from retaining the client-only component's CSS in both page and island build
 
 ## CSS
 
-- Keep `vite.build.cssMinify: 'esbuild'`: Lightning CSS can wrap grouped
-  `::part()` selectors in invalid `:is(...)` selectors, hiding Input adornments
-  in production. The cold-home-page theme-chevron test covers this path.
+- Keep `Features.IsSelector` excluded in `vite.css.lightningcss`: Lightning CSS
+  can wrap grouped `::part()` selectors in invalid `:is(...)` selectors, hiding
+  Input adornments in production. The cold-home-page theme-chevron test covers this path.
 - Astro 7.3.3 needs the versioned [collection CSS patch](../patches/README.md) to keep client-only and processed-script styles attached to their content entries. Preserve it when installing dependencies. Before removing it or upgrading Astro, run the production asset tests and compare per-page stylesheet ownership. Incremental prerendering remains disabled until its dependency invalidation is checked with the patch.
 - **All component styles stay co-located** (a `.astro` scoped `<style>` or a `.module.css`). `astro.config.mjs` sets `build.inlineStylesheets: 'never'` so scoped styles are emitted into *linked* bundles, never inlined into the page `<head>` — Astro's per-page inline path can land present-but-inert in production for a component used inside MDX wrapping a hydrated island. Per-route CSS code-splitting stays on (default), so heavy island CSS (Monaco/Playground) loads only where it's used.
 - For a one-off style that must stay inline and untouched by Astro's pipeline, use **`<style is:inline>`** — it's rendered verbatim (no scoping, bundling, or hoisting).

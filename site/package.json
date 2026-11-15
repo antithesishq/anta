@@ -66,6 +66,7 @@
   "devDependencies": {
     "@types/chroma-js": "3.1.2",
     "@types/mark.js": "8.11.12",
+    "lightningcss": "1.33.0",
     "pixelmatch": "7.2.0",
     "playwright": "1.63.0",
     "pngjs": "7.0.0",

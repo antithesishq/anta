@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
+import { Features } from 'lightningcss';
 import { satteri, satteriHeadingIdsPlugin } from '@astrojs/markdown-satteri';
 import { monacoStyleAliases } from './lib/monaco-styles.mjs';
 import preact from '@astrojs/preact';
@@ -15,9 +16,9 @@ export default defineConfig({
   devToolbar: { enabled: false },
   vite: {
     optimizeDeps: { exclude: ['@hegeldev/hegel', '@hegeldev/hegel/generators'] },
-    // Lightning CSS wraps grouped ::part() selectors in :is(), which browsers
-    // discard. Keep the package's valid shadow-part selectors when minifying.
-    build: { target: 'es2022', cssMinify: 'esbuild' },
+    // Keep grouped ::part() selectors out of :is(), where browsers discard them.
+    css: { lightningcss: { exclude: Features.IsSelector } },
+    build: { target: 'es2022' },
     resolve: { alias: {
       ...monacoStyleAliases,
       // Root-level fixtures use the site's Plot dependency without a root/Plot cycle.

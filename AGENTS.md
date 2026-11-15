@@ -2,11 +2,12 @@
 
 Anta is a portable UI component library, published as `@antadesign/anta`. It works in React, Preact through `preact/compat`, and custom JSX runtimes through `configure()`.
 
-This pnpm workspace contains four publishable packages and one private site:
+This pnpm workspace contains five publishable packages and one private site:
 
 - `@antadesign/anta` — the root package; its source is in `src/`.
 - `@antadesign/stickers` — a separate sticker package in `stickers/`, keeping `lottie-web` out of anta's dependency graph.
 - `@antadesign/plot` — the separate canvas plot package in `plot/`.
+- `@antadesign/virtual-scroll` — the virtualized list package in `virtual-scroll/`. The table will follow as its own package.
 - `@antadesign/typedoc-theme` — the separate TypeDoc theme package in `typedoc-theme/`.
 - `site/` — the documentation site; it is not published to npm.
 
@@ -18,6 +19,7 @@ Read the closest guidance before changing a scoped area:
 - `site/AGENTS.md` — Astro site, interactive playground, client-router, and documentation-page conventions.
 - `stickers/AGENTS.md` — sticker package layout, generation, and publishing details. Read `src/AGENTS.md` as well before changing its elements or wrappers.
 - `plot/AGENTS.md` — plot entry points, build, and package verification.
+- `virtual-scroll/AGENTS.md` — virtual scroll entry points, build, tests, and the record of intentional divergences from the notebook original.
 - `typedoc-theme/README.md` — TypeDoc theme setup and package behavior.
 - `RELEASING.md` — mandatory publish order and package-manager commands.
 - `FIGMA.md`, `WRITING.md`, and `DESIGN.md` — Figma extraction, prose, and design guidance respectively.
@@ -75,6 +77,10 @@ site preview as described in [site/AGENTS.md](site/AGENTS.md#local-servers), the
 run `ANTA_HARNESS_ORIGIN=<preview-url> pnpm test:fuzz_component`. To check one
 case, add `ANTA_HARNESS_SHARD=22905 ANTA_HARNESS_CASES=1` (replace `22905` with
 the case ID). Failures and screenshots go to `tests/pbt/.runs/`.
+
+The authored Hegel/Bombadil fixture campaign runs separately from `pnpm test`.
+See [`fixtures/README.md`](fixtures/README.md) for setup, properties, and focused runs.
+The saved Button property harness above remains available with `?model=Button`.
 
 CI's `pnpm install --frozen-lockfile` runs the workspace `prepare` scripts to
 build Anta, stickers, and Plot. Do not repeat those builds in the same job or

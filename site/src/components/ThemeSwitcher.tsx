@@ -25,10 +25,10 @@ const notify = () => window.dispatchEvent(new Event('anta-palette-change'))
 
 function applyPalette(v: string) {
   const link = document.getElementById(LINK_ID) as HTMLLinkElement | null
-  const href = THEME_HREF[v] ?? THEME_HREF.antune
+  const href = THEME_HREF[v] ?? THEME_HREF.antithesis
   const fonts = document.getElementById('palette-fonts-link') as HTMLLinkElement | null
   if (fonts) fonts.href = v === 'none'
-    ? THEME_HREF.none : `/themes/fonts-${v === 'antithesis' ? 'antithesis' : 'antune'}.css`
+    ? THEME_HREF.none : `/themes/fonts-${v === 'antune' ? 'antune' : 'antithesis'}.css`
   if (!link || link.getAttribute('href') === href) {
     notify()
     return
@@ -39,13 +39,13 @@ function applyPalette(v: string) {
 }
 
 export default function ThemeSwitcher() {
-  const [value, setValue] = useState('antune')
+  const [value, setValue] = useState('antithesis')
 
   // Reflect the stored choice once mounted (the inline head script already
   // applied the stylesheet before paint).
   useEffect(() => {
     const href = document.getElementById(LINK_ID)?.getAttribute('href')
-    setValue(Object.keys(THEME_HREF).find(key => THEME_HREF[key] === href) ?? 'antune')
+    setValue(Object.keys(THEME_HREF).find(key => THEME_HREF[key] === href) ?? 'antithesis')
   }, [])
 
   return (

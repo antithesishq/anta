@@ -1688,6 +1688,23 @@
     --native-field-round: 1px;
   }
 
+  select[data-anta] {
+    --native-field-border: var(--stroke-1);
+    --native-select-picker-radius: 2px;
+    --native-select-option-color: var(--text-1);
+    --native-select-option-hover: var(--fill-3-hover);
+    --native-select-option-active: var(--fill-3-active);
+    box-shadow: inset 0 0 0 1px var(--native-field-border);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    select[data-anta]:not(:disabled):hover { --native-field-border: var(--stroke-1-hover); }
+  }
+  select[data-anta]:disabled {
+    --native-field-border: var(--stroke-disabled);
+    background: var(--fill-disabled);
+    box-shadow: inset 0 0 0 1px var(--native-field-border);
+  }
+
   a-tag {
     border-radius: 3px;
   }

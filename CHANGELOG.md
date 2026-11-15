@@ -8,6 +8,7 @@ changes are not listed.
 ### Fixed
 
 - Select disables open menu options, filtering, and bulk actions when the whole control becomes disabled, preserving its selection.
+- Native selects style the default trigger and dropdown without custom button markup, match Antithesis field and option states, and keep closed pickers hidden. The Select style entry also includes native select styles.
 
 ## 0.3.38 — October 29, 2026
 

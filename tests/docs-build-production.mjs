@@ -100,6 +100,25 @@ for (const engine of engines) test(`${engine.name()}: theme chevron is visible o
   assert.deepEqual(errors, [])
 })
 
+for (const engine of engines) test(`${engine.name()}: native Select examples retain rich options in production`, async t => {
+  const { page, errors } = await productionPage(t, engine)
+  await page.goto('https://anta.test/select/#native-html-select')
+  const plain = page.locator('#native-output')
+  const rich = page.locator('#native-recipient')
+  await rich.waitFor({ state: 'visible' })
+  assert.equal(await rich.locator('option > a-menu-item-text').count(), 3)
+  assert.equal(await rich.locator('option').first().evaluate(option => option.text), 'Alex Morgan Accountant · Finance')
+  assert.equal(await plain.locator('button').count(), 0)
+  await plain.click()
+  await plain.getByRole('option', { name: 'File path', exact: true }).click()
+  assert.equal(await plain.inputValue(), 'file_path')
+  await rich.click()
+  await rich.getByRole('option', { name: 'Alex Morgan Designer · Product', exact: true }).click()
+  assert.equal(await rich.inputValue(), 'alex-design')
+  assert.equal(await rich.locator('selectedcontent a-menu-item-hint').textContent(), 'Designer · Product')
+  assert.deepEqual(errors, [])
+})
+
 test('changelog feed preserves dated releases, HTML notes and working release links', async t => {
   const { page } = await productionPage(t)
   const [feed, html, changelog] = await Promise.all([

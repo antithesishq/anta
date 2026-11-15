@@ -79,6 +79,27 @@ async function productionPage(t, engine = chromium) {
   return { page, errors }
 }
 
+for (const engine of engines) test(`${engine.name()}: theme chevron is visible on a cold home-page load`, async t => {
+  const { page, errors } = await productionPage(t, engine)
+  await page.goto('https://anta.test/')
+  const chevron = page.locator('.theming-select a-icon[shape="chevron-down"]')
+  await chevron.waitFor({ state: 'visible' })
+  const appearance = await chevron.evaluate(icon => {
+    const style = getComputedStyle(icon)
+    const slot = icon.closest('a-input').shadowRoot.querySelector('[part="trailing"]')
+    return {
+      width: icon.getBoundingClientRect().width,
+      height: icon.getBoundingClientRect().height,
+      mask: style.maskImage,
+      slotDisplay: getComputedStyle(slot).display,
+    }
+  })
+  assert.ok(appearance.width > 0 && appearance.height > 0)
+  assert.notEqual(appearance.mask, 'none')
+  assert.equal(appearance.slotDisplay, 'flex')
+  assert.deepEqual(errors, [])
+})
+
 test('changelog feed preserves dated releases, HTML notes and working release links', async t => {
   const { page } = await productionPage(t)
   const [feed, html, changelog] = await Promise.all([

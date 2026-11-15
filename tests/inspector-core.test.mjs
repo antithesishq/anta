@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url'
 import { build as esbuild } from 'esbuild'
 import * as hegel from '@hegeldev/hegel'
 import * as gs from '@hegeldev/hegel/generators'
-import { build, leaves, primitives, recipes } from './inspector-core.fixture.ts'
+import { build, leaves, primitives, recipes, reprOptions } from './inspector-core.fixture.ts'
 
 let core
 let directory
@@ -35,10 +35,6 @@ const make = recipe => build(recipe, { toRepr: core.to_repr })
 
 // The ci profile derives each run's seed from the test, so CI results repeat.
 const settings = process.env.CI ? { profile: 'ci' } : {}
-// Properties that fail until phase 2 fixes the bug they expose. Their failure
-// message names the shrunk case, so Hegel's own report would only add noise.
-const todoSettings = { ...settings, verbosity: hegel.Verbosity.Quiet, printBlob: false }
-const phase2 = 'fixed in phase 2 of the Inspector work'
 
 test('formats primitives', () => {
   assert.equal(repr(1), '1')
@@ -159,41 +155,56 @@ test('primitives print the same exactly when Object.is', () =>
     else assert.notEqual(ra, rb)
   }, settings))
 
-// Each of these exposes a known legacy bug that phase 2 fixes. The examples pin
-// each bug down; the properties look for variations of it.
+// Regressions for bugs in the legacy notebook repr(). The examples pin each bug
+// down; the properties look for variations of it.
 
-test('example: a Proxy whose get trap throws', { todo: phase2 }, () => {
-  assert.doesNotThrow(() => repr(new Proxy({}, { get() { throw new Error('trap') } })))
+test('reads through a Proxy whose get trap throws', () => {
+  assert.equal(repr(new Proxy({ a: 1 }, { get() { throw new Error('trap') } })), '{a:1}')
 })
 
-test('example: a repeated function with to_repr is not circular', { todo: phase2 }, () => {
+test('a repeated function with to_repr is not circular', () => {
   const f = Object.assign(function named() {}, { [core.to_repr](v) { v.span('F', 'function_name') } })
   assert.equal(repr([f, f]), '[F,ref[0]]')
 })
 
-test('example: trailing empty slots next to a named property', { todo: phase2 }, () => {
+test('reports trailing empty slots next to a named property', () => {
   assert.equal(repr(Object.assign(new Array(2), { x: 1 })), '[<2 empty slots>]{x:1}')
 })
 
-test('example: a repeated symbol', { todo: phase2 }, () => {
+test('a repeated symbol prints as ref[...]', () => {
   const s = Symbol('s')
   assert.equal(repr([s, s]), '[Symbol("s"),ref[0]]')
 })
 
-test('never throws, even on hostile values', { todo: phase2 }, () =>
+test('prints <inaccessible> for reads that throw', () => {
+  const boom = () => { throw new Error('boom') }
+  const revocable = Proxy.revocable({}, {})
+  revocable.revoke()
+  assert.equal(repr(new Proxy({}, { has: boom })), '<inaccessible>')
+  assert.equal(repr(new Proxy({ a: 1 }, { ownKeys: boom })), '{<inaccessible>}')
+  assert.equal(repr(new Proxy({}, { getPrototypeOf: boom })), '<inaccessible>')
+  assert.equal(repr(new Proxy({ a: 1 }, { getOwnPropertyDescriptor: boom })), '<inaccessible>')
+  assert.equal(repr(revocable.proxy), '<inaccessible>')
+  assert.equal(repr({ [core.to_repr](v) { v.span('X', 'class_name'); boom() } }), 'X<inaccessible>')
+  assert.equal(repr(Object.defineProperty(new Error('m'), 'message', { get: boom })), 'Error(<inaccessible>)')
+  assert.equal(repr(Object.defineProperty([1, 2], 1, { get: boom })), '[1,<inaccessible>]')
+  assert.equal(repr({ ok: 1, bad: new Proxy({}, { has: boom }), after: 2 }), '{ok:1,bad:<inaccessible>,after:2}')
+})
+
+test('never throws, even on hostile values', () =>
   hegel.test(tc => {
     const { value } = make(tc.draw(recipes({ hostile: true }), 'recipe'))
     try { repr(value) } catch (e) { throw new Error(`repr threw: ${e.message}`) }
-  }, todoSettings))
+  }, settings))
 
-test('circular_ref only appears when the value has a cycle', { todo: phase2 }, () =>
+test('circular_ref only appears when the value has a cycle', () =>
   hegel.test(tc => {
     const { value, realCycles } = make(tc.draw(recipes(), 'recipe'))
     const out = repr(value)
     if (out.includes('circular_ref')) assert.ok(realCycles > 0, `no cycle, but got: ${out}`)
-  }, { ...todoSettings, testCases: 500 }))
+  }, { ...settings, testCases: 500 }))
 
-test('every empty slot is reported', { todo: phase2 }, () =>
+test('every empty slot is reported', () =>
   hegel.test(tc => {
     const leaf = leaves({ cycles: false })
     const items = tc.draw(gs.arrays(gs.optional(leaf), { maxSize: 6 }), 'items')
@@ -201,12 +212,170 @@ test('every empty slot is reported', { todo: phase2 }, () =>
     const out = repr(make({ t: 'arr', items, ...(named ? { named } : {}) }).value)
     const reported = [...out.matchAll(/<(\d+) empty slots?>/g)].reduce((sum, m) => sum + Number(m[1]), 0)
     assert.equal(reported, items.filter(item => item === null).length, `got: ${out}`)
-  }, todoSettings))
+  }, settings))
 
-test('a repeated symbol prints as ref[...]', { todo: phase2 }, () =>
+test('every repeated symbol prints as ref[...]', () =>
   hegel.test(tc => {
     const ids = tc.draw(gs.arrays(gs.integers({ minValue: 0, maxValue: 2 }), { minSize: 1, maxSize: 6 }), 'ids')
     const out = repr(make({ t: 'arr', items: ids.map(id => ({ t: 'sym', id })) }).value)
     const refs = (out.match(/\bref\[/g) ?? []).length
     assert.equal(refs, ids.length - new Set(ids).size, `got: ${out}`)
-  }, todoSettings))
+  }, settings))
+
+// Node model: describe() builds a lazy tree for the Inspector.
+
+const text = tokens => tokens.map(token => token.text).join('')
+
+// A Proxy that records any access and refuses it.
+function tripwire() {
+  const state = { touched: false }
+  const refuse = () => { state.touched = true; throw new Error('tripwire touched') }
+  const traps = ['get', 'has', 'ownKeys', 'getPrototypeOf', 'getOwnPropertyDescriptor', 'set', 'defineProperty', 'deleteProperty', 'apply', 'construct']
+  return { state, proxy: new Proxy({}, Object.fromEntries(traps.map(trap => [trap, refuse]))) }
+}
+
+// Every node reachable from `node`, with its ancestors, to a bounded depth and width.
+function* walk(node, ancestors = [], depth = 0) {
+  yield { node, ancestors }
+  if (depth >= 5 || node.kind === 'circular') return
+  const next = [...ancestors, node]
+  for (const part of node.parts) {
+    if (part.type === 'value') yield* walk(part.node, next, depth + 1)
+    if (part.type !== 'group') continue
+    for (const child of part.group.children(0, 20).items) {
+      if (child.key && !Array.isArray(child.key)) yield* walk(child.key, next, depth + 1)
+      yield* walk(child.value, next, depth + 1)
+    }
+  }
+}
+
+test('describes values as nodes with groups of children', () => {
+  const node = core.describe([1, [2]])
+  assert.equal(node.kind, 'array')
+  assert.equal(node.size, 2)
+  assert.deepEqual(node.header, [])
+  const [elements, extra] = node.groups
+  assert.equal(elements.open, '[')
+  assert.equal(extra.hideWhenEmpty, true)
+  const { items, more } = elements.children(0, 10)
+  assert.equal(more, false)
+  assert.deepEqual(items.map(child => child.value.kind), ['number', 'array'])
+  assert.deepEqual(items[1].value.path, [1])
+})
+
+test('keeps keys apart from values, including non-string Map keys', () => {
+  const object = core.describe({ a: 1 }).groups[0].childAt(0)
+  assert.deepEqual(object.key, [{ text: 'a', type: 'field_name' }])
+  assert.equal(object.value.kind, 'number')
+  const entry = core.describe(new Map([[{ id: 1 }, 'v']])).groups[0].childAt(0)
+  assert.equal(entry.key.kind, 'object')
+  assert.equal(text(core.serialize(entry.key)), '{id:1}')
+})
+
+test('marks cycles with the path of the ancestor they refer to', () => {
+  const o = { child: {} }
+  o.child.parent = o
+  const parent = core.describe(o).groups[0].childAt(0).value.groups[0].childAt(0).value
+  assert.equal(parent.kind, 'circular')
+  assert.deepEqual(parent.target, [])
+  assert.equal(text(parent.header), 'circular_ref[]')
+})
+
+test('pages through wide groups', () => {
+  const elements = core.describe(Array.from({ length: 250 }, (_, i) => i)).groups[0]
+  const first = elements.children(0, 100)
+  assert.equal(first.items.length, 100)
+  assert.equal(first.more, true)
+  const last = elements.children(200, 100)
+  assert.equal(last.items.length, 50)
+  assert.equal(last.more, false)
+  assert.equal(text(last.items[0].value.header), '200')
+})
+
+test('custom types become groups through to_repr', () => {
+  const point = { [core.to_repr](v) { v.constructor_call('Point', 1, { z: 2 }) } }
+  const node = core.describe(point)
+  assert.equal(node.kind, 'custom')
+  assert.equal(text(node.header), 'Point')
+  assert.deepEqual(node.groups[0].children(0, 5).items.map(child => child.value.kind), ['number', 'object'])
+  assert.equal(core.to_repr, Symbol.for('anta.to-repr'))
+})
+
+test('summaries are short previews of a node', () => {
+  const node = core.describe({ message: 'a long message that will not fit', count: 3 })
+  assert.equal(text(node.summary(20)), '{message:"a long ...')
+  assert.equal(node.summary(20).at(-1).type, 'ellipsis')
+})
+
+test('describe reads nothing until a node resolves', () => {
+  const { state, proxy } = tripwire()
+  const node = core.describe(proxy)
+  assert.equal(state.touched, false)
+  assert.equal(node.kind, 'inaccessible')
+  assert.equal(state.touched, true)
+})
+
+test('pulling a group never resolves its children', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes(), 'recipe')
+    const position = tc.draw(gs.integers({ minValue: 0, maxValue: 3 }), 'position')
+    const { state, proxy } = tripwire()
+    const siblings = [make(recipe).value, make(recipe).value, make(recipe).value]
+    siblings.splice(position, 0, { wire: proxy })
+    const root = core.describe(siblings)
+    for (const child of root.groups[0].children(0, 10).items) {
+      // Resolving a sibling and pulling its groups reads one level down only.
+      for (const group of child.value.groups) group.children(0, 10)
+    }
+    assert.equal(state.touched, false, 'a child node was resolved without being asked')
+  }, settings))
+
+test('pages concatenate to one full read', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
+    const limit = tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'limit')
+    const paged = core.describe(make(recipe).value)
+    const whole = core.describe(make(recipe).value)
+    paged.groups.forEach((group, g) => {
+      const seen = []
+      for (let offset = 0; ; offset += limit) {
+        const { items, more } = group.children(offset, limit)
+        assert.ok(items.length <= limit)
+        seen.push(...items)
+        if (!more) break
+        assert.equal(items.length, limit, 'a short page reported more')
+      }
+      const all = whole.groups[g].children(0, Infinity).items
+      assert.deepEqual(seen.map(child => text(core.serialize(child.value))), all.map(child => text(core.serialize(child.value))))
+    })
+  }, settings))
+
+test('circular targets are real ancestors', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes(), 'recipe')
+    for (const { node, ancestors } of walk(core.describe(make(recipe).value))) {
+      if (node.kind !== 'circular') continue
+      const ancestor = ancestors.find(a => a.identity === node.identity)
+      assert.ok(ancestor, 'a circular node has no matching ancestor')
+      assert.deepEqual(node.target, ancestor.path)
+    }
+  }, settings))
+
+test('a root summary equals repr within the same budget', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
+    const options = tc.draw(reprOptions, 'options')
+    const budget = tc.draw(gs.integers({ minValue: 3, maxValue: 80 }), 'budget')
+    const summary = text(core.describe(make(recipe).value, options).summary(budget))
+    assert.ok(summary.length <= budget, `length ${summary.length} > ${budget}`)
+    assert.equal(summary, repr(make(recipe).value, { ...options, char_limit: budget }))
+  }, settings))
+
+test('the node API never throws, even on hostile values', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
+    for (const { node } of walk(core.describe(make(recipe).value))) {
+      node.summary(40)
+      void node.header, node.size, node.target
+    }
+  }, settings))

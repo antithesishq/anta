@@ -1,12 +1,12 @@
 /**
- * Value representation core for the Inspector: walks any JavaScript value and
- * emits a flat stream of typed tokens through `span(text, type)`. Subclasses
- * decide what tokens become; `StringRepresentationVisitor` joins them into a
- * string within a character budget. No DOM or framework imports.
+ * Value representation core for the Inspector. `describe()` turns any
+ * JavaScript value into a lazy tree of nodes made of typed tokens and groups of
+ * children; `serialize()` renders a node as tokens within a character budget,
+ * and `repr()` joins them into a string. No DOM or framework imports.
  *
- * This is a mechanical port of the Antithesis notebook's `repr()` core. Its
- * behavior, including known bugs, is kept on purpose so the port can be
- * checked against the original before the core is refactored.
+ * Derived from the Antithesis notebook's `repr()`, whose string output it
+ * reproduces. It never throws: a read that fails, such as a hostile Proxy trap,
+ * prints `<inaccessible>`.
  *
  * @internal Not public API until it is deliberately exported.
  * @module
@@ -31,7 +31,7 @@ export type SpanType = 'field_name' | 'field_colon' | 'open_bracket' | 'close_br
   'string' | 'number' | 'boolean' | 'symbol' | 'bigint' | 'undefined' | 'null' |
   'error_class_name' | 'class_name' | 'error_message' | 'reference' | 'reference_path' |
   'function' | 'function_name' | 'open_slash' | 'close_slash' | 'regexp' | 'regexp_flags' | 'legacy_repr' |
-  'empty_slot' | 'open_quote' | 'close_quote'
+  'empty_slot' | 'open_quote' | 'close_quote' | 'inaccessible' | 'ellipsis'
 
 const numeric_bases = {
   binary: { prefix: '0b', number: 0b10 },
@@ -43,17 +43,17 @@ const numeric_bases = {
 // The standard does not expose %TypedArray%.
 const TypedArray = Object.getPrototypeOf(Int8Array)
 
-export const to_repr = Symbol('to_repr')
+/**
+ * Method key a value implements to describe itself, receiving a
+ * `CustomRepresentationVisitor`. Registered with `Symbol.for`, so copies of the
+ * library loaded separately agree on it.
+ */
+export const to_repr = Symbol.for('anta.to-repr')
 
-type RepresentationVisitorState = {
-  char_limit: number
-  stop: boolean
-  refs: WeakMap<object, ReferenceInfo>
-  symbol_refs: Map<symbol, ReferenceInfo>
-  repeated_reference_count: number
-  path: unknown[]
-  options: Options
-}
+/** Stands in for a value or entry whose read threw. */
+const INACCESSIBLE: unique symbol = Symbol('inaccessible')
+type Inaccessible = typeof INACCESSIBLE
+const INACCESSIBLE_TEXT = '<inaccessible>'
 
 /** Converts a path segment to a string, even when its conversion throws. @internal */
 export function safe_string(value: unknown): string {
@@ -83,13 +83,88 @@ export const well_known_symbols: Map<symbol, string> = new Map(
     .map(name => [(Symbol as unknown as Record<string, symbol>)[name], name]),
 )
 
+/** Runs `read`, returning `INACCESSIBLE` if it throws. */
+function guard<T>(read: () => T): T | Inaccessible {
+  try {
+    return read()
+  } catch {
+    return INACCESSIBLE
+  }
+}
+
+/** Iterates `iterable`, yielding `INACCESSIBLE` once and stopping if iteration throws. */
+function* guarded<T>(iterable: Iterable<T>): Generator<T | Inaccessible> {
+  let iterator: Iterator<T>
+  try {
+    iterator = iterable[Symbol.iterator]()
+  } catch {
+    yield INACCESSIBLE
+    return
+  }
+  while (true) {
+    let result: IteratorResult<T>
+    try {
+      result = iterator.next()
+    } catch {
+      yield INACCESSIBLE
+      return
+    }
+    if (result.done) return
+    yield result.value
+  }
+}
+
+function* keys_in(it: object): Generator<string> {
+  for (const key in it) yield key
+}
+
+// Enumerable string-keyed data properties, including inherited ones, read
+// lazily (for...in) so truncation can stop early. Accessors are skipped, so no
+// user code runs. A failed read yields INACCESSIBLE and ends the iteration.
+function* data_entries(it: object): Generator<[string, unknown] | Inaccessible> {
+  for (const prop of guarded(keys_in(it))) {
+    if (prop === INACCESSIBLE) { yield INACCESSIBLE; return }
+    const desc = guard(() => find_descriptor(it, prop))
+    if (desc === INACCESSIBLE) { yield INACCESSIBLE; return }
+    if (desc && 'value' in desc) yield [prop, desc.value]
+  }
+}
+
+function format_key_name(key: string) {
+  if (/^[A-Za-z0-9_]+$/.test(key)) return key
+  return `"${key}"`
+}
+
+// Finds a property descriptor up the prototype chain without running getters.
+// Proxy traps it reaches may throw; callers guard.
+function find_descriptor(it: object | null, prop: PropertyKey): PropertyDescriptor | undefined {
+  while (it) {
+    const desc = Object.getOwnPropertyDescriptor(it, prop)
+    if (desc) return desc
+    it = Object.getPrototypeOf(it)
+  }
+  return undefined
+}
+
+function data_property(it: object, prop: PropertyKey): unknown {
+  const desc = find_descriptor(it, prop)
+  return desc && 'value' in desc ? desc.value : undefined
+}
+
+// Read through descriptors, so a `constructor` getter or a Proxy `get` trap
+// never runs.
+function constructor_name(obj: object): string | undefined {
+  const ctor = data_property(obj, 'constructor')
+  if (typeof ctor !== 'function') return undefined
+  const name = data_property(ctor, 'name')
+  return typeof name === 'string' ? name : undefined
+}
 function constructor_name_if_any(obj: object) {
-  if (!obj.constructor || obj.constructor.name === 'Object') return ''
-  return obj.constructor.name
+  const name = constructor_name(obj)
+  return name === 'Object' ? '' : name ?? ''
 }
 function is_pojo(obj: object) {
-  if (!obj.constructor) return false
-  return obj.constructor.name === 'Object'
+  return constructor_name(obj) === 'Object'
 }
 
 /** What an implementation of `[to_repr]` receives. */
@@ -102,380 +177,519 @@ export interface CustomRepresentationVisitor {
   get stopped(): boolean
 }
 
-export abstract class RepresentationVisitor implements CustomRepresentationVisitor {
-  state: RepresentationVisitorState
-  constructor(parent: RepresentationVisitor | undefined, options: Options) {
-    if (parent)
-      this.state = parent.state
-    else
-      this.state = {
-        char_limit: options.char_limit === undefined ? Infinity : options.char_limit,
-        stop: false,
-        refs: new WeakMap<object, ReferenceInfo>(),
-        symbol_refs: new Map<symbol, ReferenceInfo>(),
-        repeated_reference_count: 0,
-        path: [],
-        options,
-      }
-  }
-
-  /** Adds `text` to the end of the representation. */
-  abstract span(text: string, type: SpanType): void
-
-  constructor_call(name: string, ...params: unknown[]): void {
-    this.set_like(params, name, '(', ')')
-  }
-  class_object_like(class_name: string, members: object): void {
-    this.object_like(this.#iter(members), class_name, '{', '}')
-  }
-  iterable_like(class_name: string, iter: Iterable<unknown>) {
-    this.set_like(iter, class_name, '[', ']')
-  }
-
-  set_like(value: Iterable<unknown>, class_name: string, open: string, close: string) {
-    this.span(class_name, 'class_name')
-    this.span(open, 'open_bracket')
-    this.visit_set_like(value)
-    this.span(close, 'close_bracket')
-  }
-  // Array-like or set-like; sparseness is handled by the caller.
-  array_like_child(index: number): RepresentationVisitor {
-    if (index)
-      this.span(',', 'comma')
-    return this // a string needs no nested visitors
-  }
-
-  object_like(value: Iterable<[unknown, unknown]>, class_name: string, open: string, close: string, is_pojo = false) {
-    this.span(class_name, 'class_name')
-    this.span(open, 'open_bracket')
-    this.visit_object_like(value, is_pojo)
-    this.span(close, 'close_bracket')
-  }
-  object_like_child(index: number, field: unknown, open_bracket: string, close_bracket: string, str_open_bracket: string | undefined, str_close_bracket: string | undefined, is_pojo = false): RepresentationVisitor {
-    const ch = this.array_like_child(index)
-    if (typeof field === 'string') { // #iter ignores symbol keys
-      if (str_open_bracket) ch.span(str_open_bracket, 'open_bracket')
-      ch.span(is_pojo ? this.format_key_name(field) : field, 'field_name')
-      if (str_close_bracket) ch.span(str_close_bracket, 'close_bracket')
-    } else {
-      if (open_bracket) ch.span(open_bracket, 'open_bracket')
-      ch.visit(field)
-      if (close_bracket) ch.span(close_bracket, 'close_bracket')
-    }
-    ch.span(':', 'field_colon')
-    return ch
-  }
-
-  string(str: string) {
-    if (this.state.options.unquoted_strings) {
-      this.span(JSON.stringify(str).slice(0, -1).substring(1), 'string')
-    } else {
-      this.span('"', 'open_quote')
-      this.span(JSON.stringify(str).slice(0, -1).substring(1), 'string')
-      this.span('"', 'close_quote')
-    }
-  }
-  number(num: number) {
-    if (Number.isNaN(num)) { this.span('NaN', 'number'); return }
-    if (num === Infinity) { this.span('Infinity', 'number'); return }
-    if (num === -Infinity) { this.span('-Infinity', 'number'); return }
-
-    let str = Object.is(num, -0) ? '-0' : num.toString(numeric_bases[this.state.options.numeric_base ?? 'decimal'].number)
-    let sign = ''
-
-    if (str[0] === '-') {
-      str = str.slice(1)
-      sign = '-'
-    }
-
-    this.span(sign + numeric_bases[this.state.options.numeric_base ?? 'decimal'].prefix + str.toUpperCase(), 'number')
-  }
-  boolean(bool: boolean) { this.span(String(bool), 'boolean') }
-  symbol(sym: symbol) {
-    if (well_known_symbols.has(sym)) {
-      this.span('Symbol', 'class_name')
-      this.span('.', 'class_name')
-      this.span(well_known_symbols.get(sym)!, 'field_name')
-      return
-    }
-    this.constructor_call(Symbol.keyFor(sym) !== undefined ? 'Symbol.for' : 'Symbol', String(sym).slice(7, -1)) // drop `Symbol(` and `)`
-  }
-  bigint(num: bigint) {
-    if (!this.state.options.numeric_base || this.state.options.numeric_base === 'decimal') return this.span(`${num}n`, 'bigint')
-
-    this.span(numeric_bases[this.state.options.numeric_base].prefix + num.toString(numeric_bases[this.state.options.numeric_base].number) + 'n', 'bigint')
-  }
-  undefined() { this.span('undefined', 'undefined') }
-  null() { this.span('null', 'null') }
-
-  error(error: Error) {
-    this.span(error.constructor.name, 'error_class_name')
-    this.span('(', 'open_bracket')
-    this.span(JSON.stringify(error.message), 'error_message')
-    this.span(')', 'close_bracket')
-    this.keyable(error)
-  }
-
-  /** A value seen before: "circular" when it is an ancestor of the current node, otherwise "repeated". */
-  reference(_ref: object | symbol, is_circular: boolean, path: string[]) {
-    if (is_circular)
-      this.span('circular_ref', 'reference')
-    else
-      this.span('ref', 'reference')
-    this.span('[', 'open_bracket')
-    this.span(path.map(this.format_key_name).join('.'), 'reference_path')
-    this.span(']', 'close_bracket')
-  }
-  format_key_name(key: string) {
-    if (/^[A-Za-z0-9_]+$/.test(key)) return key
-    return `"${key}"`
-  }
-
-  function(func: Function) {
-    this.span('<', 'open_bracket')
-    if (func.name) {
-      this.span('function ', 'function')
-      this.span('display_name' in func && typeof func.display_name === 'string' ? func.display_name : func.name, 'function_name')
-    } else {
-      this.span('anonymous function', 'function')
-    }
-    this.span('>', 'close_bracket')
-    this.keyable(func)
-  }
-
-  array(arr: unknown[]) {
-    this.span('[', 'open_bracket')
-    this.visit_array(arr)
-    this.span(']', 'close_bracket')
-    this.keyable(arr, true)
-  }
-  typed_array(arr: ArrayLike<unknown> & Iterable<unknown>) {
-    this.set_like(arr, arr.constructor.name, '[', ']')
-    this.keyable(arr, true)
-  }
-  set(set: Set<unknown>) {
-    this.set_like(set, 'Set', '{', '}')
-    this.keyable(set)
-  }
-  map(map: Map<unknown, unknown>) {
-    this.object_like(map, 'Map', '{', '}')
-    this.keyable(map)
-  }
-  regexp(re: RegExp) {
-    this.span('/', 'open_slash')
-    this.span(re.source, 'regexp')
-    this.span('/', 'close_slash')
-    this.span(re.flags, 'regexp_flags')
-    this.keyable(re)
-  }
-
-  // Like object_like, for values that don't usually have user-defined keys (arrays, sets, functions).
-  keyable(it: object, array_like = false) {
-    let visited_any = false
-    let i = 0
-    for (const [name, value] of this.#iter(it)) {
-      if (array_like && /^\d+$/.test(name)) continue
-
-      if (!visited_any) {
-        visited_any = true
-        this.span('{', 'open_bracket')
-      }
-
-      this.state.path.push(name)
-      this.object_like_child(i++, name, '[', ']', '', '', true).visit(value)
-      if (this.state.stop) return
-      this.state.path.pop()
-    }
-    if (visited_any) this.span('}', 'close_bracket')
-  }
-
-  /** `is_pojo` marks a plain object. */
-  object(object: object, iter: Iterable<[string, unknown]>, is_pojo = false) {
-    return this.object_like(iter, constructor_name_if_any(object), '{', '}', is_pojo)
-  }
-
-  #iter(it: object): Iterable<[string, unknown]> {
-    // Lazy (for...in) so truncation stops the walk early. Yields only data
-    // properties so no user code runs, skips symbol keys, and includes
-    // enumerable properties up the prototype chain.
-    return {
-      *[Symbol.iterator]() {
-        for (const prop in it) {
-          const desc = getPropertyDescriptor(it, prop)
-          if ('value' in desc)
-            yield [prop, desc.value] as [string, unknown]
-        }
-      },
-    }
-  }
-
-  // Subclasses should not generally override the visit*() methods.
-  visit(it: unknown) {
-    switch (typeof it) {
-      case 'object': {
-        if (it === null)
-          return this.null()
-
-        let ref: ReferenceInfo | undefined
-        if (!(ref = this.ref_info(it, false))) return
-
-        // Object.getOwnPropertyDescriptor would be safer, but bypasses proxying.
-        if (to_repr in it && typeof (it as Record<symbol, unknown>)[to_repr] === 'function') {
-          this.visit_to_repr(it as ToRepr)
-        } else if (Array.isArray(it)) {
-          this.array(it)
-        } else if (it instanceof TypedArray) {
-          this.typed_array(it as ArrayLike<unknown> & Iterable<unknown>)
-        } else if (it instanceof Set) {
-          this.set(it)
-        } else if (it instanceof Map) {
-          this.map(it)
-        } else if (it instanceof Error) {
-          this.error(it)
-        } else if (it instanceof RegExp) {
-          this.regexp(it)
-        } else if (constructor_name_if_any(it) === 'Blob' && 'size' in it && 'type' in it) { // Node has no Blob before 18
-          this.class_object_like('Blob', { size: (it as Blob).size, type: (it as Blob).type })
-        } else {
-          this.object(it, this.#iter(it), is_pojo(it))
-        }
-        ref.circular = false
-        break
-      }
-      case 'string': return this.string(it)
-      case 'number': return this.number(it)
-      case 'boolean': return this.boolean(it)
-      case 'bigint': return this.bigint(it)
-      case 'undefined': return this.undefined()
-      case 'symbol': {
-        if (!this.ref_info(it, true)) return
-
-        return this.symbol(it)
-      }
-      case 'function': {
-        let ref: ReferenceInfo | undefined
-        if (!(ref = this.ref_info(it, false))) return
-
-        if (to_repr in it && typeof (it as unknown as Record<symbol, unknown>)[to_repr] === 'function') {
-          return this.visit_to_repr(it as unknown as ToRepr)
-        }
-
-        this.function(it)
-        ref.circular = false
-        break
-      }
-      default: throw Error('Unknown type in repr.visit: ' + typeof it)
-    }
-  }
-  /** Returns undefined for a repeated reference, after printing it; otherwise records and returns the reference. */
-  ref_info(it: object, is_symbol: false): ReferenceInfo | undefined
-  ref_info(it: symbol, is_symbol: true): ReferenceInfo | undefined
-  ref_info(it: object | symbol, is_symbol = false) {
-    let ref = this.state.refs.get(it as object)
-    if (ref && (ref.circular || this.state.options.deduplicate_references !== false)) {
-      this.reference(it, ref.circular, ref.path)
-      return undefined
-    }
-
-    ref = {
-      circular: !is_symbol,
-      path: this.state.path.map(p => safe_string(p)),
-    }
-    if (is_symbol) this.state.symbol_refs.set(it as symbol, ref)
-    else this.state.refs.set(it as object, ref)
-    return ref
-  }
-  visit_set_like(value: Iterable<unknown>) {
-    let i = 0
-    for (const ch of value) {
-      this.state.path.push(i)
-      this.array_like_child(i).visit(ch)
-      i++
-      if (this.state.stop) return
-      this.state.path.pop()
-    }
-  }
-  visit_array(value: Array<unknown>) {
-    let last_nonempty_idx = -1
-    for (const nonempty_idx_str in value) {
-      if (!/^\d+$/.test(nonempty_idx_str)) return // numeric array keys come before other keys
-      if (this.state.stop) return
-
-      const nonempty_idx = +nonempty_idx_str
-      const empty_slots_skipped = nonempty_idx - last_nonempty_idx - 1
-      if (empty_slots_skipped > 0) this.array_like_child(last_nonempty_idx + 1).span(`<${empty_slots_skipped} empty slot${empty_slots_skipped === 1 ? '' : 's'}>`, 'empty_slot')
-
-      this.state.path.push(nonempty_idx)
-      this.array_like_child(nonempty_idx).visit(value[nonempty_idx])
-      this.state.path.pop()
-
-      last_nonempty_idx = nonempty_idx
-    }
-    if (last_nonempty_idx !== value.length - 1) {
-      const trailing_empty_slots = value.length - 1 - last_nonempty_idx
-      this.array_like_child(last_nonempty_idx + 1).span(`<${trailing_empty_slots} empty slot${trailing_empty_slots === 1 ? '' : 's'}>`, 'empty_slot')
-    }
-  }
-  visit_object_like(it: Iterable<[unknown, unknown]>, is_pojo = false) {
-    let i = 0
-    const open_bracket = it instanceof Map ? '' : '['
-    const close_bracket = it instanceof Map ? '' : ']'
-    const str_open_bracket = it instanceof Map ? '"' : ''
-    const str_close_bracket = it instanceof Map ? '"' : ''
-    for (const [name, value] of it) {
-      this.state.path.push(name)
-      this.object_like_child(i++, name, open_bracket, close_bracket, str_open_bracket, str_close_bracket, is_pojo).visit(value)
-      if (this.state.stop) return
-      this.state.path.pop()
-    }
-  }
-  visit_to_repr(it: ToRepr) {
-    it[to_repr](this)
-  }
-
-  get stopped() { return this.state.stop }
-}
+type ObjectKind = 'custom' | 'array' | 'typed_array' | 'set' | 'map' | 'error' | 'regexp' | 'blob' | 'object'
 
 type ToRepr = { [to_repr](visitor: CustomRepresentationVisitor): void }
 
-export class StringRepresentationVisitor extends RepresentationVisitor {
-  parts: string[] = []
+// ---------------------------------------------------------------------------
+// Node model: a lazy tree of a value, for interactive display and for the
+// string output. Nothing below a node is read until its groups are pulled.
 
-  constructor(options: Options) {
-    super(undefined, options)
+export type Token = { text: string; type: SpanType }
+
+export type NodeKind =
+  | 'string' | 'number' | 'bigint' | 'boolean' | 'null' | 'undefined' | 'symbol'
+  | 'array' | 'typed-array' | 'set' | 'map' | 'object' | 'error' | 'regexp' | 'function' | 'blob'
+  | 'custom' | 'circular' | 'empty-slots' | 'inaccessible'
+
+/** One entry in a group. `key` is tokens for a property or string key, or a node for a non-string Map key. */
+export type InspectChild = { key?: Token[] | InspectNode; value: InspectNode }
+
+/** A node's content in display order. Custom types can interleave tokens, inline values, and groups. */
+export type InspectPart =
+  | { type: 'tokens'; tokens: Token[] }
+  | { type: 'group'; group: InspectGroup }
+  | { type: 'value'; node: InspectNode }
+
+/** A node in the lazy value tree. Reading `kind`, `parts`, `header`, `groups` or `size` resolves the node. */
+export interface InspectNode {
+  /** Path from the root. Segments are property names, indices, or raw Map keys. */
+  readonly path: readonly unknown[]
+  /** The object, function, or symbol this node shows, for detecting repeated references. */
+  readonly identity: object | symbol | undefined
+  readonly kind: NodeKind
+  readonly parts: readonly InspectPart[]
+  /** Tokens before the first group or inline value. */
+  readonly header: readonly Token[]
+  readonly groups: readonly InspectGroup[]
+  /** Element count of an array, typed array, Set, or Map. */
+  readonly size: number | undefined
+  /** For a circular node, the path of the ancestor it refers to. */
+  readonly target: readonly unknown[] | undefined
+  /** One-line text of this node within `budget` characters, as tokens. */
+  summary(budget: number): Token[]
+}
+
+type Ancestor = { identity: object; path: readonly unknown[]; parent: Ancestor | undefined }
+type Context = { options: Options; ancestors: Ancestor | undefined }
+type Resolved = { kind: NodeKind; parts: InspectPart[]; size?: number; target?: readonly unknown[] }
+
+/** A bracketed list of children, pulled lazily and cached so paging re-reads nothing. */
+export class InspectGroup {
+  readonly open: string
+  readonly close: string
+  /** Omit the brackets when there are no children, as for extra properties on an array. */
+  readonly hideWhenEmpty: boolean
+  #source: () => Iterator<InspectChild>
+  #iterator: Iterator<InspectChild> | undefined
+  #cache: InspectChild[] = []
+  #done = false
+
+  constructor(open: string, close: string, hideWhenEmpty: boolean, source: () => Iterator<InspectChild>) {
+    this.open = open
+    this.close = close
+    this.hideWhenEmpty = hideWhenEmpty
+    this.#source = source
   }
 
-  span(stuff: string, _type: SpanType) {
-    if (stuff) {
-      if (this.state.stop) return
-
-      if ((this.state.char_limit -= stuff.length) < 3) {
-        this.parts.push(safe_truncate(stuff, this.state.char_limit + stuff.length - 3))
-        this.parts.push('...')
-        this.state.stop = true
-      } else
-        this.parts.push(stuff)
+  /** The child at `index`, reading only as far as needed. */
+  childAt(index: number): InspectChild | undefined {
+    while (this.#cache.length <= index && !this.#done) {
+      try {
+        this.#iterator ??= this.#source()
+        const result = this.#iterator.next()
+        if (result.done) this.#done = true
+        else this.#cache.push(result.value)
+      } catch {
+        this.#done = true
+      }
     }
+    return this.#cache[index]
   }
-  toString() {
-    return this.parts.join('')
+
+  /** Up to `limit` children from `offset`, and whether more follow. */
+  children(offset: number, limit: number): { items: InspectChild[]; more: boolean } {
+    const items: InspectChild[] = []
+    while (items.length < limit) {
+      const child = this.childAt(offset + items.length)
+      if (!child) break
+      items.push(child)
+    }
+    return { items, more: this.childAt(offset + items.length) !== undefined }
   }
 }
 
-function getPropertyDescriptor(it: object | null, prop: string) {
-  while (it) {
-    const desc = Object.getOwnPropertyDescriptor(it, prop)
-    if (desc) return desc
-    it = Object.getPrototypeOf(it)
+const empty_slots_text = (count: number) => `<${count} empty slot${count === 1 ? '' : 's'}>`
+
+class Node implements InspectNode {
+  readonly path: readonly unknown[]
+  readonly identity: object | symbol | undefined
+  #value: unknown
+  #context: Context
+  #resolved: Resolved | undefined
+
+  constructor(value: unknown, path: readonly unknown[], context: Context, resolved?: Resolved) {
+    this.#value = value
+    this.path = path
+    this.#context = context
+    this.#resolved = resolved
+    this.identity = (typeof value === 'object' && value !== null) || typeof value === 'function' || typeof value === 'symbol'
+      ? value as object | symbol
+      : undefined
   }
-  throw Error('Unable to find property descriptor: ' + prop)
+
+  get kind() { return this.#resolve().kind }
+  get parts() { return this.#resolve().parts }
+  get size() { return this.#resolve().size }
+  get target() { return this.#resolve().target }
+  get header() {
+    const tokens: Token[] = []
+    for (const part of this.parts) {
+      if (part.type !== 'tokens') break
+      tokens.push(...part.tokens)
+    }
+    return tokens
+  }
+  get groups() {
+    return this.parts.flatMap(part => part.type === 'group' ? [part.group] : [])
+  }
+
+  summary(budget: number): Token[] {
+    return serialize(this, { ...this.#context.options, char_limit: budget })
+  }
+
+  // Context for this node's children: this node joins the ancestor chain.
+  #inner(): Context {
+    const identity = this.identity
+    if (typeof identity !== 'object' && typeof identity !== 'function') return this.#context
+    return { options: this.#context.options, ancestors: { identity, path: this.path, parent: this.#context.ancestors } }
+  }
+
+  #child(value: unknown, path: readonly unknown[]): InspectNode {
+    const context = this.#inner()
+    if ((typeof value === 'object' && value !== null) || typeof value === 'function') {
+      for (let a = context.ancestors; a; a = a.parent) {
+        if (a.identity === value) {
+          return new Node(value, path, context, {
+            kind: 'circular',
+            target: a.path,
+            parts: [{ type: 'tokens', tokens: [
+              { text: 'circular_ref', type: 'reference' },
+              { text: '[', type: 'open_bracket' },
+              { text: a.path.map(p => format_key_name(safe_string(p))).join('.'), type: 'reference_path' },
+              { text: ']', type: 'close_bracket' },
+            ] }],
+          })
+        }
+      }
+    }
+    return new Node(value, path, context)
+  }
+
+  #leaf(kind: NodeKind, path: readonly unknown[], tokens: Token[]): InspectNode {
+    return new Node(undefined, path, this.#context, { kind, parts: [{ type: 'tokens', tokens }] })
+  }
+  #inaccessible(path: readonly unknown[]) {
+    return this.#leaf('inaccessible', path, [{ text: INACCESSIBLE_TEXT, type: 'inaccessible' }])
+  }
+
+  // Children with only values, from any iterable (Set, typed array, to_repr lists).
+  *#elements(iterable: Iterable<unknown>): Generator<InspectChild> {
+    let i = 0
+    for (const element of guarded(iterable)) {
+      if (element === INACCESSIBLE) { yield { value: this.#inaccessible([...this.path, i]) }; return }
+      yield { value: this.#child(element, [...this.path, i]) }
+      i++
+    }
+  }
+
+  *#array_elements(arr: unknown[]): Generator<InspectChild> {
+    let last = -1
+    for (const key of guarded(keys_in(arr))) {
+      if (key === INACCESSIBLE) { yield { value: this.#inaccessible([...this.path, last + 1]) }; return }
+      if (!/^\d+$/.test(key)) break // numeric array keys come before other keys
+      const index = +key
+      const skipped = index - last - 1
+      if (skipped > 0) yield { value: this.#leaf('empty-slots', [...this.path, last + 1], [{ text: empty_slots_text(skipped), type: 'empty_slot' }]) }
+      const element = guard(() => arr[index])
+      yield { value: element === INACCESSIBLE ? this.#inaccessible([...this.path, index]) : this.#child(element, [...this.path, index]) }
+      last = index
+    }
+    const length = guard(() => arr.length)
+    if (length === INACCESSIBLE || last === length - 1) return
+    yield { value: this.#leaf('empty-slots', [...this.path, last + 1], [{ text: empty_slots_text(length - 1 - last), type: 'empty_slot' }]) }
+  }
+
+  // Properties as keyed children. `skip_indices` leaves out an array's elements.
+  *#properties(it: object, format_keys: boolean, skip_indices = false): Generator<InspectChild> {
+    for (const entry of data_entries(it)) {
+      if (entry === INACCESSIBLE) { yield { value: this.#inaccessible(this.path) }; return }
+      const [name, value] = entry
+      if (skip_indices && /^\d+$/.test(name)) continue
+      yield {
+        key: [{ text: format_keys ? format_key_name(name) : name, type: 'field_name' }],
+        value: this.#child(value, [...this.path, name]),
+      }
+    }
+  }
+
+  *#map_entries(map: Map<unknown, unknown>): Generator<InspectChild> {
+    for (const entry of guarded(map)) {
+      if (entry === INACCESSIBLE) { yield { value: this.#inaccessible(this.path) }; return }
+      const [key, value] = entry
+      const path = [...this.path, key]
+      yield {
+        key: typeof key === 'string'
+          ? [{ text: '"', type: 'open_bracket' }, { text: key, type: 'field_name' }, { text: '"', type: 'close_bracket' }]
+          : this.#child(key, path),
+        value: this.#child(value, path),
+      }
+    }
+  }
+
+  #group(open: string, close: string, source: () => Iterator<InspectChild>, hide_when_empty = false): InspectPart {
+    return { type: 'group', group: new InspectGroup(open, close, hide_when_empty, source) }
+  }
+  #keyable(it: object, skip_indices = false): InspectPart {
+    return this.#group('{', '}', () => this.#properties(it, true, skip_indices), true)
+  }
+
+  #resolve(): Resolved {
+    if (!this.#resolved) {
+      try {
+        this.#resolved = this.#classify()
+      } catch {
+        this.#resolved = { kind: 'inaccessible', parts: [{ type: 'tokens', tokens: [{ text: INACCESSIBLE_TEXT, type: 'inaccessible' }] }] }
+      }
+    }
+    return this.#resolved
+  }
+
+  #classify(): Resolved {
+    const value = this.#value
+    const options = this.#context.options
+    const tokens: Token[] = []
+    const t = (text: string, type: SpanType) => { tokens.push({ text, type }) }
+    const parts: InspectPart[] = [{ type: 'tokens', tokens }]
+    const inaccessible = () => t(INACCESSIBLE_TEXT, 'inaccessible')
+
+    switch (typeof value) {
+      case 'string': {
+        const text = JSON.stringify(value).slice(1, -1)
+        if (options.unquoted_strings) t(text, 'string')
+        else { t('"', 'open_quote'); t(text, 'string'); t('"', 'close_quote') }
+        return { kind: 'string', parts }
+      }
+      case 'number': {
+        const base = numeric_bases[options.numeric_base ?? 'decimal']
+        if (Number.isNaN(value)) t('NaN', 'number')
+        else if (value === Infinity) t('Infinity', 'number')
+        else if (value === -Infinity) t('-Infinity', 'number')
+        else {
+          let str = Object.is(value, -0) ? '-0' : value.toString(base.number)
+          let sign = ''
+          if (str[0] === '-') { str = str.slice(1); sign = '-' }
+          t(sign + base.prefix + str.toUpperCase(), 'number')
+        }
+        return { kind: 'number', parts }
+      }
+      case 'bigint': {
+        const name = options.numeric_base
+        if (!name || name === 'decimal') t(`${value}n`, 'bigint')
+        else t(numeric_bases[name].prefix + value.toString(numeric_bases[name].number) + 'n', 'bigint')
+        return { kind: 'bigint', parts }
+      }
+      case 'boolean': t(String(value), 'boolean'); return { kind: 'boolean', parts }
+      case 'undefined': t('undefined', 'undefined'); return { kind: 'undefined', parts }
+      case 'symbol': {
+        const known = well_known_symbols.get(value)
+        if (known) {
+          t('Symbol', 'class_name'); t('.', 'class_name'); t(known, 'field_name')
+        } else {
+          t(Symbol.keyFor(value) !== undefined ? 'Symbol.for' : 'Symbol', 'class_name')
+          t('(', 'open_bracket')
+          const text = JSON.stringify(String(value).slice(7, -1)).slice(1, -1) // drop `Symbol(` and `)`
+          if (options.unquoted_strings) t(text, 'string')
+          else { t('"', 'open_quote'); t(text, 'string'); t('"', 'close_quote') }
+          t(')', 'close_bracket')
+        }
+        return { kind: 'symbol', parts }
+      }
+      case 'function': {
+        const custom = guard(() => to_repr in value && typeof (value as unknown as Record<symbol, unknown>)[to_repr] === 'function')
+        if (custom === INACCESSIBLE) { inaccessible(); return { kind: 'inaccessible', parts } }
+        if (custom) return this.#custom(value as unknown as ToRepr)
+        t('<', 'open_bracket')
+        const name = guard(() => ({ name: value.name, display: 'display_name' in value ? (value as { display_name?: unknown }).display_name : undefined }))
+        if (name === INACCESSIBLE) inaccessible()
+        else if (name.name) { t('function ', 'function'); t(typeof name.display === 'string' ? name.display : name.name, 'function_name') }
+        else t('anonymous function', 'function')
+        t('>', 'close_bracket')
+        parts.push(this.#keyable(value))
+        return { kind: 'function', parts }
+      }
+      case 'object': {
+        if (value === null) { t('null', 'null'); return { kind: 'null', parts } }
+        const kind = classify_object(value)
+        if (kind === INACCESSIBLE) { inaccessible(); return { kind: 'inaccessible', parts } }
+        switch (kind) {
+          case 'custom': return this.#custom(value as ToRepr)
+          case 'array': {
+            const arr = value as unknown[]
+            parts.push(this.#group('[', ']', () => this.#array_elements(arr)), this.#keyable(arr, true))
+            const size = guard(() => arr.length)
+            return { kind: 'array', parts, size: size === INACCESSIBLE ? undefined : size }
+          }
+          case 'typed_array': {
+            const arr = value as ArrayLike<unknown> & Iterable<unknown>
+            const name = guard(() => constructor_name(arr))
+            if (name === INACCESSIBLE) inaccessible()
+            else if (name) t(name, 'class_name')
+            parts.push(this.#group('[', ']', () => this.#elements(arr)), this.#keyable(arr, true))
+            const size = guard(() => arr.length)
+            return { kind: 'typed-array', parts, size: size === INACCESSIBLE ? undefined : size }
+          }
+          case 'set': {
+            const set = value as Set<unknown>
+            t('Set', 'class_name')
+            parts.push(this.#group('{', '}', () => this.#elements(set)), this.#keyable(set))
+            const size = guard(() => set.size)
+            return { kind: 'set', parts, size: size === INACCESSIBLE ? undefined : size }
+          }
+          case 'map': {
+            const map = value as Map<unknown, unknown>
+            t('Map', 'class_name')
+            parts.push(this.#group('{', '}', () => this.#map_entries(map)), this.#keyable(map))
+            const size = guard(() => map.size)
+            return { kind: 'map', parts, size: size === INACCESSIBLE ? undefined : size }
+          }
+          case 'error': {
+            const error = value as Error
+            const name = guard(() => constructor_name(error))
+            if (name === INACCESSIBLE) inaccessible()
+            else if (name) t(name, 'error_class_name')
+            t('(', 'open_bracket')
+            const message = guard(() => JSON.stringify(error.message))
+            if (message === INACCESSIBLE) inaccessible()
+            else if (message !== undefined) t(message, 'error_message')
+            t(')', 'close_bracket')
+            parts.push(this.#keyable(error))
+            return { kind: 'error', parts }
+          }
+          case 'regexp': {
+            const re = value as RegExp
+            const source = guard(() => ({ source: re.source, flags: re.flags }))
+            if (source === INACCESSIBLE) inaccessible()
+            else { t('/', 'open_slash'); t(source.source, 'regexp'); t('/', 'close_slash'); t(source.flags, 'regexp_flags') }
+            parts.push(this.#keyable(re))
+            return { kind: 'regexp', parts }
+          }
+          case 'blob': {
+            const blob = guard(() => ({ size: (value as Blob).size, type: (value as Blob).type }))
+            if (blob === INACCESSIBLE) { inaccessible(); return { kind: 'inaccessible', parts } }
+            t('Blob', 'class_name')
+            parts.push(this.#group('{', '}', () => this.#properties(blob, false)))
+            return { kind: 'blob', parts }
+          }
+          default: {
+            const name = guard(() => constructor_name_if_any(value))
+            if (name !== INACCESSIBLE && name) t(name, 'class_name')
+            const pojo = guard(() => is_pojo(value)) === true
+            parts.push(this.#group('{', '}', () => this.#properties(value, pojo)))
+            return { kind: 'object', parts }
+          }
+        }
+      }
+    }
+    throw Error('Unknown type in describe: ' + typeof value)
+  }
+
+  // Runs to_repr against a recorder, so custom types keep the visitor protocol.
+  #custom(value: ToRepr): Resolved {
+    const parts: InspectPart[] = []
+    const tokens = () => {
+      const last = parts.at(-1)
+      if (last?.type === 'tokens') return last.tokens
+      const fresh: Token[] = []
+      parts.push({ type: 'tokens', tokens: fresh })
+      return fresh
+    }
+    const node = this
+    const recorder: CustomRepresentationVisitor = {
+      span(text, type) { tokens().push({ text, type }) },
+      visit(it) { parts.push({ type: 'value', node: node.#child(it, node.path) }) },
+      constructor_call(name, ...params) {
+        tokens().push({ text: name, type: 'class_name' })
+        parts.push(node.#group('(', ')', () => node.#elements(params)))
+      },
+      class_object_like(name, members) {
+        tokens().push({ text: name, type: 'class_name' })
+        parts.push(node.#group('{', '}', () => node.#properties(members, false)))
+      },
+      iterable_like(name, iter) {
+        tokens().push({ text: name, type: 'class_name' })
+        parts.push(node.#group('[', ']', () => node.#elements(iter)))
+      },
+      get stopped() { return false },
+    }
+    try {
+      value[to_repr](recorder)
+    } catch {
+      tokens().push({ text: INACCESSIBLE_TEXT, type: 'inaccessible' })
+    }
+    return { kind: 'custom', parts }
+  }
+}
+
+function classify_object(it: object): ObjectKind | Inaccessible {
+  try {
+    // Read through the Proxy on purpose, so a Proxy can supply to_repr.
+    if (to_repr in it && typeof (it as Record<symbol, unknown>)[to_repr] === 'function') return 'custom'
+    if (Array.isArray(it)) return 'array'
+    if (it instanceof TypedArray) return 'typed_array'
+    if (it instanceof Set) return 'set'
+    if (it instanceof Map) return 'map'
+    if (it instanceof Error) return 'error'
+    if (it instanceof RegExp) return 'regexp'
+    if (constructor_name(it) === 'Blob' && 'size' in it && 'type' in it) return 'blob' // Node has no Blob before 18
+    return 'object'
+  } catch {
+    return INACCESSIBLE
+  }
+}
+
+/** Describes `value` as a lazy node tree. Nothing is read until the root resolves. */
+export function describe(value: unknown, options: Options = {}): InspectNode {
+  return new Node(value, [], { options, ancestors: undefined })
+}
+
+/**
+ * Renders a node as tokens within `options.char_limit` characters. Repeated
+ * objects and symbols print as `ref[path]` and ancestors as `circular_ref[path]`,
+ * labelled by first appearance in walk order. Children are pulled one at a time
+ * and the walk stops at the limit, so nothing past the limit is read.
+ */
+export function serialize(root: InspectNode, options: Options = {}): Token[] {
+  const out: Token[] = []
+  let remaining = options.char_limit ?? Infinity
+  let stop = false
+  const refs = new WeakMap<object, ReferenceInfo>()
+  const symbol_refs = new Map<symbol, ReferenceInfo>()
+  const deduplicate = options.deduplicate_references !== false
+
+  const emit = (text: string, type: SpanType) => {
+    if (!text || stop) return
+    remaining -= text.length
+    if (remaining < 3) {
+      out.push({ text: safe_truncate(text, remaining + text.length - 3), type })
+      out.push({ text: '...', type: 'ellipsis' })
+      stop = true
+    } else {
+      out.push({ text, type })
+    }
+  }
+
+  const visit = (node: InspectNode) => {
+    if (stop) return
+    const identity = node.identity
+    let ref: ReferenceInfo | undefined
+    if (identity !== undefined) {
+      const seen = typeof identity === 'symbol' ? symbol_refs.get(identity) : refs.get(identity)
+      if (seen && (seen.circular || deduplicate)) {
+        emit(seen.circular ? 'circular_ref' : 'ref', 'reference')
+        emit('[', 'open_bracket')
+        emit(seen.path.map(format_key_name).join('.'), 'reference_path')
+        emit(']', 'close_bracket')
+        return
+      }
+      ref = { circular: typeof identity !== 'symbol', path: node.path.map(p => safe_string(p)) }
+      if (typeof identity === 'symbol') symbol_refs.set(identity, ref)
+      else refs.set(identity, ref)
+    }
+    for (const part of node.parts) {
+      if (stop) return
+      if (part.type === 'tokens') for (const token of part.tokens) emit(token.text, token.type)
+      else if (part.type === 'value') visit(part.node)
+      else visit_group(part.group)
+    }
+    if (ref) ref.circular = false
+  }
+
+  const visit_group = (group: InspectGroup) => {
+    if (group.hideWhenEmpty && !group.childAt(0)) return
+    emit(group.open, 'open_bracket')
+    for (let i = 0; !stop; i++) {
+      const child = group.childAt(i)
+      if (!child) break
+      if (i) emit(',', 'comma')
+      if (child.key) {
+        if (Array.isArray(child.key)) for (const token of child.key) emit(token.text, token.type)
+        else visit(child.key as InspectNode)
+        emit(':', 'field_colon')
+      }
+      visit(child.value)
+    }
+    emit(group.close, 'close_bracket')
+  }
+
+  visit(root)
+  return out
 }
 
 export const DEFAULT_REPR_CHAR_LIMIT = 50000
 
 /** Returns a string representation of any JavaScript value, within `options.char_limit` characters. */
 export function repr(value: unknown, options: Options = {}): string {
-  const v = new StringRepresentationVisitor({ ...options, char_limit: options.char_limit ?? DEFAULT_REPR_CHAR_LIMIT })
-  v.visit(value)
-  return v.toString()
+  const limited = { ...options, char_limit: options.char_limit ?? DEFAULT_REPR_CHAR_LIMIT }
+  return serialize(describe(value, limited), limited).map(token => token.text).join('')
 }

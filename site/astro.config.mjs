@@ -15,7 +15,9 @@ export default defineConfig({
   devToolbar: { enabled: false },
   vite: {
     optimizeDeps: { exclude: ['@hegeldev/hegel', '@hegeldev/hegel/generators'] },
-    build: { target: 'es2022' },
+    // Lightning CSS wraps grouped ::part() selectors in :is(), which browsers
+    // discard. Keep the package's valid shadow-part selectors when minifying.
+    build: { target: 'es2022', cssMinify: 'esbuild' },
     resolve: { alias: {
       ...monacoStyleAliases,
       // Root-level fixtures use the site's Plot dependency without a root/Plot cycle.

@@ -20,10 +20,11 @@ before(async () => {
   const result = await build({stdin:{contents:"@import './src/tokens.css'; @import './src/reset.css'; @import './src/components/Select.css';",loader:'css',resolveDir:process.cwd()},bundle:true,write:false,minify:true})
   assets.set('/select.css', result.outputFiles[0].text)
   assets.set('/theme.css', await readFile('src/theme-antithesis.css','utf8'))
+  assets.set('/antune.css', await readFile('src/theme-antune.css','utf8'))
   assets.set('/fixture.css', 'body{padding:32px;background:var(--bg-1);color:var(--text-1)}form{display:grid;gap:12px;max-width:320px}label{display:grid;gap:4px}')
   server = createServer((req,res) => {
     if (assets.has(req.url)) {res.setHeader('Content-Type','text/css'); return res.end(assets.get(req.url))}
-    const theme = req.url.includes('antithesis') ? '<link rel="stylesheet" href="/theme.css">' : ''
+    const theme = req.url.includes('antithesis') ? '<link rel="stylesheet" href="/theme.css">' : req.url.includes('antune') ? '<link rel="stylesheet" href="/antune.css">' : ''
     res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'none'; style-src 'self'; style-src-attr 'none'; object-src 'none'")
     res.end(`<!doctype html><html class="${req.url.includes('dark')?'dark':'light'}"><meta charset="utf-8"><link rel="stylesheet" href="/select.css">${theme}<link rel="stylesheet" href="/fixture.css"><body><form>
       <label>Output<select data-anta name="output" id="plain">${options}</select></label>
@@ -129,4 +130,51 @@ for (const engine of engines) {
       await page.keyboard.press('Escape')
     }
   })
+
+  test.fast(`${name}: native select focus follows its theme and motion preference`,async t=>{
+    const page = await browsers.get(name).newPage()
+    t.after(()=>page.close())
+    for (const theme of ['default','antune','antithesis']) for (const mode of ['light','dark']) {
+      await page.goto(`${origin}/${theme}-${mode}`)
+      await page.keyboard.press('Tab')
+      const plain = page.locator('#plain')
+      const focused = await plain.evaluate(node=>{
+        node.getAnimations().forEach(animation=>animation.finish())
+        const style=getComputedStyle(node)
+        return {focused:node.matches(':focus'),width:style.outlineWidth,offset:style.outlineOffset,animation:style.animationName,shadow:style.boxShadow}
+      })
+      assert.equal(focused.focused,true)
+      assert.equal(focused.width,theme==='antithesis'?'2px':'1px',`${theme}/${mode} field ring width`)
+      assert.equal(focused.offset,theme==='antithesis'?'-1px':'1px',`${theme}/${mode} field ring offset`)
+      assert.equal(focused.animation,theme==='antithesis'?'focus-field-pulse':'none')
+      if (theme==='antithesis') assert.equal(focused.shadow.match(/inset/g)?.length,2,'field uses the shared inner and outer shadows')
+      if (await page.evaluate(()=>CSS.supports('appearance','base-select'))) {
+        await plain.press('Space')
+        await page.keyboard.press('ArrowDown')
+        const option=page.locator('#plain option[value="container"]')
+        const ring=await option.evaluate(node=>{
+          node.getAnimations().forEach(animation=>animation.finish())
+          const style=getComputedStyle(node)
+          return {focused:node.matches(':focus-visible'),width:style.outlineWidth,animation:style.animationName}
+        })
+        assert.equal(ring.focused,true)
+        assert.equal(ring.width,theme==='antithesis'?'2px':'1px',`${theme}/${mode} option ring width`)
+        assert.equal(ring.animation,theme==='antithesis'?'focus-ring-pulse':'none')
+        await page.keyboard.press('Escape')
+      }
+    }
+    await page.emulateMedia({reducedMotion:'reduce'})
+    await page.goto(`${origin}/antithesis-light`)
+    await page.keyboard.press('Tab')
+    assert.equal(await page.locator('#plain').evaluate(node=>getComputedStyle(node).animationName),'none')
+    assert.equal(await page.locator('#plain').evaluate(node=>getComputedStyle(node).outlineWidth),'2px')
+    if(name==='chromium') {
+      await page.emulateMedia({forcedColors:'active'})
+      const outline=await page.locator('#plain').evaluate(node=>{const style=getComputedStyle(node);return {width:style.outlineWidth,color:style.outlineColor,style:style.outlineStyle}})
+      assert.equal(outline.width,'2px')
+      assert.equal(outline.style,'solid')
+      assert.notEqual(outline.color,'rgba(0, 0, 0, 0)','forced colors retain a visible fallback outline')
+    }
+  })
+
 }

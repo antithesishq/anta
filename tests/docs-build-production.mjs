@@ -112,6 +112,10 @@ for (const engine of engines) test(`${engine.name()}: native Select examples ret
   await plain.click()
   await plain.getByRole('option', { name: 'File path', exact: true }).click()
   assert.equal(await plain.inputValue(), 'file_path')
+  assert.deepEqual(await plain.evaluate(node => {
+    const style = getComputedStyle(node)
+    return [style.outlineWidth, style.outlineOffset, style.animationName]
+  }), ['2px', '-1px', 'focus-field-pulse'])
   await rich.click()
   await rich.getByRole('option', { name: 'Alex Morgan Designer · Product', exact: true }).click()
   assert.equal(await rich.inputValue(), 'alex-design')

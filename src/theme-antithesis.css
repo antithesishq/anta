@@ -565,7 +565,7 @@
 
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"], [type="checkbox"], [type="radio"]),
-      a-tab, a-menu-item, a[data-anta-menu-item],
+      a-tab, a-menu-item, a[data-anta-menu-item], select[data-anta] option,
       details[data-anta] > summary):focus-visible,
   a-expander::part(summary):focus-visible,
   a-card > a:focus-visible,
@@ -1567,7 +1567,8 @@
      matches the shadow ring condition. */
   a-input:not([readonly]):focus::part(field),
   a-input[readonly]:state(kb-focus)::part(field),
-  a-input-time:focus-within::part(field) {
+  a-input-time:focus-within::part(field),
+  select[data-anta]:focus {
     outline-color: transparent;
     box-shadow:
       inset 0 0 0 1px var(--focus-ring),
@@ -1690,11 +1691,16 @@
 
   select[data-anta] {
     --native-field-border: var(--stroke-1);
+    --focus-field-border: var(--stroke-1-hover);
     --native-select-picker-radius: 2px;
     --native-select-option-color: var(--text-1);
     --native-select-option-hover: var(--fill-3-hover);
     --native-select-option-active: var(--fill-3-active);
     box-shadow: inset 0 0 0 1px var(--native-field-border);
+  }
+  select[data-anta]:focus {
+    outline-width: 2px;
+    outline-offset: -1px;
   }
   @media (hover: hover) and (pointer: fine) {
     select[data-anta]:not(:disabled):hover { --native-field-border: var(--stroke-1-hover); }

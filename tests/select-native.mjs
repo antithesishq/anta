@@ -41,7 +41,9 @@ before(async () => {
   })
   await new Promise(resolve => server.listen(0,'127.0.0.1',resolve))
   origin = `http://127.0.0.1:${server.address().port}`
-  for (const engine of engines) browsers.set(engine.name(),await engine.launch())
+  for (const engine of engines) browsers.set(engine.name(),await engine.launch({
+    ...(engine === chromium ? {channel:process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined} : {}),
+  }))
 })
 after(async () => {
   await Promise.all([...browsers.values()].map(browser=>browser.close()))

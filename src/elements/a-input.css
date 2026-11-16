@@ -1,4 +1,4 @@
-@import '../components/Select.css';
+@import './a-select.css';
 
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;

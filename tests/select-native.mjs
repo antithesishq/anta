@@ -17,7 +17,7 @@ const options = '<option value="stream">Stream</option><optgroup label="Metadata
 const rich = '<button type="button"><selectedcontent></selectedcontent></button><option value="finance"><a-menu-item-text><a-menu-item-label>Alex Morgan</a-menu-item-label> <a-menu-item-hint>Accountant · Finance</a-menu-item-hint></a-menu-item-text></option><option value="design"><a-menu-item-text><a-menu-item-label>Alex Morgan</a-menu-item-label> <a-menu-item-hint>Designer · Product</a-menu-item-hint></a-menu-item-text></option>'
 
 before(async () => {
-  const result = await build({stdin:{contents:"@import './src/tokens.css'; @import './src/reset.css'; @import './src/components/Select.css';",loader:'css',resolveDir:process.cwd()},bundle:true,write:false,minify:true})
+  const result = await build({stdin:{contents:"@import './src/tokens.css'; @import './src/reset.css'; @import './src/elements/a-select.css';",loader:'css',resolveDir:process.cwd()},bundle:true,write:false,minify:true})
   assets.set('/select.css', result.outputFiles[0].text)
   assets.set('/theme.css', await readFile('src/theme-antithesis.css','utf8'))
   assets.set('/antune.css', await readFile('src/theme-antune.css','utf8'))

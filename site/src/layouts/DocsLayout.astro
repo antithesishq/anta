@@ -830,6 +830,13 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   /* Show the destination theme: moon in light mode, sun in dark mode. */
+  .theme-toggle {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    justify-content: center;
+  }
+
   .theme-toggle a-icon[shape="sun"] { display: none; }
   .theme-toggle a-icon[shape="moon"] { display: inline-block; }
   :global(.dark) .theme-toggle a-icon[shape="sun"] { display: inline-block; }

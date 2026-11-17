@@ -43,6 +43,8 @@ compositions. Use `pnpm test:value-ownership` for its full source matrix or
 
 Direct commands such as `pnpm test:select` run the full source suite by default.
 Set `ANTA_COMPONENT_TEST_TIER=fast` to limit a direct command to its core cases.
+Set `ANTA_SELECT_SCREENSHOTS=1` when running Select tests to save native-picker
+screenshots in `tests/.test-output/select/`.
 See the [matrix reference](component-matrices.md) for direct commands, package
 checks, browser overrides, and appearance comparisons.
 

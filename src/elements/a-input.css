@@ -1,3 +1,5 @@
+@import './a-select.css';
+
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
@@ -657,76 +659,6 @@
     cursor: not-allowed;
   }
 
-  /* Native selects opt into the same field chrome with `data-anta`. Browsers
-     that support customizable selects also receive a styled trigger, picker,
-     selected-content slot, options, and optgroups — with no selection JS. */
-  select[data-anta] {
-    --native-field-block-size: 28px;
-    --native-field-padding-block: 4px;
-    --native-field-font-size: 15px;
-    --native-field-line-height: 20px;
-    --native-field-round: 4px;
-    --native-field-border: var(--border-2);
-    --native-select-picker-bg: light-dark(
-      color-mix(in oklch, var(--bg-1) 90%, transparent),
-      color-mix(in oklch, var(--bg-1) 78%, transparent)
-    );
-    --native-select-picker-radius: var(--radius-md, 8px);
-    --native-select-picker-border: 1px solid var(--border-3);
-    --native-select-picker-shadow:
-      0 2px 6px color-mix(in oklch, var(--text-1) 8%, transparent),
-      0 8px 24px color-mix(in oklch, var(--text-1) 10%, transparent);
-    --native-select-option-color: var(--text-2);
-    --native-select-option-hover: 5%;
-    --native-select-option-active: 8%;
-    --native-select-option-selected: 8%;
-    --native-select-option-padding-x: 8px;
-    --native-select-option-padding-y: 6px;
-
-    box-sizing: border-box;
-    block-size: var(--native-field-block-size);
-    margin: 0;
-    padding-block: var(--native-field-padding-block);
-    padding-inline: 7px;
-    border: 0;
-    border-radius: var(--native-field-round);
-    outline: 0;
-    background: var(--bg-1);
-    box-shadow: inset 0 0 0 0.5px var(--native-field-border);
-    color: var(--text-1);
-    color-scheme: inherit;
-    font-family: var(--sans-serif);
-    font-size: var(--native-field-font-size);
-    font-weight: 400;
-    font-stretch: normal;
-    font-style: normal;
-    line-height: var(--native-field-line-height);
-    transition: box-shadow 120ms ease;
-  }
-  /* Dark mode adds an inset ring to the shadow list. `light-dark()` carries
-     colors only, so this geometry stays in a class rule. */
-  .dark select[data-anta] {
-    --native-select-picker-shadow:
-      0 2px 8px color-mix(in oklch, black 50%, transparent),
-      0 12px 32px color-mix(in oklch, black 40%, transparent),
-      inset 0 0 0 1px color-mix(in oklch, white 8%, transparent);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    select[data-anta]:not(:disabled):hover {
-      box-shadow: inset 0 0 0 1px var(--native-field-border);
-    }
-  }
-  select[data-anta]:focus {
-    box-shadow: inset 0 0 0 1px var(--native-field-border);
-    outline: 1px solid var(--focus-ring);
-    outline-offset: 1px;
-  }
-  select[data-anta]:disabled {
-    background: color-mix(in oklch, var(--text-1) 4%, var(--bg-1));
-    box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--text-1) 15%, transparent);
-    color: var(--text-4);
-    cursor: not-allowed;
-  }
   @media (forced-colors: active) {
     input[data-anta]:is(
       :not([type]),
@@ -743,12 +675,11 @@
       [type="time"],
       [type="week"]
     ),
-    select[data-anta],
     textarea[data-anta] {
       border: 1px solid ButtonBorder;
     }
   }
-  /* Input and select own a semantic `size` attribute, so the Anta size variant
+  /* Native inputs own a semantic `size` attribute, so the Anta size variant
      uses a namespaced data attribute. `round` and custom-color `tone` have no
      native meaning and keep the same spelling as their component counterparts. */
   input[data-anta]:is(
@@ -766,7 +697,6 @@
     [type="time"],
     [type="week"]
   )[data-anta-size="small"],
-  select[data-anta][data-anta-size="small"],
   textarea[data-anta][data-anta-size="small"] {
     --native-field-block-size: 24px;
     --native-field-padding-block: 2px;
@@ -788,7 +718,6 @@
     [type="time"],
     [type="week"]
   )[data-anta-size="large"],
-  select[data-anta][data-anta-size="large"],
   textarea[data-anta][data-anta-size="large"] {
     --native-field-block-size: 32px;
     --native-field-padding-block: 5px;
@@ -810,7 +739,6 @@
     [type="time"],
     [type="week"]
   )[round],
-  select[data-anta][round],
   textarea[data-anta][round] {
     --native-field-round: 999px;
     @supports (border-radius: attr(probe type(<length>), 1px)) {
@@ -840,114 +768,6 @@
     );
     @supports (color: attr(probe type(<color>), red)) {
       --native-field-tone: attr(tone type(<color>), var(--border-2));
-    }
-  }
-  @supports (appearance: base-select) {
-    select[data-anta],
-    select[data-anta]::picker(select) {
-      appearance: base-select;
-      -webkit-appearance: base-select;
-    }
-    select[data-anta] {
-      padding: 0;
-    }
-    select[data-anta] > button {
-      box-sizing: border-box;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      inline-size: 100%;
-      min-block-size: var(--native-field-block-size);
-      padding-block: var(--native-field-padding-block);
-      padding-inline: 7px;
-      border: 0;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-      font: inherit;
-      font-variation-settings: inherit;
-      text-align: start;
-    }
-    select[data-anta] > button > selectedcontent {
-      flex: 1;
-      min-inline-size: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    /* The markup supplies Anta's own chevron in the native trigger. Hide the
-       browser indicator so its platform alignment never competes with it. */
-    select[data-anta]::picker-icon { display: none; }
-    select[data-anta] > button > a-icon {
-      margin-inline-start: auto;
-      color: var(--text-3);
-      transition: transform 120ms ease;
-    }
-    select[data-anta]:open > button > a-icon { transform: rotate(180deg); }
-    select[data-anta]::picker(select) {
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      margin-block-start: 4px;
-      padding: 4px;
-      border: var(--native-select-picker-border);
-      border-radius: var(--native-select-picker-radius);
-      background: var(--native-select-picker-bg);
-      box-shadow: var(--native-select-picker-shadow);
-      color: var(--native-select-option-color);
-      -webkit-backdrop-filter: blur(20px);
-      backdrop-filter: blur(20px);
-    }
-    select[data-anta] option {
-      box-sizing: border-box;
-      min-block-size: 28px;
-      padding-block: var(--native-select-option-padding-y);
-      padding-inline: var(--native-select-option-padding-x);
-      border-radius: var(--radius-sm, 4px);
-      background: transparent;
-      color: var(--native-select-option-color);
-      cursor: pointer;
-      font-family: var(--sans-serif);
-      font-size: 14px;
-      font-weight: 400;
-      font-stretch: normal;
-      font-style: normal;
-      letter-spacing: normal;
-      line-height: 16px;
-      text-transform: none;
-      transition: background-color 280ms ease-out;
-    }
-    select[data-anta] option:is(:hover, :focus-visible) {
-      background: color-mix(in oklch, currentColor var(--native-select-option-hover), transparent);
-      transition: background-color 60ms ease-in-out;
-    }
-    select[data-anta] option:focus-visible {
-      outline: 1px solid var(--focus-ring);
-      outline-offset: 1px;
-    }
-    select[data-anta] option:active {
-      background: color-mix(in oklch, currentColor var(--native-select-option-active), transparent);
-      transition: none;
-    }
-    select[data-anta] option:checked {
-      background: color-mix(in oklch, currentColor var(--native-select-option-selected), transparent);
-      transition: background-color 280ms ease-out;
-    }
-    select[data-anta] option:disabled {
-      color: var(--text-5);
-      cursor: default;
-    }
-    select[data-anta] optgroup {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      color: var(--text-5);
-      font-family: var(--sans-serif);
-      font-size: 0.75em;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
     }
   }
 

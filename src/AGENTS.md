@@ -78,10 +78,11 @@ The `exports` map handles all subpath imports. Explicit entries exist for `.`, `
 Keep the `./elements/*.css` export mapped directly to `./dist/elements/*.css`.
 The more general `./elements/*` entry appends `.js`, so it cannot expose CSS.
 A component owns styles for all of its supported markup forms. Keep native
-variants and structural regions in that component's stylesheet and entry.
-Share visual tokens, variants, and animations; keep form-specific layout and
-browser-native selectors separate within the file. A native HTML variant does
-not need its own TypeScript entry.
+control selectors in `elements/a-{name}.css`. Reserve `components/{Name}.css`
+for composed structural layouts. When both exist, as for Select, the CSS-only
+element entry and barrel load both stylesheets. Keep native-control compatibility
+imports pointed at the element stylesheet rather than the composed layout.
+A native HTML variant does not need its own TypeScript entry.
 
 CSS-only tags and composed layouts have `.ts` style entries that do not
 register a custom element automatically. These include Card, Progress, Title,

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { resolve, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parse, serialize } from 'parse5'
+import { parse } from 'parse5'
 import { Document } from 'flexsearch'
 import searchConfig from '../lib/search/config.json' with { type: 'json' }
 
@@ -44,7 +44,17 @@ function isIgnored(node) {
     || attr(node, 'data-no-search') !== undefined
 }
 
-function setAttr(node, name, value) {
+function setAttr(node, name, value, edits) {
+  const location = node.sourceCodeLocation
+  if (!location?.startTag) throw new Error(`Search block ${node.nodeName} has no source start tag`)
+  const existingLocation = location.attrs?.[name]
+  const position = location.startTag.endOffset - 1
+  const escaped = value.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+  edits.push({
+    start: existingLocation?.startOffset ?? position,
+    end: existingLocation?.endOffset ?? position,
+    text: `${existingLocation ? '' : ' '}${name}="${escaped}"`,
+  })
   const existing = node.attrs?.find((item) => item.name === name)
   if (existing) existing.value = value
   else (node.attrs ??= []).push({ name, value })
@@ -102,13 +112,22 @@ async function htmlFiles(dir) {
   return files
 }
 
+function* authoredChildren(node) {
+  for (const child of node.childNodes ?? []) {
+    if (child.childNodes && !child.sourceCodeLocation?.startTag && !isIgnored(child)) {
+      // Parser-created wrappers have no start tag where an anchor can be added.
+      yield* authoredChildren(child)
+    } else yield child
+  }
+}
+
 function collectBlocks(node, blocks = []) {
   // `data-no-search` excludes the element and its complete subtree.
   if (isIgnored(node)) return blocks
 
   const inline = []
   const containers = []
-  for (const child of node.childNodes ?? []) {
+  for (const child of authoredChildren(node)) {
     if (isIgnored(child)) continue
     // Space-only text nodes stay in the inline run: between two adjacent
     // inline elements they are the only word boundary. `normalizedText`
@@ -154,11 +173,12 @@ export async function buildSearchIndex({
     if (route === '/404/' || route === '/500/') continue
 
     const source = await readFile(file, 'utf8')
-    const document = parse(source)
+    const document = parse(source, { sourceCodeLocationInfo: true })
     const main = findMain(document)
     if (!main) continue
 
     const blocks = collectBlocks(main)
+    const edits = []
     const headings = blocks.filter((block) => /^h[1-6]$/.test(block.node.nodeName))
     const title = headings.find((heading) => heading.node.nodeName === 'h1')?.text
       ?? blocks[0]?.text
@@ -175,8 +195,8 @@ export async function buildSearchIndex({
       const anchor = attr(node, 'id') || `search-${id}`
       const heading = /^h[1-6]$/.test(node.nodeName) ? block : nearestHeading(block, headings)
 
-      setAttr(node, 'data-search-id', id)
-      setAttr(node, 'id', anchor)
+      setAttr(node, 'data-search-id', id, edits)
+      if (!attr(node, 'id')) setAttr(node, 'id', anchor, edits)
       documents.push({
         id,
         route,
@@ -193,7 +213,16 @@ export async function buildSearchIndex({
       })
     }
 
-    await writeFile(file, serialize(document))
+    // Reserializing parse5's tree strips modern select buttons and rich options.
+    // Insert only search attributes so browser-owned markup stays intact.
+    const chunks = []
+    let cursor = 0
+    for (const edit of edits.sort((a, b) => a.start - b.start)) {
+      chunks.push(source.slice(cursor, edit.start), edit.text)
+      cursor = edit.end
+    }
+    chunks.push(source.slice(cursor))
+    await writeFile(file, chunks.join(''))
   }
 
   const index = new Document(searchConfig)

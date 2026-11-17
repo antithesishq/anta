@@ -14,6 +14,8 @@ site/dist/
 site/.astro/
 site/.cache/
 /site/public/reference/
+/site/public/plot/reference/
+/site/public/virtual-scroll/reference/
 site/.wrangler/
 site/worker-configuration.d.ts
 site/chat-configuration.d.ts

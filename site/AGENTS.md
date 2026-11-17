@@ -48,6 +48,12 @@ cleanup. Use the root `pnpm run stop` command to stop development servers.
 
 ## Build preparation
 
+`pnpm --filter anta-site docs:reference` generates Anta, Plot, and Virtual Scroll
+TypeDoc references from their public entry points, using the shared Anta theme.
+Each reference has a separate cache record and output directory. Sidebar links
+use explicit `index.html` URLs because Astro dev does not serve public directory
+indexes at trailing-slash URLs.
+
 `integrations/site-build.mjs` makes `astro build` produce the complete static
 site. It runs `scripts/prepare.mjs docs` in `astro:config:done`, before content
 sync can import generated files. API data and the iframe manifest finish before
@@ -119,6 +125,9 @@ MDX from retaining the client-only component's CSS in both page and island build
 
 ## CSS
 
+- Keep `Features.IsSelector` excluded in `vite.css.lightningcss`: Lightning CSS
+  can wrap grouped `::part()` selectors in invalid `:is(...)` selectors, hiding
+  Input adornments in production. The cold-home-page theme-chevron test covers this path.
 - Astro 7.3.3 needs the versioned [collection CSS patch](../patches/README.md) to keep client-only and processed-script styles attached to their content entries. Preserve it when installing dependencies. Before removing it or upgrading Astro, run the production asset tests and compare per-page stylesheet ownership. Incremental prerendering remains disabled until its dependency invalidation is checked with the patch.
 - **All component styles stay co-located** (a `.astro` scoped `<style>` or a `.module.css`). `astro.config.mjs` sets `build.inlineStylesheets: 'never'` so scoped styles are emitted into *linked* bundles, never inlined into the page `<head>` — Astro's per-page inline path can land present-but-inert in production for a component used inside MDX wrapping a hydrated island. Per-route CSS code-splitting stays on (default), so heavy island CSS (Monaco/Playground) loads only where it's used.
 - For a one-off style that must stay inline and untouched by Astro's pipeline, use **`<style is:inline>`** — it's rendered verbatim (no scoping, bundling, or hoisting).
@@ -127,7 +136,12 @@ MDX from retaining the client-only component's CSS in both page and island build
 
 ## ClientRouter (view transitions)
 
-`DocsLayout.astro` renders Astro's `<ClientRouter />`: navigation swaps the page in place instead of reloading. The custom-element registry, fonts, and loaded CSS survive, so `a-*` elements upgrade instantly on every page, and the sidebar (`transition:persist="sidebar"`) keeps its scroll position and the hydrated ThemeSwitcher island. This changes the rules for every script and head element on the site:
+Keep the sticker stylesheets linked explicitly in `DocsLayout.astro`, alongside
+the Anta bundle. Vite's script-imported sticker styles can disappear during a
+ClientRouter swap while their registration script remains cached, leaving SVGs
+at their intrinsic size when returning to the gallery.
+
+`DocsLayout.astro` renders Astro's `<ClientRouter />`: navigation swaps the page in place instead of reloading. The custom-element registry, fonts, and loaded CSS survive, so `a-*` elements upgrade instantly on every page, and the sidebar (`transition:persist="sidebar"`) keeps its scroll position. The top-bar ThemeSwitcher island persists separately with `transition:persist="theme-switcher"`. This changes the rules for every script and head element on the site:
 
 - **Scripts run once per session.** The router never re-executes a script it has already seen (module scripts by URL, inline scripts by content). Anything that touches a specific page's DOM at module top level only ever sees the *first* page. Two sanctioned patterns:
   1. **Document-level delegation** (`document.addEventListener` + `closest()`) for event handling — see the drawer/theme-toggle handlers in `DocsLayout.astro` and the header-anchor handler in `Disclosure.astro`.
@@ -152,8 +166,10 @@ MDX from retaining the client-only component's CSS in both page and island build
 The site integration runs `scripts/build-search-index.mjs` after Astro writes its
 configured output directory (`dist/` by default).
 The script parses rendered `<main class="content">` elements, adds stable `data-search-id`
-attributes and anchors to searchable blocks, then writes `dist/search-index.json`. Keep the
-browser configuration in `lib/search/config.json` compatible with the build script: FlexSearch
+attributes and anchors to searchable blocks, then writes `dist/search-index.json`.
+Keep HTML edits limited to source locations of those attributes. Reserializing parse5's
+document tree strips customizable select buttons and rich option markup.
+Keep the browser configuration in `lib/search/config.json` compatible with the build script: FlexSearch
 imports require the same document configuration that exported the chunks. The search island starts
 loading the index during idle time; its page-target highlighter must run on `astro:page-load` so
 ClientRouter navigations receive the same mark.js treatment as cold loads.

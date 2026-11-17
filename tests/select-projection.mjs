@@ -362,3 +362,19 @@ test.fast('Select undefined stays uncontrolled and defaults initialize only once
   empty();assert.equal(values.at(-1),null)
   empty({selection:'multiple',value:[]});assert.deepEqual(values.at(-1),[])
 })
+
+for (const selection of ['single', 'multiple']) test.fast(`Select blocks open-menu requests after disabling (${selection})`, () => {
+  const reports = []
+  const initial = selection === 'multiple' ? ['alpha'] : 'alpha'
+  const render = renderer(runtime.Select, {
+    selection, defaultValue: initial, clearable: true,
+    options: ['alpha', { label: 'More', submenu: ['beta'] }],
+    onValueChange: value => reports.push(value),
+  })
+  render()
+  const tree = render({ disabled: true })
+  assert.ok(rows(tree).every(node => node.props.disabled === ''))
+  for (const node of rows(tree)) node.props.onmenuselect?.({})
+  assert.deepEqual(reports, [])
+  assert.equal(nodes(render()).find(node => node.type === 'a-input').props.value, 'alpha')
+})

@@ -81,7 +81,7 @@
     "test:menu:package": "node tests/menu-package.mjs",
     "test:input-autocomplete": "node --test tests/input-autocomplete-types.mjs tests/input-autocomplete-projection.mjs tests/input-autocomplete-csp.mjs",
     "test:input-autocomplete:package": "node tests/input-autocomplete-package.mjs",
-    "test:select": "node --test tests/select-projection.mjs tests/select-csp.mjs",
+    "test:select": "node --test tests/select-projection.mjs tests/select-csp.mjs tests/select-native.mjs",
     "test:select:package": "node tests/select-package.mjs",
     "test:copy": "node --test tests/copy-csp.mjs",
     "test:copy:package": "node tests/copy-package.mjs",

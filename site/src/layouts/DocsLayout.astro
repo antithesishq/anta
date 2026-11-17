@@ -3,19 +3,21 @@
 // otherwise emits imported CSS after authored head links, which would let the
 // default unlayered tokens override the selected theme.
 import antaStylesheet from '@antadesign/anta/bundle.css?url'
+import stickerStylesheet from '@antadesign/stickers/elements/a-sticker.css?url'
+import animatedStickerStylesheet from '@antadesign/stickers/elements/a-sticker-animated.css?url'
 import '../styles/base.css'
 import '@antadesign/plot/plot.css'
 // Docs-site-only extra icon shapes (generated via Anta's generate-icons
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
 import '../icons/docs-icons.css'
 import { ClientRouter } from 'astro:transitions'
-import { Breadcrumbs, Button, Icon } from '@antadesign/anta'
-import { h } from 'preact'
+import { Button, Icon } from '@antadesign/anta'
 import PostHog from '../components/posthog.astro'
 import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
 import { getNavigationGroups, getNavigationTree } from '../../lib/content/catalog.mjs'
 import { addDocReviewMarker } from '../../lib/doc-review-heading.mjs'
 import SidebarSearch from '../components/SidebarSearch'
+import ThemeSwitcher from '../components/ThemeSwitcher'
 import SidebarNavItem from '../components/SidebarNavItem.astro'
 import SearchDialog from '../components/SearchDialog.tsx'
 import AntaLogo from '../components/AntaLogo'
@@ -43,7 +45,6 @@ const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
 const catalog = await getAstroPageCatalog()
 const navigationGroups = getNavigationGroups(catalog)
 const currentPage = catalog.find((page) => (page.path.replace(/\/+$/, '') || '/') === path)
-const breadcrumbLabel = title ? currentPage?.breadcrumbLabel ?? title : ''
 const parentPages = []
 for (let parentKey = currentPage?.parentKey; parentKey;) {
   const parent = catalog.find((page) => page.key === parentKey)
@@ -130,6 +131,8 @@ if (hasStructuredBreadcrumbs && title) {
     <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href={antaStylesheet} />
+    <link rel="stylesheet" href={stickerStylesheet} />
+    <link rel="stylesheet" href={animatedStickerStylesheet} />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content={pageUrl} />
@@ -227,26 +230,26 @@ if (hasStructuredBreadcrumbs && title) {
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
     <div class="navigation-progress" aria-hidden="true"></div>
-    <header class:list={["topbar", { 'has-parent-breadcrumbs': parentPages.length > 0 }]} style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
+    <header class="topbar" style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
       <div class="topbar-start">
-        <div class="topbar-breadcrumbs">
-          <Breadcrumbs
-            className="header-breadcrumbs"
-            size="small"
-            aria-label="Site breadcrumb"
-            items={[
-              {
-                label: [h(Icon, { shape: 'menu', size: 16, className: 'mobile-menu-icon', 'aria-hidden': true }), h(AntaLogo, { size: 16, compact: true }), 'Anta'],
-                href: '/',
-                'aria-label': 'Anta',
-                current: !title,
-                tone: title ? 'brand' : 'neutral',
-              },
-              ...parentPages.map((page) => ({ label: page.breadcrumbLabel, href: page.path, tone: 'brand' as const })),
-              ...(breadcrumbLabel ? [{ label: breadcrumbLabel, current: true, tone: 'neutral' as const }] : []),
-            ]}
-          />
-        </div>
+        <Button
+          class="mobile-menu-toggle"
+          size="small"
+          priority="tertiary"
+          aria-label="Open navigation"
+          aria-controls="site-navigation"
+          aria-expanded="false"
+        >
+          <Icon shape="menu" size={16} />
+        </Button>
+        <span class="topbar-brand">
+          <AntaLogo size={24} compact style={{ borderRadius: '1000px', border: '1px solid var(--border-3-brand)' }} />
+          Anta
+          <Button size="small" priority="secondary" href="/changelog/" aria-label={`Changelog for version ${npmVersion}`}>
+            {npmVersion}
+            <a-tooltip follow>Changelog</a-tooltip>
+          </Button>
+        </span>
       </div>
       <div class="topbar-center">
         <div class="topbar-search">
@@ -254,50 +257,43 @@ if (hasStructuredBreadcrumbs && title) {
         </div>
       </div>
       <div class="topbar-tools">
+        <div class="theming-switcher" transition:persist="theme-switcher"><ThemeSwitcher client:load /></div>
+        <Button class="theme-toggle" priority="tertiary" tone="neutral" size="small" aria-label="Switch to dark theme">
+          <Icon shape="sun" size={16} />
+          <Icon shape="moon" size={16} />
+          <a-tooltip follow>Switch to dark theme</a-tooltip>
+        </Button>
         <div class="package-links">
           <Button
             size="small"
-            priority="quaternary"
-            icon="cube"
-            tone="brand"
-            underline="solid"
-            underlineOnHover
+            priority="tertiary"
             href="https://www.npmjs.com/package/@antadesign/anta?activeTab=versions"
             target="_blank"
             rel="noopener"
-            aria-label={npmVersion ? `npm package ${npmVersion}` : 'npm package'}
+            aria-label="npm package"
           >
-            <span class="package-link-label">{npmVersion ? `npm ${npmVersion}` : 'npm'}</span>
-            <a-tooltip follow>{npmVersion ? `npm package ${npmVersion}` : 'npm package'}</a-tooltip>
+            <Icon shape="cube" size={18} />
+            <a-tooltip follow>npm package</a-tooltip>
           </Button>
           <Button
             size="small"
-            priority="quaternary"
-            icon="github-logo"
-            tone="brand"
-            underline="solid"
-            underlineOnHover
+            priority="tertiary"
             href="https://github.com/antithesishq/anta"
             target="_blank"
             rel="noopener"
             aria-label="GitHub repository"
           >
-            <span class="package-link-label">GitHub</span>
+            <Icon shape="github-logo" size={18} />
             <a-tooltip follow>GitHub repository</a-tooltip>
           </Button>
         </div>
-        <Button class="theme-toggle" priority="quaternary" tone="neutral" size="small" aria-label="Switch to dark theme">
-          <Icon shape="sun" size={16} />
-          <Icon shape="moon" size={16} />
-          <a-tooltip follow>Switch to dark theme</a-tooltip>
-        </Button>
       </div>
     </header>
     <div class="layout">
       {/* Persisted: ClientRouter moves this exact node into each new page, so
-          sidebar scroll and the ThemeSwitcher island survive navigation. The
-          stale aria-current is re-pointed on astro:page-load below. */}
-      <aside class="sidebar" transition:persist="sidebar">
+          sidebar scroll survives navigation. The stale aria-current is
+          re-pointed on astro:page-load below. */}
+      <aside id="site-navigation" class="sidebar" transition:persist="sidebar">
         {navigationGroups.map((group) => (
           <>
             {group.title && <h4>{group.title}</h4>}
@@ -308,9 +304,11 @@ if (hasStructuredBreadcrumbs && title) {
             </menu>
           </>
         ))}
-        <h4>API reference</h4>
+        <h4>Type Script reference</h4>
         <menu>
-          <li><a href="/reference/" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta TypeScript</a></li>
+          <li><a href="/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta components</a></li>
+          <li><a href="/plot/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Plot package</a></li>
+          <li><a href="/virtual-scroll/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Virtual Scroll</a></li>
         </menu>
       </aside>
       <div transition:persist="search-dialog"><SearchDialog client:load /></div>
@@ -339,7 +337,7 @@ if (hasStructuredBreadcrumbs && title) {
     <div class="backdrop" aria-hidden="true"></div>
 
     <script>
-      import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'
+      import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client'
       import { clearSearchHighlighting, startSearchHighlighting } from '../../lib/search/highlight'
 
       // Runs once per session (ClientRouter never re-runs a seen script), so
@@ -376,11 +374,12 @@ if (hasStructuredBreadcrumbs && title) {
       // body.dataset, which the body swap resets, closing drawers on nav.
       const setMenu = (open: boolean) => {
         document.body.dataset.menuOpen = open ? 'true' : 'false'
+        document.querySelector('.mobile-menu-toggle')?.setAttribute('aria-expanded', String(open))
         if (open) document.body.dataset.tocOpen = 'false'
       }
       const setToc = (open: boolean) => {
         document.body.dataset.tocOpen = open ? 'true' : 'false'
-        if (open) document.body.dataset.menuOpen = 'false'
+        if (open) setMenu(false)
       }
       const closeAll = () => {
         setMenu(false)
@@ -388,17 +387,6 @@ if (hasStructuredBreadcrumbs && title) {
       }
 
       const mobileNavigation = matchMedia('(max-width: 800px)')
-      const isMobileBreadcrumb = (target: EventTarget | null) =>
-        mobileNavigation.matches
-        && target instanceof Element
-        && Boolean(target.closest('.header-breadcrumbs > :first-child'))
-
-      // Capture before ClientRouter handles the breadcrumb's link.
-      document.addEventListener('click', (e) => {
-        if (!isMobileBreadcrumb(e.target)) return
-        e.preventDefault()
-        setMenu(true)
-      }, true)
       mobileNavigation.addEventListener('change', () => setMenu(false))
 
       // Show immediate acknowledgement while ClientRouter prepares the next
@@ -409,8 +397,32 @@ if (hasStructuredBreadcrumbs && title) {
         document.documentElement.toggleAttribute('data-navigation-pending', pending)
         document.documentElement.setAttribute('aria-busy', pending ? 'true' : 'false')
       }
-      document.addEventListener('astro:before-preparation', () => setNavigationPending(true))
-      document.addEventListener('astro:after-swap', () => setNavigationPending(false))
+      // Hold the destination's fill until the loaded page takes over aria-current.
+      const setSidebarDestination = (pathname?: string) => {
+        const destination = pathname?.replace(/\/+$/, '') || '/'
+        for (const link of document.querySelectorAll<HTMLAnchorElement>('.sidebar menu a')) {
+          const path = new URL(link.href).pathname.replace(/\/+$/, '') || '/'
+          link.toggleAttribute('data-navigation-target', pathname !== undefined && path === destination)
+        }
+      }
+      let navigationSignal: AbortSignal | undefined
+      document.addEventListener('astro:before-preparation', (event) => {
+        const navigation = event as TransitionBeforePreparationEvent
+        navigationSignal = navigation.signal
+        setNavigationPending(true)
+        setSidebarDestination(navigation.to.pathname)
+        navigation.signal.addEventListener('abort', () => {
+          if (navigationSignal !== navigation.signal) return
+          setSidebarDestination()
+          setNavigationPending(false)
+        }, { once: true })
+      })
+      document.addEventListener('astro:after-swap', () => {
+        syncSidebarNavigation()
+        setSidebarDestination()
+        navigationSignal = undefined
+        setNavigationPending(false)
+      })
 
       document.addEventListener('click', (e) => {
         const target = e.target as HTMLElement
@@ -419,6 +431,8 @@ if (hasStructuredBreadcrumbs && title) {
           e.preventDefault()
         } else if (target.closest('[data-search-trigger]')) {
           document.dispatchEvent(new Event('anta-search-open'))
+        } else if (target.closest('.mobile-menu-toggle') && mobileNavigation.matches) {
+          setMenu(document.body.dataset.menuOpen !== 'true')
         } else if (target.closest('.toc-toggle')) {
           setToc(document.body.dataset.tocOpen !== 'true')
         } else if (target.closest('.backdrop')) {
@@ -498,8 +512,7 @@ if (hasStructuredBreadcrumbs && title) {
 
       // The persisted sidebar keeps the previous page's aria-current:
       // re-point it at the new URL. Idempotent on the initial load.
-      document.addEventListener('astro:page-load', () => {
-        applyTheme(document.documentElement.classList.contains('dark'))
+      function syncSidebarNavigation() {
         const here = location.pathname.replace(/\/+$/, '') || '/'
         for (const a of document.querySelectorAll<HTMLAnchorElement>('.sidebar menu a')) {
           const linkPath = new URL(a.href).pathname.replace(/\/+$/, '') || '/'
@@ -513,6 +526,10 @@ if (hasStructuredBreadcrumbs && title) {
           children.hidden = !active
           link.toggleAttribute('data-active-parent', Boolean(active && active !== link))
         }
+      }
+      document.addEventListener('astro:page-load', () => {
+        applyTheme(document.documentElement.classList.contains('dark'))
+        syncSidebarNavigation()
         syncSidebarSearch()
       })
       syncSidebarSearch()
@@ -659,6 +676,7 @@ if (hasStructuredBreadcrumbs && title) {
     align-items: center;
     flex-shrink: 0;
     gap: 0.25ch;
+    margin-inline-start: 12px;
     white-space: nowrap;
   }
 
@@ -669,6 +687,13 @@ if (hasStructuredBreadcrumbs && title) {
     letter-spacing: 0.08em;
     color: var(--text-2-brand);
     margin: 24px 0 8px;
+  }
+
+  .sidebar menu {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-inline: -8px;
   }
 
   .sidebar menu + menu {
@@ -682,20 +707,18 @@ if (hasStructuredBreadcrumbs && title) {
     display: flex;
     align-items: center;
     gap: 0.75ch;
-    padding: 2px 0 4px;
-    /* Match the compact corner treatment of Anta menu rows. It also gives
-       the shared focus outline a rounded shape without changing the sidebar's
-       text alignment. */
+    padding: 3px 8px;
     border-radius: var(--radius-sm, 4px);
     color: var(--text-3);
+    background: transparent;
     font-size: 14px;
     font-weight: 400;
     letter-spacing: 0.03ch;
     text-decoration: none;
-    transition: color 160ms ease-out;
+    transition: color 160ms ease-out, background-color 280ms ease-out;
   }
   .sidebar :global(menu li a > a-icon) {
-    color: var(--text-4-brand);
+    color: var(--text-3-brand);
     flex-shrink: 0;
     transition: color 160ms ease-out;
   }
@@ -705,21 +728,37 @@ if (hasStructuredBreadcrumbs && title) {
     flex-shrink: 0;
   }
   .sidebar :global(menu li a:hover),
-  .sidebar :global(menu li a[aria-current="page"]),
+  .sidebar :global(menu li a:focus-visible) {
+    color: var(--text-2);
+    background: light-dark(
+      color-mix(in oklch, currentColor 5%, transparent),
+      color-mix(in oklch, currentColor 10%, transparent)
+    );
+    transition: color 160ms ease-out, background-color 60ms ease-in-out;
+  }
+  .sidebar :global(menu li a:active) {
+    background: light-dark(
+      color-mix(in oklch, currentColor 8%, transparent),
+      color-mix(in oklch, currentColor 14%, transparent)
+    );
+    transition: none;
+  }
   .sidebar :global(menu li a[data-active-parent]) {
     color: var(--text-1);
-    text-decoration: none;
   }
-  /* Sidebar navigation uses the same dotted underline as the in-page TOC. */
-  .sidebar :global(menu li a:hover) {
-    text-decoration: underline dotted;
-    text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
+  .sidebar :global(menu li a[aria-current="page"]),
+  .sidebar :global(menu li a[data-navigation-target]) {
+    color: var(--text-2-brand);
+    background: light-dark(
+      color-mix(in oklch, currentColor 8%, transparent),
+      color-mix(in oklch, currentColor 14%, transparent)
+    );
   }
   .sidebar :global(menu li a:hover > a-icon),
-  .sidebar :global(menu li a[aria-current="page"] > a-icon) {
-    color: var(--text-1-brand);
+  .sidebar :global(menu li a:focus-visible > a-icon),
+  .sidebar :global(menu li a[aria-current="page"] > a-icon),
+  .sidebar :global(menu li a[data-navigation-target] > a-icon) {
+    color: var(--text-2-brand);
   }
   .sidebar :global(a:focus-visible) {
     outline: 1px solid var(--focus-ring);
@@ -770,8 +809,8 @@ if (hasStructuredBreadcrumbs && title) {
     position: sticky;
     top: 0;
     z-index: 10;
-    background: var(--bg-3-brand);
-    border-bottom: 1px solid var(--border-4-brand);
+    background: var(--bg-3);
+    border-bottom: 1px solid var(--border-3);
   }
 
   .topbar-start,
@@ -791,28 +830,30 @@ if (hasStructuredBreadcrumbs && title) {
     gap: 8px;
   }
 
-  .topbar-breadcrumbs {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 222px;
+  .topbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75ch;
+    height: 28px;
+    margin-inline-start: 2px;
+    padding: 2px 10px 2px 0;
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.03ch;
   }
 
-  .topbar :global(.header-breadcrumbs) {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .topbar :global(.header-breadcrumbs > [aria-current="page"]) {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-
-  .topbar :global(.mobile-menu-icon) {
+  .mobile-menu-toggle {
     display: none;
   }
 
-  .topbar :global(.header-breadcrumbs a-breadcrumb-separator) {
-    width: 8px;
+  .mobile-menu-toggle,
+  .theme-toggle,
+  .package-links :global(a[role="button"]) {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
   }
 
   .topbar-center {
@@ -831,6 +872,20 @@ if (hasStructuredBreadcrumbs && title) {
     flex: 1 1 auto;
     min-width: 0;
     max-width: 960px;
+  }
+
+  .theming-switcher {
+    flex: 0 0 auto;
+    width: 180px;
+  }
+
+  .theming-switcher :global(.theming-select)::part(field) {
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .theming-switcher :global(a-button.theming-select) {
+    min-height: 32px;
   }
 
   .topbar-search :global(a-input) {
@@ -860,10 +915,6 @@ if (hasStructuredBreadcrumbs && title) {
      layout, because the dual-rail shell squeezes the content track first.
      The nav sidebar keeps its own slide-out at 800px below. */
   @media (max-width: 1024px) {
-    .package-link-label {
-      display: none;
-    }
-
     .topbar-tools {
       min-width: 0;
     }
@@ -930,31 +981,28 @@ if (hasStructuredBreadcrumbs && title) {
     }
   }
 
+  @media (max-width: 640px) {
+    .theming-switcher {
+      width: auto;
+    }
+  }
+
   @media (max-width: 800px) {
-    .topbar :global(.mobile-menu-icon) {
-      display: inline-block;
+    .topbar {
+      padding-inline: 8px;
+    }
+
+    .mobile-menu-toggle {
+      display: inline-flex;
     }
 
     .topbar-search :global(a-input)::part(trailing) {
       display: none;
     }
 
-    .topbar:not(.has-parent-breadcrumbs) :global(.header-breadcrumbs > :not(:first-child)) {
-      display: none;
-    }
-
     .topbar-start {
       width: auto;
       min-width: 0;
-    }
-
-    .topbar.has-parent-breadcrumbs .topbar-start {
-      width: min(190px, 45vw);
-      flex-shrink: 0;
-    }
-
-    .topbar.has-parent-breadcrumbs :global(.header-breadcrumbs > :first-child > :not(.mobile-menu-icon)) {
-      display: none;
     }
 
     .content {

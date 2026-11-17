@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { Select } from '@antadesign/anta'
 
 /**
- * Sidebar palette switcher. Switching a theme swaps the href of the stable
+ * Palette switcher. Switching a theme swaps the href of the stable
  * palette <link> that DocsLayout.astro renders on every page (persisted across
  * ClientRouter swaps). The choice lives in localStorage under `anta-palette`;
  * DocsLayout's inline head script applies it before paint on cold loads, so
@@ -53,6 +53,7 @@ export default function ThemeSwitcher() {
       aria-label="Theme"
       className="theming-select"
       size="small"
+      leading="Theme:"
       value={value}
       onValueChange={(v) => {
         if (v === null) return

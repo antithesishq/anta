@@ -15,6 +15,7 @@ import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
 import { getNavigationGroups, getNavigationTree } from '../../lib/content/catalog.mjs'
 import { addDocReviewMarker } from '../../lib/doc-review-heading.mjs'
 import SidebarSearch from '../components/SidebarSearch'
+import ThemeSwitcher from '../components/ThemeSwitcher'
 import SidebarNavItem from '../components/SidebarNavItem.astro'
 import SearchDialog from '../components/SearchDialog.tsx'
 import AntaLogo from '../components/AntaLogo'
@@ -248,47 +249,42 @@ if (hasStructuredBreadcrumbs && title) {
         </div>
       </div>
       <div class="topbar-tools">
-        <div class="package-links">
-          <Button
-            size="small"
-            priority="quaternary"
-            icon="cube"
-            underline="solid"
-            underlineOnHover
-            href="https://www.npmjs.com/package/@antadesign/anta?activeTab=versions"
-            target="_blank"
-            rel="noopener"
-            aria-label="npm package"
-          >
-            <span class="package-link-label">npm</span>
-            <a-tooltip follow>npm package</a-tooltip>
-          </Button>
-          <Button
-            size="small"
-            priority="quaternary"
-            icon="github-logo"
-            underline="solid"
-            underlineOnHover
-            href="https://github.com/antithesishq/anta"
-            target="_blank"
-            rel="noopener"
-            aria-label="GitHub repository"
-          >
-            <span class="package-link-label">GitHub</span>
-            <a-tooltip follow>GitHub repository</a-tooltip>
-          </Button>
-        </div>
+        <div class="theming-switcher" transition:persist="theme-switcher"><ThemeSwitcher client:load /></div>
         <Button class="theme-toggle" priority="quaternary" tone="neutral" size="small" aria-label="Switch to dark theme">
           <Icon shape="sun" size={16} />
           <Icon shape="moon" size={16} />
           <a-tooltip follow>Switch to dark theme</a-tooltip>
         </Button>
+        <div class="package-links">
+          <Button
+            size="small"
+            priority="tertiary"
+            icon="cube"
+            href="https://www.npmjs.com/package/@antadesign/anta?activeTab=versions"
+            target="_blank"
+            rel="noopener"
+            aria-label="npm package"
+          >
+            <a-tooltip follow>npm package</a-tooltip>
+          </Button>
+          <Button
+            size="small"
+            priority="tertiary"
+            icon="github-logo"
+            href="https://github.com/antithesishq/anta"
+            target="_blank"
+            rel="noopener"
+            aria-label="GitHub repository"
+          >
+            <a-tooltip follow>GitHub repository</a-tooltip>
+          </Button>
+        </div>
       </div>
     </header>
     <div class="layout">
       {/* Persisted: ClientRouter moves this exact node into each new page, so
-          sidebar scroll and the ThemeSwitcher island survive navigation. The
-          stale aria-current is re-pointed on astro:page-load below. */}
+          sidebar scroll survives navigation. The stale aria-current is
+          re-pointed on astro:page-load below. */}
       <aside id="site-navigation" class="sidebar" transition:persist="sidebar">
         {navigationGroups.map((group) => (
           <>
@@ -810,6 +806,15 @@ if (hasStructuredBreadcrumbs && title) {
     max-width: 960px;
   }
 
+  .theming-switcher {
+    flex: 0 0 auto;
+    width: 180px;
+  }
+
+  .theming-switcher :global(.theming-select)::part(field) {
+    background: transparent;
+  }
+
   .topbar-search :global(a-input) {
     width: 100%;
   }
@@ -837,10 +842,6 @@ if (hasStructuredBreadcrumbs && title) {
      layout, because the dual-rail shell squeezes the content track first.
      The nav sidebar keeps its own slide-out at 800px below. */
   @media (max-width: 1024px) {
-    .package-link-label {
-      display: none;
-    }
-
     .topbar-tools {
       min-width: 0;
     }

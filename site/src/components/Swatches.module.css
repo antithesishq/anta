@@ -2,11 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 56px;
-  /* Approximate height of the sticky `.toneTabs` strip: 3 px gutter ×2 +
-     0.5 px borders + ~28 px button content. Anchor scrolls below add
-     1.5× this on top of html's --scroll-padding-top so the target
-     heading lands below the tabs instead of behind them. */
-  --tabs-height: 36px;
+  --tabs-height: 28px;
 }
 
 /* Apply the offset to any anchor-targetable heading inside the page so
@@ -15,36 +11,18 @@
   scroll-margin-top: calc(var(--tabs-height) * 1.5);
 }
 
-/* ─── Segmented control ──────────────────────────────────────────────────
-   Style for the documentation tone tabs (Colors). Surface is bg-block.
-   (The Accessibility matrix controls are Anta <Tabs> — see AccessibilityMatrix.) */
-/* The tone nav is an Anta <Tabs> strip (the NavTabs island) that navigates on
-   pick; this wrapper only positions it (sticky page-nav below) and caps its
-   width. The strip's own chrome comes from <Tabs>. */
-.toneTabs {
-  max-width: 100%;
-}
-
 /* Tone tabs are also sticky page-nav, nudged in to the 960 prose left edge
    (the page is a full-width lane). The margin collapses to 0 once the track
    is narrower than the readable measure. */
 .toneTabs {
+  max-width: 100%;
   align-self: flex-start;
   margin-inline-start: max(0px, calc((100% - 960px) / 2));
   position: sticky;
   top: var(--scroll-padding-top, 0);
   z-index: 5;
-}
-
-/* The strip overlaps content as the page scrolls under it, so it needs a solid
-   fill — the default track tint is near-transparent and content bleeds through.
-   A 3px gutter around the tabs turns it into a padded well; the outer radius is
-   the 4px tab radius + the 3px gutter so the corners stay concentric. Un-layered,
-   so it wins over `@layer anta`. */
-.toneTabs a-tabs {
-  padding: 3px;
-  background: var(--bg-4);
-  border-radius: 7px;
+  /* Keep scrolling content behind the wrapper without changing the tabs. */
+  background: var(--bg-canvas);
 }
 
 /* ─── Full-bleed layout ──────────────────────────────────────────────────

@@ -57,7 +57,10 @@ for (const [entry, [stylesheet, selector]] of Object.entries(composedStyles)) {
   test(`${entry} loads its layout CSS without registering or importing browser elements`, async () => {
     const result = await bundleImports([`@antadesign/anta/elements/${entry}`])
     const inputs = Object.keys(result.metafile.inputs)
-    assert.deepEqual(inputs.filter(path => path.endsWith('.css')), [`dist/components/${stylesheet}`])
+    assert.deepEqual(inputs.filter(path => path.endsWith('.css')).sort(), [
+      `dist/components/${stylesheet}`,
+      ...(entry === 'a-select' ? ['dist/elements/a-select.css'] : []),
+    ].sort())
     assert.equal(result.outputFiles.find(file => file.path.endsWith('.js')).text.trim(), '')
     assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, selector)
   })
@@ -69,7 +72,27 @@ test('Select and SelectFaceted share one layout stylesheet', async () => {
     '@antadesign/anta/elements/a-select-faceted',
   ])
   const cssInputs = Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css'))
-  assert.deepEqual(cssInputs, ['dist/components/Select.css'])
+  assert.deepEqual(cssInputs.sort(), ['dist/components/Select.css', 'dist/elements/a-select.css'])
+})
+
+test('native select CSS loads independently of the composed layout and JavaScript', async () => {
+  const result = await bundleImports(['@antadesign/anta/elements/a-select.css'])
+  assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')), ['dist/elements/a-select.css'])
+  assert.equal(result.outputFiles.find(file => file.path.endsWith('.js')).text.trim(), '')
+  const css = result.outputFiles.find(file => file.path.endsWith('.css')).text
+  assert.match(css, /select\[data-anta\]/)
+  assert.doesNotMatch(css, /a-select-field/)
+})
+
+test('native select styles remain available through Select, Input CSS, and the full bundle', async () => {
+  for (const entry of ['elements/a-select', 'elements/a-input.css', 'bundle.css']) {
+    const result = await bundleImports([`@antadesign/anta/${entry}`])
+    assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, /select\[data-anta\]/, entry)
+    if (entry === 'elements/a-input.css') {
+      assert.ok(!Object.keys(result.metafile.inputs).some(path => path.startsWith('dist/components/')),
+        'Input must not pull in composed Select styles')
+    }
+  }
 })
 
 test('the previous Select stylesheet import resolves to the canonical stylesheet without duplication', async () => {

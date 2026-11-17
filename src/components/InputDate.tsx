@@ -186,22 +186,19 @@ export const InputDate = ({
   const h24 = hasTime ? parseInt(current!.slice(11, 13), 10) || 0 : 0
   const curM = hasTime ? current!.slice(14, 16) : '00'
 
-  // `text` is what the field shows — a live draft while typing, canonicalized on
-  // commit. `open` drives the calendar menu; `invalid` flags an unrecognized entry.
-  const [text, setText] = useState<string>(() => fmt(current))
+  // Committed text follows the current format; only an active edit needs state.
+  const [draft, setDraft] = useState<string | undefined>(undefined)
+  const text = draft ?? fmt(current)
   const [open, setOpen] = useState(false)
   const [invalid, setInvalid] = useState(false)
-  // Bumped to move focus into the calendar grid on a keyboard open (ArrowDown) —
-  // fed to `Calendar`'s `focusSignal`, which drives `<a-calendar>`'s `data-focus`.
+  // Bumped to move focus into the calendar grid on a keyboard open.
   const [focusNonce, setFocusNonce] = useState(0)
 
-  // Reformat the field when the committed value changes from outside typing — a
-  // calendar pick, a controlled `value` update, or an accepted commit (React's
-  // "adjust state when a prop changes" pattern, guarded so it can't loop).
+  // An accepted commit or external value update replaces the active draft.
   const [lastValue, setLastValue] = useState(current)
   if (current !== lastValue) {
     setLastValue(current)
-    setText(fmt(current))
+    setDraft(undefined)
     setInvalid(false)
   }
   const commit = (iso: string) => {
@@ -218,7 +215,7 @@ export const InputDate = ({
   // Clears the invalid flag either way. Shared so both entry points stay in step.
   const apply = (iso: string) => {
     setInvalid(false)
-    if (iso === (current ?? '')) setText(fmt(iso))
+    if (iso === (current ?? '')) setDraft(undefined)
     else commit(iso)
   }
 
@@ -231,7 +228,7 @@ export const InputDate = ({
     if (!t) {
       setInvalid(false)
       if (current) commit('')
-      else setText('')
+      else setDraft(undefined)
       return true
     }
     const parsed = time
@@ -292,7 +289,7 @@ export const InputDate = ({
         aria-haspopup="dialog"
         aria-expanded={open ? 'true' : 'false'}
         onInput={(e: any) => {
-          setText(e.currentTarget.value)
+          setDraft(e.currentTarget.value)
           if (invalid) setInvalid(false)
         }}
         onChange={(e: any) => resolve(e.currentTarget.value)}

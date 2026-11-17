@@ -7,6 +7,7 @@ changes are not listed.
 
 ### Fixed
 
+- Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.
 - Disabling [Select](/select/#size-and-status) also disables its open menu without clearing the selection.
 - [Native selects](/select/#native-html-select) style the field and dropdown without custom trigger markup. Focus rings follow the theme.
 

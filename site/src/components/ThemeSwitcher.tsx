@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select } from '@antadesign/anta'
+import { Button, Select } from '@antadesign/anta'
 
 /**
  * Palette switcher. Switching a theme swaps the href of the stable
@@ -40,6 +40,15 @@ function applyPalette(v: string) {
 
 export default function ThemeSwitcher() {
   const [value, setValue] = useState('antithesis')
+  const [compact, setCompact] = useState(false)
+
+  useEffect(() => {
+    const media = matchMedia('(max-width: 640px)')
+    const sync = () => setCompact(media.matches)
+    sync()
+    media.addEventListener('change', sync)
+    return () => media.removeEventListener('change', sync)
+  }, [])
 
   // Reflect the stored choice once mounted (the inline head script already
   // applied the stylesheet before paint).
@@ -53,6 +62,17 @@ export default function ThemeSwitcher() {
       aria-label="Theme"
       className="theming-select"
       leading="Theme:"
+      renderTrigger={compact ? ({ open, selected }) => (
+        <Button
+          className="theming-select"
+          priority="tertiary"
+          icon="theme"
+          iconTrailing="chevron-down"
+          aria-label={`Theme: ${selected[0]?.label ?? value}`}
+          aria-haspopup="menu"
+          aria-expanded={open ? 'true' : 'false'}
+        />
+      ) : undefined}
       value={value}
       onValueChange={(v) => {
         if (v === null) return

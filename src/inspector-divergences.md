@@ -93,6 +93,10 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
     characters other than tab stay escaped, so ANSI codes are visible and can't garble the display. Strings open only
     when the reader toggles them, never from `expandDepth`. Closed rows, summaries, and `repr()` keep the notebook's
     escaped one-line form.
+22. **The Inspector shows values as an outline, as browser DevTools do.** Its rows use the `tree` style of
+    `visibleRows()`: each child is `key: value`, array elements show their index, an open node's row names its type
+    and size (`Array(3)`, `Map(2)`, `{…}`), and there are no closing brackets or commas. The notebook's DOM sink nested
+    the `repr()` text itself. `repr()` and the `repr` row style keep the notebook's format.
 
 ## Kept identical on purpose
 

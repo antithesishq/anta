@@ -1,0 +1,22 @@
+---
+title: Inspector
+nav:
+  icon: braces
+  group: content
+  order: 90
+---
+import Disclosure from '../../../components/Disclosure.astro'
+import Playground from '../../../components/PlaygroundEmbed.astro'
+import inspectorDemo from './inspector.demo.ts'
+
+# Inspector
+
+Inspector shows any JavaScript value as a tree you can open one level at a
+time, such as test results, errors, and logs. Select a row to open or close it.
+Long arrays and strings open a page at a time.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground component="Inspector" layout="side" initialCode={inspectorDemo} />
+
+</Disclosure>

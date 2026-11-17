@@ -398,6 +398,7 @@ test('the node API never throws, even on hostile values', () =>
 // Rows: visibleRows() lists the lines the Inspector renders for a display state.
 
 const line = row => row.type === 'more' ? '' : text([...(row.key ?? []), ...row.tokens])
+const styles = gs.sampledFrom(['repr', 'tree'])
 const lines = rows => rows.map(row => ({ id: row.id, line: line(row) }))
 const inSubtree = (row, id) => row.id === id || row.id.startsWith(`${id}:`) || row.id.startsWith(`${id}>`)
 
@@ -482,15 +483,16 @@ test('with every node open, the rows spell out repr without deduplication', () =
 test('closing a node hides only its descendants', () =>
   hegel.test(tc => {
     const root = core.describe(make(tc.draw(recipes(), 'recipe')).value)
-    const toggled = openSome(tc, root, { expandDepth: 1 })
-    const open = core.visibleRows(root, { expandDepth: 1, toggled }).filter(row => row.type === 'node' && row.open)
+    const style = tc.draw(styles, 'style')
+    const toggled = openSome(tc, root, { expandDepth: 1, style })
+    const open = core.visibleRows(root, { expandDepth: 1, style, toggled }).filter(row => row.type === 'node' && row.open)
     tc.assume(open.length > 0)
     const { id } = open[tc.draw(gs.integers({ minValue: 0, maxValue: open.length - 1 }), 'close')]
     const flipped = new Set(toggled)
     if (flipped.has(id)) flipped.delete(id)
     else flipped.add(id)
-    const before = core.visibleRows(root, { expandDepth: 1, toggled })
-    const after = core.visibleRows(root, { expandDepth: 1, toggled: flipped })
+    const before = core.visibleRows(root, { expandDepth: 1, style, toggled })
+    const after = core.visibleRows(root, { expandDepth: 1, style, toggled: flipped })
     assert.deepEqual(lines(after.filter(row => !inSubtree(row, id))), lines(before.filter(row => !inSubtree(row, id))))
     assert.deepEqual(after.filter(row => inSubtree(row, id)).map(row => row.id), [id])
   }, settings))
@@ -499,17 +501,18 @@ test('showing every page gives the same rows as one unbounded page', () =>
   hegel.test(tc => {
     const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
     const pageSize = tc.draw(gs.integers({ minValue: 1, maxValue: 3 }), 'pageSize')
+    const style = tc.draw(styles, 'style')
     const root = core.describe(make(recipe).value)
     const pages = new Map()
     let rows
     for (let round = 0; round < 100; round++) {
-      rows = core.visibleRows(root, { expandDepth: Infinity, pageSize, pages })
+      rows = core.visibleRows(root, { expandDepth: Infinity, pageSize, pages, style })
       const more = rows.filter(row => row.type === 'more')
       for (const row of more) assert.equal(row.shown, (pages.get(row.group) ?? 1) * pageSize, 'a page showed the wrong number of children')
       if (!more.length) break
       for (const row of more) pages.set(row.group, (pages.get(row.group) ?? 1) + 1)
     }
-    const whole = core.visibleRows(core.describe(make(recipe).value), { expandDepth: Infinity, pageSize: Infinity })
+    const whole = core.visibleRows(core.describe(make(recipe).value), { expandDepth: Infinity, pageSize: Infinity, style })
     assert.deepEqual(lines(rows), lines(whole))
   }, settings))
 
@@ -555,6 +558,7 @@ test('rows never throw and keep ids unique, even on hostile values', () =>
       expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth'),
       pageSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'pageSize'),
       previewBudget: tc.draw(gs.integers({ minValue: 3, maxValue: 80 }), 'previewBudget'),
+      style: tc.draw(styles, 'style'),
     }
     const rows = core.visibleRows(root, { ...display, toggled: openSome(tc, root, display) })
     assert.equal(new Set(rows.map(row => row.id)).size, rows.length, 'duplicate row id')
@@ -656,3 +660,56 @@ test('summaries and closed rows name an error without its stack', () => {
   const opened = core.visibleRows(core.describe(outer), { expandDepth: 1 })
   assert.deepEqual(opened.map(line), ['Error("transfer failed"){', 'cause:RangeError("index 9"),', 'stack:"Error: transfer failed"', '}'])
 })
+
+// The tree style: rows read like an object in browser DevTools.
+
+const tree = (value, state = {}) => core.visibleRows(core.describe(value), { style: 'tree', ...state })
+
+test('tree rows show keys and values, with no brackets or commas', () => {
+  const failure = pin(new Error('transfer failed', { cause: pin(new RangeError('index 9')) }))
+  const rows = tree({ failure, results: [{ id: 't1' }, 'plain'] }, { expandDepth: 2 })
+  assert.deepEqual(rows.map(row => [row.type, row.depth, line(row)]), [
+    ['node', 0, '{…}'],
+    ['node', 1, 'failure:Error("transfer failed")'],
+    ['node', 2, 'cause:RangeError("index 9")'],
+    ['node', 2, 'stack:"Error: transfer failed"'],
+    ['node', 1, 'results:Array(2)'],
+    ['node', 2, '0:{id:"t1"}'],
+    ['node', 2, '1:"plain"'],
+  ])
+})
+
+test('open tree rows name their type and size', () => {
+  class Point { constructor() { this.x = 1 } }
+  const value = [new Map([['a', 1]]), new Set([1]), new Uint8Array(2), new Point(), [1, , 3], 'a\nb', () => 1]
+  const rows = tree(value, { expandDepth: 2, toggled: new Set(['r:1.5']) })
+  assert.deepEqual(rows.filter(row => row.type === 'node' && row.depth === 1).map(line), [
+    '0:Map(1)', '1:Set(1)', '2:Uint8Array(2)', '3:Point{…}', '4:Array(3)', '5:String(3)', '6:<anonymous function>',
+  ])
+  assert.deepEqual(textRows(rows), ['a', 'b'])
+  assert.ok(rows.some(row => line(row) === '<1 empty slot>'), 'an empty-slots row has a key')
+})
+
+test('tree groups page with a more row', () => {
+  const rows = tree(Array.from({ length: 5 }, (_, i) => i), { expandDepth: 1, pageSize: 2 })
+  assert.deepEqual(rows.map(line), ['Array(5)', '0:0', '1:1', ''])
+  assert.deepEqual(rows.at(-1), { type: 'more', id: 'r:1+', depth: 1, group: 'r:1', shown: 2, unit: 'children' })
+})
+
+test('tree rows are the repr rows without brackets or commas', () =>
+  hegel.test(tc => {
+    const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
+    const display = {
+      expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth'),
+      pageSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'pageSize'),
+    }
+    const toggled = openSome(tc, root, display)
+    const shape = row => [row.type, row.id, row.depth, row.open ?? null]
+    const repr_rows = core.visibleRows(root, { ...display, toggled })
+    const tree_rows = core.visibleRows(root, { ...display, toggled, style: 'tree' })
+    assert.deepEqual(tree_rows.map(shape), repr_rows.filter(row => row.type !== 'close').map(shape))
+    for (const row of tree_rows) {
+      assert.notEqual(row.type, 'close')
+      if (row.type !== 'more') assert.notEqual(row.tokens.at(-1)?.type, 'comma', `row ${row.id} ends in a comma`)
+    }
+  }, settings))

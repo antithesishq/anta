@@ -847,6 +847,13 @@ export type RowState = {
   textPageSize?: number
   /** Characters in a closed node's summary. Defaults to 80. */
   previewBudget?: number
+  /**
+   * `repr` rows read like `repr()` output, with brackets, commas, and `close`
+   * rows. `tree` rows read like an object in browser DevTools: an open node's
+   * row names its type and size, every child is `key: value`, and there are no
+   * `close` rows or commas. Defaults to `repr`.
+   */
+  style?: 'repr' | 'tree'
 }
 
 const LEAF_KINDS: ReadonlySet<NodeKind> = new Set([
@@ -858,6 +865,22 @@ function is_expandable(node: InspectNode, budget: number): boolean {
   if (node.kind === 'string') return node.text!.includes('\n') || node.text!.length > budget
   if (LEAF_KINDS.has(node.kind)) return false
   return node.parts.some(part => part.type === 'value' || (part.type === 'group' && part.group.childAt(0) !== undefined))
+}
+
+// An open node's row in the `tree` style: its type, with a size where it has one.
+function label(node: InspectNode): Token[] {
+  const count = (size: number): Token[] => [
+    { text: '(', type: 'open_bracket' }, { text: String(size), type: 'number' }, { text: ')', type: 'close_bracket' },
+  ]
+  switch (node.kind) {
+    case 'string': return [{ text: 'String', type: 'class_name' }, ...count(node.text!.length)]
+    case 'array': return [{ text: 'Array', type: 'class_name' }, ...(node.size === undefined ? [] : count(node.size))]
+    case 'typed-array': case 'set': case 'map': return [...node.header, ...(node.size === undefined ? [] : count(node.size))]
+    case 'object': return [
+      ...node.header, { text: '{', type: 'open_bracket' }, { text: '…', type: 'ellipsis' }, { text: '}', type: 'close_bracket' },
+    ]
+    default: return node.header.length ? [...node.header] : [{ text: '…', type: 'ellipsis' }]
+  }
 }
 
 /**
@@ -875,8 +898,18 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
   const page_size = state.pageSize ?? 100
   const text_page_size = state.textPageSize ?? 5000
   const budget = state.previewBudget ?? 80
+  const tree = state.style === 'tree'
   const rows: InspectRow[] = []
   type Open = { identity: object | symbol | undefined; id: string }
+  const colon: Token = { text: ':', type: 'field_colon' }
+
+  // A child's key and colon. In the tree style, children without a key, such
+  // as array elements, show their index.
+  const key_of = (child: InspectChild): Token[] => {
+    if (child.key !== undefined) return [...(Array.isArray(child.key) ? child.key : (child.key as InspectNode).summary(budget)), colon]
+    if (!tree || child.value.kind === 'empty-slots') return []
+    return [{ text: safe_string(child.value.path.at(-1)), type: 'field_name' }, colon]
+  }
 
   const visit = (node: InspectNode, id: string, depth: number, key: Token[], ancestors: Open[]) => {
     const expandable = is_expandable(node, budget)
@@ -898,7 +931,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
 
     if (node.kind === 'string') {
       // Quotes stay on the node and close rows; the text between them is paged by characters.
-      row.tokens = node.header.filter(token => token.type === 'open_quote')
+      row.tokens = tree ? label(node) : node.header.filter(token => token.type === 'open_quote')
       const text = node.text!
       const text_id = `${id}:t`
       const shown = safe_truncate(text, Math.max(1, pages.get(text_id) ?? 1) * text_page_size)
@@ -908,15 +941,18 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
       if (shown.length < text.length) {
         rows.push({ type: 'more', id: `${text_id}+`, depth: depth + 1, group: text_id, shown: shown.length, unit: 'characters' })
       }
-      rows.push({ type: 'close', id: `${id}>0`, depth, tokens: node.header.filter(token => token.type === 'close_quote') })
+      if (!tree) rows.push({ type: 'close', id: `${id}>0`, depth, tokens: node.header.filter(token => token.type === 'close_quote') })
       return
     }
 
     // `line` collects tokens for the current line: the node row, then a close
     // row created when the first token after a group or inline value arrives.
+    // The tree style shows a label instead and has no close rows.
+    if (tree) row.tokens = label(node)
     let line: Token[] | undefined = row.tokens
     let closes = 0
     const append = (...tokens: Token[]) => {
+      if (tree) return
       if (!line) {
         const close: InspectRow = { type: 'close', id: `${id}>${closes++}`, depth, tokens: [] }
         rows.push(close)
@@ -946,10 +982,8 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
         const shown = Math.max(1, pages.get(group_id) ?? 1) * page_size
         const { items, more } = group.children(0, shown)
         items.forEach((child, i) => {
-          const child_key: Token[] = child.key === undefined ? []
-            : [...(Array.isArray(child.key) ? child.key : (child.key as InspectNode).summary(budget)), { text: ':', type: 'field_colon' }]
-          visit(child.value, `${group_id}.${i}`, depth + 1, child_key, inner)
-          if (i < items.length - 1 || more) {
+          visit(child.value, `${group_id}.${i}`, depth + 1, key_of(child), inner)
+          if (!tree && (i < items.length - 1 || more)) {
             const last = rows.at(-1)!
             if (last.type !== 'more') last.tokens.push({ text: ',', type: 'comma' })
           }

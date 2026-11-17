@@ -1396,6 +1396,41 @@ export interface ATabpanelAttributes extends BaseAttributes {
   role?: 'tabpanel'
 }
 
+/** Attributes for `<a-inspector>`, the value tree. The JSX `Inspector` wrapper
+ * renders its `a-inspector-row` children and owns their state; the element
+ * reports clicks as `nodetoggle` and `pagerequest` requests. */
+export interface AInspectorAttributes extends BaseAttributes {
+  'aria-label'?: string
+  /** A request to open or close a row: `detail.id` and the requested `detail.open`. */
+  onnodetoggle?: (event: CustomEvent<{ id: string; open: boolean }> | { nativeEvent: CustomEvent<{ id: string; open: boolean }> }) => void
+  /** A request for another page of a group or string: `detail.group`. */
+  onpagerequest?: (event: CustomEvent<{ group: string }> | { nativeEvent: CustomEvent<{ group: string }> }) => void
+}
+
+/** One line of an `<a-inspector>` tree. */
+export interface AInspectorRowAttributes extends BaseAttributes {
+  /** The row's id from the Inspector core, sent back in `nodetoggle`. */
+  'row-id'?: string
+  /** `node` shows a value, `text` one line of an open string, `more` a request for another page. */
+  type?: 'node' | 'text' | 'more' | 'close'
+  /** The kind of value a `node` row shows, such as `array` or `error`. */
+  kind?: string
+  /** The row can open. Presence-based (`''` on, omit off). */
+  expandable?: boolean | ''
+  /** The row is open. Presence-based (`''` on, omit off). */
+  open?: boolean | ''
+  /** For a `more` row, the group or string it pages, sent back in `pagerequest`. */
+  group?: string
+  'aria-level'?: number | string
+  'aria-expanded'?: 'true' | 'false' | boolean
+}
+
+/** One run of text in an `<a-inspector>` row, colored by its token type. */
+export interface AInspectorTokenAttributes extends BaseAttributes {
+  /** The core's token type, such as `string`, `number`, or `field_name`. */
+  type?: string
+}
+
 /** Surface attributes for the CSS-only `<a-card>` tag. Its `a-card-*` children
  * define the layout. Put navigation attributes and link ARIA on a native `<a>`
  * directly under `a-card`, marked with `data-anta-card-link`. Its

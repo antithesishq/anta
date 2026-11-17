@@ -9,8 +9,7 @@ import '@antadesign/plot/plot.css'
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
 import '../icons/docs-icons.css'
 import { ClientRouter } from 'astro:transitions'
-import { Breadcrumbs, Button, Icon } from '@antadesign/anta'
-import { h } from 'preact'
+import { Button, Icon } from '@antadesign/anta'
 import PostHog from '../components/posthog.astro'
 import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
 import { getNavigationGroups, getNavigationTree } from '../../lib/content/catalog.mjs'
@@ -18,7 +17,6 @@ import { addDocReviewMarker } from '../../lib/doc-review-heading.mjs'
 import SidebarSearch from '../components/SidebarSearch'
 import SidebarNavItem from '../components/SidebarNavItem.astro'
 import SearchDialog from '../components/SearchDialog.tsx'
-import AntaLogo from '../components/AntaLogo'
 import antaPackage from '../../../package.json'
 
 interface Props {
@@ -43,7 +41,6 @@ const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
 const catalog = await getAstroPageCatalog()
 const navigationGroups = getNavigationGroups(catalog)
 const currentPage = catalog.find((page) => (page.path.replace(/\/+$/, '') || '/') === path)
-const breadcrumbLabel = title ? currentPage?.breadcrumbLabel ?? title : ''
 const parentPages = []
 for (let parentKey = currentPage?.parentKey; parentKey;) {
   const parent = catalog.find((page) => page.key === parentKey)
@@ -227,26 +224,17 @@ if (hasStructuredBreadcrumbs && title) {
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
     <div class="navigation-progress" aria-hidden="true"></div>
-    <header class:list={["topbar", { 'has-parent-breadcrumbs': parentPages.length > 0 }]} style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
+    <header class="topbar" style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
       <div class="topbar-start">
-        <div class="topbar-breadcrumbs">
-          <Breadcrumbs
-            className="header-breadcrumbs"
-            size="small"
-            aria-label="Site breadcrumb"
-            items={[
-              {
-                label: [h(Icon, { shape: 'menu', size: 16, className: 'mobile-menu-icon', 'aria-hidden': true }), h(AntaLogo, { size: 16, compact: true }), 'Anta'],
-                href: '/',
-                'aria-label': 'Anta',
-                current: !title,
-                tone: title ? 'brand' : 'neutral',
-              },
-              ...parentPages.map((page) => ({ label: page.breadcrumbLabel, href: page.path, tone: 'brand' as const })),
-              ...(breadcrumbLabel ? [{ label: breadcrumbLabel, current: true, tone: 'neutral' as const }] : []),
-            ]}
-          />
-        </div>
+        <Button
+          class="mobile-menu-toggle"
+          size="small"
+          priority="quaternary"
+          icon="menu"
+          aria-label="Open navigation"
+          aria-controls="site-navigation"
+          aria-expanded="false"
+        />
       </div>
       <div class="topbar-center">
         <div class="topbar-search">
@@ -297,7 +285,7 @@ if (hasStructuredBreadcrumbs && title) {
       {/* Persisted: ClientRouter moves this exact node into each new page, so
           sidebar scroll and the ThemeSwitcher island survive navigation. The
           stale aria-current is re-pointed on astro:page-load below. */}
-      <aside class="sidebar" transition:persist="sidebar">
+      <aside id="site-navigation" class="sidebar" transition:persist="sidebar">
         {navigationGroups.map((group) => (
           <>
             {group.title && <h4>{group.title}</h4>}
@@ -376,11 +364,12 @@ if (hasStructuredBreadcrumbs && title) {
       // body.dataset, which the body swap resets, closing drawers on nav.
       const setMenu = (open: boolean) => {
         document.body.dataset.menuOpen = open ? 'true' : 'false'
+        document.querySelector('.mobile-menu-toggle')?.setAttribute('aria-expanded', String(open))
         if (open) document.body.dataset.tocOpen = 'false'
       }
       const setToc = (open: boolean) => {
         document.body.dataset.tocOpen = open ? 'true' : 'false'
-        if (open) document.body.dataset.menuOpen = 'false'
+        if (open) setMenu(false)
       }
       const closeAll = () => {
         setMenu(false)
@@ -388,17 +377,6 @@ if (hasStructuredBreadcrumbs && title) {
       }
 
       const mobileNavigation = matchMedia('(max-width: 800px)')
-      const isMobileBreadcrumb = (target: EventTarget | null) =>
-        mobileNavigation.matches
-        && target instanceof Element
-        && Boolean(target.closest('.header-breadcrumbs > :first-child'))
-
-      // Capture before ClientRouter handles the breadcrumb's link.
-      document.addEventListener('click', (e) => {
-        if (!isMobileBreadcrumb(e.target)) return
-        e.preventDefault()
-        setMenu(true)
-      }, true)
       mobileNavigation.addEventListener('change', () => setMenu(false))
 
       // Show immediate acknowledgement while ClientRouter prepares the next
@@ -419,6 +397,8 @@ if (hasStructuredBreadcrumbs && title) {
           e.preventDefault()
         } else if (target.closest('[data-search-trigger]')) {
           document.dispatchEvent(new Event('anta-search-open'))
+        } else if (target.closest('.mobile-menu-toggle') && mobileNavigation.matches) {
+          setMenu(document.body.dataset.menuOpen !== 'true')
         } else if (target.closest('.toc-toggle')) {
           setToc(document.body.dataset.tocOpen !== 'true')
         } else if (target.closest('.backdrop')) {
@@ -791,28 +771,8 @@ if (hasStructuredBreadcrumbs && title) {
     gap: 8px;
   }
 
-  .topbar-breadcrumbs {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 222px;
-  }
-
-  .topbar :global(.header-breadcrumbs) {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .topbar :global(.header-breadcrumbs > [aria-current="page"]) {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-
-  .topbar :global(.mobile-menu-icon) {
+  .mobile-menu-toggle {
     display: none;
-  }
-
-  .topbar :global(.header-breadcrumbs a-breadcrumb-separator) {
-    width: 8px;
   }
 
   .topbar-center {
@@ -931,30 +891,17 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   @media (max-width: 800px) {
-    .topbar :global(.mobile-menu-icon) {
-      display: inline-block;
+    .mobile-menu-toggle {
+      display: inline-flex;
     }
 
     .topbar-search :global(a-input)::part(trailing) {
       display: none;
     }
 
-    .topbar:not(.has-parent-breadcrumbs) :global(.header-breadcrumbs > :not(:first-child)) {
-      display: none;
-    }
-
     .topbar-start {
       width: auto;
       min-width: 0;
-    }
-
-    .topbar.has-parent-breadcrumbs .topbar-start {
-      width: min(190px, 45vw);
-      flex-shrink: 0;
-    }
-
-    .topbar.has-parent-breadcrumbs :global(.header-breadcrumbs > :first-child > :not(.mobile-menu-icon)) {
-      display: none;
     }
 
     .content {

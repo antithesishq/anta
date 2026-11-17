@@ -42,4 +42,9 @@ const hasChildren = page.children.length > 0
     padding: 0 0 0 16px;
     border-inline-start: 1px solid var(--border-4);
   }
+  .nav-children:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
 </style>

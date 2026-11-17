@@ -656,6 +656,13 @@ if (hasStructuredBreadcrumbs && title) {
     margin: 24px 0 8px;
   }
 
+  .sidebar menu {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-inline: -8px;
+  }
+
   .sidebar menu + menu {
     margin-block-start: 12px;
   }
@@ -667,20 +674,18 @@ if (hasStructuredBreadcrumbs && title) {
     display: flex;
     align-items: center;
     gap: 0.75ch;
-    padding: 2px 0 4px;
-    /* Match the compact corner treatment of Anta menu rows. It also gives
-       the shared focus outline a rounded shape without changing the sidebar's
-       text alignment. */
+    padding: 2px 8px 4px;
     border-radius: var(--radius-sm, 4px);
     color: var(--text-3);
+    background: transparent;
     font-size: 14px;
     font-weight: 400;
     letter-spacing: 0.03ch;
     text-decoration: none;
-    transition: color 160ms ease-out;
+    transition: color 160ms ease-out, background-color 280ms ease-out;
   }
   .sidebar :global(menu li a > a-icon) {
-    color: var(--text-4-brand);
+    color: var(--text-3);
     flex-shrink: 0;
     transition: color 160ms ease-out;
   }
@@ -690,21 +695,35 @@ if (hasStructuredBreadcrumbs && title) {
     flex-shrink: 0;
   }
   .sidebar :global(menu li a:hover),
-  .sidebar :global(menu li a[aria-current="page"]),
+  .sidebar :global(menu li a:focus-visible) {
+    color: var(--text-2);
+    background: light-dark(
+      color-mix(in oklch, currentColor 5%, transparent),
+      color-mix(in oklch, currentColor 10%, transparent)
+    );
+    transition: color 160ms ease-out, background-color 60ms ease-in-out;
+  }
+  .sidebar :global(menu li a:active) {
+    background: light-dark(
+      color-mix(in oklch, currentColor 8%, transparent),
+      color-mix(in oklch, currentColor 14%, transparent)
+    );
+    transition: none;
+  }
   .sidebar :global(menu li a[data-active-parent]) {
     color: var(--text-1);
-    text-decoration: none;
   }
-  /* Sidebar navigation uses the same dotted underline as the in-page TOC. */
-  .sidebar :global(menu li a:hover) {
-    text-decoration: underline dotted;
-    text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
+  .sidebar :global(menu li a[aria-current="page"]) {
+    color: var(--text-2-brand);
+    background: light-dark(
+      color-mix(in oklch, currentColor 8%, transparent),
+      color-mix(in oklch, currentColor 14%, transparent)
+    );
   }
   .sidebar :global(menu li a:hover > a-icon),
+  .sidebar :global(menu li a:focus-visible > a-icon),
   .sidebar :global(menu li a[aria-current="page"] > a-icon) {
-    color: var(--text-1-brand);
+    color: inherit;
   }
   .sidebar :global(a:focus-visible) {
     outline: 1px solid var(--focus-ring);

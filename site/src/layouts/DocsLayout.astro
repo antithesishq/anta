@@ -3,6 +3,8 @@
 // otherwise emits imported CSS after authored head links, which would let the
 // default unlayered tokens override the selected theme.
 import antaStylesheet from '@antadesign/anta/bundle.css?url'
+import stickerStylesheet from '@antadesign/stickers/elements/a-sticker.css?url'
+import animatedStickerStylesheet from '@antadesign/stickers/elements/a-sticker-animated.css?url'
 import '../styles/base.css'
 import '@antadesign/plot/plot.css'
 // Docs-site-only extra icon shapes (generated via Anta's generate-icons
@@ -129,6 +131,8 @@ if (hasStructuredBreadcrumbs && title) {
     <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href={antaStylesheet} />
+    <link rel="stylesheet" href={stickerStylesheet} />
+    <link rel="stylesheet" href={animatedStickerStylesheet} />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content={pageUrl} />

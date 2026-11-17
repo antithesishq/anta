@@ -100,6 +100,36 @@ for (const engine of engines) test(`${engine.name()}: theme chevron is visible o
   assert.deepEqual(errors, [])
 })
 
+for (const engine of engines) test(`${engine.name()}: stickers retain their requested size after ClientRouter navigation`, async t => {
+  const { page, errors } = await productionPage(t, engine)
+  await page.goto('https://anta.test/stickers/')
+  for (let visit = 0; visit < 2; visit++) {
+    for (const animated of [false, true]) {
+      if (animated) await page.getByRole('tab', { name: 'Animated', exact: true }).click()
+      const selector = animated ? 'a-sticker-animated' : 'a-sticker'
+      await page.waitForFunction(selector => document.querySelector(selector)?.shadowRoot?.querySelector('svg'), selector)
+      const dimensions = await page.locator(selector).first().evaluate(el => {
+        const rect = node => {
+          const { width, height } = node.getBoundingClientRect()
+          return [width, height]
+        }
+        return {
+          host: rect(el),
+          container: rect(el.shadowRoot.querySelector('[part="container"]')),
+        }
+      })
+      assert.deepEqual(dimensions, { host: [174, 174], container: [174, 174] })
+    }
+    if (visit === 0) {
+      await page.locator('.sidebar a[href="/"]').click()
+      await page.waitForURL('https://anta.test/')
+      await page.locator('.sidebar a[href="/stickers/"]').click()
+      await page.waitForURL('https://anta.test/stickers/')
+    }
+  }
+  assert.deepEqual(errors, [])
+})
+
 for (const engine of engines) test(`${engine.name()}: native Select examples retain rich options in production`, async t => {
   const { page, errors } = await productionPage(t, engine)
   await page.goto('https://anta.test/select/#native-html-select')

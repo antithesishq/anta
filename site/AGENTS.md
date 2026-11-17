@@ -130,6 +130,11 @@ MDX from retaining the client-only component's CSS in both page and island build
 
 ## ClientRouter (view transitions)
 
+Keep the sticker stylesheets linked explicitly in `DocsLayout.astro`, alongside
+the Anta bundle. Vite's script-imported sticker styles can disappear during a
+ClientRouter swap while their registration script remains cached, leaving SVGs
+at their intrinsic size when returning to the gallery.
+
 `DocsLayout.astro` renders Astro's `<ClientRouter />`: navigation swaps the page in place instead of reloading. The custom-element registry, fonts, and loaded CSS survive, so `a-*` elements upgrade instantly on every page, and the sidebar (`transition:persist="sidebar"`) keeps its scroll position. The top-bar ThemeSwitcher island persists separately with `transition:persist="theme-switcher"`. This changes the rules for every script and head element on the site:
 
 - **Scripts run once per session.** The router never re-executes a script it has already seen (module scripts by URL, inline scripts by content). Anything that touches a specific page's DOM at module top level only ever sees the *first* page. Two sanctioned patterns:

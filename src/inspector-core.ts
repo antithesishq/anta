@@ -22,6 +22,8 @@ export type Options = {
   numeric_base?: 'binary' | 'octal' | 'decimal' | 'hex'
   /** If true, string values are not quoted. */
   unquoted_strings?: boolean
+  /** Include an error's `stack`. Defaults to true; `summary()` always leaves it out. */
+  error_stacks?: boolean
 }
 
 type ReferenceInfo = {
@@ -77,6 +79,31 @@ export function safe_truncate(text: string, length: number): string {
   const last = text.charCodeAt(length - 1)
   return text.slice(0, last >= 0xd800 && last <= 0xdbff ? length - 1 : length)
 }
+
+/**
+ * Splits text into display lines at `\r\n` and `\n`. Other control characters
+ * except tab become escapes, so ANSI codes stay visible and can't garble the
+ * display. @internal
+ */
+export function text_lines(text: string): string[] {
+  return text.split(/\r?\n/).map(line => line.replace(
+    /[\u0000-\u0008\u000b-\u001f\u007f]/g,
+    c => c === '\r' ? '\\r' : `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  ))
+}
+
+// Built-ins captured at load, so a page that replaces them can't change what
+// they report or run its own code through them.
+const date_get_time = Date.prototype.getTime
+const date_to_iso_string = Date.prototype.toISOString
+
+// The engine's own `stack` accessors: V8 puts one on each error, Firefox on
+// Error.prototype. Only these run; a user-defined `stack` getter never does.
+const engine_stack_getters: ReadonlySet<unknown> = new Set(
+  [new Error(), Error.prototype]
+    .map(holder => Object.getOwnPropertyDescriptor(holder, 'stack')?.get)
+    .filter(get => get !== undefined),
+)
 
 /** Well-known symbols, such as `Symbol.iterator`, mapped to their property names. @internal */
 export const well_known_symbols: Map<symbol, string> = new Map(
@@ -148,6 +175,32 @@ function find_descriptor(it: object | null, prop: PropertyKey): PropertyDescript
   return undefined
 }
 
+// A brand check through the captured built-in: a Proxy around a Date fails it,
+// and a Date from another frame passes.
+function is_date(it: object): boolean {
+  try {
+    date_get_time.call(it)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// An error's own `cause` or `errors`, or its `stack` through the engine's own
+// accessor. Proxy traps it reaches may throw; callers guard.
+function error_detail(error: object, name: 'cause' | 'errors' | 'stack'): { value: unknown } | undefined {
+  if (name !== 'stack') {
+    const desc = Object.getOwnPropertyDescriptor(error, name)
+    return desc && 'value' in desc ? { value: desc.value } : undefined
+  }
+  const desc = find_descriptor(error, 'stack')
+  const stack = !desc ? undefined
+    : 'value' in desc ? desc.value
+    : engine_stack_getters.has(desc.get) ? desc.get!.call(error)
+    : undefined
+  return typeof stack === 'string' ? { value: stack } : undefined
+}
+
 function data_property(it: object, prop: PropertyKey): unknown {
   const desc = find_descriptor(it, prop)
   return desc && 'value' in desc ? desc.value : undefined
@@ -179,7 +232,7 @@ export interface CustomRepresentationVisitor {
   get stopped(): boolean
 }
 
-type ObjectKind = 'custom' | 'array' | 'typed_array' | 'set' | 'map' | 'error' | 'regexp' | 'blob' | 'object'
+type ObjectKind = 'custom' | 'array' | 'typed_array' | 'set' | 'map' | 'date' | 'error' | 'regexp' | 'blob' | 'object'
 
 type ToRepr = { [to_repr](visitor: CustomRepresentationVisitor): void }
 
@@ -191,11 +244,14 @@ export type Token = { text: string; type: SpanType }
 
 export type NodeKind =
   | 'string' | 'number' | 'bigint' | 'boolean' | 'null' | 'undefined' | 'symbol'
-  | 'array' | 'typed-array' | 'set' | 'map' | 'object' | 'error' | 'regexp' | 'function' | 'blob'
+  | 'array' | 'typed-array' | 'set' | 'map' | 'object' | 'date' | 'error' | 'regexp' | 'function' | 'blob'
   | 'custom' | 'circular' | 'empty-slots' | 'inaccessible'
 
-/** One entry in a group. `key` is tokens for a property or string key, or a node for a non-string Map key. */
-export type InspectChild = { key?: Token[] | InspectNode; value: InspectNode }
+/**
+ * One entry in a group. `key` is tokens for a property or string key, or a node for a non-string Map key.
+ * `stack` marks an error's stack, which the string output leaves out when `error_stacks` is false.
+ */
+export type InspectChild = { key?: Token[] | InspectNode; value: InspectNode; stack?: true }
 
 /** A node's content in display order. Custom types can interleave tokens, inline values, and groups. */
 export type InspectPart =
@@ -210,6 +266,8 @@ export interface InspectNode {
   /** The object, function, or symbol this node shows, for detecting repeated references. */
   readonly identity: object | symbol | undefined
   readonly kind: NodeKind
+  /** The raw text of a string node, unescaped. */
+  readonly text: string | undefined
   readonly parts: readonly InspectPart[]
   /** Tokens before the first group or inline value. */
   readonly header: readonly Token[]
@@ -291,6 +349,7 @@ class Node implements InspectNode {
   }
 
   get kind() { return this.#resolve().kind }
+  get text() { return typeof this.#value === 'string' ? this.#value : undefined }
   get parts() { return this.#resolve().parts }
   get size() { return this.#resolve().size }
   get target() { return this.#resolve().target }
@@ -306,8 +365,9 @@ class Node implements InspectNode {
     return this.parts.flatMap(part => part.type === 'group' ? [part.group] : [])
   }
 
+  // A one-line preview names an error without its stack, as DevTools does.
   summary(budget: number): Token[] {
-    return serialize(this, { ...this.#context.options, char_limit: budget })
+    return serialize(this, { ...this.#context.options, char_limit: budget, error_stacks: false })
   }
 
   // Context for this node's children: this node joins the ancestor chain.
@@ -373,14 +433,33 @@ class Node implements InspectNode {
   }
 
   // Properties as keyed children. `skip_indices` leaves out an array's elements.
-  *#properties(it: object, format_keys: boolean, skip_indices = false): Generator<InspectChild> {
+  // `listed` collects the names yielded.
+  *#properties(it: object, format_keys: boolean, skip_indices = false, listed?: Set<string>): Generator<InspectChild> {
     for (const entry of data_entries(it)) {
       if (entry === INACCESSIBLE) { yield { value: this.#inaccessible(this.path) }; return }
       const [name, value] = entry
       if (skip_indices && /^\d+$/.test(name)) continue
+      listed?.add(name)
       yield {
         key: [{ text: format_keys ? format_key_name(name) : name, type: 'field_name' }],
         value: this.#child(value, [...this.path, name]),
+      }
+    }
+  }
+
+  // An error's enumerable properties, then the own ones for...in skips.
+  *#error_properties(error: Error): Generator<InspectChild> {
+    const listed = new Set<string>()
+    yield* this.#properties(error, true, false, listed)
+    for (const name of ['cause', 'errors', 'stack'] as const) {
+      if (listed.has(name)) continue
+      const key: Token[] = [{ text: name, type: 'field_name' }]
+      const detail = guard(() => error_detail(error, name))
+      if (detail === INACCESSIBLE) { yield { key, value: this.#inaccessible([...this.path, name]) }; return }
+      if (detail) {
+        const child: InspectChild = { key, value: this.#child(detail.value, [...this.path, name]) }
+        if (name === 'stack') child.stack = true
+        yield child
       }
     }
   }
@@ -525,8 +604,19 @@ class Node implements InspectNode {
             if (message === INACCESSIBLE) inaccessible()
             else if (message !== undefined) t(message, 'error_message')
             t(')', 'close_bracket')
-            parts.push(this.#keyable(error))
+            parts.push(this.#group('{', '}', () => this.#error_properties(error), true))
             return { kind: 'error', parts }
+          }
+          case 'date': {
+            const time = date_get_time.call(value)
+            const text = Number.isNaN(time) ? 'Invalid Date' : date_to_iso_string.call(value)
+            t('Date', 'class_name')
+            t('(', 'open_bracket')
+            if (options.unquoted_strings) t(text, 'string')
+            else { t('"', 'open_quote'); t(text, 'string'); t('"', 'close_quote') }
+            t(')', 'close_bracket')
+            parts.push(this.#keyable(value))
+            return { kind: 'date', parts }
           }
           case 'regexp': {
             const re = value as RegExp
@@ -601,6 +691,7 @@ function classify_object(it: object): ObjectKind | Inaccessible {
     if (it instanceof TypedArray) return 'typed_array'
     if (it instanceof Set) return 'set'
     if (it instanceof Map) return 'map'
+    if (is_date(it)) return 'date'
     if (it instanceof Error) return 'error'
     if (it instanceof RegExp) return 'regexp'
     if (constructor_name(it) === 'Blob' && 'size' in it && 'type' in it) return 'blob' // Node has no Blob before 18
@@ -667,13 +758,21 @@ export function serialize(root: InspectNode, options: Options = {}): Token[] {
     if (ref) ref.circular = false
   }
 
+  // The index of the first child at or after `i` that the output includes.
+  const next_shown = (group: InspectGroup, i: number) => {
+    if (options.error_stacks !== false) return i
+    while (group.childAt(i)?.stack) i++
+    return i
+  }
+
   const visit_group = (group: InspectGroup) => {
-    if (group.hideWhenEmpty && !group.childAt(0)) return
+    let i = next_shown(group, 0)
+    if (group.hideWhenEmpty && !group.childAt(i)) return
     emit(group.open, 'open_bracket')
-    for (let i = 0; !stop; i++) {
+    for (let first = true; !stop; i = next_shown(group, i + 1), first = false) {
       const child = group.childAt(i)
       if (!child) break
-      if (i) emit(',', 'comma')
+      if (!first) emit(',', 'comma')
       if (child.key) {
         if (Array.isArray(child.key)) for (const token of child.key) emit(token.text, token.type)
         else visit(child.key as InspectNode)
@@ -701,7 +800,8 @@ export function serialize(root: InspectNode, options: Options = {}): Token[] {
  * - `node`: a value, open or closed. A closed node shows its summary; an open
  *   node shows its header and the opening bracket of its first group.
  * - `close`: closing brackets of an open node, and any tokens between its groups.
- * - `more`: the end of a group that has more children than are shown.
+ * - `text`: one line of an open string, unescaped apart from control characters.
+ * - `more`: the end of a group with more children, or a string with more text, than is shown.
  */
 export type InspectRow =
   | {
@@ -721,26 +821,30 @@ export type InspectRow =
     target?: string
   }
   | { type: 'close'; id: string; depth: number; tokens: Token[] }
+  | { type: 'text'; id: string; depth: number; tokens: Token[] }
   | {
     type: 'more'
     id: string
     depth: number
-    /** The group to page further, as a key of `RowState.pages`. */
+    /** The group or string to page further, as a key of `RowState.pages`. */
     group: string
-    /** Children shown so far. */
+    /** Children, or characters of a string, shown so far. */
     shown: number
+    unit: 'children' | 'characters'
   }
 
 /** Display state for `visibleRows`. Every field is serializable. */
 export type RowState = {
   /** Nodes shallower than this depth start open. Defaults to 0. */
   expandDepth?: number
-  /** Ids of nodes whose open state is the opposite of their default. */
+  /** Ids of nodes whose open state is the opposite of their default. Strings start closed at any depth. */
   toggled?: ReadonlySet<string>
-  /** Pages shown per group id, from `more` rows. Groups default to one page. */
+  /** Pages shown per group or string, keyed by a `more` row's `group`. Each defaults to one page. */
   pages?: ReadonlyMap<string, number>
   /** Children per page. Defaults to 100. */
   pageSize?: number
+  /** Characters per page of an open string. Defaults to 5,000. */
+  textPageSize?: number
   /** Characters in a closed node's summary. Defaults to 80. */
   previewBudget?: number
 }
@@ -749,7 +853,9 @@ const LEAF_KINDS: ReadonlySet<NodeKind> = new Set([
   'string', 'number', 'bigint', 'boolean', 'null', 'undefined', 'symbol', 'circular', 'empty-slots', 'inaccessible',
 ])
 
-function is_expandable(node: InspectNode): boolean {
+// A string opens when it has more than one line or doesn't fit its summary.
+function is_expandable(node: InspectNode, budget: number): boolean {
+  if (node.kind === 'string') return node.text!.includes('\n') || node.text!.length > budget
   if (LEAF_KINDS.has(node.kind)) return false
   return node.parts.some(part => part.type === 'value' || (part.type === 'group' && part.group.childAt(0) !== undefined))
 }
@@ -758,21 +864,24 @@ function is_expandable(node: InspectNode): boolean {
  * Lists the visible rows of `root` for the given display state. A closed node
  * is read only as far as its summary needs, so opening a node is what reads its
  * children. Repeated references expand in place; only cycles become `circular`
- * rows, whose `target` names an open ancestor. With every node open, the rows'
- * text joined in order is the `repr()` text without deduplication.
+ * rows, whose `target` names an open ancestor. Strings open only when toggled,
+ * into `text` rows. With every other node open, the rows' text joined in order
+ * is the `repr()` text without deduplication.
  */
 export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow[] {
   const expand_depth = state.expandDepth ?? 0
   const toggled = state.toggled ?? new Set<string>()
   const pages = state.pages ?? new Map<string, number>()
   const page_size = state.pageSize ?? 100
+  const text_page_size = state.textPageSize ?? 5000
   const budget = state.previewBudget ?? 80
   const rows: InspectRow[] = []
   type Open = { identity: object | symbol | undefined; id: string }
 
   const visit = (node: InspectNode, id: string, depth: number, key: Token[], ancestors: Open[]) => {
-    const expandable = is_expandable(node)
-    const open = expandable && ((depth < expand_depth) !== toggled.has(id))
+    const expandable = is_expandable(node, budget)
+    const starts_open = depth < expand_depth && node.kind !== 'string'
+    const open = expandable && (starts_open !== toggled.has(id))
     const row: InspectRow = {
       type: 'node', id, depth, key, tokens: [], kind: node.kind, path: node.path, size: node.size, expandable, open,
     }
@@ -784,6 +893,22 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
     rows.push(row)
     if (!open) {
       row.tokens = node.summary(budget)
+      return
+    }
+
+    if (node.kind === 'string') {
+      // Quotes stay on the node and close rows; the text between them is paged by characters.
+      row.tokens = node.header.filter(token => token.type === 'open_quote')
+      const text = node.text!
+      const text_id = `${id}:t`
+      const shown = safe_truncate(text, Math.max(1, pages.get(text_id) ?? 1) * text_page_size)
+      text_lines(shown).forEach((line, n) => {
+        rows.push({ type: 'text', id: `${text_id}.${n}`, depth: depth + 1, tokens: [{ text: line, type: 'string' }] })
+      })
+      if (shown.length < text.length) {
+        rows.push({ type: 'more', id: `${text_id}+`, depth: depth + 1, group: text_id, shown: shown.length, unit: 'characters' })
+      }
+      rows.push({ type: 'close', id: `${id}>0`, depth, tokens: node.header.filter(token => token.type === 'close_quote') })
       return
     }
 
@@ -829,7 +954,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
             if (last.type !== 'more') last.tokens.push({ text: ',', type: 'comma' })
           }
         })
-        if (more) rows.push({ type: 'more', id: `${group_id}+`, depth: depth + 1, group: group_id, shown: items.length })
+        if (more) rows.push({ type: 'more', id: `${group_id}+`, depth: depth + 1, group: group_id, shown: items.length, unit: 'children' })
         append(close_token)
       }
     })

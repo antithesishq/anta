@@ -3,7 +3,8 @@
 // Hegel draws a plain-data recipe, and build() turns it into a fresh live
 // value. Failing cases then print and shrink as readable data, build() can
 // create values Hegel can't generate directly (cycles, proxies, functions,
-// symbols), and building one recipe twice gives equal but distinct values.
+// symbols, errors with causes), and building one recipe twice gives equal but
+// distinct values.
 //
 // The file imports only packages, so tests load it through Node's type
 // stripping without a bundler.
@@ -19,10 +20,13 @@ export type Recipe =
   // Symbols and functions come from small pools, so the same one can repeat.
   | { t: 'sym'; id: number }
   | { t: 'fn'; id: number; toRepr: boolean }
-  | { t: 'err'; msg: string }
+  // `errors` makes an AggregateError.
+  | { t: 'err'; msg: string; cause?: Recipe; errors?: Recipe[] }
+  // NaN makes an invalid Date.
+  | { t: 'date'; ms: number }
   // The nearest enclosing container, which makes a real cycle.
   | { t: 'cycle' }
-  | { t: 'hostile'; k: 'getter' | 'proxyGet' | 'proxyHas' | 'proxyOwnKeys' }
+  | { t: 'hostile'; k: 'getter' | 'proxyGet' | 'proxyHas' | 'proxyOwnKeys' | 'causeGetter' | 'stackGetter' | 'dateProxy' }
   // `null` in `items` is a hole.
   | { t: 'arr'; items: (Recipe | null)[]; named?: Recipe }
   | { t: 'obj'; entries: [string, Recipe][] }
@@ -33,11 +37,23 @@ export type LeafOptions = { hostile?: boolean; cycles?: boolean }
 
 const shortText = gs.text({ maxSize: 4 })
 
+/** Strings with several lines, joined by `\n` or `\r\n`. Control characters are left out, so lines read back exactly. */
+export const multilineText = gs.tuples(
+  gs.arrays(gs.text({ maxSize: 6, excludeCategories: ['Cc'] }), { minSize: 2, maxSize: 4 }),
+  gs.sampledFrom(['\n', '\r\n'] as const),
+).map(([lines, separator]) => lines.join(separator))
+
+/** Strings longer than a closed row's 80-character summary. */
+export const longText = gs.tuples(gs.text({ minSize: 1, maxSize: 4 }), gs.integers({ minValue: 25, maxValue: 60 }))
+  .map(([unit, times]) => unit.repeat(Math.ceil(81 / unit.length) + times))
+
 export function leaves({ hostile = false, cycles = true }: LeafOptions = {}) {
   const parts = [
     gs.floats({ allowNan: true, allowInfinity: true }).map(v => ({ t: 'num', v }) as Recipe),
     gs.bigIntegers({ minValue: -(2n ** 70n), maxValue: 2n ** 70n }).map(v => ({ t: 'big', v }) as Recipe),
     gs.text({ maxSize: 8 }).map(v => ({ t: 'str', v }) as Recipe),
+    gs.oneOf(multilineText, longText).map(v => ({ t: 'str', v }) as Recipe),
+    gs.oneOf(gs.integers({ minValue: -8.64e15, maxValue: 8.64e15 }), gs.just(NaN)).map(ms => ({ t: 'date', ms }) as Recipe),
     gs.booleans().map(v => ({ t: 'bool', v }) as Recipe),
     gs.just({ t: 'null' } as Recipe),
     gs.just({ t: 'undef' } as Recipe),
@@ -48,7 +64,7 @@ export function leaves({ hostile = false, cycles = true }: LeafOptions = {}) {
   ]
   if (cycles) parts.push(gs.just({ t: 'cycle' } as Recipe))
   if (hostile) parts.push(
-    gs.sampledFrom(['getter', 'proxyGet', 'proxyHas', 'proxyOwnKeys'] as const)
+    gs.sampledFrom(['getter', 'proxyGet', 'proxyHas', 'proxyOwnKeys', 'causeGetter', 'stackGetter', 'dateProxy'] as const)
       .map(k => ({ t: 'hostile', k }) as Recipe),
   )
   return gs.oneOf(...parts)
@@ -63,6 +79,8 @@ function containers(children: gs.Generator<Recipe>) {
     gs.arrays(gs.tuples(shortText, children), { maxSize: 4 }).map(entries => ({ t: 'obj', entries }) as Recipe),
     gs.arrays(gs.tuples(shortText, children), { maxSize: 4 }).map(entries => ({ t: 'map', entries }) as Recipe),
     gs.arrays(children, { maxSize: 4 }).map(items => ({ t: 'set', items }) as Recipe),
+    gs.tuples(shortText, children).map(([msg, cause]) => ({ t: 'err', msg, cause }) as Recipe),
+    gs.tuples(shortText, gs.arrays(children, { maxSize: 3 })).map(([msg, errors]) => ({ t: 'err', msg, errors }) as Recipe),
   )
 }
 
@@ -90,6 +108,7 @@ export type ReprOptions = {
   deduplicate_references?: boolean
   numeric_base?: 'binary' | 'octal' | 'decimal' | 'hex'
   unquoted_strings?: boolean
+  error_stacks?: boolean
 }
 
 /** Any combination of repr options, each possibly left unset. */
@@ -98,9 +117,17 @@ export const reprOptions = gs.record({
   deduplicate_references: gs.optional(gs.booleans()),
   numeric_base: gs.optional(gs.sampledFrom(['binary', 'octal', 'decimal', 'hex'] as const)),
   unquoted_strings: gs.optional(gs.booleans()),
+  error_stacks: gs.optional(gs.booleans()),
 }).map(o => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== null)) as ReprOptions)
 
 export type Built = { value: unknown; realCycles: number }
+
+// A real stack names the line that built the error, so two builds of one recipe
+// would differ. Pinning it keeps equal recipes equal.
+function pinStack<E extends Error>(e: E): E {
+  const name = e instanceof AggregateError ? 'AggregateError' : 'Error'
+  return Object.defineProperty(e, 'stack', { value: `${name}: ${e.message}\n    at recipe`, writable: true, configurable: true })
+}
 
 /** Builds a fresh value from a recipe. `toRepr` is the symbol the core under test recognizes. */
 export function build(recipe: Recipe, { toRepr }: { toRepr: symbol }): Built {
@@ -127,7 +154,18 @@ export function build(recipe: Recipe, { toRepr }: { toRepr: symbol }): Built {
         }
         return functions.get(key)
       }
-      case 'err': return new Error(r.msg)
+      case 'err': {
+        const e = r.errors ? new AggregateError([], r.msg) : new Error(r.msg)
+        pinStack(e)
+        stack.push(e)
+        const own = (name: string, value: unknown) =>
+          Object.defineProperty(e, name, { value, writable: true, configurable: true, enumerable: false })
+        if (r.cause) own('cause', make(r.cause))
+        if (r.errors) own('errors', r.errors.map(make))
+        stack.pop()
+        return e
+      }
+      case 'date': return new Date(r.ms)
       case 'cycle': {
         const parent = stack.at(-1)
         if (parent) realCycles++
@@ -138,6 +176,9 @@ export function build(recipe: Recipe, { toRepr }: { toRepr: symbol }): Built {
         if (r.k === 'getter') return Object.defineProperty({}, 'boom', { get: boom, enumerable: true })
         if (r.k === 'proxyGet') return new Proxy({ a: 1 }, { get: boom })
         if (r.k === 'proxyHas') return new Proxy({}, { has: boom })
+        if (r.k === 'causeGetter') return Object.defineProperty(pinStack(new Error('h')), 'cause', { get: boom })
+        if (r.k === 'stackGetter') return Object.defineProperty(new Error('h'), 'stack', { get: boom })
+        if (r.k === 'dateProxy') return new Proxy(new Date(0), {})
         return new Proxy({}, { ownKeys: boom })
       }
       case 'arr': {

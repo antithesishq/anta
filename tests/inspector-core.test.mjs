@@ -3,10 +3,13 @@ import { test } from 'node:test'
 import * as hegel from '@hegeldev/hegel'
 import * as gs from '@hegeldev/hegel/generators'
 import * as core from '../src/inspector-core.ts'
-import { build, leaves, primitives, recipes, reprOptions } from './inspector-core.fixture.ts'
+import { build, leaves, longText, multilineText, primitives, recipes, reprOptions } from './inspector-core.fixture.ts'
 
 const repr = (value, options) => core.repr(value, options)
 const make = recipe => build(recipe, { toRepr: core.to_repr })
+// Replaces an error's real stack, which names the line that made it, with fixed text.
+const pin = (error, stack = `${error.name}: ${error.message}`) =>
+  Object.defineProperty(error, 'stack', { value: stack, writable: true, configurable: true })
 
 // Derandomized runs derive each run's seed from the test, so CI results repeat.
 const settings = process.env.CI ? { derandomize: true } : {}
@@ -54,7 +57,7 @@ test('never calls getters', () => {
 test('formats Map, Set, Error, RegExp, and typed arrays', () => {
   assert.equal(repr(new Map([['k', 1], [2, 'v']])), 'Map{"k":1,2:"v"}')
   assert.equal(repr(new Set([1, 'a'])), 'Set{1,"a"}')
-  assert.equal(repr(new Error('boom')), 'Error("boom")')
+  assert.equal(repr(pin(new Error('boom'))), 'Error("boom"){stack:"Error: boom"}')
   assert.equal(repr(/ab+/gi), '/ab+/gi')
   assert.equal(repr(new Uint8Array([1, 2])), 'Uint8Array[1,2]')
 })
@@ -161,7 +164,7 @@ test('prints <inaccessible> for reads that throw', () => {
   assert.equal(repr(new Proxy({ a: 1 }, { getOwnPropertyDescriptor: boom })), '<inaccessible>')
   assert.equal(repr(revocable.proxy), '<inaccessible>')
   assert.equal(repr({ [core.to_repr](v) { v.span('X', 'class_name'); boom() } }), 'X<inaccessible>')
-  assert.equal(repr(Object.defineProperty(new Error('m'), 'message', { get: boom })), 'Error(<inaccessible>)')
+  assert.equal(repr(Object.defineProperty(pin(new Error('m')), 'message', { get: boom })), 'Error(<inaccessible>){stack:"Error: m"}')
   assert.equal(repr(Object.defineProperty([1, 2], 1, { get: boom })), '[1,<inaccessible>]')
   assert.equal(repr({ ok: 1, bad: new Proxy({}, { has: boom }), after: 2 }), '{ok:1,bad:<inaccessible>,after:2}')
 })
@@ -196,6 +199,43 @@ test('every repeated symbol prints as ref[...]', () =>
     const refs = (out.match(/\bref\[/g) ?? []).length
     assert.equal(refs, ids.length - new Set(ids).size, `got: ${out}`)
   }, settings))
+
+// Errors and Dates show what the notebook's repr() left out.
+
+test('errors show their cause, inner errors, and stack', () => {
+  const outer = pin(new Error('transfer failed', { cause: pin(new RangeError('index 9')) }))
+  assert.equal(repr(outer), 'Error("transfer failed"){cause:RangeError("index 9"){stack:"RangeError: index 9"},stack:"Error: transfer failed"}')
+  const all = pin(new AggregateError([pin(new Error('a')), 1], 'all failed'))
+  assert.equal(repr(all), 'AggregateError("all failed"){errors:[Error("a"){stack:"Error: a"},1],stack:"AggregateError: all failed"}')
+  const looped = pin(new Error('loop'))
+  looped.cause = looped
+  assert.equal(repr(looped), 'Error("loop"){cause:circular_ref[],stack:"Error: loop"}')
+})
+
+test('reads a real stack through the engine, never through a user getter', () => {
+  assert.match(repr(new Error('boom')), /^Error\("boom"\)\{stack:"Error: boom\\n {4}at /)
+  let ran = false
+  const spy = () => { ran = true; return 'fake' }
+  assert.equal(repr(Object.defineProperty(new Error('m'), 'stack', { get: spy })), 'Error("m")')
+  assert.equal(repr(Object.defineProperty(pin(new Error('m')), 'cause', { get: spy })), 'Error("m"){stack:"Error: m"}')
+  assert.equal(ran, false)
+})
+
+test('an enumerable cause is listed once, with the other properties', () => {
+  const error = pin(new Error('m'))
+  error.cause = 1
+  error.code = 'E1'
+  assert.equal(repr(error), 'Error("m"){cause:1,code:"E1",stack:"Error: m"}')
+})
+
+test('formats Dates as their ISO time', () => {
+  assert.equal(repr(new Date(Date.UTC(2026, 10, 14, 3, 12, 44, 120))), 'Date("2026-11-14T03:12:44.120Z")')
+  assert.equal(repr(new Date(NaN)), 'Date("Invalid Date")')
+  assert.equal(repr(new Date(0), { unquoted_strings: true }), 'Date(1970-01-01T00:00:00.000Z)')
+  assert.equal(repr(Object.assign(new Date(0), { label: 'epoch' })), 'Date("1970-01-01T00:00:00.000Z"){label:"epoch"}')
+  // A Proxy fails the brand check, so it shows as an object instead of reaching Date methods.
+  assert.equal(repr(new Proxy(new Date(0), {})), 'Date{}')
+})
 
 // Node model: describe() builds a lazy tree for the Inspector.
 
@@ -343,7 +383,7 @@ test('a root summary equals repr within the same budget', () =>
     const budget = tc.draw(gs.integers({ minValue: 3, maxValue: 80 }), 'budget')
     const summary = text(core.describe(make(recipe).value, options).summary(budget))
     assert.ok(summary.length <= budget, `length ${summary.length} > ${budget}`)
-    assert.equal(summary, repr(make(recipe).value, { ...options, char_limit: budget }))
+    assert.equal(summary, repr(make(recipe).value, { ...options, char_limit: budget, error_stacks: false }))
   }, settings))
 
 test('the node API never throws, even on hostile values', () =>
@@ -415,7 +455,7 @@ test('wide groups end in a more row until every page is shown', () => {
   const root = core.describe(Array.from({ length: 5 }, (_, i) => i))
   const first = core.visibleRows(root, { expandDepth: 1, pageSize: 2 })
   assert.deepEqual(first.map(line), ['[', '0,', '1,', '', ']'])
-  assert.deepEqual(first[3], { type: 'more', id: 'r:1+', depth: 1, group: 'r:1', shown: 2 })
+  assert.deepEqual(first[3], { type: 'more', id: 'r:1+', depth: 1, group: 'r:1', shown: 2, unit: 'children' })
   const all = core.visibleRows(root, { expandDepth: 1, pageSize: 2, pages: new Map([['r:1', 3]]) })
   assert.deepEqual(all.map(line), ['[', '0,', '1,', '2,', '3,', '4', ']'])
 })
@@ -432,7 +472,8 @@ test('cycles link to their open ancestor and repeats expand in place', () => {
 test('with every node open, the rows spell out repr without deduplication', () =>
   hegel.test(tc => {
     const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
-    const { char_limit: _limit, deduplicate_references: _dedupe, ...options } = tc.draw(reprOptions, 'options')
+    // Open rows always list an error's stack, so compare with the stack included.
+    const { char_limit: _limit, deduplicate_references: _dedupe, error_stacks: _stacks, ...options } = tc.draw(reprOptions, 'options')
     const { value } = make(recipe)
     const rows = core.visibleRows(core.describe(value, options), { expandDepth: Infinity, pageSize: Infinity, previewBudget: Infinity })
     assert.equal(rows.map(line).join(''), repr(value, { ...options, deduplicate_references: false, char_limit: Infinity }))
@@ -521,3 +562,97 @@ test('rows never throw and keep ids unique, even on hostile values', () =>
       if (index) assert.ok(row.depth <= rows[index - 1].depth + 1, `row ${row.id} skips a depth`)
     })
   }, settings))
+
+// Strings open into lines of raw text, paged by characters.
+
+const textRows = rows => rows.filter(row => row.type === 'text').map(line)
+
+test('a multiline string opens into text rows', () => {
+  const root = core.describe({ log: 'first\r\nsecond\n\tthird' })
+  const closed = core.visibleRows(root, { expandDepth: 1 })
+  assert.deepEqual(closed.map(line), ['{', 'log:"first\\r\\nsecond\\n\\tthird"', '}'])
+  assert.deepEqual([closed[1].expandable, closed[1].open], [true, false])
+  const opened = core.visibleRows(root, { expandDepth: 1, toggled: new Set([closed[1].id]) })
+  assert.deepEqual(opened.map(row => [row.type, row.depth, line(row)]), [
+    ['node', 0, '{'],
+    ['node', 1, 'log:"'],
+    ['text', 2, 'first'],
+    ['text', 2, 'second'],
+    ['text', 2, '\tthird'],
+    ['close', 1, '"'],
+    ['close', 0, '}'],
+  ])
+})
+
+test('open strings escape control characters but keep tabs', () => {
+  const rows = core.visibleRows(core.describe('\u001b[31mred\u001b[0m\ta\rb\nnext'), { toggled: new Set(['r']) })
+  assert.deepEqual(textRows(rows), ['\\u001b[31mred\\u001b[0m\ta\\rb', 'next'])
+  const unquoted = core.visibleRows(core.describe('a\nb', { unquoted_strings: true }), { toggled: new Set(['r']) })
+  assert.deepEqual(unquoted.map(line), ['', 'a', 'b', ''])
+})
+
+test('long strings page by characters, never splitting a surrogate pair', () => {
+  const root = core.describe('x'.repeat(12))
+  const display = { toggled: new Set(['r']), previewBudget: 5, textPageSize: 5 }
+  const first = core.visibleRows(root, display)
+  assert.deepEqual(first.map(line), ['"', 'xxxxx', '', '"'])
+  assert.deepEqual(first[2], { type: 'more', id: 'r:t+', depth: 1, group: 'r:t', shown: 5, unit: 'characters' })
+  assert.deepEqual(core.visibleRows(root, { ...display, pages: new Map([['r:t', 3]]) }).map(line), ['"', 'x'.repeat(12), '"'])
+  const emoji = core.visibleRows(core.describe('😀😀😀'), { toggled: new Set(['r']), previewBudget: 1, textPageSize: 3 })
+  assert.deepEqual(textRows(emoji), ['😀'])
+})
+
+test('strings open only when toggled, and only when they need to', () => {
+  const root = core.describe(['short', 'two\nlines', 'y'.repeat(81)])
+  const rows = core.visibleRows(root, { expandDepth: Infinity })
+  const strings = rows.filter(row => row.type === 'node' && row.depth === 1)
+  assert.deepEqual(strings.map(row => [row.expandable, row.open]), [[false, false], [true, false], [true, false]])
+  const toggled = core.visibleRows(root, { expandDepth: Infinity, toggled: new Set([strings[0].id]) })
+  assert.deepEqual(toggled.map(line), rows.map(line))
+})
+
+test('open strings spell out their text', () =>
+  hegel.test(tc => {
+    const parts = tc.draw(gs.arrays(gs.text({ maxSize: 30, excludeCategories: ['Cc'] }), { minSize: 1, maxSize: 6 }), 'lines')
+    const separator = tc.draw(gs.sampledFrom(['\n', '\r\n']), 'separator')
+    const value = parts.join(separator)
+    tc.assume(value !== '')
+    const rows = core.visibleRows(core.describe(value), { toggled: new Set(['r']), previewBudget: 0, textPageSize: Infinity })
+    assert.equal(textRows(rows).join('\n'), parts.join('\n'))
+  }, settings))
+
+test('string pages join into the whole text', () =>
+  hegel.test(tc => {
+    const value = tc.draw(gs.oneOf(multilineText, longText, gs.text({ minSize: 1, maxSize: 40 })), 'value')
+    const textPageSize = tc.draw(gs.integers({ minValue: 1, maxValue: 20 }), 'textPageSize')
+    tc.assume(value.length > 0)
+    const root = core.describe(value)
+    const display = { toggled: new Set(['r']), previewBudget: 0, textPageSize }
+    const pages = new Map()
+    let rows
+    for (let round = 0; round < 1000; round++) {
+      rows = core.visibleRows(root, { ...display, pages })
+      const more = rows.find(row => row.type === 'more')
+      if (!more) break
+      const limit = (pages.get(more.group) ?? 1) * textPageSize
+      assert.equal(more.unit, 'characters')
+      assert.ok(more.shown === limit || more.shown === limit - 1, `showed ${more.shown} of a ${limit}-character page`)
+      const lastUnit = value.charCodeAt(more.shown - 1)
+      assert.ok(!(lastUnit >= 0xd800 && lastUnit <= 0xdbff), 'a page ended inside a surrogate pair')
+      pages.set(more.group, (pages.get(more.group) ?? 1) + 1)
+    }
+    assert.ok(!rows.some(row => row.type === 'more'), 'paging never finished')
+    assert.deepEqual(lines(rows), lines(core.visibleRows(root, { ...display, textPageSize: Infinity })))
+  }, settings))
+
+// Errors: closed rows and summaries name an error without its stack.
+
+test('summaries and closed rows name an error without its stack', () => {
+  const outer = pin(new Error('transfer failed', { cause: pin(new RangeError('index 9')) }))
+  assert.equal(repr(outer, { error_stacks: false }), 'Error("transfer failed"){cause:RangeError("index 9")}')
+  assert.equal(text(core.describe(pin(new Error('boom'))).summary(80)), 'Error("boom")')
+  const closed = core.visibleRows(core.describe({ failure: outer }), { expandDepth: 1 })
+  assert.deepEqual(closed.map(line), ['{', 'failure:Error("transfer failed"){cause:RangeError("index 9")}', '}'])
+  const opened = core.visibleRows(core.describe(outer), { expandDepth: 1 })
+  assert.deepEqual(opened.map(line), ['Error("transfer failed"){', 'cause:RangeError("index 9"),', 'stack:"Error: transfer failed"', '}'])
+})

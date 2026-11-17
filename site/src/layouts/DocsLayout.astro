@@ -676,7 +676,7 @@ if (hasStructuredBreadcrumbs && title) {
     gap: 0.75ch;
     padding: 2px 8px 4px;
     border-radius: var(--radius-sm, 4px);
-    color: var(--text-3-brand);
+    color: var(--text-3);
     background: transparent;
     font-size: 14px;
     font-weight: 400;
@@ -696,7 +696,7 @@ if (hasStructuredBreadcrumbs && title) {
   }
   .sidebar :global(menu li a:hover),
   .sidebar :global(menu li a:focus-visible) {
-    color: var(--text-2-brand);
+    color: var(--text-2);
     background: light-dark(
       color-mix(in oklch, currentColor 5%, transparent),
       color-mix(in oklch, currentColor 10%, transparent)
@@ -711,7 +711,7 @@ if (hasStructuredBreadcrumbs && title) {
     transition: none;
   }
   .sidebar :global(menu li a[data-active-parent]) {
-    color: var(--text-1-brand);
+    color: var(--text-1);
   }
   .sidebar :global(menu li a[aria-current="page"]) {
     color: var(--text-2-brand);
@@ -723,7 +723,7 @@ if (hasStructuredBreadcrumbs && title) {
   .sidebar :global(menu li a:hover > a-icon),
   .sidebar :global(menu li a:focus-visible > a-icon),
   .sidebar :global(menu li a[aria-current="page"] > a-icon) {
-    color: inherit;
+    color: var(--text-2-brand);
   }
   .sidebar :global(a:focus-visible) {
     outline: 1px solid var(--focus-ring);

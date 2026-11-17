@@ -1,9 +1,8 @@
 ---
 // At-a-glance matrix for the /comparison page: one row per system, columns
 // for the facts that decide adoption (frameworks, styling, license, browser
-// support). Its rows use the coverage matrix's shared system order. The Anta
-// row is highlighted. Horizontal scrolling stays inside the matrix on compact
-// screens.
+// support). Its rows use the coverage matrix's shared system order.
+// Horizontal scrolling stays inside the matrix on compact screens.
 import { COVERAGE_SYSTEMS } from './comparison-data'
 ---
 
@@ -20,7 +19,7 @@ import { COVERAGE_SYSTEMS } from './comparison-data'
     </thead>
     <tbody>
       {COVERAGE_SYSTEMS.map((s) => (
-        <tr class:list={[{ anta: s.anta }]}>
+        <tr>
           <th scope="row" class="sys-col">
             <span class="sys-name">
               {s.nameParts
@@ -151,17 +150,4 @@ import { COVERAGE_SYSTEMS } from './comparison-data'
     font-size: 12px;
   }
 
-  /* Anta row: brand tint across the row, including the sticky name cell,
-     so it reads as the reference point the page is written around. */
-  .matrix tbody tr.anta th,
-  .matrix tbody tr.anta td {
-    background: var(--bg-5-brand);
-    border-bottom-color: var(--border-4-brand);
-  }
-  .matrix tbody tr.anta .sys-name {
-    color: var(--text-1-brand);
-  }
-  .matrix tbody tr.anta td {
-    color: var(--text-1);
-  }
 </style>

@@ -769,34 +769,74 @@ without requiring a popup ID, and preserves an authored `aria-controls`.
 
 ### Native HTML select
 
-When a native single-value select is enough, add `data-anta` to `<select>`. The
-modern customizable-select model keeps native selection, keyboard behavior, and
-form submission while exposing its trigger `button`, `selectedcontent`, options,
-and optgroups for styling. Anta styles the customizable parts. Browser support and fallback behavior are
-covered in [Install and configure](../install-config.md#browser-support). Use `Select` for filtering, multiple
-selection, nested menus, or custom option coordination.
-
-Use `data-anta-size="small"` or `"large"` for the field size. Native selects
-continue to use their standard `size` attribute, and `round` gives the trigger matching rounded
-corners.
+Add `data-anta` to a native `<select>` to style its field and open dropdown.
+Selection, keyboard navigation, validation, and form submission stay with the
+browser. No custom trigger or JavaScript is needed. For granular imports, load
+`@antadesign/anta/elements/a-select` alongside Anta's tokens and reset.
 
 ```html
-<select data-anta data-anta-size="small" round name="output">
-  <!-- The native trigger; selectedcontent mirrors the chosen option. -->
-  <button>
-    <selectedcontent></selectedcontent>
-    <a-icon shape="chevron-down" aria-hidden="true"></a-icon>
-  </button>
-
-  <option value="" selected disabled>Choose an output</option>
+<label for="output">Output</label>
+<select id="output" data-anta name="output">
   <option value="stream">Stream</option>
   <option value="output_text">Output text</option>
   <optgroup label="Metadata">
     <option value="container">Container</option>
     <option value="file_path">File path</option>
+    <option value="archived" disabled>Archived (unavailable)</option>
   </optgroup>
 </select>
 ```
+
+Use `data-anta-size="small"` or `"large"` for the field size, and `round` for
+rounded field corners. The standard `size` and `multiple` attributes keep the
+browser's listbox rendering.
+
+#### Rich native options
+
+In browsers that support [customizable selects](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select),
+options can contain icons and supporting text. The same passive
+`a-menu-item-text`, `a-menu-item-label`, and `a-menu-item-hint` tags used by
+Anta's menu rows provide the layout. Keep `<option>` as the selectable row.
+Its children must not contain interactive controls.
+
+Add `<button type="button"><selectedcontent></selectedcontent></button>` when
+the closed field should show the selected option's rich content too. The browser
+copies that option into `selectedcontent` after each choice. Anta supplies the
+chevron automatically, and still supports an authored `a-icon` chevron.
+
+```html
+<label for="recipient">Send invoice to</label>
+<select id="recipient" data-anta name="recipient">
+  <button type="button"><selectedcontent></selectedcontent></button>
+  <option value="alex-finance">
+    <a-menu-item-text>
+      <a-menu-item-label>Alex Morgan</a-menu-item-label>
+      <a-menu-item-hint>Accountant · Finance</a-menu-item-hint>
+    </a-menu-item-text>
+  </option>
+  <option value="alex-design">
+    <a-menu-item-text>
+      <a-menu-item-label>Alex Morgan</a-menu-item-label>
+      <a-menu-item-hint>Designer · Product</a-menu-item-hint>
+    </a-menu-item-text>
+  </option>
+  <option value="sam-operations" disabled>
+    <a-menu-item-text>
+      <a-menu-item-label>Sam Rivera</a-menu-item-label>
+      <a-menu-item-hint>Operations · Unavailable</a-menu-item-hint>
+    </a-menu-item-text>
+  </option>
+</select>
+```
+
+Give each option an explicit `value`. Keep whitespace between its label and
+hint so the combined text makes sense in browsers that display plain options.
+Those browsers retain the native picker and ignore the custom trigger and
+option layout. Customizable selects use an in-page dropdown, including on touch
+devices, instead of the operating system's picker.
+
+The examples build on [Ahmad Alfy's contextual select examples](https://alfy.blog/2026/10/27/a-select-should-tell-you-something.html).
+Use `Select` for filtering, nested menus, or coordinated multiple selection.
 
 ## Styling
 

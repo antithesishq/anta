@@ -155,8 +155,10 @@ MDX from retaining the client-only component's CSS in both page and island build
 The site integration runs `scripts/build-search-index.mjs` after Astro writes its
 configured output directory (`dist/` by default).
 The script parses rendered `<main class="content">` elements, adds stable `data-search-id`
-attributes and anchors to searchable blocks, then writes `dist/search-index.json`. Keep the
-browser configuration in `lib/search/config.json` compatible with the build script: FlexSearch
+attributes and anchors to searchable blocks, then writes `dist/search-index.json`.
+Keep HTML edits limited to source locations of those attributes. Reserializing parse5's
+document tree strips customizable select buttons and rich option markup.
+Keep the browser configuration in `lib/search/config.json` compatible with the build script: FlexSearch
 imports require the same document configuration that exported the chunks. The search island starts
 loading the index during idle time; its page-target highlighter must run on `astro:page-load` so
 ClientRouter navigations receive the same mark.js treatment as cold loads.

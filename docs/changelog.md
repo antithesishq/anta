@@ -7,8 +7,9 @@ changes are not listed.
 
 ### Fixed
 
-- InputDate reformats its committed date when the locale changes, so confirming the field preserves the saved date.
-- Select disables open menu options, filtering, and bulk actions when the whole control becomes disabled, preserving its selection.
+- Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.
+- Disabling [Select](/select/#size-and-status) also disables its open menu without clearing the selection.
+- [Native selects](/select/#native-html-select) style the field and dropdown without custom trigger markup. Focus rings follow the theme.
 
 ## 0.3.38 — October 29, 2026
 

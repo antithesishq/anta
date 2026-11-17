@@ -6,11 +6,15 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
+import { createRequire } from 'node:module'
 import { buildSearchIndex } from '../site/scripts/build-search-index.mjs'
 import { buildSearchWorker } from '../site/scripts/build-search-worker.mjs'
 import { copySitemapIndex } from '../site/scripts/copy-sitemap-index.mjs'
 
 const run = promisify(execFile)
+const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
+const { Document } = requireSite('flexsearch')
+const searchConfig = requireSite('./lib/search/config.json')
 
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'anta site output '))
@@ -66,6 +70,48 @@ test('search CLI retains cwd-relative dist and public defaults', async (t) => {
   const index = await readFile(join(root, 'dist/search-index.json'), 'utf8')
   assert.equal(JSON.parse(index).documents, 1)
   assert.equal(await readFile(join(root, 'public/search-index.json'), 'utf8'), index)
+})
+
+test('search indexing preserves rich native selects and existing HTML outside its attributes', async (t) => {
+  const { outDir, publicDir } = await fixture(t)
+  const select = '<select data-anta name="recipient"><button type="button"><selectedcontent></selectedcontent></button><option value="finance"><a-menu-item-text><a-menu-item-label>Alex Morgan</a-menu-item-label> <a-menu-item-hint>Accountant · Finance</a-menu-item-hint></a-menu-item-text></option></select>'
+  const page = `<!doctype html><main class='content'><h1 id='native'>Native select</h1><p data-search-id='old'>Choose a recipient.</p>${select}<!-- Retain this comment. --></main>`
+  const file = join(outDir, 'index.html')
+  await writeFile(file, page)
+  const options = { outDir, publicDir }
+  const result = await buildSearchIndex(options)
+  assert.equal(result.documents, 2, 'option content is excluded from search')
+  const output = await readFile(file, 'utf8')
+  assert.ok(output.includes(select), 'the native select remains byte-for-byte intact')
+  assert.match(output, /<h1 id='native' data-search-id="[^"]+">/)
+  assert.equal(output.replace(/ data-search-id="[^"]+"/g, '').replace(/ id="search-[^"]+"/g, ''), page.replace(" data-search-id='old'", ''))
+  await buildSearchIndex(options)
+  assert.equal(await readFile(file, 'utf8'), output)
+})
+
+test('search indexing anchors parser-created text to its authored container', async (t) => {
+  const { outDir, publicDir } = await fixture(t)
+  const source = '<!doctype html><main class="content"><h1>Fixture</h1><font><div>Orphaned text</font> remains.</div><nobr><div>Reconstructed text</nobr> survives.</div><table><td>Table text</td></table></main>'
+  const file = join(outDir, 'index.html')
+  await writeFile(file, source)
+  const options = { outDir, publicDir }
+  const result = await buildSearchIndex(options)
+  assert.equal(result.documents, 4)
+  const output = await readFile(file, 'utf8')
+  assert.equal(output.replace(/ data-search-id="[^"]+"/g, '').replace(/ id="search-[^"]+"/g, ''), source)
+  const serialized = await readFile(join(outDir, 'search-index.json'), 'utf8')
+  const payload = JSON.parse(serialized)
+  const index = new Document(searchConfig)
+  for (const [key, value] of Object.entries(payload.chunks)) await index.import(key, value)
+  for (const [query, text] of [['Orphaned', 'Orphaned text remains.'], ['Reconstructed', 'Reconstructed text survives.'], ['Table', 'Table text']]) {
+    const matches = index.search(query, { enrich: true }).flatMap(field => field.result)
+    assert.equal(matches.length, 1)
+    assert.equal(matches[0].doc.text, text)
+    assert.ok(output.includes(`id="${matches[0].doc.anchor}"`), 'each search result has an authored anchor')
+  }
+  await buildSearchIndex(options)
+  assert.equal(await readFile(file, 'utf8'), output)
+  assert.equal(await readFile(join(outDir, 'search-index.json'), 'utf8'), serialized)
 })
 
 test('worker build resolves its source from the configured root and writes the configured directory', async (t) => {

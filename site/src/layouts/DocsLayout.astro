@@ -17,6 +17,7 @@ import { addDocReviewMarker } from '../../lib/doc-review-heading.mjs'
 import SidebarSearch from '../components/SidebarSearch'
 import SidebarNavItem from '../components/SidebarNavItem.astro'
 import SearchDialog from '../components/SearchDialog.tsx'
+import AntaLogo from '../components/AntaLogo'
 import antaPackage from '../../../package.json'
 
 interface Props {
@@ -235,6 +236,10 @@ if (hasStructuredBreadcrumbs && title) {
           aria-controls="site-navigation"
           aria-expanded="false"
         />
+        <Button href="/" size="small" priority="quaternary" tone="brand" aria-label="Anta home">
+          <AntaLogo size={16} compact />
+          Anta
+        </Button>
       </div>
       <div class="topbar-center">
         <div class="topbar-search">

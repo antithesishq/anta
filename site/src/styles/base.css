@@ -372,7 +372,7 @@ hr:not(:where(a-tooltip *)),
    any block authored `folded` (lib/ec-foldable.mjs forces a header onto an
    otherwise plain block so it can fold). EC draws different chrome per frame
    type (an editor tab, terminal traffic-light dots); we collapse it into a
-   single plain bar — a bg-4 strip with a 1px border-4 outline, a chevron at the
+   single plain bar — a bg-4 strip with a 1px border-5 outline, a chevron at the
    left, then the label — and make the whole bar a fold toggle.
 
    The chevron glyph is anta's `chevron-down`, delivered as a mask (no element
@@ -452,7 +452,7 @@ hr:not(:where(a-tooltip *)),
   min-height: var(--fold-header-h);
   padding-block: 0;
   padding-inline: 6px 4px;
-  border: 1px solid var(--border-4);
+  border: 1px solid var(--border-5);
   background: var(--bg-4);
   cursor: pointer;
 }

@@ -236,10 +236,10 @@ if (hasStructuredBreadcrumbs && title) {
           aria-controls="site-navigation"
           aria-expanded="false"
         />
-        <Button class="topbar-home" href="/" size="small" priority="quaternary" tone="brand" aria-label="Anta home">
+        <a class="topbar-home" href="/" aria-label="Anta home">
           <AntaLogo size={24} compact style={{ borderRadius: '1000px', border: '1px solid var(--border-3-brand)' }} />
           Anta
-        </Button>
+        </a>
       </div>
       <div class="topbar-center">
         <div class="topbar-search">
@@ -777,9 +777,28 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   .topbar-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75ch;
     height: 28px;
     margin-inline-start: 2px;
     padding: 2px 10px 2px 0;
+    border-radius: var(--radius-sm, 4px);
+    color: var(--text-3);
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.03ch;
+    text-decoration: none;
+    transition: color 160ms ease-out;
+  }
+
+  .topbar-home:hover {
+    color: var(--text-1);
+  }
+
+  .topbar-home:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
   }
 
   .mobile-menu-toggle {

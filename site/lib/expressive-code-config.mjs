@@ -22,7 +22,7 @@ const config = {
   themeCssSelector: (theme) => theme.type === 'dark' ? '.dark' : '',
   styleOverrides: {
     borderWidth: '1px',
-    borderColor: 'var(--border-5)',
+    borderColor: 'var(--border-4)',
     codeFontFamily: 'var(--monospace)',
     uiFontFamily: 'var(--sans-serif)',
     codeFontSize: '13px',
@@ -41,7 +41,7 @@ const config = {
       editorActiveTabBackground: 'var(--bg-canvas)',
       terminalBackground: 'var(--bg-canvas)',
       terminalTitlebarBackground: 'var(--bg-pane)',
-      terminalTitlebarBorderBottomColor: 'var(--border-5)',
+      terminalTitlebarBorderBottomColor: 'var(--border-4)',
       // NOTE: the copy glyph's stroke is controlled in base.css (the EC
       // `copyIcon` pipeline mangles/strips the SVG stroke-width). This SVG
       // still provides the shape; base.css overrides the mask for sizing.

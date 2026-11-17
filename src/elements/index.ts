@@ -46,7 +46,7 @@ export { ADialogElement, register_a_dialog } from './a-dialog'
 import './a-card.css'
 export { ABannerElement, register_a_banner } from './a-banner'
 export { AInspectorElement, register_a_inspector } from './a-inspector'
-export type { InspectorToggleDetail, InspectorPageDetail } from './a-inspector'
+export type { InspectorToggleDetail, InspectorPageDetail, InspectorMenuDetail } from './a-inspector'
 export { AToasterElement, register_a_toaster } from './a-toaster'
 export { AToastElement, register_a_toast } from './a-toast'
 

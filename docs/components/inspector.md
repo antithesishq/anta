@@ -7,7 +7,7 @@ Long arrays and strings open a page at a time.
 ## Example
 
 ```tsx
-import { Inspector } from '@antadesign/anta'
+import { Inspector, Text } from '@antadesign/anta'
 
 function Demo() {
   const config = { retries: 3, timeout_ms: 2500, endpoint: 'http://api-1:8080' }
@@ -36,6 +36,15 @@ function Demo() {
     self: null as unknown,
   }
   run.self = run
-  return <Inspector value={run} aria-label="Test run" />
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <Text>
+        Assertion failed with{' '}
+        <Inspector layout="inline" value={{ expected: 1000000, observed: 999987.5, account: 'acct_9f31' }} aria-label="Assertion details" />{' '}
+        after 3 retries.
+      </Text>
+      <Inspector value={run} aria-label="Test run" />
+    </div>
+  )
 }
 ```

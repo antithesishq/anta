@@ -136,4 +136,42 @@
     color: var(--text-3-warning);
     font-style: italic;
   }
+
+  /* A circular row links to the ancestor it refers to. */
+  a-inspector-row[target] {
+    cursor: pointer;
+  }
+
+  a-inspector-row[target]:hover a-inspector-token:is([type="reference"], [type="reference_path"]) {
+    color: var(--text-1);
+    text-decoration: underline;
+  }
+
+  /* The ancestor a circular row revealed, briefly. Set by the element as a
+     CSS Custom Highlight, so no DOM changes. */
+  ::highlight(anta-inspector-reveal) {
+    background-color: color-mix(in oklch, var(--text-1-brand) 22%, transparent);
+  }
+
+  /* Inline layout: a closed value flows in its sentence or table cell. Opening
+     it makes a block, so the tree appears under the line. */
+  a-inspector[layout="inline"]:not([open]) {
+    display: inline;
+  }
+
+  a-inspector[layout="inline"]:not([open]) a-inspector-row {
+    display: inline;
+    padding-inline: 16px 0;
+    white-space: normal;
+  }
+
+  a-inspector[layout="inline"]:not([open]) a-inspector-row:hover {
+    background: none;
+  }
+
+  a-inspector[layout="inline"]:not([open]) a-inspector-row[expandable]::before {
+    inset-block-start: auto;
+    inset-inline-start: 2px;
+    margin-block-start: calc((var(--inspector-line-height) - 12px) / 2);
+  }
 }

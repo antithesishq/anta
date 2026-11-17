@@ -819,6 +819,12 @@ export type InspectRow =
     open: boolean
     /** For a circular node, the id of the ancestor row it refers to. */
     target?: string
+    /**
+     * A JavaScript accessor for this value from the root, such as
+     * `results[3].details.error`; `''` for the root. Undefined where no
+     * expression reaches it, as for Set items and object Map keys.
+     */
+    pathText?: string
   }
   | { type: 'close'; id: string; depth: number; tokens: Token[] }
   | { type: 'text'; id: string; depth: number; tokens: Token[] }
@@ -867,6 +873,33 @@ function is_expandable(node: InspectNode, budget: number): boolean {
   return node.parts.some(part => part.type === 'value' || (part.type === 'group' && part.group.childAt(0) !== undefined))
 }
 
+// A property step of an accessor: `.name` for identifiers, `["key"]` otherwise.
+// No expression reaches an own `__proto__` property, since both forms read the prototype.
+function property_path(base: string, key: string): string | undefined {
+  if (key === '__proto__') return undefined
+  if (/^[A-Za-z_$][\w$]*$/.test(key)) return base === '' ? key : `${base}.${key}`
+  return `${base}[${JSON.stringify(key)}]`
+}
+
+// A child's accessor, from its parent's accessor and kind.
+function child_path_text(parent: InspectNode, base: string | undefined, child: InspectChild): string | undefined {
+  if (base === undefined || child.value.kind === 'empty-slots') return undefined
+  const segment = child.value.path.at(-1)
+  switch (parent.kind) {
+    case 'set': case 'custom': return undefined
+    case 'map': {
+      if (typeof segment === 'string') return `${base}.get(${JSON.stringify(segment)})`
+      if (typeof segment === 'number') return `${base}.get(${Object.is(segment, -0) ? '-0' : String(segment)})`
+      if (typeof segment === 'bigint') return `${base}.get(${segment}n)`
+      if (typeof segment === 'boolean' || segment === null || segment === undefined) return `${base}.get(${String(segment)})`
+      return undefined
+    }
+    default:
+      if (typeof segment === 'number') return `${base}[${segment}]`
+      return typeof segment === 'string' ? property_path(base, segment) : undefined
+  }
+}
+
 // An open node's row in the `tree` style: its type, with a size where it has one.
 function label(node: InspectNode): Token[] {
   const count = (size: number): Token[] => [
@@ -911,13 +944,14 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
     return [{ text: safe_string(child.value.path.at(-1)), type: 'field_name' }, colon]
   }
 
-  const visit = (node: InspectNode, id: string, depth: number, key: Token[], ancestors: Open[]) => {
+  const visit = (node: InspectNode, id: string, depth: number, key: Token[], ancestors: Open[], path_text: string | undefined) => {
     const expandable = is_expandable(node, budget)
     const starts_open = depth < expand_depth && node.kind !== 'string'
     const open = expandable && (starts_open !== toggled.has(id))
     const row: InspectRow = {
       type: 'node', id, depth, key, tokens: [], kind: node.kind, path: node.path, size: node.size, expandable, open,
     }
+    if (path_text !== undefined) row.pathText = path_text
     if (node.kind === 'circular') {
       for (let a = ancestors.length - 1; a >= 0; a--) {
         if (ancestors[a].identity === node.identity) { row.target = ancestors[a].id; break }
@@ -966,7 +1000,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
       if (part.type === 'tokens') {
         append(...part.tokens)
       } else if (part.type === 'value') {
-        visit(part.node, `${id}:${p}`, depth + 1, [], inner)
+        visit(part.node, `${id}:${p}`, depth + 1, [], inner, undefined)
         line = undefined
       } else {
         const group = part.group
@@ -982,7 +1016,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
         const shown = Math.max(1, pages.get(group_id) ?? 1) * page_size
         const { items, more } = group.children(0, shown)
         items.forEach((child, i) => {
-          visit(child.value, `${group_id}.${i}`, depth + 1, key_of(child), inner)
+          visit(child.value, `${group_id}.${i}`, depth + 1, key_of(child), inner, child_path_text(node, path_text, child))
           if (!tree && (i < items.length - 1 || more)) {
             const last = rows.at(-1)!
             if (last.type !== 'more') last.tokens.push({ text: ',', type: 'comma' })
@@ -994,8 +1028,36 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
     })
   }
 
-  visit(root, 'r', 0, [], [])
+  visit(root, 'r', 0, [], [], '')
   return rows
+}
+
+/**
+ * The node a `node` row's id names, or `undefined` for any other id. In an id,
+ * `:p.i` is child `i` of the group in part `p`, and a bare `:p` is the inline
+ * value in part `p`. Reads only the nodes along the way.
+ */
+export function rowNode(root: InspectNode, id: string): InspectNode | undefined {
+  if (!/^r(?::\d+(?:\.\d+)?)*$/.test(id)) return undefined
+  let node: InspectNode | undefined = root
+  for (const [, part, index] of id.slice(1).matchAll(/:(\d+)(?:\.(\d+))?/g)) {
+    const found: InspectPart | undefined = node?.parts[Number(part)]
+    if (found?.type === 'value' && index === undefined) node = found.node
+    else if (found?.type === 'group' && index !== undefined) node = found.group.childAt(Number(index))?.value
+    else return undefined
+  }
+  return node
+}
+
+/**
+ * The text to copy for a node: a string's raw text, or the full `repr()` text
+ * of anything else. Undefined for nodes with no value of their own: cycles,
+ * empty slots, and reads that failed.
+ */
+export function copyText(node: InspectNode, options: Options = {}): string | undefined {
+  if (node.kind === 'circular' || node.kind === 'empty-slots' || node.kind === 'inaccessible') return undefined
+  if (node.kind === 'string') return node.text
+  return serialize(node, { ...options, char_limit: Infinity }).map(token => token.text).join('')
 }
 
 export const DEFAULT_REPR_CHAR_LIMIT = 50000

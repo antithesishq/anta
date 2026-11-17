@@ -1401,6 +1401,12 @@ export interface ATabpanelAttributes extends BaseAttributes {
  * reports clicks as `nodetoggle` and `pagerequest` requests. */
 export interface AInspectorAttributes extends BaseAttributes {
   'aria-label'?: string
+  /** `inline` flows in text until the root row opens. Omit for the block layout. */
+  layout?: 'inline'
+  /** The root row is open. Presence-based (`''` on, omit off). */
+  open?: boolean | ''
+  /** A context menu opened: `detail.id` is the row's id, or `null` outside any row. */
+  onrowmenu?: (event: CustomEvent<{ id: string | null }> | { nativeEvent: CustomEvent<{ id: string | null }> }) => void
   /** A request to open or close a row: `detail.id` and the requested `detail.open`. */
   onnodetoggle?: (event: CustomEvent<{ id: string; open: boolean }> | { nativeEvent: CustomEvent<{ id: string; open: boolean }> }) => void
   /** A request for another page of a group or string: `detail.group`. */
@@ -1421,6 +1427,8 @@ export interface AInspectorRowAttributes extends BaseAttributes {
   open?: boolean | ''
   /** For a `more` row, the group or string it pages, sent back in `pagerequest`. */
   group?: string
+  /** For a circular row, the `row-id` of the ancestor it refers to. */
+  target?: string
   'aria-level'?: number | string
   'aria-expanded'?: 'true' | 'false' | boolean
 }

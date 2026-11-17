@@ -713,3 +713,77 @@ test('tree rows are the repr rows without brackets or commas', () =>
       if (row.type !== 'more') assert.notEqual(row.tokens.at(-1)?.type, 'comma', `row ${row.id} ends in a comma`)
     }
   }, settings))
+
+// Copy path: each row's accessor from the root.
+
+const paths = (value, state = {}) => Object.fromEntries(
+  tree(value, { expandDepth: Infinity, ...state }).filter(row => row.type === 'node').map(row => [line(row), row.pathText]),
+)
+
+test('rows carry a JavaScript path from the root', () => {
+  const error = pin(new Error('m', { cause: 1 }))
+  const value = { results: [{ 'a b': 1, ok: true }], byKey: new Map([['k', 1], [2, 'two'], [{ o: 1 }, 3]]), tags: new Set(['x']), error }
+  const found = paths(value)
+  assert.equal(found['{…}'], '')
+  assert.equal(found['results:Array(1)'], 'results')
+  assert.equal(found['0:{…}'], 'results[0]')
+  assert.equal(found['"a b":1'], 'results[0]["a b"]')
+  assert.equal(found['ok:true'], 'results[0].ok')
+  assert.equal(found['"k":1'], 'byKey.get("k")')
+  assert.equal(found['2:"two"'], 'byKey.get(2)')
+  assert.equal(found['{o:1}:3'], undefined)
+  assert.equal(found['0:"x"'], undefined)
+  assert.equal(found['cause:1'], 'error.cause')
+  assert.equal(paths([[1]])['0:1'], '[0][0]')
+  assert.equal(paths(Object.defineProperty({}, '__proto__', { value: 1, enumerable: true }))['__proto__:1'], undefined)
+})
+
+test('copied paths evaluate back to the row\'s value', () =>
+  hegel.test(tc => {
+    const { value } = make(tc.draw(recipes(), 'recipe'))
+    const root = core.describe(value)
+    for (const row of core.visibleRows(root, { style: 'tree', expandDepth: Infinity, pageSize: Infinity })) {
+      if (row.type !== 'node' || row.pathText === undefined || row.kind === 'circular') continue
+      const text = row.pathText
+      const read = new Function('v', `return v${text === '' || /^[[.]/.test(text) ? '' : '.'}${text}`)
+      const found = read(value)
+      const node = nodeAt(root, row.id)
+      if (node.identity !== undefined && typeof node.identity === 'object') assert.equal(found, node.identity, `${text} reached another object`)
+      else assert.deepEqual(core.describe(found).summary(200), node.summary(200), `${text} reached another value`)
+    }
+  }, settings))
+
+// Copy value: the node behind a row, and the text that copies it.
+
+test('copy text is a string\'s raw text, or the whole repr of anything else', () => {
+  const value = { log: 'a\n"b"', n: 42, list: [1, { x: 2 }], error: pin(new Error('m')), empty: [, 1] }
+  value.self = value
+  const root = core.describe(value)
+  const rows = tree(value, { expandDepth: 2 })
+  const copy = label => core.copyText(core.rowNode(root, rows.find(row => line(row).startsWith(label)).id))
+  assert.equal(copy('log:'), 'a\n"b"')
+  assert.equal(copy('n:'), '42')
+  assert.equal(copy('list:'), '[1,{x:2}]')
+  assert.equal(copy('error:'), 'Error("m"){stack:"Error: m"}')
+  assert.equal(copy('self:'), undefined)
+  assert.equal(copy('<1 empty slot>'), undefined)
+  assert.equal(core.copyText(core.describe('x'.repeat(60000))).length, 60000)
+  assert.equal(core.rowNode(root, 'r:1.0:t.0'), undefined)
+  assert.equal(core.rowNode(root, 'nope'), undefined)
+  // A to_repr that calls visit() makes an inline value, which the generators never produce.
+  const wrapped = core.describe({ [core.to_repr](v) { v.span('W(', 'class_name'); v.visit({ a: 1 }); v.span(')', 'class_name') } })
+  const inline = core.visibleRows(wrapped, { style: 'tree', expandDepth: 1 }).find(row => row.depth === 1)
+  assert.equal(inline.id, 'r:1')
+  assert.equal(core.copyText(core.rowNode(wrapped, inline.id)), '{a:1}')
+})
+
+test('rowNode finds the node every row shows', () =>
+  hegel.test(tc => {
+    const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
+    const display = { expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth'), style: tc.draw(styles, 'style') }
+    const toggled = openSome(tc, root, display)
+    for (const row of core.visibleRows(root, { ...display, toggled })) {
+      if (row.type === 'node') assert.equal(core.rowNode(root, row.id), nodeAt(root, row.id), `row ${row.id}`)
+      else assert.equal(core.rowNode(root, row.id), undefined, `row ${row.id} is not a node row`)
+    }
+  }, settings))

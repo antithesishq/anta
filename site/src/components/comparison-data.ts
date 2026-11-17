@@ -32,7 +32,7 @@ export interface System {
   /** Compact label for the matrix column headers, where horizontal space is
    *  tight. Falls back to `name`. */
   short?: string
-  /** True for Anta; drives the highlight styling in both matrices. */
+  /** Identifies Anta for ordering, coverage links, and coverage styling. */
   anta?: boolean
   /** Package + version string, e.g. "@mui/material 9.2.0". */
   version: string
@@ -67,7 +67,7 @@ export interface System {
   cons: string[]
 }
 
-/** Anta first (highlighted), then the framework-agnostic web-component peers,
+/** Anta first, then the framework-agnostic web-component peers,
  *  the batteries-included React libraries, the headless React primitives, and
  *  the copy-paste model, roughly grouped by how close they sit to Anta. */
 export const SYSTEMS: System[] = [

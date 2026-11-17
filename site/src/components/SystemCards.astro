@@ -4,7 +4,7 @@ import { COVERAGE_SYSTEMS } from './comparison-data'
 
 <div class="cards">
   {COVERAGE_SYSTEMS.map((s) => (
-    <section class:list={['card', { anta: s.anta }]}>
+    <section class="card">
       <header class="card-head">
         <div class="card-identity">
           <h3 class="card-name" id={`sys-${s.id}`}>
@@ -67,10 +67,6 @@ import { COVERAGE_SYSTEMS } from './comparison-data'
     padding: 20px 22px;
     background: var(--bg-canvas);
   }
-  .card.anta {
-    border-color: var(--border-3-brand);
-    background: var(--bg-4-brand);
-  }
 
   .card-head {
     display: grid;
@@ -91,9 +87,6 @@ import { COVERAGE_SYSTEMS } from './comparison-data'
   }
   .card-name a {
     color: var(--text-1);
-  }
-  .card.anta .card-name a {
-    color: var(--text-1-brand);
   }
   .card-ver {
     font-size: 12px;

@@ -112,13 +112,22 @@ async function htmlFiles(dir) {
   return files
 }
 
+function* authoredChildren(node) {
+  for (const child of node.childNodes ?? []) {
+    if (child.childNodes && !child.sourceCodeLocation?.startTag && !isIgnored(child)) {
+      // Parser-created wrappers have no start tag where an anchor can be added.
+      yield* authoredChildren(child)
+    } else yield child
+  }
+}
+
 function collectBlocks(node, blocks = []) {
   // `data-no-search` excludes the element and its complete subtree.
   if (isIgnored(node)) return blocks
 
   const inline = []
   const containers = []
-  for (const child of node.childNodes ?? []) {
+  for (const child of authoredChildren(node)) {
     if (isIgnored(child)) continue
     // Space-only text nodes stay in the inline run: between two adjacent
     // inline elements they are the only word boundary. `normalizedText`

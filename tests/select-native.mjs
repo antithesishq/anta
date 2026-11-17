@@ -93,7 +93,7 @@ for (const engine of engines) {
     assert.equal(await page.locator('#plain').evaluate(node=>node.matches(':open')),false)
   })
 
-  test(`${name}: native trigger, picker, and rich rows across themes`,{tier:'fast'},async t=>{
+  test.fast(`${name}: native trigger, picker, and rich rows across themes`,async t=>{
     const page = await browsers.get(name).newPage({viewport:{width:800,height:1000}})
     t.after(()=>page.close())
     for (const theme of ['default','antithesis']) for (const mode of ['light','dark']) {
@@ -126,10 +126,36 @@ for (const engine of engines) {
         assert.equal(await page.locator('#plain').evaluate(node=>getComputedStyle(node,'::picker(select)').borderRadius),'2px')
       }
       await page.keyboard.press('Escape')
-      await page.locator('#rich').click()
-      await mkdir('tests/.test-output/select',{recursive:true})
-      await page.screenshot({animations:'disabled',path:resolve(`tests/.test-output/select/native-${name}-${theme}-${mode}.png`)})
-      await page.keyboard.press('Escape')
+      if (process.env.ANTA_SELECT_SCREENSHOTS === '1') {
+        await page.locator('#rich').click()
+        await mkdir('tests/.test-output/select',{recursive:true})
+        await page.screenshot({animations:'disabled',path:resolve(`tests/.test-output/select/native-${name}-${theme}-${mode}.png`)})
+        await page.keyboard.press('Escape')
+      }
+    }
+  })
+
+  test.fast(`${name}: zero and empty sizes retain native dropdown styling`, async t => {
+    const page = await browsers.get(name).newPage()
+    t.after(() => page.close())
+    for (const theme of ['default', 'antithesis']) {
+      await page.goto(`${origin}/${theme}-light`)
+      const enhanced = await page.evaluate(() => CSS.supports('appearance', 'base-select'))
+      const select = page.locator('#plain')
+      for (const size of ['0', '', '1']) {
+        await select.evaluate((node, value) => node.setAttribute('size', value), size)
+        assert.equal((await select.boundingBox()).height, 28, `${theme}: size=${JSON.stringify(size)}`)
+        if (enhanced) {
+          assert.equal(await select.evaluate(node => getComputedStyle(node).appearance), 'base-select')
+          await select.click()
+          assert.equal(await select.evaluate(node => node.matches(':open')), true)
+          await select.getByRole('option', { name: 'File path', exact: true }).click()
+          assert.equal(await select.inputValue(), 'file')
+        }
+      }
+      await select.evaluate(node => node.setAttribute('size', '4'))
+      assert.notEqual(await select.evaluate(node => getComputedStyle(node).appearance), 'base-select')
+      assert.ok((await select.boundingBox()).height > 28, 'explicit listboxes retain multiple visible rows')
     }
   })
 

@@ -241,7 +241,9 @@ if (hasStructuredBreadcrumbs && title) {
         <span class="topbar-brand">
           <AntaLogo size={24} compact style={{ borderRadius: '1000px', border: '1px solid var(--border-3-brand)' }} />
           Anta
-          <Tag value={npmVersion} aria-label={`npm package version ${npmVersion}`} />
+          <a class="version-link" href="/changelog/" aria-label={`Changelog for version ${npmVersion}`}>
+            <Tag value={npmVersion} />
+          </a>
         </span>
       </div>
       <div class="topbar-center">
@@ -788,6 +790,17 @@ if (hasStructuredBreadcrumbs && title) {
 
   .mobile-menu-toggle {
     display: none;
+  }
+
+  .version-link {
+    display: inline-flex;
+    border-radius: 1000px;
+    text-decoration: none;
+  }
+
+  .version-link:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
   }
 
   .mobile-menu-toggle,

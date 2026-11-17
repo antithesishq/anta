@@ -232,11 +232,12 @@ if (hasStructuredBreadcrumbs && title) {
           class="mobile-menu-toggle"
           size="small"
           priority="tertiary"
-          icon="menu"
           aria-label="Open navigation"
           aria-controls="site-navigation"
           aria-expanded="false"
-        />
+        >
+          <Icon shape="menu" size={16} />
+        </Button>
         <span class="topbar-brand">
           <AntaLogo size={24} compact style={{ borderRadius: '1000px', border: '1px solid var(--border-3-brand)' }} />
           Anta
@@ -787,6 +788,10 @@ if (hasStructuredBreadcrumbs && title) {
 
   .mobile-menu-toggle {
     display: none;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    justify-content: center;
   }
 
   .topbar-center {

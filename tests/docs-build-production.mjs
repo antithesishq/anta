@@ -133,7 +133,7 @@ for (const engine of engines) test(`${engine.name()}: stickers retain their requ
 for (const engine of engines) test(`${engine.name()}: package TypeScript references are linked and styled`, async t => {
   const { page, errors } = await productionPage(t, engine)
   for (const { label, path, name, symbol } of [
-    { label: 'Plot', path: 'plot/reference', name: '@antadesign/plot', symbol: 'Plot' },
+    { label: 'Plot package', path: 'plot/reference', name: '@antadesign/plot', symbol: 'Plot' },
     { label: 'Virtual Scroll', path: 'virtual-scroll/reference', name: '@antadesign/virtual-scroll', symbol: 'VirtualScroll' },
   ]) {
     await page.goto('https://anta.test/')

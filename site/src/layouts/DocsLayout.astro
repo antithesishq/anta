@@ -236,8 +236,8 @@ if (hasStructuredBreadcrumbs && title) {
           aria-controls="site-navigation"
           aria-expanded="false"
         />
-        <Button href="/" size="small" priority="quaternary" tone="brand" aria-label="Anta home">
-          <AntaLogo size={16} compact />
+        <Button class="topbar-home" href="/" size="small" priority="quaternary" tone="brand" aria-label="Anta home">
+          <AntaLogo size={24} compact />
           Anta
         </Button>
       </div>
@@ -774,6 +774,11 @@ if (hasStructuredBreadcrumbs && title) {
     width: max(222px, calc((100% - 960px + var(--topbar-sidebar-balance)) / 2 - 12px));
     min-width: 222px;
     gap: 8px;
+  }
+
+  .topbar-home {
+    height: 32px;
+    padding: 4px 10px 4px 5px;
   }
 
   .mobile-menu-toggle {

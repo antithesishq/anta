@@ -18,7 +18,7 @@ test('Plot pages retain working links, unique anchors, and one page title', asyn
   const documents = new Map()
   async function document(path) {
     if (documents.has(path)) return documents.get(path)
-    const html = await readFile(new URL(`.${path}index.html`, dist), 'utf8')
+    const html = await readFile(new URL(`.${path}${path.endsWith('/') ? 'index.html' : ''}`, dist), 'utf8')
     const nodes = []
     function visit(node) {
       nodes.push(node)
@@ -97,6 +97,60 @@ for (const engine of engines) test(`${engine.name()}: theme chevron is visible o
   assert.ok(appearance.width > 0 && appearance.height > 0)
   assert.notEqual(appearance.mask, 'none')
   assert.equal(appearance.slotDisplay, 'flex')
+  assert.deepEqual(errors, [])
+})
+
+for (const engine of engines) test(`${engine.name()}: stickers retain their requested size after ClientRouter navigation`, async t => {
+  const { page, errors } = await productionPage(t, engine)
+  await page.goto('https://anta.test/stickers/', { waitUntil: 'domcontentloaded' })
+  for (let visit = 0; visit < 2; visit++) {
+    for (const animated of [false, true]) {
+      if (animated) await page.getByRole('tab', { name: 'Animated', exact: true }).click()
+      const selector = animated ? 'a-sticker-animated' : 'a-sticker'
+      await page.waitForFunction(selector => document.querySelector(selector)?.shadowRoot?.querySelector('svg'), selector)
+      const dimensions = await page.locator(selector).first().evaluate(el => {
+        const rect = node => {
+          const { width, height } = node.getBoundingClientRect()
+          return [width, height]
+        }
+        return {
+          host: rect(el),
+          container: rect(el.shadowRoot.querySelector('[part="container"]')),
+        }
+      })
+      assert.deepEqual(dimensions, { host: [174, 174], container: [174, 174] })
+    }
+    if (visit === 0) {
+      await page.locator('.sidebar a[href="/"]').click()
+      await page.waitForURL('https://anta.test/')
+      await page.locator('.sidebar a[href="/stickers/"]').click()
+      await page.waitForURL('https://anta.test/stickers/')
+    }
+  }
+  assert.deepEqual(errors, [])
+})
+
+for (const engine of engines) test(`${engine.name()}: package TypeScript references are linked and styled`, async t => {
+  const { page, errors } = await productionPage(t, engine)
+  for (const { label, path, name, symbol } of [
+    { label: 'Plot package', path: 'plot/reference', name: '@antadesign/plot', symbol: 'Plot' },
+    { label: 'Virtual Scroll', path: 'virtual-scroll/reference', name: '@antadesign/virtual-scroll', symbol: 'VirtualScroll' },
+  ]) {
+    await page.goto('https://anta.test/')
+    const link = page.locator(`.sidebar a[href="/${path}/index.html"]`)
+    assert.equal((await link.textContent()).trim(), label)
+    assert.equal(await link.getAttribute('href'), `/${path}/index.html`)
+    assert.equal(await link.getAttribute('data-astro-reload'), '')
+    await link.click()
+    await page.waitForURL(`https://anta.test/${path}/index.html`)
+    assert.equal(await page.title(), name)
+    await page.getByRole('link', { name: 'Back to Anta docs', exact: true }).waitFor()
+    const stylesheet = page.locator('link[href="assets/anta-theme.css"]')
+    assert.equal(await stylesheet.count(), 1)
+    await page.goto(`https://anta.test/${path}/functions/index.${symbol}.html`)
+    assert.match(await page.locator('.tsd-page-title h1').textContent(), new RegExp(symbol))
+    assert.ok(await page.locator('.tsd-signature').count() > 0)
+  }
   assert.deepEqual(errors, [])
 })
 
@@ -215,6 +269,39 @@ for (const engine of engines) {
     assert.deepEqual(errors, [])
   })
 
+  test(`${engine.name()}: sidebar destination stays highlighted until navigation commits`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/button/')
+    let release
+    const ready = new Promise(resolve => { release = resolve })
+    await page.route('https://anta.test/text/', async route => {
+      await ready
+      await route.fallback()
+    })
+    const destination = page.locator('.sidebar a[href="/text/"]')
+    try {
+      await destination.click()
+      await page.waitForFunction(() => {
+        const target = document.querySelector('.sidebar a[data-navigation-target]')
+        const current = document.querySelector('.sidebar a[aria-current="page"]')
+        return target && current && getComputedStyle(target).backgroundColor === getComputedStyle(current).backgroundColor
+      })
+      assert.equal(await destination.getAttribute('data-navigation-target'), '')
+      assert.equal(await destination.getAttribute('aria-current'), null)
+      const background = await destination.evaluate(el => getComputedStyle(el).backgroundColor)
+      await page.mouse.move(0, 0)
+      assert.equal(await destination.evaluate(el => getComputedStyle(el).backgroundColor), background)
+      release()
+      await page.waitForURL('https://anta.test/text/')
+      await page.waitForFunction(() => document.querySelector('.sidebar a[href="/text/"]')?.getAttribute('aria-current') === 'page')
+      assert.equal(await destination.getAttribute('data-navigation-target'), null)
+      assert.equal(await destination.evaluate(el => getComputedStyle(el).backgroundColor), background)
+    } finally {
+      release()
+    }
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: Plot navigation expands, persists, and follows page history`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/button/')
@@ -222,7 +309,7 @@ for (const engine of engines) {
     const children = sidebar.getByRole('list', { name: 'Plot documentation', includeHidden: true })
     assert.equal(await children.isVisible(), false)
     await sidebar.evaluate(element => { element.dataset.testPersist = 'true' })
-    await sidebar.getByRole('link', { name: 'Plot', exact: true }).click()
+    await sidebar.locator('a[href="/plot/"]').click()
     await page.waitForURL('https://anta.test/plot/')
     await children.waitFor({ state: 'visible' })
     assert.equal(await children.isVisible(), true)
@@ -232,9 +319,6 @@ for (const engine of engines) {
       await page.waitForURL(`https://anta.test/plot/${name.toLowerCase()}/`)
       await page.getByRole('heading', { level: 1, name, exact: true }).waitFor()
       await children.locator(`a[href="/plot/${name.toLowerCase()}/"][aria-current="page"]`).waitFor()
-      const breadcrumbs = page.getByRole('navigation', { name: 'Site breadcrumb' })
-      assert.equal(await breadcrumbs.getByRole('button', { name: 'Plot', exact: true }).getAttribute('href'), '/plot/')
-      assert.equal((await breadcrumbs.locator('[aria-current="page"]').textContent()).trim(), name)
       assert.equal((await children.locator('[aria-current="page"]').textContent()).trim(), name)
       assert.equal(await sidebar.locator('a[href="/plot/"]').getAttribute('data-active-parent'), '')
       await page.waitForFunction(() => [...document.querySelectorAll('main a-plot canvas')].some(canvas => canvas.width > 0))
@@ -246,7 +330,7 @@ for (const engine of engines) {
     assert.equal((await children.locator('[aria-current="page"]').textContent()).trim(), 'Rule')
     await page.goForward()
     await page.waitForURL('https://anta.test/plot/custom/')
-    await page.getByRole('navigation', { name: 'Site breadcrumb' }).getByRole('button', { name: 'Plot', exact: true }).click()
+    await sidebar.locator('a[href="/plot/"]').click()
     await page.waitForURL('https://anta.test/plot/')
     await page.locator('main').getByRole('link', { name: 'Explore stacked bars series' }).click()
     await page.waitForURL('https://anta.test/plot/bar/#stacked-bars')
@@ -257,18 +341,15 @@ for (const engine of engines) {
     await page.goto('https://anta.test/plot/scatter/')
     assert.equal(await children.isVisible(), true)
     await page.setViewportSize({ width: 390, height: 844 })
-    const breadcrumbs = page.getByRole('navigation', { name: 'Site breadcrumb' })
-    assert.equal(await breadcrumbs.getByRole('button', { name: 'Plot', exact: true }).isVisible(), true)
-    assert.equal(await breadcrumbs.locator('[aria-current="page"]').isVisible(), true)
-    const currentLabel = breadcrumbs.locator('[aria-current="page"] a-button-label')
-    assert.equal(await currentLabel.evaluate(element => element.scrollWidth <= element.clientWidth), true,
-      'the current series name must fit in the mobile breadcrumb')
-    await breadcrumbs.getByRole('button', { name: 'Anta', exact: true }).click()
+    const menu = page.getByRole('button', { name: 'Open navigation', exact: true })
+    await menu.click()
     await page.waitForFunction(() => document.body.dataset.menuOpen === 'true')
+    assert.equal(await menu.getAttribute('aria-expanded'), 'true')
     assert.equal(await children.isVisible(), true)
     await children.getByRole('link', { name: 'Line', exact: true }).click()
     await page.waitForURL('https://anta.test/plot/line/')
-    await breadcrumbs.getByRole('button', { name: 'Plot', exact: true }).click()
+    await menu.click()
+    await sidebar.locator('a[href="/plot/"]').click()
     await page.waitForURL('https://anta.test/plot/')
     assert.notEqual(await page.locator('body').getAttribute('data-menu-open'), 'true')
     assert.deepEqual(errors, [])

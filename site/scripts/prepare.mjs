@@ -59,18 +59,28 @@ const api = () => cached('api', [
   '--plugin', './lib/union-source-order.mjs',
 ]))
 
-const reference = () => cached('reference', [
+const referenceInputs = [
   'src', 'site/typedoc.reference.mjs', 'site/lib/union-source-order.mjs',
   'site/lib/doc-review-status.mjs', 'site/src/styles/typedoc-reference.css',
   'site/src/scripts/typedoc-reference.js', 'typedoc-theme/src',
   'typedoc-theme/dist', 'typedoc-theme/package.json',
-], [
-  'site/public/reference/index.html',
-  'site/public/reference/assets/anta-theme.css',
-  'site/public/reference/assets/anta-theme.js',
-], () => cli('typedoc', [
-  '--options', 'typedoc.reference.mjs',
-]))
+]
+
+const referenceProjects = [
+  { name: 'reference', config: 'typedoc.reference.mjs', output: 'reference', inputs: [] },
+  {
+    name: 'reference-plot', config: 'typedoc.plot.reference.mjs', output: 'plot/reference',
+    inputs: ['plot/src', 'plot/tsconfig.json', 'plot/tsconfig.build.json', 'plot/package.json'],
+  },
+  {
+    name: 'reference-virtual-scroll', config: 'typedoc.virtual-scroll.reference.mjs', output: 'virtual-scroll/reference',
+    inputs: ['virtual-scroll/src', 'virtual-scroll/tsconfig.build.json', 'virtual-scroll/package.json'],
+  },
+]
+
+const reference = () => together(referenceProjects.map(({ name, config, output, inputs }) =>
+  cached(name, [...referenceInputs, `site/${config}`, ...inputs], [`site/public/${output}`],
+    () => cli('typedoc', ['--options', config]))))
 
 const iframe = () => cached('iframe', [
   'dist', 'site/scripts/build-iframe-runtime.mjs',

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select } from '@antadesign/anta'
+import { Button, Select } from '@antadesign/anta'
 
 /**
- * Sidebar palette switcher. Switching a theme swaps the href of the stable
+ * Palette switcher. Switching a theme swaps the href of the stable
  * palette <link> that DocsLayout.astro renders on every page (persisted across
  * ClientRouter swaps). The choice lives in localStorage under `anta-palette`;
  * DocsLayout's inline head script applies it before paint on cold loads, so
@@ -40,6 +40,15 @@ function applyPalette(v: string) {
 
 export default function ThemeSwitcher() {
   const [value, setValue] = useState('antithesis')
+  const [compact, setCompact] = useState(false)
+
+  useEffect(() => {
+    const media = matchMedia('(max-width: 640px)')
+    const sync = () => setCompact(media.matches)
+    sync()
+    media.addEventListener('change', sync)
+    return () => media.removeEventListener('change', sync)
+  }, [])
 
   // Reflect the stored choice once mounted (the inline head script already
   // applied the stylesheet before paint).
@@ -52,7 +61,18 @@ export default function ThemeSwitcher() {
     <Select
       aria-label="Theme"
       className="theming-select"
-      size="small"
+      leading="Theme:"
+      renderTrigger={compact ? ({ open, selected }) => (
+        <Button
+          className="theming-select"
+          priority="tertiary"
+          icon="theme"
+          iconTrailing="chevron-down"
+          aria-label={`Theme: ${selected[0]?.label ?? value}`}
+          aria-haspopup="menu"
+          aria-expanded={open ? 'true' : 'false'}
+        />
+      ) : undefined}
       value={value}
       onValueChange={(v) => {
         if (v === null) return

@@ -8,6 +8,6 @@ export const STANDALONE_PAGES = [
   { id: 'theming', path: '/theming/', source: 'src/pages/theming.mdx', nav: { group: 'design', order: 10, icon: 'theme' }, exportOrder: 60 },
   { id: 'accessibility', path: '/accessibility/', source: 'src/pages/accessibility/index.mdx', nav: { group: 'design', order: 30, icon: 'hat-glasses' }, exportOrder: 70 },
   { id: 'credits', path: '/credits/', source: 'src/pages/credits.mdx', nav: { group: 'design', order: 40, icon: 'heart-handshake' }, exportOrder: 80 },
-  { id: 'changelog', path: '/changelog/', source: 'src/pages/changelog.astro', title: 'Changelog', nav: { group: 'setup', order: 30, icon: 'scroll-text' }, exportOrder: 90, exportContent: 'changelog' },
+  { id: 'changelog', path: '/changelog/', source: 'src/pages/changelog.astro', title: 'Changelog', nav: false, exportOrder: 90, exportContent: 'changelog' },
   { id: 'changelog/dev', path: '/changelog/dev/', source: 'src/pages/changelog/dev.astro', title: 'Changelog — dev releases', breadcrumbLabel: 'Changelog', nav: false, export: false },
 ]

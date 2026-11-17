@@ -48,6 +48,12 @@ cleanup. Use the root `pnpm run stop` command to stop development servers.
 
 ## Build preparation
 
+`pnpm --filter anta-site docs:reference` generates Anta, Plot, and Virtual Scroll
+TypeDoc references from their public entry points, using the shared Anta theme.
+Each reference has a separate cache record and output directory. Sidebar links
+use explicit `index.html` URLs because Astro dev does not serve public directory
+indexes at trailing-slash URLs.
+
 `integrations/site-build.mjs` makes `astro build` produce the complete static
 site. It runs `scripts/prepare.mjs docs` in `astro:config:done`, before content
 sync can import generated files. API data and the iframe manifest finish before

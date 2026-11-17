@@ -304,9 +304,11 @@ if (hasStructuredBreadcrumbs && title) {
             </menu>
           </>
         ))}
-        <h4>API reference</h4>
+        <h4>Type Script reference</h4>
         <menu>
-          <li><a href="/reference/" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta TypeScript</a></li>
+          <li><a href="/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta components</a></li>
+          <li><a href="/plot/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Plot</a></li>
+          <li><a href="/virtual-scroll/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Virtual Scroll</a></li>
         </menu>
       </aside>
       <div transition:persist="search-dialog"><SearchDialog client:load /></div>
@@ -335,7 +337,7 @@ if (hasStructuredBreadcrumbs && title) {
     <div class="backdrop" aria-hidden="true"></div>
 
     <script>
-      import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'
+      import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client'
       import { clearSearchHighlighting, startSearchHighlighting } from '../../lib/search/highlight'
 
       // Runs once per session (ClientRouter never re-runs a seen script), so
@@ -395,8 +397,32 @@ if (hasStructuredBreadcrumbs && title) {
         document.documentElement.toggleAttribute('data-navigation-pending', pending)
         document.documentElement.setAttribute('aria-busy', pending ? 'true' : 'false')
       }
-      document.addEventListener('astro:before-preparation', () => setNavigationPending(true))
-      document.addEventListener('astro:after-swap', () => setNavigationPending(false))
+      // Hold the destination's fill until the loaded page takes over aria-current.
+      const setSidebarDestination = (pathname?: string) => {
+        const destination = pathname?.replace(/\/+$/, '') || '/'
+        for (const link of document.querySelectorAll<HTMLAnchorElement>('.sidebar menu a')) {
+          const path = new URL(link.href).pathname.replace(/\/+$/, '') || '/'
+          link.toggleAttribute('data-navigation-target', pathname !== undefined && path === destination)
+        }
+      }
+      let navigationSignal: AbortSignal | undefined
+      document.addEventListener('astro:before-preparation', (event) => {
+        const navigation = event as TransitionBeforePreparationEvent
+        navigationSignal = navigation.signal
+        setNavigationPending(true)
+        setSidebarDestination(navigation.to.pathname)
+        navigation.signal.addEventListener('abort', () => {
+          if (navigationSignal !== navigation.signal) return
+          setSidebarDestination()
+          setNavigationPending(false)
+        }, { once: true })
+      })
+      document.addEventListener('astro:after-swap', () => {
+        syncSidebarNavigation()
+        setSidebarDestination()
+        navigationSignal = undefined
+        setNavigationPending(false)
+      })
 
       document.addEventListener('click', (e) => {
         const target = e.target as HTMLElement
@@ -486,8 +512,7 @@ if (hasStructuredBreadcrumbs && title) {
 
       // The persisted sidebar keeps the previous page's aria-current:
       // re-point it at the new URL. Idempotent on the initial load.
-      document.addEventListener('astro:page-load', () => {
-        applyTheme(document.documentElement.classList.contains('dark'))
+      function syncSidebarNavigation() {
         const here = location.pathname.replace(/\/+$/, '') || '/'
         for (const a of document.querySelectorAll<HTMLAnchorElement>('.sidebar menu a')) {
           const linkPath = new URL(a.href).pathname.replace(/\/+$/, '') || '/'
@@ -501,6 +526,10 @@ if (hasStructuredBreadcrumbs && title) {
           children.hidden = !active
           link.toggleAttribute('data-active-parent', Boolean(active && active !== link))
         }
+      }
+      document.addEventListener('astro:page-load', () => {
+        applyTheme(document.documentElement.classList.contains('dark'))
+        syncSidebarNavigation()
         syncSidebarSearch()
       })
       syncSidebarSearch()
@@ -678,7 +707,7 @@ if (hasStructuredBreadcrumbs && title) {
     display: flex;
     align-items: center;
     gap: 0.75ch;
-    padding: 2px 8px 4px;
+    padding: 3px 8px;
     border-radius: var(--radius-sm, 4px);
     color: var(--text-3);
     background: transparent;
@@ -717,7 +746,8 @@ if (hasStructuredBreadcrumbs && title) {
   .sidebar :global(menu li a[data-active-parent]) {
     color: var(--text-1);
   }
-  .sidebar :global(menu li a[aria-current="page"]) {
+  .sidebar :global(menu li a[aria-current="page"]),
+  .sidebar :global(menu li a[data-navigation-target]) {
     color: var(--text-2-brand);
     background: light-dark(
       color-mix(in oklch, currentColor 8%, transparent),
@@ -726,7 +756,8 @@ if (hasStructuredBreadcrumbs && title) {
   }
   .sidebar :global(menu li a:hover > a-icon),
   .sidebar :global(menu li a:focus-visible > a-icon),
-  .sidebar :global(menu li a[aria-current="page"] > a-icon) {
+  .sidebar :global(menu li a[aria-current="page"] > a-icon),
+  .sidebar :global(menu li a[data-navigation-target] > a-icon) {
     color: var(--text-2-brand);
   }
   .sidebar :global(a:focus-visible) {

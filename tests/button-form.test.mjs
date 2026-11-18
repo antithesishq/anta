@@ -23,6 +23,22 @@ before(async () => {
 
 after(async () => browser?.close())
 
+test('Button gathers repeated field names without losing values or special keys', async t => {
+  const page = await browser.newPage()
+  t.after(() => page.close())
+  await page.setContent('<form><input name="single" value="one"><input name="many" value="first"><input name="many" value="second"><input name="many" value="third"><input name="__proto__" value="safe"><a-button type="submit"></a-button></form>')
+  await page.addScriptTag({ content: script })
+  const result = await page.evaluate(() => {
+    const form = document.querySelector('form')
+    let gathered
+    form.addEventListener('submit', event => event.preventDefault())
+    form.addEventListener('submitdetailed', event => gathered = event.detail.formData)
+    form.querySelector('a-button').click()
+    return JSON.stringify(gathered)
+  })
+  assert.deepEqual(JSON.parse(result), {single:'one',many:['first','second','third'],['__proto__']:'safe'})
+})
+
 test('Button uses only HTML forms for explicit and ancestor targets', async t => {
   const page = await browser.newPage()
   t.after(() => page.close())

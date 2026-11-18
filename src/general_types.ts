@@ -736,6 +736,10 @@ export interface AInputAttributes extends BaseAttributes {
   /** Controlled value (string). Reflected to the shadow control only when it
    *  differs, so the caret survives re-renders. */
   value?: string
+  /** JSON-encoded submitted value: a string, number, boolean, array of those
+   * primitives, or null to omit the field. Omit to submit the live text. The
+   * element's `formValue` property accepts the decoded value. */
+  'form-value'?: string
   /** Initial value for the uncontrolled case; read once on connect. */
   defaultvalue?: string
   /** Render a `<textarea>` rather than `<input>`. Presence-based. */
@@ -775,6 +779,8 @@ export interface AInputAttributes extends BaseAttributes {
   type?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'number'
   /** Form field name — submitted via ElementInternals. */
   name?: string
+  /** ID of the associated form when outside it. */
+  form?: string
   /** Placeholder shown when empty. */
   placeholder?: string
   /** Focus this field when its containing `a-dialog` opens. Presence-based. */
@@ -802,6 +808,8 @@ export interface AInputAttributes extends BaseAttributes {
   /** Fires after the field has been cleared (bubbling `clearinput` event).
    *  All-lowercase so it binds in React *and* Preact. */
   onclearinput?: (e: any) => void
+  /** Cancelable notification before form reset, for composed value owners. */
+  oninputformreset?: (e: Event) => void
   'aria-invalid'?: 'true' | 'false' | boolean
   'aria-label'?: string
 }

@@ -5,8 +5,14 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values. Named button-mode Inputs submit their text when `formValue` is omitted; pass `null` to omit the field.
+- [Select](/select/#using-select-in-forms) submits its selection under `name` and restores uncontrolled defaults on form reset.
+
 ### Fixed
 
+- [Button form gathering](/button/#form-submission) preserves repeated field names as arrays in `submitdetailed` instead of keeping only the last value.
 - Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.
 - Disabling [Select](/select/#size-and-status) also disables its open menu without clearing the selection.
 - [Native selects](/select/#native-html-select) style the field and dropdown without custom trigger markup. Focus rings follow the theme.

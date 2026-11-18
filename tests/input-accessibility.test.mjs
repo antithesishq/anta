@@ -270,7 +270,7 @@ test('raw Input delegates standard ARIA and tracks later updates and removal', a
     propertyRemoved: false,
     compoundPropertyUpdated: 'grid',
     compoundPropertyRemoved: false,
-    buttonSubmitted: false,
+    buttonSubmitted: true,
   })
 
   const client = await page.context().newCDPSession(page)
@@ -1269,7 +1269,7 @@ test('legacy Select raw field tags retain styling, labels, hints, and popup beha
   assert.equal(await field.locator('a-menu').evaluate(menu => menu.isOpen), true)
 })
 
-test('Select triggers preserve their display on form reset and never block or submit the form', async t => {
+test('Select triggers preserve their display on reset and submit selections without blocking the form', async t => {
   const page = await pageFor(t)
   const result = await page.evaluate(() => {
     const host = [...document.querySelectorAll('a-input[button]')].find(host => host.value.startsWith('Engineering'))
@@ -1297,5 +1297,5 @@ test('Select triggers preserve their display on form reset and never block or su
     form.append(editable)
     return { ...result, editableBlocks: !form.checkValidity() }
   })
-  assert.deepEqual(result, { valid: true, formData: [], preserved: true, invalid: 'true', changes: 0, editableBlocks: true })
+  assert.deepEqual(result, { valid: true, formData: [['department', 'Engineering department with a very long name']], preserved: true, invalid: 'true', changes: 0, editableBlocks: true })
 })

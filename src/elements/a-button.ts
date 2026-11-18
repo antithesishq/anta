@@ -225,12 +225,18 @@ function handleClick(e: MouseEvent) {
     form.requestSubmit();
     // Richer event so listeners can inspect which button submitted.
     const formData = new FormData(form);
+    const values = new Map<string, FormDataEntryValue | FormDataEntryValue[]>();
+    for (const [name, value] of formData) {
+      const previous = values.get(name);
+      if (Array.isArray(previous)) previous.push(value);
+      else values.set(name, previous === undefined ? value : [previous, value]);
+    }
     form.dispatchEvent(
       new CustomEvent("submitdetailed", {
         bubbles: true,
         cancelable: true,
         detail: {
-          formData: Object.fromEntries(formData.entries()),
+          formData: Object.fromEntries(values),
           submitter: {
             tag: el.tagName.toLowerCase(),
             attrs: Object.fromEntries(

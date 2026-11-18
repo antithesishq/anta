@@ -263,6 +263,12 @@ Input submits its value under `name` with the surrounding form, and
 `new FormData(form)` includes it. Native constraints such as `required` block
 normal submission while invalid. A reset button restores `defaultValue` on uncontrolled fields.
 
+Pass `formValue` to submit a value independently of the displayed text, such as
+`<Input button name="country" value="United States" formValue="us" />`.
+Omit `formValue` or pass `undefined` to submit the current text. Pass `null` to
+omit the field, or an array to submit repeated entries under `name`. Numbers
+and booleans become strings. Use `form` to associate an Input with a form by ID.
+
 ## Types and validation
 
 ```tsx
@@ -442,6 +448,8 @@ Narrow the preview to see the layout adjust.
 | `defaultValue?` | string | — | Initial value for an uncontrolled field, restored on form reset. |
 | `dimActions?` | boolean | — | Keep leading, trailing, and clear content subtle until someone hovers over or focuses the field. |
 | `disabled?` | boolean | — | Disable the field. |
+| `form?` | string | — | ID of the form to associate with when outside that form. |
+| `formValue?` | InputFormValue | — | Submit this value instead of the displayed text. Omit or pass undefined to submit the live text, including in button mode. Null omits the field. Arrays submit repeated entries under `name`. Numbers and booleans become strings. |
 | `hint?` | ReactNode | — | Persistent help or feedback below the field. `status` colors the message and adds a status icon. |
 | `inputMode?` | 'none' \| 'text' \| 'decimal' \| 'numeric' \| 'tel' \| 'search' \| 'email' \| 'url' | — | Virtual keyboard hint. Overrides the value derived from `type` without changing validation. |
 | `label?` | ReactNode | — | Explain what to enter. Accepts text or JSX and also names the field for screen readers. |
@@ -458,6 +466,7 @@ Narrow the preview to see the layout adjust.
 | `onClearClick?` | (e) => void | — | Fires before the built-in clear action. Call `e.preventDefault()` synchronously to keep the value and cancel `onClearInput`. Corresponds to the cancelable, bubbling `clearclick` event. |
 | `onClearInput?` | (e) => void | — | Fires after clearing, following `onInput` and `onChange`. Does not fire when clearing is canceled. Corresponds to the bubbling `clearinput` event. |
 | `onFocus?` | (e) => void | — | Fires when the field gains focus. |
+| `onFormReset?` | (e) => void | — | Fires before form reset. Prevent the default to let a composed field restore its own value and displayed text. |
 | `onInput?` | (e) => void | — | Fires when editing changes the value or the field is cleared. Read `e.target.value`. |
 | `onValueChange?` | (event, attrs) => void | — | Receive the current text, field name, and validation result while editing and when an edit is committed, including clear. Can run more than once for the same value. Use `event.type` to distinguish the events. |
 | `pattern?` | string | — | Validation pattern for supported single-line types. Checks validity without preventing typing. |

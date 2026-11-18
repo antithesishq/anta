@@ -7,7 +7,7 @@ import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select
 import { prepareSelectOptions, type SelectNode } from './select-tree'
 import type { BaseProps, OptionPresentationProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { Input } from './Input'
+import { Input, type InputProps } from './Input'
 import { Icon } from './Icon'
 import { Menu, type MenuProps } from './Menu'
 import { MenuItem } from './MenuItem'
@@ -120,6 +120,9 @@ export interface EmptyState {
 /** Snapshot passed to `renderTrigger` so a custom trigger can reflect the current
  *  selection and open state. */
 export interface TriggerState<V extends OptionValue = string> {
+  /** Spread onto a custom `Input button` trigger to preserve form submission
+   * and reset. Other trigger types must provide their own form integration. */
+  formProps: Pick<InputProps, 'name' | 'form' | 'formValue' | 'onFormReset'>
   /** Whether the menu is open — use it for `aria-expanded` and a chevron. */
   open: boolean
   /** The current selection: a value or `null` in single mode, an array in
@@ -164,6 +167,13 @@ export type SelectChangeAttrs<V extends OptionValue = string> =
  *  (and kept as an interface intersected — not a union base via `extends`) so its
  *  members read as `Select`'s *own* props in the generated docs, not inherited. */
 export interface SelectCommonProps<V extends OptionValue = string> extends Omit<BaseProps, 'children'> {
+  /** Form field name. The default Input trigger submits option values rather
+   * than labels. Multiple selections submit repeated entries. Empty selections
+   * submit nothing. With `renderTrigger`, spread `state.formProps` onto an Input
+   * trigger to retain submission and reset. */
+  name?: string
+  /** ID of the associated form when outside it. */
+  form?: string
   /** The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s
    *  (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and
    *  submenus nest and mix with plain options. Selection stays global (one `value`,
@@ -505,6 +515,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     indicator,
     value,
     defaultValue,
+    name,
+    form,
     onValueChange,
     placeholder,
     icon,
@@ -546,6 +558,15 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // Uncontrolled selection lives here (component state re-render is allowed where
   // element DOM mutation isn't). `open` drives the chevron + aria-expanded.
   const [currentRaw, setInternal] = useValueMirror<V | V[] | null>(value, defaultValue ?? (multiple ? [] : null))
+  const formProps: TriggerState<V>['formProps'] = {
+    name,
+    form,
+    formValue: currentRaw,
+    onFormReset: event => {
+      event.preventDefault()
+      if (!controlled) setInternal(defaultValue ?? (multiple ? [] : null))
+    },
+  }
   const [open, setOpen] = useState(false)
   // Filter query (reset when the menu closes — see the Menu's onStateChange).
   const [query, setQuery] = useState('')
@@ -757,7 +778,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   return (
     <>
       {renderTrigger ? (
-        renderTrigger({ open, value: currentRaw, selected: selectedOptions, disabled: !!disabled, icon })
+        renderTrigger({ open, value: currentRaw, selected: selectedOptions, disabled: !!disabled, icon, formProps })
       ) : (
       <Input
         button
@@ -784,6 +805,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
           </a-select-chevron>
         }
         {...rest}
+        {...formProps}
       />
       )}
       {/* Anchors to the trigger (its previous sibling); opens on click. Single-select

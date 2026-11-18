@@ -82,6 +82,7 @@ before(async () => {
       const commit=node=>{${react ? "root??=createRoot(document.querySelector('#mount'));root.render(node)" : "render(node,document.querySelector('#mount'))"}};
       window.hydrateSelect=(initial={})=>{props={...initial};configure(h,React.Fragment,React,{hydratingEvents:true});${react ? "root=hydrateRoot(document.querySelector('#mount'),app({...handlers,...props}),{onRecoverableError:e=>recoverableErrors.push(e.message),onUncaughtError:e=>fatalErrors.push(e.message)})" : "hydrate(app({...handlers,...props}),document.querySelector('#mount'))"}};
       window.updateSelect=updates=>{props={...props,...updates};commit(app({...handlers,...props}))};
+      window.customSelectInput=()=>updateSelect({renderTrigger:state=>h(Input,{...state.formProps,id:'trigger',button:true,label:'Custom team',value:state.selected[0]?.label??'',disabled:state.disabled,'aria-haspopup':'dialog','aria-expanded':String(state.open)})});
       window.customIndicator=()=>updateSelect({renderIndicator:state=>h(Icon,{shape:state.selected?'check':'minus'})});
       window.renderHooks=()=>{customIndicator();updateSelect({renderSummary:selected=>selected.map(o=>o.label).join(' / '),renderEmpty:({query})=>h('span',{'data-empty':''},'No '+query)})};
       window.faceted=()=>{configure(h,React.Fragment,React);commit(h(SelectFaceted,{label:'Filters',searchable:true,defaultValue:{owner:[false]},onValueChange:(value,attrs)=>reports.push({value,attrs}),facets:['owner','assignee'].map(key=>({key,label:key,kind:'multiple',filter:true,options,renderOption:(option,state)=>h('span',{'data-facet':key,'data-option':String(option.value),'data-selected':String(state.selected)},option.label)}))}))};
@@ -226,6 +227,64 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
     }
   })
   for (const framework of ['React', 'Preact']) {
+    test.fast(`${name} ${framework}: form submission follows typed selection, ownership, and reset`,async t=>{
+      const page=await pageFor(t,engine,mode,framework)
+      await page.locator('#mount').evaluate((node,html)=>{
+        const form=document.createElement('form');form.id='selection-form';node.before(form);form.append(node);node.innerHTML=html
+        form.addEventListener('submit',event=>event.preventDefault())
+        const submit=document.createElement('a-button');submit.setAttribute('type','submit');submit.id='gather';form.append(submit)
+        form.addEventListener('submitdetailed',event=>window.gathered=event.detail.formData)
+      },renderers.get(framework)({name:'team'}))
+      const read=()=>page.locator('#selection-form').evaluate(form=>[...new FormData(form)])
+      await hydrate(page,mode,framework,{name:'team'})
+      assert.deepEqual(await read(),[['team','1']])
+      await page.locator('#trigger button').click()
+      await menu(page).locator('[data-option="false"]').click()
+      await page.waitForFunction(()=>new FormData(document.querySelector('#selection-form')).getAll('team').length===2)
+      assert.deepEqual(await read(),[['team','1'],['team','false']])
+      await page.locator('#gather').evaluate(button=>button.click())
+      assert.deepEqual(await page.evaluate(()=>gathered),{team:['1','false']})
+      await page.locator('form').evaluate(form=>form.reset())
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Alpha')
+      assert.deepEqual(await read(),[['team','1']])
+      assert.equal(await page.evaluate(()=>reports.length),1)
+      await page.evaluate(()=>updateSelect({selection:'single',value:false}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Beta')
+      assert.deepEqual(await read(),[['team','false']])
+      await page.locator('form').evaluate(form=>form.reset())
+      assert.deepEqual(await read(),[['team','false']])
+      for(const [value,expected] of [[null,[]],[[],[]],['',[['team','']]],[0,[['team','0']]]]) {
+        await page.evaluate(value=>updateSelect({value}),value)
+        await page.waitForFunction(value=>JSON.stringify(document.querySelector('#trigger').formValue)===JSON.stringify(value),value)
+        assert.deepEqual(await read(),expected)
+      }
+      await page.evaluate(()=>updateSelect({value:undefined,defaultValue:false}))
+      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))
+      await page.locator('form').evaluate(form=>form.reset())
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Beta')
+      assert.deepEqual(await read(),[['team','false']])
+      await page.evaluate(()=>updateSelect({disabled:true}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').hasAttribute('disabled'))
+      assert.deepEqual(await read(),[])
+      await page.evaluate(()=>updateSelect({disabled:false,name:'renamed'}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').name==='renamed')
+      assert.deepEqual(await read(),[['renamed','false']])
+      await page.evaluate(()=>customSelectInput())
+      await page.waitForFunction(()=>document.querySelector('#trigger').textContent.includes('Custom team'))
+      assert.deepEqual(await read(),[['renamed','false']])
+      await page.evaluate(()=>updateSelect({value:1}))
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Alpha')
+      await page.evaluate(()=>updateSelect({value:undefined}))
+      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))
+      await page.locator('form').evaluate(form=>form.reset())
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Beta')
+      assert.deepEqual(await read(),[['renamed','false']])
+      await page.locator('#trigger').evaluate(host=>{host.setAttribute('form','other');const other=document.createElement('form');other.id='other';document.body.append(other)})
+      assert.deepEqual(await read(),[])
+      assert.deepEqual(await page.locator('#other').evaluate(form=>[...new FormData(form)]),[['renamed','false']])
+      assert.equal(await page.locator('input[type="hidden"]').count(),0)
+      assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+    })
     test.fast(`${name} ${framework}: custom indicators retain external layout and row activation through SSR hydration`, async t => {
       const page=await pageFor(t,engine,mode,framework,false,false,true)
       assert.ok(await menu(page).locator('[data-indicator]').count()>0)

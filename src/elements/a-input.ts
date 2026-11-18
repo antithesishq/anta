@@ -284,8 +284,9 @@ export class AInputElement extends HTMLElementBase {
           const parsed: unknown = JSON.parse(value)
           const primitive = (v: unknown) => ['string', 'number', 'boolean'].includes(typeof v)
           decoded = parsed === null || primitive(parsed) || (Array.isArray(parsed) && parsed.every(primitive))
-            ? parsed as InputFormValue : null
-        } catch { decoded = null }
+            ? parsed as InputFormValue : undefined
+        } catch { /* Invalid attributes use the same fallback as an omitted override. */ }
+        if (decoded === undefined) console.warn('a-input: Invalid form-value; submitting the live value instead.')
       }
       this.formValue = decoded
       return
@@ -750,7 +751,7 @@ export class AInputElement extends HTMLElementBase {
   // --- Form-associated callbacks ---
   formResetCallback() {
     if (!this.dispatchEvent(new Event(INPUT_FORM_RESET_EVENT, { cancelable: true }))) return
-    if (inputValueIsControlled(this)) return
+    if (isButton(this.control) || inputValueIsControlled(this)) return
     this.value = this.getAttribute('defaultvalue') ?? ''
     // Notify composed uncontrolled fields so their state follows the form value.
     this.dispatchEvent(new Event('input', { bubbles: true }))

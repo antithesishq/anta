@@ -737,7 +737,8 @@ export interface AInputAttributes extends BaseAttributes {
    *  differs, so the caret survives re-renders. */
   value?: string
   /** JSON-encoded submitted value: a string, number, boolean, array of those
-   * primitives, or null to omit the field. Omit to submit the live text. The
+   * primitives, or null to omit the field. Omitted or invalid attributes submit
+   * the live text. Invalid attributes report a console warning. The
    * element's `formValue` property accepts the decoded value. */
   'form-value'?: string
   /** Initial value for the uncontrolled case; read once on connect. */

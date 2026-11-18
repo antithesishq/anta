@@ -83,6 +83,10 @@ before(async () => {
       window.hydrateSelect=(initial={})=>{props={...initial};configure(h,React.Fragment,React,{hydratingEvents:true});${react ? "root=hydrateRoot(document.querySelector('#mount'),app({...handlers,...props}),{onRecoverableError:e=>recoverableErrors.push(e.message),onUncaughtError:e=>fatalErrors.push(e.message)})" : "hydrate(app({...handlers,...props}),document.querySelector('#mount'))"}};
       window.updateSelect=updates=>{props={...props,...updates};commit(app({...handlers,...props}))};
       window.customSelectInput=()=>updateSelect({renderTrigger:state=>h(Input,{...state.formProps,id:'trigger',button:true,label:'Custom team',value:state.selected[0]?.label??'',disabled:state.disabled,'aria-haspopup':'dialog','aria-expanded':String(state.open)})});
+      window.customSelectInputWithoutForms=()=>updateSelect({renderTrigger:state=>{
+        window.customSelection=state.value;
+        return h(Input,{key:'legacy',id:'trigger',button:true,label:'Custom team',defaultValue:'Choose a team','aria-haspopup':'dialog','aria-expanded':String(state.open)});
+      }});
       window.customIndicator=()=>updateSelect({renderIndicator:state=>h(Icon,{shape:state.selected?'check':'minus'})});
       window.renderHooks=()=>{customIndicator();updateSelect({renderSummary:selected=>selected.map(o=>o.label).join(' / '),renderEmpty:({query})=>h('span',{'data-empty':''},'No '+query)})};
       window.faceted=()=>{configure(h,React.Fragment,React);commit(h(SelectFaceted,{label:'Filters',searchable:true,defaultValue:{owner:[false]},onValueChange:(value,attrs)=>reports.push({value,attrs}),facets:['owner','assignee'].map(key=>({key,label:key,kind:'multiple',filter:true,options,renderOption:(option,state)=>h('span',{'data-facet':key,'data-option':String(option.value),'data-selected':String(state.selected)},option.label)}))}))};
@@ -284,6 +288,25 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
       assert.deepEqual(await page.locator('#other').evaluate(form=>[...new FormData(form)]),[['renamed','false']])
       assert.equal(await page.locator('input[type="hidden"]').count(),0)
       assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+    })
+    test.fast(`${name} ${framework}: custom Input without form props preserves its label and selection on reset`,async t=>{
+      const page=await pageFor(t,engine,mode,framework)
+      await page.locator('#mount').evaluate(node=>{
+        const form=document.createElement('form');node.before(form);form.append(node)
+      })
+      await hydrate(page,mode,framework)
+      await page.evaluate(()=>customSelectInputWithoutForms())
+      await page.waitForFunction(()=>document.querySelector('#trigger').value==='Choose a team')
+      await page.locator('#trigger button').click()
+      await menu(page).locator('[data-option="false"]').click()
+      await page.waitForFunction(()=>customSelection.length===2)
+      await page.locator('form').evaluate(form=>{
+        window.triggerChanges=[]
+        for(const type of ['input','change'])form.addEventListener(type,event=>triggerChanges.push(event.type))
+        form.reset()
+      })
+      assert.equal(await page.locator('#trigger').evaluate(host=>host.value),'Choose a team')
+      assert.deepEqual(await page.evaluate(()=>({value:customSelection,events:triggerChanges,reports:reports.length})),{value:[1,false],events:[],reports:1})
     })
     test.fast(`${name} ${framework}: custom indicators retain external layout and row activation through SSR hydration`, async t => {
       const page=await pageFor(t,engine,mode,framework,false,false,true)

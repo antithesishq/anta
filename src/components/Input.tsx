@@ -65,7 +65,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    * submit the live text, including in button mode. Null omits the field. Arrays
    * submit repeated entries under `name`. Numbers and booleans become strings. */
   formValue?: InputFormValue
-  /** Initial value for an uncontrolled field, restored on form reset. */
+  /** Initial value for an uncontrolled field. Form reset restores it for editable
+   * fields; button-mode triggers preserve their current text. */
   defaultValue?: string
   /** Allow longer text and grow the field as someone types. Use `maxRows` to
    * limit growth or `rows` to keep a fixed height. */
@@ -166,8 +167,9 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   onFocus?: (e: any) => void
   /** Fires when the field loses focus. */
   onBlur?: (e: any) => void
-  /** Fires before form reset. Prevent the default to let a composed field restore
-   * its own value and displayed text. */
+  /** Fires on form reset before the field handles it. Prevent the default to let
+   * a composed field restore its own value and displayed text. Button-mode
+   * triggers preserve their text when no handler takes ownership. */
   onFormReset?: (e: Event) => void
   /** ARIA role for the native control, such as `combobox` for an InputAutocomplete
    * trigger. The element delegates this and standard `aria-*` props to its native

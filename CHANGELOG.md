@@ -7,15 +7,19 @@ changes are not listed.
 
 ### Added
 
-- [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values. Named button-mode Inputs submit their text when `formValue` is omitted; pass `null` to omit the field.
+- [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name` and restores uncontrolled defaults on form reset.
 
 ### Fixed
 
-- [Button form gathering](/button/#form-submission) preserves repeated field names as arrays in `submitdetailed` instead of keeping only the last value.
 - Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.
 - Disabling [Select](/select/#size-and-status) also disables its open menu without clearing the selection.
 - [Native selects](/select/#native-html-select) style the field and dropdown without custom trigger markup. Focus rings follow the theme.
+
+### Breaking
+
+- Named [button-mode Inputs](/input/#forms) now submit their displayed text when `formValue` is omitted. Pass `formValue={null}` to retain the previous behavior of omitting the field.
+- [Button form gathering](/button/#form-submission) returns an array for repeated field names in `submitdetailed.formData`, instead of keeping only the last entry. Unique field names retain scalar values.
 
 ## 0.3.38 — October 29, 2026
 

@@ -422,6 +422,52 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await field(page).evaluate(host=>host.setAttribute('disabled',''))
     assert.deepEqual(await read(),[])
   })
+  test.fast(`${name}: invalid submitted attributes fall back to live values and report a diagnostic`, async t => {
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    const warnings=[]
+    page.on('console',message=>{if(message.type()==='warning'&&message.text().includes('Invalid form-value'))warnings.push(message.text())})
+    for(const button of [false,true]) {
+      await mount(page,`<form><a-input name="choice" ${button?'button':''} defaultvalue="Visible"></a-input></form>`)
+      const read=()=>page.locator('form').evaluate(form=>[...new FormData(form)])
+      for(const invalid of ['not JSON','{}','[null]','[["nested"]]','']) {
+        await field(page).evaluate((host,invalid)=>{
+          host.setAttribute('form-value','"override"')
+          host.value='Live text'
+          host.setAttribute('form-value',invalid)
+        },invalid)
+        assert.deepEqual(await read(),[['choice','Live text']])
+        await field(page).evaluate(host=>host.value='Changed')
+        assert.deepEqual(await read(),[['choice','Changed']])
+      }
+      await field(page).evaluate(host=>host.setAttribute('form-value','null'))
+      assert.deepEqual(await read(),[])
+    }
+    await frames(page)
+    assert.equal(warnings.length,10)
+  })
+  test.fast(`${name}: button reset preserves live labels and values unless a form owner handles it`, async t => {
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<form><a-input button name="first"></a-input><a-input button name="second" defaultvalue="Initial"></a-input></form>')
+    const snapshot=()=>page.locator('form').evaluate(form=>{
+      return {values:[...form.querySelectorAll('a-input')].map(host=>({value:host.value,label:host.shadowRoot.querySelector('button').textContent})),entries:[...new FormData(form)],events:window.resetEvents}
+    })
+    await page.locator('form').evaluate(form=>{
+      window.resetEvents=[]
+      for(const [index,host] of [...form.querySelectorAll('a-input')].entries()) {
+        host.value=`Chosen ${index}`
+        for(const type of ['input','change'])host.addEventListener(type,()=>resetEvents.push(type))
+      }
+    })
+    const before=await snapshot()
+    await page.locator('form').evaluate(form=>form.reset())
+    assert.deepEqual(await snapshot(),before)
+    await page.locator('form').evaluate(form=>{
+      const first=form.querySelector('a-input')
+      first.addEventListener('inputformreset',event=>{event.preventDefault();first.value='Owner reset';first.formValue='reset-value'})
+      form.reset()
+    })
+    assert.deepEqual(await snapshot(),{values:[{value:'Owner reset',label:'Owner reset'},{value:'Chosen 1',label:'Chosen 1'}],entries:[['first','reset-value'],['second','Chosen 1']],events:[]})
+  })
   test.fast(`${name}: form names, constraints, reset, restoration, and button validity`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
     await mount(page,'<form><fieldset><a-input name="email" required type="email" defaultvalue="seed@example.com"></a-input><a-input button required name="trigger" value="Open" form-value="null"></a-input></fieldset></form>')
@@ -593,6 +639,29 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
           else assert.ok(metrics.width>actionSize,context)
         }
       }
+    })
+    test.fast(`${name} ${framework}: uncontrolled button labels survive reset before and after hydration`,async t=>{
+      const page=await pageFor(t,engine,mode)
+      await page.locator('#mount').evaluate((node,html)=>{
+        const form=document.createElement('form');node.before(form);form.append(node);node.innerHTML=html
+      },renderers.get(framework)({name:'choice',button:true,defaultValue:undefined}))
+      await register(page,mode)
+      for(const hydrated of [false,true]) {
+        if(hydrated) {
+          await page.addScriptTag({url:`/${framework}.js`,type:'module'})
+          await page.evaluate(()=>hydrateInput({name:'choice',button:true,defaultValue:undefined}));await frames(page)
+        }
+        const result=await field(page).evaluate(host=>{
+          host.value='Choose a team'
+          const events=[],record=event=>events.push(event.type)
+          for(const type of ['input','change'])host.addEventListener(type,record)
+          const form=host.closest('form');form.reset()
+          for(const type of ['input','change'])host.removeEventListener(type,record)
+          return {value:host.value,label:host.shadowRoot.querySelector('button').textContent,entries:[...new FormData(form)],events}
+        })
+        assert.deepEqual(result,{value:'Choose a team',label:'Choose a team',entries:[['choice','Choose a team']],events:[]})
+      }
+      assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
     })
     test.fast(`${name} ${framework}: submitted overrides survive JSX hydration, updates, and removal`,async t=>{
       const page=await pageFor(t,engine,mode)

@@ -261,13 +261,19 @@ function Demo() {
 
 Input submits its value under `name` with the surrounding form, and
 `new FormData(form)` includes it. Native constraints such as `required` block
-normal submission while invalid. A reset button restores `defaultValue` on uncontrolled fields.
+normal submission while invalid. A reset button restores `defaultValue` on
+uncontrolled editable fields. Button-mode Inputs preserve their current text.
+A composed field can handle `onFormReset` to restore its own selection and label.
 
 Pass `formValue` to submit a value independently of the displayed text, such as
 `<Input button name="country" value="United States" formValue="us" />`.
 Omit `formValue` or pass `undefined` to submit the current text. Pass `null` to
 omit the field, or an array to submit repeated entries under `name`. Numbers
 and booleans become strings. Use `form` to associate an Input with a form by ID.
+
+In raw HTML, `form-value` is JSON-encoded. Malformed JSON or unsupported values
+fall back to the live text and report a console warning. Explicit `null` omits
+the field.
 
 ## Types and validation
 
@@ -445,7 +451,7 @@ Narrow the preview to see the layout adjust.
 | `button?` | boolean | — | Render the field surface with a native button as its focus target. This is available for Input-styled popup triggers; the value becomes the button text and the placeholder is shown while it is empty. |
 | `children?` | ReactNode | — | Extra content between the field and hint. A `Tooltip` child anchors to the field. Use `leading` and `trailing` for content inside the field. |
 | `clearable?` | boolean | — | Show a clear button before trailing content when an editable field has a value. |
-| `defaultValue?` | string | — | Initial value for an uncontrolled field, restored on form reset. |
+| `defaultValue?` | string | — | Initial value for an uncontrolled field. Form reset restores it for editable fields; button-mode triggers preserve their current text. |
 | `dimActions?` | boolean | — | Keep leading, trailing, and clear content subtle until someone hovers over or focuses the field. |
 | `disabled?` | boolean | — | Disable the field. |
 | `form?` | string | — | ID of the form to associate with when outside that form. |
@@ -466,7 +472,7 @@ Narrow the preview to see the layout adjust.
 | `onClearClick?` | (e) => void | — | Fires before the built-in clear action. Call `e.preventDefault()` synchronously to keep the value and cancel `onClearInput`. Corresponds to the cancelable, bubbling `clearclick` event. |
 | `onClearInput?` | (e) => void | — | Fires after clearing, following `onInput` and `onChange`. Does not fire when clearing is canceled. Corresponds to the bubbling `clearinput` event. |
 | `onFocus?` | (e) => void | — | Fires when the field gains focus. |
-| `onFormReset?` | (e) => void | — | Fires before form reset. Prevent the default to let a composed field restore its own value and displayed text. |
+| `onFormReset?` | (e) => void | — | Fires on form reset before the field handles it. Prevent the default to let a composed field restore its own value and displayed text. Button-mode triggers preserve their text when no handler takes ownership. |
 | `onInput?` | (e) => void | — | Fires when editing changes the value or the field is cleared. Read `e.target.value`. |
 | `onValueChange?` | (event, attrs) => void | — | Receive the current text, field name, and validation result while editing and when an edit is committed, including clear. Can run more than once for the same value. Use `event.type` to distinguish the events. |
 | `pattern?` | string | — | Validation pattern for supported single-line types. Checks validity without preventing typing. |

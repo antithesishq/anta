@@ -1407,8 +1407,9 @@ export interface AInspectorAttributes extends BaseAttributes {
   open?: boolean | ''
   /** A context menu opened: `detail.id` is the row's id, or `null` outside any row. */
   onrowmenu?: (event: CustomEvent<{ id: string | null }> | { nativeEvent: CustomEvent<{ id: string | null }> }) => void
-  /** A request to open or close a row: `detail.id` and the requested `detail.open`. */
-  onnodetoggle?: (event: CustomEvent<{ id: string; open: boolean }> | { nativeEvent: CustomEvent<{ id: string; open: boolean }> }) => void
+  /** A request to open or close a row: `detail.id`, the requested `detail.open`, and
+   *  `detail.deep` when it covers the row's whole subtree (Alt+click, Alt+Enter). */
+  onnodetoggle?: (event: CustomEvent<{ id: string; open: boolean; deep?: boolean }> | { nativeEvent: CustomEvent<{ id: string; open: boolean; deep?: boolean }> }) => void
   /** A request for another page of a group or string: `detail.group`. */
   onpagerequest?: (event: CustomEvent<{ group: string }> | { nativeEvent: CustomEvent<{ group: string }> }) => void
 }

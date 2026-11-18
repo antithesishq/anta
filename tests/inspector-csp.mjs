@@ -1,0 +1,338 @@
+import assert from 'node:assert/strict'
+import { after, before } from 'node:test'
+import { componentTest as test, componentEngines } from './component-tier.mjs'
+import { createServer } from 'node:http'
+import { createRequire } from 'node:module'
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { build } from 'esbuild'
+
+const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
+const require = createRequire(import.meta.url)
+const { chromium, firefox, webkit } = requireSite('playwright')
+const engines = componentEngines([chromium, firefox, webkit])
+const source = resolve('src')
+// The chevron is a data: SVG mask, as Expander's is, so images allow data:.
+const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; object-src 'none'"
+const browsers = new Map()
+let server, origin
+
+// The sample, as ids in the tree style with expandDepth 1:
+// r {…} > r:1.0 name, r:1.1 results, r:1.2 log, r:1.3 byKey, r:1.4 list, r:1.5 self (a cycle).
+const app = `
+  import React, { useState } from 'react'
+  import { render } from 'preact'
+  import { Inspector } from '${source}/components/Inspector'
+  import { describe, visibleRows, setRowOpen } from '${source}/inspector-core'
+
+  function sample() {
+    const value = {
+      name: 'run',
+      results: [{ id: 't1', ok: true }, { id: 't2', ok: false }],
+      log: 'line one\\nline two',
+      byKey: new Map([['k', 1]]),
+      list: Array.from({ length: 7 }, (_, i) => i),
+      self: null,
+    }
+    value.self = value
+    return value
+  }
+  const mount = () => document.querySelector('#mount')
+  window.renderInspector = props => render(React.createElement(Inspector, { value: sample(), pageSize: 6, 'aria-label': 'Run', ...props }), mount())
+
+  // A stand-in for a worker renderer: it renders rows from the core itself and
+  // answers each request after a delay.
+  function Delayed({ delay }) {
+    const [root] = useState(() => describe(sample()))
+    const [toggled, setToggled] = useState(() => new Set())
+    const apply = (id, open) => setToggled(current => setRowOpen(root, { expandDepth: 1, toggled: current }, id, open))
+    window.closeRow = id => apply(id, false)
+    const onToggle = event => {
+      const { id, open } = event.detail
+      window.requests.push(id)
+      setTimeout(() => apply(id, open), delay)
+    }
+    const rows = visibleRows(root, { style: 'tree', expandDepth: 1, toggled })
+    return React.createElement('a-inspector', { role: 'tree', tabIndex: 0, 'aria-label': 'Delayed', onnodetoggle: onToggle },
+      rows.map(row => React.createElement('a-inspector-row', {
+        key: row.id, 'row-id': row.id, type: row.type, role: 'treeitem', 'aria-level': row.depth + 1,
+        expandable: row.expandable ? '' : undefined, open: row.open ? '' : undefined,
+        'aria-expanded': row.expandable ? String(row.open) : undefined,
+      }, [...(row.key ?? []), ...(row.tokens ?? [])].map(token => token.text).join(''))))
+  }
+  window.requests = []
+  window.renderDelayed = delay => render(React.createElement(Delayed, { delay }), mount())
+`
+
+before(async () => {
+  const assets = new Map()
+  for (const mode of ['granular', 'bundle']) {
+    const contents = mode === 'bundle'
+      ? `import '${source}/bundle';`
+      : ['tokens.css', 'reset.css', 'elements/a-inspector', 'elements/a-menu', 'elements/a-menu-item', 'elements/a-copy', 'elements/a-icon']
+        .map(path => `import '${source}/${path}';`).join(' ')
+    const result = await build({
+      stdin: { contents, resolveDir: process.cwd() }, bundle: true, write: false,
+      outfile: `${mode}.js`, format: 'esm', target: 'es2022',
+      alias: { react: requireSite.resolve('preact/compat') },
+      nodePaths: [resolve('node_modules')],
+    })
+    for (const file of result.outputFiles) assets.set(`/${mode}.${file.path.endsWith('.css') ? 'css' : 'js'}`, file.text)
+    assert.ok(assets.has(`/${mode}.css`), `${mode} must load its paired stylesheet`)
+  }
+  const result = await build({
+    stdin: { contents: app, resolveDir: process.cwd() }, bundle: true, write: false,
+    outfile: 'app.js', format: 'esm', target: 'es2022',
+    jsx: 'automatic', jsxImportSource: '@antadesign/anta',
+    define: { 'process.env.NODE_ENV': '"production"' },
+    nodePaths: [resolve('node_modules'), resolve('site/node_modules')],
+    alias: { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime'), react: requireSite.resolve('preact/compat') },
+  })
+  for (const file of result.outputFiles) if (file.path.endsWith('.js')) assets.set('/app.js', file.text)
+  assets.set('/axe.js', await readFile(require.resolve('axe-core/axe.min.js'), 'utf8'))
+  assets.set('/boot.js', `window.cspViolations=[]; document.addEventListener('securitypolicyviolation', e=>window.cspViolations.push(e.effectiveDirective));`)
+  server = createServer((req, res) => {
+    res.setHeader('Content-Security-Policy', policy)
+    res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html')
+    const mode = new URL(req.url, 'http://localhost').searchParams.get('mode') || 'granular'
+    // Inputs, not buttons: WebKit's Tab skips buttons by default.
+    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><script src="/boot.js"></script><input id="before" aria-label="Before"><p>Result: <span id="mount"></span> done.</p><input id="after" aria-label="After">`)
+  })
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  origin = `http://127.0.0.1:${server.address().port}`
+  for (const engine of engines) browsers.set(engine, await engine.launch({
+    headless: true,
+    ...(engine === chromium ? { channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined } : {}),
+  }))
+})
+
+after(async () => {
+  await Promise.all([...browsers.values()].map(browser => browser.close()))
+  if (server) await new Promise(resolve => server.close(resolve))
+})
+
+async function pageFor(t, engine, mode = 'granular') {
+  const context = await browsers.get(engine).newContext({
+    reducedMotion: 'reduce',
+    ...(engine === chromium ? { permissions: ['clipboard-read', 'clipboard-write'] } : {}),
+  })
+  const page = await context.newPage()
+  page.setDefaultTimeout(10000)
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  const response = await page.goto(`${origin}/?mode=${mode}`)
+  assert.equal(response.headers()['content-security-policy'], policy)
+  await page.evaluate(async mode => { await import(`/${mode}.js`); await import('/app.js') }, mode)
+  t.after(async () => {
+    try {
+      assert.deepEqual(errors, [])
+      assert.deepEqual(await page.evaluate(() => window.cspViolations), [])
+    } finally { await context.close() }
+  })
+  return page
+}
+
+const renderInspector = (page, props = {}) => page.evaluate(props => window.renderInspector(props), props)
+const ids = page => page.$$eval('a-inspector > a-inspector-row', rows => rows.map(row => row.getAttribute('row-id')))
+const active = page => page.evaluate(() => document.querySelector('a-inspector-row:state(active)')?.getAttribute('row-id') ?? null)
+const isOpen = (page, id) => page.locator(`a-inspector-row[row-id="${id}"]`).evaluate(row => row.hasAttribute('open'))
+async function until(page, check, message) {
+  for (let i = 0; i < 100; i++) {
+    if (await check()) return
+    await page.waitForTimeout(20)
+  }
+  assert.fail(message)
+}
+async function focusTree(page) {
+  await page.locator('#before').focus()
+  await page.keyboard.press('Tab')
+  assert.equal(await page.evaluate(() => document.activeElement?.localName), 'a-inspector')
+}
+
+for (const engine of engines) {
+  const name = engine.name()
+
+  for (const mode of ['granular', 'bundle']) {
+    test.fast(`${name} ${mode}: rows render under a strict CSP, indented by level, with no inline styles`, async t => {
+      const page = await pageFor(t, engine, mode)
+      await renderInspector(page)
+      assert.deepEqual(await ids(page), ['r', 'r:1.0', 'r:1.1', 'r:1.2', 'r:1.3', 'r:1.4', 'r:1.5'])
+      const indent = id => page.locator(`a-inspector-row[row-id="${id}"]`).evaluate(row => parseFloat(getComputedStyle(row).paddingInlineStart))
+      assert.ok(await indent('r:1.0') > await indent('r'), 'a child is indented past its parent')
+      assert.match(await page.locator('a-inspector').evaluate(host => getComputedStyle(host).fontFamily), /mono|Menlo|Consolas/i)
+      assert.equal(await page.locator('a-inspector [style]').count(), 0)
+    })
+  }
+
+  test.fast(`${name}: clicks open and close rows and show more of a group`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    await page.locator('a-inspector-row[row-id="r:1.1"]').click()
+    await until(page, async () => (await ids(page)).includes('r:1.1:1.0'), 'results did not open')
+    await page.locator('a-inspector-row[row-id="r:1.4"]').click()
+    await until(page, async () => (await ids(page)).includes('r:1.4:1+'), 'list did not show a more row')
+    assert.equal((await ids(page)).filter(id => id.startsWith('r:1.4:1.')).length, 6)
+    await page.locator('a-inspector-row[row-id="r:1.4:1+"]').click()
+    await until(page, async () => (await ids(page)).filter(id => id.startsWith('r:1.4:1.')).length === 7, 'the next page did not show')
+    await page.locator('a-inspector-row[row-id="r:1.1"]').click()
+    await until(page, async () => !(await ids(page)).includes('r:1.1:1.0'), 'results did not close')
+  })
+
+  test.fast(`${name}: the tree is one Tab stop`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    await focusTree(page)
+    await page.keyboard.press('Tab')
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'after')
+  })
+
+  test.fast(`${name}: arrow keys, Home, End, Enter, and Space follow the tree pattern`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    await focusTree(page)
+    assert.equal(await active(page), 'r')
+    const press = async (key, expected) => {
+      await page.keyboard.press(key)
+      await until(page, async () => await active(page) === expected, `${key} should make ${expected} active, not ${await active(page)}`)
+    }
+    await press('ArrowDown', 'r:1.0')
+    await press('ArrowDown', 'r:1.1')
+    await page.keyboard.press('ArrowRight')
+    await until(page, () => isOpen(page, 'r:1.1'), 'Right did not open results')
+    assert.equal(await active(page), 'r:1.1', 'opening keeps the row active')
+    await press('ArrowRight', 'r:1.1:1.0')
+    await page.keyboard.press('ArrowRight')
+    await until(page, () => isOpen(page, 'r:1.1:1.0'), 'Right did not open the first result')
+    await page.keyboard.press('ArrowLeft')
+    await until(page, async () => !(await isOpen(page, 'r:1.1:1.0')), 'Left did not close the first result')
+    await press('ArrowLeft', 'r:1.1')
+    await page.keyboard.press('ArrowLeft')
+    await until(page, async () => !(await isOpen(page, 'r:1.1')), 'Left did not close results')
+    await press('End', 'r:1.5')
+    await press('Home', 'r')
+    await press('PageDown', 'r:1.5')
+    // Enter on a cycle reveals its ancestor and makes it the active row.
+    await press('Enter', 'r')
+    await page.keyboard.press(' ')
+    await until(page, async () => (await ids(page)).length === 1, 'Space did not close the root')
+    await press('ArrowUp', 'r')
+  })
+
+  test.fast(`${name}: Shift+F10 opens the copy menu for the active row`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    await focusTree(page)
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    assert.equal(await active(page), 'r:1.1')
+    // Menu binds its trigger once its anchor is seen on screen, a frame or two
+    // after the first render; a person can't press keys sooner than that.
+    await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))))
+    await page.keyboard.press('Shift+F10')
+    const item = label => page.locator('a-menu-item', { hasText: label }).first()
+    await until(page, () => item('Copy path').isVisible(), 'the copy menu did not open')
+    assert.ok(await item('Copy object').isVisible())
+    if (engine === chromium) {
+      await item('Copy path').click()
+      await until(page, async () => await page.evaluate(() => navigator.clipboard.readText()) === 'results', 'Copy path did not copy "results"')
+    }
+  })
+
+  test.fast(`${name}: right-click copies a string's raw text`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    await page.locator('a-inspector-row[row-id="r:1.2"]').click({ button: 'right' })
+    const item = page.locator('a-menu-item', { hasText: 'Copy string' }).first()
+    await until(page, () => item.isVisible(), 'the menu did not offer Copy string')
+    if (engine === chromium) {
+      await item.click()
+      await until(page, async () => await page.evaluate(() => navigator.clipboard.readText()) === 'line one\nline two', 'Copy string did not copy the raw text')
+    }
+  })
+
+  test.fast(`${name}: only the copy item just used shows its feedback, and closing clears it`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    const item = label => page.locator('a-menu-item', { hasText: label }).first()
+    const green = () => page.$$eval('a-menu-item[tone="success"]', items => items.map(item => item.textContent.trim()))
+    const openMenu = async id => {
+      await page.locator(`a-inspector-row[row-id="${id}"]`).click({ button: 'right' })
+      await until(page, () => item('Copy path').isVisible(), `the menu did not open on ${id}`)
+    }
+    await openMenu('r:1.0')
+    await item('Copy path').click()
+    await until(page, async () => JSON.stringify(await green()) === '["Copy path"]', `expected only Copy path to be green, got ${JSON.stringify(await green())}`)
+    await item('Copy string').click()
+    await until(page, async () => JSON.stringify(await green()) === '["Copy string"]', `expected only Copy string to be green, got ${JSON.stringify(await green())}`)
+    // Closing clears it, so the next menu opens clean.
+    await page.keyboard.press('Escape')
+    await openMenu('r:1.1')
+    assert.deepEqual(await green(), [], 'feedback carried into the next menu')
+    // Opening on another row while the menu is still open also starts clean.
+    await item('Copy path').click()
+    await until(page, async () => (await green()).length === 1, 'Copy path did not show feedback')
+    // The open menu sits below r:1.1, so right-click a row above it.
+    await openMenu('r:1.0')
+    assert.deepEqual(await green(), [], 'feedback carried into the menu for another row')
+  })
+
+  test.fast(`${name}: Alt+click and Alt+Enter open and close a whole subtree`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    await page.locator('a-inspector-row[row-id="r:1.1"]').click({ modifiers: ['Alt'] })
+    await until(page, async () => (await ids(page)).includes('r:1.1:1.1:1.0'), 'Alt+click did not open the subtree')
+    assert.ok(await isOpen(page, 'r:1.1:1.0') && await isOpen(page, 'r:1.1:1.1'))
+    assert.equal(await active(page), 'r:1.1')
+    await page.locator('a-inspector').focus()
+    await page.keyboard.press('Alt+Enter')
+    await until(page, async () => !(await ids(page)).some(id => id.startsWith('r:1.1:')), 'Alt+Enter did not close the subtree')
+    await page.keyboard.press('ArrowRight')
+    await until(page, () => isOpen(page, 'r:1.1'), 'Right did not reopen results')
+    assert.equal(await isOpen(page, 'r:1.1:1.0'), false, 'a deep close leaves children closed')
+  })
+
+  test.fast(`${name}: the inline layout flows in text and becomes a block when opened`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page, { layout: 'inline' })
+    const display = () => page.locator('a-inspector').evaluate(host => getComputedStyle(host).display)
+    assert.equal(await display(), 'inline')
+    assert.deepEqual(await ids(page), ['r'])
+    await page.locator('a-inspector-row[row-id="r"]').click()
+    await until(page, async () => await display() === 'block', 'the inline Inspector did not become a block')
+  })
+
+  test.fast(`${name}: axe finds no WCAG A violations in an open tree`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page, { expandDepth: 2 })
+    await page.addScriptTag({ url: '/axe.js' })
+    const violations = await page.evaluate(async () => {
+      const result = await window.axe.run(document.querySelector('#mount'), { runOnly: { type: 'tag', values: ['wcag2a'] } })
+      return result.violations.map(violation => `${violation.id}: ${violation.nodes.length}`)
+    })
+    assert.deepEqual(violations, [])
+  })
+
+  test.fast(`${name}: with a delayed renderer, keys stay consistent and requests repeat harmlessly`, async t => {
+    const page = await pageFor(t, engine)
+    await page.evaluate(() => window.renderDelayed(150))
+    await focusTree(page)
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    assert.equal(await active(page), 'r:1.1')
+    // Two Rights before the first answer arrives request the same state twice.
+    await page.keyboard.press('ArrowRight')
+    await page.keyboard.press('ArrowRight')
+    await page.keyboard.press('ArrowDown')
+    assert.equal(await active(page), 'r:1.2', 'Down moves among the rows already shown')
+    await until(page, async () => (await ids(page)).includes('r:1.1:1.0'), 'the delayed open never arrived')
+    await page.waitForTimeout(250)
+    assert.equal(await isOpen(page, 'r:1.1'), true, 'a repeated request closed the row')
+    assert.deepEqual(await page.evaluate(() => window.requests), ['r:1.1', 'r:1.1'])
+    assert.equal(await active(page), 'r:1.2', 'the active row survives the re-render')
+    // When an ancestor of the active row closes, the ancestor becomes active.
+    await page.keyboard.press('ArrowUp')
+    assert.equal(await active(page), 'r:1.1:1.1')
+    await page.evaluate(() => window.closeRow('r:1.1'))
+    await until(page, async () => await active(page) === 'r:1.1', 'the active row did not move to its closed ancestor')
+  })
+}

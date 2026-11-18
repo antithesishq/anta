@@ -11,6 +11,7 @@ import { Calendar } from './calendar/Calendar'
 import { Select } from './select/Select'
 import { Dialog } from './dialog/Dialog'
 import { Expander } from './expander/Expander'
+import { Inspector } from './inspector/Inspector'
 import { Plot } from './plot/Plot'
 import './AppFixture.css'
 
@@ -18,7 +19,7 @@ const fixtureNames = {
   button: 'Button', checkbox: 'Checkbox', 'radio-group': 'RadioGroup',
   switch: 'Switch', slider: 'Slider', tabs: 'Tabs', input: 'Input',
   calendar: 'Calendar', select: 'Select', dialog: 'Dialog',
-  expander: 'Expander', plot: 'Plot',
+  expander: 'Expander', inspector: 'Inspector', plot: 'Plot',
 } satisfies Record<typeof fixtureTypes[number], string>
 
 type PropsByType = {
@@ -33,6 +34,7 @@ type PropsByType = {
   'select': Omit<ComponentProps<typeof Select>, 'id'>
   'dialog': Omit<ComponentProps<typeof Dialog>, 'id'>
   'expander': Omit<ComponentProps<typeof Expander>, 'id'>
+  'inspector': Omit<ComponentProps<typeof Inspector>, 'id'>
   'plot': Omit<ComponentProps<typeof Plot>, 'id'>
 }
 
@@ -53,6 +55,7 @@ function renderFixture(fixture: FixtureDescription) {
     case 'select': return <Select {...fixture.props} id={fixture.id} />
     case 'dialog': return <Dialog {...fixture.props} id={fixture.id} />
     case 'expander': return <Expander {...fixture.props} id={fixture.id} />
+    case 'inspector': return <Inspector {...fixture.props} id={fixture.id} />
     case 'plot': return <Plot {...fixture.props} id={fixture.id} />
   }
 }

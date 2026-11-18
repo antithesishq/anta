@@ -1049,6 +1049,73 @@ export function rowNode(root: InspectNode, id: string): InspectNode | undefined 
   return node
 }
 
+// Whether a row starts open: strings never do; other rows do above `expandDepth`.
+function opens_by_default(id: string, kind: NodeKind, expand_depth: number): boolean {
+  return kind !== 'string' && id.split(':').length - 1 < expand_depth
+}
+
+/**
+ * Opens or closes one row, returning the new `toggled` set for `state`. It sets
+ * the state requested rather than flipping it, so a repeated request, as from
+ * keys pressed while a worker renders, changes nothing.
+ */
+export function setRowOpen(root: InspectNode, state: RowState, id: string, open: boolean): Set<string> {
+  const toggled = new Set(state.toggled)
+  const node = rowNode(root, id)
+  if (!node) return toggled
+  if (open === opens_by_default(id, node.kind, state.expandDepth ?? 0)) toggled.delete(id)
+  else toggled.add(id)
+  return toggled
+}
+
+/**
+ * Opens or closes a row and everything below it, returning the new `toggled`
+ * set for `state`. Opening works one node at a time, shallowest first, and
+ * stops once the subtree shows `limit` rows in `state.style`, so one action
+ * reads only what it shows; strings and cycles stay closed. Closing also
+ * closes the descendants that
+ * `expandDepth` would open, so reopening the row shows its children closed. The
+ * result holds only ids whose state differs from their default.
+ */
+export function deepToggle(root: InspectNode, state: RowState, id: string, open: boolean, limit = 500): Set<string> {
+  const node = rowNode(root, id)
+  if (!node) return new Set(state.toggled)
+  const expand_depth = state.expandDepth ?? 0
+  const prefix = `${id}:`
+  // Rows below `id` return to their defaults first.
+  const toggled = new Set([...(state.toggled ?? [])].filter(other => !other.startsWith(prefix)))
+  const set = (row_id: string, kind: NodeKind, want: boolean) => {
+    if (want === opens_by_default(row_id, kind, expand_depth)) toggled.delete(row_id)
+    else toggled.add(row_id)
+  }
+  const subtree = () => visibleRows(root, { ...state, toggled }).filter(row => row.id.startsWith(prefix))
+
+  set(id, node.kind, true)
+  if (node.kind === 'string') {
+    if (!open) set(id, node.kind, false)
+    return toggled
+  }
+  if (!open) {
+    // With no toggles below `id`, the open rows shown are exactly those open by default.
+    for (const row of subtree()) if (row.type === 'node' && row.open) set(row.id, row.kind, false)
+    set(id, node.kind, false)
+    return toggled
+  }
+  for (;;) {
+    const rows = subtree()
+    if (rows.length >= limit) break
+    // Breadth-first: the shallowest closed row, so a cap leaves whole levels open.
+    let next: Extract<InspectRow, { type: 'node' }> | undefined
+    for (const row of rows) {
+      if (row.type !== 'node' || !row.expandable || row.open || row.kind === 'string' || row.kind === 'circular') continue
+      if (!next || row.depth < next.depth) next = row
+    }
+    if (!next) break
+    set(next.id, next.kind, true)
+  }
+  return toggled
+}
+
 /**
  * The text to copy for a node: a string's raw text, or the full `repr()` text
  * of anything else. Undefined for nodes with no value of their own: cycles,

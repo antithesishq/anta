@@ -787,3 +787,84 @@ test('rowNode finds the node every row shows', () =>
       else assert.equal(core.rowNode(root, row.id), undefined, `row ${row.id} is not a node row`)
     }
   }, settings))
+
+// Opening or closing a whole subtree.
+
+test('deepToggle opens and closes a whole subtree', () => {
+  const value = { a: { b: { c: [1, { d: 2 }] }, s: 'x\ny' }, loop: null }
+  value.loop = value
+  const root = core.describe(value)
+  const opened = core.deepToggle(root, { expandDepth: 1 }, 'r:1.0', true)
+  const rows = tree(value, { expandDepth: 1, toggled: opened })
+  assert.deepEqual(rows.filter(row => row.type === 'node' && row.expandable && !row.open).map(line), ['s:"x\\ny"'])
+  assert.ok(rows.some(row => line(row) === 'd:2'))
+  // Closing collapses descendants too: reopening the row normally shows them closed.
+  const closed = core.deepToggle(root, { expandDepth: 1, toggled: opened }, 'r:1.0', false)
+  // Closed by default at this depth, so no toggle is needed: the set stays minimal.
+  assert.deepEqual([...closed], [])
+  const reopened = tree(value, { expandDepth: 1, toggled: new Set([...closed, 'r:1.0']) }).filter(row => row.id.startsWith('r:1.0:'))
+  assert.ok(reopened.length > 0 && reopened.every(row => row.type !== 'node' || !row.open))
+  // Closing a row that expandDepth opens below it adds closing toggles for them.
+  const deep = core.deepToggle(root, { expandDepth: 3 }, 'r', false)
+  assert.deepEqual([...deep].sort(), ['r', 'r:1.0', 'r:1.0:1.0'])
+  // The cap stops opening once the subtree shows that many rows. Opening the
+  // row itself already shows 20, so nothing below it opens.
+  const wide = core.describe(Array.from({ length: 20 }, (_, i) => ({ i, more: { j: i } })))
+  const capped = core.deepToggle(wide, { expandDepth: 0 }, 'r', true, 10)
+  const shown = core.visibleRows(wide, { style: 'tree', toggled: capped }).filter(row => row.id.startsWith('r:'))
+  assert.equal(shown.length, 20)
+  assert.ok(shown.every(row => !row.open))
+  const roomy = core.visibleRows(wide, { style: 'tree', toggled: core.deepToggle(wide, { expandDepth: 0, style: 'tree' }, 'r', true, 30) })
+  assert.equal(roomy.filter(row => row.open && row.depth === 1).length, 5, 'opened rows until 30 showed')
+})
+
+test('a deep open leaves nothing closed below it, within the cap', () =>
+  hegel.test(tc => {
+    const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
+    const display = { expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 3 }), 'expandDepth'), pageSize: 3, style: 'tree' }
+    const toggled = openSome(tc, root, display)
+    const before = core.visibleRows(root, { ...display, toggled })
+    const candidates = before.filter(row => row.type === 'node' && row.expandable && row.kind !== 'string')
+    tc.assume(candidates.length > 0)
+    const { id } = candidates[tc.draw(gs.integers({ minValue: 0, maxValue: candidates.length - 1 }), 'row')]
+    const limit = tc.draw(gs.integers({ minValue: 1, maxValue: 30 }), 'limit')
+    const after = core.visibleRows(root, { ...display, toggled: core.deepToggle(root, { ...display, toggled }, id, true, limit) })
+    const below = after.filter(row => row.id.startsWith(`${id}:`))
+    assert.equal(after.find(row => row.id === id).open, true)
+    // Anything left closed means the cap was reached.
+    const closed = below.filter(row => row.type === 'node' && row.expandable && !row.open && row.kind !== 'string')
+    if (closed.length) assert.ok(below.length >= limit, `${closed.map(row => row.id)} stayed closed with ${below.length} of ${limit} rows`)
+    const outside = rows => lines(rows.filter(row => !inSubtree(row, id)))
+    assert.deepEqual(outside(after), outside(before), 'a row outside the subtree changed')
+  }, settings))
+
+test('a deep close leaves nothing open below it, even after reopening', () =>
+  hegel.test(tc => {
+    const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
+    const display = { expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 4 }), 'expandDepth'), style: 'tree' }
+    const toggled = openSome(tc, root, display)
+    const open = core.visibleRows(root, { ...display, toggled }).filter(row => row.type === 'node' && row.open)
+    tc.assume(open.length > 0)
+    const { id } = open[tc.draw(gs.integers({ minValue: 0, maxValue: open.length - 1 }), 'row')]
+    const closed = core.deepToggle(root, { ...display, toggled }, id, false)
+    const rows = core.visibleRows(root, { ...display, toggled: closed })
+    assert.equal(rows.find(row => row.id === id).open, false)
+    assert.deepEqual(rows.filter(row => row.id.startsWith(`${id}:`)).map(row => row.id), [])
+    const reopened = new Set(closed)
+    if (!reopened.delete(id)) reopened.add(id)
+    const below = core.visibleRows(root, { ...display, toggled: reopened }).filter(row => row.id.startsWith(`${id}:`))
+    assert.deepEqual(below.filter(row => row.type === 'node' && row.open).map(row => row.id), [], 'a row below reopened')
+  }, settings))
+
+test('setRowOpen sets the requested state, so repeated requests change nothing', () => {
+  const root = core.describe({ a: { b: 1 }, s: 'x\ny' })
+  const state = { expandDepth: 1 }
+  const once = core.setRowOpen(root, state, 'r:1.0', true)
+  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: once }, 'r:1.0', true)], [...once])
+  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: once }, 'r:1.0', false)], [])
+  // The root starts open at expandDepth 1, so closing it twice leaves one toggle.
+  const closed = core.setRowOpen(root, state, 'r', false)
+  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: closed }, 'r', false)], ['r'])
+  // Strings start closed at any depth.
+  assert.deepEqual([...core.setRowOpen(root, state, 'r:1.1', true)], ['r:1.1'])
+})

@@ -71,6 +71,7 @@ jobs:
             echo 'text=true' >> "$GITHUB_OUTPUT"
             echo 'progress=true' >> "$GITHUB_OUTPUT"
             echo 'expander=true' >> "$GITHUB_OUTPUT"
+            echo 'inspector=true' >> "$GITHUB_OUTPUT"
             echo 'banner=true' >> "$GITHUB_OUTPUT"
             echo 'input-time=true' >> "$GITHUB_OUTPUT"
             echo 'input=true' >> "$GITHUB_OUTPUT"
@@ -314,6 +315,19 @@ jobs:
             echo 'expander=true' >> "$GITHUB_OUTPUT"
           else
             echo 'expander=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-inspector.*' src/inspector-core.ts \
+            'src/elements/a-menu*' 'src/elements/a-copy*' 'src/elements/a-icon*' src/elements/copy-behavior.ts \
+            src/components/{Inspector,Menu,MenuItem,MenuItemCopy}.tsx src/components/copy-props.ts \
+            src/{jsx-runtime,native-event-props,anta_helpers,element-base,general_types,index,bundle}.ts src/elements/{index,key-activation}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/inspector-*' scripts/build-bundle.mjs .github/workflows/{ci,component-tests}.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml site/package.json)
+          if [ -n "$changed" ]; then
+            echo 'inspector=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'inspector=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-tooltip.*' 'src/elements/a-text.*' 'src/elements/a-button.*' \

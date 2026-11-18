@@ -2,7 +2,7 @@ import { Database, test, type TestCase } from '@hegeldev/hegel'
 import * as gs from '@hegeldev/hegel/generators'
 import type { FixtureDescription } from './AppFixture'
 
-export const fixtureTypes = ['button', 'checkbox', 'radio-group', 'switch', 'slider', 'tabs', 'input', 'calendar', 'select', 'dialog', 'expander', 'plot'] as const
+export const fixtureTypes = ['button', 'checkbox', 'radio-group', 'switch', 'slider', 'tabs', 'input', 'calendar', 'select', 'dialog', 'expander', 'inspector', 'plot'] as const
 
 export const minimumFixtures = 6
 export const maximumFixtures = fixtureTypes.length
@@ -45,6 +45,7 @@ function drawFixture(tc: TestCase, id: string, type: typeof fixtureTypes[number]
     } }
     case 'dialog': return { id, type, props: { persistent: tc.draw(gs.booleans()), closable: tc.draw(gs.booleans()) } }
     case 'expander': return { id, type, props: { disabled: occasionally(tc) } }
+    case 'inspector': return { id, type, props: { expandDepth: pick(tc, [0, 1, 2]), layout: pick(tc, ['block', 'block', 'inline'] as const) } }
     case 'plot': return { id, type, props: { zoomPan: !occasionally(tc), height: pick(tc, [180, 240, 320]) } }
   }
 }
@@ -80,6 +81,12 @@ function drawProps(tc: TestCase, fixture: FixtureDescription): FixtureDescriptio
         x, y: tc.draw(gs.integers({ minValue: 0, maxValue: 100 })),
       }))
       return { ...fixture, props: { ...fixture.props, points } }
+    }
+    case 'inspector': {
+      const prop = pick(tc, ['expandDepth', 'layout'] as const)
+      return { ...fixture, props: prop === 'layout'
+        ? { ...fixture.props, layout: fixture.props.layout === 'block' ? 'inline' : 'block' }
+        : { ...fixture.props, expandDepth: pick(tc, [0, 1, 2].filter(depth => depth !== fixture.props.expandDepth)) } }
     }
     case 'switch':
       return { ...fixture, props: { ...fixture.props, disabled: !fixture.props.disabled } }

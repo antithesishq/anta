@@ -1,10 +1,10 @@
 # Interactive component fixtures
 
-The `/test/` harness renders `AppFixture`. Hegel starts with 6–12 distinct
+The `/test/` harness renders `AppFixture`. Hegel starts with 6–13 distinct
 components. When Bombadil dispatches `fixture:advance`, Hegel changes one prop,
 mounts a missing component, or unmounts one. Surviving components keep their
 keys and state. Prop updates have weight 3; mounts and unmounts have weight 1
-each, subject to the 6–12 limits.
+each, subject to the 6–13 limits.
 
 | Fixture | Props varied while mounted |
 | --- | --- |
@@ -15,6 +15,7 @@ each, subject to the 6–12 limits.
 | Select | disabled, clearable |
 | Dialog | persistent, closable |
 | Plot | zoomPan, height, points |
+| Inspector | expandDepth (0–2), layout (block / inline) |
 
 Checkbox, Switch, RadioGroup, Tabs, and Calendar also vary their initial state.
 Slider's min, max, and step are chosen on mount. Labels, sizes, orientations,
@@ -37,6 +38,12 @@ that every property was exercised.
 The Calendar fixture also mounts an InputDate starting at July 4, 2026. Its
 locale property checks that switching between en-US and en-GB preserves the date
 and formats it correctly, starting from matching display/value snapshots.
+
+The Inspector fixture shows a small value with nested results, a Map, a paged
+array, a multiline string, and a cycle. Its properties check that `open` matches
+`aria-expanded`, that the tree is one Tab stop with one active row while
+focused, that rows nest by level and `more` rows end their group, and that a
+click on a row changes nothing outside that row's subtree.
 
 Plot properties observe the latest viewport callback, not canvas pixels. The
 callback can be stale after a data update; the disabled check may miss delayed

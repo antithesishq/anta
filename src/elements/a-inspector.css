@@ -24,7 +24,64 @@
     outline-offset: 2px;
   }
 
-  /* One line per row, indented by depth. The wrapper sets --inspector-depth. */
+  /* With an active row, the ring moves to that row, so only one ring shows. */
+  a-inspector:has(> a-inspector-row:state(active)):focus-visible {
+    outline: none;
+  }
+
+  a-inspector:focus a-inspector-row:state(active) {
+    background: var(--inspector-row-hover);
+  }
+
+  a-inspector:focus-visible a-inspector-row:state(active) {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  /* One line per row, indented by aria-level. Static rules keep rows free of
+     inline styles under a strict CSP. The general rule comes first, so levels
+     past 32 share the deepest indent and the exact levels below override it. */
+  a-inspector-row {
+    --inspector-depth: 0;
+  }
+
+  a-inspector-row[aria-level] {
+    --inspector-depth: 31;
+  }
+
+  a-inspector-row[aria-level="1"] { --inspector-depth: 0; }
+  a-inspector-row[aria-level="2"] { --inspector-depth: 1; }
+  a-inspector-row[aria-level="3"] { --inspector-depth: 2; }
+  a-inspector-row[aria-level="4"] { --inspector-depth: 3; }
+  a-inspector-row[aria-level="5"] { --inspector-depth: 4; }
+  a-inspector-row[aria-level="6"] { --inspector-depth: 5; }
+  a-inspector-row[aria-level="7"] { --inspector-depth: 6; }
+  a-inspector-row[aria-level="8"] { --inspector-depth: 7; }
+  a-inspector-row[aria-level="9"] { --inspector-depth: 8; }
+  a-inspector-row[aria-level="10"] { --inspector-depth: 9; }
+  a-inspector-row[aria-level="11"] { --inspector-depth: 10; }
+  a-inspector-row[aria-level="12"] { --inspector-depth: 11; }
+  a-inspector-row[aria-level="13"] { --inspector-depth: 12; }
+  a-inspector-row[aria-level="14"] { --inspector-depth: 13; }
+  a-inspector-row[aria-level="15"] { --inspector-depth: 14; }
+  a-inspector-row[aria-level="16"] { --inspector-depth: 15; }
+  a-inspector-row[aria-level="17"] { --inspector-depth: 16; }
+  a-inspector-row[aria-level="18"] { --inspector-depth: 17; }
+  a-inspector-row[aria-level="19"] { --inspector-depth: 18; }
+  a-inspector-row[aria-level="20"] { --inspector-depth: 19; }
+  a-inspector-row[aria-level="21"] { --inspector-depth: 20; }
+  a-inspector-row[aria-level="22"] { --inspector-depth: 21; }
+  a-inspector-row[aria-level="23"] { --inspector-depth: 22; }
+  a-inspector-row[aria-level="24"] { --inspector-depth: 23; }
+  a-inspector-row[aria-level="25"] { --inspector-depth: 24; }
+  a-inspector-row[aria-level="26"] { --inspector-depth: 25; }
+  a-inspector-row[aria-level="27"] { --inspector-depth: 26; }
+  a-inspector-row[aria-level="28"] { --inspector-depth: 27; }
+  a-inspector-row[aria-level="29"] { --inspector-depth: 28; }
+  a-inspector-row[aria-level="30"] { --inspector-depth: 29; }
+  a-inspector-row[aria-level="31"] { --inspector-depth: 30; }
+  a-inspector-row[aria-level="32"] { --inspector-depth: 31; }
+
   a-inspector-row {
     display: block;
     position: relative;

@@ -1,6 +1,6 @@
 import { customEventHandler } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
-import { copyText, describe, rowNode, visibleRows, type InspectNode, type InspectRow, type NodeKind, type Token } from "../inspector-core"
+import { copyText, deepToggle, describe, rowNode, setRowOpen, visibleRows, type InspectNode, type InspectRow, type NodeKind, type Token } from "../inspector-core"
 import { useMemo, useState } from "../jsx-runtime"
 import { useNativeEventProps } from "../native-event-props"
 import { Menu } from "./Menu"
@@ -44,6 +44,9 @@ type View = {
   pages: ReadonlyMap<string, number>
   /** The row a context menu last opened on. */
   menuRow: string | null
+  /** Keys for the copy items. A new key remounts an item, which clears its ✓
+   *  feedback; MenuItemCopy otherwise keeps it for two seconds, across menus. */
+  copyKeys: { value: number; path: number }
 }
 const NONE: ReadonlySet<string> = new Set()
 const NO_PAGES: ReadonlyMap<string, number> = new Map()
@@ -81,8 +84,8 @@ function renderRow(row: InspectRow, wrap: boolean) {
     "row-id": row.id,
     type: row.type,
     role: "treeitem",
+    // The stylesheet indents by aria-level, so rows need no inline style under CSP.
     "aria-level": row.depth + 1,
-    style: { "--inspector-depth": row.depth } as React.CSSProperties,
   }
   if (row.type === "more") {
     return (
@@ -130,8 +133,9 @@ export const Inspector = ({
     () => describe(value, { numeric_base: numericBase, unquoted_strings: unquotedStrings }),
     [value, numericBase, unquotedStrings],
   )
+  const rowState = { style: "tree" as const, expandDepth, pageSize, previewBudget, textPageSize }
   // Open rows and pages belong to one value; a new value starts fresh.
-  const fresh: View = { root, toggled: NONE, pages: NO_PAGES, menuRow: null }
+  const fresh: View = { root, toggled: NONE, pages: NO_PAGES, menuRow: null, copyKeys: { value: 0, path: 0 } }
   const [view, setView] = useState<View>(fresh)
   const current = view.root === root ? view : fresh
   const update = (change: (view: View) => Partial<View>) =>
@@ -141,11 +145,12 @@ export const Inspector = ({
     })
 
   const eventProps = useNativeEventProps({
-    onnodetoggle: customEventHandler<{ id: string; open: boolean }>((_event, { id }) => {
-      update(({ toggled }) => {
-        const next = new Set(toggled)
-        if (!next.delete(id)) next.add(id)
-        return { toggled: next }
+    onnodetoggle: customEventHandler<{ id: string; open: boolean; deep?: boolean }>((_event, { id, open, deep }) => {
+      update(({ root, toggled, pages }) => {
+        // Set the requested state, not a flip: requests sent before a render
+        // lands, as from a worker, repeat harmlessly.
+        const state = { ...rowState, toggled, pages }
+        return { toggled: deep ? deepToggle(root, state, id, open) : setRowOpen(root, state, id, open) }
       })
     }),
     onpagerequest: customEventHandler<{ group: string }>((_event, { group }) => {
@@ -153,20 +158,13 @@ export const Inspector = ({
     }),
     // The menu opens at once; from a worker, this update lands before an item
     // can be chosen, and MenuItemCopy reads `copy` when it is.
+    // Each opening starts with no copy feedback showing.
     onrowmenu: customEventHandler<{ id: string | null }>((_event, { id }) => {
-      update(() => ({ menuRow: id }))
+      update(({ copyKeys }) => ({ menuRow: id, copyKeys: { value: copyKeys.value + 1, path: copyKeys.path + 1 } }))
     }),
   })
 
-  const rows = visibleRows(current.root, {
-    style: "tree",
-    expandDepth,
-    toggled: current.toggled,
-    pages: current.pages,
-    pageSize,
-    previewBudget,
-    textPageSize,
-  })
+  const rows = visibleRows(current.root, { ...rowState, toggled: current.toggled, pages: current.pages })
 
   const menuRow = current.menuRow === null ? undefined : rows.find(row => row.id === current.menuRow)
   const path = menuRow?.type === "node" ? menuRow.pathText : undefined
@@ -191,9 +189,28 @@ export const Inspector = ({
       >
         {rows.map(row => renderRow(row, layout === "inline"))}
       </a-inspector>
-      <Menu context>
-        <MenuItemCopy label={menuNode ? copyLabel(menuNode.kind) : "Copy value"} copy={valueText ?? ""} disabled={valueText === undefined} />
-        <MenuItemCopy label="Copy path" copy={path ?? ""} disabled={!path} />
+      <Menu
+        context
+        onStateChange={(_event, { next }) => {
+          // Closing clears the feedback, so it can't reappear in the next menu.
+          if (!next) update(({ copyKeys }) => ({ copyKeys: { value: copyKeys.value + 1, path: copyKeys.path + 1 } }))
+        }}
+      >
+        <MenuItemCopy
+          key={`value-${current.copyKeys.value}`}
+          label={menuNode ? copyLabel(menuNode.kind) : "Copy value"}
+          copy={valueText ?? ""}
+          disabled={valueText === undefined}
+          // Only the item just used shows its ✓.
+          onCopied={() => update(({ copyKeys }) => ({ copyKeys: { ...copyKeys, path: copyKeys.path + 1 } }))}
+        />
+        <MenuItemCopy
+          key={`path-${current.copyKeys.path}`}
+          label="Copy path"
+          copy={path ?? ""}
+          disabled={!path}
+          onCopied={() => update(({ copyKeys }) => ({ copyKeys: { ...copyKeys, value: copyKeys.value + 1 } }))}
+        />
       </Menu>
     </>
   )

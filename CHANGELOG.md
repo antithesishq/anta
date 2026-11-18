@@ -5,6 +5,14 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- [Inspector](/inspector/) shows any JavaScript value as a tree that opens one level at a time, for exploring test
+  results, errors, and logs. Use [`layout="inline"`](/inspector/#show-a-value-inline) to place a value in a sentence or
+  table cell. Rows can be [copied from a right-click menu](/inspector/#copy-values-and-paths) as a value or a JavaScript
+  path, and the tree supports the [keyboard](/inspector/#keyboard-accessibility). Classes can choose how they appear by
+  implementing [`inspectorRepr`](/inspector/#custom-types).
+
 ### Fixed
 
 - Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.

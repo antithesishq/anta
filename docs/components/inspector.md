@@ -1,8 +1,195 @@
 # Inspector
 
-Inspector shows any JavaScript value as a tree you can open one level at a
-time, such as test results, errors, and logs. Select a row to open or close it.
-Long arrays and strings open a page at a time.
+Inspector shows any JavaScript value as a tree you can explore, such as test
+results, errors, and logs. Rows read like an object in browser DevTools and
+open one level at a time, so a large value is read only as far as it's shown.
+Select a row to open or close it.
+
+## Open a level at a time
+
+`expandDepth` sets how many levels start open; the default opens the value's
+own properties. A closed row shows a one-line summary of up to `previewBudget`
+characters. Wide arrays, objects, Maps, and Sets show `pageSize` children at a
+time, with a **Show more** row for the next page. Long and multiline strings,
+such as stack traces, open into lines of text a page at a time.
+
+```tsx
+<Inspector value={testResult} pageSize={50} aria-label="Test result" />
+```
+
+## Show a value inline
+
+`layout="inline"` shows a one-line summary that fits in a sentence or a table
+cell. Opening it makes a block under the line, with the full tree. Inline values
+start closed.
+
+```tsx
+<Text>
+  The assertion failed with <Inspector layout="inline" value={details} aria-label="Assertion details" /> after
+  three retries.
+</Text>
+```
+
+## Show values in a log or console
+
+When an app prints values, such as log entries, test results, or a console's
+output, render each one with an inline Inspector instead of a string. Short
+values stay on one line, and people open the ones they need. Each Inspector
+keeps its own open rows, and a closed value isn't read, so long logs stay cheap
+to show. Parse values that arrive as JSON first; Maps, errors, and cycles work as
+they are.
+
+```tsx
+function LogLine({ time, message, value }) {
+  return (
+    <Text>
+      {time} {message} <Inspector layout="inline" value={value} aria-label={message} />
+    </Text>
+  )
+}
+```
+
+## Copy values and paths
+
+Right-click a row to copy it. The first item copies the row's value: **Copy
+string** copies a string's raw text, and **Copy number** or **Copy object**
+copies the value in the text form the rows use, which keeps Maps, cycles, and
+errors intact. **Copy path** copies a JavaScript path to the row, such as
+`results[3].details.error` or `byKey.get("api-1")`. It's unavailable where no
+expression reaches the value, such as items in a Set. On the keyboard, press
+Shift+F10 or the Menu key on the focused row. Right-clicking selected text
+opens the browser's own menu, with its Copy.
+
+## Errors, cycles, and repeated values
+
+An error shows its name and message, and opens to its `cause`, the inner
+`errors` of an `AggregateError`, and its `stack`. Summaries leave the stack out.
+A value that contains itself shows `circular_ref[...]`; select it to jump to the
+row it refers to. An object that appears in several places opens in each.
+
+```tsx
+const node = { id: 'api-1', role: 'leader', failure: new Error('commit failed', { cause }) }
+node.self = node
+<Inspector value={node} expandDepth={2} aria-label="Cluster node" />
+```
+
+## Custom types
+
+A class can choose how it appears by defining a method under `inspectorRepr`.
+The method receives a visitor and describes the value by calling its methods,
+in place of listing the object's own properties. Use it to hide internal fields
+or show a domain value in its familiar form.
+
+| Visitor method | Shows | Example |
+| --- | --- | --- |
+| `constructor_call(name, ...args)` | A constructor call; each argument opens as a child | `Moment(4021.88, -88127n)` |
+| `class_object_like(name, members)` | A named object with the members you choose | `Container{name:"api-1",pid:311}` |
+| `iterable_like(name, items)` | A named list | `EventLog[…]` |
+| `span(text, type)` | One piece of text in a token color, such as `'number'` | `1m 32.5s` |
+| `visit(value)` | Another value, shown like any other | |
+
+A method that throws shows `<inaccessible>`. The key is
+`Symbol.for('anta.to-repr')`, so separately loaded copies of Anta recognize the
+same method.
+
+```tsx
+import { inspectorRepr, type InspectorReprVisitor } from '@antadesign/anta'
+
+class Moment {
+  constructor(public vtime: number, public inputHash: bigint) {}
+  [inspectorRepr](v: InspectorReprVisitor) { v.constructor_call('Moment', this.vtime, this.inputHash) }
+}
+
+class Container {
+  socket = { fd: 7 }
+  constructor(public name: string, public image: string, public pid: number) {}
+  [inspectorRepr](v: InspectorReprVisitor) {
+    v.class_object_like('Container', { name: this.name, image: this.image, pid: this.pid })
+  }
+}
+```
+
+<a id="keyboard-accessibility"></a>
+
+## Keyboard and accessibility
+
+The tree is one Tab stop. Once it has focus, the keys move a highlighted row:
+
+| Key | Action |
+| --- | --- |
+| Down / Up | Next or previous row |
+| Home / End | First or last row |
+| Page Down / Page Up | Ten rows down or up |
+| Right | Open a closed row, or move to an open row's first child |
+| Left | Close an open row, or move to its parent |
+| Enter / Space | Open or close a row, show the next page, or jump from a cycle to its row |
+| Alt+Enter | Open or close a row and everything below it (also Alt+click) |
+| Shift+F10 / Menu key | Open the copy menu for the row |
+
+Give each Inspector an `aria-label`, such as the name of the value it shows.
+Screen readers announce rows as tree items, with their level and whether
+they're open. Opening a whole subtree stops after 500 rows, so one action can't
+read an unbounded part of a value.
+
+## Component props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | unknown | — | The value to show. Any JavaScript value works, including cycles, Maps, errors, and proxies; nothing is read until its row is shown. |
+| `aria-label?` | string | — | Accessible name for the tree. Give every Inspector one, such as the name of the value it shows, so screen readers can tell several apart. |
+| `expandDepth?` | number | 1, or 0 with `layout="inline" | Levels open when the value first renders. `0` starts with the value closed to a one-line summary. Strings always start closed. |
+| `layout?` | 'block' \| 'inline' | 'block' | `block` shows the tree on its own lines. `inline` shows a one-line summary that sits in a sentence or table cell, and becomes a block when opened. |
+| `numericBase?` | 'binary' \| 'octal' \| 'decimal' \| 'hex' | 'decimal' | Base for numbers. |
+| `pageSize?` | number | 100 | Children shown per page of an open array, object, Map, or Set. A "Show more" row shows the next page. |
+| `previewBudget?` | number | 80 | Characters in a closed row's one-line summary. |
+| `textPageSize?` | number | 5000 | Characters per page of an open string. Long and multiline strings open into lines of text. |
+| `unquotedStrings?` | boolean | — | Show strings without quotes. |
+
+## Web Component
+
+`<a-inspector>` handles input for rows the JSX wrapper renders. The wrapper
+renders each line as a direct `a-inspector-row` child with its ARIA and its
+`row-id`, `type`, `expandable`, `open`, `group`, and `target` attributes. The
+element owns focus, the highlighted row, and the keyboard, and never changes the
+DOM. It reports what the reader asks for as events, so a renderer can answer
+them, including one running in a worker:
+
+| Event | Detail | Sent when |
+| --- | --- | --- |
+| `nodetoggle` | `{ id, open, deep? }` | A row should open or close; `deep` covers its whole subtree |
+| `pagerequest` | `{ group }` | A **Show more** row asks for the next page |
+| `rowmenu` | `{ id }` | A context menu opens on a row, or `null` outside any row |
+
+Use the JSX `Inspector`, which renders the rows and answers these events.
+Writing rows by hand means reimplementing that renderer.
+
+## Styling
+
+Rows use the monospace font and the theme's text colors, in light and dark.
+`--inspector-font-size`, `--inspector-line-height`, and `--inspector-indent`
+set the type size, row height, and indent per level. Style `a-inspector` and
+its `a-inspector-row` children with plain CSS; unlayered rules override Anta's
+defaults without `!important`. `::highlight(anta-inspector-reveal)` styles the
+brief highlight after jumping from a cycle.
+
+The classes below identify demonstrations. Substitute your own selectors.
+
+A larger size for reading on a wide screen.
+
+```css
+a-inspector.inspector-large {
+  --inspector-font-size: 14px;
+  --inspector-line-height: 22px;
+}
+```
+
+A tighter indent for deeply nested values. Keep it at 14px or more so the 12px disclosure mark fits.
+
+```css
+a-inspector.inspector-tight {
+  --inspector-indent: 14px;
+}
+```
 
 ## Example
 

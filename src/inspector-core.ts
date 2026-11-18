@@ -10,7 +10,9 @@
  * reproduces. It never throws: a read that fails, such as a hostile Proxy trap,
  * prints `<inaccessible>`.
  *
- * @internal Not public API until it is deliberately exported.
+ * Internal to Anta, except `to_repr`, `CustomRepresentationVisitor`, and
+ * `SpanType`, which the package entry re-exports as `inspectorRepr`,
+ * `InspectorReprVisitor`, and `InspectorTokenType` for custom types.
  * @module
  */
 
@@ -31,6 +33,10 @@ type ReferenceInfo = {
   path: string[]
 }
 
+/**
+ * The kind of a piece of text, which sets its color in the Inspector. A custom
+ * type passes one to `span()`; for example, `'number'` or `'class_name'`.
+ */
 export type SpanType = 'field_name' | 'field_colon' | 'open_bracket' | 'close_bracket' | 'comma' |
   'string' | 'number' | 'boolean' | 'symbol' | 'bigint' | 'undefined' | 'null' |
   'error_class_name' | 'class_name' | 'error_message' | 'reference' | 'reference_path' |
@@ -48,9 +54,21 @@ const numeric_bases = {
 const TypedArray = Object.getPrototypeOf(Int8Array)
 
 /**
- * Method key a value implements to describe itself, receiving a
- * `CustomRepresentationVisitor`. Registered with `Symbol.for`, so copies of the
- * library loaded separately agree on it.
+ * The method key a class implements to control how the Inspector shows it. The
+ * method receives an `InspectorReprVisitor` and describes the value by calling
+ * its methods, in place of listing the value's own properties.
+ *
+ * The key is `Symbol.for('anta.to-repr')`, so separately loaded copies of Anta
+ * recognize the same method.
+ *
+ * @example
+ * ```ts
+ * class Moment {
+ *   constructor(public vtime: number) {}
+ *   [inspectorRepr](v: InspectorReprVisitor) { v.constructor_call('Moment', this.vtime) }
+ * }
+ * // Shows as Moment(12.5); its argument opens like any other value.
+ * ```
  */
 export const to_repr = Symbol.for('anta.to-repr')
 
@@ -222,13 +240,23 @@ function is_pojo(obj: object) {
   return constructor_name(obj) === 'Object'
 }
 
-/** What an implementation of `[to_repr]` receives. */
+/**
+ * What an `inspectorRepr` method receives. Call its methods in display order;
+ * each call adds text, a value, or a group of children that opens in the
+ * Inspector. A method that throws shows `<inaccessible>`.
+ */
 export interface CustomRepresentationVisitor {
+  /** Adds one piece of text in the color for `type`, such as `span('1m 32s', 'number')`. */
   span(text: string, type: SpanType): void
+  /** Adds a value, shown and opened like any other. */
   visit(it: unknown): void
+  /** Shows the value as a constructor call, `name(a, b)`; each parameter opens as a child. */
   constructor_call(name: string, ...params: unknown[]): void
+  /** Shows the value as a named object with the given members as its properties, `name{a:1}`. */
   class_object_like(class_name: string, members: object): void
+  /** Shows the value as a named list of the given items, `name[a, b]`. */
   iterable_like(class_name: string, iter: Iterable<unknown>): void
+  /** Always false: the Inspector reads a value's parts only as far as they're shown. */
   get stopped(): boolean
 }
 

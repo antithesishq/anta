@@ -28,10 +28,17 @@ export class AInspectorRowElement extends HTMLElementBase {
   }
 }
 
-/** Input for the Inspector's light-DOM rows. The JSX wrapper renders the rows
- * and owns which are open; this element owns focus and the keyboard, and turns
- * clicks and keys into serializable requests. It never changes the DOM, so the
- * wrapper can render from a worker. */
+/**
+ * Input for the Inspector's light-DOM rows. The JSX wrapper renders the
+ * `a-inspector-row` children, their ARIA, and which are open; this element owns
+ * focus, the active row, and the keyboard. It never changes the DOM, so the
+ * wrapper can render from a worker.
+ *
+ * It reports requests as serializable, non-bubbling events: `nodetoggle`
+ * (`InspectorToggleDetail`) to open or close a row, `pagerequest`
+ * (`InspectorPageDetail`) for another page, and `rowmenu`
+ * (`InspectorMenuDetail`) when a context menu opens on a row.
+ */
 export class AInspectorElement extends HTMLElementBase {
   #internals = this.attachInternals?.()
   #active: AInspectorRowElement | null = null

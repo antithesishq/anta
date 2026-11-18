@@ -17,16 +17,18 @@ export interface InspectorProps extends Omit<BaseProps, "children"> {
    *  @defaultValue 'block' */
   layout?: "block" | "inline"
   /** Levels open when the value first renders. `0` starts with the value
-   *  closed to a one-line summary. Defaults to 1 in the block layout and 0 in
-   *  the inline layout. */
+   *  closed to a one-line summary. Strings always start closed.
+   *  @defaultValue 1, or 0 with `layout="inline"` */
   expandDepth?: number
-  /** Children shown per page of an open array, object, Map, or Set.
+  /** Children shown per page of an open array, object, Map, or Set. A
+   *  "Show more" row shows the next page.
    *  @defaultValue 100 */
   pageSize?: number
   /** Characters in a closed row's one-line summary.
    *  @defaultValue 80 */
   previewBudget?: number
-  /** Characters per page of an open string.
+  /** Characters per page of an open string. Long and multiline strings open
+   *  into lines of text.
    *  @defaultValue 5000 */
   textPageSize?: number
   /** Base for numbers.
@@ -34,7 +36,8 @@ export interface InspectorProps extends Omit<BaseProps, "children"> {
   numericBase?: "binary" | "octal" | "decimal" | "hex"
   /** Show strings without quotes. */
   unquotedStrings?: boolean
-  /** Accessible name for the tree. */
+  /** Accessible name for the tree. Give every Inspector one, such as the name
+   *  of the value it shows, so screen readers can tell several apart. */
   "aria-label"?: string
 }
 
@@ -111,11 +114,22 @@ function renderRow(row: InspectRow, wrap: boolean) {
   )
 }
 
-/** Interactive tree of any JavaScript value, for exploring test output. Rows
- * read like an object in browser DevTools, and open one level at a time, so a
- * large value is read only as far as it is shown. The wrapper owns the rows and
- * which are open; `<a-inspector>` turns clicks into requests, so the wrapper can
- * render from a worker. */
+/**
+ * Interactive tree of any JavaScript value, for exploring test output, errors,
+ * and logs. Rows read like an object in browser DevTools and open one level at
+ * a time, so a large value is read only as far as it's shown.
+ *
+ * Select a row, or use the arrow keys, to open it. Right-click a row, or press
+ * Shift+F10, to copy its value or its path. `layout="inline"` shows a one-line
+ * summary that fits in a sentence and becomes a block when opened. Classes can
+ * control how they appear with `inspectorRepr`.
+ *
+ * @example
+ * ```tsx
+ * <Inspector value={testResult} aria-label="Test result" />
+ * <Text>Failed with <Inspector layout="inline" value={error} aria-label="Error" /></Text>
+ * ```
+ */
 export const Inspector = ({
   value,
   layout = "block",

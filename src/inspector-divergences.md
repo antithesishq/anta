@@ -71,7 +71,8 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
 
 16. **The custom-representation key is `Symbol.for('anta.to-repr')`.** The notebook's `to_repr` is a unique `Symbol()`
     defined in notebook code, so Anta can't reference or alias it. A registered symbol lets separately loaded copies of
-    Anta agree on it. The notebook adopts the new key if it moves to Anta's core.
+    Anta agree on it. The package exports it as `inspectorRepr`, with the visitor type `InspectorReprVisitor`; the
+    visitor's method names are unchanged. A notebook type moves over by switching its key to `inspectorRepr`.
 17. **`stopped` is always false in `to_repr`.** The notebook's visitor reported `stopped` once `char_limit` ran out, so
     a custom type could stop describing itself early. In Anta, `to_repr` runs against a recorder when its node resolves,
     and laziness bounds the reading instead: the recorded groups are pulled only as far as they are displayed.

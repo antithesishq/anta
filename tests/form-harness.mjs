@@ -47,6 +47,11 @@ export async function formPage(t, engine, html, { upgrade = true } = {}) {
   if (upgrade) {
     await page.addScriptTag({ content: script })
     await page.waitForFunction(() => [...document.querySelectorAll('a-input')].every(el => el.shadowRoot))
+    // Input fades in as it upgrades when a frame was painted first. End that
+    // transition so a test that counts animations counts only Form's glide.
+    await page.evaluate(() => document.getAnimations()
+      .filter(animation => animation instanceof CSSTransition && animation.effect?.target?.localName === 'a-input')
+      .forEach(animation => animation.finish()))
   }
   return { page, errors }
 }

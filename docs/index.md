@@ -40,6 +40,7 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 - [InputTime](./components/input-time.md)
 - [Select](./components/select.md)
 - [SelectFaceted](./components/select-faceted.md)
+- [Form](./components/form.md)
 
 - [Banner](./components/banner.md)
 - [Card](./components/card.md)

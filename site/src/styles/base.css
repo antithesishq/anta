@@ -805,6 +805,18 @@ code[data-copied]::after {
   .columns.reverse {
     flex-direction: row-reverse;
   }
+  /* `stretch` (see <Columns stretch>): the columns share the tallest one's
+     height and a <Preview> fills its column, so paired examples end level. */
+  .columns.stretch {
+    align-items: stretch;
+  }
+  .columns.stretch > .col {
+    display: flex;
+    flex-direction: column;
+  }
+  .columns.stretch > .col > .preview {
+    flex: 1;
+  }
   /* Default: every child is an equal column with a sensible min width. */
   .columns > * {
     flex: 1;

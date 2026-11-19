@@ -17,6 +17,7 @@ export const componentSuites = {
   calendar: { tests: ['tests/calendar-controlled.mjs'] },
   expander: { tests: ['tests/expander-csp.mjs'], slow: ['tests/expander-package.mjs'] },
   card: { tests: ['tests/card-csp.mjs'] },
+  form: { tests: ['tests/form-layout.mjs', 'tests/form-keys.mjs'] },
   progress: { tests: ['tests/progress-csp.mjs'] },
   tooltip: { tests: ['tests/tooltip-csp.mjs'], slow: ['tests/tooltip-package.mjs'] },
   text: { tests: ['tests/text-csp.mjs'] },

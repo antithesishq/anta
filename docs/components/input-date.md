@@ -56,7 +56,9 @@ You can also type a date and time together, such as `06/15/2026 2:30pm` or
 Use `defaultValue` for an initial date, or pair `value` with `onValueChange`
 to control it. InputDate reports an ISO string: `YYYY-MM-DD`, or
 `YYYY-MM-DDTHH:mm` with `time`. An empty field reports `''`. Add `name` to
-submit that value with a form.
+submit that value with a form. The visible Input submits the ISO value while
+showing the localized text; no hidden field is needed. Disabled fields are
+omitted. Use `form` to associate the field with a form elsewhere on the page.
 
 Omit `value` or pass `undefined` to release control and retain the latest date.
 Form reset and browser restoration preserve a controlled value. An uncontrolled
@@ -75,6 +77,7 @@ const [date, setDate] = useState('2026-06-15')
 | `clearable?` | boolean | — | Show a clear button once the field has a value. |
 | `defaultValue?` | string | — | Initial uncontrolled value and form-reset baseline, including time. |
 | `disabled?` | boolean | — | Disable the field and the calendar. |
+| `form?` | string | — | ID of the associated form when outside it. |
 | `hint?` | ReactNode | — | Helper text under the field. Replaced by a format hint while the entry is unrecognized. |
 | `hour12?` | boolean | — | Force the time cycle when `time` is on: `true` for 12-hour (AM/PM), `false` for 24-hour. Omit to follow the locale (`en-US` → 12-hour, most others → 24). |
 | `icon?` | false \| IconShape | calendar-days | Leading icon at the start of the field — the calendar affordance. Pass another shape to change it, or `false` to drop it. |

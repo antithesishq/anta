@@ -538,12 +538,13 @@ export class AInputElement extends HTMLElementBase {
 
   private syncFormValue(value: string) {
     const submitted = this.#formValue === undefined ? value : this.#formValue
+    // Restore the displayed text even when submission uses an ISO value or array.
     if (Array.isArray(submitted)) {
       const entries = new this.view.FormData()
       if (this.name) for (const item of submitted) entries.append(this.name, String(item))
-      this.internals?.setFormValue(entries)
+      this.internals?.setFormValue(entries, value)
     } else {
-      this.internals?.setFormValue(submitted === null ? null : String(submitted))
+      this.internals?.setFormValue(submitted === null ? null : String(submitted), value)
     }
   }
 
@@ -669,7 +670,11 @@ export class AInputElement extends HTMLElementBase {
     const c = this.control
     if (!this.internals || !c) return
     if (isButton(c)) {
-      this.internals.setValidity({})
+      const submitted = this.#formValue === undefined ? this.value : this.#formValue
+      const empty = submitted === null || submitted === '' || (Array.isArray(submitted) && submitted.length === 0)
+      if (this.hasAttribute('required') && empty) {
+        this.internals.setValidity({ valueMissing: true }, 'Please select an option.', c)
+      } else this.internals.setValidity({})
       return
     }
     // Reflect the inner control's native constraints — valueMissing (from
@@ -706,6 +711,7 @@ export class AInputElement extends HTMLElementBase {
   set formValue(value: InputFormValue | undefined) {
     this.#formValue = value
     this.syncFormValue(this.value)
+    this.updateValidity()
   }
 
   /** Focus the shadow control. `delegatesFocus` handles this in supporting

@@ -468,6 +468,25 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     })
     assert.deepEqual(await snapshot(),{values:[{value:'Owner reset',label:'Owner reset'},{value:'Chosen 1',label:'Chosen 1'}],entries:[['first','reset-value'],['second','Chosen 1']],events:[]})
   })
+  test.fast(`${name}: required button Inputs validate submitted values independently of labels`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<form><fieldset><a-input button required name="choice" value="Displayed label" form-value="null"></a-input></fieldset></form>')
+    const validity=()=>field(page).evaluate(host=>({missing:host.validity.valueMissing,valid:host.checkValidity(),form:host.closest('form').checkValidity()}))
+    assert.deepEqual(await validity(),{missing:true,valid:false,form:false})
+    for(const [value,missing] of [[[],true],['',true],[0,false],[false,false],['value',false],[[''],false],[null,true]]) {
+      await field(page).evaluate((host,value)=>host.formValue=value,value)
+      assert.deepEqual(await validity(),{missing,valid:!missing,form:!missing})
+    }
+    await field(page).evaluate(host=>host.removeAttribute('required'))
+    assert.deepEqual(await validity(),{missing:false,valid:true,form:true})
+    await field(page).evaluate(host=>{host.setAttribute('required','');host.formValue=undefined;host.value=''})
+    assert.deepEqual(await validity(),{missing:true,valid:false,form:false})
+    await page.locator('fieldset').evaluate(fieldset=>fieldset.disabled=true)
+    assert.equal(await field(page).evaluate(host=>host.willValidate),false)
+    assert.equal((await validity()).form,true)
+    await page.locator('fieldset').evaluate(fieldset=>fieldset.disabled=false)
+    assert.equal((await validity()).form,false)
+  })
   test.fast(`${name}: form names, constraints, reset, restoration, and button validity`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
     await mount(page,'<form><fieldset><a-input name="email" required type="email" defaultvalue="seed@example.com"></a-input><a-input button required name="trigger" value="Open" form-value="null"></a-input></fieldset></form>')
@@ -487,7 +506,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       fieldset.disabled=true;const disabled=values();fieldset.disabled=false
       return {invalid,valid,initial,property,attribute,authored,removed,critical,reset,restored,disabled,button:form.querySelector('[button]').checkValidity()}
     })
-    assert.deepEqual(result,{invalid:true,valid:true,initial:[['email','good@example.com']],property:[['renamed','good@example.com']],attribute:'renamed',authored:[['authored','good@example.com']],removed:[{attribute:'',name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true}],critical:true,reset:'seed@example.com',restored:'restored@example.com',disabled:[],button:true})
+    assert.deepEqual(result,{invalid:true,valid:true,initial:[['email','good@example.com']],property:[['renamed','good@example.com']],attribute:'renamed',authored:[['authored','good@example.com']],removed:[{attribute:'',name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true}],critical:true,reset:'seed@example.com',restored:'restored@example.com',disabled:[],button:false})
     await field(page).evaluate(host=>{host.setAttribute('type','number');host.setAttribute('min','2');host.setAttribute('max','8');host.setAttribute('step','2');host.value='3'})
     assert.equal(await field(page).evaluate(host=>host.validity.stepMismatch),true)
     await field(page).evaluate(host=>host.value='10')

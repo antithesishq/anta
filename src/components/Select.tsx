@@ -122,7 +122,7 @@ export interface EmptyState {
 export interface TriggerState<V extends OptionValue = string> {
   /** Spread onto a custom `Input button` trigger to preserve form submission
    * and reset. Other trigger types must provide their own form integration. */
-  formProps: Pick<InputProps, 'name' | 'form' | 'formValue' | 'onFormReset'>
+  formProps: Pick<InputProps, 'name' | 'form' | 'formValue' | 'onFormReset' | 'required' | 'disabled'>
   /** Whether the menu is open — use it for `aria-expanded` and a chevron. */
   open: boolean
   /** The current selection: a value or `null` in single mode, an array in
@@ -174,6 +174,8 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
   name?: string
   /** ID of the associated form when outside it. */
   form?: string
+  /** Require a nonempty selection before the associated form can submit. */
+  required?: boolean
   /** The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s
    *  (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and
    *  submenus nest and mix with plain options. Selection stays global (one `value`,
@@ -517,6 +519,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     defaultValue,
     name,
     form,
+    required,
     onValueChange,
     placeholder,
     icon,
@@ -562,6 +565,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     name,
     form,
     formValue: currentRaw,
+    required,
+    disabled,
     onFormReset: event => {
       event.preventDefault()
       if (!controlled) setInternal(defaultValue ?? (multiple ? [] : null))

@@ -4,7 +4,7 @@ const submitted: InputFormValue = [0, false, '']
 ;<Input name="choice" form="settings" formValue={submitted} />
 // @ts-expect-error Submitted values must be primitives or arrays of primitives.
 ;<Input formValue={{ id: 1 }} />
-;<Select name="choice" form="settings" options={['a']} renderTrigger={state => (
+;<Select name="choice" form="settings" required options={['a']} renderTrigger={state => (
   <Input button {...state.formProps} value={String(state.value ?? '')} />
 )} />
 

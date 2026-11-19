@@ -271,6 +271,10 @@ Omit `formValue` or pass `undefined` to submit the current text. Pass `null` to
 omit the field, or an array to submit repeated entries under `name`. Numbers
 and booleans become strings. Use `form` to associate an Input with a form by ID.
 
+For `Input button`, `required` checks the submitted value. Null, an empty string,
+and an empty array fail validation even when the trigger shows a label. Zero
+and `false` are valid values.
+
 In raw HTML, `form-value` is JSON-encoded. Malformed JSON or unsupported values
 fall back to the live text and report a console warning. Explicit `null` omits
 the field.
@@ -479,7 +483,7 @@ Narrow the preview to see the layout adjust.
 | `placeholder?` | string | — | Placeholder shown when empty. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' | primary | Field emphasis. `primary` has a fill and border, `secondary` keeps the border without a fill, and `tertiary` makes the border transparent until hover or focus. Status borders remain visible at rest. |
 | `readOnly?` | boolean | — | Make the field read-only. |
-| `required?` | boolean | — | Mark the field required (drives native validity). |
+| `required?` | boolean | — | Mark the field required. Button mode checks the submitted value: null, an empty string, or an empty array is missing, independently of the label. |
 | `role?` | string | — | ARIA role for the native control, such as `combobox` for an InputAutocomplete trigger. The element delegates this and standard `aria-*` props to its native shadow control. |
 | `round?` | boolean \| number \| string | — | Give the field fully rounded corners. Pass a number in pixels or a CSS length for a custom radius. The clear button stays circular. |
 | `rows?` | number | — | Fixed visible row count. Also enables `multiline`. |

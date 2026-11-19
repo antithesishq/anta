@@ -289,7 +289,10 @@ form elsewhere on the page.
 entries under the same name; read them with `formData.getAll(name)`. Numbers and
 booleans become strings. Empty selections and disabled Selects submit nothing.
 A reset restores `defaultValue` for an uncontrolled Select. Controlled Selects
-retain `value`. Select does not provide native required-field validation.
+retain `value`. Pass `required` to block submission for an empty selection.
+The selected value drives validation, independently of the displayed label.
+Button's `submitdetailed.formData` keeps multiple selections as arrays, including
+`[]` when empty and a one-item array for one pick. A single Select submits a scalar.
 
 For a custom `Input button` trigger, spread `state.formProps` onto the Input
 to preserve submission and reset. Other custom triggers must provide their
@@ -614,6 +617,7 @@ the keyboard. Validate the query before offering to create an option.
 | `renderOption?` | (option, state) => ReactNode | — | Replaces the built-in `label`, `hint`, and `icon` layout for each option row. Select still supplies the row container, click handling, ARIA attributes, and selection indicator. Read extra option fields through `SelectOption`'s index signature. `state` contains `value`, `selected`, and `disabled`. Filtering still matches the option's `value`, `label`, and `hint`, but Select cannot highlight matches within the returned content. |
 | `renderSummary?` | (selected) => string \| undefined | — | `multiple` only: build the trigger's selection summary text yourself, replacing the built-in "`All` / one label / `N selected`" logic. Receives the resolved selected options (`selected.length` is the count) and runs only while something is selected — an empty selection still shows the `placeholder`. Return a **string**: it becomes the default trigger's value, so a long summary ellipsizes at the field's width just like a long value (`Engineering, Design, … `). Return `undefined` to fall back to the default for that case (e.g. customize only the count, keeping the single-label case built-in). For rich content (chips, multiple nodes) use `renderTrigger`, which replaces the whole field. |
 | `renderTrigger?` | (state) => ReactNode | — | Replaces the default field with a trigger returned from this function. Receives `open`, `value`, `selected`, `disabled`, and `icon`. Return exactly one focusable element, such as an Anta `Button`. The menu is positioned relative to that element and opens when it is clicked. Do not return a fragment, multiple siblings, or a non-focusable wrapper. Add `aria-haspopup={filter ? 'dialog' : 'menu'}` and `aria-expanded={state.open}` to the returned button. An Anta `Button` already carries the correct role. Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and `className` / `style` apply only to the default field. Add styling and attributes to the returned element instead. |
+| `required?` | boolean | — | Require a nonempty selection before the associated form can submit. |
 | `round?` | boolean \| number \| string | — | Round the field corners — `true` for fully round, or a number / CSS length. |
 | `selectAll?` | boolean | true | `multiple` only: shows a "Select all" row that toggles every enabled option, or only the visible options when a filter query is active. Its checkbox is mixed when some options are selected. It is on by default. Set it to `false` to remove the row and the Alt/Option-click shortcut that selects only one row. |
 | `selectAllLabel?` | string | Select all | Label for the `selectAll` row. |

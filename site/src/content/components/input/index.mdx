@@ -457,6 +457,10 @@ Omit `formValue` or pass `undefined` to submit the current text. Pass `null` to
 omit the field, or an array to submit repeated entries under `name`. Numbers
 and booleans become strings. Use `form` to associate an Input with a form by ID.
 
+For `Input button`, `required` checks the submitted value. Null, an empty string,
+and an empty array fail validation even when the trigger shows a label. Zero
+and `false` are valid values.
+
 In raw HTML, `form-value` is JSON-encoded. Malformed JSON or unsupported values
 fall back to the live text and report a console warning. Explicit `null` omits
 the field.

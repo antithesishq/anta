@@ -765,7 +765,8 @@ export interface AInputAttributes extends BaseAttributes {
   readonly?: boolean | ''
   /** Render a native button inside the field surface. Presence-based. */
   button?: boolean | ''
-  /** Required — drives native validity. Presence-based. */
+  /** Required — drives native validity. In button mode, null, an empty string,
+   * or an empty submitted array is missing. Presence-based. */
   required?: boolean | ''
   /** Dim the leading/trailing adornments at rest (0.6); they brighten to full
    *  when the field is hovered or focused. Presence-based. */

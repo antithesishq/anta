@@ -398,7 +398,10 @@ form elsewhere on the page.
 entries under the same name; read them with `formData.getAll(name)`. Numbers and
 booleans become strings. Empty selections and disabled Selects submit nothing.
 A reset restores `defaultValue` for an uncontrolled Select. Controlled Selects
-retain `value`. Select does not provide native required-field validation.
+retain `value`. Pass `required` to block submission for an empty selection.
+The selected value drives validation, independently of the displayed label.
+Button's `submitdetailed.formData` keeps multiple selections as arrays, including
+`[]` when empty and a one-item array for one pick. A single Select submits a scalar.
 
 For a custom `Input button` trigger, spread `state.formProps` onto the Input
 to preserve submission and reset. Other custom triggers must provide their

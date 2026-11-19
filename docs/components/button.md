@@ -297,8 +297,10 @@ Submitting calls `form.requestSubmit()`, so the form's validation and `submit`
 event still run. It also dispatches `submitdetailed` on the form with
 `{ formData, submitter: { tag, attrs } }` in `detail`, which can identify the
 trigger in analytics or multi-button forms.
-Each `formData` property contains a string or File for one entry, or an array
-when several entries share the name, such as a multiple Select.
+Multiple Selects, native multiple selects, and Inputs with array-valued
+`formValue` always produce arrays, including `[]` for an empty selection and
+a one-item array for one pick. Other fields produce a string or File for one
+entry, or an array when several entries share the name. Disabled fields are omitted.
 
 ```tsx
 <form id="signup">

@@ -123,7 +123,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    *  available for Input-styled popup triggers; the value becomes
    *  the button text and the placeholder is shown while it is empty. */
   button?: boolean
-  /** Mark the field required (drives native validity). */
+  /** Mark the field required. Button mode checks the submitted value: null,
+   * an empty string, or an empty array is missing, independently of the label. */
   required?: boolean
   /** Keep leading, trailing, and clear content subtle until someone hovers over
    * or focuses the field. */

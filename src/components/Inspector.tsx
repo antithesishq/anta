@@ -1,6 +1,6 @@
 import { customEventHandler } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
-import { copyText, deepToggle, describe, rowNode, setRowOpen, visibleRows, type InspectNode, type InspectRow, type NodeKind, type Token } from "../inspector-core"
+import { copyText, deepToggle, describe, jsonText, rowNode, setRowOpen, visibleRows, type InspectNode, type InspectRow, type NodeKind, type Token } from "../inspector-core"
 import { useMemo, useState } from "../jsx-runtime"
 import { useNativeEventProps } from "../native-event-props"
 import { Menu } from "./Menu"
@@ -24,7 +24,9 @@ export interface InspectorProps extends Omit<BaseProps, "children"> {
    *  "Show more" row shows the next page.
    *  @defaultValue 100 */
   pageSize?: number
-  /** Characters in a closed row's one-line summary.
+  /** Characters in a closed row's one-line summary with `layout="inline"`,
+   *  counting the space after each comma and colon. Strings longer than this
+   *  can open. In block layout, a summary instead ends at the row's edge.
    *  @defaultValue 80 */
   previewBudget?: number
   /** Characters per page of an open string. Long and multiline strings open
@@ -45,12 +47,23 @@ type View = {
   root: InspectNode
   toggled: ReadonlySet<string>
   pages: ReadonlyMap<string, number>
-  /** The row a context menu last opened on. */
+  /** The row the open context menu is for. Null while it's closed, and until
+   *  `rowmenu` names the row, so the copy items never hold another row's text. */
   menuRow: string | null
   /** Keys for the copy items. A new key remounts an item, which clears its ✓
    *  feedback; MenuItemCopy otherwise keeps it for two seconds, across menus. */
-  copyKeys: { value: number; path: number }
+  copyKeys: CopyKeys
 }
+type CopyKeys = { value: number; json: number; path: number }
+const NO_COPY_KEYS: CopyKeys = { value: 0, json: 0, path: 0 }
+// New keys for every copy item except `keep`, the one just used, so only it shows its ✓.
+const remount = (keys: CopyKeys, keep?: keyof CopyKeys): CopyKeys => ({
+  value: keep === "value" ? keys.value : keys.value + 1,
+  json: keep === "json" ? keys.json : keys.json + 1,
+  path: keep === "path" ? keys.path : keys.path + 1,
+})
+// Block rows render this much of a summary; CSS cuts it at the row's edge.
+const BLOCK_SUMMARY_LIMIT = 300
 const NONE: ReadonlySet<string> = new Set()
 const NO_PAGES: ReadonlyMap<string, number> = new Map()
 
@@ -120,7 +133,7 @@ function renderRow(row: InspectRow, wrap: boolean) {
  * a time, so a large value is read only as far as it's shown.
  *
  * Select a row, or use the arrow keys, to open it. Right-click a row, or press
- * Shift+F10, to copy its value or its path. `layout="inline"` shows a one-line
+ * Shift+F10, to copy its value, its JSON, or its path. `layout="inline"` shows a one-line
  * summary that fits in a sentence and becomes a block when opened. Classes can
  * control how they appear with `inspectorRepr`.
  *
@@ -147,9 +160,10 @@ export const Inspector = ({
     () => describe(value, { numeric_base: numericBase, unquoted_strings: unquotedStrings }),
     [value, numericBase, unquotedStrings],
   )
-  const rowState = { style: "tree" as const, expandDepth, pageSize, previewBudget, textPageSize }
+  const summaryLimit = layout === "block" ? Math.max(BLOCK_SUMMARY_LIMIT, previewBudget ?? 0) : undefined
+  const rowState = { style: "tree" as const, expandDepth, pageSize, previewBudget, summaryLimit, textPageSize }
   // Open rows and pages belong to one value; a new value starts fresh.
-  const fresh: View = { root, toggled: NONE, pages: NO_PAGES, menuRow: null, copyKeys: { value: 0, path: 0 } }
+  const fresh: View = { root, toggled: NONE, pages: NO_PAGES, menuRow: null, copyKeys: NO_COPY_KEYS }
   const [view, setView] = useState<View>(fresh)
   const current = view.root === root ? view : fresh
   const update = (change: (view: View) => Partial<View>) =>
@@ -170,11 +184,14 @@ export const Inspector = ({
     onpagerequest: customEventHandler<{ group: string }>((_event, { group }) => {
       update(({ pages }) => ({ pages: new Map(pages).set(group, (pages.get(group) ?? 1) + 1) }))
     }),
-    // The menu opens at once; from a worker, this update lands before an item
-    // can be chosen, and MenuItemCopy reads `copy` when it is.
+    // The menu opens at once, and the copy items stay disabled until this
+    // update names the row; from a worker, that's a round trip later.
+    // Known gap: a right-click on another row while the menu is open moves the
+    // menu without closing it, so until this update lands, the items still
+    // hold the previous row's text. tests/inspector-csp.mjs pins this.
     // Each opening starts with no copy feedback showing.
     onrowmenu: customEventHandler<{ id: string | null }>((_event, { id }) => {
-      update(({ copyKeys }) => ({ menuRow: id, copyKeys: { value: copyKeys.value + 1, path: copyKeys.path + 1 } }))
+      update(({ copyKeys }) => ({ menuRow: id, copyKeys: remount(copyKeys) }))
     }),
   })
 
@@ -188,6 +205,8 @@ export const Inspector = ({
     [current.root, current.menuRow],
   )
   const valueText = useMemo(() => menuNode && copyText(menuNode), [menuNode])
+  const json = useMemo(() => menuNode && jsonText(menuNode), [menuNode])
+  const waiting = current.menuRow === null
 
   return (
     <>
@@ -206,24 +225,32 @@ export const Inspector = ({
       <Menu
         context
         onStateChange={(_event, { next }) => {
-          // Closing clears the feedback, so it can't reappear in the next menu.
-          if (!next) update(({ copyKeys }) => ({ copyKeys: { value: copyKeys.value + 1, path: copyKeys.path + 1 } }))
+          // Closing clears the feedback, so it can't reappear in the next menu,
+          // and forgets the row, so the next opening waits for its own.
+          if (!next) update(({ copyKeys }) => ({ menuRow: null, copyKeys: remount(copyKeys) }))
         }}
       >
         <MenuItemCopy
           key={`value-${current.copyKeys.value}`}
           label={menuNode ? copyLabel(menuNode.kind) : "Copy value"}
           copy={valueText ?? ""}
-          disabled={valueText === undefined}
-          // Only the item just used shows its ✓.
-          onCopied={() => update(({ copyKeys }) => ({ copyKeys: { ...copyKeys, path: copyKeys.path + 1 } }))}
+          disabled={waiting || valueText === undefined}
+          onCopied={() => update(({ copyKeys }) => ({ copyKeys: remount(copyKeys, "value") }))}
+        />
+        <MenuItemCopy
+          key={`json-${current.copyKeys.json}`}
+          label="Copy JSON"
+          copy={json && "text" in json ? json.text : ""}
+          disabled={waiting || !json || "reason" in json}
+          hint={json && "reason" in json ? json.reason : undefined}
+          onCopied={() => update(({ copyKeys }) => ({ copyKeys: remount(copyKeys, "json") }))}
         />
         <MenuItemCopy
           key={`path-${current.copyKeys.path}`}
           label="Copy path"
           copy={path ?? ""}
-          disabled={!path}
-          onCopied={() => update(({ copyKeys }) => ({ copyKeys: { ...copyKeys, value: copyKeys.value + 1 } }))}
+          disabled={waiting || !path}
+          onCopied={() => update(({ copyKeys }) => ({ copyKeys: remount(copyKeys, "path") }))}
         />
       </Menu>
     </>

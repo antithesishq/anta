@@ -304,8 +304,12 @@ export interface InspectNode {
   readonly size: number | undefined
   /** For a circular node, the path of the ancestor it refers to. */
   readonly target: readonly unknown[] | undefined
-  /** One-line text of this node within `budget` characters, as tokens. */
-  summary(budget: number): Token[]
+  /**
+   * One-line text of this node within `budget` characters, as tokens. With
+   * `display`, the budget counts the space the Inspector draws after commas and
+   * colons, and a cut text ends in `…`.
+   */
+  summary(budget: number, display?: boolean): Token[]
 }
 
 type Ancestor = { identity: object; path: readonly unknown[]; parent: Ancestor | undefined }
@@ -376,6 +380,11 @@ class Node implements InspectNode {
       : undefined
   }
 
+  /** The raw value of a primitive node, for `jsonText`. @internal */
+  static primitive(node: InspectNode): unknown {
+    return node instanceof Node ? node.#value : undefined
+  }
+
   get kind() { return this.#resolve().kind }
   get text() { return typeof this.#value === 'string' ? this.#value : undefined }
   get parts() { return this.#resolve().parts }
@@ -394,8 +403,8 @@ class Node implements InspectNode {
   }
 
   // A one-line preview names an error without its stack, as DevTools does.
-  summary(budget: number): Token[] {
-    return serialize(this, { ...this.#context.options, char_limit: budget, error_stacks: false })
+  summary(budget: number, display = false): Token[] {
+    return serialize(this, { ...this.#context.options, char_limit: budget, error_stacks: false }, display)
   }
 
   // Context for this node's children: this node joins the ancestor chain.
@@ -740,20 +749,29 @@ export function describe(value: unknown, options: Options = {}): InspectNode {
  * labelled by first appearance in walk order. Children are pulled one at a time
  * and the walk stops at the limit, so nothing past the limit is read.
  */
-export function serialize(root: InspectNode, options: Options = {}): Token[] {
+export function serialize(root: InspectNode, options: Options = {}, display = false): Token[] {
   const out: Token[] = []
   let remaining = options.char_limit ?? Infinity
   let stop = false
+  // `display` counts the Inspector's spacing after separators and ends a cut in
+  // one `…`. A cut never leaves a separator or an emptied token, whose spacing
+  // would show before the `…`.
+  const mark = display ? '…' : '...'
   const refs = new WeakMap<object, ReferenceInfo>()
   const symbol_refs = new Map<symbol, ReferenceInfo>()
   const deduplicate = options.deduplicate_references !== false
 
   const emit = (text: string, type: SpanType) => {
     if (!text || stop) return
-    remaining -= text.length
-    if (remaining < 3) {
-      out.push({ text: safe_truncate(text, remaining + text.length - 3), type })
-      out.push({ text: '...', type: 'ellipsis' })
+    const separator = type === 'comma' || type === 'field_colon'
+    const width = text.length + (display && separator ? 1 : 0)
+    remaining -= width
+    if (remaining < mark.length) {
+      const kept = safe_truncate(text, remaining + width - mark.length)
+      if (!display) out.push({ text: kept, type })
+      else if (kept && !separator) out.push({ text: kept, type })
+      else while (out.at(-1)?.type === 'comma' || out.at(-1)?.type === 'field_colon') out.pop()
+      out.push({ text: mark, type: 'ellipsis' })
       stop = true
     } else {
       out.push({ text, type })
@@ -879,8 +897,17 @@ export type RowState = {
   pageSize?: number
   /** Characters per page of an open string. Defaults to 5,000. */
   textPageSize?: number
-  /** Characters in a closed node's summary. Defaults to 80. */
+  /**
+   * Characters in a closed node's summary, counting the space drawn after
+   * commas and colons. Strings longer than this can open. Defaults to 80.
+   */
   previewBudget?: number
+  /**
+   * Characters rendered in a closed node's summary when the Inspector's CSS
+   * cuts the row at its edge instead, as in block layout. It only bounds the
+   * work, so it's a wide row's worth. Defaults to `previewBudget`.
+   */
+  summaryLimit?: number
   /**
    * `repr` rows read like `repr()` output, with brackets, commas, and `close`
    * rows. `tree` rows read like an object in browser DevTools: an open node's
@@ -959,6 +986,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
   const page_size = state.pageSize ?? 100
   const text_page_size = state.textPageSize ?? 5000
   const budget = state.previewBudget ?? 80
+  const summary_limit = state.summaryLimit ?? budget
   const tree = state.style === 'tree'
   const rows: InspectRow[] = []
   type Open = { identity: object | symbol | undefined; id: string }
@@ -967,7 +995,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
   // A child's key and colon. In the tree style, children without a key, such
   // as array elements, show their index.
   const key_of = (child: InspectChild): Token[] => {
-    if (child.key !== undefined) return [...(Array.isArray(child.key) ? child.key : (child.key as InspectNode).summary(budget)), colon]
+    if (child.key !== undefined) return [...(Array.isArray(child.key) ? child.key : (child.key as InspectNode).summary(budget, true)), colon]
     if (!tree || child.value.kind === 'empty-slots') return []
     return [{ text: safe_string(child.value.path.at(-1)), type: 'field_name' }, colon]
   }
@@ -987,7 +1015,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
     }
     rows.push(row)
     if (!open) {
-      row.tokens = node.summary(budget)
+      row.tokens = node.summary(summary_limit, true)
       return
     }
 
@@ -1153,6 +1181,72 @@ export function copyText(node: InspectNode, options: Options = {}): string | und
   if (node.kind === 'circular' || node.kind === 'empty-slots' || node.kind === 'inaccessible') return undefined
   if (node.kind === 'string') return node.text
   return serialize(node, { ...options, char_limit: Infinity }).map(token => token.text).join('')
+}
+
+/**
+ * A node as compact JSON, or the reason it can't be: the first part that isn't
+ * plain data, and its path from the node. Reads only through the node, so
+ * getters and Proxy traps stay contained as they do in the Inspector.
+ */
+export function jsonText(node: InspectNode): { text: string } | { reason: string } {
+  let reason: string | undefined
+  const fail = (what: string, path: string) => {
+    reason = path ? `Not JSON: contains ${what} at ${path}` : `Not JSON: ${what}`
+    return undefined
+  }
+  const key_path = (base: string, key: string) =>
+    /^[A-Za-z_$][\w$]*$/.test(key) ? `${base}.${key}` : `${base}[${JSON.stringify(key)}]`
+  const each = (group: InspectGroup, visit: (child: InspectChild, i: number) => boolean) => {
+    for (let i = 0, child = group.childAt(0); child; child = group.childAt(++i)) if (!visit(child, i)) return false
+    return true
+  }
+
+  const write = (node: InspectNode, path: string): string | undefined => {
+    switch (node.kind) {
+      case 'string': return JSON.stringify(node.text)
+      case 'boolean': case 'null': return JSON.stringify(Node.primitive(node))
+      case 'number': {
+        const value = Node.primitive(node) as number
+        return Number.isFinite(value) ? JSON.stringify(value) : fail(String(value), path)
+      }
+      case 'array': {
+        const [elements, extra] = node.groups
+        if (extra?.childAt(0)) return fail('named properties on an array', path)
+        const out: string[] = []
+        const ok = each(elements, (child, i) => {
+          const text = write(child.value, `${path}[${i}]`)
+          if (text !== undefined) out.push(text)
+          return text !== undefined
+        })
+        return ok ? `[${out.join(',')}]` : undefined
+      }
+      case 'object': {
+        if (node.header.length) return fail(`a ${node.header.map(token => token.text).join('')} instance`, path)
+        const out: string[] = []
+        const ok = each(node.groups[0], child => {
+          // A failed read of the object's own keys has no key of its own.
+          const key = child.value.path.at(-1)
+          if (child.key === undefined || typeof key !== 'string') return fail(KIND_NAMES.inaccessible, path) !== undefined
+          const text = write(child.value, key_path(path, key))
+          if (text !== undefined) out.push(`${JSON.stringify(key)}:${text}`)
+          return text !== undefined
+        })
+        return ok ? `{${out.join(',')}}` : undefined
+      }
+      default: return fail(KIND_NAMES[node.kind], path)
+    }
+  }
+
+  const text = write(node, '')
+  return text === undefined ? { reason: reason! } : { text }
+}
+
+const KIND_NAMES: Record<NodeKind, string> = {
+  'string': 'a string', 'number': 'a number', 'bigint': 'a bigint', 'boolean': 'a boolean', 'null': 'null',
+  'undefined': 'undefined', 'symbol': 'a symbol', 'array': 'an array', 'typed-array': 'a typed array', 'set': 'a Set',
+  'map': 'a Map', 'object': 'an object', 'date': 'a Date', 'error': 'an error', 'regexp': 'a RegExp',
+  'function': 'a function', 'blob': 'a Blob', 'custom': 'a custom type', 'circular': 'a circular reference',
+  'empty-slots': 'an empty slot', 'inaccessible': 'an unreadable value',
 }
 
 export const DEFAULT_REPR_CHAR_LIMIT = 50000

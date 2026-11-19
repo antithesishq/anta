@@ -61,6 +61,21 @@ const app = `
       }, [...(row.key ?? []), ...(row.tokens ?? [])].map(token => token.text).join(''))))
   }
   window.requests = []
+
+  // Holds back each rowmenu for 'delay' ms, as a worker renderer's round trip
+  // would, then sends a fresh copy. The real wrapper sees the gap; Menu still
+  // opens at once. Capture on window runs before any listener on the element.
+  window.rowmenuArrivals = 0
+  window.delayRowMenu = delay => window.addEventListener('rowmenu', event => {
+    if (event.replayed) { window.rowmenuArrivals++; return }
+    event.stopImmediatePropagation()
+    const target = event.target
+    setTimeout(() => {
+      const replay = new CustomEvent('rowmenu', { detail: event.detail })
+      replay.replayed = true
+      target.dispatchEvent(replay)
+    }, delay)
+  }, true)
   window.renderDelayed = delay => render(React.createElement(Delayed, { delay }), mount())
 `
 
@@ -143,6 +158,16 @@ async function until(page, check, message) {
   }
   assert.fail(message)
 }
+// The copy items in menu order: value, JSON, path.
+const copyItems = page => page.$$eval('a-menu-item', items => items.map(item => {
+  const copy = item.querySelector('a-copy')
+  return {
+    label: item.querySelector('a-menu-item-label')?.textContent.trim() ?? item.textContent.trim(),
+    disabled: item.hasAttribute('disabled'),
+    copy: copy?.getAttribute('copy') ?? copy?.copy ?? null,
+    hint: item.querySelector('a-menu-item-hint')?.textContent.trim() ?? null,
+  }
+}))
 async function focusTree(page) {
   await page.locator('#before').focus()
   await page.keyboard.press('Tab')
@@ -310,6 +335,115 @@ for (const engine of engines) {
       return result.violations.map(violation => `${violation.id}: ${violation.nodes.length}`)
     })
     assert.deepEqual(violations, [])
+  })
+
+  test.fast(`${name}: Copy JSON copies plain data and explains anything else`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    const openMenu = async id => {
+      await page.locator(`a-inspector-row[row-id="${id}"]`).click({ button: 'right' })
+      await until(page, async () => (await copyItems(page))[2]?.copy !== null && !(await copyItems(page))[2]?.disabled, `the menu did not open on ${id}`)
+    }
+    await openMenu('r:1.1')
+    const json = (await copyItems(page))[1]
+    assert.deepEqual(json, { label: 'Copy JSON', disabled: false, copy: '[{"id":"t1","ok":true},{"id":"t2","ok":false}]', hint: null })
+    if (engine === chromium) {
+      await page.locator('a-menu-item', { hasText: 'Copy JSON' }).first().click()
+      await until(page, async () => await page.evaluate(() => navigator.clipboard.readText()) === json.copy, 'Copy JSON did not copy the JSON')
+    }
+    await page.keyboard.press('Escape')
+    await openMenu('r:1.3')
+    assert.deepEqual((await copyItems(page))[1], { label: 'Copy JSON', disabled: true, copy: '', hint: 'Not JSON: a Map' })
+  })
+
+  test.fast(`${name}: with rowmenu delayed, the copy items wait for their row`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    await page.evaluate(() => window.delayRowMenu(150))
+    const arrivals = () => page.evaluate(() => window.rowmenuArrivals)
+    // A first opening: every item stays disabled until its row's answer.
+    await page.locator('a-inspector-row[row-id="r:1.1"]').click({ button: 'right' })
+    await until(page, async () => (await copyItems(page)).length === 3, 'the menu did not open')
+    assert.equal(await arrivals(), 0, 'the delay was too short to check before the answer')
+    assert.deepEqual((await copyItems(page)).map(item => item.disabled), [true, true, true])
+    await until(page, async () => (await copyItems(page)).every(item => !item.disabled), 'the items never became available')
+    assert.deepEqual((await copyItems(page)).map(item => item.copy).slice(1), ['[{"id":"t1","ok":true},{"id":"t2","ok":false}]', 'results'])
+    // Closed, then opened on another row: waiting again, never showing r:1.1's text.
+    await page.keyboard.press('Escape')
+    await page.locator('a-inspector-row[row-id="r:1.0"]').click({ button: 'right' })
+    assert.equal(await arrivals(), 1)
+    assert.deepEqual((await copyItems(page)).map(item => item.disabled), [true, true, true])
+    await until(page, async () => (await copyItems(page))[2].copy === 'name' && !(await copyItems(page))[2].disabled, 'the items never showed r:1.0')
+    assert.deepEqual((await copyItems(page)).map(item => item.copy), ['run', '"run"', 'name'])
+  })
+
+  // Tripwire for the known gap in the comment on `onrowmenu` in Inspector.tsx:
+  // Menu moves an open menu to another row without closing, so until rowmenu
+  // lands, the items still hold the previous row's text. If this fails, the gap
+  // was closed; update that comment and this test.
+  test.fast(`${name}: re-targeting an open menu keeps the previous row's text until rowmenu arrives (known gap)`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    await page.evaluate(() => window.delayRowMenu(150))
+    await page.locator('a-inspector-row[row-id="r:1.1"]').click({ button: 'right' })
+    await until(page, async () => (await copyItems(page))[2]?.copy === 'results' && !(await copyItems(page))[2].disabled, 'the menu never showed r:1.1')
+    // The open menu sits below r:1.1, so right-click a row above it.
+    await page.locator('a-inspector-row[row-id="r:1.0"]').click({ button: 'right' })
+    const before = await copyItems(page)
+    assert.equal(await page.evaluate(() => window.rowmenuArrivals), 1, 'the delay was too short to check before the answer')
+    assert.deepEqual(before.map(item => [item.disabled, item.copy]).slice(2), [[false, 'results']])
+    await until(page, async () => (await copyItems(page))[2].copy === 'name', 'the menu never moved to r:1.0')
+  })
+
+  test.fast(`${name}: block rows cut every value at the same edge, keys whole`, async t => {
+    const page = await pageFor(t, engine)
+    await page.setViewportSize({ width: 480, height: 600 })
+    const numbers = Array.from({ length: 200 }, (_, i) => i * 37)
+    await renderInspector(page, { value: { n: numbers, a_much_longer_key: numbers.map(String) } })
+    const rows = await page.$$eval('a-inspector-row[type="node"][aria-level="2"]', rows => rows.map(row => {
+      const key = row.querySelector('a-inspector-key')
+      const value = row.querySelector('a-inspector-value')
+      return {
+        display: getComputedStyle(row).display,
+        keyClipped: key.scrollWidth > key.clientWidth,
+        valueClipped: value.scrollWidth > value.clientWidth,
+        overflow: getComputedStyle(value).textOverflow,
+        right: Math.round(value.getBoundingClientRect().right),
+      }
+    }))
+    assert.equal(rows.length, 2)
+    for (const row of rows) assert.deepEqual({ ...row, right: 0 }, { display: 'flex', keyClipped: false, valueClipped: true, overflow: 'ellipsis', right: 0 })
+    assert.equal(rows[0].right, rows[1].right, 'the values end at different places')
+  })
+
+  // A centered flex column sizes its children to their content, as the docs
+  // preview does. The Inspector must still stay inside it.
+  test.fast(`${name}: in a container that sizes it to its content, rows still cut at the container's edge`, async t => {
+    const page = await pageFor(t, engine)
+    await page.setViewportSize({ width: 480, height: 600 })
+    await page.evaluate(() => { document.querySelector('#mount').style.cssText = 'display: flex; flex-direction: column; align-items: center; width: 400px' })
+    await renderInspector(page, { value: { n: Array.from({ length: 200 }, (_, i) => i * 37) } })
+    const sizes = await page.evaluate(() => ({
+      mount: document.querySelector('#mount').getBoundingClientRect().width,
+      inspector: document.querySelector('a-inspector').getBoundingClientRect().width,
+      clipped: (value => value.scrollWidth > value.clientWidth)(document.querySelector('a-inspector-row[aria-level="2"] a-inspector-value')),
+    }))
+    assert.ok(sizes.inspector <= sizes.mount, `the Inspector is ${sizes.inspector}px in a ${sizes.mount}px container`)
+    assert.ok(sizes.clipped, 'the value was not clipped')
+  })
+
+  test.fast(`${name}: a closed inline summary counts its spacing and stays inline`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page, { layout: 'inline', value: Array.from({ length: 100 }, (_, i) => i) })
+    const row = page.locator('a-inspector-row[row-id="r"]')
+    assert.equal(await row.evaluate(row => getComputedStyle(row).display), 'inline')
+    const tokens = await row.locator('a-inspector-token').evaluateAll(tokens => tokens.map(token => [token.getAttribute('type'), token.textContent]))
+    assert.deepEqual(tokens.at(-1), ['ellipsis', '…'])
+    assert.ok(tokens.every(([, text]) => text !== ''), 'an empty token keeps its spacing')
+    assert.notEqual(tokens.at(-2)[0], 'comma')
+    const commas = tokens.filter(([type]) => type === 'comma').reduce((count, [, text]) => count + text.length, 0)
+    const width = tokens.reduce((sum, [, text]) => sum + text.length, 0) + commas
+    assert.ok(width <= 80, `drawn width ${width} > 80`)
   })
 
   test.fast(`${name}: with a delayed renderer, keys stay consistent and requests repeat harmlessly`, async t => {

@@ -386,6 +386,66 @@ test('a root summary equals repr within the same budget', () =>
     assert.equal(summary, repr(make(recipe).value, { ...options, char_limit: budget, error_stacks: false }))
   }, settings))
 
+// What a row draws: the text, plus the 1ch the stylesheet adds after each comma and colon.
+const drawnWidth = tokens => tokens.reduce((width, token) =>
+  width + token.text.length + (token.type === 'comma' || token.type === 'field_colon' ? 1 : 0), 0)
+
+test('display summaries fit their budget as drawn and end in one …', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
+    const options = tc.draw(reprOptions, 'options')
+    const budget = tc.draw(gs.integers({ minValue: 1, maxValue: 80 }), 'budget')
+    const tokens = core.describe(make(recipe).value, options).summary(budget, true)
+    assert.ok(drawnWidth(tokens) <= budget, `drawn width ${drawnWidth(tokens)} > ${budget}`)
+    const cut = tokens.at(-1)?.type === 'ellipsis'
+    if (cut) {
+      assert.equal(tokens.at(-1).text, '…')
+      assert.ok(!['comma', 'field_colon'].includes(tokens.at(-2)?.type), 'a cut ends on a separator')
+      assert.ok(tokens.slice(0, -1).every(token => token.text !== ''), 'a cut left an empty token')
+    }
+    assert.equal(tokens.filter(token => token.type === 'ellipsis' && token.text === '...').length, 0)
+  }, settings))
+
+test('display summaries cut where the row draws, not at a comma', () => {
+  const tokens = core.describe(Array.from({ length: 100 }, (_, i) => i)).summary(30, true)
+  assert.equal(text(tokens), '[0,1,2,3,4,5,6,7,8,9…')
+  assert.equal(drawnWidth(tokens), 30)
+  assert.equal(text(core.describe([1, 22, 333]).summary(9, true)), '[1,22…')
+})
+
+test('jsonText writes plain data as compact JSON', () => {
+  const shared = { s: 1 }
+  const value = { a: 1, b: [1, 'x', null, true], 'api-1': { c: -0 }, d: shared, e: shared, n: Object.create(null) }
+  const json = core.jsonText(core.describe(value, { numeric_base: 'hex' }))
+  assert.deepEqual(json, { text: '{"a":1,"b":[1,"x",null,true],"api-1":{"c":0},"d":{"s":1},"e":{"s":1},"n":{}}' })
+  assert.deepEqual(core.jsonText(core.describe('hi')), { text: '"hi"' })
+})
+
+test('jsonText names the first value JSON cannot hold, and where it is', () => {
+  const reason = value => core.jsonText(core.describe(value)).reason
+  const cycle = { list: [] }
+  cycle.list.push(cycle)
+  class Point { x = 1 }
+  assert.equal(reason({ containers: new Map() }), 'Not JSON: contains a Map at .containers')
+  assert.equal(reason({ 'api-1': [new Set()] }), 'Not JSON: contains a Set at ["api-1"][0]')
+  assert.equal(reason([1, , 3]), 'Not JSON: contains an empty slot at [1]')
+  assert.equal(reason({ x: [{ y: NaN }] }), 'Not JSON: contains NaN at .x[0].y')
+  assert.equal(reason(cycle), 'Not JSON: contains a circular reference at .list[0]')
+  assert.equal(reason({ p: new Point() }), 'Not JSON: contains a Point instance at .p')
+  assert.equal(reason(Object.assign([1], { extra: 2 })), 'Not JSON: named properties on an array')
+  assert.equal(reason(10n), 'Not JSON: a bigint')
+  assert.equal(reason(new Date(0)), 'Not JSON: a Date')
+  assert.equal(reason(undefined), 'Not JSON: undefined')
+})
+
+test('jsonText output parses, and never throws on hostile values', () =>
+  hegel.test(tc => {
+    const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
+    const json = core.jsonText(core.describe(make(recipe).value))
+    if ('text' in json) JSON.parse(json.text)
+    else assert.match(json.reason, /^Not JSON: /)
+  }, settings))
+
 test('the node API never throws, even on hostile values', () =>
   hegel.test(tc => {
     const recipe = tc.draw(recipes({ hostile: true }), 'recipe')

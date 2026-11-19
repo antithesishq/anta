@@ -98,6 +98,13 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
     `visibleRows()`: each child is `key: value`, array elements show their index, an open node's row names its type
     and size (`Array(3)`, `Map(2)`, `{…}`), and there are no closing brackets or commas. The notebook's DOM sink nested
     the `repr()` text itself. `repr()` and the `repr` row style keep the notebook's format.
+23. **Inspector rows cut summaries by what they draw.** Row summaries count the space the Inspector draws after each
+    comma and colon, end a cut in one `…` instead of `...`, and never end on a comma or colon. In block layout, rows
+    render up to 300 characters and CSS ends the value at the row's edge, so every row cuts at the same place.
+    `summary()` without its display flag, and `repr()`, keep the notebook's count and `...`.
+24. **Copy JSON is new.** `jsonText()` writes a node as compact JSON when it holds only plain objects, arrays, strings,
+    finite numbers, booleans, and null. Otherwise it names the first other value and its path, such as
+    `Not JSON: contains a Map at .containers`. The notebook had no JSON export.
 
 ## Kept identical on purpose
 

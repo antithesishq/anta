@@ -8,8 +8,9 @@ Select a row to open or close it.
 ## Open a level at a time
 
 `expandDepth` sets how many levels start open; the default opens the value's
-own properties. A closed row shows a one-line summary of up to `previewBudget`
-characters. Wide arrays, objects, Maps, and Sets show `pageSize` children at a
+own properties. A closed row shows a one-line summary that ends in `…` at the
+row's edge, so a narrower window cuts it sooner. With `layout="inline"`, the
+summary has up to `previewBudget` characters instead. Wide arrays, objects, Maps, and Sets show `pageSize` children at a
 time, with a **Show more** row for the next page. Long and multiline strings,
 such as stack traces, open into lines of text a page at a time.
 
@@ -54,7 +55,9 @@ function LogLine({ time, message, value }) {
 Right-click a row to copy it. The first item copies the row's value: **Copy
 string** copies a string's raw text, and **Copy number** or **Copy object**
 copies the value in the text form the rows use, which keeps Maps, cycles, and
-errors intact. **Copy path** copies a JavaScript path to the row, such as
+errors intact. **Copy JSON** copies the value as compact JSON. It's
+unavailable for values JSON can't express, such as Maps, cycles, and class
+instances, and says where the first one is. **Copy path** copies a JavaScript path to the row, such as
 `results[3].details.error` or `byKey.get("api-1")`. It's unavailable where no
 expression reaches the value, such as items in a Set. On the keyboard, press
 Shift+F10 or the Menu key on the focused row. Right-clicking selected text
@@ -141,7 +144,7 @@ read an unbounded part of a value.
 | `layout?` | 'block' \| 'inline' | 'block' | `block` shows the tree on its own lines. `inline` shows a one-line summary that sits in a sentence or table cell, and becomes a block when opened. |
 | `numericBase?` | 'binary' \| 'octal' \| 'decimal' \| 'hex' | 'decimal' | Base for numbers. |
 | `pageSize?` | number | 100 | Children shown per page of an open array, object, Map, or Set. A "Show more" row shows the next page. |
-| `previewBudget?` | number | 80 | Characters in a closed row's one-line summary. |
+| `previewBudget?` | number | 80 | Characters in a closed row's one-line summary with `layout="inline"`, counting the space after each comma and colon. Strings longer than this can open. In block layout, a summary instead ends at the row's edge. |
 | `textPageSize?` | number | 5000 | Characters per page of an open string. Long and multiline strings open into lines of text. |
 | `unquotedStrings?` | boolean | — | Show strings without quotes. |
 

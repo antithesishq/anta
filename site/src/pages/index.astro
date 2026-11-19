@@ -1,6 +1,7 @@
 ---
 import DocsLayout from '../layouts/DocsLayout.astro'
 import AntaLogo from '../components/AntaLogo'
+import HeroDemo from '../components/HeroDemo'
 import { Text, Tooltip } from '@antadesign/anta'
 import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 ---
@@ -22,6 +23,10 @@ import { StickerThumbsUpAnimated } from '@antadesign/stickers'
     </Text>
     <StickerThumbsUpAnimated size={256} delay={0.5} playOnce replayOnClick label="Replay thumbs-up animation" className="overview-sticker" />
   </div>
+
+  <section class="hero-demo" aria-label="Customization demo" data-no-search>
+    <HeroDemo client:only="preact" />
+  </section>
 </DocsLayout>
 
 <style>
@@ -35,7 +40,10 @@ import { StickerThumbsUpAnimated } from '@antadesign/stickers'
   .overview-sticker { flex: none; transform: scaleX(-1); }
   .overview-copy { flex: 1 1 auto; min-width: min(100%, 33ch); max-width: 33ch; }
   .overview-copy ul { padding-left: 2.25ch; }
+  /* Reserve the island's height so the page doesn't jump when it mounts. */
+  .hero-demo { margin-block: 32px; min-height: 548px; }
   @media (max-width: 640px) {
+    .hero-demo { min-height: 0; }
     .overview-intro { flex-direction: column; align-items: flex-start; }
     .overview-sticker { order: -1; }
   }

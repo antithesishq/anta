@@ -382,9 +382,30 @@ filtering, and bulk actions in an already open menu without changing the selecti
 
 ### Using Select in forms
 
-Select reports choices through `onValueChange`. It does not submit a form value
-or block submission. Include the selected value in your application's form
-handling, and validate it before accepting the submission.
+Pass `name` to include the selected option value in the surrounding form.
+The Input trigger shows the label and submits the value through
+`ElementInternals`, without hidden fields. Use `form` to associate it with a
+form elsewhere on the page.
+
+```tsx
+<Select name="country" label="Country" options={[
+  { value: 'us', label: 'United States' },
+  { value: 'ca', label: 'Canada' },
+]} defaultValue="us" />
+```
+
+`new FormData(form)` includes `country=us`. Multiple selection submits repeated
+entries under the same name; read them with `formData.getAll(name)`. Numbers and
+booleans become strings. Empty selections and disabled Selects submit nothing.
+A reset restores `defaultValue` for an uncontrolled Select. Controlled Selects
+retain `value`. Pass `required` to block submission for an empty selection.
+The selected value drives validation, independently of the displayed label.
+Button's `submitdetailed.formData` keeps multiple selections as arrays, including
+`[]` when empty and a one-item array for one pick. A single Select submits a scalar.
+
+For a custom `Input button` trigger, spread `state.formProps` onto the Input
+to preserve submission and reset. Other custom triggers must provide their
+own form integration.
 
 </Col>
 </Columns>

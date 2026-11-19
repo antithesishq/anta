@@ -736,6 +736,11 @@ export interface AInputAttributes extends BaseAttributes {
   /** Controlled value (string). Reflected to the shadow control only when it
    *  differs, so the caret survives re-renders. */
   value?: string
+  /** JSON-encoded submitted value: a string, number, boolean, array of those
+   * primitives, or null to omit the field. Omitted or invalid attributes submit
+   * the live text. Invalid attributes report a console warning. The
+   * element's `formValue` property accepts the decoded value. */
+  'form-value'?: string
   /** Initial value for the uncontrolled case; read once on connect. */
   defaultvalue?: string
   /** Render a `<textarea>` rather than `<input>`. Presence-based. */
@@ -760,7 +765,8 @@ export interface AInputAttributes extends BaseAttributes {
   readonly?: boolean | ''
   /** Render a native button inside the field surface. Presence-based. */
   button?: boolean | ''
-  /** Required — drives native validity. Presence-based. */
+  /** Required — drives native validity. In button mode, null, an empty string,
+   * or an empty submitted array is missing. Presence-based. */
   required?: boolean | ''
   /** Dim the leading/trailing adornments at rest (0.6); they brighten to full
    *  when the field is hovered or focused. Presence-based. */
@@ -775,6 +781,8 @@ export interface AInputAttributes extends BaseAttributes {
   type?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'number'
   /** Form field name — submitted via ElementInternals. */
   name?: string
+  /** ID of the associated form when outside it. */
+  form?: string
   /** Placeholder shown when empty. */
   placeholder?: string
   /** Focus this field when its containing `a-dialog` opens. Presence-based. */
@@ -802,6 +810,8 @@ export interface AInputAttributes extends BaseAttributes {
   /** Fires after the field has been cleared (bubbling `clearinput` event).
    *  All-lowercase so it binds in React *and* Preact. */
   onclearinput?: (e: any) => void
+  /** Cancelable notification before form reset, for composed value owners. */
+  oninputformreset?: (e: Event) => void
   'aria-invalid'?: 'true' | 'false' | boolean
   'aria-label'?: string
 }

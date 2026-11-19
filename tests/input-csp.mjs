@@ -399,9 +399,97 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await field(page).evaluate(host=>{const parent=host.parentElement;host.remove();host.removeAttribute('rows');host.removeAttribute('maxrows');host.value='One\nTwo\nThree';parent.append(host)})
     assert.equal((await snapshot(page)).height,68)
   })
-  test.fast(`${name}: form names, constraints, reset, restoration, and button exclusion`, async t => {
+  test.fast(`${name}: submitted overrides preserve live text, falsy values, arrays, and fallback`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
-    await mount(page,'<form><fieldset><a-input name="email" required type="email" defaultvalue="seed@example.com"></a-input><a-input button required name="trigger" value="Open"></a-input></fieldset></form>')
+    await mount(page,'<form id="values"><a-input name="choice" defaultvalue="Visible"></a-input></form>')
+    const read=()=>page.locator('form').evaluate(form=>[...new FormData(form)])
+    assert.deepEqual(await read(),[['choice','Visible']])
+    await control(page).fill('Edited')
+    assert.deepEqual(await read(),[['choice','Edited']])
+    for(const [value,expected] of [[0,[['choice','0']]],[false,[['choice','false']]],['',[['choice','']]],[null,[]],[[0,false,''],[['choice','0'],['choice','false'],['choice','']]]]) {
+      await field(page).evaluate((host,value)=>{host.formValue=value},value)
+      assert.deepEqual(await read(),expected)
+      assert.equal(await control(page).inputValue(),'Edited')
+    }
+    await field(page).evaluate(host=>host.name='renamed')
+    assert.deepEqual(await read(),[['renamed','0'],['renamed','false'],['renamed','']])
+    await field(page).evaluate(host=>{host.formValue=undefined;host.setAttribute('button','')})
+    assert.deepEqual(await read(),[['renamed','Edited']])
+    await field(page).evaluate(host=>host.setAttribute('form-value','null'))
+    assert.deepEqual(await read(),[])
+    await field(page).evaluate(host=>host.removeAttribute('form-value'))
+    assert.deepEqual(await read(),[['renamed','Edited']])
+    await field(page).evaluate(host=>host.setAttribute('disabled',''))
+    assert.deepEqual(await read(),[])
+  })
+  test.fast(`${name}: invalid submitted attributes fall back to live values and report a diagnostic`, async t => {
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    const warnings=[]
+    page.on('console',message=>{if(message.type()==='warning'&&message.text().includes('Invalid form-value'))warnings.push(message.text())})
+    for(const button of [false,true]) {
+      await mount(page,`<form><a-input name="choice" ${button?'button':''} defaultvalue="Visible"></a-input></form>`)
+      const read=()=>page.locator('form').evaluate(form=>[...new FormData(form)])
+      for(const invalid of ['not JSON','{}','[null]','[["nested"]]','']) {
+        await field(page).evaluate((host,invalid)=>{
+          host.setAttribute('form-value','"override"')
+          host.value='Live text'
+          host.setAttribute('form-value',invalid)
+        },invalid)
+        assert.deepEqual(await read(),[['choice','Live text']])
+        await field(page).evaluate(host=>host.value='Changed')
+        assert.deepEqual(await read(),[['choice','Changed']])
+      }
+      await field(page).evaluate(host=>host.setAttribute('form-value','null'))
+      assert.deepEqual(await read(),[])
+    }
+    await frames(page)
+    assert.equal(warnings.length,10)
+  })
+  test.fast(`${name}: button reset preserves live labels and values unless a form owner handles it`, async t => {
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<form><a-input button name="first"></a-input><a-input button name="second" defaultvalue="Initial"></a-input></form>')
+    const snapshot=()=>page.locator('form').evaluate(form=>{
+      return {values:[...form.querySelectorAll('a-input')].map(host=>({value:host.value,label:host.shadowRoot.querySelector('button').textContent})),entries:[...new FormData(form)],events:window.resetEvents}
+    })
+    await page.locator('form').evaluate(form=>{
+      window.resetEvents=[]
+      for(const [index,host] of [...form.querySelectorAll('a-input')].entries()) {
+        host.value=`Chosen ${index}`
+        for(const type of ['input','change'])host.addEventListener(type,()=>resetEvents.push(type))
+      }
+    })
+    const before=await snapshot()
+    await page.locator('form').evaluate(form=>form.reset())
+    assert.deepEqual(await snapshot(),before)
+    await page.locator('form').evaluate(form=>{
+      const first=form.querySelector('a-input')
+      first.addEventListener('inputformreset',event=>{event.preventDefault();first.value='Owner reset';first.formValue='reset-value'})
+      form.reset()
+    })
+    assert.deepEqual(await snapshot(),{values:[{value:'Owner reset',label:'Owner reset'},{value:'Chosen 1',label:'Chosen 1'}],entries:[['first','reset-value'],['second','Chosen 1']],events:[]})
+  })
+  test.fast(`${name}: required button Inputs validate submitted values independently of labels`,async t=>{
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<form><fieldset><a-input button required name="choice" value="Displayed label" form-value="null"></a-input></fieldset></form>')
+    const validity=()=>field(page).evaluate(host=>({missing:host.validity.valueMissing,valid:host.checkValidity(),form:host.closest('form').checkValidity()}))
+    assert.deepEqual(await validity(),{missing:true,valid:false,form:false})
+    for(const [value,missing] of [[[],true],['',true],[0,false],[false,false],['value',false],[[''],false],[null,true]]) {
+      await field(page).evaluate((host,value)=>host.formValue=value,value)
+      assert.deepEqual(await validity(),{missing,valid:!missing,form:!missing})
+    }
+    await field(page).evaluate(host=>host.removeAttribute('required'))
+    assert.deepEqual(await validity(),{missing:false,valid:true,form:true})
+    await field(page).evaluate(host=>{host.setAttribute('required','');host.formValue=undefined;host.value=''})
+    assert.deepEqual(await validity(),{missing:true,valid:false,form:false})
+    await page.locator('fieldset').evaluate(fieldset=>fieldset.disabled=true)
+    assert.equal(await field(page).evaluate(host=>host.willValidate),false)
+    assert.equal((await validity()).form,true)
+    await page.locator('fieldset').evaluate(fieldset=>fieldset.disabled=false)
+    assert.equal((await validity()).form,false)
+  })
+  test.fast(`${name}: form names, constraints, reset, restoration, and button validity`, async t => {
+    const page=await pageFor(t,engine,mode);await register(page,mode)
+    await mount(page,'<form><fieldset><a-input name="email" required type="email" defaultvalue="seed@example.com"></a-input><a-input button required name="trigger" value="Open" form-value="null"></a-input></fieldset></form>')
     const result=await field(page).evaluate(host=>{
       const form=host.closest('form'),fieldset=host.closest('fieldset');const values=()=>[...new FormData(form)]
       host.value='bad';const invalid=!host.checkValidity();host.value='good@example.com';const valid=host.checkValidity()
@@ -418,7 +506,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
       fieldset.disabled=true;const disabled=values();fieldset.disabled=false
       return {invalid,valid,initial,property,attribute,authored,removed,critical,reset,restored,disabled,button:form.querySelector('[button]').checkValidity()}
     })
-    assert.deepEqual(result,{invalid:true,valid:true,initial:[['email','good@example.com']],property:[['renamed','good@example.com']],attribute:'renamed',authored:[['authored','good@example.com']],removed:[{attribute:'',name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true}],critical:true,reset:'seed@example.com',restored:'restored@example.com',disabled:[],button:true})
+    assert.deepEqual(result,{invalid:true,valid:true,initial:[['email','good@example.com']],property:[['renamed','good@example.com']],attribute:'renamed',authored:[['authored','good@example.com']],removed:[{attribute:'',name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true},{attribute:null,name:'',entries:[],lookup:true}],critical:true,reset:'seed@example.com',restored:'restored@example.com',disabled:[],button:false})
     await field(page).evaluate(host=>{host.setAttribute('type','number');host.setAttribute('min','2');host.setAttribute('max','8');host.setAttribute('step','2');host.value='3'})
     assert.equal(await field(page).evaluate(host=>host.validity.stepMismatch),true)
     await field(page).evaluate(host=>host.value='10')
@@ -570,6 +658,49 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
           else assert.ok(metrics.width>actionSize,context)
         }
       }
+    })
+    test.fast(`${name} ${framework}: uncontrolled button labels survive reset before and after hydration`,async t=>{
+      const page=await pageFor(t,engine,mode)
+      await page.locator('#mount').evaluate((node,html)=>{
+        const form=document.createElement('form');node.before(form);form.append(node);node.innerHTML=html
+      },renderers.get(framework)({name:'choice',button:true,defaultValue:undefined}))
+      await register(page,mode)
+      for(const hydrated of [false,true]) {
+        if(hydrated) {
+          await page.addScriptTag({url:`/${framework}.js`,type:'module'})
+          await page.evaluate(()=>hydrateInput({name:'choice',button:true,defaultValue:undefined}));await frames(page)
+        }
+        const result=await field(page).evaluate(host=>{
+          host.value='Choose a team'
+          const events=[],record=event=>events.push(event.type)
+          for(const type of ['input','change'])host.addEventListener(type,record)
+          const form=host.closest('form');form.reset()
+          for(const type of ['input','change'])host.removeEventListener(type,record)
+          return {value:host.value,label:host.shadowRoot.querySelector('button').textContent,entries:[...new FormData(form)],events}
+        })
+        assert.deepEqual(result,{value:'Choose a team',label:'Choose a team',entries:[['choice','Choose a team']],events:[]})
+      }
+      assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+    })
+    test.fast(`${name} ${framework}: submitted overrides survive JSX hydration, updates, and removal`,async t=>{
+      const page=await pageFor(t,engine,mode)
+      await page.locator('#mount').evaluate((node,html)=>{
+        const form=document.createElement('form');node.before(form);form.append(node);node.innerHTML=html
+      },renderers.get(framework)({name:'choice',button:true,value:'Displayed',formValue:false}))
+      await register(page,mode)
+      const read=()=>page.locator('form').evaluate(form=>[...new FormData(form)])
+      assert.deepEqual(await read(),[['choice','false']])
+      await page.addScriptTag({url:`/${framework}.js`,type:'module'})
+      await page.evaluate(()=>hydrateInput({name:'choice',button:true,value:'Displayed',formValue:false}));await frames(page)
+      for(const [value,expected] of [[0,[['choice','0']]],[null,[]],[['a','b'],[['choice','a'],['choice','b']]]]) {
+        await page.evaluate(formValue=>renderInput({name:'choice',button:true,value:'Displayed',formValue}),value);await frames(page)
+        assert.deepEqual(await read(),expected)
+        assert.equal(await control(page).evaluate(node=>node.value),'Displayed')
+      }
+      await page.evaluate(()=>renderInput({name:'choice',button:true,value:'Displayed'}));await frames(page)
+      assert.deepEqual(await read(),[['choice','Displayed']])
+      assert.deepEqual(await page.evaluate(()=>recoverableErrors),[])
+      assert.equal(await page.locator('input[type="hidden"]').count(),0)
     })
     for (const registration of ['before render','after render']) {
       test.fast(`${name} ${framework}: client form names reflect with registration ${registration}`,async t=>{

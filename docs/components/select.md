@@ -273,9 +273,30 @@ filtering, and bulk actions in an already open menu without changing the selecti
 
 ### Using Select in forms
 
-Select reports choices through `onValueChange`. It does not submit a form value
-or block submission. Include the selected value in your application's form
-handling, and validate it before accepting the submission.
+Pass `name` to include the selected option value in the surrounding form.
+The Input trigger shows the label and submits the value through
+`ElementInternals`, without hidden fields. Use `form` to associate it with a
+form elsewhere on the page.
+
+```tsx
+<Select name="country" label="Country" options={[
+  { value: 'us', label: 'United States' },
+  { value: 'ca', label: 'Canada' },
+]} defaultValue="us" />
+```
+
+`new FormData(form)` includes `country=us`. Multiple selection submits repeated
+entries under the same name; read them with `formData.getAll(name)`. Numbers and
+booleans become strings. Empty selections and disabled Selects submit nothing.
+A reset restores `defaultValue` for an uncontrolled Select. Controlled Selects
+retain `value`. Pass `required` to block submission for an empty selection.
+The selected value drives validation, independently of the displayed label.
+Button's `submitdetailed.formData` keeps multiple selections as arrays, including
+`[]` when empty and a one-item array for one pick. A single Select submits a scalar.
+
+For a custom `Input button` trigger, spread `state.formProps` onto the Input
+to preserve submission and reset. Other custom triggers must provide their
+own form integration.
 
 <a id="build-it-from-elements"></a>
 
@@ -580,11 +601,13 @@ the keyboard. Validate the query before offering to create an option.
 | `dimActions?` | boolean | true | Dim the default trigger's leading content and chevron at rest. They brighten on hover or focus. Ignored by `renderTrigger`. |
 | `disabled?` | boolean | — | Disable the whole select. |
 | `filter?` | boolean \| (option, query) => boolean | — | Add a search field that filters option values, labels, and hints. `true` uses case-insensitive substring matching. A space in the trimmed query matches a run of whitespace. Built-in row text highlights matches. A custom `(option, query) => boolean` receives the trimmed query and returns whether to keep the option, without automatic highlighting. It runs once per option on each render, including for an empty query. Rows, empty content, and filtered Select all use the same results. A query flattens groups and submenus into grouped results. Closing the popup resets the query. |
+| `form?` | string | — | ID of the associated form when outside it. |
 | `hint?` | string | — | Helper text under the field. |
 | `icon?` | IconShape | — | Leading icon shown at the left of the field. With a custom `renderTrigger`, it's passed through as `state.icon` instead — the consumer places it. |
 | `indicator?` | 'none' \| 'check' \| 'radio' | none | The per-row mark for **single**-select: `'none'` (a tint-only highlight), `'check'` (a trailing checkmark on the selected row, keeping the tint — the canonical Select look), or `'radio'` (a leading radio on every row). Multi-select always uses checkboxes. |
 | `label?` | string | — | Visible field label and accessible name for the default trigger. If omitted, provide `aria-label` or `aria-labelledby` that identifies the field. Leading content and the chevron are hidden from assistive technologies and do not label the trigger. |
 | `leading?` | ReactNode | — | Content before the default trigger's value, such as a key prefix before the value. It replaces the icon derived from `icon`. Include an `<Icon>` in this content when both are needed. Hidden from assistive technologies. Include any meaningful prefix in `label` or `aria-label`. Ignored by `renderTrigger`. |
+| `name?` | string | — | Form field name. The default Input trigger submits option values rather than labels. Multiple selections submit repeated entries. Empty selections submit nothing. With `renderTrigger`, spread `state.formProps` onto an Input trigger to retain submission and reset. |
 | `offset?` | number | 4 | Gap in pixels between the trigger and the options menu. |
 | `onValueChange?` | (value, attrs) => void | — | Reports the new value and a `{ value, option }` snapshot after a pick. Clear reports `null` with `{ all: true, selected: false }`. Narrow on `'all' in attrs` before reading `option`. Update `value` to accept a controlled change. There is no cancelable `onStateChange`; see the Input event-model note. |
 | `placeholder?` | string | — | Text shown when nothing is selected. |
@@ -594,6 +617,7 @@ the keyboard. Validate the query before offering to create an option.
 | `renderOption?` | (option, state) => ReactNode | — | Replaces the built-in `label`, `hint`, and `icon` layout for each option row. Select still supplies the row container, click handling, ARIA attributes, and selection indicator. Read extra option fields through `SelectOption`'s index signature. `state` contains `value`, `selected`, and `disabled`. Filtering still matches the option's `value`, `label`, and `hint`, but Select cannot highlight matches within the returned content. |
 | `renderSummary?` | (selected) => string \| undefined | — | `multiple` only: build the trigger's selection summary text yourself, replacing the built-in "`All` / one label / `N selected`" logic. Receives the resolved selected options (`selected.length` is the count) and runs only while something is selected — an empty selection still shows the `placeholder`. Return a **string**: it becomes the default trigger's value, so a long summary ellipsizes at the field's width just like a long value (`Engineering, Design, … `). Return `undefined` to fall back to the default for that case (e.g. customize only the count, keeping the single-label case built-in). For rich content (chips, multiple nodes) use `renderTrigger`, which replaces the whole field. |
 | `renderTrigger?` | (state) => ReactNode | — | Replaces the default field with a trigger returned from this function. Receives `open`, `value`, `selected`, `disabled`, and `icon`. Return exactly one focusable element, such as an Anta `Button`. The menu is positioned relative to that element and opens when it is clicked. Do not return a fragment, multiple siblings, or a non-focusable wrapper. Add `aria-haspopup={filter ? 'dialog' : 'menu'}` and `aria-expanded={state.open}` to the returned button. An Anta `Button` already carries the correct role. Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and `className` / `style` apply only to the default field. Add styling and attributes to the returned element instead. |
+| `required?` | boolean | — | Require a nonempty selection before the associated form can submit. |
 | `round?` | boolean \| number \| string | — | Round the field corners — `true` for fully round, or a number / CSS length. |
 | `selectAll?` | boolean | true | `multiple` only: shows a "Select all" row that toggles every enabled option, or only the visible options when a filter query is active. Its checkbox is mixed when some options are selected. It is on by default. Set it to `false` to remove the row and the Alt/Option-click shortcut that selects only one row. |
 | `selectAllLabel?` | string | Select all | Label for the `selectAll` row. |

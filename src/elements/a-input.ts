@@ -1,4 +1,4 @@
-import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, ownsInputClearRequest, inputValueIsControlled } from '../input-events'
+import { CLEAR_TRIGGER, CLEAR_CLICK_EVENT, CLEAR_INPUT_EVENT, INPUT_FORM_RESET_EVENT, ownsInputClearRequest, inputValueIsControlled, type InputFormValue } from '../input-events'
 import { inputTrailingActions } from './input-trailing-actions'
 import { MODALITY, trackFocusModality, type InputDocument } from './input-focus-modality'
 import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from '../anta_helpers'
@@ -94,6 +94,7 @@ export class AInputElement extends HTMLElementBase {
   static observedAttributes = [
     ...FORWARDED, ...SHADOW_ARIA_ATTRIBUTES,
     'value', 'defaultvalue', 'multiline', 'button', 'rows', 'maxrows', 'status', 'disabled',
+    'form-value',
   ]
 
   private internals?: ElementInternals
@@ -109,6 +110,7 @@ export class AInputElement extends HTMLElementBase {
   // may set the `value` property before the element connects), so the initial
   // value isn't lost when the control is built.
   private pendingValue?: string
+  #formValue?: InputFormValue
   #releaseModality?: () => void
   // True between connect and the first control build, so attribute changes for
   // forwarded props don't try to touch a control that doesn't exist yet.
@@ -238,6 +240,11 @@ export class AInputElement extends HTMLElementBase {
       delete (this as unknown as { name?: string }).name
       this.name = name
     }
+    if (Object.prototype.hasOwnProperty.call(this, 'formValue')) {
+      const value = this.formValue
+      delete (this as { formValue?: InputFormValue }).formValue
+      this.formValue = value
+    }
     if (!this.control) this.buildControl()
     else this.syncAutoHeight()
     this.ready = true
@@ -270,6 +277,20 @@ export class AInputElement extends HTMLElementBase {
   }
 
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
+    if (name === 'form-value') {
+      let decoded: InputFormValue | undefined
+      if (value !== null) {
+        try {
+          const parsed: unknown = JSON.parse(value)
+          const primitive = (v: unknown) => ['string', 'number', 'boolean'].includes(typeof v)
+          decoded = parsed === null || primitive(parsed) || (Array.isArray(parsed) && parsed.every(primitive))
+            ? parsed as InputFormValue : undefined
+        } catch { /* Invalid attributes use the same fallback as an omitted override. */ }
+        if (decoded === undefined) console.warn('a-input: Invalid form-value; submitting the live value instead.')
+      }
+      this.formValue = decoded
+      return
+    }
     if (SHADOW_ARIA_ATTRIBUTE_SET.has(name)) {
       if (this.consumingAria.has(name)) return
       this.consumeAria(name as ShadowAriaAttribute, value)
@@ -300,6 +321,7 @@ export class AInputElement extends HTMLElementBase {
     // flip the inner control's validity. Symmetric with the `status` branch.
     if (this.control) {
       this.forward(name, value)
+      if (name === 'name') this.syncFormValue(this.value)
       if (name === 'readonly' || name === 'type') this.syncButtonFocus()
       this.syncButtonPresentation()
       this.updateValidity()
@@ -515,10 +537,15 @@ export class AInputElement extends HTMLElementBase {
   }
 
   private syncFormValue(value: string) {
-    // Button-backed Inputs are triggers rather than form fields. The native
-    // button is type="button"; keep the form-associated host equally inert.
-    if (isButton(this.control)) { this.internals?.setFormValue(null); return }
-    this.internals?.setFormValue(value)
+    const submitted = this.#formValue === undefined ? value : this.#formValue
+    // Restore the displayed text even when submission uses an ISO value or array.
+    if (Array.isArray(submitted)) {
+      const entries = new this.view.FormData()
+      if (this.name) for (const item of submitted) entries.append(this.name, String(item))
+      this.internals?.setFormValue(entries, value)
+    } else {
+      this.internals?.setFormValue(submitted === null ? null : String(submitted), value)
+    }
   }
 
   /** Reflect `status` into the control's `aria-invalid` and the `:state(invalid)`
@@ -643,7 +670,11 @@ export class AInputElement extends HTMLElementBase {
     const c = this.control
     if (!this.internals || !c) return
     if (isButton(c)) {
-      this.internals.setValidity({})
+      const submitted = this.#formValue === undefined ? this.value : this.#formValue
+      const empty = submitted === null || submitted === '' || (Array.isArray(submitted) && submitted.length === 0)
+      if (this.hasAttribute('required') && empty) {
+        this.internals.setValidity({ valueMissing: true }, 'Please select an option.', c)
+      } else this.internals.setValidity({})
       return
     }
     // Reflect the inner control's native constraints — valueMissing (from
@@ -673,6 +704,14 @@ export class AInputElement extends HTMLElementBase {
     this.updateValidity()
     this.updateFilled()
     this.syncAutoHeight()
+  }
+
+  /** Submitted value override. Undefined restores submission of the live text. */
+  get formValue(): InputFormValue | undefined { return this.#formValue }
+  set formValue(value: InputFormValue | undefined) {
+    this.#formValue = value
+    this.syncFormValue(this.value)
+    this.updateValidity()
   }
 
   /** Focus the shadow control. `delegatesFocus` handles this in supporting
@@ -717,6 +756,7 @@ export class AInputElement extends HTMLElementBase {
 
   // --- Form-associated callbacks ---
   formResetCallback() {
+    if (!this.dispatchEvent(new Event(INPUT_FORM_RESET_EVENT, { cancelable: true }))) return
     if (isButton(this.control) || inputValueIsControlled(this)) return
     this.value = this.getAttribute('defaultvalue') ?? ''
     // Notify composed uncontrolled fields so their state follows the form value.

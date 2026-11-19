@@ -1,0 +1,166 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+@layer anta.components {
+  /* `<a-form>` adds behavior around its native form and no box styling of its
+     own. */
+  a-form {
+    display: block;
+  }
+
+  /* Layout for the form inside `<a-form>` and for a native form marked with
+     `data-anta`. Fields flow into one or more columns. In each field the label sits beside the control while the
+     label width, the label gap, and the minimum field width fit in the field's
+     own box, and above it otherwise. Hints and inline controls use the same
+     indent so they align with the input. */
+
+  :is(form[data-anta], a-form > form) {
+    /* The public variables are read with fallbacks, so a value set on the
+       form or on any ancestor applies. */
+    --_form-label-width: var(--form-label-width, 140px);
+    --_form-label-gap: var(--form-label-gap, 12px);
+    --_form-field-min: var(--form-field-min, 200px);
+    --_form-columns: var(--form-columns, 1);
+    --_form-column-gap: 24px;
+
+    /* `--_form-fits` is far above zero while a label and field fit side by
+       side and far below zero when they do not. Its percentage resolves
+       against the box of the property that reads it. The added 1px makes an
+       exact fit count as fitting. `--_form-indent` is where the field column
+       starts: the label width plus the gap, or zero when labels are above. */
+    --_form-side: calc(var(--_form-label-width) + var(--_form-label-gap));
+    --_form-fits: calc((100% - var(--_form-side) - var(--_form-field-min) + 1px) * 9999);
+    --_form-indent: clamp(0px, var(--_form-fits), var(--_form-side));
+
+    /* At most `--form-columns` columns, and fewer when a column would be
+       narrower than the minimum field width. Later rows move only when the
+       row itself grows. The column
+       count assumes `--_form-column-gap`; set `row-gap` to space the rows. */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(var(--_form-field-min), (100% - (var(--_form-columns) - 1) * var(--_form-column-gap)) / var(--_form-columns))), 1fr));
+    gap: 16px var(--_form-column-gap);
+    align-items: start;
+  }
+
+  /* Input, InputTime, and RadioGroup hold a label, a control, and a hint. The
+     label floats, so a label taller than its control runs down beside the
+     hint and does not push the hint away from the control. */
+  :is(form[data-anta], a-form > form) > a-input,
+  :is(form[data-anta], a-form > form) > a-input-time,
+  :is(form[data-anta], a-form > form) > a-radio-group {
+    display: flow-root;
+  }
+  /* InputTime sizes to its content by default. Fill the cell so its label
+     column lines up; the control keeps its natural width below. */
+  :is(form[data-anta], a-form > form) > a-input-time {
+    inline-size: auto;
+  }
+
+  /* The `:not(:defined)` selectors give an Input that has not upgraded yet the
+     same arrangement, so the label does not move when it does. */
+  :is(form[data-anta], a-form > form) > a-input::part(label),
+  :is(form[data-anta], a-form > form) > a-input:not(:defined) > [slot="label"],
+  :is(form[data-anta], a-form > form) > a-input-time::part(label),
+  :is(form[data-anta], a-form > form) > a-radio-group > a-radio-group-label {
+    float: inline-start;
+    box-sizing: border-box;
+    /* Exactly the label width beside the control, the full row above it. A
+       full-width float leaves no room beside it, which moves the control to
+       the next line. */
+    inline-size: clamp(min(var(--_form-label-width), 100%), calc(var(--_form-fits) * -1), 100%);
+    margin-inline-end: clamp(0px, var(--_form-fits), var(--_form-label-gap));
+    margin-block-end: clamp(0px, calc(var(--_form-fits) * -1), 4px);
+  }
+  /* Center one line of label on a one-line field. No offset when stacked. */
+  :is(form[data-anta], a-form > form) > a-input::part(label),
+  :is(form[data-anta], a-form > form) > a-input:not(:defined) > [slot="label"],
+  :is(form[data-anta], a-form > form) > a-input-time::part(label) {
+    padding-block-start: clamp(0px, var(--_form-fits), 4px);
+  }
+
+  /* Everything in the field column starts at the same offset, with or without
+     a label before it. */
+  :is(form[data-anta], a-form > form) > a-input::part(field),
+  :is(form[data-anta], a-form > form) > a-input::part(hint),
+  :is(form[data-anta], a-form > form) > a-input:not(:defined)::after,
+  /* A plain child of an Input renders between its field and its hint. */
+  :is(form[data-anta], a-form > form) > a-input > :not([slot]),
+  :is(form[data-anta], a-form > form) > a-input-time::part(field),
+  :is(form[data-anta], a-form > form) > a-input-time::part(hint),
+  :is(form[data-anta], a-form > form) > a-radio-group > a-radio-list,
+  :is(form[data-anta], a-form > form) > a-radio-group > a-radio-group-hint,
+  :is(form[data-anta], a-form > form) > a-checkbox,
+  :is(form[data-anta], a-form > form) > a-switch,
+  :is(form[data-anta], a-form > form) > a-button,
+  :is(form[data-anta], a-form > form) > button[data-anta] {
+    margin-inline-start: var(--_form-indent);
+  }
+  /* A control with no minimum width would shrink to nothing beside a
+     full-width label. This minimum moves it below the label, where it fills
+     the row. It is 1px under the public minimum so that an exact fit, which
+     `--_form-fits` counts as fitting, keeps the control beside its label. */
+  :is(form[data-anta], a-form > form) > a-input::part(field),
+  :is(form[data-anta], a-form > form) > a-input:not(:defined)::after,
+  :is(form[data-anta], a-form > form) > a-radio-group > a-radio-list {
+    min-inline-size: min(100%, var(--_form-field-min) - 1px);
+  }
+  /* The stand-in field is a plain block. As its own formatting context it
+     moves below a full-width label, as the real field does. */
+  :is(form[data-anta], a-form > form) > a-input:not(:defined)::after {
+    display: flow-root;
+    box-sizing: border-box;
+  }
+  :is(form[data-anta], a-form > form) > a-input::part(hint),
+  :is(form[data-anta], a-form > form) > a-input-time::part(hint) {
+    margin-block-start: 4px;
+  }
+  :is(form[data-anta], a-form > form) > a-input-time::part(field) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+  }
+  /* Beside its label, the first option lines up with the label's first line.
+     Above the options, the label keeps the group's own 10px spacing. */
+  :is(form[data-anta], a-form > form) > a-radio-group > a-radio-group-label {
+    margin-block-end: clamp(0px, calc(var(--_form-fits) * -1), 10px);
+  }
+  :is(form[data-anta], a-form > form) > a-radio-group > a-radio-group-label + a-radio-list {
+    margin-block-start: 0;
+  }
+
+  :is(form[data-anta], a-form > form) > a-checkbox,
+  :is(form[data-anta], a-form > form) > a-switch {
+    justify-self: start;
+  }
+  :is(form[data-anta], a-form > form) > a-slider {
+    box-sizing: border-box;
+    padding-inline-start: var(--_form-indent);
+  }
+  /* A button starts a new row in the first column, so its offset follows that
+     column's width and it lines up with the controls above it. Treat a direct
+     Box with a direct submit button as an action row. Other boxes keep their
+     placement. */
+  :is(form[data-anta], a-form > form) > a-button,
+  :is(form[data-anta], a-form > form) > button[data-anta],
+  :is(form[data-anta], a-form > form) > a-box:has(> a-button[type="submit"], > button[data-anta][type="submit"]) {
+    grid-column: 1;
+  }
+  :is(form[data-anta], a-form > form) > a-button,
+  :is(form[data-anta], a-form > form) > button[data-anta] {
+    justify-self: start;
+  }
+  /* Padding, so a background on the row covers its whole column when the row
+     is sticky. This replaces the inline-start side of the Box's own padding. */
+  :is(form[data-anta], a-form > form) > a-box:has(> a-button[type="submit"], > button[data-anta][type="submit"]) {
+    padding-inline-start: var(--_form-indent);
+  }
+
+  /* `sticky-actions` on `<a-form>`: the row of actions stays at the block-end edge of the
+     nearest scroll container. It is opaque so the fields scroll under it. Set
+     `background` on the Box when the form sits on another surface. */
+  a-form[sticky-actions] > form > a-box:has(> a-button[type="submit"], > button[data-anta][type="submit"]) {
+    position: sticky;
+    inset-block-end: 0;
+    padding-block: 12px;
+    background: var(--bg-1);
+  }
+}

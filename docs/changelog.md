@@ -9,6 +9,7 @@ changes are not listed.
 
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
+- [Form](/form/) aligns labels and fields in a form and stacks them in narrow containers. See [the submit hotkey](/form/#keyboard) and [sticky actions](/form/#actions) for the optional controls.
 
 ### Fixed
 

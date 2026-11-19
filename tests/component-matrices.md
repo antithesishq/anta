@@ -18,6 +18,7 @@ when editing package source.
 | Copy | `pnpm test:copy` | `pnpm test:copy:package` |
 | Dialog | `pnpm test:dialog` | `pnpm test:dialog:package` |
 | Expander | `pnpm test:expander` | `pnpm test:expander:package` |
+| Form | `pnpm test:form` | — |
 | Input | `pnpm test:input` | `pnpm test:input:package` |
 | InputAutocomplete | `pnpm test:input-autocomplete` | `pnpm test:input-autocomplete:package` |
 | InputTime | `pnpm test:input-time` | `pnpm test:input-time:package` |

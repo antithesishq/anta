@@ -200,6 +200,8 @@ export type {
   SelectFacetedChangeAttrs,
   SelectFacetedTriggerState,
 } from './components/SelectFaceted'
+export { Form } from './components/Form'
+export type { FormProps } from './components/Form'
 export { Tabs } from './components/Tabs'
 export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
 export { Steps } from './components/Steps'

@@ -123,6 +123,9 @@ function renderRow(row: InspectRow, wrap: boolean) {
     >
       {row.key.length ? <a-inspector-key>{renderTokens(row.key, wrap)}</a-inspector-key> : null}
       <a-inspector-value>{renderTokens(row.tokens, wrap)}</a-inspector-value>
+      {/* The ⋯ button. The element focuses it on Right and opens the copy
+          menu from it; tabIndex -1 keeps it out of the Tab order. */}
+      <a-inspector-actions role="button" tabIndex={-1} aria-label="More actions" aria-haspopup="menu" />
     </a-inspector-row>
   )
 }
@@ -132,9 +135,10 @@ function renderRow(row: InspectRow, wrap: boolean) {
  * and logs. Rows read like an object in browser DevTools and open one level at
  * a time, so a large value is read only as far as it's shown.
  *
- * Select a row, or use the arrow keys, to open it. Right-click a row, or press
- * Shift+F10, to copy its value, its JSON, or its path. `layout="inline"` shows a one-line
- * summary that fits in a sentence and becomes a block when opened. Classes can
+ * Select a row, or use the arrow keys, to open it. Right-click a row, select
+ * its ⋯ button, or press Shift+F10, to copy its value, its JSON, or its path.
+ * `layout="inline"` shows a one-line summary that fits in a sentence and
+ * becomes a block when opened. Classes can
  * control how they appear with `inspectorRepr`.
  *
  * @example

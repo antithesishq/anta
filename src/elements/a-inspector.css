@@ -6,9 +6,12 @@
     --inspector-font-size: 12px;
     --inspector-line-height: 18px;
     --inspector-indent: 16px;
+    --inspector-row-width: 120ch;
     --inspector-row-hover: color-mix(in oklch, var(--text-1) 6%, transparent);
     /* The same chevron mask Expander uses. */
     --_inspector-chevron: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m9 18 6-6-6-6'/%3e%3c/svg%3e");
+    /* The `more` icon's three dots, for a row's ⋯ button. */
+    --_inspector-more: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3ccircle cx='2' cy='8' r='2'/%3e%3ccircle cx='8' cy='8' r='2'/%3e%3ccircle cx='14' cy='8' r='2'/%3e%3c/svg%3e");
 
     display: block;
     /* A row's text never wraps, so in a container that sizes the Inspector to
@@ -115,6 +118,76 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Block rows end at most --inspector-row-width from the Inspector's start,
+     indentation included, so a wide window keeps a margin on the right and
+     every row still cuts at the same place. The percentage is the Inspector's
+     width, so the hover background still spans it. */
+  a-inspector:is(:not([layout="inline"]), [open]) > a-inspector-row {
+    padding-inline-end: max(4px, 100% - var(--inspector-row-width));
+  }
+
+  /* A node row's ⋯ button opens the copy menu. It holds its space while
+     hidden, so the cut doesn't move when it appears. `visibility: hidden` also
+     keeps hidden buttons out of each row's accessible name. The active row's
+     button stays visible but transparent while the tree has focus, so Right
+     can focus it; its tabindex="-1" keeps it out of the Tab order. */
+  a-inspector-actions {
+    position: relative;
+    flex: none;
+    width: 18px;
+    height: var(--inspector-line-height);
+    margin-inline-start: 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    user-select: none;
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  a-inspector-actions::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--text-3);
+    mask: var(--_inspector-more) center / 12px no-repeat;
+  }
+
+  a-inspector:focus-within > a-inspector-row:state(active) > a-inspector-actions {
+    visibility: visible;
+  }
+
+  a-inspector-row:hover > a-inspector-actions,
+  a-inspector-actions:focus {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  a-inspector-actions:hover {
+    background: var(--inspector-row-hover);
+  }
+
+  a-inspector-actions:hover::before {
+    background: var(--text-1);
+  }
+
+  a-inspector-actions:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  /* With focus on its button, the row still reads as the active one. */
+  a-inspector-row:has(> a-inspector-actions:focus) {
+    background: var(--inspector-row-hover);
+  }
+
+  /* A touch screen has no hover, so the button always shows. */
+  @media (hover: none) {
+    a-inspector-actions {
+      visibility: visible;
+      opacity: 1;
+    }
   }
 
   a-inspector-row:is([expandable], [type="more"]) {
@@ -241,6 +314,10 @@
     display: inline;
     padding-inline: 16px 0;
     white-space: normal;
+  }
+
+  a-inspector[layout="inline"]:not([open]) a-inspector-actions {
+    display: none;
   }
 
   a-inspector[layout="inline"]:not([open]) a-inspector-row:hover {

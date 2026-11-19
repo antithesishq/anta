@@ -12,6 +12,8 @@ export type InspectorMenuDetail = { id: string | null }
 const REVEAL_HIGHLIGHT = 'anta-inspector-reveal'
 const REVEAL_MS = 1500
 const PAGE_ROWS = 10
+// Keys that, pressed on a row's ⋯ button, return to the tree and move.
+const VERTICAL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'])
 
 /** One line of an Inspector. The wrapper renders its attributes and ARIA;
  *  `a-inspector` marks the keyboard's active row through the `active` property,
@@ -45,7 +47,8 @@ export class AInspectorElement extends HTMLElementBase {
   #activeId: string | null = null
   #observer?: MutationObserver
   #revealTimer: ReturnType<typeof setTimeout> | undefined
-  #menuFromKey = false
+  // Set while the element sends its own `contextmenu`, from a key or the ⋯ button.
+  #menuFromUs = false
 
   constructor() {
     super()
@@ -81,6 +84,18 @@ export class AInspectorElement extends HTMLElementBase {
     const row = event.composedPath().find(node =>
       (node as Node).nodeType === 1 && (node as Element).localName === 'a-inspector-row') as AInspectorRowElement | undefined
     return row && row.parentElement === this ? row : undefined
+  }
+
+  // The ⋯ button of a row the event passed through, if any.
+  #actionsOf(event: Event, row: Element): HTMLElement | undefined {
+    return event.composedPath().find(node =>
+      (node as Node).nodeType === 1 && (node as Element).localName === 'a-inspector-actions' &&
+      (node as Element).parentElement === row) as HTMLElement | undefined
+  }
+
+  #actionsIn(row: Element): HTMLElement | undefined {
+    for (const child of row.children) if (child.localName === 'a-inspector-actions') return child as HTMLElement
+    return undefined
   }
 
   #level(row: Element): number {
@@ -119,6 +134,11 @@ export class AInspectorElement extends HTMLElementBase {
     const row = this.#rowOf(event)
     if (!row) return
     this.#setActive(row, false)
+    const actions = this.#actionsOf(event, row)
+    if (actions) {
+      this.#openMenuAt(actions)
+      return
+    }
     // A click that ends a text selection selects; it doesn't toggle.
     if (event.detail !== 0 && this.#hasSelectionIn(row)) return
     this.#activate(row, event.altKey)
@@ -143,6 +163,28 @@ export class AInspectorElement extends HTMLElementBase {
   }
 
   #onKeyDown = (event: KeyboardEvent) => {
+    // A row's ⋯ button, which Right focuses. Enter, Space, or the menu keys
+    // open the menu from it; Left or Escape return to the tree; a vertical move
+    // returns and moves. Other keys, such as Tab, keep their browser default.
+    const owner = event.target !== this ? this.#rowOf(event) : undefined
+    const actions = owner && this.#actionsOf(event, owner)
+    if (owner && actions && event.target === actions) {
+      const plain = !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey
+      if ((plain && (event.key === 'Enter' || event.key === ' ')) || (event.key === 'F10' && event.shiftKey) || event.key === 'ContextMenu') {
+        event.preventDefault()
+        this.#setActive(owner, false)
+        this.#openMenuAt(actions)
+      } else if (plain && (event.key === 'ArrowLeft' || event.key === 'Escape')) {
+        event.preventDefault()
+        this.#setActive(owner, false)
+        this.focus({ preventScroll: true })
+      } else if (VERTICAL_KEYS.has(event.key) && !isModifiedNavigationKey(event)) {
+        this.#setActive(owner, false)
+        this.focus({ preventScroll: true })
+        this.#treeKey(event)
+      }
+      return
+    }
     if (event.target !== this) return
     if ((event.key === 'F10' && event.shiftKey) || event.key === 'ContextMenu') {
       event.preventDefault()
@@ -154,6 +196,11 @@ export class AInspectorElement extends HTMLElementBase {
       if (this.#active?.hasAttribute('expandable')) this.#toggle(this.#active, !this.#active.hasAttribute('open'), true)
       return
     }
+    this.#treeKey(event)
+  }
+
+  // The tree pattern's keys, with focus on the host.
+  #treeKey(event: KeyboardEvent) {
     if (isModifiedNavigationKey(event) || event.ctrlKey || event.metaKey || event.altKey) return
     const rows = this.#rows()
     if (!rows.length) return
@@ -169,8 +216,10 @@ export class AInspectorElement extends HTMLElementBase {
       case 'PageUp': move(index - PAGE_ROWS); break
       case 'ArrowRight': {
         if (!row) { move(0); break }
+        // A closed row opens. An open row, or one that can't open, moves to
+        // its ⋯ button; Down already reaches an open row's first child.
         if (row.hasAttribute('expandable') && !row.hasAttribute('open')) this.#toggle(row, true)
-        else if (row.hasAttribute('open') && rows[index + 1] && this.#level(rows[index + 1]) > this.#level(row)) move(index + 1)
+        else this.#actionsIn(row)?.focus({ preventScroll: true })
         break
       }
       case 'ArrowLeft': {
@@ -196,25 +245,38 @@ export class AInspectorElement extends HTMLElementBase {
     const row = this.#active?.parentElement === this ? this.#active : null
     if (!row) return
     const rect = row.getBoundingClientRect()
-    this.#menuFromKey = true
-    row.dispatchEvent(new this.view.MouseEvent('contextmenu', {
-      bubbles: true, cancelable: true, composed: true, button: 2,
-      clientX: rect.left + Math.min(rect.width, 32), clientY: rect.bottom,
-    }))
-    this.#menuFromKey = false
+    this.#sendMenu(row, rect.left + Math.min(rect.width, 32), rect.bottom)
+  }
+
+  // Opens the copy menu from a row's ⋯ button, at its bottom-left corner.
+  #openMenuAt(actions: HTMLElement) {
+    const rect = actions.getBoundingClientRect()
+    this.#sendMenu(actions, rect.left, rect.bottom)
+  }
+
+  #sendMenu(from: Element, clientX: number, clientY: number) {
+    this.#menuFromUs = true
+    try {
+      from.dispatchEvent(new this.view.MouseEvent('contextmenu', {
+        bubbles: true, cancelable: true, composed: true, button: 2, clientX, clientY,
+      }))
+    } finally {
+      this.#menuFromUs = false
+    }
   }
 
   #onContextMenu = (event: MouseEvent) => {
     // A browser-made keyboard `contextmenu` targets the focused host itself;
     // open the menu at the active row instead.
-    if (event.isTrusted && event.target === this && !this.#menuFromKey && this.#active?.parentElement === this) {
+    if (event.isTrusted && event.target === this && !this.#menuFromUs && this.#active?.parentElement === this) {
       event.preventDefault()
       event.stopImmediatePropagation()
       this.#openMenu()
       return
     }
     // Over selected text, leave the browser's own menu, with its Copy, in place.
-    if (this.#hasSelectionIn(this)) {
+    // A menu the element opens itself can't be the browser's, so it skips this.
+    if (!this.#menuFromUs && this.#hasSelectionIn(this)) {
       event.stopImmediatePropagation()
       return
     }

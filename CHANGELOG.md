@@ -9,9 +9,11 @@ changes are not listed.
 
 - [Inspector](/inspector/) shows any JavaScript value as a tree that opens one level at a time, for exploring test
   results, errors, and logs. Use [`layout="inline"`](/inspector/#show-a-value-inline) to place a value in a sentence or
-  table cell. Rows can be [copied from a right-click menu](/inspector/#copy-values-and-paths) as a value, JSON, or a
-  JavaScript path, and the tree supports the [keyboard](/inspector/#keyboard-accessibility). Classes can choose how they
-  appear by implementing [`inspectorRepr`](/inspector/#custom-types).
+  table cell. Rows can be [copied from a menu](/inspector/#copy-values-and-paths), opened by right-click or a row's ⋯
+  button, as a value, JSON, or a JavaScript path, and the tree supports the
+  [keyboard](/inspector/#keyboard-accessibility). Rows end 120 characters from the Inspector's start, set by
+  `--inspector-row-width`. Classes can choose how they appear by implementing
+  [`inspectorRepr`](/inspector/#custom-types).
 
 ### Fixed
 

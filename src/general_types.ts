@@ -1434,6 +1434,14 @@ export interface AInspectorRowAttributes extends BaseAttributes {
   'aria-expanded'?: 'true' | 'false' | boolean
 }
 
+/** A node row's ⋯ button, its last child. `a-inspector` focuses it on Right
+ * and opens the copy menu from it on click, Enter, or Space. Give it
+ * `role="button"`, `tabindex="-1"`, and a label, so the tree stays one Tab stop. */
+export interface AInspectorActionsAttributes extends BaseAttributes {
+  'aria-label'?: string
+  'aria-haspopup'?: 'menu' | 'true'
+}
+
 /** One run of text in an `<a-inspector>` row, colored by its token type. */
 export interface AInspectorTokenAttributes extends BaseAttributes {
   /** The core's token type, such as `string`, `number`, or `field_name`. */

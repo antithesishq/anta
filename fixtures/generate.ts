@@ -99,11 +99,15 @@ function drawProps(tc: TestCase, fixture: FixtureDescription): FixtureDescriptio
   }
 }
 
-export function generateNextFixtures(current: FixtureDescription[], seed: number, revision: number, onlyPlot = false): FixtureDescription[] {
+export type FixtureType = typeof fixtureTypes[number]
+
+// With `only`, the page holds that one component, for a focused campaign: each
+// update changes one of its props, or unmounts it so the next one mounts anew.
+export function generateNextFixtures(current: FixtureDescription[], seed: number, revision: number, only?: FixtureType): FixtureDescription[] {
   let next: FixtureDescription[] | undefined
   test((tc) => {
-    if (onlyPlot) {
-      next = current.length === 0 ? [drawFixture(tc, `fixture-${revision}`, 'plot')]
+    if (only) {
+      next = current.length === 0 ? [drawFixture(tc, `fixture-${revision}`, only)]
         : pick(tc, [0, 1, 1, 1, 1, 1]) === 0 ? [] : [drawProps(tc, current[0])]
       return
     }

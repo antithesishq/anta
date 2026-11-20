@@ -22,10 +22,18 @@ const inspector = extract(state => {
     }
   })
   const tabStops = [...host.querySelectorAll('*')].filter(node => (node as HTMLElement).tabIndex >= 0).length
+  const focus = state.document.activeElement
+  const actions = focus?.localName === 'a-inspector-actions' && focus.parentElement?.parentElement === host ? focus : null
+  const actionsStyle = actions && state.window.getComputedStyle(actions)
+  const menu = host.nextElementSibling as (Element & { isOpen?: boolean }) | null
   return {
     ...record,
     rows,
-    focused: state.document.activeElement === host,
+    focused: focus === host,
+    // The row whose ⋯ button has focus, and whether that button shows.
+    actionsRow: actions ? actions.parentElement!.getAttribute('row-id') ?? '' : null,
+    actionsShown: !!actionsStyle && actionsStyle.visibility === 'visible' && actionsStyle.opacity === '1',
+    menuOpen: menu?.localName === 'a-menu' && !!menu.isOpen,
     hostTabIndex: host.tabIndex,
     tabStops,
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
@@ -48,7 +56,35 @@ export const inspectorHasOneActiveRowWhileFocused = always(() => {
   const current = inspector.current
   if (!current) return true
   const active = current.rows.filter(row => row.active).length
-  return active <= 1 && (!current.focused || current.rows.length === 0 || active === 1)
+  const focused = current.focused || current.actionsRow !== null
+  return active <= 1 && (!focused || current.rows.length === 0 || active === 1)
+})
+
+// Focus on a ⋯ button is only ever on the active row's button, and that
+// button shows, so keyboard focus is never invisible.
+export const inspectorActionsFocusIsOnTheActiveRow = always(() => {
+  const current = inspector.current
+  if (!current || current.actionsRow === null) return true
+  return current.actionsShown && current.rows.some(row => row.active && row.id === current.actionsRow)
+})
+
+// On a focused ⋯, Left and Escape return focus to the tree, with the same row
+// active; Enter, Space, and the Menu key open the copy menu.
+export const inspectorActionsKeysReturnOrOpen = always(() => {
+  const before = inspector.current
+  if (!before || before.actionsRow === null || before.menuOpen || before.modalOpen) return true
+  return next(() => {
+    const after = inspector.current
+    if (after?.id !== before.id || after.expandDepth !== before.expandDepth || after.layout !== before.layout) return true
+    const action = lastAction.current
+    if (!action || typeof action !== 'object' || !('PressKey' in action)) return true
+    const key = action.PressKey.code
+    if (key === 37 || key === 27) {
+      return after.focused && after.rows.some(row => row.active && row.id === before.actionsRow)
+    }
+    if (key === 13 || key === 32 || key === 93) return after.menuOpen
+    return true
+  })
 })
 
 export const inspectorRowsNestUnderTheirParents = always(() => {
@@ -81,8 +117,13 @@ export const inspectorClicksChangeOnlyTheirSubtree = always(() => {
     if (after?.id !== before.id || after.expandDepth !== before.expandDepth || after.layout !== before.layout) return true
     const action = lastAction.current
     if (!action || typeof action !== 'object' || !('Click' in action)) return true
+    // A click makes its row the active one. The point can miss: a wheel scroll
+    // that's still moving shifts the page between Bombadil's snapshot and the
+    // click, so the row the click activated wins over the point.
+    const activated = after.rows.find(row => row.active)
     const { x, y } = action.Click.point
-    const clicked = before.rows.find(({ rect }) => x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom)
+    const clicked = before.rows.find(row => row.id === activated?.id)
+      ?? before.rows.find(({ rect }) => x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom)
     if (!clicked) return true
     const prefix = clicked.type === 'more' ? clicked.id.slice(0, -1) : clicked.id
     const outside = (rows: typeof before.rows) => rows

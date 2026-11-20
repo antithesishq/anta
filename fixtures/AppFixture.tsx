@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState, type ComponentProps } from 'react'
-import { fixtureTypes, generateNextFixtures } from './generate'
+import { fixtureTypes, generateNextFixtures, type FixtureType } from './generate'
 import { Button } from './button/Button'
 import { Checkbox } from './checkbox/Checkbox'
 import { RadioGroup } from './radio-group/RadioGroup'
@@ -64,18 +64,19 @@ type AppState = {
   fixtures: FixtureDescription[]
   revision: number
   seed: number
-  onlyPlot: boolean
+  only: FixtureType | undefined
 }
 export default function AppFixture() {
   const [state, setState] = useState<AppState>(() => {
     const params = new URLSearchParams(location.search)
     const input = params.get('seed')
-    const onlyPlot = params.get('only') === 'plot'
+    // `?only=plot` or `?only=inspector` mounts just that component.
+    const only = fixtureTypes.find(type => type === params.get('only'))
     const parsed = input?.trim() ? Number(input) : NaN
     const seed = Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= 0xffff_ffff
       ? parsed
       : crypto.getRandomValues(new Uint32Array(1))[0]
-    return { fixtures: generateNextFixtures([], seed, 0, onlyPlot), revision: 0, seed, onlyPlot }
+    return { fixtures: generateNextFixtures([], seed, 0, only), revision: 0, seed, only }
   })
   useLayoutEffect(() => {
     function advance() {
@@ -83,7 +84,7 @@ export default function AppFixture() {
         const revision = current.revision + 1
         return {
           ...current,
-          fixtures: generateNextFixtures(current.fixtures, (current.seed + revision) >>> 0, revision, current.onlyPlot),
+          fixtures: generateNextFixtures(current.fixtures, (current.seed + revision) >>> 0, revision, current.only),
           revision,
         }
       })

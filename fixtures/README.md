@@ -43,7 +43,11 @@ The Inspector fixture shows a small value with nested results, a Map, a paged
 array, a multiline string, and a cycle. Its properties check that `open` matches
 `aria-expanded`, that the tree is one Tab stop with one active row while
 focused, that rows nest by level and `more` rows end their group, and that a
-click on a row changes nothing outside that row's subtree.
+click on a row changes nothing outside that row's subtree. Its keyboard actions
+also reach a row's ⋯ button and its copy menu. Properties check that a focused
+⋯ shows and belongs to the active row, that Left and Escape return from it to
+the tree, and that Enter, Space, and the Menu key open the menu. PressKey has no
+modifiers, so the Menu key stands in for Shift+F10.
 
 Plot properties observe the latest viewport callback, not canvas pixels. The
 callback can be stale after a data update; the disabled check may miss delayed
@@ -61,7 +65,10 @@ pnpm exec bombadil browser test --time-limit=1m \
 Add `--headless` to hide Chrome. For a focused run, use the same URL with
 `fixtures/calendar/locale.spec.ts` or `fixtures/form.spec.ts`. For Plot, add
 `&only=plot` to the URL and use `fixtures/plot/bombadil.spec.ts`. The Plot-only
-campaign also resizes the browser. Type-check with
+campaign also resizes the browser. For the Inspector, add `&only=inspector` and
+use `fixtures/inspector/bombadil.spec.ts`. That campaign mostly presses the
+tree's and the ⋯ button's keys, so the ⋯ properties, which the combined
+campaign rarely reaches, run often. Type-check with
 `pnpm exec tsc -p fixtures/tsconfig.json`.
 
 For Plot heap checks, use a production preview and run the Plot-only campaign

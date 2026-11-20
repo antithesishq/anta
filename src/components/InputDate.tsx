@@ -53,6 +53,8 @@ export interface InputDateProps extends Omit<BaseProps, 'children'> {
   locale?: string
   /** Form field name — the ISO value submits under this key. */
   name?: string
+  /** ID of the associated form when outside it. */
+  form?: string
   /** Field size. Also sizes the calendar and the time row.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
@@ -130,6 +132,7 @@ export const InputDate = ({
   max,
   locale,
   name,
+  form,
   size,
   disabled,
   label,
@@ -278,6 +281,9 @@ export const InputDate = ({
         clearable={clearable}
         leading={icon === false ? undefined : <Icon shape={icon ?? 'calendar-days'} />}
         value={text}
+        name={name}
+        form={form}
+        formValue={current ?? ''}
         defaultValue={fmt(normalize(defaultValue))}
         data-anta-value-mode={controlled ? 'controlled' : 'uncontrolled'}
         placeholder={pattern}
@@ -391,8 +397,6 @@ export const InputDate = ({
           )}
         </div>
       </Menu>
-      {/* Submit the ISO value under `name` (the field itself shows locale text). */}
-      {name ? <input type="hidden" name={name} value={current ?? ''} /> : null}
     </>
   )
 }

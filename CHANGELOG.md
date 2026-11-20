@@ -14,12 +14,21 @@ changes are not listed.
   [keyboard](/inspector/#keyboard-accessibility). Rows end 120 characters from the Inspector's start, set by
   `--inspector-row-width`. Classes can choose how they appear by implementing
   [`inspectorRepr`](/inspector/#custom-types).
+- [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
+- [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 
 ### Fixed
 
+- [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.
+- [InputDate](/input-date/#manage-the-value) submits its ISO value through the visible Input instead of a hidden field. Disabled fields are omitted, and `form` supports association with a form elsewhere on the page.
 - Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.
 - Disabling [Select](/select/#size-and-status) also disables its open menu without clearing the selection.
 - [Native selects](/select/#native-html-select) style the field and dropdown without custom trigger markup. Focus rings follow the theme.
+
+### Breaking
+
+- Named [button-mode Inputs](/input/#forms) now submit their displayed text when `formValue` is omitted. Pass `formValue={null}` to retain the previous behavior of omitting the field.
+- [Button form gathering](/button/#form-submission) keeps multiple Selects and array-valued Inputs as arrays in `submitdetailed.formData`, including empty and one-item selections. Repeated field names also produce arrays instead of keeping only the last entry. Other unique field names retain scalar values.
 
 ## 0.3.38 — October 29, 2026
 

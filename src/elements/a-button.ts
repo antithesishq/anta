@@ -219,18 +219,36 @@ function handleClick(e: MouseEvent) {
   if (!form) return;
 
   if (type === "submit") {
+    // Detailed submission must obey the same constraints as the native submit.
+    if (!form.noValidate && !form.reportValidity()) return;
     // requestSubmit() (not submit()) so the form fires its `submit` event and
     // runs constraint validation. Baseline-available on every engine anta
     // targets (it relies on the Popover API elsewhere), so no fallback.
     form.requestSubmit();
     // Richer event so listeners can inspect which button submitted.
     const formData = new FormData(form);
+    const values = new Map<string, FormDataEntryValue | FormDataEntryValue[]>();
+    for (const [name, value] of formData) {
+      const previous = values.get(name);
+      if (Array.isArray(previous)) previous.push(value);
+      else values.set(name, previous === undefined ? value : [previous, value]);
+    }
+    for (const field of Array.from(form.elements)) {
+      const name = field.getAttribute("name");
+      if (!name || field.matches(":disabled")) continue;
+      const arrayValue = Array.isArray((field as Element & { formValue?: unknown }).formValue);
+      const multipleSelect = field.localName === "select" && field.hasAttribute("multiple");
+      if (arrayValue || multipleSelect) {
+        const value = values.get(name);
+        values.set(name, value === undefined ? [] : Array.isArray(value) ? value : [value]);
+      }
+    }
     form.dispatchEvent(
       new CustomEvent("submitdetailed", {
         bubbles: true,
         cancelable: true,
         detail: {
-          formData: Object.fromEntries(formData.entries()),
+          formData: Object.fromEntries(values),
           submitter: {
             tag: el.tagName.toLowerCase(),
             attrs: Object.fromEntries(

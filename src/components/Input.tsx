@@ -1,10 +1,12 @@
-import { CLEAR_TRIGGER } from '../input-events'
+import { CLEAR_TRIGGER, type InputFormValue } from '../input-events'
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 import { useNativeEventProps } from '../native-event-props'
+
+export type { InputFormValue } from '../input-events'
 
 /** Convenience snapshot passed as the 2nd argument to `onValueChange`. */
 export interface InputChangeAttrs {
@@ -59,7 +61,12 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    * editing. Form reset and restoration preserve controlled text; release
    * retains the current text. */
   value?: string
-  /** Initial value for an uncontrolled field, restored on form reset. */
+  /** Submit this value instead of the displayed text. Omit or pass undefined to
+   * submit the live text, including in button mode. Null omits the field. Arrays
+   * submit repeated entries under `name`. Numbers and booleans become strings. */
+  formValue?: InputFormValue
+  /** Initial value for an uncontrolled field. Form reset restores it for editable
+   * fields; button-mode triggers preserve their current text. */
   defaultValue?: string
   /** Allow longer text and grow the field as someone types. Use `maxRows` to
    * limit growth or `rows` to keep a fixed height. */
@@ -100,6 +107,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   autoFocus?: boolean
   /** Form field name for submission, named form lookup, and attribute selectors. */
   name?: string
+  /** ID of the form to associate with when outside that form. */
+  form?: string
   /** Placeholder shown when empty. */
   placeholder?: string
   /** Ellipsize an overflowing single-line value. Read-only inputs already do
@@ -114,7 +123,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    *  available for Input-styled popup triggers; the value becomes
    *  the button text and the placeholder is shown while it is empty. */
   button?: boolean
-  /** Mark the field required (drives native validity). */
+  /** Mark the field required. Button mode checks the submitted value: null,
+   * an empty string, or an empty array is missing, independently of the label. */
   required?: boolean
   /** Keep leading, trailing, and clear content subtle until someone hovers over
    * or focuses the field. */
@@ -158,6 +168,10 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   onFocus?: (e: any) => void
   /** Fires when the field loses focus. */
   onBlur?: (e: any) => void
+  /** Fires on form reset before the field handles it. Prevent the default to let
+   * a composed field restore its own value and displayed text. Button-mode
+   * triggers preserve their text when no handler takes ownership. */
+  onFormReset?: (e: Event) => void
   /** ARIA role for the native control, such as `combobox` for an InputAutocomplete
    * trigger. The element delegates this and standard `aria-*` props to its native
    * shadow control. */
@@ -234,6 +248,7 @@ export const Input = ({
   size,
   round,
   value,
+  formValue,
   defaultValue,
   multiline,
   rows,
@@ -246,6 +261,7 @@ export const Input = ({
   inputMode,
   autoFocus,
   name,
+  form,
   placeholder,
   truncate = true,
   disabled,
@@ -266,6 +282,7 @@ export const Input = ({
   onValueChange,
   onClearClick,
   onClearInput,
+  onFormReset,
   children,
   className,
   style,
@@ -276,6 +293,7 @@ export const Input = ({
     onchange: onChange || onValueChange ? (e: any) => { onChange?.(e); onValueChange?.(e, attrsOf(e)) } : undefined,
     onclearclick: onClearClick ? (e: any) => onClearClick(nativeStateChange(e).event) : undefined,
     onclearinput: onClearInput ? (e: any) => onClearInput(nativeStateChange(e).event) : undefined,
+    oninputformreset: onFormReset,
   })
 
   // `hint` is the single message channel; `status` only recolors it + adds a
@@ -299,6 +317,7 @@ export const Input = ({
       round={roundAttr(round)}
       data-anta-value-mode={value !== undefined ? 'controlled' : 'uncontrolled'}
       value={value}
+      form-value={formValue === undefined ? undefined : JSON.stringify(formValue)}
       // Keep the reset baseline available after controlled ownership is released.
       defaultvalue={defaultValue}
       multiline={presence(multiline || rows != null)}
@@ -308,6 +327,7 @@ export const Input = ({
       tone={neutralToneAttr(tone)}
       type={!multiline && rows == null ? nativeType : undefined}
       name={name}
+      form={form}
       placeholder={placeholder}
       truncate={presence(truncate)}
       disabled={presence(disabled)}

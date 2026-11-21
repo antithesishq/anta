@@ -55,8 +55,8 @@
     --switch-label-color: var(--text-2);
     --switch-label-color-disabled: var(--text-4);
     --switch-hint-color: var(--text-3);
-    --switch-hint-fs: 13px;
-    --switch-hint-lh: 16px;
+    --switch-hint-fs: 14px;
+    --switch-hint-lh: 20px;
 
     display: inline-grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -204,7 +204,7 @@
       --switch-label-fs: 13px;
       --switch-label-lh: 18px;
       --switch-hint-fs: 12px;
-      --switch-hint-lh: 14px;
+      --switch-hint-lh: 16px;
     }
     &[size="large"] {
       --switch-track-inline-size: 34px;
@@ -215,8 +215,8 @@
       --switch-thumb-travel: 15px;
       --switch-label-fs: 17px;
       --switch-label-lh: 26px;
-      --switch-hint-fs: 15px;
-      --switch-hint-lh: 19px;
+      --switch-hint-fs: 16px;
+      --switch-hint-lh: 24px;
     }
   }
 

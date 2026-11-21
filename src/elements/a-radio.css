@@ -52,7 +52,7 @@
     --radio-label-fs: 15px;
     --radio-label-lh: 22px;
     --radio-hint-fs: 14px;
-    --radio-hint-lh: 17px;
+    --radio-hint-lh: 20px;
 
     /* Inline-grid: ring + dot in column 1, label/hint in column 2. Ring and dot top-align to the label's first line (align-self: start plus a margin offset on the control, so the row keeps the label's line-height); the dot's offset differs by half a dot so it stays centered on the ring. Column 2 is 1fr so a stretched radio's slack goes to the label, keeping the ring column content-sized. */
     display: inline-grid;
@@ -166,7 +166,7 @@
       --radio-label-fs: 13px;
       --radio-label-lh: 18px;
       --radio-hint-fs: 12px;
-      --radio-hint-lh: 14px;
+      --radio-hint-lh: 16px;
     }
     &[size="large"] {
       --radio-control-size: 18px;
@@ -174,14 +174,13 @@
       --radio-label-fs: 17px;
       --radio-label-lh: 26px;
       --radio-hint-fs: 16px;
-      --radio-hint-lh: 21px;
+      --radio-hint-lh: 24px;
     }
   }
 
   /* Label + hint — light-DOM styled tags, stacked in column 2 (see a-radio grid).
      Both `display: block` so they stack; `min-width: 0` lets a consumer ellipsis
-     either line. The hint mirrors <a-input>'s hint (1px under the label text,
-     tighter line, --text-3) rather than carrying its own scale. */
+     either line. Hint typography matches the same-size Input hint. */
   a-radio-label,
   a-radio-hint {
     display: block;

@@ -205,7 +205,7 @@
     --input-time-hint: var(--text-3);
     --input-time-period-color: var(--text-3);
     --input-time-font-size: 15px;
-    --input-time-line-height: 20px;
+    --input-time-line-height: 22px;
     --input-time-field-height: 28px;
     --input-time-field-radius: 4px;
 
@@ -271,13 +271,13 @@
 
   a-input-time[size="small"] {
     --input-time-font-size: 13px;
-    --input-time-line-height: 16px;
+    --input-time-line-height: 18px;
     --input-time-field-height: 24px;
     --_input-time-action-size: 20px;
   }
   a-input-time[size="large"] {
     --input-time-font-size: 17px;
-    --input-time-line-height: 22px;
+    --input-time-line-height: 26px;
     --input-time-field-height: 32px;
     --_input-time-action-size: 28px;
   }

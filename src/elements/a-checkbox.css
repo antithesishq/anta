@@ -55,8 +55,8 @@
        a step down. Tokens so the size variants set them in one place. */
     --checkbox-label-fs: 15px;
     --checkbox-label-lh: 22px;
-    --checkbox-hint-fs: 13px;
-    --checkbox-hint-lh: 16px;
+    --checkbox-hint-fs: 14px;
+    --checkbox-hint-lh: 20px;
 
     /* Inline-grid: box + glyph in column 1, label/hint in column 2. Box and glyph top-align to the label's first line (align-self: start plus a margin offset on the control, so the row keeps the label's line-height); they share align-self + margin so the glyph never drifts off the box. Column 2 is 1fr so a stretched checkbox's slack goes to the label, keeping the box column content-sized. */
     display: inline-grid;
@@ -189,7 +189,7 @@
       --checkbox-label-fs: 13px;
       --checkbox-label-lh: 18px;
       --checkbox-hint-fs: 12px;
-      --checkbox-hint-lh: 14px;
+      --checkbox-hint-lh: 16px;
       --checkbox-mask-size: 11px;
       &::before,
       &::after { inline-size: 14px; block-size: 14px; }
@@ -198,8 +198,8 @@
       --checkbox-box-size: 18px;
       --checkbox-label-fs: 17px;
       --checkbox-label-lh: 26px;
-      --checkbox-hint-fs: 15px;
-      --checkbox-hint-lh: 19px;
+      --checkbox-hint-fs: 16px;
+      --checkbox-hint-lh: 24px;
       --checkbox-mask-size: 15px;
       &::before,
       &::after { inline-size: 18px; block-size: 18px; }

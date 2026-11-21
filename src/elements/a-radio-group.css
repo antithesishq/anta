@@ -66,7 +66,7 @@
     --radio-label-fs: 13px;
     --radio-label-lh: 18px;
     --radio-hint-fs: 12px;
-    --radio-hint-lh: 14px;
+    --radio-hint-lh: 16px;
   }
   a-radio-group[size="large"] a-radio:not([size]) {
     --radio-control-size: 18px;
@@ -74,7 +74,7 @@
     --radio-label-fs: 17px;
     --radio-label-lh: 26px;
     --radio-hint-fs: 16px;
-    --radio-hint-lh: 21px;
+    --radio-hint-lh: 24px;
   }
 
   /* Group disabled — quiet the hint (after the status rules so it wins) and grey

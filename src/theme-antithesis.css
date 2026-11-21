@@ -817,7 +817,6 @@
   }
   a-tabs[data-steps] a-step-hint {
     color: var(--steps-hint-fg);
-    font-size: calc(1em - 1px);
     transition: color var(--tab-timing);
   }
   a-tabs[data-steps]:not([orientation="vertical"], [priority="tertiary"]) > a-tab:not(:last-child)::before {

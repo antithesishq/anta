@@ -6,6 +6,8 @@ password.
 
 ## Size
 
+Small, medium, and large fields use 18px, 22px, and 26px text line heights. A one-row multiline field matches the height and first text baseline of a single-line field at the same size. Additional lines grow downward.
+
 ```tsx
 <Input size="small"  label="Small"  placeholder="Enter text…" autoComplete="off" />
 <Input size="medium" label="Medium" placeholder="Enter text…" autoComplete="off" /> {/* default */}

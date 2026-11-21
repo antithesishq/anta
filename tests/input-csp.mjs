@@ -206,7 +206,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     const before = await field(page).boundingBox()
     await register(page,mode)
     assert.equal(await field(page).evaluate(host=>host.shadowRoot.querySelectorAll('style,link').length),0)
-    assert.equal((await control(page).boundingBox()).height,20)
+    assert.equal((await control(page).boundingBox()).height,22)
     assert.equal((await field(page).evaluate(host=>host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect())).height,28)
     assert.equal((await field(page).boundingBox()).width,before.width)
     await field(page).evaluate(host=>{
@@ -220,7 +220,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.deepEqual(await page.evaluate(()=>mutations),[])
     await field(page).evaluate(host=>host.setAttribute('rows','3'))
     assert.equal(await control(page).evaluate(node=>node.localName),'textarea')
-    assert.equal((await snapshot(page)).height,68)
+    assert.equal((await snapshot(page)).height,72)
     await field(page).evaluate(host=>{host.removeAttribute('rows');host.setAttribute('button','');host.value=''})
     assert.equal(await control(page).evaluate(node=>node.localName),'button')
     assert.equal(await control(page).evaluate(node=>node.type),'button')
@@ -256,7 +256,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
         if(multiline) for(const center of ['leadingCenter','clearCenter','actionCenter']) {
           assert.ok(Math.abs(metrics[center]-metrics.firstLine)<0.1,JSON.stringify({size,direct,center,metrics}))
         }
-        const actionSize=multiline&&size==='large'?26:height-4
+        const actionSize=height-4
         assert.deepEqual(metrics.clearSize,[actionSize,actionSize])
         assert.equal(metrics.clearPadding,'2px')
         assert.equal(metrics.top,2)
@@ -288,7 +288,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
   test.fast(`${name}: single-icon actions are square and content elements keep natural width`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const [size,height,attrs] of [['small',24,''],['large',32,'rows="3"']]) {
-      const actionSize=attrs&&size==='large'?26:height-4
+      const actionSize=height-4
       for(const tag of ['a-button','button','a']) for(const slot of ['clear','trailing']) for(const wrapped of [false,true]) {
         const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
         for(const [content,iconOnly] of [['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon><a-tooltip>Find matches</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches<a-tooltip>Help</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches',true],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['<a-icon shape="search"></a-icon><span>Find matches</span>',false],['<a-icon shape="search"></a-icon><a-icon shape="x"></a-icon>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
@@ -383,21 +383,21 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await page.evaluate(()=>{const supports=CSS.supports.bind(CSS);CSS.supports=(...args)=>args[0]==='field-sizing'?false:supports(...args)})
     await register(page,mode);await mount(page,'<div class="spacer"></div><a-input multiline maxrows="3"></a-input>')
     await field(page).evaluate(host=>host.value='Line\n'.repeat(40))
-    assert.equal((await snapshot(page)).height,68)
+    assert.equal((await snapshot(page)).height,72)
     await control(page).evaluate(ta=>{ta.focus();ta.setSelectionRange(12,12);ta.scrollTop=30;window.scrollTo(0,document.body.scrollHeight)})
     const scroll=await control(page).evaluate(ta=>[window.scrollY,ta.scrollTop])
     await control(page).press('x')
     assert.deepEqual(await control(page).evaluate(ta=>[window.scrollY,ta.scrollTop]),scroll)
     await field(page).evaluate(host=>{host.removeAttribute('maxrows');host.value='One\nTwo\nThree\nFour'})
-    assert.equal((await snapshot(page)).height,88)
+    assert.equal((await snapshot(page)).height,94)
     await field(page).evaluate(host=>host.value='Short')
     assert.equal((await snapshot(page)).height,28)
     await field(page).evaluate(host=>{host.setAttribute('rows','2');host.value='Many\n'.repeat(30)})
-    assert.equal((await snapshot(page)).height,48)
+    assert.equal((await snapshot(page)).height,50)
     await field(page).evaluate(host=>host.setAttribute('maxrows','1'))
-    assert.equal((await snapshot(page)).height,48)
+    assert.equal((await snapshot(page)).height,50)
     await field(page).evaluate(host=>{const parent=host.parentElement;host.remove();host.removeAttribute('rows');host.removeAttribute('maxrows');host.value='One\nTwo\nThree';parent.append(host)})
-    assert.equal((await snapshot(page)).height,68)
+    assert.equal((await snapshot(page)).height,72)
   })
   test.fast(`${name}: submitted overrides preserve live text, falsy values, arrays, and fallback`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
@@ -879,7 +879,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     const page=await pageFor(t,engine,mode,'',{hasTouch:true});await register(page,mode)
     await mount(page,'<a-input multiline maxrows="3"></a-input>')
     await field(page).evaluate(host=>host.value='One\nTwo\nThree\nFour\nFive')
-    assert.equal((await snapshot(page)).height,68)
+    assert.equal((await snapshot(page)).height,72)
     await field(page).evaluate(host=>host.value='Short')
     assert.equal((await snapshot(page)).height,28)
     await page.addScriptTag({url:'/Preact.js',type:'module'})
@@ -933,8 +933,8 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
         return regions.map(node=>{const b=node.getBoundingClientRect(),s=getComputedStyle(node);return {part:node.getAttribute('part')??'host',box:[b.x,b.y,b.width,b.height],font:[s.fontFamily,s.fontSize,s.lineHeight,s.fontWeight,s.fontStretch,s.fontStyle],appearance:[s.backgroundColor,s.color,s.borderRadius,s.boxShadow,s.padding,s.textOverflow]}})
       })
       const actual=await metrics(current)
-      assert.equal(actual.find(region=>region.part==='field').box[3],variant==='small'?24:variant==='large'?32:variant==='multiline'||variant==='fixed'?68:28)
-      assert.equal(actual.find(region=>region.part==='label').box[3],variant==='small'?16:variant==='large'?22:20)
+      assert.equal(actual.find(region=>region.part==='field').box[3],variant==='small'?24:variant==='large'?32:variant==='multiline'||variant==='fixed'?72:28)
+      assert.equal(actual.find(region=>region.part==='label').box[3],variant==='small'?18:variant==='large'?26:22)
       if(assets.has('/original.js')) {
         const original=await browsers.get(engine).newPage({viewport:{width:900,height:500},reducedMotion:'reduce'})
         original.setDefaultTimeout(8000)

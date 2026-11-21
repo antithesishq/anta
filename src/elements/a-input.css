@@ -10,8 +10,8 @@
 
   a-input {
     --_fs: 15px;
-    --_pad-block: 4px;
-    --_lh: 20px;
+    --_pad-block: 3px;
+    --_lh: 22px;
     --_input-action-size: 24px;
 
     display: grid;
@@ -43,8 +43,8 @@
     transition: box-shadow 120ms ease;
   }
   a-input:state(multiline)::part(field) { align-items: stretch; }
-  a-input[size="small"] { --_fs: 13px; --_lh: 16px; --_input-action-size: 20px; }
-  a-input[size="large"] { --_fs: 17px; --_lh: 22px; --_input-action-size: 28px; }
+  a-input[size="small"] { --_fs: 13px; --_lh: 18px; --_input-action-size: 20px; }
+  a-input[size="large"] { --_fs: 17px; --_lh: 26px; --_input-action-size: 28px; }
   /* Multiline actions fit the padded first text line, including their inset. */
   a-input:state(multiline) { --_input-action-size: calc(var(--_lh) + var(--_pad-block) * 2 - 4px); }
   a-input[size="small"]::part(field) { min-height: var(--_input-measured-min-height, 24px); }
@@ -88,6 +88,7 @@
   }
   a-input:state(multiline)::part(input) {
     resize: none;
+    /* Match the centered first line of a single-line field at every size. */
     padding-block: var(--_pad-block);
     overflow-y: auto;
   }
@@ -219,11 +220,11 @@
     color: var(--input-label);
     font-family: var(--sans-serif);
     font-size: 15px;
-    line-height: 20px;
+    line-height: 22px;
     font-weight: 500;
   }
-  a-input[size="small"]:not(:defined) > [slot="label"] { font-size: 13px; line-height: 16px; }
-  a-input[size="large"]:not(:defined) > [slot="label"] { font-size: 17px; line-height: 22px; }
+  a-input[size="small"]:not(:defined) > [slot="label"] { font-size: 13px; line-height: 18px; }
+  a-input[size="large"]:not(:defined) > [slot="label"] { font-size: 17px; line-height: 26px; }
   a-input:not(:defined)::after {
     content: attr(placeholder);
     display: block;
@@ -476,9 +477,9 @@
   ),
   textarea[data-anta] {
     --native-field-block-size: 28px;
-    --native-field-padding-block: 4px;
+    --native-field-padding-block: 3px;
     --native-field-font-size: 15px;
-    --native-field-line-height: 20px;
+    --native-field-line-height: 22px;
     --native-field-round: 4px;
     --native-field-border: var(--border-2);
 
@@ -699,9 +700,9 @@
   )[data-anta-size="small"],
   textarea[data-anta][data-anta-size="small"] {
     --native-field-block-size: 24px;
-    --native-field-padding-block: 2px;
+    --native-field-padding-block: 3px;
     --native-field-font-size: 13px;
-    --native-field-line-height: 16px;
+    --native-field-line-height: 18px;
   }
   input[data-anta]:is(
     :not([type]),
@@ -720,9 +721,9 @@
   )[data-anta-size="large"],
   textarea[data-anta][data-anta-size="large"] {
     --native-field-block-size: 32px;
-    --native-field-padding-block: 5px;
+    --native-field-padding-block: 3px;
     --native-field-font-size: 17px;
-    --native-field-line-height: 22px;
+    --native-field-line-height: 26px;
   }
   input[data-anta]:is(
     :not([type]),

@@ -64,8 +64,6 @@
     /* Labels add 2px of clipping clearance to the type scale. Their outer
        padding absorbs it and the optical bottom padding, keeping 24/28/32px
        control heights and the existing text position. */
-    --_fs: 15px;
-    --_lh: 20px;
     --_pb: 1px;
     --_radius: 4px;
     /* Round text padding to whole CSS pixels at the 13/15/17px type scale.
@@ -179,11 +177,11 @@
 
     box-shadow: inset 0 0 1px color-mix(in oklch, currentColor, transparent 90%);
 
-    font-size: var(--_fs);
+    font-size: var(--font-size-medium);
     font-family: var(--sans-serif);
     font-weight: 450;
     font-stretch: normal;
-    line-height: var(--_lh);
+    line-height: calc(var(--line-height-medium) - 2px);
     letter-spacing: 0.025ch;
 
     text-overflow: ellipsis;
@@ -213,7 +211,7 @@
       overflow: hidden;
       min-width: 0;
 
-      line-height: calc(var(--_lh) + 2px);
+      line-height: calc(1lh + 2px);
       /* Optically centers Anta's font (glyphs sit slightly low in the line-box —
          a font-metric offset that scales with size: 0.5 / 1 / 1.5px). The button
          outer padding absorbs --_pb and the extra label leading. */
@@ -279,18 +277,20 @@
     }
 
     &[size="small"] {
-      --_fs: 13px;
-      --_lh: 16px;
       --_pb: 0.5px;
+
+      font-size: var(--font-size-small);
+      line-height: calc(var(--line-height-small) - 2px);
       min-height: 24px;
       /* Icon tracks the button size (medium is the a-icon default, 16px). An
          explicit `<Icon size>` (inline `--icon-size`) still wins. */
       & a-icon { --icon-size: 14px; }
     }
     &[size="large"] {
-      --_fs: 17px;
-      --_lh: 24px;
       --_pb: 1.5px;
+
+      font-size: var(--font-size-large);
+      line-height: calc(var(--line-height-large) - 2px);
       min-height: 32px;
       & a-icon { --icon-size: 18px; }
     }

@@ -3,11 +3,8 @@
 
 @layer anta.components {
   a-tabs {
-    /* Type scale by size — shared with Button/Input (small 13/16 · medium 15/20 ·
-       large 17/24). --_pb is the optical bottom nudge for Anta's low-sitting glyphs;
-       a-tab.css consumes it on the label. */
-    --_fs: 15px;
-    --_lh: 20px;
+    /* Labels add 2px to the inherited host leading. --_pb supplies the optical
+       bottom nudge consumed by a-tab.css. */
     --_pb: 1px;
     --tab-padding-x: 9px;
     /* Tab box height — prescribed on the same 24/28/32 scale as Button's `min-height`, so a
@@ -58,6 +55,8 @@
     );
     --tab-secondary-bg: var(--tab-secondary-neutral-bg);
 
+    font-size: var(--font-size-medium);
+    line-height: calc(var(--line-height-medium) - 2px);
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -90,18 +89,20 @@
 
   /* ── Sizes ───────────────────────────────────────────────────────────────── */
   a-tabs[size="small"] {
-    --_fs: 13px;
-    --_lh: 16px;
     --_pb: 0.5px;
     --tab-padding-x: 7px;
     --tab-height: 24px;
+
+    font-size: var(--font-size-small);
+    line-height: calc(var(--line-height-small) - 2px);
   }
   a-tabs[size="large"] {
-    --_fs: 17px;
-    --_lh: 24px;
     --_pb: 1.5px;
     --tab-padding-x: 13px;
     --tab-height: 32px;
+
+    font-size: var(--font-size-large);
+    line-height: calc(var(--line-height-large) - 2px);
   }
   /* Icons and loaders track the tab size (medium = the 16px default). */
   a-tabs a-tab :is(a-icon, a-loader) { --icon-size: 16px; }

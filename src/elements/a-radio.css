@@ -47,13 +47,6 @@
     --radio-label-color-disabled: var(--text-4);
     --radio-hint-color: var(--text-3);
 
-    /* Type scales with `size` (like <a-input>): label tracks input's fs/lh, hint a
-       step down. Tokens so the size variants + group cascade set them in one place. */
-    --radio-label-fs: 15px;
-    --radio-label-lh: 22px;
-    --radio-hint-fs: 14px;
-    --radio-hint-lh: 20px;
-
     /* Inline-grid: ring + dot in column 1, label/hint in column 2. Ring and dot top-align to the label's first line (align-self: start plus a margin offset on the control, so the row keeps the label's line-height); the dot's offset differs by half a dot so it stays centered on the ring. Column 2 is 1fr so a stretched radio's slack goes to the label, keeping the ring column content-sized. */
     display: inline-grid;
     grid-template-columns: auto 1fr;
@@ -67,8 +60,8 @@
 
     color: var(--radio-label-color);
     font-family: var(--sans-serif);
-    font-size: var(--radio-label-fs);
-    line-height: var(--radio-label-lh);
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
 
     &::before {
       content: "";
@@ -76,7 +69,7 @@
       grid-row: 1 / -1;
       align-self: start;
       /* Sit the ring on the label's first-line center; offset on the control so the row keeps the label's line-height. */
-      margin-block-start: calc((var(--radio-label-lh) - var(--radio-control-size)) / 2);
+      margin-block-start: calc((1lh - var(--radio-control-size)) / 2);
       box-sizing: border-box;
       inline-size: var(--radio-control-size);
       block-size: var(--radio-control-size);
@@ -95,7 +88,7 @@
       align-self: start;
       justify-self: center;
       /* Center the dot on the first line like the ring, using its rendered size (minus the dark-mode shrink) so it stays centered on the ring in both themes. */
-      margin-block-start: calc((var(--radio-label-lh) - (var(--radio-dot-size) - var(--_radio-dot-adjust))) / 2);
+      margin-block-start: calc((1lh - (var(--radio-dot-size) - var(--_radio-dot-adjust))) / 2);
       inline-size: calc(var(--radio-dot-size) - var(--_radio-dot-adjust));
       block-size: calc(var(--radio-dot-size) - var(--_radio-dot-adjust));
       border-radius: 50%;
@@ -163,18 +156,26 @@
       --radio-control-size: 14px;
       --radio-dot-size: 5px;
       --radio-gap: 6px;
-      --radio-label-fs: 13px;
-      --radio-label-lh: 18px;
-      --radio-hint-fs: 12px;
-      --radio-hint-lh: 16px;
+
+      font-size: var(--font-size-small);
+      line-height: var(--line-height-small);
+
+      a-radio-hint {
+        font-size: var(--font-size-hint-small);
+        line-height: var(--line-height-hint-small);
+      }
     }
     &[size="large"] {
       --radio-control-size: 18px;
       --radio-dot-size: 7px;
-      --radio-label-fs: 17px;
-      --radio-label-lh: 26px;
-      --radio-hint-fs: 16px;
-      --radio-hint-lh: 24px;
+
+      font-size: var(--font-size-large);
+      line-height: var(--line-height-large);
+
+      a-radio-hint {
+        font-size: var(--font-size-hint-large);
+        line-height: var(--line-height-hint-large);
+      }
     }
   }
 
@@ -190,8 +191,8 @@
 
   a-radio-hint {
     color: var(--radio-hint-color);
-    font-size: var(--radio-hint-fs);
-    line-height: var(--radio-hint-lh);
+    font-size: var(--font-size-hint-medium);
+    line-height: var(--line-height-hint-medium);
   }
 
   /* Focus ring, aria-activedescendant mode (raw hand-assembly): focus is on the
@@ -303,8 +304,8 @@
     gap: 8px;
     color: var(--text-2);
     font-family: var(--sans-serif);
-    font-size: 15px;
-    line-height: 22px;
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
   }
   input[data-anta][type="radio"] {
     --radio-control-size: 16px;
@@ -340,12 +341,12 @@
   }
   label:has(> input[data-anta][type="radio"][size="small"]) {
     gap: 6px;
-    font-size: 13px;
-    line-height: 18px;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
   }
   label:has(> input[data-anta][type="radio"][size="large"]) {
-    font-size: 17px;
-    line-height: 26px;
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
   }
   input[data-anta][type="radio"][size="small"] {
     --radio-control-size: 14px;

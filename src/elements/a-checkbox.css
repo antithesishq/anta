@@ -51,12 +51,6 @@
        disabled label). */
     --checkbox-hint-color: var(--text-3);
 
-    /* Type scales with `size` (like <a-radio>): label tracks the body size, hint
-       a step down. Tokens so the size variants set them in one place. */
-    --checkbox-label-fs: 15px;
-    --checkbox-label-lh: 22px;
-    --checkbox-hint-fs: 14px;
-    --checkbox-hint-lh: 20px;
 
     /* Inline-grid: box + glyph in column 1, label/hint in column 2. Box and glyph top-align to the label's first line (align-self: start plus a margin offset on the control, so the row keeps the label's line-height); they share align-self + margin so the glyph never drifts off the box. Column 2 is 1fr so a stretched checkbox's slack goes to the label, keeping the box column content-sized. */
     display: inline-grid;
@@ -71,8 +65,8 @@
 
     color: var(--checkbox-label-color);
     font-family: var(--sans-serif);
-    font-size: var(--checkbox-label-fs);
-    line-height: var(--checkbox-label-lh);
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
 
     &::before {
       content: "";
@@ -80,7 +74,7 @@
       grid-row: 1 / -1;
       align-self: start;
       /* Sit the box on the label's first-line center; offset on the box so the row keeps the label's line-height. */
-      margin-block-start: calc((var(--checkbox-label-lh) - var(--checkbox-box-size)) / 2);
+      margin-block-start: calc((1lh - var(--checkbox-box-size)) / 2);
       box-sizing: border-box;
       inline-size: 16px;
       block-size: 16px;
@@ -111,7 +105,7 @@
       grid-column: 1;
       grid-row: 1 / -1;
       align-self: start;
-      margin-block-start: calc((var(--checkbox-label-lh) - var(--checkbox-box-size)) / 2);
+      margin-block-start: calc((1lh - var(--checkbox-box-size)) / 2);
       inline-size: 16px;
       block-size: 16px;
       background-color: transparent;
@@ -186,21 +180,29 @@
     &[size="small"] {
       --checkbox-gap: 6px;
       --checkbox-box-size: 14px;
-      --checkbox-label-fs: 13px;
-      --checkbox-label-lh: 18px;
-      --checkbox-hint-fs: 12px;
-      --checkbox-hint-lh: 16px;
       --checkbox-mask-size: 11px;
+
+      font-size: var(--font-size-small);
+      line-height: var(--line-height-small);
+
+      a-checkbox-hint {
+        font-size: var(--font-size-hint-small);
+        line-height: var(--line-height-hint-small);
+      }
       &::before,
       &::after { inline-size: 14px; block-size: 14px; }
     }
     &[size="large"] {
       --checkbox-box-size: 18px;
-      --checkbox-label-fs: 17px;
-      --checkbox-label-lh: 26px;
-      --checkbox-hint-fs: 16px;
-      --checkbox-hint-lh: 24px;
       --checkbox-mask-size: 15px;
+
+      font-size: var(--font-size-large);
+      line-height: var(--line-height-large);
+
+      a-checkbox-hint {
+        font-size: var(--font-size-hint-large);
+        line-height: var(--line-height-hint-large);
+      }
       &::before,
       &::after { inline-size: 18px; block-size: 18px; }
     }
@@ -216,8 +218,8 @@
   }
   a-checkbox-hint {
     color: var(--checkbox-hint-color);
-    font-size: var(--checkbox-hint-fs);
-    line-height: var(--checkbox-hint-lh);
+    font-size: var(--font-size-hint-medium);
+    line-height: var(--line-height-hint-medium);
   }
 
   /* `tone` always sets the checked mark fill. `tone-scope="selected"` keeps the
@@ -290,8 +292,8 @@
     gap: 8px;
     color: var(--text-2);
     font-family: var(--sans-serif);
-    font-size: 15px;
-    line-height: 22px;
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
   }
   input[data-anta][type="checkbox"] {
     --checkbox-box-size: 16px;
@@ -329,12 +331,12 @@
   }
   label:has(> input[data-anta][type="checkbox"][size="small"]) {
     gap: 6px;
-    font-size: 13px;
-    line-height: 18px;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
   }
   label:has(> input[data-anta][type="checkbox"][size="large"]) {
-    font-size: 17px;
-    line-height: 26px;
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
   }
   input[data-anta][type="checkbox"][size="small"] {
     --checkbox-box-size: 14px;

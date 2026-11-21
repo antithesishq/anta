@@ -14,17 +14,17 @@
        and restyle body copy. */
     font-family: var(--sans-serif);
     color: var(--text-color);
-    font-size: 15px;
-    line-height: 22px;
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
     /* Even out widows/orphans on multi-line body copy — matches the raw `<p>`
        reset (headings use `balance`). Only affects the non-truncated case;
        `truncate` clamps directly in light DOM. */
     text-wrap: pretty;
   }
 
-  a-text[size="small"]  { font-size: 13px; line-height: 18px; }
-  a-text[size="medium"] { font-size: 15px; line-height: 22px; }
-  a-text[size="large"]  { font-size: 17px; line-height: 26px; }
+  a-text[size="small"]  { font-size: var(--font-size-small); line-height: var(--line-height-small); }
+  a-text[size="medium"] { font-size: var(--font-size-medium); line-height: var(--line-height-medium); }
+  a-text[size="large"]  { font-size: var(--font-size-large); line-height: var(--line-height-large); }
 
   a-text[inline] {
     display: inline-block;

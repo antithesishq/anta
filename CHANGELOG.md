@@ -7,6 +7,8 @@ changes are not listed.
 
 ### Added
 
+- Shared small, medium, and large font-size and line-height variables for main text and hints. Matching controls replace their component typography variables with direct references to these independent scales in `tokens.css`.
+
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 

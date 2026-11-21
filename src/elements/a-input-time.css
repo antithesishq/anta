@@ -3,6 +3,8 @@
 
 @layer anta.components {
   a-input-time {
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     row-gap: 2px;
@@ -14,8 +16,8 @@
     margin-block-end: 2px;
     color: var(--input-time-label);
     font-family: var(--sans-serif);
-    font-size: var(--input-time-font-size);
-    line-height: var(--input-time-line-height);
+    font-size: inherit;
+    line-height: inherit;
     font-weight: 500;
   }
 
@@ -52,8 +54,8 @@
   a-input-time::part(leading) {
     display: none;
     color: var(--input-time-adornment);
-    font-size: var(--input-time-font-size);
-    line-height: var(--input-time-line-height);
+    font-size: inherit;
+    line-height: inherit;
   }
   a-input-time:disabled::part(leading),
   a-input-time:disabled::part(trailing) { opacity: 0.5; pointer-events: none; }
@@ -68,8 +70,8 @@
     font-family: var(--sans-serif);
     font-stretch: normal;
     font-style: normal;
-    font-size: var(--input-time-font-size);
-    line-height: var(--input-time-line-height);
+    font-size: inherit;
+    line-height: inherit;
     font-weight: 400;
   }
 
@@ -113,8 +115,8 @@
   a-input-time::part(trailing) {
     display: none;
     color: var(--input-time-adornment);
-    font-size: var(--input-time-font-size);
-    line-height: var(--input-time-line-height);
+    font-size: inherit;
+    line-height: inherit;
   }
   a-input-time::part(clear) {
     display: flex;
@@ -132,8 +134,8 @@
     padding-inline-start: 1px;
     color: var(--input-time-hint);
     font-family: var(--sans-serif);
-    font-size: calc(var(--input-time-font-size) - 1px);
-    line-height: calc(var(--input-time-line-height) - 2px);
+    font-size: var(--font-size-hint-medium);
+    line-height: var(--line-height-hint-medium);
   }
 
   /* Token surface — mirrors a-input's field chrome (same literal/role values) so a
@@ -160,8 +162,8 @@
     margin-block-end: 2px;
     color: var(--input-time-label);
     font-family: var(--sans-serif);
-    font-size: var(--input-time-font-size);
-    line-height: var(--input-time-line-height);
+    font-size: inherit;
+    line-height: inherit;
     font-weight: 500;
   }
   a-input-time:not(:defined)::after {
@@ -174,7 +176,7 @@
     box-shadow: inset 0 0 0 0.5px var(--input-time-border);
     color: var(--input-time-placeholder);
     font-family: var(--sans-serif);
-    font-size: var(--input-time-font-size);
+    font-size: inherit;
     font-weight: 400;
     font-stretch: normal;
     font-style: normal;
@@ -206,8 +208,6 @@
     --input-time-adornment: var(--text-3);
     --input-time-hint: var(--text-3);
     --input-time-period-color: var(--text-3);
-    --input-time-font-size: 15px;
-    --input-time-line-height: 22px;
     --input-time-field-height: 28px;
     --input-time-field-radius: 4px;
 
@@ -249,9 +249,10 @@
      Unmarked native buttons and other custom content keep their own sizing. */
   a-input-time > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
   a-input-time > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
-    --_fs: var(--input-time-font-size);
-    --_lh: var(--input-time-line-height);
     --_pb: 0px;
+
+    font-size: inherit;
+    line-height: inherit;
     box-sizing: border-box;
     width: auto;
     min-width: var(--_input-time-action-size);
@@ -272,18 +273,26 @@
   }
 
   a-input-time[size="small"] {
-    --input-time-font-size: 13px;
-    --input-time-line-height: 18px;
     --input-time-field-height: 24px;
     --_input-time-action-size: 20px;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
   }
   a-input-time[size="large"] {
-    --input-time-font-size: 17px;
-    --input-time-line-height: 26px;
     --input-time-field-height: 32px;
     --_input-time-action-size: 28px;
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
   }
 
+  a-input-time[size="small"]::part(hint) {
+    font-size: var(--font-size-hint-small);
+    line-height: var(--line-height-hint-small);
+  }
+  a-input-time[size="large"]::part(hint) {
+    font-size: var(--font-size-hint-large);
+    line-height: var(--line-height-hint-large);
+  }
   a-input-time[round] {
     --input-time-round: 999px;
     --input-time-field-radius: var(--input-time-round, 999px);

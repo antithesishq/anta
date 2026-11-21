@@ -94,6 +94,41 @@ font sources in your application.
 
 </Disclosure>
 
+<Disclosure title="Text and hint sizes" id="text-and-hint-sizes">
+
+`tokens.css` defines independent font-size and line-height scales for main text
+and hints. Matching controls use these values without requiring `reset.css`.
+Use length values such as `px` or `rem` for these variables.
+
+| Size | Main font size | Main line height | Hint font size | Hint line height |
+| --- | --- | --- | --- | --- |
+| Small | `--font-size-small`: 13px | `--line-height-small`: 18px | `--font-size-hint-small`: 12px | `--line-height-hint-small`: 16px |
+| Medium | `--font-size-medium`: 15px | `--line-height-medium`: 22px | `--font-size-hint-medium`: 14px | `--line-height-hint-medium`: 20px |
+| Large | `--font-size-large`: 17px | `--line-height-large`: 26px | `--font-size-hint-large`: 16px | `--line-height-hint-large`: 24px |
+
+Override either scale on the root or an application container. Changing hint
+typography leaves main text unchanged:
+
+```css
+.settings {
+  --font-size-hint-medium: 13px;
+  --line-height-hint-medium: 18px;
+}
+```
+
+Button, Tabs, Steps, Input, InputTime, Text, Checkbox, Switch, and Radio options
+use the main scale. Field, choice-control, RadioGroup, and Steps hints use the
+hint scale. Select, InputDate, and InputAutocomplete inherit their field styles
+from Input. Native text inputs and textareas use the main scale as well.
+
+Headings, Tag, Menu Item, and Progress retain their separate typography.
+RadioGroup's overall label retains its fixed 15/20px pair.
+For an individual component, override `font-size` and `line-height` on its
+styled element or exposed part. Geometry such as padding and control dimensions
+remains component-specific.
+
+</Disclosure>
+
 <Disclosure title="Color seeds" id="color-seeds" data-no-search>
 
 In your custom theme, override any of Anta's six seed color tokens to recolor

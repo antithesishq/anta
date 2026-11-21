@@ -7,12 +7,10 @@
 /* Scope of this file — Anta's entire global token vocabulary, kept
    deliberately tiny: theme-aware color *roles* for text (--text-*),
    container background (--bg-*), and container border (--border-*),
-   per tone, plus font stacks and prose link colors. Nothing else is
-   global by design: no primitive palette tokens, no spacing/size/radius
-   scales. Those live component-side as --{component}-* with literal
-   values so each component stays independently tunable while values
-   are still settling. Don't add new role families here without an
-   explicit decision that the values have stabilized across components. */
+   per tone, plus font stacks, independent text and hint typography scales,
+   and prose link colors. Spacing, radii, and compact typography remain
+   component-owned. Promote other role families only after an explicit
+   decision that their values have stabilized across components. */
 
 /* The whole role scale is DERIVED from six tone seeds via oklch relative
    color: each token is `oklch(from var(--anta-seed-{tone}) L C h)`, taking the
@@ -28,6 +26,25 @@
   --sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+/* Color-scheme scopes inherit typography so nested light/dark surfaces retain
+   application overrides. Text and hint scales can be changed independently. */
+@layer anta.reset {
+  :root {
+    --font-size-small: 13px;
+    --font-size-medium: 15px;
+    --font-size-large: 17px;
+    --line-height-small: 18px;
+    --line-height-medium: 22px;
+    --line-height-large: 26px;
+    --font-size-hint-small: 12px;
+    --font-size-hint-medium: 14px;
+    --font-size-hint-large: 16px;
+    --line-height-hint-small: 16px;
+    --line-height-hint-medium: 20px;
+    --line-height-hint-large: 24px;
+  }
 }
 
 :root,

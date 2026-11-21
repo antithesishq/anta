@@ -3,7 +3,7 @@
 
 @layer anta.components {
   /* Intrinsic, priority-independent tab chrome. The per-priority / per-tone / per-
-     state values of --tab-fg / --tab-bg, the type-scale vars (--_fs/--_lh/--_pb),
+     state values of --tab-fg / --tab-bg, typography, optical --_pb,
      padding, and the track live on the parent <a-tabs> (a-tabs.css) and inherit /
      cascade down — this file is just the box that consumes them, so a-tab stays the
      button-like item regardless of which tablist style wraps it. */
@@ -34,11 +34,11 @@
        Inset matches the ring so the transition doesn't flip inset↔outset mid-way. */
     box-shadow: inset 0 0 0 0 transparent;
 
-    font-size: var(--_fs);
+    font-size: inherit;
     font-family: var(--sans-serif);
     font-weight: 450;
     font-stretch: normal;
-    line-height: var(--_lh);
+    line-height: inherit;
     letter-spacing: 0.025ch;
 
     white-space: nowrap;
@@ -69,7 +69,7 @@
       text-wrap: nowrap;
       white-space: nowrap;
 
-      line-height: calc(var(--_lh) + 2px);
+      line-height: inherit;
       padding-bottom: var(--_pb);
 
       &:has(> *) {
@@ -91,6 +91,10 @@
     &:has(> a-icon:last-child):has(> a-tab-label) {
       padding-inline-end: max(0px, var(--tab-padding-x) - 2px);
     }
+  }
+
+  a-tabs > a-tab > a-tab-label {
+    line-height: calc(1lh + 2px);
   }
 
   a-tab:focus-visible {

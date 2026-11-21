@@ -16,7 +16,6 @@
        vertical bridge reads; each tab re-points it to its own tone below. */
     --steps-complete-connector-color: var(--border-2);
     --steps-tab-padding-block: 0px;
-    --steps-hint-leading: 20px;
 
     display: flex;
     flex-direction: column;
@@ -27,13 +26,21 @@
   a-steps:has(> a-tabs[size="small"]) {
     --steps-marker-size: 24px;
     --steps-icon-size: 14px;
-    --steps-hint-leading: 16px;
+
+    > a-tabs > a-tab > a-step-desc > a-step-hint {
+      font-size: var(--font-size-hint-small);
+      line-height: var(--line-height-hint-small);
+    }
   }
 
   a-steps:has(> a-tabs[size="large"]) {
     --steps-marker-size: 32px;
     --steps-icon-size: 18px;
-    --steps-hint-leading: 24px;
+
+    > a-tabs > a-tab > a-step-desc > a-step-hint {
+      font-size: var(--font-size-hint-large);
+      line-height: var(--line-height-hint-large);
+    }
   }
 
   a-steps:has(> a-tabs[priority="tertiary"]) {
@@ -230,7 +237,7 @@
   }
 
   a-step-desc > a-tab-label {
-    line-height: calc(var(--_lh) + 2px);
+    line-height: calc(1lh + 2px);
     display: block;
     min-width: 0;
     overflow: hidden;
@@ -246,9 +253,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--tab-rest-tone, var(--text-3));
-    font-size: calc(1em - 1px);
+    font-size: var(--font-size-hint-medium);
     font-weight: 400;
-    line-height: var(--steps-hint-leading);
+    line-height: var(--line-height-hint-medium);
   }
 
   a-step-marker {

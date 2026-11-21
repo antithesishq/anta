@@ -44,11 +44,11 @@
   a-radio-group-hint {
     display: block;
     color: var(--radio-group-hint);
-    font-size: 14px;
-    line-height: 20px;
+    font-size: var(--font-size-hint-medium);
+    line-height: var(--line-height-hint-medium);
   }
-  a-radio-group[size="small"] > a-radio-group-hint { font-size: 12px; line-height: 16px; }
-  a-radio-group[size="large"] > a-radio-group-hint { font-size: 16px; line-height: 24px; }
+  a-radio-group[size="small"] > a-radio-group-hint { font-size: var(--font-size-hint-small); line-height: var(--line-height-hint-small); }
+  a-radio-group[size="large"] > a-radio-group-hint { font-size: var(--font-size-hint-large); line-height: var(--line-height-hint-large); }
 
   /* Status tones — recolor the group hint, same set as <a-input>'s status. */
   a-radio-group[status="critical"] { --radio-group-hint: var(--text-2-critical); }
@@ -62,18 +62,26 @@
     --radio-control-size: 14px;
     --radio-dot-size: 5px;
     --radio-gap: 6px;
-    --radio-label-fs: 13px;
-    --radio-label-lh: 18px;
-    --radio-hint-fs: 12px;
-    --radio-hint-lh: 16px;
+
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
+
+    a-radio-hint {
+      font-size: var(--font-size-hint-small);
+      line-height: var(--line-height-hint-small);
+    }
   }
   a-radio-group[size="large"] a-radio:not([size]) {
     --radio-control-size: 18px;
     --radio-dot-size: 7px;
-    --radio-label-fs: 17px;
-    --radio-label-lh: 26px;
-    --radio-hint-fs: 16px;
-    --radio-hint-lh: 24px;
+
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
+
+    a-radio-hint {
+      font-size: var(--font-size-hint-large);
+      line-height: var(--line-height-hint-large);
+    }
   }
 
   /* Group disabled — quiet the hint (after the status rules so it wins) and grey

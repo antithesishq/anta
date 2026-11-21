@@ -16,7 +16,7 @@
        vertical bridge reads; each tab re-points it to its own tone below. */
     --steps-complete-connector-color: var(--border-2);
     --steps-tab-padding-block: 0px;
-    --steps-hint-leading: 16px;
+    --steps-hint-leading: 18px;
 
     display: flex;
     flex-direction: column;
@@ -27,13 +27,13 @@
   a-steps:has(> a-tabs[size="small"]) {
     --steps-marker-size: 24px;
     --steps-icon-size: 14px;
-    --steps-hint-leading: 14px;
+    --steps-hint-leading: 16px;
   }
 
   a-steps:has(> a-tabs[size="large"]) {
     --steps-marker-size: 32px;
     --steps-icon-size: 18px;
-    --steps-hint-leading: 20px;
+    --steps-hint-leading: 22px;
   }
 
   a-steps:has(> a-tabs[priority="tertiary"]) {
@@ -230,6 +230,7 @@
   }
 
   a-step-desc > a-tab-label {
+    line-height: calc(var(--_lh) + 2px);
     display: block;
     min-width: 0;
     overflow: hidden;

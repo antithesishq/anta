@@ -10,7 +10,6 @@ const cases = [
   ...sizes.map(size => [`Button · ${size}`, 'Label clips · optical bottom padding remains', `<a-button size="${size}"><a-button-label data-sample></a-button-label></a-button>`]),
   ...sizes.map(size => [`Paddingless Button · ${size}`, 'No outer block padding to reclaim', `<a-button size="${size}" priority="quaternary" paddingless><a-button-label data-sample></a-button-label></a-button>`]),
   ...sizes.map(size => [`Select trigger · ${size}`, 'Actual Select component · Input-based button trigger', '']),
-  ['Faceted Select summary · fixed small tag', 'Shipped composition uses a small Tag; summary has no size variant', '<a-tag size="small"><a-tag-value><a-select-faceted-summary data-sample></a-select-faceted-summary></a-tag-value></a-tag>'],
   ...sizes.map(size => [`Tag · ${size}`, 'Inner label/value and outer pill both clip', `<a-tag size="${size}"><a-tag-label data-sample></a-tag-label><a-tag-value data-sample></a-tag-value></a-tag>`]),
   ...sizes.map(size => [`Steps · ${size}`, 'Nested label and hint clip independently', `<a-steps><a-tabs data-steps size="${size}"><a-tab value="one"><a-step-marker>1</a-step-marker><a-step-desc><a-tab-label data-sample></a-tab-label><a-step-hint data-sample></a-step-hint></a-step-desc></a-tab></a-tabs></a-steps>`]),
   ...levels.map(level => [`Expander summary · level ${level}`, 'Heading levels supply the type scale; level 6 is smallest', `<a-expander><a-expander-summary level="${level}" data-sample></a-expander-summary><a-expander-details>Details</a-expander-details></a-expander>`]),
@@ -19,14 +18,12 @@ const cases = [
   ...sizes.map(size => [`Input · ${size}`, 'Native input painting inside the shadow field', `<a-input size="${size}" aria-label="Clipping sample" data-sample-input></a-input>`]),
   ...sizes.map(size => [`Input button · ${size}`, 'Clipped value span inside the shadow button', `<a-input button size="${size}" aria-label="Clipping sample" data-sample-input></a-input>`]),
   ...sizes.map(size => [`Textarea · ${size} · two rows`, 'Native multiline control with vertical scrolling', `<a-input rows="2" size="${size}" aria-label="Clipping sample" data-sample-input></a-input>`]),
-  ...sizes.map(size => [`Native Select · ${size}`, 'Browser-specific trigger painting; open to inspect options', `<select data-anta data-anta-size="${size}" aria-label="Clipping sample"><button><selectedcontent></selectedcontent><a-icon shape="chevron-down"></a-icon></button><option data-sample></option></select>`]),
 ]
 const groups = [
   { value: 'button', label: 'Button', cases: cases.filter(([title]) => /^(Button|Paddingless Button) ·/.test(title)) },
   { value: 'tabs', label: 'Tabs', cases: cases.filter(([title]) => title.startsWith('Tab ·')) },
   { value: 'menu-item', label: 'Menu Item', cases: cases.filter(([title]) => title.startsWith('Menu item')) },
   { value: 'select', label: 'Select', cases: cases.filter(([title]) => title.startsWith('Select trigger')) },
-  { value: 'select-faceted', label: 'Select Faceted', cases: cases.filter(([title]) => title.startsWith('Faceted Select')) },
   { value: 'tag', label: 'Tag', cases: cases.filter(([title]) => title.startsWith('Tag ·')) },
   { value: 'steps', label: 'Steps', cases: cases.filter(([title]) => title.startsWith('Steps ·')) },
   { value: 'expander', label: 'Expander', cases: cases.filter(([title]) => title.startsWith('Expander summary')) },
@@ -34,7 +31,6 @@ const groups = [
   { value: 'title', label: 'Title', cases: cases.filter(([title]) => title.startsWith('Title ·')) },
   { value: 'input', label: 'Input', cases: cases.filter(([title]) => /^(Input ·|Input button ·)/.test(title)) },
   { value: 'textarea', label: 'Textarea', cases: cases.filter(([title]) => title.startsWith('Textarea ·')) },
-  { value: 'native-select', label: 'Native Select', cases: cases.filter(([title]) => title.startsWith('Native Select ·')) },
 ]
 
 ---
@@ -53,7 +49,7 @@ const groups = [
     <header>
       <p class="eyebrow">Anta / typography inspection</p>
       <h1>Text clipping lab</h1>
-      <p>Each sized component includes small, medium, and large. Title and Expander include all six heading levels. Menu items and faceted summaries retain their fixed shipped sizes. Compare the shipped styles with the same text allowed to paint outside its box. Red outlines mark text boxes. Look for flat cuts through accents and descenders.</p>
+      <p>Each sized component includes small, medium, and large. Title and Expander include all six heading levels. Menu items retain their fixed shipped size. Compare the shipped styles with the same text allowed to paint outside its box. Red outlines mark text boxes. Look for flat cuts through accents and descenders.</p>
       <div class="controls">
         <label>Font<select data-anta id="font"><option value="reference">Antithesis reference</option><option value="Arial, sans-serif">Arial</option><option value="Georgia, serif">Georgia</option><option value="Times New Roman, serif">Times New Roman</option><option value="system-ui, sans-serif">System UI</option><option value="monospace">Monospace</option></select></label>
         <label>Text<select data-anta id="preset"><option value="accents">Accents + descenders</option><option value="vietnamese">Vietnamese</option><option value="marks" selected>Combining marks (stress test)</option><option value="arabic">Arabic</option><option value="devanagari">Devanagari</option><option value="plain">Ordinary label</option></select></label>
@@ -84,7 +80,7 @@ const groups = [
       </section>)}
       </a-tabpanel>)}
     </main>
-    <footer>The diagnostic column only relaxes clipping; it is not a proposed fix. Native input/select painting may still clip internally. The current column uses the latest package build.</footer>
+    <footer>The diagnostic column only relaxes clipping; it is not a proposed fix. Native input painting may still clip internally. The current column uses the latest package build.</footer>
   </body>
 </html>
 <style>
@@ -119,8 +115,7 @@ const groups = [
   :global(.stage.unclipped a-tag),
   :global(.stage.unclipped a-tag-value),
   :global(.stage.unclipped a-tag-label),
-  :global(.stage.unclipped a-tabs),
-  :global(.stage.unclipped selectedcontent) { overflow: visible !important; }
+  :global(.stage.unclipped a-tabs) { overflow: visible !important; }
   :global(.stage.unclipped a-text[truncate]),
   :global(.stage.unclipped a-title[truncate]) { display: block; -webkit-line-clamp: unset; }
   :global(.stage.unclipped a-input::part(input)),
@@ -149,7 +144,6 @@ const groups = [
         const element = (specimen.querySelector('[data-select-preview] a-input') ?? specimen.firstElementChild) as HTMLElement
         if (!element || element.localName === 'astro-island') continue
         const label = element.shadowRoot?.querySelector<HTMLElement>('[part~="input"]')
-          ?? specimen.querySelector<HTMLElement>('selectedcontent')
           ?? specimen.querySelector<HTMLElement>('[data-sample]')
         const style = getComputedStyle(label ?? element)
         column.querySelector('output')!.textContent = `${style.fontSize}/${style.lineHeight} · ${Math.round(element.offsetHeight * 10) / 10}px high`

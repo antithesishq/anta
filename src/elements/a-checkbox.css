@@ -54,7 +54,7 @@
     /* Type scales with `size` (like <a-radio>): label tracks the body size, hint
        a step down. Tokens so the size variants set them in one place. */
     --checkbox-label-fs: 15px;
-    --checkbox-label-lh: 20px;
+    --checkbox-label-lh: 22px;
     --checkbox-hint-fs: 13px;
     --checkbox-hint-lh: 16px;
 
@@ -187,7 +187,7 @@
       --checkbox-gap: 6px;
       --checkbox-box-size: 14px;
       --checkbox-label-fs: 13px;
-      --checkbox-label-lh: 16px;
+      --checkbox-label-lh: 18px;
       --checkbox-hint-fs: 12px;
       --checkbox-hint-lh: 14px;
       --checkbox-mask-size: 11px;
@@ -197,7 +197,7 @@
     &[size="large"] {
       --checkbox-box-size: 18px;
       --checkbox-label-fs: 17px;
-      --checkbox-label-lh: 22px;
+      --checkbox-label-lh: 26px;
       --checkbox-hint-fs: 15px;
       --checkbox-hint-lh: 19px;
       --checkbox-mask-size: 15px;
@@ -292,7 +292,7 @@
     color: var(--text-2);
     font-family: var(--sans-serif);
     font-size: 15px;
-    line-height: 20px;
+    line-height: 22px;
   }
   input[data-anta][type="checkbox"] {
     --checkbox-box-size: 16px;
@@ -331,11 +331,11 @@
   label:has(> input[data-anta][type="checkbox"][size="small"]) {
     gap: 6px;
     font-size: 13px;
-    line-height: 16px;
+    line-height: 18px;
   }
   label:has(> input[data-anta][type="checkbox"][size="large"]) {
     font-size: 17px;
-    line-height: 22px;
+    line-height: 26px;
   }
   input[data-anta][type="checkbox"][size="small"] {
     --checkbox-box-size: 14px;

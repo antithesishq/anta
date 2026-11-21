@@ -17,7 +17,7 @@
     --switch-track-round: 999px;
     --switch-thumb-round: 999px;
     --switch-label-fs: 15px;
-    --switch-label-lh: 20px;
+    --switch-label-lh: 22px;
 
     --switch-track-off-stroke-neutral: var(--border-3);
     --switch-track-off-stroke: var(--switch-track-off-stroke-neutral);
@@ -202,7 +202,7 @@
       --switch-thumb-inset-off: 4px;
       --switch-thumb-travel: 11px;
       --switch-label-fs: 13px;
-      --switch-label-lh: 16px;
+      --switch-label-lh: 18px;
       --switch-hint-fs: 12px;
       --switch-hint-lh: 14px;
     }
@@ -214,7 +214,7 @@
       --switch-thumb-inset-off: 5px;
       --switch-thumb-travel: 15px;
       --switch-label-fs: 17px;
-      --switch-label-lh: 22px;
+      --switch-label-lh: 26px;
       --switch-hint-fs: 15px;
       --switch-hint-lh: 19px;
     }

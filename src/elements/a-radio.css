@@ -50,7 +50,7 @@
     /* Type scales with `size` (like <a-input>): label tracks input's fs/lh, hint a
        step down. Tokens so the size variants + group cascade set them in one place. */
     --radio-label-fs: 15px;
-    --radio-label-lh: 20px;
+    --radio-label-lh: 22px;
     --radio-hint-fs: 14px;
     --radio-hint-lh: 17px;
 
@@ -164,7 +164,7 @@
       --radio-dot-size: 5px;
       --radio-gap: 6px;
       --radio-label-fs: 13px;
-      --radio-label-lh: 16px;
+      --radio-label-lh: 18px;
       --radio-hint-fs: 12px;
       --radio-hint-lh: 14px;
     }
@@ -172,7 +172,7 @@
       --radio-control-size: 18px;
       --radio-dot-size: 7px;
       --radio-label-fs: 17px;
-      --radio-label-lh: 22px;
+      --radio-label-lh: 26px;
       --radio-hint-fs: 16px;
       --radio-hint-lh: 21px;
     }
@@ -296,7 +296,7 @@
   /* A native radio can opt into the same compact control surface with
      `data-anta`. It remains a real input, so the shared name group, labels,
      checked value, and form submission stay browser-native. */
-  /* A wrapping label matches a-radio's 16px control / 20px text row. Using a
+  /* A wrapping label matches a-radio's 16px control / 22px text row. Using a
      flex gap rather than input margin prevents source whitespace from making
      the visible gap wider. */
   label:has(> input[data-anta][type="radio"]) {
@@ -306,7 +306,7 @@
     color: var(--text-2);
     font-family: var(--sans-serif);
     font-size: 15px;
-    line-height: 20px;
+    line-height: 22px;
   }
   input[data-anta][type="radio"] {
     --radio-control-size: 16px;
@@ -343,11 +343,11 @@
   label:has(> input[data-anta][type="radio"][size="small"]) {
     gap: 6px;
     font-size: 13px;
-    line-height: 16px;
+    line-height: 18px;
   }
   label:has(> input[data-anta][type="radio"][size="large"]) {
     font-size: 17px;
-    line-height: 22px;
+    line-height: 26px;
   }
   input[data-anta][type="radio"][size="small"] {
     --radio-control-size: 14px;

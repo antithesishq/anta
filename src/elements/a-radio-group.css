@@ -64,7 +64,7 @@
     --radio-dot-size: 5px;
     --radio-gap: 6px;
     --radio-label-fs: 13px;
-    --radio-label-lh: 16px;
+    --radio-label-lh: 18px;
     --radio-hint-fs: 12px;
     --radio-hint-lh: 14px;
   }
@@ -72,7 +72,7 @@
     --radio-control-size: 18px;
     --radio-dot-size: 7px;
     --radio-label-fs: 17px;
-    --radio-label-lh: 24px;
+    --radio-label-lh: 26px;
     --radio-hint-fs: 16px;
     --radio-hint-lh: 21px;
   }

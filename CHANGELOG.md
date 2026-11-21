@@ -12,6 +12,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Checkbox](/checkbox/), [Switch](/switch/), and [RadioGroup](/radio/) option labels match Input, Text, Button, and Tabs at 13/18, 15/22, and 17/26px. Hint typography is unchanged.
+
 - Reset headings match Title’s font sizes and line heights at all six levels.
 
 - [Text](/text/), [Title](/title/), and [Expander](/expander/) summaries gain 2px of line height at every size or level. Expander reclaims header padding to preserve single-line header heights.

@@ -85,6 +85,7 @@ const cases = [
   .stage { zoom: var(--inspection-zoom, 4); padding: 12px; width: 304px; min-height: 48px; box-sizing: content-box; }
   .specimen { width: 280px; }
   :global(.stage [data-sample]) { unicode-bidi: plaintext; }
+  :global(.stage [data-multiline]) { white-space: pre-line; }
   :global(#lab[data-outlines="true"] [data-sample]) { outline: 0.5px solid #d92d53; outline-offset: 0; }
   :global(.stage.unclipped [data-sample]),
   :global(.stage.unclipped a-tag),
@@ -117,7 +118,9 @@ const cases = [
       for (const column of section.querySelectorAll('.column')) {
         const specimen = column.querySelector('.specimen')!
         const element = specimen.firstElementChild as HTMLElement
-        const label = specimen.querySelector<HTMLElement>('[data-sample]')
+        const label = element.shadowRoot?.querySelector<HTMLElement>('[part~="input"]')
+          ?? specimen.querySelector<HTMLElement>('selectedcontent')
+          ?? specimen.querySelector<HTMLElement>('[data-sample]')
         const style = getComputedStyle(label ?? element)
         column.querySelector('output')!.textContent = `${style.fontSize}/${style.lineHeight} · ${Math.round(element.offsetHeight * 10) / 10}px high`
       }
@@ -125,7 +128,7 @@ const cases = [
   }
   function update() {
     for (const sample of lab.querySelectorAll<HTMLElement>('[data-sample]')) {
-      sample.textContent = sample.hasAttribute('data-multiline') ? `${text.value} ${text.value} ${text.value} ${text.value}` : text.value
+      sample.textContent = sample.hasAttribute('data-multiline') ? `${text.value}\n${text.value}\n${text.value}` : text.value
     }
     for (const input of lab.querySelectorAll<HTMLElement & { value: string }>('[data-sample-input]')) input.value = text.value
     requestAnimationFrame(measure)

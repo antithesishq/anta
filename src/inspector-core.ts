@@ -1089,6 +1089,62 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
 }
 
 /**
+ * A visible row with its own visible rows nested under it, for a renderer whose
+ * DOM nests, such as `Tree`. A node that can open has `children`, empty while
+ * it's closed; other rows have none. An open node's final `close` row becomes
+ * its `after`, a line below its children; a `close` row between two groups
+ * stays among the children. The `tree` style has no `close` rows.
+ */
+export type InspectTreeRow = InspectRow & {
+  children?: InspectTreeRow[]
+  /** Tokens of the line below an open node's children, such as `]`. */
+  after?: Token[]
+}
+
+/**
+ * The rows of `visibleRows`, nested: each row is listed under the open node it
+ * belongs to. Flattening the result in order, with each `after` as a `close`
+ * row after its node's children, gives `visibleRows` again.
+ */
+export function visibleTree(root: InspectNode, state: RowState = {}): InspectTreeRow[] {
+  const top: InspectTreeRow[] = []
+  // The open nodes the walk is inside, outermost first.
+  const stack: InspectTreeRow[] = []
+  for (const flat of visibleRows(root, state)) {
+    const row: InspectTreeRow = { ...flat }
+    if (row.type === 'node' && row.expandable) row.children = []
+    // A row belongs to the nearest open node above its depth. A `close` row
+    // shares its node's depth, so it belongs to that node.
+    while (stack.length) {
+      const last = stack[stack.length - 1]
+      if (last.depth < row.depth || (row.type === 'close' && last.depth === row.depth)) break
+      stack.pop()
+    }
+    const parent = stack[stack.length - 1]
+    ;(parent ? parent.children! : top).push(row)
+    if (row.type === 'node' && row.open) stack.push(row)
+  }
+  const settle = (rows: InspectTreeRow[]) => {
+    for (const row of rows) {
+      if (!row.children) continue
+      settle(row.children)
+      const last = row.children[row.children.length - 1]
+      if (last?.type === 'close') {
+        row.children.pop()
+        row.after = last.tokens
+      }
+    }
+  }
+  settle(top)
+  return top
+}
+
+/** Ids of the open nodes `visibleRows` shows for this state, in order. */
+export function openIds(root: InspectNode, state: RowState = {}): string[] {
+  return visibleRows(root, state).filter(row => row.type === 'node' && row.open).map(row => row.id)
+}
+
+/**
  * The node a `node` row's id names, or `undefined` for any other id. In an id,
  * `:p.i` is child `i` of the group in part `p`, and a bare `:p` is the inline
  * value in part `p`. Reads only the nodes along the way.

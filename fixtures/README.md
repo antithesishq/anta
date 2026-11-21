@@ -1,10 +1,10 @@
 # Interactive component fixtures
 
-The `/test/` harness renders `AppFixture`. Hegel starts with 6–13 distinct
+The `/test/` harness renders `AppFixture`. Hegel starts with 6–14 distinct
 components. When Bombadil dispatches `fixture:advance`, Hegel changes one prop,
 mounts a missing component, or unmounts one. Surviving components keep their
 keys and state. Prop updates have weight 3; mounts and unmounts have weight 1
-each, subject to the 6–13 limits.
+each, subject to the 6–14 limits.
 
 | Fixture | Props varied while mounted |
 | --- | --- |
@@ -16,6 +16,7 @@ each, subject to the 6–13 limits.
 | Dialog | persistent, closable |
 | Plot | zoomPan, height, points |
 | Inspector | expandDepth (0–2), layout (block / inline) |
+| Tree | controlled, indicatorPlacement (start / end), folderIcons |
 
 Checkbox, Switch, RadioGroup, Tabs, and Calendar also vary their initial state.
 Slider's min, max, and step are chosen on mount. Labels, sizes, orientations,
@@ -40,14 +41,24 @@ locale property checks that switching between en-US and en-GB preserves the date
 and formats it correctly, starting from matching display/value snapshots.
 
 The Inspector fixture shows a small value with nested results, a Map, a paged
-array, a multiline string, and a cycle. Its properties check that `open` matches
-`aria-expanded`, that the tree is one Tab stop with one active row while
-focused, that rows nest by level and `more` rows end their group, and that a
+array, a multiline string, and a cycle. The Inspector renders a Tree, so its rows are
+`a-tree-item`s. Its properties check that each row's open state matches the
+`state` the wrapper rendered, that exactly one row is a Tab stop, that one row
+is active while the tree has focus and focus is on that row, that rows nest by level and `more` rows end their group, and that a
 click on a row changes nothing outside that row's subtree. Its keyboard actions
 also reach a row's ⋯ button and its copy menu. Properties check that a focused
 ⋯ shows and belongs to the active row, that Left and Escape return from it to
-the tree, and that Enter, Space, and the Menu key open the menu. PressKey has no
+its row, and that Enter, Space, and the Menu key open the menu. PressKey has no
 modifiers, so the Menu key stands in for Shift+F10.
+
+The Tree fixture is a folder tree built only from Tree's public API: nested
+folders, an empty folder, a disabled folder, two actions on every folder, and a
+context menu. Its properties check that each item's open state matches its
+`state` attribute, that exactly one item is a Tab stop, that focus is always on
+the active row or its shown actions, that a disabled folder never opens, that
+Right, Left, and Escape move between a row's actions and back to the row, that
+a click changes nothing outside the clicked row's subtree, and that Enter on a
+file selects it.
 
 Plot properties observe the latest viewport callback, not canvas pixels. The
 callback can be stale after a data update; the disabled check may miss delayed
@@ -68,7 +79,8 @@ Add `--headless` to hide Chrome. For a focused run, use the same URL with
 campaign also resizes the browser. For the Inspector, add `&only=inspector` and
 use `fixtures/inspector/bombadil.spec.ts`. That campaign mostly presses the
 tree's and the ⋯ button's keys, so the ⋯ properties, which the combined
-campaign rarely reaches, run often. Type-check with
+campaign rarely reaches, run often. For Tree, add `&only=tree` and use
+`fixtures/tree/bombadil.spec.ts`, which does the same for a row's actions. Type-check with
 `pnpm exec tsc -p fixtures/tsconfig.json`.
 
 For Plot heap checks, use a production preview and run the Plot-only campaign

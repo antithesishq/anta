@@ -2,7 +2,7 @@ import { Database, test, type TestCase } from '@hegeldev/hegel'
 import * as gs from '@hegeldev/hegel/generators'
 import type { FixtureDescription } from './AppFixture'
 
-export const fixtureTypes = ['button', 'checkbox', 'radio-group', 'switch', 'slider', 'tabs', 'input', 'calendar', 'select', 'dialog', 'expander', 'inspector', 'plot'] as const
+export const fixtureTypes = ['button', 'checkbox', 'radio-group', 'switch', 'slider', 'tabs', 'input', 'calendar', 'select', 'dialog', 'expander', 'inspector', 'plot', 'tree'] as const
 
 export const minimumFixtures = 6
 export const maximumFixtures = fixtureTypes.length
@@ -47,6 +47,9 @@ function drawFixture(tc: TestCase, id: string, type: typeof fixtureTypes[number]
     case 'expander': return { id, type, props: { disabled: occasionally(tc) } }
     case 'inspector': return { id, type, props: { expandDepth: pick(tc, [0, 1, 2]), layout: pick(tc, ['block', 'block', 'inline'] as const) } }
     case 'plot': return { id, type, props: { zoomPan: !occasionally(tc), height: pick(tc, [180, 240, 320]) } }
+    case 'tree': return { id, type, props: {
+      controlled: tc.draw(gs.booleans()), indicatorPlacement: pick(tc, ['start', 'start', 'end'] as const), folderIcons: tc.draw(gs.booleans()),
+    } }
   }
 }
 
@@ -87,6 +90,11 @@ function drawProps(tc: TestCase, fixture: FixtureDescription): FixtureDescriptio
       return { ...fixture, props: prop === 'layout'
         ? { ...fixture.props, layout: fixture.props.layout === 'block' ? 'inline' : 'block' }
         : { ...fixture.props, expandDepth: pick(tc, [0, 1, 2].filter(depth => depth !== fixture.props.expandDepth)) } }
+    }
+    case 'tree': {
+      const prop = pick(tc, ['controlled', 'indicatorPlacement', 'folderIcons'] as const)
+      if (prop === 'indicatorPlacement') return { ...fixture, props: { ...fixture.props, indicatorPlacement: fixture.props.indicatorPlacement === 'start' ? 'end' : 'start' } }
+      return { ...fixture, props: { ...fixture.props, [prop]: !fixture.props[prop] } }
     }
     case 'switch':
       return { ...fixture, props: { ...fixture.props, disabled: !fixture.props.disabled } }

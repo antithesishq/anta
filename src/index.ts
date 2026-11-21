@@ -206,6 +206,8 @@ export type {
 } from './components/SelectFaceted'
 export { Tabs } from './components/Tabs'
 export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
+export { Tree } from './components/Tree'
+export type { TreeProps, TreeItem, TreeAction, TreeIndicator, TreeItemState } from './components/Tree'
 export { Steps } from './components/Steps'
 export type {
   StepsProps,

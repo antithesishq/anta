@@ -1,6 +1,8 @@
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
+/* The Inspector is a Tree with a monospace look. `a-inspector` is a CSS-only
+   tag around its `a-tree` and copy menu; the rows are Tree's `a-tree-*` tags. */
 @layer anta.components {
   a-inspector {
     --inspector-font-size: 12px;
@@ -8,10 +10,6 @@
     --inspector-indent: 16px;
     --inspector-row-width: 120ch;
     --inspector-row-hover: color-mix(in oklch, var(--text-1) 6%, transparent);
-    /* The same chevron mask Expander uses. */
-    --_inspector-chevron: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m9 18 6-6-6-6'/%3e%3c/svg%3e");
-    /* The `more` icon's three dots, for a row's ⋯ button. */
-    --_inspector-more: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3ccircle cx='2' cy='8' r='2'/%3e%3ccircle cx='8' cy='8' r='2'/%3e%3ccircle cx='14' cy='8' r='2'/%3e%3c/svg%3e");
 
     display: block;
     /* A row's text never wraps, so in a container that sizes the Inspector to
@@ -23,98 +21,31 @@
     font-size: var(--inspector-font-size);
     line-height: var(--inspector-line-height);
     color: var(--text-2);
-    border-radius: 2px;
   }
 
-  a-inspector:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 2px;
+  a-inspector > a-tree {
+    --tree-indent: var(--inspector-indent);
+    --tree-row-padding: 0;
+    --tree-row-hover: var(--inspector-row-hover);
+    --tree-indicator-size: 12px;
+    --tree-gap: 4px;
   }
 
-  /* With an active row, the ring moves to that row, so only one ring shows. */
-  a-inspector:has(> a-inspector-row:state(active)):focus-visible {
-    outline: none;
+  a-inspector a-tree-row {
+    padding-inline: 2px 4px;
   }
 
-  a-inspector:focus a-inspector-row:state(active) {
-    background: var(--inspector-row-hover);
-  }
-
-  a-inspector:focus-visible a-inspector-row:state(active) {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: -2px;
-  }
-
-  /* One line per row, indented by aria-level. Static rules keep rows free of
-     inline styles under a strict CSP. The general rule comes first, so levels
-     past 32 share the deepest indent and the exact levels below override it. */
-  a-inspector-row {
-    --inspector-depth: 0;
-  }
-
-  a-inspector-row[aria-level] {
-    --inspector-depth: 31;
-  }
-
-  a-inspector-row[aria-level="1"] { --inspector-depth: 0; }
-  a-inspector-row[aria-level="2"] { --inspector-depth: 1; }
-  a-inspector-row[aria-level="3"] { --inspector-depth: 2; }
-  a-inspector-row[aria-level="4"] { --inspector-depth: 3; }
-  a-inspector-row[aria-level="5"] { --inspector-depth: 4; }
-  a-inspector-row[aria-level="6"] { --inspector-depth: 5; }
-  a-inspector-row[aria-level="7"] { --inspector-depth: 6; }
-  a-inspector-row[aria-level="8"] { --inspector-depth: 7; }
-  a-inspector-row[aria-level="9"] { --inspector-depth: 8; }
-  a-inspector-row[aria-level="10"] { --inspector-depth: 9; }
-  a-inspector-row[aria-level="11"] { --inspector-depth: 10; }
-  a-inspector-row[aria-level="12"] { --inspector-depth: 11; }
-  a-inspector-row[aria-level="13"] { --inspector-depth: 12; }
-  a-inspector-row[aria-level="14"] { --inspector-depth: 13; }
-  a-inspector-row[aria-level="15"] { --inspector-depth: 14; }
-  a-inspector-row[aria-level="16"] { --inspector-depth: 15; }
-  a-inspector-row[aria-level="17"] { --inspector-depth: 16; }
-  a-inspector-row[aria-level="18"] { --inspector-depth: 17; }
-  a-inspector-row[aria-level="19"] { --inspector-depth: 18; }
-  a-inspector-row[aria-level="20"] { --inspector-depth: 19; }
-  a-inspector-row[aria-level="21"] { --inspector-depth: 20; }
-  a-inspector-row[aria-level="22"] { --inspector-depth: 21; }
-  a-inspector-row[aria-level="23"] { --inspector-depth: 22; }
-  a-inspector-row[aria-level="24"] { --inspector-depth: 23; }
-  a-inspector-row[aria-level="25"] { --inspector-depth: 24; }
-  a-inspector-row[aria-level="26"] { --inspector-depth: 25; }
-  a-inspector-row[aria-level="27"] { --inspector-depth: 26; }
-  a-inspector-row[aria-level="28"] { --inspector-depth: 27; }
-  a-inspector-row[aria-level="29"] { --inspector-depth: 28; }
-  a-inspector-row[aria-level="30"] { --inspector-depth: 29; }
-  a-inspector-row[aria-level="31"] { --inspector-depth: 30; }
-  a-inspector-row[aria-level="32"] { --inspector-depth: 31; }
-
-  a-inspector-row {
-    display: block;
-    position: relative;
-    padding-inline: calc((var(--inspector-depth, 0) + 1) * var(--inspector-indent)) 4px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    border-radius: 2px;
-  }
-
-  a-inspector-row:hover {
-    background: var(--inspector-row-hover);
-  }
-
-  /* A node row's value ends in an ellipsis at the row's edge, wherever the
-     key ends, so every row cuts at the same place. A closed inline Inspector
-     keeps its rows inline, in its sentence. */
-  a-inspector:is(:not([layout="inline"]), [open]) > a-inspector-row[type="node"] {
+  /* The key keeps its width; the value ends in an ellipsis at the row's edge,
+     wherever the key ends. */
+  a-inspector a-tree-value {
     display: flex;
   }
 
-  a-inspector:is(:not([layout="inline"]), [open]) > a-inspector-row[type="node"] > a-inspector-key {
+  a-inspector a-inspector-key {
     flex: none;
   }
 
-  a-inspector:is(:not([layout="inline"]), [open]) > a-inspector-row[type="node"] > a-inspector-value {
+  a-inspector a-inspector-value {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -122,120 +53,53 @@
 
   /* Block rows end at most --inspector-row-width from the Inspector's start,
      indentation included, so a wide window keeps a margin on the right and
-     every row still cuts at the same place. The percentage is the Inspector's
-     width, so the hover background still spans it. */
-  a-inspector:is(:not([layout="inline"]), [open]) > a-inspector-row {
-    padding-inline-end: max(4px, 100% - var(--inspector-row-width));
+     every row still cuts at the same place. Every row ends at the Inspector's
+     end, whatever its depth, so the container's width (100cqi) measures from
+     the start. The hover background still spans the row. */
+  a-inspector:is(:not([layout="inline"]), [open]) {
+    container-type: inline-size;
   }
 
-  /* A node row's ⋯ button opens the copy menu. It holds its space while
-     hidden, so the cut doesn't move when it appears. `visibility: hidden` also
-     keeps hidden buttons out of each row's accessible name. The active row's
-     button stays visible but transparent while the tree has focus, so Right
-     can focus it; its tabindex="-1" keeps it out of the Tab order. */
-  a-inspector-actions {
-    position: relative;
-    flex: none;
-    width: 18px;
-    height: var(--inspector-line-height);
+  a-inspector:is(:not([layout="inline"]), [open]) a-tree-row {
+    padding-inline-end: max(4px, 100cqi - var(--inspector-row-width));
+  }
+
+  /* The ⋯ button sits just after the value, and fits the row's line. */
+  a-inspector a-tree-actions {
     margin-inline-start: 12px;
-    border-radius: 2px;
-    cursor: pointer;
-    user-select: none;
-    visibility: hidden;
-    opacity: 0;
   }
 
-  a-inspector-actions::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: var(--text-3);
-    mask: var(--_inspector-more) center / 12px no-repeat;
+  a-inspector a-tree-actions > a-button {
+    min-height: 0;
+    height: var(--inspector-line-height);
+    padding-block: 0;
+    padding-inline: 3px;
   }
 
-  a-inspector:focus-within > a-inspector-row:state(active) > a-inspector-actions {
-    visibility: visible;
-  }
-
-  a-inspector-row:hover > a-inspector-actions,
-  a-inspector-actions:focus {
-    visibility: visible;
-    opacity: 1;
-  }
-
-  a-inspector-actions:hover {
-    background: var(--inspector-row-hover);
-  }
-
-  a-inspector-actions:hover::before {
-    background: var(--text-1);
-  }
-
-  a-inspector-actions:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: -2px;
-  }
-
-  /* With focus on its button, the row still reads as the active one. */
-  a-inspector-row:has(> a-inspector-actions:focus) {
-    background: var(--inspector-row-hover);
-  }
-
-  /* A touch screen has no hover, so the button always shows. */
-  @media (hover: none) {
-    a-inspector-actions {
-      visibility: visible;
-      opacity: 1;
-    }
-  }
-
-  a-inspector-row:is([expandable], [type="more"]) {
-    cursor: pointer;
-  }
-
-  a-inspector-row[expandable]::before {
-    content: "";
-    position: absolute;
-    inset-block-start: calc((var(--inspector-line-height) - 12px) / 2);
-    inset-inline-start: calc(var(--inspector-depth, 0) * var(--inspector-indent) + 2px);
-    width: 12px;
-    height: 12px;
-    background: var(--text-4);
-    mask: var(--_inspector-chevron) center / contain no-repeat;
-    transition: rotate 150ms ease;
-  }
-
-  a-inspector-row[expandable]:dir(rtl)::before {
-    scale: -1 1;
-  }
-
-  a-inspector-row[expandable][open]::before {
-    rotate: 90deg;
-  }
-
-  a-inspector-row[expandable][open]:dir(rtl)::before {
-    rotate: -90deg;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    a-inspector-row[expandable]::before {
-      transition: none;
-    }
+  a-inspector a-tree-actions a-icon {
+    --icon-size: 12px;
   }
 
   /* Lines of an open string keep their whitespace and wrap. */
-  a-inspector-row[type="text"] {
+  a-inspector a-tree-item[data-type="text"] > a-tree-row {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     color: var(--text-2-critical);
   }
 
-  a-inspector-row[type="more"] {
+  a-inspector a-tree-item[data-type="text"] > a-tree-row > a-tree-value {
+    overflow: visible;
+  }
+
+  a-inspector a-tree-item:is([data-type="more"], [data-target]) > a-tree-row {
+    cursor: pointer;
+  }
+
+  a-inspector a-tree-item[data-type="more"] > a-tree-row {
     color: var(--text-3);
   }
 
-  a-inspector-row[type="more"]:hover {
+  a-inspector a-tree-item[data-type="more"] > a-tree-row:hover {
     color: var(--text-1);
     text-decoration: underline;
   }
@@ -289,44 +153,39 @@
   }
 
   /* A circular row links to the ancestor it refers to. */
-  a-inspector-row[target] {
-    cursor: pointer;
-  }
-
-  a-inspector-row[target]:hover a-inspector-token:is([type="reference"], [type="reference_path"]) {
+  a-inspector a-tree-item[data-target] > a-tree-row:hover a-inspector-token:is([type="reference"], [type="reference_path"]) {
     color: var(--text-1);
     text-decoration: underline;
   }
 
-  /* The ancestor a circular row revealed, briefly. Set by the element as a
-     CSS Custom Highlight, so no DOM changes. */
-  ::highlight(anta-inspector-reveal) {
+  /* The ancestor a circular row jumped to, briefly. */
+  a-inspector a-tree-item[data-revealed] > a-tree-row {
     background-color: color-mix(in oklch, var(--text-1-brand) 22%, transparent);
   }
 
   /* Inline layout: a closed value flows in its sentence or table cell. Opening
      it makes a block, so the tree appears under the line. */
-  a-inspector[layout="inline"]:not([open]) {
+  a-inspector[layout="inline"]:not([open]),
+  a-inspector[layout="inline"]:not([open]) :is(a-tree, a-tree-item, a-tree-row, a-tree-value) {
     display: inline;
   }
 
-  a-inspector[layout="inline"]:not([open]) a-inspector-row {
-    display: inline;
-    padding-inline: 16px 0;
+  a-inspector[layout="inline"]:not([open]) a-tree-row {
+    padding: 0;
     white-space: normal;
   }
 
-  a-inspector[layout="inline"]:not([open]) a-inspector-actions {
+  a-inspector[layout="inline"]:not([open]) a-tree-indicator {
+    display: inline-grid;
+    vertical-align: -1px;
+    margin-inline-end: 4px;
+  }
+
+  a-inspector[layout="inline"]:not([open]) a-tree-actions {
     display: none;
   }
 
-  a-inspector[layout="inline"]:not([open]) a-inspector-row:hover {
+  a-inspector[layout="inline"]:not([open]) a-tree-row:hover {
     background: none;
-  }
-
-  a-inspector[layout="inline"]:not([open]) a-inspector-row[expandable]::before {
-    inset-block-start: auto;
-    inset-inline-start: 2px;
-    margin-block-start: calc((var(--inspector-line-height) - 12px) / 2);
   }
 }

@@ -25,6 +25,7 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 - [Loader](./components/loader.md)
 - [Progress](./components/progress.md)
 - [Inspector](./components/inspector.md)
+- [Tree](./components/tree.md)
 
 - [Button](./components/button.md)
 - [Breadcrumbs](./components/breadcrumbs.md)

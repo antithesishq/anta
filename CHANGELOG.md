@@ -14,11 +14,16 @@ changes are not listed.
   [keyboard](/inspector/#keyboard-accessibility). Rows end 120 characters from the Inspector's start, set by
   `--inspector-row-width`. Classes can choose how they appear by implementing
   [`inspectorRepr`](/inspector/#custom-types).
+- [Tree](/tree/) shows nested items that open and close, rendered from `items` data, such as a folder browser. Rows can
+  carry [actions and a context menu](/tree/#add-actions-and-a-context-menu), the open items can be
+  [controlled](/tree/#control-the-open-items) and their children loaded when they open, and the tree supports the
+  [keyboard](/tree/#keyboard-accessibility) as one Tab stop. Inspector is built on Tree.
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 
 ### Fixed
 
+- Closing a [Menu](/menu/) with Escape returns focus to the first visible control in its trigger, not a hidden one.
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.
 - [InputDate](/input-date/#manage-the-value) submits its ISO value through the visible Input instead of a hidden field. Disabled fields are omitted, and `form` supports association with a form elsewhere on the page.
 - Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.

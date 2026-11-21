@@ -27,9 +27,9 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
 5. **`repr()` is built on the node tree.** It serializes `describe(value)`, and its string output matches the notebook's
    except where this file says otherwise. `StringRepresentationVisitor` and `RepresentationVisitor` are gone.
 6. **The DOM sink is not ported.** The notebook's `PrintableRepresentationVisitor` builds nested `<span>`s through the
-   notebook's own `h()` wrapper. The Inspector component replaces it: `visibleRows()` lists display rows, and Anta's
-   wrapper and element render them. The core has no DOM or renderer imports, so it can run in a worker next to the
-   value.
+   notebook's own `h()` wrapper. The Inspector component replaces it: `visibleRows()` lists display rows,
+   `visibleTree()` nests them, and Anta's `Tree` renders them. The core has no DOM or renderer imports, so it can run
+   in a worker next to the value.
 7. **Options are not validated at runtime.** The notebook declares `repr()` and its options through its `expect`
    library, which checks types at call time and documents them in the notebook's `help()`. Anta uses TypeScript types
    and TSDoc instead.

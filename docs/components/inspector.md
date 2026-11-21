@@ -3,7 +3,8 @@
 Inspector shows any JavaScript value as a tree you can explore, such as test
 results, errors, and logs. Rows read like an object in browser DevTools and
 open one level at a time, so a large value is read only as far as it's shown.
-Select a row to open or close it.
+Select a row to open or close it. Inspector is built on [Tree](./tree.md), with a
+monospace look and a copy menu.
 
 ## Open a level at a time
 
@@ -118,7 +119,7 @@ class Container {
 
 ## Keyboard and accessibility
 
-The tree is one Tab stop. Once it has focus, the keys move a highlighted row:
+The tree is one Tab stop. Once it has focus, the arrow keys move focus between rows:
 
 | Key | Action |
 | --- | --- |
@@ -133,13 +134,11 @@ The tree is one Tab stop. Once it has focus, the keys move a highlighted row:
 
 Give each Inspector an `aria-label`, such as the name of the value it shows.
 Screen readers announce rows as tree items, with their level and whether
-they're open. Opening a whole subtree stops after 500 rows, so one action can't
+they're open, named by their text alone. Opening a whole subtree stops after 500 rows, so one action can't
 read an unbounded part of a value.
 
-On a row's ⋯ button, Enter or Space opens the copy menu, Left or Escape returns
-to the row, and Down or Up return to the tree and move a row. The button is
-named "More actions", so the highlighted row's name ends with it while the tree
-has focus.
+On a row's ⋯ button, named "More actions", Enter or Space opens the copy menu,
+Left or Escape returns to the row, and Down or Up return to the row and move.
 
 ## Component props
 
@@ -157,21 +156,11 @@ has focus.
 
 ## Web Component
 
-`<a-inspector>` handles input for rows the JSX wrapper renders. The wrapper
-renders each line as a direct `a-inspector-row` child with its ARIA and its
-`row-id`, `type`, `expandable`, `open`, `group`, and `target` attributes. The
-element owns focus, the highlighted row, and the keyboard, and never changes the
-DOM. It reports what the reader asks for as events, so a renderer can answer
-them, including one running in a worker:
-
-| Event | Detail | Sent when |
-| --- | --- | --- |
-| `nodetoggle` | `{ id, open, deep? }` | A row should open or close; `deep` covers its whole subtree |
-| `pagerequest` | `{ group }` | A **Show more** row asks for the next page |
-| `rowmenu` | `{ id }` | A context menu opens on a row, or `null` outside any row |
-
-Use the JSX `Inspector`, which renders the rows and answers these events.
-Writing rows by hand means reimplementing that renderer.
+The Inspector renders a [Tree](./tree.md#web-component): an `a-tree` of
+`a-tree-item` rows inside `<a-inspector>`, a tag that only carries its styling,
+followed by its copy menu. The rows come from the JSX `Inspector`, which reads
+the value as rows are shown, so use the JSX component rather than writing rows
+by hand.
 
 ## Styling
 
@@ -179,10 +168,11 @@ Rows use the monospace font and the theme's text colors, in light and dark.
 `--inspector-font-size`, `--inspector-line-height`, and `--inspector-indent`
 set the type size, row height, and indent per level. `--inspector-row-width`
 sets where rows end, measured from the Inspector's start with indentation
-included; it's `120ch` by default, and `100%` fills the width. Style `a-inspector` and
-its `a-inspector-row` children with plain CSS; unlayered rules override Anta's
-defaults without `!important`. `::highlight(anta-inspector-reveal)` styles the
-brief highlight after jumping from a cycle.
+included; it's `120ch` by default, and `100%` fills the width. Style
+`a-inspector` and its rows, the `a-tree-*` tags described in
+[Tree's styling](./tree.md#styling), with plain CSS; unlayered rules override Anta's defaults without `!important`. A row's
+`data-type` is `node`, `text`, or `more`, and the row a cycle jumps to has
+`data-revealed` for a moment.
 
 The classes below identify demonstrations. Substitute your own selectors.
 

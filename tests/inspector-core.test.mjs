@@ -928,3 +928,60 @@ test('setRowOpen sets the requested state, so repeated requests change nothing',
   // Strings start closed at any depth.
   assert.deepEqual([...core.setRowOpen(root, state, 'r:1.1', true)], ['r:1.1'])
 })
+
+// Nested rows: visibleTree() nests visibleRows() for a renderer whose DOM nests.
+
+// Back to the flat list: each row, its children, then its after line as a close row.
+function flatten(rows) {
+  return rows.flatMap(({ children, after, ...row }) => {
+    const out = [row, ...(children ? flatten(children) : [])]
+    if (after) out.push({ type: 'close', tokens: after })
+    return out
+  })
+}
+const shape = rows => rows.map(row => row.type === 'close' ? { type: 'close', line: line(row) } : { id: row.id, type: row.type, line: line(row) })
+
+test('nests rows under the open node they belong to', () => {
+  const value = { tags: ['a', 'b'], deep: { x: 1 }, n: 1 }
+  const tree = core.visibleTree(core.describe(value), { expandDepth: 2 })
+  assert.equal(tree.length, 1)
+  const [root] = tree
+  assert.deepEqual(root.children.map(row => row.id), ['r:1.0', 'r:1.1', 'r:1.2'])
+  const [tags, deep, n] = root.children
+  assert.deepEqual(tags.children.map(row => line(row)), ['"a",', '"b"'])
+  assert.deepEqual(tags.after.map(token => token.text).join(''), '],')
+  assert.equal(root.after.map(token => token.text).join(''), '}')
+  // A node that can open has children even while closed; a leaf has none.
+  assert.ok(deep.children.length > 0)
+  assert.equal(n.children, undefined)
+  const closed = core.visibleTree(core.describe(value), { expandDepth: 1 })
+  assert.deepEqual(closed[0].children[1].children, [])
+})
+
+test('the tree style has no after lines, and a page of children ends in its more row', () => {
+  const root = core.describe({ list: [1, 2, 3, 4, 5] })
+  const [top] = core.visibleTree(root, { style: 'tree', expandDepth: 2, pageSize: 2 })
+  const list = top.children[0]
+  assert.equal(top.after, undefined)
+  assert.deepEqual(list.children.map(row => row.type), ['node', 'node', 'more'])
+  assert.equal(list.children[2].group, 'r:1.0:1')
+})
+
+test('an open string nests its lines', () => {
+  const [top] = core.visibleTree(core.describe('one\ntwo'), { style: 'tree', toggled: new Set(['r']) })
+  assert.deepEqual(top.children.map(row => [row.type, line(row)]), [['text', 'one'], ['text', 'two']])
+})
+
+test('flattening visibleTree gives visibleRows, and openIds lists its open nodes', () =>
+  hegel.test(tc => {
+    const root = core.describe(make(tc.draw(recipes(), 'recipe')).value)
+    const display = {
+      expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 4 }), 'expandDepth'),
+      pageSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'pageSize'),
+      style: tc.draw(styles, 'style'),
+    }
+    const state = { ...display, toggled: openSome(tc, root, display) }
+    const rows = core.visibleRows(root, state)
+    assert.deepEqual(shape(flatten(core.visibleTree(root, state))), shape(rows))
+    assert.deepEqual(core.openIds(root, state), rows.filter(row => row.type === 'node' && row.open).map(row => row.id))
+  }, settings))

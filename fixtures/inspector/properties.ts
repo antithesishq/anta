@@ -6,58 +6,72 @@ import type {} from './Inspector'
 const inspector = extract(state => {
   const record = state.window.__antaInspector
   if (!record) return null
+  // The Inspector's id lands on its tree; the rows are the tree's items.
   const host = state.document.getElementById(record.id)
   if (!host) return null
-  const rows = [...host.children].filter(child => child.localName === 'a-inspector-row').map(row => {
-    const { left, right, top, bottom } = row.getBoundingClientRect()
+  const items = [...host.querySelectorAll('a-tree-item')].filter(item => item.closest('a-tree') === host)
+  const rows = items.map(item => {
+    const { left, right, top, bottom } = item.querySelector(':scope > a-tree-row')!.getBoundingClientRect()
+    let level = 1
+    for (let parent = item.parentElement?.closest('a-tree-item'); parent; parent = parent.parentElement?.closest('a-tree-item')) level++
     return {
-      id: row.getAttribute('row-id') ?? '',
-      type: row.getAttribute('type'),
-      expandable: row.hasAttribute('expandable'),
-      open: row.hasAttribute('open'),
-      expanded: row.getAttribute('aria-expanded'),
-      level: Number(row.getAttribute('aria-level')),
-      active: row.matches(':state(active)'),
+      id: item.getAttribute('item-id') ?? '',
+      type: item.getAttribute('data-type'),
+      stateAttribute: item.getAttribute('state'),
+      expandable: item.matches(':state(open), :state(closed)'),
+      open: item.matches(':state(open)'),
+      level,
+      active: item.matches(':state(active)'),
       rect: { left, right, top, bottom },
     }
   })
-  const tabStops = [...host.querySelectorAll('*')].filter(node => (node as HTMLElement).tabIndex >= 0).length
+  const tabStops = [...host.querySelectorAll('*')].filter(node => (node as HTMLElement).tabIndex >= 0)
   const focus = state.document.activeElement
-  const actions = focus?.localName === 'a-inspector-actions' && focus.parentElement?.parentElement === host ? focus : null
+  const focusedItem = focus?.localName === 'a-tree-item' && host.contains(focus) ? focus : null
+  const actions = focus && host.contains(focus) ? focus.closest('a-tree-actions') : null
   const actionsStyle = actions && state.window.getComputedStyle(actions)
   const menu = host.nextElementSibling as (Element & { isOpen?: boolean }) | null
   return {
     ...record,
     rows,
-    focused: focus === host,
+    focused: focusedItem?.getAttribute('item-id') ?? null,
     // The row whose ⋯ button has focus, and whether that button shows.
-    actionsRow: actions ? actions.parentElement!.getAttribute('row-id') ?? '' : null,
+    actionsRow: actions ? actions.closest('a-tree-item')!.getAttribute('item-id') ?? '' : null,
     actionsShown: !!actionsStyle && actionsStyle.visibility === 'visible' && actionsStyle.opacity === '1',
     menuOpen: menu?.localName === 'a-menu' && !!menu.isOpen,
-    hostTabIndex: host.tabIndex,
-    tabStops,
+    hostTabIndex: (host as HTMLElement).tabIndex,
+    tabStops: tabStops.map(node => node.getAttribute('item-id') ?? node.localName),
     modalOpen: !!state.document.querySelector('a-dialog[state="open"]'),
   }
 })
 
-export const inspectorOpenMatchesAriaExpanded = always(() => {
+// The open state the item shows (its custom state, and its aria-expanded with
+// it) is the one the wrapper rendered in its `state` attribute.
+export const inspectorOpenMatchesItsStateAttribute = always(() => {
   const current = inspector.current
   return !current || current.rows.every(row => row.expandable
-    ? row.expanded === String(row.open)
-    : row.expanded === null && !row.open)
+    ? row.stateAttribute === (row.open ? 'open' : 'closed')
+    : row.stateAttribute === null && !row.open)
 })
 
+// One item is the Tab stop; the tree itself and the ⋯ buttons are not.
 export const inspectorIsOneTabStop = always(() => {
   const current = inspector.current
-  return !current || (current.hostTabIndex === 0 && current.tabStops === 0)
+  return !current || current.rows.length === 0 || (current.hostTabIndex < 0 && current.tabStops.length === 1)
 })
 
 export const inspectorHasOneActiveRowWhileFocused = always(() => {
   const current = inspector.current
   if (!current) return true
   const active = current.rows.filter(row => row.active).length
-  const focused = current.focused || current.actionsRow !== null
+  const focused = current.focused !== null || current.actionsRow !== null
   return active <= 1 && (!focused || current.rows.length === 0 || active === 1)
+})
+
+// Focus on a row is on the active row.
+export const inspectorFocusIsOnTheActiveRow = always(() => {
+  const current = inspector.current
+  return !current || current.focused === null || current.rows.some(row => row.active && row.id === current.focused)
 })
 
 // Focus on a ⋯ button is only ever on the active row's button, and that
@@ -68,7 +82,7 @@ export const inspectorActionsFocusIsOnTheActiveRow = always(() => {
   return current.actionsShown && current.rows.some(row => row.active && row.id === current.actionsRow)
 })
 
-// On a focused ⋯, Left and Escape return focus to the tree, with the same row
+// On a focused ⋯, Left and Escape return focus to its row, which stays
 // active; Enter, Space, and the Menu key open the copy menu.
 export const inspectorActionsKeysReturnOrOpen = always(() => {
   const before = inspector.current
@@ -80,7 +94,7 @@ export const inspectorActionsKeysReturnOrOpen = always(() => {
     if (!action || typeof action !== 'object' || !('PressKey' in action)) return true
     const key = action.PressKey.code
     if (key === 37 || key === 27) {
-      return after.focused && after.rows.some(row => row.active && row.id === before.actionsRow)
+      return after.focused === before.actionsRow && after.rows.some(row => row.active && row.id === before.actionsRow)
     }
     if (key === 13 || key === 32 || key === 93) return after.menuOpen
     return true

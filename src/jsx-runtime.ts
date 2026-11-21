@@ -141,7 +141,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ATextContentAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AExpanderSummaryAttributes, AExpanderIndicatorAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, AInspectorAttributes, AInspectorRowAttributes, AInspectorActionsAttributes, AInspectorTokenAttributes, ACardAttributes,ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
+import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ATextContentAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AExpanderSummaryAttributes, AExpanderIndicatorAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, AInspectorAttributes, AInspectorTokenAttributes, ATreeAttributes, ATreeItemAttributes, ATreeIndicatorAttributes, ATreeGroupAttributes, ACardAttributes,ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -242,11 +242,18 @@ export interface AntaIntrinsicElements {
   'a-dialog': ADialogAttributes
   'a-dialog-close': BaseAttributes
   'a-dialog-footer': BaseAttributes
+  'a-tree': ATreeAttributes
+  'a-tree-item': ATreeItemAttributes
+  'a-tree-row': BaseAttributes
+  'a-tree-indicator': ATreeIndicatorAttributes
+  'a-tree-value': BaseAttributes
+  'a-tree-before': BaseAttributes
+  'a-tree-actions': BaseAttributes
+  'a-tree-group': ATreeGroupAttributes
+  'a-tree-after': BaseAttributes
   'a-inspector': AInspectorAttributes
-  'a-inspector-row': AInspectorRowAttributes
   'a-inspector-key': BaseAttributes
   'a-inspector-value': BaseAttributes
-  'a-inspector-actions': AInspectorActionsAttributes
   'a-inspector-token': AInspectorTokenAttributes
   'a-card': ACardAttributes
   'a-card-layout': BaseAttributes

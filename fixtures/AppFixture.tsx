@@ -13,13 +13,14 @@ import { Dialog } from './dialog/Dialog'
 import { Expander } from './expander/Expander'
 import { Inspector } from './inspector/Inspector'
 import { Plot } from './plot/Plot'
+import { Tree } from './tree/Tree'
 import './AppFixture.css'
 
 const fixtureNames = {
   button: 'Button', checkbox: 'Checkbox', 'radio-group': 'RadioGroup',
   switch: 'Switch', slider: 'Slider', tabs: 'Tabs', input: 'Input',
   calendar: 'Calendar', select: 'Select', dialog: 'Dialog',
-  expander: 'Expander', inspector: 'Inspector', plot: 'Plot',
+  expander: 'Expander', inspector: 'Inspector', plot: 'Plot', tree: 'Tree',
 } satisfies Record<typeof fixtureTypes[number], string>
 
 type PropsByType = {
@@ -36,6 +37,7 @@ type PropsByType = {
   'expander': Omit<ComponentProps<typeof Expander>, 'id'>
   'inspector': Omit<ComponentProps<typeof Inspector>, 'id'>
   'plot': Omit<ComponentProps<typeof Plot>, 'id'>
+  'tree': Omit<ComponentProps<typeof Tree>, 'id'>
 }
 
 export type FixtureDescription = {
@@ -57,6 +59,7 @@ function renderFixture(fixture: FixtureDescription) {
     case 'expander': return <Expander {...fixture.props} id={fixture.id} />
     case 'inspector': return <Inspector {...fixture.props} id={fixture.id} />
     case 'plot': return <Plot {...fixture.props} id={fixture.id} />
+    case 'tree': return <Tree {...fixture.props} id={fixture.id} />
   }
 }
 
@@ -70,7 +73,7 @@ export default function AppFixture() {
   const [state, setState] = useState<AppState>(() => {
     const params = new URLSearchParams(location.search)
     const input = params.get('seed')
-    // `?only=plot` or `?only=inspector` mounts just that component.
+    // `?only=plot`, `?only=inspector`, or `?only=tree` mounts just that component.
     const only = fixtureTypes.find(type => type === params.get('only'))
     const parsed = input?.trim() ? Number(input) : NaN
     const seed = Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= 0xffff_ffff

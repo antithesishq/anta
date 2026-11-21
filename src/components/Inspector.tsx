@@ -1,10 +1,9 @@
-import { customEventHandler } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
-import { copyText, deepToggle, describe, jsonText, rowNode, setRowOpen, visibleRows, type InspectNode, type InspectRow, type NodeKind, type Token } from "../inspector-core"
-import { useMemo, useState } from "../jsx-runtime"
-import { useNativeEventProps } from "../native-event-props"
+import { copyText, deepToggle, describe, jsonText, openIds, rowNode, setRowOpen, visibleTree, type InspectNode, type InspectTreeRow, type NodeKind, type Token } from "../inspector-core"
+import { useLayoutEffect, useMemo, useState } from "../jsx-runtime"
 import { Menu } from "./Menu"
 import { MenuItemCopy } from "./MenuItemCopy"
+import { Tree, type TreeAction, type TreeItem } from "./Tree"
 
 /** Public props for the `<Inspector>` value tree. */
 export interface InspectorProps extends Omit<BaseProps, "children"> {
@@ -48,11 +47,15 @@ type View = {
   toggled: ReadonlySet<string>
   pages: ReadonlyMap<string, number>
   /** The row the open context menu is for. Null while it's closed, and until
-   *  `rowmenu` names the row, so the copy items never hold another row's text. */
+   *  `onItemMenu` names the row, so the copy items never hold another row's text. */
   menuRow: string | null
   /** Keys for the copy items. A new key remounts an item, which clears its ✓
    *  feedback; MenuItemCopy otherwise keeps it for two seconds, across menus. */
   copyKeys: CopyKeys
+  /** The last jump from a cycle to the row it refers to. */
+  reveal: { id: string; n: number } | null
+  /** The row a jump highlights, until the highlight fades. */
+  revealed: string | null
 }
 type CopyKeys = { value: number; json: number; path: number }
 const NO_COPY_KEYS: CopyKeys = { value: 0, json: 0, path: 0 }
@@ -64,8 +67,12 @@ const remount = (keys: CopyKeys, keep?: keyof CopyKeys): CopyKeys => ({
 })
 // Block rows render this much of a summary; CSS cuts it at the row's edge.
 const BLOCK_SUMMARY_LIMIT = 300
+// How long a jump from a cycle highlights its row.
+const REVEAL_MS = 1500
 const NONE: ReadonlySet<string> = new Set()
 const NO_PAGES: ReadonlyMap<string, number> = new Map()
+// Every node row has the ⋯ button, which opens the copy menu.
+const ROW_ACTIONS: TreeAction[] = [{ icon: "more", label: "More actions", opensMenu: true }]
 
 // The copy item's label names the value's type, as DevTools does.
 function copyLabel(kind: NodeKind): string {
@@ -95,39 +102,14 @@ function renderTokens(tokens: readonly Token[], wrap: boolean) {
   })
 }
 
-function renderRow(row: InspectRow, wrap: boolean) {
-  const common = {
-    "row-id": row.id,
-    type: row.type,
-    role: "treeitem",
-    // The stylesheet indents by aria-level, so rows need no inline style under CSP.
-    "aria-level": row.depth + 1,
+// Find a row by id among the rows shown.
+function findRow(rows: readonly InspectTreeRow[], id: string): InspectTreeRow | undefined {
+  for (const row of rows) {
+    if (row.id === id) return row
+    const found = row.children && findRow(row.children, id)
+    if (found) return found
   }
-  if (row.type === "more") {
-    return (
-      <a-inspector-row key={row.id} {...common} group={row.group}>
-        Show more ({row.shown.toLocaleString("en-US")} {row.unit === "characters" ? "characters" : "shown"})
-      </a-inspector-row>
-    )
-  }
-  if (row.type !== "node") return <a-inspector-row key={row.id} {...common}>{renderTokens(row.tokens, wrap)}</a-inspector-row>
-  return (
-    <a-inspector-row
-      key={row.id}
-      {...common}
-      kind={row.kind}
-      target={row.target}
-      expandable={row.expandable ? "" : undefined}
-      open={row.open ? "" : undefined}
-      aria-expanded={row.expandable ? String(row.open) as "true" | "false" : undefined}
-    >
-      {row.key.length ? <a-inspector-key>{renderTokens(row.key, wrap)}</a-inspector-key> : null}
-      <a-inspector-value>{renderTokens(row.tokens, wrap)}</a-inspector-value>
-      {/* The ⋯ button. The element focuses it on Right and opens the copy
-          menu from it; tabIndex -1 keeps it out of the Tab order. */}
-      <a-inspector-actions role="button" tabIndex={-1} aria-label="More actions" aria-haspopup="menu" />
-    </a-inspector-row>
-  )
+  return undefined
 }
 
 /**
@@ -139,7 +121,7 @@ function renderRow(row: InspectRow, wrap: boolean) {
  * its ⋯ button, or press Shift+F10, to copy its value, its JSON, or its path.
  * `layout="inline"` shows a one-line summary that fits in a sentence and
  * becomes a block when opened. Classes can
- * control how they appear with `inspectorRepr`.
+ * control how they appear with `inspectorRepr`. Built on `Tree`.
  *
  * @example
  * ```tsx
@@ -164,10 +146,11 @@ export const Inspector = ({
     () => describe(value, { numeric_base: numericBase, unquoted_strings: unquotedStrings }),
     [value, numericBase, unquotedStrings],
   )
-  const summaryLimit = layout === "block" ? Math.max(BLOCK_SUMMARY_LIMIT, previewBudget ?? 0) : undefined
+  const inline = layout === "inline"
+  const summaryLimit = inline ? undefined : Math.max(BLOCK_SUMMARY_LIMIT, previewBudget ?? 0)
   const rowState = { style: "tree" as const, expandDepth, pageSize, previewBudget, summaryLimit, textPageSize }
   // Open rows and pages belong to one value; a new value starts fresh.
-  const fresh: View = { root, toggled: NONE, pages: NO_PAGES, menuRow: null, copyKeys: NO_COPY_KEYS }
+  const fresh: View = { root, toggled: NONE, pages: NO_PAGES, menuRow: null, copyKeys: NO_COPY_KEYS, reveal: null, revealed: null }
   const [view, setView] = useState<View>(fresh)
   const current = view.root === root ? view : fresh
   const update = (change: (view: View) => Partial<View>) =>
@@ -176,32 +159,55 @@ export const Inspector = ({
       return { ...base, ...change(base) }
     })
 
-  const eventProps = useNativeEventProps({
-    onnodetoggle: customEventHandler<{ id: string; open: boolean; deep?: boolean }>((_event, { id, open, deep }) => {
-      update(({ root, toggled, pages }) => {
-        // Set the requested state, not a flip: requests sent before a render
-        // lands, as from a worker, repeat harmlessly.
-        const state = { ...rowState, toggled, pages }
-        return { toggled: deep ? deepToggle(root, state, id, open) : setRowOpen(root, state, id, open) }
-      })
-    }),
-    onpagerequest: customEventHandler<{ group: string }>((_event, { group }) => {
-      update(({ pages }) => ({ pages: new Map(pages).set(group, (pages.get(group) ?? 1) + 1) }))
-    }),
-    // The menu opens at once, and the copy items stay disabled until this
-    // update names the row; from a worker, that's a round trip later.
-    // Known gap: a right-click on another row while the menu is open moves the
-    // menu without closing it, so until this update lands, the items still
-    // hold the previous row's text. tests/inspector-csp.mjs pins this.
-    // Each opening starts with no copy feedback showing.
-    onrowmenu: customEventHandler<{ id: string | null }>((_event, { id }) => {
-      update(({ copyKeys }) => ({ menuRow: id, copyKeys: remount(copyKeys) }))
-    }),
-  })
+  // The highlight after a jump fades on its own.
+  const revealN = current.reveal?.n
+  useLayoutEffect(() => {
+    if (revealN === undefined) return
+    const timer = setTimeout(() => update(() => ({ revealed: null })), REVEAL_MS)
+    return () => clearTimeout(timer)
+  }, [revealN])
 
-  const rows = visibleRows(current.root, { ...rowState, toggled: current.toggled, pages: current.pages })
+  const state = { ...rowState, toggled: current.toggled, pages: current.pages }
+  const rows = visibleTree(current.root, state)
+  const open = openIds(current.root, state)
 
-  const menuRow = current.menuRow === null ? undefined : rows.find(row => row.id === current.menuRow)
+  const toItem = (row: InspectTreeRow): TreeItem => {
+    const revealed = current.revealed === row.id ? "" : undefined
+    if (row.type === "more") {
+      const { group } = row
+      return {
+        id: row.id,
+        label: `Show more (${row.shown.toLocaleString("en-US")} ${row.unit === "characters" ? "characters" : "shown"})`,
+        onClick: () => update(({ pages }) => ({ pages: new Map(pages).set(group, (pages.get(group) ?? 1) + 1) })),
+        "data-type": "more",
+      }
+    }
+    if (row.type !== "node") {
+      return { id: row.id, label: renderTokens(row.tokens, inline), "data-type": row.type }
+    }
+    const target = row.target
+    return {
+      id: row.id,
+      label: (
+        <>
+          {row.key.length ? <a-inspector-key>{renderTokens(row.key, inline)}</a-inspector-key> : null}
+          <a-inspector-value>{renderTokens(row.tokens, inline)}</a-inspector-value>
+        </>
+      ),
+      children: row.children?.map(toItem),
+      actions: ROW_ACTIONS,
+      // A cycle jumps to the row it refers to and highlights it briefly.
+      onClick: target === undefined ? undefined : () =>
+        update(({ reveal }) => ({ reveal: { id: target, n: (reveal?.n ?? 0) + 1 }, revealed: target })),
+      "data-type": "node",
+      "data-kind": row.kind,
+      "data-target": target,
+      "data-revealed": revealed,
+    }
+  }
+  const items = rows.map(toItem)
+
+  const menuRow = current.menuRow === null ? undefined : findRow(rows, current.menuRow)
   const path = menuRow?.type === "node" ? menuRow.pathText : undefined
   // Copy text is the whole value, so it's built only for the row a menu opened on.
   const menuNode = useMemo(
@@ -213,19 +219,38 @@ export const Inspector = ({
   const waiting = current.menuRow === null
 
   return (
-    <>
-      <a-inspector
-        role="tree"
-        tabIndex={0}
-        layout={layout === "inline" ? "inline" : undefined}
-        open={rows[0]?.type === "node" && rows[0].open ? "" : undefined}
-        {...eventProps}
-        class={className}
-        style={style}
+    <a-inspector
+      layout={inline ? "inline" : undefined}
+      open={rows[0]?.type === "node" && rows[0].open ? "" : undefined}
+      class={className}
+      style={style}
+    >
+      <Tree
+        items={items}
+        open={open}
+        onStateChange={(_event, { next, prev, scope }) => {
+          // The request's own row is the shallowest one that changed.
+          const changed = [...next.filter(id => !prev.includes(id)), ...prev.filter(id => !next.includes(id))]
+          const id = changed.sort((a, b) => a.split(":").length - b.split(":").length)[0]
+          if (id === undefined) return
+          const opening = next.includes(id)
+          // Set the requested state, not a flip: requests sent before a render
+          // lands, as from a worker, repeat harmlessly.
+          update(({ root, toggled, pages }) => {
+            const rowsState = { ...rowState, toggled, pages }
+            return { toggled: scope === "subtree" ? deepToggle(root, rowsState, id, opening) : setRowOpen(root, rowsState, id, opening) }
+          })
+        }}
+        // The menu opens at once, and the copy items stay disabled until this
+        // update names the row; from a worker, that's a round trip later.
+        // Known gap: a right-click on another row while the menu is open moves the
+        // menu without closing it, so until this update lands, the items still
+        // hold the previous row's text. tests/inspector-csp.mjs pins this.
+        // Each opening starts with no copy feedback showing.
+        onItemMenu={(_event, { id }) => update(({ copyKeys }) => ({ menuRow: id, copyKeys: remount(copyKeys) }))}
+        focusRequest={current.reveal ?? undefined}
         {...rest}
-      >
-        {rows.map(row => renderRow(row, layout === "inline"))}
-      </a-inspector>
+      />
       <Menu
         context
         onStateChange={(_event, { next }) => {
@@ -257,6 +282,6 @@ export const Inspector = ({
           onCopied={() => update(({ copyKeys }) => ({ copyKeys: remount(copyKeys, "path") }))}
         />
       </Menu>
-    </>
+    </a-inspector>
   )
 }

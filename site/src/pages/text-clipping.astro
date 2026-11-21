@@ -1,0 +1,162 @@
+---
+import antaStylesheet from '@antadesign/anta/bundle.css?url'
+const cases = [
+  ['Menu item', '14px / 16px · label clips inside a padded row', '<a-menu-item role="menuitem"><a-icon shape="circle-small-solid"></a-icon><a-menu-item-label data-sample></a-menu-item-label><kbd>⌘K</kbd></a-menu-item>'],
+  ['Menu item with hint', 'Label 14/16 · hint 12/15 · top-aligned icon', '<a-menu-item role="menuitem"><a-icon shape="circle-small-solid"></a-icon><a-menu-item-text><a-menu-item-label data-sample></a-menu-item-label><a-menu-item-hint data-sample></a-menu-item-hint></a-menu-item-text></a-menu-item>'],
+  ...['small', 'medium', 'large'].map(size => [`Tab · ${size}`, 'Label has 2px less leading than the parent', `<a-tabs size="${size}"><a-tab value="one"><a-tab-label data-sample></a-tab-label></a-tab></a-tabs>`]),
+  ...['small', 'medium', 'large'].map(size => [`Button · ${size}`, 'Label clips · optical bottom padding remains', `<a-button size="${size}"><a-button-label data-sample></a-button-label></a-button>`]),
+  ['Paddingless Button', 'No outer block padding to reclaim', '<a-button size="small" priority="quaternary" paddingless><a-button-label data-sample></a-button-label></a-button>'],
+  ['Select trigger · small', 'Button label has its optical padding removed', '<a-select-field size="small"><a-button size="small"><a-button-label data-sample></a-button-label><a-select-chevron><a-icon shape="chevron-down"></a-icon></a-select-chevron></a-button></a-select-field>'],
+  ['Faceted Select summary', 'Separate ellipsis box', '<a-select-faceted-summary data-sample></a-select-faceted-summary>'],
+  ...['small', 'medium', 'large'].map(size => [`Tag · ${size}`, 'Inner label/value and outer pill both clip', `<a-tag size="${size}"><a-tag-label data-sample></a-tag-label><a-tag-value data-sample></a-tag-value></a-tag>`]),
+  ['Steps · small', 'Nested label and hint clip independently', '<a-steps><a-tabs data-steps size="small"><a-tab value="one"><a-step-marker>1</a-step-marker><a-step-desc><a-tab-label data-sample></a-tab-label><a-step-hint data-sample></a-step-hint></a-step-desc></a-tab></a-tabs></a-steps>'],
+  ['Expander summary', '15px / 20px · summary clips inside header padding', '<a-expander><a-expander-summary data-sample></a-expander-summary><a-expander-details>Details</a-expander-details></a-expander>'],
+  ['Expander heading', '28px / 32px · tall heading glyphs', '<a-expander><a-expander-summary level="1" data-sample></a-expander-summary><a-expander-details>Details</a-expander-details></a-expander>'],
+  ['Text · small · one line', '13px / 16px · line clamp', '<a-text size="small" truncate="1" data-sample></a-text>'],
+  ['Text · two lines', '15px / 20px · first and last line edges', '<a-text truncate="2" data-sample data-multiline></a-text>'],
+  ['Title · level 1', '28px / 32px · one-line clamp', '<a-title level="1" truncate data-sample></a-title>'],
+  ['Title · level 6', '13px / 16px · one-line clamp', '<a-title level="6" truncate data-sample></a-title>'],
+  ['Input · small', 'Native input painting inside the shadow field', '<a-input size="small" aria-label="Clipping sample" data-sample-input></a-input>'],
+  ['Input button · small', 'Clipped value span inside the shadow button', '<a-input button size="small" aria-label="Clipping sample" data-sample-input></a-input>'],
+  ['Textarea · two rows', 'Native multiline control with vertical scrolling', '<a-input rows="2" size="small" aria-label="Clipping sample" data-sample-input></a-input>'],
+  ['Native Select · small', 'Browser-specific trigger painting; open to inspect options', '<select data-anta size="small" aria-label="Clipping sample"><button><selectedcontent></selectedcontent><a-icon shape="chevron-down"></a-icon></button><option data-sample></option></select>'],
+]
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Text clipping lab · Anta</title>
+    <link rel="stylesheet" href={antaStylesheet} />
+    <link rel="stylesheet" href="/themes/antithesis.css" />
+    <link rel="stylesheet" href="/themes/fonts-antithesis.css" />
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">Anta / typography inspection</p>
+      <h1>Text clipping lab</h1>
+      <p>Compare the shipped styles with the same text allowed to paint outside its box. Red outlines mark text boxes. Look for flat cuts through accents and descenders.</p>
+      <div class="controls">
+        <label>Font<select data-anta id="font"><option value="reference">Antithesis reference</option><option value="Arial, sans-serif">Arial</option><option value="Georgia, serif">Georgia</option><option value="Times New Roman, serif">Times New Roman</option><option value="system-ui, sans-serif">System UI</option><option value="monospace">Monospace</option></select></label>
+        <label>Text<select data-anta id="preset"><option value="accents">Accents + descenders</option><option value="vietnamese">Vietnamese</option><option value="marks" selected>Combining marks (stress test)</option><option value="arabic">Arabic</option><option value="devanagari">Devanagari</option><option value="plain">Ordinary label</option></select></label>
+        <label>Magnification<select data-anta id="zoom"><option value="1">100%</option><option value="2">200%</option><option value="4" selected>400%</option><option value="6">600%</option></select></label>
+        <a-button id="outlines" role="button" tabindex="0" aria-pressed="true"><a-button-label>Text outlines: on</a-button-label></a-button>
+      </div>
+      <label class="custom">Custom text<input data-anta id="sample-text" value="Ấ Ë̄ g̣̱ ỵ" /></label>
+      <p class="note">Magnification enlarges the actual components; horizontal scrolling is expected. Browser zoom (⌘+ / Ctrl+) also works. Fonts rerasterize at each zoom level, so check 100% too. A font may fit cleanly; the stress test intentionally pushes beyond typical labels.</p>
+      <p class="note" id="font-status" aria-live="polite">Loading reference fonts…</p>
+    </header>
+    <main id="lab" data-outlines="true">
+      {cases.map(([title, detail, markup]) => <section>
+        <div class="case-heading"><h2>{title}</h2><p>{detail}</p></div>
+        <div class="pair">
+          {['current', 'unclipped'].map(mode => <div class="column">
+            <div class="caption">{mode === 'current' ? 'Current styles' : 'Overflow visible · diagnostic'}<output></output></div>
+            <div class="viewport"><div class:list={['stage', mode]}><div class="specimen" set:html={markup} /></div></div>
+          </div>)}
+        </div>
+      </section>)}
+    </main>
+    <footer>The diagnostic column only relaxes clipping; it is not a proposed fix. Native input/select painting may still clip internally. Component source styles are unchanged.</footer>
+  </body>
+</html>
+<style>
+  :global(body) { margin: 0; background: #faf9f7; color: #29252d; font-family: system-ui, sans-serif; }
+  header, main, footer { max-width: 1440px; margin-inline: auto; padding: 28px; }
+  header { padding-bottom: 12px; }
+  h1 { font: 600 32px/1.2 system-ui; margin: 8px 0 14px; }
+  p { max-width: 850px; margin: 8px 0; font-size: 14px; line-height: 1.5; }
+  .eyebrow { font-size: 12px; color: #716477; }
+  .controls { display: flex; gap: 18px; flex-wrap: wrap; align-items: end; margin-block: 20px 14px; }
+  label { display: grid; gap: 6px; font-size: 12px; }
+  select { min-width: 150px; }
+  .custom { max-width: 520px; }
+  .note { color: #716477; font-size: 12px; }
+  main { padding-top: 0; }
+  section { border-top: 1px solid #ded8df; padding-block: 22px; }
+  .case-heading { display: flex; gap: 16px; flex-wrap: wrap; align-items: baseline; margin-bottom: 12px; }
+  h2 { font: 600 16px/1.3 system-ui; margin: 0; }
+  .case-heading p { font-size: 12px; color: #716477; margin: 0; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .column { min-width: 0; }
+  .caption { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: #716477; margin-bottom: 8px; }
+  .viewport { overflow: auto; border: 1px solid #e4dfe5; background: white; min-height: 170px; }
+  .stage { zoom: var(--inspection-zoom, 4); padding: 12px; width: 304px; min-height: 48px; box-sizing: content-box; }
+  .specimen { width: 280px; }
+  :global(.stage [data-sample]) { unicode-bidi: plaintext; }
+  :global(#lab[data-outlines="true"] [data-sample]) { outline: 0.5px solid #d92d53; outline-offset: 0; }
+  :global(.stage.unclipped [data-sample]),
+  :global(.stage.unclipped a-tag),
+  :global(.stage.unclipped a-tabs),
+  :global(.stage.unclipped selectedcontent) { overflow: visible !important; }
+  :global(.stage.unclipped a-text[truncate]),
+  :global(.stage.unclipped a-title[truncate]) { display: block; -webkit-line-clamp: unset; }
+  :global(.stage.unclipped a-input::part(input)),
+  :global(.stage.unclipped a-input::part(input-label)) { overflow: visible; }
+  :global(.stage a-menu-item),
+  :global(.stage a-tabs),
+  :global(.stage a-button),
+  :global(.stage a-select-field),
+  :global(.stage a-input) { max-width: 100%; }
+  footer { font-size: 12px; color: #716477; }
+  @media (max-width: 760px) { .pair { grid-template-columns: 1fr; } header, main, footer { padding-inline: 16px; } }
+</style>
+<script>
+  import '@antadesign/anta/elements'
+  const lab = document.querySelector<HTMLElement>('#lab')!
+  const text = document.querySelector<HTMLInputElement>('#sample-text')!
+  const presets: Record<string, string> = {
+    accents: 'ÁÉÎŶ Ågjpqý', vietnamese: 'ẤẴỄỘ ựợỵ gj', marks: 'A\u0302\u0301 E\u0308\u0304 g\u0323\u0331 y\u0323',
+    arabic: 'مُحَمَّد العَرَبِيَّة', devanagari: 'हिन्दी दृष्टि क्रांति', plain: 'Typography settings',
+  }
+  function measure() {
+    for (const section of lab.querySelectorAll('section')) {
+      for (const column of section.querySelectorAll('.column')) {
+        const specimen = column.querySelector('.specimen')!
+        const element = specimen.firstElementChild as HTMLElement
+        const label = specimen.querySelector<HTMLElement>('[data-sample]')
+        const style = getComputedStyle(label ?? element)
+        column.querySelector('output')!.textContent = `${style.fontSize}/${style.lineHeight} · ${Math.round(element.offsetHeight * 10) / 10}px high`
+      }
+    }
+  }
+  function update() {
+    for (const sample of lab.querySelectorAll<HTMLElement>('[data-sample]')) {
+      sample.textContent = sample.hasAttribute('data-multiline') ? `${text.value} ${text.value} ${text.value} ${text.value}` : text.value
+    }
+    for (const input of lab.querySelectorAll<HTMLElement & { value: string }>('[data-sample-input]')) input.value = text.value
+    requestAnimationFrame(measure)
+  }
+  document.querySelector('#preset')!.addEventListener('change', event => {
+    text.value = presets[(event.target as HTMLSelectElement).value]; update()
+  })
+  text.addEventListener('input', update)
+  document.querySelector('#zoom')!.addEventListener('change', event => {
+    lab.style.setProperty('--inspection-zoom', (event.target as HTMLSelectElement).value); requestAnimationFrame(measure)
+  })
+  document.querySelector('#font')!.addEventListener('change', event => {
+    const family = (event.target as HTMLSelectElement).value
+    for (const stage of lab.querySelectorAll<HTMLElement>('.stage')) {
+      if (family === 'reference') stage.style.removeProperty('--sans-serif')
+      else stage.style.setProperty('--sans-serif', family)
+      stage.style.fontFamily = 'var(--sans-serif)'
+    }
+    requestAnimationFrame(measure)
+  })
+  const outlines = document.querySelector('#outlines')!
+  function toggleOutlines() {
+    const on = lab.dataset.outlines !== 'true'
+    lab.dataset.outlines = String(on); outlines.setAttribute('aria-pressed', String(on))
+    outlines.querySelector('a-button-label')!.textContent = `Text outlines: ${on ? 'on' : 'off'}`
+  }
+  outlines.addEventListener('click', toggleOutlines)
+  for (const stage of lab.querySelectorAll<HTMLElement>('.stage')) stage.style.fontFamily = 'var(--sans-serif)'
+  update()
+  document.fonts.ready.then(() => {
+    document.querySelector('#font-status')!.textContent = document.fonts.check('14px "TT Interphases Pro Variable"')
+      ? 'Reference font loaded. Other scripts may use system fallback fonts.' : 'Reference font unavailable; the browser is using fallback fonts.'
+    measure()
+  })
+</script>

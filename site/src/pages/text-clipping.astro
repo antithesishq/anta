@@ -20,6 +20,13 @@ const cases = [
   ...sizes.map(size => [`Textarea · ${size} · two rows`, 'Native multiline control with vertical scrolling', `<a-input rows="2" size="${size}" aria-label="Clipping sample" data-sample-input></a-input>`]),
   ...sizes.map(size => [`Native Select · ${size}`, 'Browser-specific trigger painting; open to inspect options', `<select data-anta data-anta-size="${size}" aria-label="Clipping sample"><button><selectedcontent></selectedcontent><a-icon shape="chevron-down"></a-icon></button><option data-sample></option></select>`]),
 ]
+const groups = [
+  { value: 'button', label: 'Button', cases: cases.filter(([title]) => /^(Button|Paddingless Button) ·/.test(title)) },
+  { value: 'tabs', label: 'Tabs', cases: cases.filter(([title]) => title.startsWith('Tab ·')) },
+  { value: 'menu-item', label: 'Menu Item', cases: cases.filter(([title]) => title.startsWith('Menu item')) },
+  { value: 'other', label: 'Other components', cases: cases.filter(([title]) => !/^(Button ·|Paddingless Button ·|Tab ·|Menu item)/.test(title)) },
+]
+
 ---
 <!doctype html>
 <html lang="en">
@@ -48,7 +55,11 @@ const cases = [
       <p class="note" id="font-status" aria-live="polite">Loading reference fonts…</p>
     </header>
     <main id="lab" data-outlines="true">
-      {cases.map(([title, detail, markup]) => <section>
+      <a-tabs id="component-tabs" default-state="button" role="tablist" tabindex="0" aria-label="Component cases">
+        {groups.map(group => <a-tab value={group.value} role="tab"><a-tab-label>{group.label}</a-tab-label></a-tab>)}
+      </a-tabs>
+      {groups.map(group => <a-tabpanel value={group.value} role="tabpanel" tabindex="0">
+      {group.cases.map(([title, detail, markup]) => <section>
         <div class="case-heading"><h2>{title}</h2><p>{detail}</p></div>
         <div class="pair">
           {['current', 'unclipped'].map(mode => <div class="column">
@@ -57,6 +68,7 @@ const cases = [
           </div>)}
         </div>
       </section>)}
+      </a-tabpanel>)}
     </main>
     <footer>The diagnostic column only relaxes clipping; it is not a proposed fix. Native input/select painting may still clip internally. The current column uses the latest package build.</footer>
   </body>
@@ -74,6 +86,7 @@ const cases = [
   .custom { max-width: 520px; }
   .note { color: #716477; font-size: 12px; }
   main { padding-top: 0; }
+  #component-tabs { margin-bottom: 20px; }
   section { border-top: 1px solid #ded8df; padding-block: 22px; }
   .case-heading { display: flex; gap: 16px; flex-wrap: wrap; align-items: baseline; margin-bottom: 12px; }
   h2 { font: 600 16px/1.3 system-ui; margin: 0; }
@@ -115,6 +128,7 @@ const cases = [
   }
   function measure() {
     for (const section of lab.querySelectorAll('section')) {
+      if (!section.getClientRects().length) continue
       for (const column of section.querySelectorAll('.column')) {
         const specimen = column.querySelector('.specimen')!
         const element = specimen.firstElementChild as HTMLElement
@@ -157,6 +171,7 @@ const cases = [
   }
   outlines.addEventListener('click', toggleOutlines)
   for (const stage of lab.querySelectorAll<HTMLElement>('.stage')) stage.style.fontFamily = 'var(--sans-serif)'
+  document.querySelector('#component-tabs')!.addEventListener('change', () => requestAnimationFrame(measure))
   update()
   document.fonts.ready.then(() => {
     document.querySelector('#font-status')!.textContent = document.fonts.check('14px "TT Interphases Pro Variable"')

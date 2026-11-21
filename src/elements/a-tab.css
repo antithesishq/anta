@@ -73,10 +73,8 @@
       text-wrap: nowrap;
       white-space: nowrap;
 
-      /* 2px tighter than the type-scale leading (--_lh) so each tab sits 2px shorter
-         than the same-size Button, without re-pointing the shared 13/16·15/20·17/24
-         scale; the symmetric tab padding is untouched, so the height comment above holds. */
-      line-height: calc(var(--_lh) - 2px);
+      /* The full type-scale leading uses the 2px spare inside min-height. */
+      line-height: var(--_lh);
       padding-bottom: var(--_pb);
 
       &:has(> *) {

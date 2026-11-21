@@ -131,6 +131,9 @@
   }
   /* Ellipsis on the label wherever it sits — direct child or inside the column. */
   a-menu-item-label {
+    /* Extend the clipping box without moving text or growing the row. */
+    line-height: 18px;
+    margin-block: -1px;
     display: block;
     min-width: 0;
     overflow: hidden;
@@ -141,10 +144,10 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-block-start: 1px;
+    margin-block: 0 -1px;
     color: var(--menu-item-hint-color);
     font-size: 12px;
-    line-height: 15px;
+    line-height: 17px;
   }
 
   a-menu-item > a-icon,

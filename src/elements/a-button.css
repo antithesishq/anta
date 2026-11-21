@@ -61,13 +61,9 @@
     --button-bg-secondary-hover: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.15), oklch(from var(--_src) 0.44 0.01 h / 0.34));
     --button-bg-secondary-active: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.2), oklch(from var(--_src) 0.44 0.01 h / 0.44));
 
-    /* Type scale by size (small 13/16 · medium 15/20 · large 17/24); --_fs/--_lh
-       carry it. The label gets an optical `padding-bottom` (--_pb) that scales
-       with the font (0.5 / 1 / 1.5px) — Anta's glyphs sit slightly low in the
-       line-box, a font-metric offset that grows with size. Block padding derives
-       from --_pb so the two always sum to 8px, holding the box at
-       line-height + 8 → 24/28/32, matching the same-size Input. Icon-only
-       buttons are min-height-anchored separately, below. */
+    /* Labels add 2px of clipping clearance to the type scale. Their outer
+       padding absorbs it and the optical bottom padding, keeping 24/28/32px
+       control heights and the existing text position. */
     --_fs: 15px;
     --_lh: 20px;
     --_pb: 1px;
@@ -205,6 +201,10 @@
        just its children + padding. Paddingless quaternary opts out below. */
     min-height: 28px;
 
+    &:has(> a-button-label) {
+      --button-padding-y: calc((6px - var(--_pb)) / 2);
+    }
+
     & > a-button-label {
       display: inline-block;
       text-overflow: ellipsis;
@@ -213,10 +213,10 @@
       overflow: hidden;
       min-width: 0;
 
-      line-height: var(--_lh);
+      line-height: calc(var(--_lh) + 2px);
       /* Optically centers Anta's font (glyphs sit slightly low in the line-box —
          a font-metric offset that scales with size: 0.5 / 1 / 1.5px). The button
-         height math (above) absorbs --_pb so the box stays line-height + 8. */
+         outer padding absorbs --_pb and the extra label leading. */
       padding-bottom: var(--_pb);
 
       &:has(> *) {
@@ -343,6 +343,9 @@
       /* Inline link-style button: no box, so it must sit on the text baseline
          at its natural height rather than the size floor. */
       min-height: 0;
+
+      /* Keep the inline footprint while extending the label's clipping box. */
+      & > a-button-label { margin-block: -1px; }
 
       &[loading]::before {
         clip-path: inset(0 0 0 var(--button-loading-x-period) round min(var(--_radius), 3px));

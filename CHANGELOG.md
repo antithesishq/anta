@@ -12,6 +12,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Button](/button/), [Tabs](/tabs/), and [Menu item](/menu/) labels gain 2px of line height to reduce text clipping while preserving control heights and text alignment.
+
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.
 - [InputDate](/input-date/#manage-the-value) submits its ISO value through the visible Input instead of a hidden field. Disabled fields are omitted, and `form` supports association with a form elsewhere on the page.
 - Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.

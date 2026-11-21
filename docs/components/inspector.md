@@ -172,7 +172,9 @@ included; it's `120ch` by default, and `100%` fills the width. Style
 `a-inspector` and its rows, the `a-tree-*` tags described in
 [Tree's styling](./tree.md#styling), with plain CSS; unlayered rules override Anta's defaults without `!important`. A row's
 `data-type` is `node`, `text`, or `more`, and the row a cycle jumps to has
-`data-revealed` for a moment.
+`data-revealed` for a moment. The ⋯ button follows the value, because the
+Inspector sets Tree's `--tree-actions-align` to `start`; set it to `end` to pin
+⋯ to the row's end.
 
 The classes below identify demonstrations. Substitute your own selectors.
 
@@ -190,6 +192,14 @@ A tighter indent for deeply nested values. Keep it at 14px or more so the 12px d
 ```css
 a-inspector.inspector-tight {
   --inspector-indent: 14px;
+}
+```
+
+The ⋯ button pinned to the row's end, where it stays in one place however long the value is.
+
+```css
+a-inspector.inspector-pinned {
+  --tree-actions-align: end;
 }
 ```
 

@@ -185,34 +185,67 @@
   }
 
   /* ── Actions ──
-     They hold their space while hidden, so a label's cut doesn't move when
-     they appear. `visibility: hidden` also keeps them out of each row's
-     accessible name. The active row's actions stay visible but transparent
-     while the tree has focus, so Right can focus them; they're never Tab
-     stops. */
+     The container takes the rest of the row, and --tree-actions-align places
+     the buttons in it: `end` pins them to the row's end, `start` puts them
+     right after the label. It holds its space while hidden, so a label's cut
+     doesn't move when the actions appear. `visibility: hidden` also keeps them
+     out of each row's accessible name, and lets clicks reach the row. The
+     active row's actions stay visible but transparent while the tree has
+     focus, so Right can focus them; they're never Tab stops. */
   a-tree-actions {
     display: flex;
-    flex: none;
+    flex: 1 1 auto;
     align-items: center;
+    justify-content: var(--tree-actions-align, end);
     gap: 2px;
-    margin-inline-start: auto;
+    /* The row's line height, resolved here: a `1lh` read inside the button
+       would use the button's own line height. Rows with and without actions
+       stay the same height. */
+    height: var(--tree-action-size, 1lh);
     visibility: hidden;
     opacity: 0;
+  }
+
+  /* Anta buttons fill the container's height, as Input's actions fill the
+     field (a-input.css). Icon-only buttons stay square, so each theme's radius
+     gives its own shape: a rounded square in Antune, a circle in Antithesis.
+     No radius is set here. */
+  a-tree a-tree-actions > :is(a-button, button[data-anta], a[role="button"][data-anta]) {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    padding-block: 0;
+    justify-content: center;
+
+    /* One icon plus optional tooltip or copy helpers is an icon action. */
+    &:has(> a-icon:only-of-type):not(:has(> :not(a-icon, a-tooltip, a-copy))) {
+      aspect-ratio: 1;
+      width: auto;
+      padding-inline: 0;
+    }
   }
 
   a-tree:focus-within a-tree-item:state(active) > a-tree-row > a-tree-actions {
     visibility: visible;
   }
 
+  /* Hover, focus inside the actions, or keyboard focus on the row reveals
+     them. A mouse click focuses the row without :focus-visible, so the
+     actions don't flash on click. */
   a-tree-row:hover > a-tree-actions,
-  a-tree-actions:focus-within {
+  a-tree-actions:focus-within,
+  a-tree-item:focus-visible > a-tree-row > a-tree-actions,
+  a-tree:focus-visible a-tree-item:state(active) > a-tree-row > a-tree-actions {
     visibility: visible;
     opacity: 1;
   }
 
-  /* A touch screen has no hover, so actions always show. */
-  @media (hover: none) {
+  /* A touch screen has no hover, so actions always show, at least 24px for a
+     finger (the WCAG 2.2 minimum target size). Rows grow to fit there only.
+     The same touch query as a-tooltip.css. */
+  @media (hover: none) and (pointer: coarse) {
     a-tree-actions {
+      height: max(var(--tree-action-size, 1lh), 24px);
       visibility: visible;
       opacity: 1;
     }

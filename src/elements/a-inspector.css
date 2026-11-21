@@ -10,6 +10,11 @@
     --inspector-indent: 16px;
     --inspector-row-width: 120ch;
     --inspector-row-hover: color-mix(in oklch, var(--text-1) 6%, transparent);
+    /* The ⋯ button sits 12px after the value, square in the fixed row. The
+       tree inherits these, so set --tree-actions-align to `end` on the
+       Inspector to pin ⋯ to the row's end instead. */
+    --tree-actions-align: start;
+    --tree-action-size: var(--inspector-line-height);
 
     display: block;
     /* A row's text never wraps, so in a container that sizes the Inspector to
@@ -55,25 +60,23 @@
      indentation included, so a wide window keeps a margin on the right and
      every row still cuts at the same place. Every row ends at the Inspector's
      end, whatever its depth, so the container's width (100cqi) measures from
-     the start. The hover background still spans the row. */
+     the start. The hover background still spans the row. A size container
+     can't take its width from its content, so the Inspector fills its
+     container's width, as a block does in normal flow; in a container that
+     sizes children to their content, it would otherwise collapse to nothing. */
   a-inspector:is(:not([layout="inline"]), [open]) {
     container-type: inline-size;
+    width: 100%;
   }
 
   a-inspector:is(:not([layout="inline"]), [open]) a-tree-row {
     padding-inline-end: max(4px, 100cqi - var(--inspector-row-width));
   }
 
-  /* The ⋯ button sits just after the value, and fits the row's line. */
-  a-inspector a-tree-actions {
-    margin-inline-start: 12px;
-  }
 
-  a-inspector a-tree-actions > a-button {
-    min-height: 0;
-    height: var(--inspector-line-height);
-    padding-block: 0;
-    padding-inline: 3px;
+  /* 12px after the value, counting the row's gap between parts. */
+  a-inspector a-tree-actions {
+    padding-inline-start: calc(12px - var(--tree-gap));
   }
 
   a-inspector a-tree-actions a-icon {

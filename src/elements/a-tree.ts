@@ -218,11 +218,14 @@ export class ATreeElement extends HTMLElementBase {
     const path = event.composedPath()
     const row = this.#row(item)
     const actions = this.#actions(item)
-    if (actions && path.includes(actions)) {
+    // Only a click on an action control is an action. The container fills the
+    // rest of the row, so a click on its empty part is a click on the row.
+    const control = actions && path.find(node =>
+      isElement(node) && node !== actions && actions.contains(node) && node.matches(ACTION_SELECTOR)) as HTMLElement | undefined
+    if (actions && control) {
       // The control takes focus itself; the row still reads as current.
       this.#setActive(item, { focus: false, scroll: false })
-      const control = path.find(node => isElement(node) && actions.contains(node) && node.matches(ACTION_SELECTOR)) as HTMLElement | undefined
-      if (control?.getAttribute('aria-haspopup') === 'menu' && !control.matches(DISABLED_SELECTOR)) this.#openMenuAt(item, control)
+      if (control.getAttribute('aria-haspopup') === 'menu' && !control.matches(DISABLED_SELECTOR)) this.#openMenuAt(item, control)
       return
     }
     // Only the row's own line toggles, not its after line or its children's.

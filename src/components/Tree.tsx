@@ -49,8 +49,10 @@ export interface TreeItem extends OptionPresentationProps {
 export interface TreeAction {
   /** The button's icon. */
   icon: IconShape
-  /** Accessible name, and the tooltip. */
+  /** Accessible name, announced by screen readers. */
   label: string
+  /** Tooltip shown on hover and focus. Leave it out for none. */
+  tooltip?: React.ReactNode
   /** Pressing the button, by pointer, Enter, or Space. It doesn't open or
    *  close the row. */
   onClick?: (event: Event) => void
@@ -274,7 +276,7 @@ export const Tree = ({
               disabled={action.disabled}
               onClick={action.onClick}
             >
-              <Tooltip>{action.label}</Tooltip>
+              {action.tooltip != null && <Tooltip>{action.tooltip}</Tooltip>}
             </Button>
           ))}
         </a-tree-actions>

@@ -100,7 +100,7 @@ const jsxApp = `
     children: entry.entries && toItems(entry.entries),
     indicator: entry.entries ? undefined : React.createElement(Icon, { shape: 'file' }),
     actions: entry.entries ? [
-      { icon: 'file', label: 'New file', onClick: () => window.log.push('new:' + entry.path) },
+      { icon: 'file', label: 'New file', tooltip: 'New file', onClick: () => window.log.push('new:' + entry.path) },
       { icon: 'more', label: 'More actions', opensMenu: true },
     ] : undefined,
     onClick: entry.entries ? undefined : () => window.log.push('open:' + entry.path),
@@ -161,6 +161,7 @@ before(async () => {
   })
   for (const file of jsx.outputFiles) if (file.path.endsWith('.js')) assets.set('/jsx.js', file.text)
   assets.set('/axe.js', await readFile(require.resolve('axe-core/axe.min.js'), 'utf8'))
+  assets.set('/antithesis.css', await readFile(resolve(source, 'theme-antithesis.css'), 'utf8'))
   assets.set('/boot.js', `window.cspViolations=[]; document.addEventListener('securitypolicyviolation', e=>window.cspViolations.push(e.effectiveDirective));`)
   server = createServer((req, res) => {
     res.setHeader('Content-Security-Policy', policy)
@@ -182,8 +183,8 @@ after(async () => {
   if (server) await new Promise(resolve => server.close(resolve))
 })
 
-async function pageFor(t, engine, { mode = 'granular', kind = 'raw', props = {} } = {}) {
-  const context = await browsers.get(engine).newContext({ reducedMotion: 'reduce' })
+async function pageFor(t, engine, { mode = 'granular', kind = 'raw', props = {}, touch = false } = {}) {
+  const context = await browsers.get(engine).newContext({ reducedMotion: 'reduce', ...(touch ? { hasTouch: true, isMobile: true } : {}) })
   const page = await context.newPage()
   page.setDefaultTimeout(10000)
   const errors = []
@@ -500,6 +501,8 @@ for (const engine of engines) {
     assert.equal(await buttons.count(), 2)
     assert.deepEqual(await buttons.evaluateAll(list => list.map(button => button.getAttribute('tabindex'))), ['-1', '-1'])
     assert.equal(await buttons.nth(1).getAttribute('aria-haspopup'), 'menu')
+    // An action shows the tooltip it's given, and none without one.
+    assert.deepEqual(await buttons.evaluateAll(list => list.map(button => button.querySelector('a-tooltip')?.textContent ?? null)), ['New file', null])
     await focusTree(page)
     await page.keyboard.press('ArrowRight')
     assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'New file')
@@ -535,6 +538,80 @@ for (const engine of engines) {
     // A click on another row's action still focuses that action.
     await page.locator('a-tree-item[item-id="src"] > a-tree-row > a-tree-actions > a-button').first().click()
     assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'New file')
+  })
+
+  // ─── Actions ──────────────────────────────────────────────────────────────
+
+  const actionsOf = id => `a-tree-item[item-id="${id}"] > a-tree-row > a-tree-actions`
+  const opacity = (page, id) => page.locator(actionsOf(id)).evaluate(actions => getComputedStyle(actions).opacity)
+
+  test.fast(`${name}: a click on the empty part of the actions toggles the row; a click on a button doesn't`, async t => {
+    const page = await pageFor(t, engine, { kind: 'jsx' })
+    await row(page, 'src/lib').hover()
+    const box = await page.locator(actionsOf('src/lib')).boundingBox()
+    const first = await page.locator(`${actionsOf('src/lib')} > a-button`).first().boundingBox()
+    assert.ok(first.x - box.x > 20, 'the actions are not pinned to the row end')
+    await page.mouse.click(box.x + 4, box.y + box.height / 2)
+    await page.waitForFunction(() => document.querySelector('a-tree-item[item-id="src/lib/util.ts"]'))
+    await page.locator(`${actionsOf('src/lib')} > a-button`).first().click()
+    await page.waitForFunction(() => window.log.includes('new:src/lib'))
+    assert.ok((await shown(page)).includes('src/lib/util.ts'), 'a button click toggled the row')
+  })
+
+  test.fast(`${name}: keyboard focus on a row shows its actions; a mouse click doesn't`, async t => {
+    const page = await pageFor(t, engine, { kind: 'jsx' })
+    await focusTree(page)
+    assert.equal(await focused(page), 'src')
+    assert.equal(await opacity(page, 'src'), '1', 'keyboard focus left the actions hidden')
+    await row(page, 'src/lib').locator('a-tree-value').click()
+    await page.mouse.move(0, 0)
+    assert.equal(await focused(page), 'src/lib')
+    assert.equal(await opacity(page, 'src/lib'), '0', 'a mouse click showed the actions')
+    assert.equal(await opacity(page, 'src'), '0')
+  })
+
+  for (const theme of ['antune', 'antithesis']) {
+    test.fast(`${name} ${theme}: action buttons are square and fill the row's line, so rows keep one height`, async t => {
+      const page = await pageFor(t, engine, { kind: 'jsx' })
+      if (theme === 'antithesis') {
+        await page.evaluate(() => new Promise(done => {
+          const link = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: '/antithesis.css', onload: done })
+          document.head.append(link)
+        }))
+      }
+      const sizes = await page.evaluate(() => {
+        const button = document.querySelector('a-tree-item[item-id="src"] > a-tree-row > a-tree-actions > a-button')
+        const rect = button.getBoundingClientRect()
+        const line = parseFloat(getComputedStyle(document.querySelector('a-tree-item[item-id="src"] > a-tree-row')).lineHeight)
+        const height = id => document.querySelector(`a-tree-item[item-id="${id}"] > a-tree-row`).getBoundingClientRect().height
+        return { width: rect.width, height: rect.height, line, radius: parseFloat(getComputedStyle(button).borderTopLeftRadius), withActions: height('src'), without: height('src/index.ts') }
+      })
+      assert.ok(Math.abs(sizes.width - sizes.height) < 0.5, `the button is ${sizes.width}x${sizes.height}, not square`)
+      assert.ok(Math.abs(sizes.height - sizes.line) < 0.5, `the button is ${sizes.height}px in a ${sizes.line}px line`)
+      assert.ok(Math.abs(sizes.withActions - sizes.without) < 0.5, `rows are ${sizes.withActions}px with actions and ${sizes.without}px without`)
+      // The theme's own radius: a circle in Antithesis, Anta's 4px elsewhere.
+      if (theme === 'antithesis') assert.ok(sizes.radius >= sizes.width / 2, `the radius ${sizes.radius}px doesn't make a circle`)
+      else assert.equal(sizes.radius, 4)
+    })
+  }
+
+  // Only Chromium emulates a mobile device's pointer and hover media features.
+  if (engine === chromium) test.fast(`${name}: on a touch screen, actions always show and are at least 24px`, async t => {
+    const page = await pageFor(t, engine, { kind: 'jsx', touch: true })
+    assert.ok(await page.evaluate(() => matchMedia('(hover: none) and (pointer: coarse)').matches), 'the emulated device is not a touch screen')
+    const size = await page.locator(`${actionsOf('src')} > a-button`).first().evaluate(button => button.getBoundingClientRect().height)
+    assert.ok(size >= 24, `the button is ${size}px`)
+    assert.equal(await opacity(page, 'src/lib'), '1')
+  })
+
+  test.fast(`${name}: --tree-actions-align: start puts the actions right after the label`, async t => {
+    const page = await pageFor(t, engine, { kind: 'jsx' })
+    await page.evaluate(() => document.querySelector('a-tree').style.setProperty('--tree-actions-align', 'start'))
+    const gap = await page.evaluate(() => {
+      const line = document.querySelector('a-tree-item[item-id="src"] > a-tree-row')
+      return line.querySelector('a-tree-actions > a-button').getBoundingClientRect().left - line.querySelector('a-tree-value').getBoundingClientRect().right
+    })
+    assert.ok(gap >= 0 && gap < 12, `the actions start ${gap}px after the label`)
   })
 
   test.fast(`${name}: renderLabel and an end indicator replace the defaults`, async t => {

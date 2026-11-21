@@ -69,8 +69,11 @@ export function ActionsDemo() {
     label: entry.name,
     children: entry.entries && toItems(entry.entries),
     indicator: entry.entries ? undefined : <Icon shape="file" />,
+    // Two actions on every row, pinned to the row's end.
     actions: [
-      ...(entry.entries ? [{ icon: 'plus' as const, label: 'New file', onClick: () => setLog(`New file in ${entry.path}`) }] : []),
+      entry.entries
+        ? { icon: 'plus' as const, label: 'New file', tooltip: 'New file', onClick: () => setLog(`New file in ${entry.path}`) }
+        : { icon: 'copy' as const, label: 'Copy path', tooltip: 'Copy path', onClick: () => setLog(`Copied ${entry.path}`) },
       { icon: 'more' as const, label: 'More actions', opensMenu: true },
     ],
   }))

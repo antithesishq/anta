@@ -577,7 +577,8 @@ for (const engine of engines) {
       inspector: document.querySelector('a-inspector').getBoundingClientRect().width,
       clipped: (value => value.scrollWidth > value.clientWidth)(document.querySelector('a-tree-item[item-id="r:1.0"] a-inspector-value')),
     }))
-    assert.ok(sizes.inspector <= sizes.mount, `the Inspector is ${sizes.inspector}px in a ${sizes.mount}px container`)
+    // It fills the container: not wider, and not collapsed to its content or to nothing.
+    assert.ok(Math.abs(sizes.inspector - sizes.mount) < 1, `the Inspector is ${sizes.inspector}px in a ${sizes.mount}px container`)
     assert.ok(sizes.clipped, 'the value was not clipped')
   })
 
@@ -612,6 +613,28 @@ for (const engine of engines) {
     assert.deepEqual(clipped.map(row => row.id), ['r:1.0', 'r:1.1', 'r:1.2'])
     for (const row of clipped) assert.ok(Math.abs(row.end - sizes.limit) < 1.5, `${row.id} ends at ${row.end}, not ${sizes.limit}`)
     for (const row of sizes.rows) assert.equal(Math.round(row.right), Math.round(sizes.inspector.right), `${row.id} is narrower than the Inspector`)
+  })
+
+  test.fast(`${name}: ⋯ sits 12px after the value, square in the row, and --tree-actions-align: end pins it to the row's end`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page)
+    const measure = () => page.evaluate(() => {
+      const line = document.querySelector('a-tree-item[item-id="r:1.0"] > a-tree-row')
+      const button = line.querySelector('a-tree-actions > a-button').getBoundingClientRect()
+      const value = line.querySelector('a-inspector-value').getBoundingClientRect()
+      const box = line.getBoundingClientRect()
+      return { gap: button.left - value.right, width: button.width, height: button.height, toEnd: box.right - parseFloat(getComputedStyle(line).paddingInlineEnd) - button.right }
+    })
+    const start = await measure()
+    assert.ok(Math.abs(start.gap - 12) < 1, `⋯ starts ${start.gap}px after the value`)
+    assert.deepEqual([start.width, start.height], [18, 18])
+    // ⋯ has no tooltip, but keeps its accessible name.
+    const button = page.locator('a-tree-item[item-id="r:1.0"] > a-tree-row > a-tree-actions > a-button')
+    assert.equal(await button.locator('a-tooltip').count(), 0, '⋯ has a tooltip')
+    assert.equal(await button.getAttribute('aria-label'), 'More actions')
+    await page.evaluate(() => document.querySelector('a-inspector').style.setProperty('--tree-actions-align', 'end'))
+    const end = await measure()
+    assert.ok(Math.abs(end.toEnd) < 1, `⋯ ends ${end.toEnd}px before the row's end`)
   })
 
   test.fast(`${name}: a closed inline summary counts its spacing and stays inline`, async t => {

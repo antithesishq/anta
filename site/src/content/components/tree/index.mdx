@@ -80,10 +80,18 @@ whether it's open.
 
 ## Add actions and a context menu
 
-An item's `actions` are buttons at the end of its row. They show on hover and on
-the focused row, and Right reaches them from the keyboard, so they never add Tab
-stops. Give each one an `icon` and a `label`, which names it for screen readers
-and shows as its tooltip.
+An item's `actions` are buttons at the end of its row. They show on hover and
+when the row has keyboard focus, and Right reaches them from the keyboard, so
+they never add Tab stops. On a touch screen they always show. Give each one an
+`icon` and a `label`, which names it for screen readers. Add a `tooltip` to show
+text on hover and focus.
+
+Actions are Anta buttons, sized to the row's line so they don't make it taller,
+and at least 24px on a touch screen. Icon-only actions stay square, so each theme
+gives them its own shape. Clicking the empty part of a row, beside its actions,
+still opens or closes it. `--tree-actions-align` places the actions: `end`, the
+default, pins them to the row's end, and `start` puts them right after the
+label.
 
 Place a `<Menu context>` right after the Tree to give every row a context menu.
 It opens on right-click, Shift+F10, or the Menu key, and from an action with
@@ -216,6 +224,19 @@ A hand-built tree opens and closes with no script:
 With `tabindex="0"` on `a-tree`, the tree is the Tab stop and points at the
 current item. The JSX `Tree` instead gives each item a moving `tabindex`. Put
 row buttons in an `a-tree-actions` child of `a-tree-row`, with `tabindex="-1"`.
+Add `data-anta` to a native `<button>` there for Anta's button styles and the
+same sizing as the JSX `Tree`'s actions:
+
+```html
+<a-tree-actions>
+  <button type="button" data-anta priority="tertiary" tabindex="-1" aria-label="New file">
+    <a-icon shape="plus" aria-hidden="true"></a-icon>
+  </button>
+</a-tree-actions>
+```
+
+The JSX `Tree` renders actions with `Button`, so a page that registers elements
+one at a time also registers `a-button`, `a-icon`, and `a-tooltip`.
 
 | Event | Fired on | Detail | Sent when |
 | --- | --- | --- | --- |
@@ -233,7 +254,9 @@ Set `data-focus="<item-id>#<n>"` on `a-tree` to focus an item.
 Tree uses the page's font and sizes in `em`. `--tree-indent` sets the indent per
 level, `--tree-row-padding` the space above and below each row,
 `--tree-indicator-size` the mark's size, `--tree-gap` the space between a row's
-parts, and `--tree-row-hover` the background of a hovered or focused row. Style
+parts, and `--tree-row-hover` the background of a hovered or focused row.
+`--tree-action-size` sets the actions' size, the row's line height by default,
+and `--tree-actions-align` places them in the row. Style
 the `a-tree-item`, `a-tree-row`, `a-tree-value`, `a-tree-indicator`,
 `a-tree-actions`, `a-tree-group`, `a-tree-before`, and `a-tree-after` tags with
 plain CSS. An item shows its state as `:state(open)` or `:state(closed)`, and

@@ -12,7 +12,7 @@ changes are not listed.
 
 ### Fixed
 
-- [Button](/button/) and [Tabs](/tabs/) labels gain 2px of line height to reduce text clipping while preserving control heights and text alignment.
+- [Button](/button/) and [Tabs](/tabs/) labels use matching 18/22/26px line heights to reduce text clipping while preserving control heights and text alignment.
 - [Menu item](/menu/) labels and hints gain 2px of line height. Rows grow to accommodate the text without overlapping line boxes.
 
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.

@@ -44,14 +44,10 @@
     white-space: nowrap;
     text-wrap: nowrap;
 
-    /* Height is prescribed, not derived: `min-height` = --tab-height (24/28/32), the same
-       scale as Button's min-height, and align-items:center centers the label. Block padding
-       mirrors Button's `(8px − --_pb)/2` — for a single-line label it stays under the
-       min-height floor, so the box is exactly --tab-height (and a strip, also unpadded,
-       matches it at every priority); once a label wraps, it gives the extra lines their
-       vertical breathing room. */
+    /* Match Button label leading and absorb its extra 2px in block padding,
+       preserving 24/28/32px heights and the existing optical text position. */
     min-height: var(--tab-height);
-    padding-block: calc((8px - var(--_pb)) / 2);
+    padding-block: calc((6px - var(--_pb)) / 2);
     padding-inline: var(--tab-padding-x);
 
     /* The text/icon `color` is INSTANT (not transitioned) — hover/select recolor the
@@ -73,8 +69,7 @@
       text-wrap: nowrap;
       white-space: nowrap;
 
-      /* The full type-scale leading uses the 2px spare inside min-height. */
-      line-height: var(--_lh);
+      line-height: calc(var(--_lh) + 2px);
       padding-bottom: var(--_pb);
 
       &:has(> *) {

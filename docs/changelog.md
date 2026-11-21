@@ -12,6 +12,27 @@ changes are not listed.
 
 ### Fixed
 
+- [Progress](/progress/) labels and hints gain 2px of line height. Reduced padding preserves single-line bar heights and text alignment.
+
+- [Checkbox](/checkbox/), [Switch](/switch/), and [RadioGroup](/radio/) option labels match Input, Text, Button, and Tabs at 13/18, 15/22, and 17/26px. Their hints match Input at 12/16, 14/20, and 16/24px, without an extra label-to-hint gap.
+
+- [InputTime](/input-time/) matches Input’s text and hint typography while preserving field heights. Input and InputTime hints sit 2px below the field, while the label-to-field gap remains 4px.
+
+- [RadioGroup](/radio/) descriptions use the same typography and label-to-hint spacing as option hints at every size.
+
+- Reset headings match Title’s font sizes and line heights at all six levels.
+
+- [Text](/text/), [Title](/title/), and [Expander](/expander/) summaries gain 2px of line height at every size or level. Expander reclaims header padding to preserve single-line header heights.
+
+- [Steps](/steps/) labels match Tab line heights, and hints match Input typography in every theme. Antithesis removes the label-to-hint gap.
+
+- [Tag](/tag/) labels use 15/18/20px line heights for small/medium/large, with reduced vertical padding to preserve tag heights.
+
+- [Input](/input/) and [Select](/select/) use 18/22/26px text line heights. Multiline Inputs use 3px vertical padding to align their first line with single-line fields.
+
+- [Button](/button/) and [Tabs](/tabs/) labels use matching 18/22/26px line heights to reduce text clipping while preserving control heights and text alignment.
+- [Menu item](/menu/) labels and hints gain 2px of line height. Rows grow to accommodate the text without overlapping line boxes.
+
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.
 - [InputDate](/input-date/#manage-the-value) submits its ISO value through the visible Input instead of a hidden field. Disabled fields are omitted, and `form` supports association with a form elsewhere on the page.
 - Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.

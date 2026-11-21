@@ -16,12 +16,14 @@
 
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
+    row-gap: 2px;
     outline: none;
   }
 
   a-input::part(label) {
     display: none;
+    /* Keep the label-to-field gap at 4px while hints sit 2px below the field. */
+    margin-block-end: 2px;
     color: var(--input-label);
     font-family: var(--sans-serif);
     font-size: var(--_fs);
@@ -200,7 +202,7 @@
   a-input:not(:defined) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
+    row-gap: 2px;
   }
   a-input:not(:defined) > [slot="leading"],
   a-input:not(:defined) > [slot="trailing"],
@@ -217,6 +219,7 @@
      both the string and node label forms track.) */
   a-input:not(:defined) > [slot="label"] {
     display: block;
+    margin-block-end: 2px;
     color: var(--input-label);
     font-family: var(--sans-serif);
     font-size: 15px;

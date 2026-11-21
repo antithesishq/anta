@@ -218,7 +218,6 @@
     color: var(--checkbox-hint-color);
     font-size: var(--checkbox-hint-fs);
     line-height: var(--checkbox-hint-lh);
-    margin-block-start: 2px;
   }
 
   /* `tone` always sets the checked mark fill. `tone-scope="selected"` keeps the

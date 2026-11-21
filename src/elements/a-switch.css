@@ -230,7 +230,6 @@
     color: var(--switch-hint-color);
     font-size: var(--switch-hint-fs);
     line-height: var(--switch-hint-lh);
-    margin-block-start: 2px;
   }
 
   a-switch[tone="brand"] {

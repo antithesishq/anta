@@ -5,9 +5,10 @@ type Props = {
   kind: 'checkbox' | 'switch' | 'radio'
   size: 'small' | 'medium' | 'large'
   withHint: boolean
+  withGroupHint?: boolean
 }
 
-export default function ClippingChoice({ kind, size, withHint }: Props) {
+export default function ClippingChoice({ kind, size, withHint, withGroupHint }: Props) {
   const [sample, setSample] = useState('Ấ Ë̄ g̣̱ ỵ')
   useEffect(() => {
     const text = document.querySelector<HTMLInputElement>('#sample-text')
@@ -26,7 +27,7 @@ export default function ClippingChoice({ kind, size, withHint }: Props) {
     <div data-choice-preview>
       {kind === 'checkbox' ? <Checkbox size={size} label={label} hint={hint} />
         : kind === 'switch' ? <Switch size={size} label={label} hint={hint} />
-        : <RadioGroup size={size} aria-label="Radio clipping sample" options={[{ value: 'sample', label, hint }]} />}
+        : <RadioGroup size={size} aria-label="Radio clipping sample" label={withGroupHint ? <span data-choice-group-label>{sample}</span> : undefined} hint={withGroupHint ? sample : undefined} options={[{ value: 'sample', label, hint }]} />}
     </div>
   )
 }

@@ -12,9 +12,11 @@ changes are not listed.
 
 ### Fixed
 
-- [Checkbox](/checkbox/), [Switch](/switch/), and [RadioGroup](/radio/) option labels match Input, Text, Button, and Tabs at 13/18, 15/22, and 17/26px. Their hints match Input at 12/16, 14/20, and 16/24px.
+- [Checkbox](/checkbox/), [Switch](/switch/), and [RadioGroup](/radio/) option labels match Input, Text, Button, and Tabs at 13/18, 15/22, and 17/26px. Their hints match Input at 12/16, 14/20, and 16/24px, without an extra label-to-hint gap.
 
-- [InputTime](/input-time/) matches Input’s text and hint typography while preserving field heights.
+- [InputTime](/input-time/) matches Input’s text and hint typography while preserving field heights. Input and InputTime hints sit 2px below the field, while the label-to-field gap remains 4px.
+
+- [RadioGroup](/radio/) descriptions use the same typography and label-to-hint spacing as option hints at every size.
 
 - Reset headings match Title’s font sizes and line heights at all six levels.
 

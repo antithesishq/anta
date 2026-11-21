@@ -24,6 +24,7 @@ const cases = [
     kind === 'Radio' ? 'Actual RadioGroup option · group size cascade' : `Actual ${kind} component`,
     '',
   ]))),
+  ...sizes.map(size => [`Radio · ${size} · group hint`, 'Actual RadioGroup label and overall hint above its options', '']),
 ]
 const groups = [
   { value: 'text', label: 'Text', cases: cases.filter(([title]) => title.startsWith('Text ·')) },
@@ -82,7 +83,7 @@ const groups = [
             <div class="caption">{mode === 'current' ? title.startsWith('Progress proposed') ? 'Proposed styles · preview only' : 'Current styles' : 'Overflow visible · diagnostic'}<output></output></div>
             <div class="viewport"><div class:list={['stage', mode]}><div class="specimen">
               {/^(Checkbox|Switch|Radio) ·/.test(title)
-                ? <ClippingChoice kind={title.split(' · ')[0].toLowerCase() as 'checkbox' | 'switch' | 'radio'} size={title.split(' · ')[1] as 'small' | 'medium' | 'large'} withHint={title.endsWith(' · with hint')} client:only="preact" />
+                ? <ClippingChoice kind={title.split(' · ')[0].toLowerCase() as 'checkbox' | 'switch' | 'radio'} size={title.split(' · ')[1] as 'small' | 'medium' | 'large'} withHint={title.endsWith(' · with hint')} withGroupHint={title.endsWith(' · group hint')} client:only="preact" />
                 : <Fragment set:html={markup} />}
             </div></div></div>
           </div>)}
@@ -118,10 +119,10 @@ const groups = [
   .stage { zoom: var(--inspection-zoom, 4); padding: 12px; width: 304px; min-height: 48px; box-sizing: content-box; }
   .specimen { width: 280px; }
   :global(.stage [data-sample]) { unicode-bidi: plaintext; }
-  :global(.stage :is([data-choice-label], [data-choice-hint])) { display: block; unicode-bidi: plaintext; }
+  :global(.stage :is([data-choice-label], [data-choice-hint], [data-choice-group-label], a-radio-group-hint)) { display: block; unicode-bidi: plaintext; }
   :global(.stage [data-multiline]) { white-space: pre-line; }
   :global(#lab[data-outlines="true"] [data-sample]) { outline: 0.5px solid #d92d53; outline-offset: 0; }
-  :global(#lab[data-outlines="true"] :is([data-choice-label], [data-choice-hint])) { outline: 0.5px solid #d92d53; }
+  :global(#lab[data-outlines="true"] :is([data-choice-label], [data-choice-hint], [data-choice-group-label], a-radio-group-hint)) { outline: 0.5px solid #d92d53; }
   :global(.stage.unclipped [data-sample]),
   :global(.stage.unclipped a-tag),
   :global(.stage.unclipped a-tag-value),
@@ -154,12 +155,12 @@ const groups = [
       if (!section.getClientRects().length) continue
       for (const column of section.querySelectorAll('.column')) {
         const specimen = column.querySelector('.specimen')!
-        const element = (specimen.querySelector('[data-choice-preview] :is(a-checkbox, a-switch, a-radio)') ?? specimen.firstElementChild) as HTMLElement
+        const element = (specimen.querySelector('[data-choice-preview] a-radio-group:has(> a-radio-group-hint)') ?? specimen.querySelector('[data-choice-preview] :is(a-checkbox, a-switch, a-radio)') ?? specimen.firstElementChild) as HTMLElement
         if (!element || element.localName === 'astro-island') continue
-        const label = specimen.querySelector<HTMLElement>('[data-choice-label]') ?? element.shadowRoot?.querySelector<HTMLElement>('[part~="input"], [part~="segments"]')
+        const label = specimen.querySelector<HTMLElement>('[data-choice-group-label], [data-choice-label]') ?? element.shadowRoot?.querySelector<HTMLElement>('[part~="input"], [part~="segments"]')
           ?? specimen.querySelector<HTMLElement>('[data-sample]')
         const style = getComputedStyle(label ?? element)
-        const hint = specimen.querySelector<HTMLElement>('[data-choice-hint], [data-sample-hint]')
+        const hint = specimen.querySelector<HTMLElement>('a-radio-group-hint, [data-choice-hint], [data-sample-hint]')
         const hintStyle = hint ? getComputedStyle(hint) : null
         column.querySelector('output')!.textContent = `${style.fontSize}/${style.lineHeight} · ${Math.round(element.offsetHeight * 10) / 10}px high${hintStyle ? ` · hint ${hintStyle.fontSize}/${hintStyle.lineHeight}` : ''}`
       }

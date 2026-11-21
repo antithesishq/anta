@@ -192,7 +192,6 @@
     color: var(--radio-hint-color);
     font-size: var(--radio-hint-fs);
     line-height: var(--radio-hint-lh);
-    margin-block-start: 2px;
   }
 
   /* Focus ring, aria-activedescendant mode (raw hand-assembly): focus is on the

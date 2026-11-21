@@ -5,12 +5,13 @@
   a-input-time {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
+    row-gap: 2px;
     outline: none;
   }
 
   a-input-time::part(label) {
     display: none;
+    margin-block-end: 2px;
     color: var(--input-time-label);
     font-family: var(--sans-serif);
     font-size: var(--input-time-font-size);
@@ -146,7 +147,7 @@
   a-input-time:not(:defined) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
+    row-gap: 2px;
   }
   a-input-time:not(:defined) > [slot="leading"],
   a-input-time:not(:defined) > [slot="trailing"],
@@ -156,6 +157,7 @@
   }
   a-input-time:not(:defined) > [slot="label"] {
     display: block;
+    margin-block-end: 2px;
     color: var(--input-time-label);
     font-family: var(--sans-serif);
     font-size: var(--input-time-font-size);

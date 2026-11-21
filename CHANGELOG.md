@@ -12,6 +12,8 @@ changes are not listed.
 
 ### Fixed
 
+- Reset headings match Title’s font sizes and line heights at all six levels.
+
 - [Text](/text/), [Title](/title/), and [Expander](/expander/) summaries gain 2px of line height at every size or level. Expander reclaims header padding to preserve single-line header heights.
 
 - [Steps](/steps/) labels match Tab line heights, and hints gain 2px of leading. Antithesis removes its tighter hint overrides and the label-to-hint gap.

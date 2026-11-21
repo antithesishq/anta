@@ -1,5 +1,5 @@
 ---
-import ClippingSelect from '../components/ClippingSelect'
+import ClippingChoice from '../components/ClippingChoice'
 import antaStylesheet from '@antadesign/anta/bundle.css?url'
 const sizes = ['small', 'medium', 'large']
 const levels = [6, 5, 4, 3, 2, 1]
@@ -9,7 +9,6 @@ const cases = [
   ...sizes.map(size => [`Tab · ${size}`, 'Label line height matches Button', `<a-tabs size="${size}"><a-tab value="one"><a-tab-label data-sample></a-tab-label></a-tab></a-tabs>`]),
   ...sizes.map(size => [`Button · ${size}`, 'Label clips · optical bottom padding remains', `<a-button size="${size}"><a-button-label data-sample></a-button-label></a-button>`]),
   ...sizes.map(size => [`Paddingless Button · ${size}`, 'No outer block padding to reclaim', `<a-button size="${size}" priority="quaternary" paddingless><a-button-label data-sample></a-button-label></a-button>`]),
-  ...sizes.map(size => [`Select trigger · ${size}`, 'Actual Select component · Input-based button trigger', '']),
   ...sizes.map(size => [`Tag · ${size}`, 'Inner label/value and outer pill both clip', `<a-tag size="${size}"><a-tag-label data-sample></a-tag-label><a-tag-value data-sample></a-tag-value></a-tag>`]),
   ...sizes.map(size => [`Steps · ${size}`, 'Nested label and hint clip independently', `<a-steps><a-tabs data-steps size="${size}"><a-tab value="one"><a-step-marker>1</a-step-marker><a-step-desc><a-tab-label data-sample></a-tab-label><a-step-hint data-sample></a-step-hint></a-step-desc></a-tab></a-tabs></a-steps>`]),
   ...levels.map(level => [`Expander summary · level ${level}`, 'Heading levels supply the type scale; level 6 is smallest', `<a-expander><a-expander-summary level="${level}" data-sample></a-expander-summary><a-expander-details>Details</a-expander-details></a-expander>`]),
@@ -18,19 +17,26 @@ const cases = [
   ...sizes.map(size => [`Input · ${size}`, 'Native input painting inside the shadow field', `<a-input size="${size}" aria-label="Clipping sample" data-sample-input></a-input>`]),
   ...sizes.map(size => [`Input button · ${size}`, 'Clipped value span inside the shadow button', `<a-input button size="${size}" aria-label="Clipping sample" data-sample-input></a-input>`]),
   ...sizes.map(size => [`Textarea · ${size} · two rows`, 'Native multiline control with vertical scrolling', `<a-input rows="2" size="${size}" aria-label="Clipping sample" data-sample-input></a-input>`]),
+  ...['Checkbox', 'Switch', 'Radio'].flatMap(kind => sizes.flatMap(size => [false, true].map(withHint => [
+    `${kind} · ${size}${withHint ? ' · with hint' : ''}`,
+    kind === 'Radio' ? 'Actual RadioGroup option · group size cascade' : `Actual ${kind} component`,
+    '',
+  ]))),
 ]
 const groups = [
   { value: 'text', label: 'Text', cases: cases.filter(([title]) => title.startsWith('Text ·')) },
   { value: 'title', label: 'Title', cases: cases.filter(([title]) => title.startsWith('Title ·')) },
+  { value: 'expander', label: 'Expander', cases: cases.filter(([title]) => title.startsWith('Expander summary')) },
   { value: 'button', label: 'Button', cases: cases.filter(([title]) => /^(Button|Paddingless Button) ·/.test(title)) },
   { value: 'tabs', label: 'Tabs', cases: cases.filter(([title]) => title.startsWith('Tab ·')) },
   { value: 'menu-item', label: 'Menu Item', cases: cases.filter(([title]) => title.startsWith('Menu item')) },
   { value: 'input', label: 'Input', cases: cases.filter(([title]) => /^(Input ·|Input button ·)/.test(title)) },
   { value: 'textarea', label: 'Textarea', cases: cases.filter(([title]) => title.startsWith('Textarea ·')) },
-  { value: 'select', label: 'Select', cases: cases.filter(([title]) => title.startsWith('Select trigger')) },
+  { value: 'checkbox', label: 'Checkbox', cases: cases.filter(([title]) => title.startsWith('Checkbox ·')) },
+  { value: 'switch', label: 'Switch', cases: cases.filter(([title]) => title.startsWith('Switch ·')) },
+  { value: 'radio', label: 'Radio', cases: cases.filter(([title]) => title.startsWith('Radio ·')) },
   { value: 'tag', label: 'Tag', cases: cases.filter(([title]) => title.startsWith('Tag ·')) },
   { value: 'steps', label: 'Steps', cases: cases.filter(([title]) => title.startsWith('Steps ·')) },
-  { value: 'expander', label: 'Expander', cases: cases.filter(([title]) => title.startsWith('Expander summary')) },
 ]
 
 ---
@@ -71,8 +77,8 @@ const groups = [
           {['current', 'unclipped'].map(mode => <div class="column">
             <div class="caption">{mode === 'current' ? 'Current styles' : 'Overflow visible · diagnostic'}<output></output></div>
             <div class="viewport"><div class:list={['stage', mode]}><div class="specimen">
-              {title.startsWith('Select trigger')
-                ? <ClippingSelect size={title.split(' · ')[1] as 'small' | 'medium' | 'large'} client:only="preact" />
+              {/^(Checkbox|Switch|Radio) ·/.test(title)
+                ? <ClippingChoice kind={title.split(' · ')[0].toLowerCase() as 'checkbox' | 'switch' | 'radio'} size={title.split(' · ')[1] as 'small' | 'medium' | 'large'} withHint={title.endsWith(' · with hint')} client:only="preact" />
                 : <Fragment set:html={markup} />}
             </div></div></div>
           </div>)}
@@ -108,9 +114,10 @@ const groups = [
   .stage { zoom: var(--inspection-zoom, 4); padding: 12px; width: 304px; min-height: 48px; box-sizing: content-box; }
   .specimen { width: 280px; }
   :global(.stage [data-sample]) { unicode-bidi: plaintext; }
+  :global(.stage :is([data-choice-label], [data-choice-hint])) { display: block; unicode-bidi: plaintext; }
   :global(.stage [data-multiline]) { white-space: pre-line; }
   :global(#lab[data-outlines="true"] [data-sample]) { outline: 0.5px solid #d92d53; outline-offset: 0; }
-  :global(#lab[data-outlines="true"] [data-select-preview] a-input::part(input-label)) { outline: 0.5px solid #d92d53; }
+  :global(#lab[data-outlines="true"] :is([data-choice-label], [data-choice-hint])) { outline: 0.5px solid #d92d53; }
   :global(.stage.unclipped [data-sample]),
   :global(.stage.unclipped a-tag),
   :global(.stage.unclipped a-tag-value),
@@ -141,12 +148,14 @@ const groups = [
       if (!section.getClientRects().length) continue
       for (const column of section.querySelectorAll('.column')) {
         const specimen = column.querySelector('.specimen')!
-        const element = (specimen.querySelector('[data-select-preview] a-input') ?? specimen.firstElementChild) as HTMLElement
+        const element = (specimen.querySelector('[data-choice-preview] :is(a-checkbox, a-switch, a-radio)') ?? specimen.firstElementChild) as HTMLElement
         if (!element || element.localName === 'astro-island') continue
-        const label = element.shadowRoot?.querySelector<HTMLElement>('[part~="input"]')
+        const label = specimen.querySelector<HTMLElement>('[data-choice-label]') ?? element.shadowRoot?.querySelector<HTMLElement>('[part~="input"]')
           ?? specimen.querySelector<HTMLElement>('[data-sample]')
         const style = getComputedStyle(label ?? element)
-        column.querySelector('output')!.textContent = `${style.fontSize}/${style.lineHeight} · ${Math.round(element.offsetHeight * 10) / 10}px high`
+        const hint = specimen.querySelector<HTMLElement>('[data-choice-hint]')
+        const hintStyle = hint ? getComputedStyle(hint) : null
+        column.querySelector('output')!.textContent = `${style.fontSize}/${style.lineHeight} · ${Math.round(element.offsetHeight * 10) / 10}px high${hintStyle ? ` · hint ${hintStyle.fontSize}/${hintStyle.lineHeight}` : ''}`
       }
     }
   }

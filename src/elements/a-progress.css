@@ -44,7 +44,7 @@
       var(--progress-text-color) calc(var(--progress-loading-stripe-gap) + var(--progress-loading-stripe))
     );
     --progress-label-size: 13px;
-    --progress-label-line-height: 16px;
+    --progress-label-line-height: 18px;
   }
 
   :where(a-progress, progress[data-anta]) {
@@ -67,6 +67,11 @@
     padding: var(--progress-padding-block) var(--progress-padding-inline);
     min-height: var(--progress-min-height);
     border: 0px solid var(--progress-border-color);
+  }
+
+  /* Trade padding for the extra label leading without resizing bare or native bars. */
+  a-progress:has(> a-progress-label) {
+    padding-block: max(0px, calc(var(--progress-padding-block) - 1px));
   }
 
   @supports (width: calc(attr(value type(<number>), 0) * 1%)) {
@@ -128,14 +133,14 @@
     --progress-padding-block: 2px;
     --progress-padding-inline: 6px;
     --progress-label-size: 12px;
-    --progress-label-line-height: 14px;
+    --progress-label-line-height: 16px;
   }
 
   :where(a-progress, progress[data-anta])[size="large"] {
     --progress-padding-block: 6px;
     --progress-padding-inline: 10px;
     --progress-label-size: 15px;
-    --progress-label-line-height: 20px;
+    --progress-label-line-height: 22px;
   }
 
   /* Clip the indicator to the track radius. */

@@ -12,6 +12,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Tag](/tag/) labels use 15/18/20px line heights for small/medium/large, with reduced vertical padding to preserve tag heights.
+
 - [Input](/input/) and [Select](/select/) use 18/22/26px text line heights. Multiline Inputs use 3px vertical padding to align their first line with single-line fields.
 
 - [Button](/button/) and [Tabs](/tabs/) labels use matching 18/22/26px line heights to reduce text clipping while preserving control heights and text alignment.

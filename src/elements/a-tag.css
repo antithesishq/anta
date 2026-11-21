@@ -47,9 +47,8 @@
     --tag-border: light-dark(color-mix(in oklch, var(--tag-tint) 15%, transparent), color-mix(in oklch, var(--tag-tint) 25%, transparent));
     --tag-separator: color-mix(in oklch, var(--tag-text) 30%, transparent);
 
-    /* 1.5px top/bottom — the extra 0.5px each side compensates for the
-       0.5px (vs 1px) border, keeping the pill at its original 20px height. */
-    --tag-padding-block: 1.5px;
+    /* Reclaim vertical padding for label leading without growing the pill. */
+    --tag-padding-block: 0.5px;
     --tag-padding-inline: 6.5px;
     --tag-icon-size: 13px;
     --tag-label-weight: 600;
@@ -75,7 +74,7 @@
     font-family: var(--sans-serif);
     font-weight: 450;
     font-size: 12px;
-    line-height: 16px;
+    line-height: 18px;
     /* Normal (mixed) case is the default. Theme-free tags use deliberately
        open tracking; reference themes can tune it for their chosen font. */
     text-transform: none;
@@ -211,23 +210,22 @@
   }
 
   a-tag[size="small"] {
-    --tag-padding-block: 0.5px;
+    --tag-padding-block: 0px;
     --tag-padding-inline: 4.5px;
     --tag-icon-size: 11px;
 
     font-size: 11px;
-    line-height: 14px;
+    line-height: 15px;
   }
 
-  /* Large — 24px tall (line-height 18 + 2×2.5 padding + 2×0.5 border),
-     on par with Button's large. */
+  /* Larger leading replaces 1px of padding on each side. */
   a-tag[size="large"] {
-    --tag-padding-block: 2.5px;
+    --tag-padding-block: 1.5px;
     --tag-padding-inline: 8.5px;
     --tag-icon-size: 15px;
 
     font-size: 13px;
-    line-height: 18px;
+    line-height: 20px;
   }
 
   /* All-caps opt-in: switch to the uppercase treatment. Uppercase reads

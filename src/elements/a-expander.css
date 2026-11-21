@@ -154,6 +154,10 @@
     /* Smooth the closed-state hover/active surface change. */
     transition: background-color 100ms ease;
   }
+  /* Trade summary padding for leading without changing single-line headers. */
+  a-expander:has(> a-expander-summary) {
+    --_expander-header-padding-block: 5px;
+  }
   a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) {
     --expander-gutter: 12px;
     --_expander-actions-end: var(--_expander-actions-gap);
@@ -293,7 +297,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 15px;
-    line-height: 20px;
+    line-height: 22px;
     font-weight: 584.62;
     letter-spacing: 0;
     text-decoration-line: var(--_summary-underline, none);
@@ -303,11 +307,11 @@
     text-underline-offset: 3px;
     transition: color 150ms ease;
   }
-  a-expander-summary[level="1"] { font-size: 28px; line-height: 32px; }
-  a-expander-summary[level="2"] { font-size: 24px; line-height: 28px; }
-  a-expander-summary[level="3"] { font-size: 20px; line-height: 24px; }
-  a-expander-summary[level="4"] { font-size: 17px; line-height: 22px; }
-  a-expander-summary[level="6"] { font-size: 13px; line-height: 16px; }
+  a-expander-summary[level="1"] { font-size: 28px; line-height: 34px; }
+  a-expander-summary[level="2"] { font-size: 24px; line-height: 30px; }
+  a-expander-summary[level="3"] { font-size: 20px; line-height: 26px; }
+  a-expander-summary[level="4"] { font-size: 17px; line-height: 24px; }
+  a-expander-summary[level="6"] { font-size: 13px; line-height: 18px; }
   a-expander-details {
     display: block;
     /* Left padding = the same `--expander-gutter` the header uses, so the body
@@ -315,9 +319,7 @@
        top (2px) to sit close under the header, a touch more (6px) at the
        bottom. */
     padding: 2px 4px 6px var(--expander-gutter);
-    /* Default the body to <Text>'s line-height (20px at the inherited 15px)
-       so plain text in the body doesn't inherit a roomy consumer body
-       line-height; a nested <Text> overrides it with the same value. */
+    /* Plain details use 20px leading; nested Text owns its typography. */
     line-height: 20px;
     /* Scroll container so wide content (a <pre>, a table) scrolls within the body
        instead of stretching the box past the surrounding layout. `overflow: auto`

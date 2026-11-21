@@ -15,16 +15,16 @@
     font-family: var(--sans-serif);
     color: var(--text-color);
     font-size: 15px;
-    line-height: 20px;
+    line-height: 22px;
     /* Even out widows/orphans on multi-line body copy — matches the raw `<p>`
        reset (headings use `balance`). Only affects the non-truncated case;
        `truncate` clamps directly in light DOM. */
     text-wrap: pretty;
   }
 
-  a-text[size="small"]  { font-size: 13px; line-height: 16px; }
-  a-text[size="medium"] { font-size: 15px; line-height: 20px; }
-  a-text[size="large"]  { font-size: 17px; line-height: 24px; }
+  a-text[size="small"]  { font-size: 13px; line-height: 18px; }
+  a-text[size="medium"] { font-size: 15px; line-height: 22px; }
+  a-text[size="large"]  { font-size: 17px; line-height: 26px; }
 
   a-text[inline] {
     display: inline-block;

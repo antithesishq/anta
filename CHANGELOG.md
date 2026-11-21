@@ -12,6 +12,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Text](/text/), [Title](/title/), and [Expander](/expander/) summaries gain 2px of line height at every size or level. Expander reclaims header padding to preserve single-line header heights.
+
 - [Steps](/steps/) labels match Tab line heights, and hints gain 2px of leading. Antithesis removes its tighter hint overrides and the label-to-hint gap.
 
 - [Tag](/tag/) labels use 15/18/20px line heights for small/medium/large, with reduced vertical padding to preserve tag heights.

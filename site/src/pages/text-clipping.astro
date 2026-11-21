@@ -23,14 +23,14 @@ const groups = [
   { value: 'button', label: 'Button', cases: cases.filter(([title]) => /^(Button|Paddingless Button) ·/.test(title)) },
   { value: 'tabs', label: 'Tabs', cases: cases.filter(([title]) => title.startsWith('Tab ·')) },
   { value: 'menu-item', label: 'Menu Item', cases: cases.filter(([title]) => title.startsWith('Menu item')) },
+  { value: 'input', label: 'Input', cases: cases.filter(([title]) => /^(Input ·|Input button ·)/.test(title)) },
+  { value: 'textarea', label: 'Textarea', cases: cases.filter(([title]) => title.startsWith('Textarea ·')) },
   { value: 'select', label: 'Select', cases: cases.filter(([title]) => title.startsWith('Select trigger')) },
   { value: 'tag', label: 'Tag', cases: cases.filter(([title]) => title.startsWith('Tag ·')) },
   { value: 'steps', label: 'Steps', cases: cases.filter(([title]) => title.startsWith('Steps ·')) },
   { value: 'expander', label: 'Expander', cases: cases.filter(([title]) => title.startsWith('Expander summary')) },
   { value: 'text', label: 'Text', cases: cases.filter(([title]) => title.startsWith('Text ·')) },
   { value: 'title', label: 'Title', cases: cases.filter(([title]) => title.startsWith('Title ·')) },
-  { value: 'input', label: 'Input', cases: cases.filter(([title]) => /^(Input ·|Input button ·)/.test(title)) },
-  { value: 'textarea', label: 'Textarea', cases: cases.filter(([title]) => title.startsWith('Textarea ·')) },
 ]
 
 ---

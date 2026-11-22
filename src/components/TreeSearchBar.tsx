@@ -1,3 +1,4 @@
+import { isComposingKey } from "../anta_helpers"
 import { Button } from "./Button"
 import { Input } from "./Input"
 
@@ -54,7 +55,8 @@ export const TreeSearchBar = ({
       autoComplete="off"
       onValueChange={(_event, { value }) => onQueryChange(value)}
       onKeyDown={(event: KeyboardEvent) => {
-        if (event.isComposing) return
+        // React's synthetic event has no `isComposing`; the helper reads the native one.
+        if (isComposingKey(event)) return
         if (event.key === "Enter" && count > 0) {
           event.preventDefault()
           onStep(event.shiftKey ? -1 : 1)

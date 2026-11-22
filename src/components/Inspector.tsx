@@ -75,7 +75,9 @@ export interface InspectorProps extends Omit<BaseProps, "children"> {
   searchable?: boolean
   /** Turns the typed query into a matcher: a RegExp, whose hits are
    *  highlighted, or a function of a row's text, which highlights the whole
-   *  field. The default ignores case and treats spaces as any whitespace. */
+   *  field. The default ignores case and treats spaces as any whitespace.
+   *  Pass a stable function, defined outside the component or memoized: a
+   *  new one on each render searches the whole value again each render. */
   searchMatcher?: (query: string) => InspectorMatcher
   /** Accessible name for the tree. Give every Inspector one, such as the name
    *  of the value it shows, so screen readers can tell several apart. */

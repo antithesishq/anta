@@ -4,9 +4,9 @@
 // stop private. The `a-tree` element handles every click and key and writes no
 // DOM; this wrapper renders what it reports. See src/elements/a-tree.ts.
 import { nativeStateChange, optionPresentationAttrs } from "../anta_helpers"
-import type { BaseProps, OptionPresentationProps } from "../general_types"
+import type { ATreeItemAttributes, BaseProps, OptionPresentationProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
-import { useId, useMemo, useState } from "../jsx-runtime"
+import { useId, useMemo, useRef, useState } from "../jsx-runtime"
 import { useNativeEventProps } from "../native-event-props"
 import { Button } from "./Button"
 import { Tooltip } from "./Tooltip"
@@ -137,6 +137,14 @@ type ElementEvent<D> = CustomEvent<D> | { nativeEvent: CustomEvent<D> }
 type ItemStateDetail = { next: "open" | "closed"; prev: "open" | "closed"; scope: "item" | "subtree" }
 const PRESETS = new Set(["chevron", "triangle", "plus"])
 const NO_IDS: string[] = []
+// Each duplicate id warns once, not on every render.
+const warnedDuplicateIds = new Set<string>()
+
+// One `<a-tree-item>`, so its listeners pass through the shared hydration gate.
+const TreeItemElement = ({ onstatechange, onactivate, ...props }: ATreeItemAttributes) => {
+  const events = useNativeEventProps({ onstatechange, onactivate })
+  return <a-tree-item {...props} {...events} />
+}
 
 const isPaired = (indicator: TreeIndicator): indicator is { closed: React.ReactNode; open: React.ReactNode } =>
   indicator != null && typeof indicator === "object" && "closed" in indicator && "open" in indicator
@@ -195,9 +203,11 @@ export const Tree = ({
   const [initialFocus] = useState(() => focusRequest && `${focusRequest.id}#${focusRequest.n}`)
   const focusSignal = focusRequest && `${focusRequest.id}#${focusRequest.n}`
   // Each new `current` is a new scroll request; the first render's is skipped.
-  const [reveal, setReveal] = useState<{ id: string | undefined; n: number }>(() => ({ id: current, n: 0 }))
-  if (reveal.id !== current) setReveal({ id: current, n: reveal.n + 1 })
-  const revealSignal = current !== undefined && reveal.n > 0 ? `${current}#${reveal.n}` : undefined
+  // A ref, not state: a render-phase setState commits the stale count first
+  // under Preact, which would change `data-reveal` twice and scroll twice.
+  const reveal = useRef<{ id: string | undefined; n: number }>({ id: current, n: 0 })
+  if (reveal.current.id !== current) reveal.current = { id: current, n: reveal.current.n + 1 }
+  const revealSignal = current !== undefined && reveal.current.n > 0 ? `${current}#${reveal.current.n}` : undefined
   const baseId = useId()
 
   // Ids are an item's identity, so duplicates make open state ambiguous.
@@ -205,8 +215,10 @@ export const Tree = ({
   const visible: string[] = []
   const walk = (list: TreeItem[], shown: boolean) => {
     for (const item of list) {
-      if (seen.has(item.id))
+      if (seen.has(item.id) && !warnedDuplicateIds.has(item.id)) {
+        warnedDuplicateIds.add(item.id)
         console.warn(`[anta] <Tree> duplicate item id=${JSON.stringify(item.id)}: ids must be unique.`)
+      }
       seen.add(item.id)
       if (shown) visible.push(item.id)
       if (item.children) walk(item.children, shown && openSet.has(item.id))
@@ -225,9 +237,6 @@ export const Tree = ({
       if (detail) onItemMenu?.(event, detail)
     },
   })
-  // Per-item listeners follow the same hydration gate as the tree's own.
-  const listening = Object.keys(events).length > 0
-
   const requestState = (item: TreeItem) => (e: ElementEvent<ItemStateDetail>) => {
     const { event, detail, isOwn } = nativeStateChange(e)
     if (!isOwn || !detail) return
@@ -296,17 +305,13 @@ export const Tree = ({
       )
       : null
     const marks = indicatorNodes(item, state, expandable)
-    const itemEvents = listening
-      ? {
-          onstatechange: expandable ? requestState(item) : undefined,
-          onactivate: !expandable && item.onClick
-            ? (e: ElementEvent<undefined>) => item.onClick?.(nativeStateChange(e).event)
-            : undefined,
-        }
-      : {}
     return (
-      <a-tree-item
+      <TreeItemElement
         key={item.id}
+        onstatechange={expandable ? requestState(item) : undefined}
+        onactivate={!expandable && item.onClick
+          ? (e: ElementEvent<undefined>) => item.onClick?.(nativeStateChange(e).event)
+          : undefined}
         {...itemAttrs}
         role="treeitem"
         item-id={item.id}
@@ -318,7 +323,6 @@ export const Tree = ({
         tabIndex={item.id === tabStop ? 0 : -1}
         class={itemClassName}
         style={itemStyle}
-        {...itemEvents}
       >
         <a-tree-row>
           {indicatorPlacement === "end"
@@ -329,7 +333,7 @@ export const Tree = ({
           ? <a-tree-group role="group">{item.children!.map((child, i) => renderItem(child, depth + 1, `${path}-${i}`))}</a-tree-group>
           : null}
         {isOpen && item.after != null ? <a-tree-after aria-hidden="true">{item.after}</a-tree-after> : null}
-      </a-tree-item>
+      </TreeItemElement>
     )
   }
 

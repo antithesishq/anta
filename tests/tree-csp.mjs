@@ -137,6 +137,14 @@ const jsxApp = `
       React.createElement(Menu, { context: true }, React.createElement(MenuItem, { label: 'Rename ' + (menuItem ?? '…') })))
   }
   window.renderTree = props => render(React.createElement(App, props), document.querySelector('#mount'))
+  // A leaf that removes itself when activated, as the Inspector's last "Show more" row does.
+  function Shrinking() {
+    const [more, setMore] = useState(true)
+    const children = [{ id: 'list/0', label: '0' }]
+    if (more) children.push({ id: 'list/more', label: 'Show more', onClick: () => setMore(false) })
+    return React.createElement(Tree, { 'aria-label': 'Shrinking', items: [{ id: 'list', label: 'list', children }], defaultOpen: ['list'] })
+  }
+  window.renderShrinking = () => render(React.createElement(Shrinking), document.querySelector('#mount'))
   // The Tree docs' search demo, as the docs page renders it.
   window.renderFileSearch = props => render(React.createElement(FileSearchDemo, props), document.querySelector('#mount'))
 `
@@ -611,6 +619,20 @@ for (const engine of engines) {
     await row(page, 'src').locator('a-tree-value').click()
     await page.waitForFunction(() => !document.querySelector('a-tree-item[item-id="src/index.ts"]'))
     assert.deepEqual(await tabStops(page), ['src'])
+  })
+
+  test.fast(`${name}: removing the focused item keeps focus in the tree, on its nearest ancestor`, async t => {
+    const page = await pageFor(t, engine, { kind: 'jsx' })
+    await page.evaluate(() => window.renderShrinking())
+    await page.waitForFunction(() => document.querySelector('a-tree-item[item-id="list/more"]'))
+    await focusTree(page)
+    await page.keyboard.press('End')
+    assert.equal(await focused(page), 'list/more')
+    await page.keyboard.press('Enter')
+    await page.waitForFunction(() => !document.querySelector('a-tree-item[item-id="list/more"]'))
+    await page.waitForFunction(() => document.activeElement?.getAttribute('item-id') === 'list')
+    await page.keyboard.press('ArrowDown')
+    assert.equal(await focused(page), 'list/0')
   })
 
   test.fast(`${name}: actions are Buttons out of the Tab order; Right reaches them; More opens the menu for its item`, async t => {

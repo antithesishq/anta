@@ -62,6 +62,9 @@ export class ATreeElement extends HTMLElementBase {
   #menuFromUs = false
   // Set from a press until the task ends, so focus from a click is the user's.
   #pressing = false
+  // Whether focus is in the tree, kept from focus events so a re-render that
+  // removes the focused item can hand focus to its fallback.
+  #focusWithin = false
   // Whether text in the tree was selected when the last press began; read by
   // the `contextmenu` that press opens.
   #selectedAtPress: boolean | undefined
@@ -74,6 +77,7 @@ export class ATreeElement extends HTMLElementBase {
     this.addEventListener('click', this.#onClick)
     this.addEventListener('keydown', this.#onKeyDown)
     this.addEventListener('focusin', this.#onFocusIn)
+    this.addEventListener('focusout', this.#onFocusOut)
     this.addEventListener('pointerdown', this.#onPointerDown)
     // Capture runs before the bubbling listener of a following `<Menu context>`,
     // whichever element upgrades first.
@@ -196,7 +200,19 @@ export class ATreeElement extends HTMLElementBase {
     if (!this.#active || this.#currentItem()) return
     const visible = this.#visibleItems()
     const fallback = this.#activeAncestors.find(item => visible.includes(item)) ?? visible[0] ?? null
-    this.#setActive(fallback, { focus: false, scroll: false })
+    // Removing the focused item drops focus to the body; keep it in the tree.
+    const doc = this.ownerDocument
+    const dropped = this.#focusWithin && (!doc.activeElement || doc.activeElement === doc.body)
+    this.#setActive(fallback, { focus: dropped, scroll: false })
+  }
+
+  #onFocusOut = (event: FocusEvent) => {
+    const to = event.relatedTarget
+    if (to && isElement(to) && this.contains(to)) return
+    const from = event.target as Node
+    // Chromium sends a removed item's focusout before the removal completes, so
+    // decide after it: focus a removal took is #keepActive's to restore.
+    queueMicrotask(() => { if (from.isConnected) this.#focusWithin = false })
   }
 
   #onPointerDown = () => {
@@ -210,6 +226,7 @@ export class ATreeElement extends HTMLElementBase {
   }
 
   #onFocusIn = (event: FocusEvent) => {
+    this.#focusWithin = true
     const item = this.#itemOf(event)
     // The keys reach a row's actions only from that row. Focus landing on
     // another row's action without a press, as a closing menu hands it to the

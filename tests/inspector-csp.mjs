@@ -128,7 +128,7 @@ before(async () => {
   for (const mode of ['granular', 'bundle']) {
     const contents = mode === 'bundle'
       ? `import '${source}/bundle';`
-      : ['tokens.css', 'reset.css', 'elements/a-inspector', 'elements/a-menu', 'elements/a-menu-item', 'elements/a-copy', 'elements/a-icon', 'elements/a-button', 'elements/a-tooltip', 'elements/a-input']
+      : ['tokens.css', 'reset.css', 'elements/a-inspector', 'elements/a-tree', 'elements/a-menu', 'elements/a-menu-item', 'elements/a-copy', 'elements/a-icon', 'elements/a-button', 'elements/a-tooltip', 'elements/a-input']
         .map(path => `import '${source}/${path}';`).join(' ')
     const result = await build({
       stdin: { contents, resolveDir: process.cwd() }, bundle: true, write: false,

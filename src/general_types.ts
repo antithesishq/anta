@@ -1469,7 +1469,8 @@ export interface ATreeIndicatorAttributes extends BaseAttributes {
   /** One of a pair of marks, shown only in that state. */
   'data-when'?: 'open' | 'closed'
   'aria-hidden'?: 'true' | boolean
-  inert?: boolean | ''
+  /** A boolean: React 19 assigns `inert` as a property, so `""` would turn it off. */
+  inert?: boolean
 }
 
 /** A group of child items, inside its `a-tree-item`. */

@@ -347,6 +347,10 @@ Most existing pages predate that guide and read in a denser voice with more dash
 bring a section into voice when you edit it. This file covers the page *structure*
 (below); `WRITING.md` covers the words.
 
+Keep shared typography token mappings in the theming guide. Component pages
+should explain sizing and customization without repeating internal font-size,
+line-height, or padding-compensation wiring.
+
 ## Component reference tables
 
 - Every `Preview` has matching `folded` code immediately after it. Put explanatory prose before the preview or after the complete code group so the panels stay visually attached. Demonstrate interaction recipes with working previews instead of placeholder handlers.

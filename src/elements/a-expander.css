@@ -154,6 +154,10 @@
     /* Smooth the closed-state hover/active surface change. */
     transition: background-color 100ms ease;
   }
+  /* Trade summary padding for leading without changing single-line headers. */
+  a-expander:has(> a-expander-summary) {
+    --_expander-header-padding-block: 5px;
+  }
   a-expander:has(> :is(a-expander-summary, a-expander-title) ~ a-expander-indicator) {
     --expander-gutter: 12px;
     --_expander-actions-end: var(--_expander-actions-gap);
@@ -292,8 +296,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 15px;
-    line-height: 20px;
     font-weight: 584.62;
     letter-spacing: 0;
     text-decoration-line: var(--_summary-underline, none);
@@ -303,11 +305,36 @@
     text-underline-offset: 3px;
     transition: color 150ms ease;
   }
-  a-expander-summary[level="1"] { font-size: 28px; line-height: 32px; }
-  a-expander-summary[level="2"] { font-size: 24px; line-height: 28px; }
-  a-expander-summary[level="3"] { font-size: 20px; line-height: 24px; }
-  a-expander-summary[level="4"] { font-size: 17px; line-height: 22px; }
-  a-expander-summary[level="6"] { font-size: 13px; line-height: 16px; }
+  a-expander-summary,
+  details[data-anta] > summary {
+    font-size: var(--font-size-heading-5);
+    line-height: var(--line-height-heading-5);
+  }
+  a-expander-summary[level="1"],
+  details[data-anta][level="1"] > summary {
+    font-size: var(--font-size-heading-1);
+    line-height: var(--line-height-heading-1);
+  }
+  a-expander-summary[level="2"],
+  details[data-anta][level="2"] > summary {
+    font-size: var(--font-size-heading-2);
+    line-height: var(--line-height-heading-2);
+  }
+  a-expander-summary[level="3"],
+  details[data-anta][level="3"] > summary {
+    font-size: var(--font-size-heading-3);
+    line-height: var(--line-height-heading-3);
+  }
+  a-expander-summary[level="4"],
+  details[data-anta][level="4"] > summary {
+    font-size: var(--font-size-heading-4);
+    line-height: var(--line-height-heading-4);
+  }
+  a-expander-summary[level="6"],
+  details[data-anta][level="6"] > summary {
+    font-size: var(--font-size-heading-6);
+    line-height: var(--line-height-heading-6);
+  }
   a-expander-details {
     display: block;
     /* Left padding = the same `--expander-gutter` the header uses, so the body
@@ -315,10 +342,9 @@
        top (2px) to sit close under the header, a touch more (6px) at the
        bottom. */
     padding: 2px 4px 6px var(--expander-gutter);
-    /* Default the body to <Text>'s line-height (20px at the inherited 15px)
-       so plain text in the body doesn't inherit a roomy consumer body
-       line-height; a nested <Text> overrides it with the same value. */
-    line-height: 20px;
+    /* Plain details follow Text; nested content can choose its own size. */
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
     /* Scroll container so wide content (a <pre>, a table) scrolls within the body
        instead of stretching the box past the surrounding layout. `overflow: auto`
        (not `overflow-x`) is honest about the clip: a scroll container on one axis
@@ -448,9 +474,7 @@
      `open` attribute remains the state source. */
   details[data-anta] {
     --native-expander-gutter: 24px;
-    --native-expander-summary-padding-block: 6px;
-    --native-expander-summary-font-size: 15px;
-    --native-expander-summary-line-height: 20px;
+    --native-expander-summary-padding-block: 5px;
     --native-expander-chevron-size: 16px;
     --native-expander-text: var(--text-2);
     --native-expander-text-hover: var(--text-1);
@@ -473,9 +497,12 @@
     color: var(--native-expander-text);
     background: var(--native-expander-bg);
     font-family: var(--sans-serif);
-    font-size: 15px;
-    line-height: var(--native-expander-summary-line-height);
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
     transition: background-color 100ms ease;
+  }
+  details[data-anta][level="4"] {
+    --native-expander-summary-padding-block: 4px;
   }
   details[data-anta][priority="secondary"] {
     --native-expander-bg: var(--native-expander-bg-secondary);
@@ -486,30 +513,6 @@
     --native-expander-bg: var(--native-expander-bg-primary);
     --native-expander-border: var(--native-expander-border-primary);
     border-width: 1px;
-  }
-  /* A native `level` changes the summary's visual type scale only, matching
-     Expander. It remains a platform summary rather than becoming a semantic
-     heading. The chevron reads the same line-height variable, so it stays
-     centered at every level. */
-  details[data-anta][level="1"] {
-    --native-expander-summary-font-size: 28px;
-    --native-expander-summary-line-height: 32px;
-  }
-  details[data-anta][level="2"] {
-    --native-expander-summary-font-size: 24px;
-    --native-expander-summary-line-height: 28px;
-  }
-  details[data-anta][level="3"] {
-    --native-expander-summary-font-size: 20px;
-    --native-expander-summary-line-height: 24px;
-  }
-  details[data-anta][level="4"] {
-    --native-expander-summary-font-size: 17px;
-    --native-expander-summary-line-height: 20px;
-  }
-  details[data-anta][level="6"] {
-    --native-expander-summary-font-size: 13px;
-    --native-expander-summary-line-height: 16px;
   }
   /* Match Expander's boolean round radius. Literal lengths override it. */
   details[data-anta][round] {
@@ -588,10 +591,8 @@
       var(--native-expander-summary-padding-block) var(--native-expander-gutter);
     color: inherit;
     cursor: pointer;
-    font: inherit;
+    font-family: inherit;
     font-variation-settings: inherit;
-    font-size: var(--native-expander-summary-font-size);
-    line-height: var(--native-expander-summary-line-height);
     font-weight: 584.62;
     letter-spacing: 0;
     list-style: none;
@@ -609,7 +610,7 @@
        first line, and rotation does not move it vertically. */
     top: var(--native-expander-summary-padding-block);
     width: var(--native-expander-chevron-size);
-    height: var(--native-expander-summary-line-height);
+    height: 1lh;
     background-color: currentColor;
     -webkit-mask: var(--_expander-chevron) center / var(--native-expander-chevron-size) no-repeat;
             mask: var(--_expander-chevron) center / var(--native-expander-chevron-size) no-repeat;
@@ -644,7 +645,6 @@
   details[data-anta] > :not(summary) {
     display: block;
     padding: 2px 4px 6px var(--native-expander-gutter);
-    line-height: 20px;
   }
 
   /* Give decorative masks a system foreground in forced colors. */

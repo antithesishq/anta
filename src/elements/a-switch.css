@@ -16,8 +16,6 @@
     --switch-thumb-travel: 13px;
     --switch-track-round: 999px;
     --switch-thumb-round: 999px;
-    --switch-label-fs: 15px;
-    --switch-label-lh: 20px;
 
     --switch-track-off-stroke-neutral: var(--border-3);
     --switch-track-off-stroke: var(--switch-track-off-stroke-neutral);
@@ -55,8 +53,6 @@
     --switch-label-color: var(--text-2);
     --switch-label-color-disabled: var(--text-4);
     --switch-hint-color: var(--text-3);
-    --switch-hint-fs: 13px;
-    --switch-hint-lh: 16px;
 
     display: inline-grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -71,8 +67,8 @@
 
     color: var(--switch-label-color);
     font-family: var(--sans-serif);
-    font-size: var(--switch-label-fs);
-    line-height: var(--switch-label-lh);
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
 
     &::before,
     &::after {
@@ -89,7 +85,7 @@
       box-sizing: border-box;
       inline-size: var(--switch-track-inline-size);
       block-size: var(--switch-track-block-size);
-      margin-block-start: calc((var(--switch-label-lh) - var(--switch-track-block-size)) / 2);
+      margin-block-start: calc((1lh - var(--switch-track-block-size)) / 2);
       border-radius: var(--switch-track-round);
       background: transparent;
       border: 1.5px solid var(--switch-track-off-stroke);
@@ -104,7 +100,7 @@
       inline-size: var(--switch-thumb-size-off);
       block-size: var(--switch-thumb-size-off);
       margin-inline-start: var(--switch-thumb-inset-off);
-      margin-block-start: calc((var(--switch-label-lh) - var(--switch-thumb-size-off)) / 2);
+      margin-block-start: calc((1lh - var(--switch-thumb-size-off)) / 2);
       border-radius: var(--switch-thumb-round);
       background: var(--switch-thumb-off);
       box-shadow: none;
@@ -143,7 +139,7 @@
         inline-size: var(--switch-thumb-size);
         block-size: var(--switch-thumb-size);
         margin-inline-start: var(--switch-thumb-inset);
-        margin-block-start: calc((var(--switch-label-lh) - var(--switch-thumb-size)) / 2);
+        margin-block-start: calc((1lh - var(--switch-thumb-size)) / 2);
         transform: translateX(var(--switch-thumb-travel));
         background: var(--switch-thumb);
         box-shadow: var(--switch-thumb-shadow);
@@ -201,10 +197,14 @@
       --switch-thumb-size-off: 8px;
       --switch-thumb-inset-off: 4px;
       --switch-thumb-travel: 11px;
-      --switch-label-fs: 13px;
-      --switch-label-lh: 16px;
-      --switch-hint-fs: 12px;
-      --switch-hint-lh: 14px;
+
+      font-size: var(--font-size-small);
+      line-height: var(--line-height-small);
+
+      a-switch-hint {
+        font-size: var(--font-size-hint-small);
+        line-height: var(--line-height-hint-small);
+      }
     }
     &[size="large"] {
       --switch-track-inline-size: 34px;
@@ -213,10 +213,14 @@
       --switch-thumb-size-off: 11px;
       --switch-thumb-inset-off: 5px;
       --switch-thumb-travel: 15px;
-      --switch-label-fs: 17px;
-      --switch-label-lh: 22px;
-      --switch-hint-fs: 15px;
-      --switch-hint-lh: 19px;
+
+      font-size: var(--font-size-large);
+      line-height: var(--line-height-large);
+
+      a-switch-hint {
+        font-size: var(--font-size-hint-large);
+        line-height: var(--line-height-hint-large);
+      }
     }
   }
 
@@ -228,9 +232,8 @@
   }
   a-switch-hint {
     color: var(--switch-hint-color);
-    font-size: var(--switch-hint-fs);
-    line-height: var(--switch-hint-lh);
-    margin-block-start: 2px;
+    font-size: var(--font-size-hint-medium);
+    line-height: var(--line-height-hint-medium);
   }
 
   a-switch[tone="brand"] {

@@ -10,6 +10,14 @@ changes are not listed.
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 
+### Changed
+
+- Consolidated [typography](/theming/#text-and-hint-sizes) into shared scales and increased line heights to reduce text clipping. Replace removed component typography variables with shared tokens or direct CSS overrides.
+
+### Removed
+
+- Removed obsolete `a-select-field`, `a-select-label`, and `a-select-hint` styles, JSX types, and Button accessibility handling. Raw Select compositions use `<a-input button>` with label and hint slots. Current Select and SelectFaceted retain their shared layout styles.
+
 ### Fixed
 
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.

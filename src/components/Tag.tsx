@@ -4,88 +4,47 @@ import { neutralToneAttr, toneStyle } from "../anta_helpers"
 import { Icon } from "./Icon"
 
 export interface TagProps extends BaseProps {
-  /** A short "key" shown before the value. When paired with `value` it
-   *  renders bold (weight 600), same color. On its own (no `value`) it's
-   *  treated as the tag's primary text and keeps the default styling. */
+  /** Displays a short status or a key before `value`. A label paired with a
+   *  value uses a heavier weight; a label on its own uses the default weight. */
   label?: string
-  /** The tag's primary text — a status, count, version, duration, etc.
-   *  Rendered in the default color and weight, with no divider from the
-   *  label; the color + weight contrast does the separating. */
+  /** Displays the tag's value, such as a count, version, or duration.
+   *  When space is limited, the value truncates before the label. */
   value?: string
-  /** Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`)
-   *  for a one-off custom tone. Each tone renders the secondary tag style:
-   *  `--text-3-{tone}` text over an alpha tint of the tone's hue (fill + a
-   *  slightly stronger hairline border). A custom color is tinted the same
-   *  way, with the text deepened to a readable foreground. `'neutral'` (the
-   *  default) is the gray tag — the same as omitting `tone`.
+  /** Selects a semantic color. A CSS color defines a custom tone.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Emphasis level. `secondary` (the default) is the subtle alpha-tint
-   *  fill; `primary` is a solid fill with white text; `tertiary` is a
-   *  transparent outline. Omitting it (or passing `'secondary'`) renders
-   *  the default and emits no DOM attribute.
+  /** Sets the emphasis: solid fill, subtle fill, or outline.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary'
-  /** Size variant. `small` = 16px tall, `medium` = 20px, `large` = 24px
-   *  (matching `Button`). Omit the attribute or pass `'medium'` for the
-   *  default — both render identically and emit no DOM attribute.
+  /** Sets the tag's dimensions.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
-  /** Render in all-caps instead of the default normal (mixed) case. */
+  /** Displays the content in uppercase. The original text remains unchanged. */
   allcaps?: boolean
-  /** Leading icon shape. Sits flush before the label, scaled to the pill. */
+  /** Adds a decorative icon before the text. */
   icon?: IconShape
-  /** Trailing icon shape. Renders last, after the value. */
+  /** Adds a decorative icon after the text. */
   iconTrailing?: IconShape
 }
 
 /**
- * Compact pill / chip for status, labels, and metadata.
+ * Displays short statuses, counts, and metadata.
  *
- * Renders an `<a-tag>` styled tag (no JS, no shadow DOM) — color and size
- * come entirely from attributes. Content is composed from `icon`, `label`,
- * `value`, and `iconTrailing` (like `<Button>`): `value` is the primary
- * text (default styling) and `label`, when paired with a value, renders as
- * a bold "key" before it (same color, no divider). Tabular figures are
- * always on, so counts / versions / timers don't reflow. For an arbitrary
- * multi-part tag, pass `children` instead — each segment after the first
- * gets a hairline divider (the `label` + `value` pair is the no-divider
- * exception).
+ * Use `label` on its own or pair it with `value` for a key-value tag. Pass
+ * child elements for several segments separated by dividers. Add `icon` or
+ * `iconTrailing` for decorative icons.
  *
- * Requires `@antadesign/anta/elements` to be imported (client-side only)
- * so the CSS ships with the page.
+ * Tag is presentational. Wrap it in an anchor for navigation or place a
+ * named Button inside it for removal. Keep navigation and removal as sibling
+ * controls when both actions are needed.
  *
- * Styling notes (`a-tag.css` ships comment-free):
- * - Sizing is intrinsic — no fixed height, like `<a-button>`: height falls
- *   out of `line-height` + `padding-block` + the 0.5px border (the base
- *   1.5px block padding compensates the half-pixel border to keep the pill
- *   at 20px), so text is never clipped and the padding tokens can be
- *   retuned freely. An edge icon trims ~2px off its side's padding
- *   (optical), and icons scale to `--tag-icon-size`.
- * - Color comes from the theme-aware semantic tokens and `light-dark()`; the
- *   hairline border and the segment divider both
- *   derive from `--tag-text`, so every tone gets a matching edge. A lone
- *   `label` is dropped into `<a-tag-value>` by this wrapper so it keeps the
- *   default weight; `<a-tag-label>` only renders as the bold key before a
- *   value (weight contrast does the separating — no divider).
- * - Segmented children: raw children (not the structured label/value/icon
- *   elements) get a hairline left border per segment after the first; the
- *   flex `gap` sits left of the border and `padding-left` balances it.
- * - Custom tones (any non-named `tone`) keep the source hue with
- *   lightness/chroma pinned via oklch relative color. `light-dark()` selects
- *   the matching ramp from the nearest inherited color scheme. The
- *   wrapper writes `--tag-tone-source` inline; a typed `attr()` fallback
- *   picks up raw `<a-tag tone="…">` on Chrome 133+/Safari 18.2+.
- * - `allcaps` switches on the uppercase transform; tabular figures stay on.
- *   Each size steps down 1px under `allcaps`
- *   (uppercase reads larger than mixed case at the same px), with height
- *   unchanged.
+ * See [Install and configure](https://anta.design/install/) for stylesheet setup.
  *
  * @example Basic usage
  * ```tsx
- * <Tag tone="success" label="Running" />
+ * <Tag tone="success" label="Passed" />
  * <Tag tone="info" icon="hourglass" label="Build" value="2m 14s" />
- * <Tag tone="brand" size="small" allcaps label="Status" />
+ * <Tag size="small" allcaps label="Running" />
  * ```
  */
 export const Tag = ({

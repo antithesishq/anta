@@ -84,6 +84,28 @@ font-specific axis settings. They are examples of application font setup and
 are not imported by the published themes. Use your own font stylesheet and
 font sources in your application.
 
+<a id="heading-sizes"></a>
+
+## Heading sizes and text compensation
+
+Title, Expander summaries, native disclosure summaries, and raw headings share
+six heading levels. Dialog headers use level 4. Each level uses
+`--font-size-heading-N` and `--line-height-heading-N`, where `N` is 1 through 6.
+
+| Level | Font size | Line height |
+| --- | --- | --- |
+| 1 | 28px | 34px |
+| 2 | 24px | 30px |
+| 3 | 20px | 26px |
+| 4 | 17px | 24px |
+| 5 | 15px | 22px |
+| 6 | 13px | 18px |
+
+Button and Tabs share label bottom-padding compensation through
+`--text-compensation-small` (0.5px), `--text-compensation-medium` (1px), and
+`--text-compensation-large` (1.5px). Their outer padding absorbs this amount to
+retain control heights. Buttons inside field action slots disable compensation.
+
 <a id="color-seeds"></a>
 
 ## Color seeds
@@ -393,3 +415,24 @@ Tint held on the selected row — a % of the item color (--text-2).
 ### Progress
 
 Every color is a role token; Progress defines none of its own. Track = --bg-4, border = --border-4, the fill indicator = --bg-5, the label = --text-2, and the right-aligned hint = --text-3. Named tones swap in the matching -{tone} role variant (so dark mode is free), and the fill’s right-edge fades from --bg-5 to --border-4. Follows the Text and Background & Borders panels live.
+
+<a id="text-and-hint-sizes"></a>
+
+## Text and hint sizes
+
+Main text and supporting hints use independent scales. Each pair below is
+font size / line height, in pixels.
+
+| Size | Main text | Hint |
+| --- | --- | --- |
+| Micro | 11 / 15 | — |
+| Tiny | 12 / 16 | — |
+| Small | 13 / 18 | 12 / 16 |
+| Medium | 15 / 22 | 14 / 20 |
+| Large | 17 / 26 | 16 / 24 |
+
+Menus and code blocks keep separate typography: menu labels use 14 / 20,
+menu hints use 12 / 16, and code blocks use 13 / 20.
+
+For an individual component, set `font-size` and `line-height` on its styled
+element or exposed part.

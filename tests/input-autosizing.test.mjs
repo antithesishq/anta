@@ -5,6 +5,7 @@ import { build } from 'esbuild'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium, webkit } = requireSite('playwright')
+const { PNG } = requireSite('pngjs')
 const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, webkit]
 const browsers = new Map()
 let script, css
@@ -51,6 +52,47 @@ async function fixture(t, engine, html, { userAgent, nativeSupport = true } = {}
 }
 
 for (const engine of engines) {
+  test(`${engine.name()}: single-line, button, and multiline fields share the first text baseline`, async t => {
+    for (const [size, height, leading] of [['small', 24, 18], ['medium', 28, 22], ['large', 32, 26]]) {
+      const { page, errors } = await fixture(t, engine,
+        ['single', 'button', 'one-row', 'growing'].map(kind =>
+          `<a-input id="${kind}" size="${size}" ${kind === 'button' ? 'button' : kind === 'one-row' ? 'rows="1"' : kind === 'growing' ? 'multiline maxrows="3"' : ''} value="Ágjpq" style="width:240px">` +
+          '<span slot="leading">Prefix</span><span slot="trailing">Suffix</span></a-input>').join('') +
+        `<input id="native-single" data-anta data-anta-size="${size}" value="Ágjpq"><textarea id="native-multiline" data-anta data-anta-size="${size}" rows="1">Ágjpq</textarea>`)
+      await page.addStyleTag({ content: `
+        input[data-anta], textarea[data-anta] { color: black; background: white; box-shadow: none; caret-color: transparent; }
+        a-input::part(input) { color: black; background: white; caret-color: transparent; }
+        a-input::part(field) { background: white; box-shadow: none; }
+      ` })
+      const inkTop = async id => {
+        const native = id.startsWith('native-')
+        const control = page.locator(native ? `#${id}` : `#${id} [part="input"]`)
+        const top = native ? 0 : await control.evaluate(el => el.getBoundingClientRect().top - el.getRootNode().host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect().top)
+        const png = PNG.sync.read(await control.screenshot({ caret: 'hide' }))
+        for (let y = 0; y < png.height; y++) for (let x = 0; x < png.width; x++) {
+          const i = (y * png.width + x) * 4
+          if (png.data[i + 3] && Math.max(...png.data.subarray(i, i + 3)) < 120) return top + y
+        }
+        assert.fail('Expected visible text pixels')
+      }
+      const baseline = await inkTop('single')
+      for (const id of ['native-single', 'native-multiline']) {
+        assert.equal(await page.locator(`#${id}`).evaluate(el => el.offsetHeight), height)
+        // Native WebKit inputs can rasterize a line one pixel below textareas.
+        assert.ok(Math.abs(await inkTop(id) - baseline) <= 1, `${size} ${id} first-line ink position`)
+      }
+      for (const id of ['single', 'button', 'one-row', 'growing']) {
+        assert.equal(await page.locator(`#${id} [part="field"]`).evaluate(el => el.offsetHeight), height)
+        assert.equal(await page.locator(`#${id} [part="input"]`).evaluate(el => parseFloat(getComputedStyle(el).lineHeight)), leading)
+        assert.equal(await inkTop(id), baseline, `${size} ${id} first-line ink position`)
+      }
+      await page.locator('#growing').evaluate(el => el.value = 'Ágjpq\nSecond\nThird\nFourth')
+      assert.equal(await page.locator('#growing textarea').evaluate(el => el.clientHeight), leading * 3 + 6)
+      assert.equal(await inkTop('growing'), baseline, `${size} first line stays aligned after growth`)
+      assert.deepEqual(errors, [])
+    }
+  })
+
   test(`${engine.name()}: WebKit browser identities use JS even when CSS reports support`, async t => {
     const agents = [
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/26.2 Safari/605.1.15',
@@ -76,15 +118,15 @@ for (const engine of engines) {
     const height = () => page.locator('#growing textarea').evaluate(el => el.clientHeight)
     assert.equal(await height(), 28)
     await page.locator('#growing').evaluate(el => el.value = 'One\nTwo\nThree\nFour\nFive\nSix')
-    assert.equal(await height(), 128)
+    assert.equal(await height(), 138)
     await page.locator('#growing').evaluate(el => el.value = 'One\nTwo')
-    assert.equal(await height(), 48)
+    assert.equal(await height(), 50)
     await page.locator('#growing').evaluate(el => { el.setAttribute('maxrows', '3'); el.value = 'Line\n'.repeat(20) })
-    assert.equal(await height(), 68)
+    assert.equal(await height(), 72)
     await page.locator('#growing').evaluate(el => el.setAttribute('rows', '2'))
-    assert.equal(await height(), 48)
+    assert.equal(await height(), 50)
     await page.locator('#growing').evaluate(el => el.value = '')
-    assert.equal(await height(), 48)
+    assert.equal(await height(), 50)
     assert.deepEqual(errors, [])
   })
 

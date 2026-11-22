@@ -161,9 +161,9 @@
     padding: var(--dialog-header-padding, 18px 20px 8px);
     overflow: clip;
     overflow-wrap: anywhere;
-    font-size: 17px;
+    font-size: var(--font-size-heading-4);
     font-weight: 560;
-    line-height: 24px;
+    line-height: var(--line-height-heading-4);
   }
   a-dialog:state(has-header)::part(header) { display: block; }
   a-dialog:has(> [slot="close"])::part(header) { padding-inline-end: 52px; }

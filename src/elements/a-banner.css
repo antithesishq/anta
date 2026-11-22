@@ -107,8 +107,8 @@
   }
 
   a-banner-message {
-    font-size: 14px;
-    line-height: 20px;
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
     font-weight: 475;
     text-align: start;
   }

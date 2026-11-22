@@ -6,7 +6,11 @@ component matrices run separately.
 ```sh
 pnpm test
 pnpm test:components --component select,tooltip
+pnpm test:typography
 ```
+
+Typography checks cover independent text and hint overrides across sizes,
+themes, nested color scopes, and imports with or without the optional reset.
 
 Browser checks use the site's Playwright installation. Install its browsers with:
 

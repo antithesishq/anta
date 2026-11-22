@@ -461,7 +461,7 @@ with a border:
 | `orientation?` | 'horizontal' \| 'vertical' | 'horizontal' | Layout + arrow-key axis. Horizontal ellipsizes labels when tabs overflow (scroll is opt-in via CSS); vertical stacks them. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'secondary' | Visual emphasis. Primary uses a solid selected marker and a stronger completed connector; secondary is the outlined default; tertiary is compact and borderless. |
 | `renderMarker?` | (option, state) => ReactNode | — | Builds a custom marker from a step and its current state. A returned node replaces `marker` and the built-in state marker; return `undefined` to use those fallbacks, or `null` for an empty ring. |
-| `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size — small 24px · medium 28px · large 32px tall, matching Button's scale (the tab's label leading runs a touch tighter, offset by 1px more block padding per side). |
+| `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size — small 24px · medium 28px · large 32px tall, matching Button's control heights and label line heights. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| '' | 'neutral' | Tone applied to every step without its own `tone`. Error steps stay critical and disabled steps stay neutral. |
 | `value?` | string | — | Controlled active value — the tab `value` to mark selected (and, when a `<TabPanel value="…">` shares it, the panel to reveal). When set, you own selection: the strip renders exactly what this says, and a user pick only *requests* a change via `onStateChange` — apply it by updating this prop. Leave undefined (and use `defaultValue`) for uncontrolled. |
 

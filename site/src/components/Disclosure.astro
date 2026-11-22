@@ -26,6 +26,10 @@ interface Props {
    *  `<Expander tone="brand">` colors its summary. Body internals stay
    *  neutral. Used for the top-of-page Playground. Defaults to false. */
   brand?: boolean
+  /** Use Anta's native details styling. */
+  'data-anta'?: boolean
+  priority?: 'primary' | 'secondary' | 'tertiary'
+  outdent?: boolean
   /** Exclude this disclosure and its contents from the site search index. */
   'data-no-search'?: boolean
 }
@@ -37,6 +41,9 @@ const {
   level = 2,
   anchor = true,
   brand = false,
+  'data-anta': dataAnta = false,
+  priority,
+  outdent = false,
   'data-no-search': dataNoSearch = false,
 } = Astro.props
 const slug = (id ?? title)
@@ -49,10 +56,14 @@ const Heading = `h${level}` as const
 <details
   class:list={["disclosure", { plain: !anchor, brand }]}
   open={open}
+  data-anta={dataAnta ? '' : undefined}
+  priority={dataAnta ? priority : undefined}
+  outdent={dataAnta && outdent ? '' : undefined}
+  tone={dataAnta && brand ? 'brand' : undefined}
   data-no-search={dataNoSearch ? '' : undefined}
 >
-  <summary class="summary">
-    <a-icon shape="chevron-right" class="chevron"></a-icon>
+  <summary class={dataAnta ? undefined : 'summary'}>
+    {!dataAnta && <a-icon shape="chevron-right" class="chevron"></a-icon>}
     {/* A real heading carries the id so the TOC picks it up; the inner
         anchor matches the Markdown heading-link transform
         (classes `header-anchor muted`) so the section deep-links and
@@ -64,7 +75,7 @@ const Heading = `h${level}` as const
         <a class="header-anchor muted" href={`#${slug}`}>{title}</a>
       </Heading>
     ) : (
-      <span class="title plain">{title}</span>
+      <span class={dataAnta ? undefined : 'title plain'}>{title}</span>
     )}
   </summary>
   <div class="body">
@@ -82,6 +93,11 @@ const Heading = `h${level}` as const
      content after it (a heading or a bare <Preview>) doesn't abut when folded. */
   .disclosure.plain {
     margin-block: 16px 32px;
+  }
+
+  .disclosure[data-anta] > summary {
+    max-width: none;
+    margin-inline: 0;
   }
 
   .summary {
@@ -137,7 +153,7 @@ const Heading = `h${level}` as const
   /* Gap below the summary. Lives as padding (not margin) so it sits
      inside the clipped grid item and collapses with the row during the
      expand/collapse animation below. */
-  .body {
+  .disclosure:not([data-anta]) > .body {
     padding-top: 12px;
   }
 

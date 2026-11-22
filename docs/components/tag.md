@@ -6,7 +6,7 @@ pair it with a value, such as a build result or version number.
 ## Priority
 
 `priority` controls emphasis. Use `primary` for a solid fill, `secondary` for a
-subtle fill, or `tertiary` for an outline. The default is `secondary`.
+subtle fill, or `tertiary` for an outline.
 
 ```tsx
 import { Tag } from '@antadesign/anta/bundle'

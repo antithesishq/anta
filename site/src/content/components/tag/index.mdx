@@ -12,7 +12,8 @@ import PropsTable from '../../../components/PropsTable.astro'
 import Disclosure from '../../../components/Disclosure.astro'
 import Columns from '../../../components/Columns.astro'
 import Col from '../../../components/Col.astro'
-import tagDemoCode, { removableTagDemoCode } from './tag.demo.ts'
+import tagDemoCode from './tag.demo.ts'
+import TagRemoveDemo from './tag-remove.demo'
 
 # Tag
 
@@ -292,17 +293,18 @@ export default function Demo() {
 }
 ```
 
-For a removable tag, place a named `Button` beside the label. The example
-removes the tag and moves focus to the button that resets the example. Padding lets
-the remove button keep its target size, and an inset focus ring stays visible
-inside the tag.
+Place a `Button` inside the tag to remove it. Give the button an accessible
+name, such as “Remove Frontend.” After removal, this example moves focus to
+**Reset example**, which restores the tag.
 
-<Playground
-  component="Tag"
-  layout="side"
-  initialCode={removableTagDemoCode}
-  initialCss={`.preview { align-items: center; justify-content: center; min-height: 100%; }`}
-/>
+<Preview>
+  <TagRemoveDemo client:load />
+  <style is:inline>{`
+    a-tag.removable-tag { padding-block: 0; }
+    a-tag.removable-tag > a-button { align-self: stretch; }
+    a-tag.removable-tag > a-button:focus-visible { outline-offset: -2px; }
+  `}</style>
+</Preview>
 
 ```tsx folded
 import { useRef, useState } from 'preact/hooks'
@@ -315,8 +317,7 @@ export default function Demo() {
   return (
     <div ref={controls} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       {visible && (
-        <Tag className="removable-tag" tone="info">
-          <span>Frontend</span>
+        <Tag className="removable-tag" tone="info" label="Frontend">
           <Button priority="quaternary" size="small" icon="x" aria-label="Remove Frontend"
             onClick={() => {
               setVisible(false)

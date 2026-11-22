@@ -16,6 +16,10 @@ changes are not listed.
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 
+### Removed
+
+- Removed obsolete `a-select-field`, `a-select-label`, and `a-select-hint` styles, JSX types, and Button accessibility handling. Raw Select compositions use `<a-input button>` with label and hint slots. Current Select and SelectFaceted retain their shared layout styles.
+
 ### Fixed
 
 - Tooltip uses the shared medium hint typography (14/20px). Padding stays unchanged; the default single-line bubble is 1px shorter.

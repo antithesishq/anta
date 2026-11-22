@@ -49,7 +49,7 @@ const composedStyles = {
   'a-breadcrumbs': ['Breadcrumbs.css', /a-breadcrumbs/],
   'a-steps': ['Steps.css', /a-steps/],
   'a-input-date': ['InputDate.css', /a-input-date-time-container/],
-  'a-select': ['Select.css', /a-select-field/],
+  'a-select': ['Select.css', /a-select-chevron/],
   'a-select-faceted': ['Select.css', /a-select-faceted-summary/],
 }
 
@@ -102,7 +102,7 @@ test('the previous Select stylesheet import resolves to the canonical stylesheet
     '@antadesign/anta/components/select-parts.css',
   ])
   assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')), ['dist/components/Select.css'])
-  assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, /a-select-field/)
+  assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, /a-select-chevron/)
 })
 
 test('the elements barrel retains every composed layout stylesheet', async () => {

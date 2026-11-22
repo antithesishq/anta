@@ -1240,35 +1240,6 @@ test('Select opens inside an ancestor Input label or hint and consumer shadow sl
   }
 })
 
-test('legacy Select raw field tags retain styling, labels, hints, and popup behavior', async t => {
-  const page = await pageFor(t)
-  await page.evaluate(() => {
-    const field = document.createElement('a-select-field')
-    field.innerHTML = '<a-select-label>Legacy team</a-select-label>' +
-      '<a-button role="button" tabindex="0" aria-haspopup="menu">' +
-      '<a-select-leading aria-hidden="true">Team:</a-select-leading>' +
-      '<a-button-label>Design</a-button-label></a-button>' +
-      '<a-menu role="menu"><a-menu-item role="menuitem">Engineering</a-menu-item></a-menu>' +
-      '<a-select-hint>Choose a team</a-select-hint>'
-    document.body.prepend(field)
-  })
-  const field = page.locator('a-select-field')
-  const trigger = field.locator('a-button')
-  assert.equal(await field.evaluate(el => getComputedStyle(el).display), 'grid')
-  assert.equal(await field.locator('a-select-label').evaluate(el => getComputedStyle(el).fontWeight), '500')
-  assert.equal(await field.locator('a-select-hint').evaluate(el => getComputedStyle(el).display), 'flex')
-  assert.equal(await field.locator('a-select-leading').evaluate(el => getComputedStyle(el).display), 'flex')
-  const cdp = await page.context().newCDPSession(page)
-  const node = (await cdp.send('Accessibility.getFullAXTree')).nodes.find(node =>
-    node.role?.value === 'button' && node.name?.value === 'Legacy team')
-  assert.equal(node?.description?.value, 'Design Choose a team')
-  await field.locator('a-select-label').click()
-  assert.equal(await trigger.evaluate(el => el === document.activeElement), true)
-  await page.waitForFunction(() => document.querySelector('a-select-field > a-menu')?.listening)
-  await trigger.click()
-  assert.equal(await field.locator('a-menu').evaluate(menu => menu.isOpen), true)
-})
-
 test('Select triggers preserve their display on reset and submit selections without blocking the form', async t => {
   const page = await pageFor(t)
   const result = await page.evaluate(() => {

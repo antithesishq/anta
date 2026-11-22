@@ -36,7 +36,8 @@ pnpm test:components --component all --list
 - **Fast** runs core Chromium regressions. PR CI selects affected suites through
   change gates and includes both granular and full-bundle imports in CSP suites.
   Selected suites are distributed across up to four parallel CI jobs, with one
-  shared-runner invocation per shard. Each runner keeps two test files active.
+  shared-runner invocation per shard. Job names list the included suites. Each
+  runner keeps two test files active.
 - **Slow** includes fast checks, expanded browser and visual coverage, and
   installed-package checks where available. Run it when expanded coverage is
   needed. The manual **Component matrix** workflow supports one suite or all.

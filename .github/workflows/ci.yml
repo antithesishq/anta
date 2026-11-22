@@ -429,7 +429,7 @@ jobs:
             --test-skip-pattern="^debounces typing, keeps previous matches, and shows activity only in the input$"
 
   components:
-    name: components (${{ matrix.shard }})
+    name: "Component tests: ${{ matrix.name }}"
     needs: select-components
     if: needs.select-components.outputs.has-components == 'true'
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 45 || 20 }}

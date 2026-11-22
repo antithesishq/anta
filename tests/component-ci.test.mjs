@@ -35,6 +35,7 @@ for (const tier of ['fast', 'slow']) test(`CI batches selected ${tier} component
 test('PR component checks select fast; only manual CI selects slow', () => {
   assert.equal(workflow.jobs.components.env.ANTA_COMPONENT_TEST_TIER, "${{ github.event_name == 'workflow_dispatch' && 'slow' || 'fast' }}")
   assert.equal(runner.env.COMPONENTS, '${{ matrix.components }}')
+  assert.equal(workflow.jobs.components.name, 'Component tests: ${{ matrix.name }}')
 })
 
 test('component shards cover each selected suite once without empty jobs', async () => {
@@ -45,7 +46,7 @@ test('component shards cover each selected suite once without empty jobs', async
   assert.deepEqual(groups.flat().sort(), [...names].sort())
   assert.ok(Math.max(...groups.map(group => group.length)) - Math.min(...groups.map(group => group.length)) <= 1)
   assert.deepEqual(componentShards({unknown: 'true', input: 'false'}), {include: []})
-  assert.deepEqual(componentShards({input: 'true'}), {include: [{shard: 1, components: 'input'}]})
+  assert.deepEqual(componentShards({input: 'true'}), {include: [{name: 'Input', components: 'input'}]})
 
   const directory = await mkdtemp(join(tmpdir(), 'anta-component-matrix-'))
   try {

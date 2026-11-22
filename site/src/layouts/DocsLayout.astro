@@ -246,7 +246,7 @@ if (hasStructuredBreadcrumbs && title) {
           <AntaLogo size={24} compact style={{ borderRadius: '1000px', border: '1px solid var(--border-3-brand)' }} />
           Anta
           <a href="/changelog/" aria-label={`Changelog for version ${npmVersion}`}>
-            <Tag interactive label={npmVersion} />
+            <Tag className="version-tag" interactive label={npmVersion} />
             <a-tooltip follow>Changelog</a-tooltip>
           </a>
         </span>
@@ -987,6 +987,12 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   @media (max-width: 500px) {
+    .topbar-brand :global(.version-tag) {
+      padding: 0 4.5px;
+      font-size: var(--font-size-micro);
+      line-height: var(--line-height-micro);
+    }
+
     .topbar,
     .topbar-tools,
     .package-links {

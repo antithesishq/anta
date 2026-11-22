@@ -966,7 +966,7 @@ if (hasStructuredBreadcrumbs && title) {
     .backdrop {
       display: block;
       position: fixed;
-      inset: 0;
+      inset: 44px 0 0;
       /* Explicit black so it stays a dark scrim in both themes — `--text-1`
          flips to near-white in dark mode, which made the overlay white. */
       background: color-mix(in srgb, black 30%, transparent);
@@ -1060,12 +1060,12 @@ if (hasStructuredBreadcrumbs && title) {
 
     .sidebar {
       position: fixed;
-      top: 0;
+      top: 44px;
       left: 0;
       background: var(--bg-pane);
       /* Wider as a slide-out than docked (214px) — matches the TOC slide-out. */
       width: min(240px, 80vw);
-      height: 100dvh;
+      height: calc(100dvh - 44px);
       transform: translateX(-100%);
       transition: transform 250ms ease-out, background 200ms ease-out;
       z-index: 20;

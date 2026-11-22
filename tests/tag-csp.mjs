@@ -108,6 +108,41 @@ for (const engine of engines) {
       }
     } finally {await page.close()}
   })
+  test.fast(`${engine.name()}: primary Tag edges are transparent at rest and contrast by color scheme`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      for (const mode of ['granular', 'bundle']) for (const theme of ['none', 'antune', 'antithesis']) {
+        await page.goto(`${origin}/?mode=${mode}&theme=${theme}`)
+        const tag = page.locator('#interactive')
+        const borderPixel = () => tag.evaluate(element => {
+          const canvas = document.createElement('canvas')
+          canvas.width = canvas.height = 1
+          const context = canvas.getContext('2d')
+          context.fillStyle = getComputedStyle(element).borderColor
+          context.fillRect(0, 0, 1, 1)
+          return [...context.getImageData(0, 0, 1, 1).data]
+        })
+        for (const scheme of ['light', 'dark']) {
+          await tag.evaluate((element, scheme) => {
+            element.setAttribute('priority', 'primary')
+            element.className = scheme
+          }, scheme)
+          await page.locator('#outside').hover()
+          const rest = await measure(tag)
+          assert.equal((await borderPixel())[3], 0, `${mode}/${theme}/${scheme}: transparent resting border`)
+          await tag.hover()
+          const hover = await measure(tag), pixel = await borderPixel()
+          assert.ok(pixel[3] > 0 && pixel[3] < 255)
+          assert.ok(pixel.slice(0, 3).every(channel => scheme === 'light' ? channel < 64 : channel > 192), `${scheme}: ${pixel}`)
+          assert.deepEqual(withoutBorder(hover), withoutBorder(rest))
+          await page.mouse.down()
+          await page.evaluate(() => new Promise(requestAnimationFrame))
+          assert.deepEqual(await measure(tag), rest)
+          await page.mouse.up()
+        }
+      }
+    } finally {await page.close()}
+  })
   for (const framework of ['React', 'Preact']) test.fast(`${engine.name()} ${framework}: hydration preserves Tag nodes and toggles the interactive attribute`, async () => {
     const page = await browsers.get(engine).newPage()
     try {
@@ -143,12 +178,17 @@ if (engines.includes(chromium)) {
     const page = await browsers.get(chromium).newPage({forcedColors: 'active'})
     try {
       await page.goto(origin)
-      const tag = page.locator('#interactive'), rest = await measure(tag)
-      await tag.hover()
-      assert.notEqual((await measure(tag)).border, rest.border)
-      await page.mouse.down()
-      assert.deepEqual(await measure(tag), rest)
-      await page.mouse.up()
+      const tag = page.locator('#interactive')
+      for (const priority of ['primary', 'secondary', 'tertiary']) {
+        await tag.evaluate((element, priority) => element.setAttribute('priority', priority), priority)
+        await page.locator('#outside').hover()
+        const rest = await measure(tag)
+        await tag.hover()
+        assert.notEqual((await measure(tag)).border, rest.border)
+        await page.mouse.down()
+        assert.deepEqual(await measure(tag), rest)
+        await page.mouse.up()
+      }
     } finally {await page.close()}
   })
 }

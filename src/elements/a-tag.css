@@ -45,6 +45,7 @@
     --tag-bg-secondary: light-dark(color-mix(in oklch, var(--tag-tint) 10%, transparent), color-mix(in oklch, var(--tag-tint) 20%, transparent));
     --tag-bg: var(--tag-bg-secondary);
     --tag-border: light-dark(color-mix(in oklch, var(--tag-tint) 15%, transparent), color-mix(in oklch, var(--tag-tint) 25%, transparent));
+    --tag-border-hover: color-mix(in oklch, var(--tag-border), var(--tag-text) 50%);
     --tag-separator: color-mix(in oklch, var(--tag-text) 30%, transparent);
 
     /* Reclaim vertical padding for label leading without growing the pill. */
@@ -90,7 +91,7 @@
   /* Pressed wrappers also suppress hover when the tag itself is not :active. */
   @media (hover: hover) and (pointer: fine) {
     a-tag[interactive]:hover:not(:active, :active *) {
-      border-color: color-mix(in oklch, var(--tag-border), var(--tag-text) 50%);
+      border-color: var(--tag-border-hover);
     }
     @media (forced-colors: active) {
       a-tag[interactive]:hover:not(:active, :active *) { border-color: Highlight; }
@@ -222,11 +223,15 @@
      they sit after the tone rules so their equal-specificity `--tag-bg` /
      `--tag-text` overrides win the cascade. */
 
-  /* Primary — solid `--tag-bg-solid` with white text. The hairline border keeps
-     the vivid `--tag-tint` edge (= the secondary border). */
+  /* Reserve border space so the primary hover edge does not change geometry. */
   a-tag[priority="primary"] {
     --tag-bg: var(--tag-bg-solid);
     --tag-text: #fff;
+    --tag-border: transparent;
+    --tag-border-hover: light-dark(
+      color-mix(in oklch, #000 50%, transparent),
+      color-mix(in oklch, #fff 50%, transparent)
+    );
   }
   /* Custom-tone primary needs the white text re-stated at higher specificity
      to out-rank the custom `--tag-text` (the `[tone]:not(…)` selector). */

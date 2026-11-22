@@ -7,7 +7,7 @@ changes are not listed.
 
 ### Added
 
-- [Tag](/tag/#interactive-tags) accepts `interactive` for a pointer cursor and stronger hover border. Pressing restores the resting border; tags without it use the default cursor.
+- [Tag](/tag/#interactive-tags) accepts `interactive` for a pointer cursor and stronger hover border that returns to normal while pressed. Primary tags use a transparent resting border and a dark or light hover edge to contrast with the fill.
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 

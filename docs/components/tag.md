@@ -1,7 +1,6 @@
 # Tag
 
-`Tag` displays short statuses, counts, and metadata. Use a label on its own or
-pair it with a value, such as a build result or version number.
+`Tag` displays short statuses, counts, and metadata.
 
 ## Priority
 

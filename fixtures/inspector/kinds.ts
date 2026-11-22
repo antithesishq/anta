@@ -123,12 +123,12 @@ export const inspectorKinds = {
   circular: {
     title: 'Circular references',
     values: () => {
-      const node: Record<string, unknown> = { id: 'api-1', peers: [] as unknown[] }
-      const peer = { id: 'api-2', leader: node }
-      ;(node.peers as unknown[]).push(peer)
-      node.self = node
+      const api_node: Record<string, unknown> = { id: 'api-1', peers: [] as unknown[] }
+      const peer = { id: 'api-2', leader: api_node }
+      ;(api_node.peers as unknown[]).push(peer)
+      api_node.self = api_node
       // A cycle back to the whole value reads Circular Ref(root object).
-      const value: Record<string, unknown> = { node }
+      const value: Record<string, unknown> = { api_node }
       value.whole = value
       return value
     },

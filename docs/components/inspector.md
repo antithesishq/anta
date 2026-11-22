@@ -599,7 +599,7 @@ the Inspector never does.
 ### Circular references
 
 A value that contains itself shows `Circular Ref(...)` with the path of the
-ancestor it refers to, such as `Circular Ref(node)`, or `Circular Ref(root object)`
+ancestor it refers to, such as `Circular Ref(api_node)`, or `Circular Ref(root object)`
 when it refers to the whole value, and never opens, so the tree can't expand
 endlessly. Select it, or press Enter on it, to move to that row,
 which is highlighted for a moment. An object that only appears in several places,
@@ -607,10 +607,10 @@ without containing itself, opens in each place instead: only a real cycle
 becomes a link, because the ancestor it points to is always open and on screen.
 
 ```tsx
-const node = { id: 'api-1', peers: [] }
-node.peers.push({ id: 'api-2', leader: node })
-node.self = node
-const value = { node }
+const api_node = { id: 'api-1', peers: [] }
+api_node.peers.push({ id: 'api-2', leader: api_node })
+api_node.self = api_node
+const value = { api_node }
 value.whole = value
 <Inspector value={value} expandDepth={3} aria-label="Cycles" />
 ```

@@ -53,6 +53,7 @@
     --tag-icon-size: 13px;
     --tag-label-weight: 600;
     --tag-gap: 0.6ch;
+    --_tag-font-size: 12px;
 
     display: inline-flex;
     align-items: center;
@@ -73,7 +74,7 @@
 
     font-family: var(--sans-serif);
     font-weight: 450;
-    font-size: 12px;
+    font-size: var(--_tag-font-size);
     line-height: 18px;
     /* Normal (mixed) case is the default. Theme-free tags use deliberately
        open tracking; reference themes can tune it for their chosen font. */
@@ -213,8 +214,8 @@
     --tag-padding-block: 0px;
     --tag-padding-inline: 4.5px;
     --tag-icon-size: 11px;
+    --_tag-font-size: 11px;
 
-    font-size: 11px;
     line-height: 15px;
   }
 
@@ -223,24 +224,15 @@
     --tag-padding-block: 1.5px;
     --tag-padding-inline: 8.5px;
     --tag-icon-size: 15px;
+    --_tag-font-size: 13px;
 
-    font-size: 13px;
     line-height: 20px;
   }
 
-  /* All-caps opt-in: switch to the uppercase treatment. Uppercase reads
-     larger than mixed case at the same px, so each size steps down
-     1px from its normal-case default (medium 12→11; small 10, large 12
-     via the combos below). */
+  /* Uppercase reads larger, so reduce the regular size by 1px. */
   a-tag[allcaps] {
-    font-size: 11px;
+    font-size: calc(var(--_tag-font-size) - 1px);
     text-transform: uppercase;
-  }
-  a-tag[size="small"][allcaps] {
-    font-size: 10px;
-  }
-  a-tag[size="large"][allcaps] {
-    font-size: 12px;
   }
 
   /* Tones are intentionally not re-created in forced colors: a status still

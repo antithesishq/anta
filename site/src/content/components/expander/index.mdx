@@ -553,19 +553,6 @@ to change the summary's visual scale.
 </details>
 ```
 
-### Custom values and CSP
-
-Custom `tone` and `round` values in JSX use inline styles. When your CSP blocks
-style attributes, use classes and external CSS. For raw custom tones, set
-`--expander-tone-source` in CSS for browsers without typed color attributes.
-See [Content Security Policy](/install/#content-security-policy) for setup.
-
-### Updating older markup
-
-Replace slot attributes with the direct regions above. Move raw `level` to
-`a-expander-summary`, and choose indicator placement through the region's order.
-Existing shadow part selectors remain supported.
-
 </Disclosure>
 
 <Disclosure title="Styling">

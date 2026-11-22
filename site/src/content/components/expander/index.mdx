@@ -10,7 +10,7 @@ import Preview from '../../../components/Preview.astro'
 import PropsTable from '../../../components/PropsTable.astro'
 import Disclosure from '../../../components/Disclosure.astro'
 import expanderDemo from './expander.demo.ts'
-import { Expander, Text } from '@antadesign/anta'
+import { Box, Expander, Text } from '@antadesign/anta'
 import { AccordionDemo } from '../../../components/AccordionDemo'
 import { CancelableExpanderDemo, ControlledExpanderDemo } from '../../../components/ExpanderStateDemo'
 import { ExpanderActionsDemo } from '../../../components/ExpanderActionsDemo'
@@ -243,6 +243,110 @@ function Accordion() {
       ))}
     </Box>
   )
+}
+```
+
+### Sticky headers
+
+Keep each header visible while its section scrolls. Apply `position: sticky`
+to `::part(header)` so the header stays within its Expander and the next
+section pushes it away. The class names identify this demo's scroll container
+and sections. Replace them with your own selectors.
+
+<Preview class="sticky-expander-preview" scroll aria-label="Sticky expander headers">
+  <Box className="sticky-expanders">
+    <Expander title="Shipping and delivery" defaultOpen>
+      <Text>Orders ship within two business days. Standard delivery takes another three to five business days. We send a tracking link as soon as your package leaves the warehouse.</Text>
+      <Text>Choose express delivery at checkout if you need your order sooner. Available delivery methods and estimated arrival dates depend on your address and appear before you confirm the order.</Text>
+      <Text>If your tracking information stops updating, contact support with your order number. We can check the shipment with the carrier and help you find the next step.</Text>
+    </Expander>
+    <Expander title="Returns" defaultOpen>
+      <Text>Unworn items can be returned free within 30 days of delivery. Keep the original packaging and start a return from your order details. We issue a refund after inspecting the returned items.</Text>
+      <Text>Pack the items securely and attach the prepaid shipping label. Keep your drop-off receipt until the return reaches us so you can follow its progress with the carrier.</Text>
+      <Text>Refunds go to the original payment method. Your bank may take a few business days to post the credit after we send the confirmation email.</Text>
+    </Expander>
+    <Expander title="Warranty" defaultOpen>
+      <Text>Every product includes a one-year limited warranty covering defects in materials and workmanship. Contact support with your order number and a description of the issue so we can arrange a repair or replacement.</Text>
+      <Text>Include a few clear photos showing the product and the affected area. These help us understand the problem and decide whether the item needs to be sent in for inspection.</Text>
+      <Text>We explain the available options before you send anything back. If a replacement is needed, we confirm the delivery address and share tracking information when it ships.</Text>
+    </Expander>
+  </Box>
+  <style is:inline>{`
+    .sticky-expander-preview {
+      block-size: 20rem;
+      overflow: auto;
+    }
+    .sticky-expanders {
+      box-sizing: border-box;
+      inline-size: 100%;
+      max-inline-size: calc(32rem + 48px);
+      margin-inline: auto;
+      padding: 24px;
+    }
+    .sticky-expanders > a-expander::part(header) {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 1;
+      background: var(--bg-2);
+      border-radius: inherit;
+    }
+    .sticky-expanders > a-expander > a-expander-details {
+      min-block-size: 20rem;
+    }
+    .sticky-expanders a-text + a-text {
+      margin-block-start: 12px;
+    }
+  `}</style>
+</Preview>
+
+```tsx folded
+import { Box, Expander, Text } from '@antadesign/anta'
+
+<Box className="sticky-expander-preview" role="region" aria-label="Sticky expander headers" tabIndex={0}>
+  <Box className="sticky-expanders">
+    <Expander title="Shipping and delivery" defaultOpen>
+      <Text>Orders ship within two business days. Standard delivery takes another three to five business days. We send a tracking link as soon as your package leaves the warehouse.</Text>
+      <Text>Choose express delivery at checkout if you need your order sooner. Available delivery methods and estimated arrival dates depend on your address and appear before you confirm the order.</Text>
+      <Text>If your tracking information stops updating, contact support with your order number. We can check the shipment with the carrier and help you find the next step.</Text>
+    </Expander>
+    <Expander title="Returns" defaultOpen>
+      <Text>Unworn items can be returned free within 30 days of delivery. Keep the original packaging and start a return from your order details. We issue a refund after inspecting the returned items.</Text>
+      <Text>Pack the items securely and attach the prepaid shipping label. Keep your drop-off receipt until the return reaches us so you can follow its progress with the carrier.</Text>
+      <Text>Refunds go to the original payment method. Your bank may take a few business days to post the credit after we send the confirmation email.</Text>
+    </Expander>
+    <Expander title="Warranty" defaultOpen>
+      <Text>Every product includes a one-year limited warranty covering defects in materials and workmanship. Contact support with your order number and a description of the issue so we can arrange a repair or replacement.</Text>
+      <Text>Include a few clear photos showing the product and the affected area. These help us understand the problem and decide whether the item needs to be sent in for inspection.</Text>
+      <Text>We explain the available options before you send anything back. If a replacement is needed, we confirm the delivery address and share tracking information when it ships.</Text>
+    </Expander>
+  </Box>
+</Box>
+```
+
+```css folded
+.sticky-expander-preview {
+  block-size: 20rem;
+  overflow: auto;
+}
+.sticky-expanders {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: calc(32rem + 48px);
+  margin-inline: auto;
+  padding: 24px;
+}
+.sticky-expanders > a-expander::part(header) {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--bg-2);
+  border-radius: inherit;
+}
+.sticky-expanders > a-expander > a-expander-details {
+  min-block-size: 20rem;
+}
+.sticky-expanders a-text + a-text {
+  margin-block-start: 12px;
 }
 ```
 

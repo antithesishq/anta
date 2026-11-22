@@ -11,6 +11,10 @@
  * on tidy rows (e.g. two rows of three) without flex line-break hacks.
  */
 interface Props {
+  class?: string
+  /** Make the preview itself a focusable scroll area. */
+  scroll?: boolean
+  'aria-label'?: string
   cols?: number
   /** Gap between previewed items. Any CSS length; defaults to 12px. */
   gap?: string
@@ -32,7 +36,7 @@ interface Props {
    *  reserve their real height. */
   minHeight?: string | number
 }
-const { cols, gap, direction, height, background, minHeight, align, justify } = Astro.props
+const { cols, gap, direction, height, background, minHeight, align, justify, scroll, class: className, 'aria-label': ariaLabel } = Astro.props
 const h = typeof height === 'number' ? `${height}px` : height
 const mh = typeof minHeight === 'number' ? `${minHeight}px` : minHeight
 const style = [
@@ -46,7 +50,15 @@ const style = [
   mh ? `--preview-min-height: ${mh}` : '',
 ].filter(Boolean).join('; ') || undefined
 ---
-<div class="preview" data-cols={cols} style={style}>
+<div
+  class:list={["preview", className]}
+  data-cols={cols}
+  data-scroll={scroll ? '' : undefined}
+  role={scroll ? 'region' : undefined}
+  tabindex={scroll ? 0 : undefined}
+  aria-label={ariaLabel}
+  style={style}
+>
   <slot />
 </div>
 
@@ -63,6 +75,13 @@ const style = [
     background: var(--bg-canvas);
     margin-bottom: 4px;
     min-height: var(--preview-min-height, auto);
+  }
+
+  /* Inner content owns padding so sticky headers reach the scrollport edge. */
+  .preview[data-scroll] {
+    display: block;
+    overflow: auto;
+    padding: 0;
   }
 
   /* A `client:only` island renders nothing server-side, so its preview

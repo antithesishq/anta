@@ -1,4 +1,5 @@
 @import './a-menu-item-typography.css';
+@import './a-menu-group-typography.css';
 
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
@@ -257,7 +258,6 @@
         gap: 1px;
         color: var(--text-5);
         font-family: var(--sans-serif);
-        font-size: 0.75em;
         font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;

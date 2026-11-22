@@ -59,7 +59,7 @@ for (const [entry, [stylesheet, selector]] of Object.entries(composedStyles)) {
     const inputs = Object.keys(result.metafile.inputs)
     assert.deepEqual(inputs.filter(path => path.endsWith('.css')).sort(), [
       `dist/components/${stylesheet}`,
-      ...(entry === 'a-select' ? ['dist/elements/a-select.css', 'dist/elements/a-menu-item-typography.css'] : []),
+      ...(entry === 'a-select' ? ['dist/elements/a-select.css', 'dist/elements/a-menu-item-typography.css', 'dist/elements/a-menu-group-typography.css'] : []),
     ].sort())
     assert.equal(result.outputFiles.find(file => file.path.endsWith('.js')).text.trim(), '')
     assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, selector)
@@ -72,12 +72,12 @@ test('Select and SelectFaceted share one layout stylesheet', async () => {
     '@antadesign/anta/elements/a-select-faceted',
   ])
   const cssInputs = Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css'))
-  assert.deepEqual(cssInputs.sort(), ['dist/components/Select.css', 'dist/elements/a-menu-item-typography.css', 'dist/elements/a-select.css'])
+  assert.deepEqual(cssInputs.sort(), ['dist/components/Select.css', 'dist/elements/a-menu-group-typography.css', 'dist/elements/a-menu-item-typography.css', 'dist/elements/a-select.css'])
 })
 
 test('native select CSS loads independently of the composed layout and JavaScript', async () => {
   const result = await bundleImports(['@antadesign/anta/elements/a-select.css'])
-  assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')).sort(), ['dist/elements/a-menu-item-typography.css', 'dist/elements/a-select.css'])
+  assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')).sort(), ['dist/elements/a-menu-group-typography.css', 'dist/elements/a-menu-item-typography.css', 'dist/elements/a-select.css'])
   assert.equal(result.outputFiles.find(file => file.path.endsWith('.js')).text.trim(), '')
   const css = result.outputFiles.find(file => file.path.endsWith('.css')).text
   assert.match(css, /select\[data-anta\]/)

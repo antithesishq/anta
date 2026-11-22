@@ -89,6 +89,42 @@ async function override(page, family) {
 }
 
 for (const engine of engines) {
+  test.fast(`${engine.name()}: menu and native group captions use compact globals across field sizes`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      await page.goto(`${origin}/?mode=native-select`)
+      await page.evaluate(() => {
+        const fixture = document.createElement('div')
+        fixture.id = 'captions'
+        fixture.innerHTML = ['small', 'medium', 'large'].map((size, index) => `<article style="font-size:${20 + index * 3}px"><a-menu-group><a-menu-group-label>Menu group</a-menu-group-label></a-menu-group><select data-anta data-anta-size="${size}"><optgroup label="Native group"><option>Option</option></optgroup></select></article>`).join('')
+        document.body.append(fixture)
+      })
+      const measure = () => page.locator('#captions article').evaluateAll(articles => articles.map(article => [...article.querySelectorAll('a-menu-group-label, optgroup')].map(element => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight])))
+      for (const pairs of await measure()) for (const pair of pairs) assert.deepEqual(pair, ['12px', '16px'])
+      assert.equal(await page.evaluate(() => !!customElements.get('a-menu-group')), false)
+      await page.locator('#captions').evaluate(fixture => {
+        fixture.style.setProperty('--font-size-extra-small', '14px')
+        fixture.style.setProperty('--line-height-extra-small', '20px')
+      })
+      for (const pairs of await measure()) for (const pair of pairs) assert.deepEqual(pair, ['14px', '20px'])
+    } finally {await page.close()}
+  })
+
+  test.fast(`${engine.name()}: inline code follows surrounding text while preformatted code inherits its block`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      await page.goto(origin)
+      await page.evaluate(() => {
+        const fixture = document.createElement('div')
+        fixture.id = 'code'
+        fixture.innerHTML = ['small', 'medium', 'large'].map(size => `<a-text size="${size}"><code>Inline</code><pre><code>Block</code></pre></a-text>`).join('') + '<div style="font-size:23px"><code>Custom parent</code><pre style="font-size:19px"><code>Custom block</code></pre></div>'
+        document.body.append(fixture)
+      })
+      const sizes = await page.locator('#code > *').evaluateAll(parents => parents.map(parent => [...parent.querySelectorAll('code')].map(code => getComputedStyle(code).fontSize)))
+      assert.deepEqual(sizes, [['12px', '13px'], ['14px', '13px'], ['16px', '13px'], ['22px', '19px']])
+    } finally {await page.close()}
+  })
+
   test.fast(`${engine.name()}: compact labels share main text sizes independently of hints`, async () => {
     const page = await browsers.get(engine).newPage()
     try {

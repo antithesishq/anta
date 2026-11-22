@@ -162,7 +162,7 @@
   /* `currentColor` carries the surrounding tone into the tint. */
   code {
     font-family: var(--monospace);
-    font-size: 0.933em;
+    font-size: calc(1em - 1px);
     line-height: 1em;
     color: inherit;
     background: light-dark(

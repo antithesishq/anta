@@ -103,6 +103,10 @@ Compact primary text also has `--font-size-extra-small` (12px) and
 small, medium, and large variants to extra-small, small, and medium text. Their
 12/16, 13/18, and 15/22 pairs remain independent of the hint scale.
 
+MenuGroup and native Select group captions use extra-small text at every field
+size. The reset makes inline code 1px smaller than its surrounding text; code
+inside a preformatted block inherits the block's typography.
+
 Override either scale on the root or an application container. Changing hint
 typography leaves main text unchanged:
 

@@ -369,44 +369,37 @@ if (hasStructuredBreadcrumbs && title) {
         syncSidebarSearch()
       }
 
-      // Two mobile slide-outs share the backdrop: the nav sidebar and the
-      // "On this page" TOC; opening one closes the other. State lives in
-      // body.dataset, which the body swap resets, closing drawers on nav.
-      const setMenu = (open: boolean, pinned = open) => {
+      const mobileNavigation = matchMedia('(max-width: 800px)')
+      let desktopMenuPinned = true
+      const setMenu = (open: boolean, pinned = false) => {
         document.body.dataset.menuOpen = open ? 'true' : 'false'
-        document.body.dataset.menuPinned = String(open && pinned)
+        document.body.dataset.menuPinned = String(open && pinned && !mobileNavigation.matches)
         document.querySelector('.mobile-menu-toggle')?.setAttribute('aria-expanded', String(open))
         if (open) document.body.dataset.tocOpen = 'false'
       }
       const setToc = (open: boolean) => {
         document.body.dataset.tocOpen = open ? 'true' : 'false'
-        if (open) setMenu(false)
+        if (open && document.body.dataset.menuPinned !== 'true') setMenu(false)
       }
       const closeAll = () => {
-        setMenu(false)
+        if (document.body.dataset.menuPinned !== 'true') setMenu(false)
         setToc(false)
       }
 
-      const mobileNavigation = matchMedia('(max-width: 800px)')
-      mobileNavigation.addEventListener('change', () => setMenu(false))
+      const syncMenu = () => {
+        const pinned = !mobileNavigation.matches && desktopMenuPinned
+        setMenu(pinned, pinned)
+      }
+      syncMenu()
+      mobileNavigation.addEventListener('change', syncMenu)
 
       document.addEventListener('pointerover', (event) => {
-        if (event.pointerType !== 'mouse' || !mobileNavigation.matches) return
+        if (event.pointerType !== 'mouse') return
         const target = event.target as HTMLElement
         if (target.closest?.('.mobile-menu-toggle')) {
           if (document.body.dataset.menuOpen !== 'true') setMenu(true, false)
         } else if (target.closest?.('.backdrop') && document.body.dataset.menuPinned !== 'true') {
           setMenu(false)
-        }
-      })
-      document.addEventListener('pointerdown', (event) => {
-        if ((event.target as HTMLElement).closest?.('.sidebar') && document.body.dataset.menuOpen === 'true') {
-          setMenu(true)
-        }
-      })
-      document.addEventListener('focusin', (event) => {
-        if ((event.target as HTMLElement).closest?.('.sidebar') && document.body.dataset.menuOpen === 'true') {
-          setMenu(true)
         }
       })
 
@@ -439,6 +432,7 @@ if (hasStructuredBreadcrumbs && title) {
         }, { once: true })
       })
       document.addEventListener('astro:after-swap', () => {
+        syncMenu()
         syncSidebarNavigation()
         setSidebarDestination()
         navigationSignal = undefined
@@ -452,8 +446,13 @@ if (hasStructuredBreadcrumbs && title) {
           e.preventDefault()
         } else if (target.closest('[data-search-trigger]')) {
           document.dispatchEvent(new Event('anta-search-open'))
-        } else if (target.closest('.mobile-menu-toggle') && mobileNavigation.matches) {
-          setMenu(document.body.dataset.menuOpen !== 'true' || document.body.dataset.menuPinned !== 'true')
+        } else if (target.closest('.mobile-menu-toggle')) {
+          if (mobileNavigation.matches) {
+            setMenu(true)
+          } else {
+            desktopMenuPinned = document.body.dataset.menuPinned !== 'true'
+            setMenu(desktopMenuPinned, desktopMenuPinned)
+          }
         } else if (target.closest('.toc-toggle')) {
           setToc(document.body.dataset.tocOpen !== 'true')
         } else if (target.closest('.backdrop')) {
@@ -665,9 +664,8 @@ if (hasStructuredBreadcrumbs && title) {
   .layout {
     display: flex;
     min-height: 100vh;
-    /* Clip horizontal overflow so the off-canvas slide-out panels (the nav
-       sidebar ≤800px and the TOC rail ≤1024px, both fixed + translated past
-       the right edge when closed) can't create a pannable region. Without it
+    /* Clip horizontal overflow so the off-canvas slide-out panels (the
+       undocked nav and the TOC rail ≤1024px) can't create a pannable region. Without it
        a wide page — the comparison matrices in landscape especially — scrolls
        sideways into empty space. `clip` (not `hidden`) doesn't establish a
        scroll container, so the sticky sidebar's vertical stickiness is
@@ -682,14 +680,34 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   .sidebar {
-    width: 214px;
+    width: min(240px, 80vw);
     flex-shrink: 0;
-    /* border-right: 1px solid var(--border-5); */
     padding: 20px 16px 48px 20px;
-    position: sticky;
+    position: fixed;
     top: 44px;
-    height: calc(100vh - 44px);
+    left: 0;
+    height: calc(100dvh - 44px);
+    background: var(--bg-pane);
     overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 250ms ease-out, background 200ms ease-out;
+    z-index: 20;
+  }
+
+  body[data-menu-open="true"] .sidebar {
+    transform: translateX(0);
+  }
+
+  @media (min-width: 801px) {
+    body:not([data-menu-pinned="false"]) .sidebar {
+      position: sticky;
+      left: auto;
+      width: 214px;
+      background: transparent;
+      transform: none;
+      transition: none;
+      z-index: auto;
+    }
   }
 
   .package-links {
@@ -865,7 +883,7 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   .mobile-menu-toggle {
-    display: none;
+    display: inline-flex;
   }
 
   .mobile-menu-toggle,
@@ -934,12 +952,30 @@ if (hasStructuredBreadcrumbs && title) {
   :global(.dark) .theme-toggle a-icon[shape="sun"] { display: inline-block; }
   :global(.dark) .theme-toggle a-icon[shape="moon"] { display: none; }
 
-  .backdrop { display: none; }
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 44px 0 0;
+    background: color-mix(in oklch, black 30%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 250ms ease-out;
+    z-index: 15;
+  }
+
+  :global(.dark) .backdrop {
+    background: color-mix(in oklch, black 45%, transparent);
+  }
+
+  body[data-menu-open="true"][data-menu-pinned="false"] .backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
   /* The TOC rail collapses to a right-side slide-out — opened by a
      top-level "On this page" trigger — earlier than the full-mobile
      layout, because the dual-rail shell squeezes the content track first.
-     The nav sidebar keeps its own slide-out at 800px below. */
+     The nav sidebar also slides out when it is not docked. */
   @media (max-width: 1024px) {
     .topbar-tools {
       min-width: 0;
@@ -980,25 +1016,6 @@ if (hasStructuredBreadcrumbs && title) {
 
     body[data-toc-open="true"] .toc-rail {
       transform: translateX(0);
-    }
-
-    /* Shared scrim for the slide-outs (the TOC here; the nav sidebar at
-       ≤800px reuses it). */
-    .backdrop {
-      display: block;
-      position: fixed;
-      inset: 44px 0 0;
-      /* Explicit black so it stays a dark scrim in both themes — `--text-1`
-         flips to near-white in dark mode, which made the overlay white. */
-      background: color-mix(in srgb, black 30%, transparent);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 250ms ease-out;
-      z-index: 15;
-    }
-    /* Dark mode: a bit darker than the light scrim. */
-    :global(.dark) .backdrop {
-      background: color-mix(in srgb, black 45%, transparent);
     }
 
     body[data-toc-open="true"] .backdrop {
@@ -1060,10 +1077,6 @@ if (hasStructuredBreadcrumbs && title) {
       }
     }
 
-    .mobile-menu-toggle {
-      display: inline-flex;
-    }
-
     .topbar-search :global(a-input)::part(trailing) {
       display: none;
     }
@@ -1077,28 +1090,6 @@ if (hasStructuredBreadcrumbs && title) {
       /* Asymmetric on mobile: a touch more breathing room on the left
          (start) than the right (end). `padding-inline: <start> <end>`. */
       padding-inline: 20px 12px;
-    }
-
-    .sidebar {
-      position: fixed;
-      top: 44px;
-      left: 0;
-      background: var(--bg-pane);
-      /* Wider as a slide-out than docked (214px) — matches the TOC slide-out. */
-      width: min(240px, 80vw);
-      height: calc(100dvh - 44px);
-      transform: translateX(-100%);
-      transition: transform 250ms ease-out, background 200ms ease-out;
-      z-index: 20;
-    }
-
-    body[data-menu-open="true"] .sidebar {
-      transform: translateX(0);
-    }
-
-    body[data-menu-open="true"][data-menu-pinned="false"] .backdrop {
-      opacity: 1;
-      pointer-events: auto;
     }
 
   }

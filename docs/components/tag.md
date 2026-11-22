@@ -188,10 +188,13 @@ export default function Demo() {
 }
 ```
 
-Place a `Button` inside the tag to remove it. Give the button an accessible
-name, such as “Remove Frontend.” A button at the start or end sits flush with
-that edge of the tag. After removal, **Reset example** appears and receives
-focus. It restores the tag and returns focus to the remove button.
+Place a `Button` inside a tag when users need to act on it, such as removing
+an applied filter. Handle the button's `onClick` to update application state
+and control whether the tag is rendered. Give an icon-only button an accessible
+name, such as “Remove Frontend.” Buttons at either edge sit flush with the tag.
+
+This example hides the tag in its click handler, then shows and focuses
+**Reset example**. Resetting restores the tag and returns focus to its button.
 
 ```tsx
 import { useLayoutEffect, useRef, useState } from 'preact/hooks'

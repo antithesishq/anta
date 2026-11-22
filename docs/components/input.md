@@ -6,8 +6,6 @@ password.
 
 ## Size
 
-A one-row multiline field matches the height and first text baseline of a single-line field at the same size. Additional lines grow downward.
-
 ```tsx
 <Input size="small"  label="Small"  placeholder="Enter text…" autoComplete="off" />
 <Input size="medium" label="Medium" placeholder="Enter text…" autoComplete="off" /> {/* default */}
@@ -586,8 +584,6 @@ Use `round` for rounded corners and `tone` for a custom border color.
 Use `priority` for the field surface, `status` for feedback, `tone` for a custom
 border color, and `size` for dimensions. The focus ring uses the global
 [`--focus-ring`](../colors.md#focus-ring).
-
-Set `--input-field-height` to customize the minimum field height.
 
 ```tsx
 <Input tone="#e0457b" label="Custom accent" autoComplete="off" />

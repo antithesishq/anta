@@ -68,7 +68,6 @@ Composed components have CSS-only entries for their layout styles:
 | `InputDate` | `@antadesign/anta/elements/a-input-date` |
 | `Select` | `@antadesign/anta/elements/a-select` |
 | `SelectFaceted` | `@antadesign/anta/elements/a-select-faceted` |
-| `Form` | `@antadesign/anta/elements/a-form` |
 
 These entries load layout CSS without registering a class or loading nested
 elements. Import the browser elements used by the composition too. For example,

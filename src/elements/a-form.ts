@@ -14,7 +14,7 @@ import './a-form.css'
 // `form[data-anta]` the same way. A plain `form[data-anta]` gets that layout
 // and nothing from this element.
 //
-//   submit-hotkey="mod+enter"  Ctrl+Enter or Cmd+Enter in any field activates
+//   submit-hotkey="mod+enter"  Ctrl+Enter or Cmd+Enter in a field activates
 //                              the form's primary submit <a-button>. A form
 //                              without one ignores the chord.
 //   submit-hotkey="enter"      Enter in a single-line <a-input> activates the
@@ -24,10 +24,18 @@ import './a-form.css'
 //   sticky-actions             CSS only. See a-form.css.
 //
 // Without `submit-hotkey` no key submits. A space-separated list turns on both.
-// The key listener runs in the bubble phase on this element, so a field, a
+// The key listeners run in the bubble phase on this element, so a field, a
 // popup, or an application handler inside the form that calls
-// `preventDefault()` goes first and keeps the key. An unavailable button is
-// left alone.
+// `preventDefault()` on the keydown goes first and keeps the key. A focused
+// radio or Button does that, with or without a modifier. An unavailable button
+// is left alone.
+//
+// Enter acts when the key is released, as Button's own key activation does.
+// By then the field has fired `change`, which a native form also delivers
+// before `submit`, and no part of the key press is left for an element that a
+// submit handler focuses. The chord acts on keydown and cancels the key,
+// because macOS sends no keyup for Enter while Cmd is held. The focused
+// field's `change` then follows on blur, after `submit`.
 //
 // Fields glide when the number of grid columns changes. The glide plays a Web
 // Animation on the form's direct Anta children; it writes no attribute and no
@@ -80,10 +88,11 @@ function isSingleLineInput(el: Element): boolean {
   return el.localName === 'a-input' && !el.hasAttribute('multiline') && !el.hasAttribute('rows') && !el.hasAttribute('button')
 }
 
-/** How many of the form's fields take part in implicit submission. */
+/** How many of the form's fields take part in implicit submission. The filter
+ *  field inside a Select's menu is not one of them. */
 function textFieldCount(form: HTMLFormElement): number {
   return Array.from(form.elements).filter(el =>
-    isSingleLineInput(el) || (el.localName === 'input' && TEXT_TYPES.has((el as HTMLInputElement).type)),
+    (isSingleLineInput(el) && !el.closest('a-menu')) || (el.localName === 'input' && TEXT_TYPES.has((el as HTMLInputElement).type)),
   ).length
 }
 
@@ -107,6 +116,8 @@ export class AFormElement extends HTMLElementBase {
   #observer?: ResizeObserver
   /** The form's column count and where each child sat at the last notification. */
   #seen?: { form: HTMLFormElement; columns: number; places: Map<Element, Place> }
+  /** The field whose Enter keydown is waiting for its keyup. */
+  #armed?: Element
 
   /** The native form this element wraps. */
   get #form(): HTMLFormElement | null {
@@ -115,6 +126,7 @@ export class AFormElement extends HTMLElementBase {
 
   connectedCallback() {
     this.addEventListener('keydown', this.#onKeyDown)
+    this.addEventListener('keyup', this.#onKeyUp)
     const view = this.ownerDocument.defaultView
     if (!view || typeof view.ResizeObserver !== 'function') return
     this.#observer = new view.ResizeObserver(this.#onResize)
@@ -125,9 +137,11 @@ export class AFormElement extends HTMLElementBase {
 
   disconnectedCallback() {
     this.removeEventListener('keydown', this.#onKeyDown)
+    this.removeEventListener('keyup', this.#onKeyUp)
     this.#observer?.disconnect()
     this.#observer = undefined
     this.#seen = undefined
+    this.#armed = undefined
   }
 
   #hotkey(key: string): boolean {
@@ -135,7 +149,10 @@ export class AFormElement extends HTMLElementBase {
   }
 
   #onKeyDown = (e: KeyboardEvent) => {
-    if (e.key !== 'Enter' || e.defaultPrevented || e.repeat || e.altKey || e.shiftKey || isComposingKey(e)) return
+    // A held key repeats its keydown. The first one decides.
+    if (e.key !== 'Enter' || e.repeat) return
+    this.#armed = undefined
+    if (e.defaultPrevented || e.altKey || e.shiftKey || isComposingKey(e)) return
     const form = this.#form
     if (!form) return
     // The composed path reaches a field inside a shadow root, which the
@@ -159,6 +176,17 @@ export class AFormElement extends HTMLElementBase {
     const field = path.find(el => el.localName === 'a-input')
     if (!field || !isSingleLineInput(field) || path[0]?.getRootNode() !== field.shadowRoot || field.closest('a-menu')) return
     if (formOf(field) !== form) return
+    this.#armed = field
+  }
+
+  #onKeyUp = (e: KeyboardEvent) => {
+    if (e.key !== 'Enter') return
+    const field = this.#armed
+    this.#armed = undefined
+    const form = this.#form
+    // Only the field the keydown armed. A focus move between press and release
+    // cancels, as it does for a button.
+    if (!field || !form || !e.composedPath().includes(field) || formOf(field) !== form) return
     const [button] = submitButtons(form)
     if (button) {
       if (!unavailable(button)) button.click()

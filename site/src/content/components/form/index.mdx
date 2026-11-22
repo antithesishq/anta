@@ -187,7 +187,7 @@ Scroll through the setup fields and try **Clear** while the action row is in vie
 
 ## Keyboard
 
-`Form` submits on no key until you choose one. Set `submitHotkey="mod+enter"` to submit with <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or <kbd>Cmd</kbd>+<kbd>Enter</kbd> from any field, including a multiline `Input`. The hotkey uses the submit `Button` with `priority="primary"`.
+`Form` submits on no key until you choose one. Set `submitHotkey="mod+enter"` to submit with <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or <kbd>Cmd</kbd>+<kbd>Enter</kbd> from a field, including a multiline `Input`. The hotkey uses the submit `Button` with `priority="primary"`.
 
 <Preview justify="flex-start">
   <FormKeysPreview client:visible={{ rootMargin: '200px' }} />
@@ -219,7 +219,9 @@ export default function Demo() {
 
 Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or <kbd>Cmd</kbd>+<kbd>Enter</kbd> in **Name**, then in **Notes**. The save count should reach two. <kbd>Enter</kbd> alone does nothing in **Name** and starts a new line in **Notes**.
 
-A form without an enabled primary submit `Button` ignores the hotkey.
+A form without an enabled primary submit `Button` ignores the hotkey. A focused radio or `Button` uses <kbd>Enter</kbd> itself, with or without the modifier, so the hotkey does not submit from there.
+
+The hotkey submits before the focused field fires `change`, which follows when the field loses focus. Read the values from the form in `onSubmit`.
 
 Set `submitHotkey="enter"` to submit with <kbd>Enter</kbd> from a single-line `Input` instead. <kbd>Enter</kbd> uses the form's first submit button, and nothing is submitted while that button is disabled or loading. Without a submit button, <kbd>Enter</kbd> submits only when the form has a single eligible text field.
 

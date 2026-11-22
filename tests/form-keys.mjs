@@ -134,11 +134,55 @@ for (const engine of engines) {
     const { page } = await fixture(t, engine, `
       <a-form ${keys}><form id="single">${input('only', 'Only')}<a-checkbox name="agree">Agree</a-checkbox></form></a-form>
       <a-form ${keys}><form id="double">${input('first', 'First')}${input('second', 'Second')}</form></a-form>
+      <a-form ${keys}><form id="filtered">${input('query', 'Query')}<a-menu><a-input name="filter"></a-input></a-menu></form></a-form>
     `)
     await press(page, field('first'), 'Enter')
     assert.deepEqual(await log(page), [])
     await press(page, field('only'), 'Enter')
     assert.deepEqual(await log(page), ['submit:single:'])
+    await press(page, field('query'), 'Enter')
+    assert.deepEqual(await log(page), ['submit:filtered:'], 'the filter field in a menu is not a second text field')
+  })
+
+  test.fast(`${engine.name()}: Enter submits after the field's change and leaves no key for a button the submit handler focuses`, async t => {
+    const { page, errors } = await fixture(t, engine, `
+      <button type="button" id="opener">Open</button>
+      <a-form ${keys}><form id="f">${input('a', 'A')}${submit('save')}</form></a-form>
+    `)
+    await page.evaluate(() => {
+      document.addEventListener('change', event => window.log.push(`change:${event.target.getAttribute('name')}`), true)
+      document.getElementById('f').addEventListener('submit', () => document.getElementById('opener').focus())
+    })
+    const target = control(page, field('a'))
+    await target.focus()
+    assert.ok(await target.evaluate(el => el.getRootNode().activeElement === el && el.ownerDocument.hasFocus()), 'the field did not take focus')
+    await page.keyboard.type('abc')
+    await page.keyboard.press('Enter')
+    assert.deepEqual(await log(page), ['change:a', 'submit:f:', 'submitdetailed:f:', 'click:save:'], 'change first, as in a native form, and the opener is not clicked')
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'opener')
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: Ctrl+Enter submits from a Checkbox or Switch, and a focused radio or Button uses Enter itself`, async t => {
+    const { page, errors } = await fixture(t, engine, `
+      <a-form ${chord}><form id="f">
+        <a-checkbox id="check" role="checkbox" tabindex="0" name="check"><a-checkbox-label>Check</a-checkbox-label></a-checkbox>
+        <a-switch id="switch" role="switch" tabindex="0" name="switch"><a-switch-label>Switch</a-switch-label></a-switch>
+        <a-radio-group id="group" name="pick" role="radiogroup"><a-radio id="radio" value="a" role="radio" tabindex="0">A</a-radio><a-radio value="b" role="radio" tabindex="-1">B</a-radio></a-radio-group>
+        <a-button id="other" role="button" tabindex="0" type="button"><a-button-label>Other</a-button-label></a-button>
+        ${submit('save', 'priority="primary"')}
+      </form></a-form>
+    `)
+    await press(page, '#check', 'Control+Enter')
+    assert.equal(count(await log(page), 'submit:f'), 1, 'from a Checkbox')
+    await press(page, '#switch', 'Control+Enter')
+    assert.equal(count(await log(page), 'submit:f'), 1, 'from a Switch')
+    await press(page, '#radio', 'Control+Enter')
+    assert.equal(count(await log(page), 'submit:f'), 0, 'a radio selects itself')
+    assert.equal(await page.locator('#group').evaluate(el => new FormData(el.closest('form')).get('pick')), 'a')
+    await press(page, '#other', 'Control+Enter')
+    assert.deepEqual(await log(page), ['click:other:'], 'a Button activates itself')
+    assert.deepEqual(errors, [])
   })
 
   test.fast(`${engine.name()}: Ctrl+Enter and Cmd+Enter activate the primary submit Button and nothing else`, async t => {
@@ -249,8 +293,10 @@ for (const engine of engines) {
       </form></a-form>
     `)
     const send = init => page.locator(field('text')).evaluate((el, init) => {
-      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true, cancelable: true, ...init })
+      // The press and its release: Enter submits on the release.
+      const [event, release] = ['keydown', 'keyup'].map(type => new KeyboardEvent(type, { key: 'Enter', bubbles: true, composed: true, cancelable: true, ...init }))
       el.dispatchEvent(event)
+      el.dispatchEvent(release)
       return event.defaultPrevented
     }, init)
     // Browsers that report the key confirming a candidate only as code 229.

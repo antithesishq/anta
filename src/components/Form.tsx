@@ -17,7 +17,7 @@ export interface FormProps extends BaseProps, DOMEventHandlers {
    *  @defaultValue 1 */
   columns?: number
   /** The key that submits the form. `'mod+enter'` is Ctrl+Enter or Cmd+Enter in
-   *  any field, including a multiline `Input`, and uses the enabled primary
+   *  a field, including a multiline `Input`, and uses the enabled primary
    *  submit `Button`. `'enter'` is Enter in a single-line `Input` and uses the
    *  form's first submit button. Without it no key submits. */
   submitHotkey?: 'mod+enter' | 'enter'
@@ -48,7 +48,7 @@ export interface FormProps extends BaseProps, DOMEventHandlers {
 /**
  * Use `Form` for a form with responsive field labels, an optional submit
  * hotkey, and animated column changes. It renders `<a-form>` around a native
- * `<form>`. `className` and `style` go to `<a-form>`. Native attributes such
+ * `<form>`. `className`, `style`, and `slot` go to `<a-form>`. Native attributes such
  * as `id`, `action`, and `method` go to the form, and `onSubmit` handles its
  * `submit` event.
  *
@@ -73,12 +73,13 @@ export interface FormProps extends BaseProps, DOMEventHandlers {
  * </Form>
  * ```
  */
-export const Form = ({ labelWidth, fieldMin, columns, submitHotkey, stickyActions, className, style, children, ...rest }: FormProps) => {
+export const Form = ({ labelWidth, fieldMin, columns, submitHotkey, stickyActions, className, style, slot, children, ...rest }: FormProps) => {
   const columnStyle = columns != null && Number.isFinite(columns) ? { ...style, '--form-columns': Math.max(1, Math.floor(columns)) } : style
   return (
     <a-form
       submit-hotkey={submitHotkey}
       sticky-actions={stickyActions ? '' : undefined}
+      slot={slot}
       class={className}
       style={lengthStyle(labelWidth, '--form-label-width', lengthStyle(fieldMin, '--form-field-min', columnStyle as React.CSSProperties))}
     >

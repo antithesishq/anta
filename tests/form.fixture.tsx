@@ -13,7 +13,7 @@ import '../src/elements'
 import '../src/tokens.css'
 import '../src/theme-antune.css'
 
-type Scene = { submitHotkey?: 'mod+enter' | 'enter'; stickyActions?: boolean; columns?: number; labelWidth?: number | string; primary?: boolean }
+type Scene = { submitHotkey?: 'mod+enter' | 'enter'; stickyActions?: boolean; slot?: string; columns?: number; labelWidth?: number | string; primary?: boolean }
 
 Object.assign(window, {
   /** Render the JSX components into `#mount` and record submissions. */

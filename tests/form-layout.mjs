@@ -273,12 +273,12 @@ for (const engine of engines) {
   test(`${engine.name()}: Form passes its props to a-form as variables and attributes`, async t => {
     const { page, errors } = await fixture(t, engine, '')
     const host = page.locator('a-form:has(> #jsx)')
-    await page.evaluate(() => window.renderForm({ columns: 1, labelWidth: 96 }))
+    await page.evaluate(() => window.renderForm({ columns: 1, labelWidth: 96, slot: 'footer' }))
     await page.waitForFunction(() => [...document.querySelectorAll('#jsx a-input')].every(el => el.shadowRoot))
     assert.deepEqual(await host.evaluate(el => ({
-      hotkey: el.getAttribute('submit-hotkey'), sticky: el.hasAttribute('sticky-actions'), form: el.firstElementChild.localName, formAttributes: el.firstElementChild.getAttributeNames(),
+      hotkey: el.getAttribute('submit-hotkey'), sticky: el.hasAttribute('sticky-actions'), slot: el.slot, form: el.firstElementChild.localName, formAttributes: el.firstElementChild.getAttributeNames(),
       columns: el.style.getPropertyValue('--form-columns'), labelWidth: el.style.getPropertyValue('--form-label-width'),
-    })), { hotkey: null, sticky: false, form: 'form', formAttributes: ['id'], columns: '1', labelWidth: '96px' })
+    })), { hotkey: null, sticky: false, slot: 'footer', form: 'form', formAttributes: ['id'], columns: '1', labelWidth: '96px' })
     const [name] = await measure(page, '#jsx')
     near(name.label.width, 96, 'label column from the prop')
     await page.evaluate(() => window.renderForm({ submitHotkey: 'mod+enter', stickyActions: true }))

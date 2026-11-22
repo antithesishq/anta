@@ -1210,6 +1210,21 @@ export interface ARadioAttributes extends BaseAttributes {
 }
 
 /**
+ * Attributes for the `<a-form>` custom element, which wraps a native `<form>`
+ * and holds the submit hotkey. For the typed JSX wrapper use `Form` from
+ * `@antadesign/anta`.
+ */
+export interface AFormAttributes extends BaseAttributes {
+  /** The key that submits the wrapped form. `mod+enter` is Ctrl+Enter or
+   *  Cmd+Enter in a field and uses the primary submit Button. `enter` is
+   *  Enter in a single-line Input and uses the first submit button. Without
+   *  it no key submits. */
+  'submit-hotkey'?: 'mod+enter' | 'enter' | (string & {})
+  /** Keeps the row of actions at the bottom of the nearest scrolling ancestor. */
+  'sticky-actions'?: boolean | ''
+}
+
+/**
  * Attributes for the `<a-radio-group>` custom element — the single-select
  * coordinator. It is the form-associated element (submits one `name=value`).
  * No shadow DOM: an optional group header (`<a-radio-group-label>` + an optional
@@ -1224,16 +1239,6 @@ export interface ARadioAttributes extends BaseAttributes {
  * the label/list/hint from `label` / `hint`; hand-authors write them directly.
  * For the typed JSX wrapper use `RadioGroup` from `@antadesign/anta`.
  */
-export interface AFormAttributes extends BaseAttributes {
-  /** The key that submits the wrapped form. `mod+enter` is Ctrl+Enter or
-   *  Cmd+Enter in any field and uses the primary submit Button. `enter` is
-   *  Enter in a single-line Input and uses the first submit button. Without
-   *  it no key submits. */
-  'submit-hotkey'?: 'mod+enter' | 'enter' | (string & {})
-  /** Keeps the row of actions at the bottom of the nearest scrolling ancestor. */
-  'sticky-actions'?: boolean | ''
-}
-
 export interface ARadioGroupAttributes extends BaseAttributes {
   /** Controlled selected value (the chosen radio's `value`). Present → controlled:
    *  a pick only requests a change through `statechange`. Absent → uncontrolled

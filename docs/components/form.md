@@ -89,7 +89,7 @@ Scroll through the setup fields and try **Clear** while the action row is in vie
 
 ## Keyboard
 
-`Form` submits on no key until you choose one. Set `submitHotkey="mod+enter"` to submit with Ctrl+Enter or Cmd+Enter from any field, including a multiline `Input`. The hotkey uses the submit `Button` with `priority="primary"`.
+`Form` submits on no key until you choose one. Set `submitHotkey="mod+enter"` to submit with Ctrl+Enter or Cmd+Enter from a field, including a multiline `Input`. The hotkey uses the submit `Button` with `priority="primary"`.
 
 ```tsx
 import { useState } from 'preact/hooks'
@@ -117,7 +117,9 @@ export default function Demo() {
 
 Press Ctrl+Enter or Cmd+Enter in **Name**, then in **Notes**. The save count should reach two. Enter alone does nothing in **Name** and starts a new line in **Notes**.
 
-A form without an enabled primary submit `Button` ignores the hotkey.
+A form without an enabled primary submit `Button` ignores the hotkey. A focused radio or `Button` uses Enter itself, with or without the modifier, so the hotkey does not submit from there.
+
+The hotkey submits before the focused field fires `change`, which follows when the field loses focus. Read the values from the form in `onSubmit`.
 
 Set `submitHotkey="enter"` to submit with Enter from a single-line `Input` instead. Enter uses the form's first submit button, and nothing is submitted while that button is disabled or loading. Without a submit button, Enter submits only when the form has a single eligible text field.
 
@@ -214,7 +216,7 @@ Use `labelWidth` to give short labels like **Key** and **Value** a narrower colu
 | `name?` | string | — | Native `name` attribute. |
 | `noValidate?` | boolean | — | Native `novalidate` attribute. Skips the browser's validation on submit. |
 | `stickyActions?` | boolean | — | Keeps the row of actions in view at the bottom of the nearest scrolling ancestor while the form scrolls. Place the submit `Button` directly inside a `Box` that is a direct child of `Form`. |
-| `submitHotkey?` | 'mod+enter' \| 'enter' | — | The key that submits the form. `'mod+enter'` is Ctrl+Enter or Cmd+Enter in any field, including a multiline `Input`, and uses the enabled primary submit `Button`. `'enter'` is Enter in a single-line `Input` and uses the form's first submit button. Without it no key submits. |
+| `submitHotkey?` | 'mod+enter' \| 'enter' | — | The key that submits the form. `'mod+enter'` is Ctrl+Enter or Cmd+Enter in a field, including a multiline `Input`, and uses the enabled primary submit `Button`. `'enter'` is Enter in a single-line `Input` and uses the form's first submit button. Without it no key submits. |
 | `target?` | string | — | Native `target` attribute. |
 
 ## Web Component

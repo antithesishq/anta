@@ -480,19 +480,21 @@ function nodeBySegments(root, segments) {
   return node
 }
 
-// Opens a few closed rows chosen by Hegel, one at a time, as a reader would.
+// The open set `expandDepth` gives on a first render, as the Inspector starts.
+const openAt = (root, state = {}) => new Set(core.openIds(root, state))
+
+// An open set: the rows `state` opens, then a few closed rows chosen by Hegel,
+// opened one at a time, as a reader would.
 function openSome(tc, root, state = {}, skip = () => false) {
-  const toggled = new Set(state.toggled ?? [])
+  const open = new Set(state.open ?? core.openIds(root, state))
   const steps = tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'opens')
   for (let step = 0; step < steps; step++) {
-    const closed = core.visibleRows(root, { ...state, toggled })
+    const closed = core.visibleRows(root, { ...state, open })
       .filter(row => row.type === 'node' && row.expandable && !row.open && !skip(row))
     if (!closed.length) break
-    const { id } = closed[tc.draw(gs.integers({ minValue: 0, maxValue: closed.length - 1 }), 'open')]
-    if (toggled.has(id)) toggled.delete(id)
-    else toggled.add(id)
+    open.add(closed[tc.draw(gs.integers({ minValue: 0, maxValue: closed.length - 1 }), 'open')].id)
   }
-  return toggled
+  return open
 }
 
 test('lists open nodes as header, children, and closing rows', () => {
@@ -510,12 +512,12 @@ test('lists open nodes as header, children, and closing rows', () => {
   assert.deepEqual(rows[1], { ...rows[1], id: 'r/.tags', expandable: true, open: true, size: 2 })
 })
 
-test('closed nodes show their summary, and toggling flips the default', () => {
+test('closed nodes show their summary, and an open set opens them', () => {
   const root = core.describe({ tags: ['a', 'b'] })
   const closed = core.visibleRows(root)
   assert.deepEqual(closed.map(line), ['{tags:["a","b"]}'])
   assert.equal(closed[0].open, false)
-  const opened = core.visibleRows(root, { toggled: new Set(['r']) })
+  const opened = core.visibleRows(root, { open: new Set(['r']) })
   assert.deepEqual(opened.map(line), ['{', 'tags:["a","b"]', '}'])
 })
 
@@ -525,7 +527,7 @@ test('a long group shows ranges, which open to show their children', () => {
   assert.deepEqual(closed.map(line), ['[', '[0…1]', '[2…3]', '[4…4]', ']'])
   assert.deepEqual(closed[2], { type: 'chunk', id: 'r~g1~2-3', depth: 1, start: 2, end: 3, open: false })
   // A range's children keep their data keys; the range is never in a path.
-  const opened = core.visibleRows(root, { expandDepth: 1, chunkSize: 2, toggled: new Set(['r~g1~2-3', 'r~g1~4-4']) })
+  const opened = core.visibleRows(root, { chunkSize: 2, open: new Set(['r', 'r~g1~2-3', 'r~g1~4-4']) })
   assert.deepEqual(opened.map(line), ['[', '[0…1]', '[2…3]', '2,', '3,', '[4…4]', '4', ']'])
   assert.deepEqual(opened.filter(row => row.type === 'node' && row.depth === 2).map(row => row.id), ['r/2', 'r/3', 'r/4'])
 })
@@ -539,50 +541,60 @@ test('cycles link to their open ancestor and repeats expand in place', () => {
   assert.equal(rows.at(-2).target, 'r')
 })
 
-test('with every node open, the rows spell out repr without deduplication', () =>
-  hegel.test(tc => {
+test('with every node open and no ranges, the rows spell out repr without deduplication', () => {
+  // `chunkSize: Infinity` turns ranges off. These groups have well over 100
+  // children, the default chunkSize, so a range row would break the text.
+  const big = { list: Array.from({ length: 250 }, (_, i) => i), byKey: new Map(Array.from({ length: 150 }, (_, i) => [`k${i}`, { i }])) }
+  const bigRows = core.visibleRows(core.describe(big), { expandDepth: Infinity, chunkSize: Infinity, previewBudget: Infinity })
+  assert.ok(!bigRows.some(row => row.type === 'chunk'), 'a range showed with chunkSize: Infinity')
+  assert.equal(bigRows.map(line).join(''), repr(big, { deduplicate_references: false, char_limit: Infinity }))
+  return hegel.test(tc => {
     const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
     // Open rows always list an error's stack, so compare with the stack included.
     const { char_limit: _limit, deduplicate_references: _dedupe, error_stacks: _stacks, ...options } = tc.draw(reprOptions, 'options')
     const { value } = make(recipe)
-    const rows = core.visibleRows(core.describe(value, options), { expandDepth: Infinity, pageSize: Infinity, previewBudget: Infinity })
+    const rows = core.visibleRows(core.describe(value, options), { expandDepth: Infinity, chunkSize: Infinity, previewBudget: Infinity })
     assert.equal(rows.map(line).join(''), repr(value, { ...options, deduplicate_references: false, char_limit: Infinity }))
-  }, settings))
+  }, settings)
+})
 
 test('closing a node hides only its descendants', () =>
   hegel.test(tc => {
     const root = core.describe(make(tc.draw(recipes(), 'recipe')).value)
     const style = tc.draw(styles, 'style')
-    const toggled = openSome(tc, root, { expandDepth: 1, style })
-    const open = core.visibleRows(root, { expandDepth: 1, style, toggled }).filter(row => row.type === 'node' && row.open)
-    tc.assume(open.length > 0)
-    const { id } = open[tc.draw(gs.integers({ minValue: 0, maxValue: open.length - 1 }), 'close')]
-    const flipped = new Set(toggled)
-    if (flipped.has(id)) flipped.delete(id)
-    else flipped.add(id)
-    const before = core.visibleRows(root, { expandDepth: 1, style, toggled })
-    const after = core.visibleRows(root, { expandDepth: 1, style, toggled: flipped })
+    const open = openSome(tc, root, { expandDepth: 1, style })
+    const shown = core.visibleRows(root, { style, open }).filter(row => row.type === 'node' && row.open)
+    tc.assume(shown.length > 0)
+    const { id } = shown[tc.draw(gs.integers({ minValue: 0, maxValue: shown.length - 1 }), 'close')]
+    const closed = new Set(open)
+    closed.delete(id)
+    const before = core.visibleRows(root, { style, open })
+    const after = core.visibleRows(root, { style, open: closed })
     assert.deepEqual(lines(after.filter(row => !inSubtree(row, id))), lines(before.filter(row => !inSubtree(row, id))))
     assert.deepEqual(after.filter(row => inSubtree(row, id)).map(row => row.id), [id])
   }, settings))
 
-test('showing every page gives the same rows as one unbounded page', () =>
+test('opening every range gives the same rows as no ranges', () =>
   hegel.test(tc => {
     const recipe = tc.draw(recipes({ hostile: true }), 'recipe')
-    const pageSize = tc.draw(gs.integers({ minValue: 1, maxValue: 3 }), 'pageSize')
+    const chunkSize = tc.draw(gs.integers({ minValue: 1, maxValue: 3 }), 'chunkSize')
     const style = tc.draw(styles, 'style')
     const root = core.describe(make(recipe).value)
-    const pages = new Map()
+    // Open every range and every node expandDepth: Infinity would open, a level at a time.
+    const open = new Set()
     let rows
-    for (let round = 0; round < 100; round++) {
-      rows = core.visibleRows(root, { expandDepth: Infinity, pageSize, pages, style })
-      const more = rows.filter(row => row.type === 'more')
-      for (const row of more) assert.equal(row.shown, (pages.get(row.group) ?? 1) * pageSize, 'a page showed the wrong number of children')
-      if (!more.length) break
-      for (const row of more) pages.set(row.group, (pages.get(row.group) ?? 1) + 1)
+    for (let round = 0; round < 1000; round++) {
+      rows = core.visibleRows(root, { chunkSize, style, open })
+      const closed = rows.filter(row => !row.open && (row.type === 'chunk' || (row.type === 'node' && row.expandable && row.kind !== 'string')))
+      for (const row of rows) {
+        if (row.type === 'chunk') assert.ok(row.start <= row.end, `range ${row.id} is empty`)
+      }
+      if (!closed.length) break
+      for (const row of closed) open.add(row.id)
     }
-    const whole = core.visibleRows(core.describe(make(recipe).value), { expandDepth: Infinity, pageSize: Infinity, style })
-    assert.deepEqual(lines(rows), lines(whole))
+    // Ranges only add rows: without them, the rows are the unranged ones, in order.
+    const whole = core.visibleRows(core.describe(make(recipe).value), { expandDepth: Infinity, chunkSize: Infinity, style })
+    assert.deepEqual(lines(rows.filter(row => row.type !== 'chunk')), lines(whole))
   }, settings))
 
 test('closed nodes are not read past their summary', () =>
@@ -596,10 +608,10 @@ test('closed nodes are not read past their summary', () =>
     // A 3-character summary prints only the first token of a closed node.
     const display = { expandDepth: 1, previewBudget: 3 }
     const isHolder = row => row.type === 'node' && row.depth === 1 && row.path.length === 1 && row.path[0] === position
-    const toggled = openSome(tc, root, display, isHolder)
-    const rows = core.visibleRows(root, { ...display, toggled })
+    const open = openSome(tc, root, display, isHolder)
+    const rows = core.visibleRows(root, { ...display, open })
     assert.equal(state.touched, false, 'a closed node was read')
-    core.visibleRows(root, { ...display, toggled: new Set([...toggled, rows.find(isHolder).id]) })
+    core.visibleRows(root, { ...display, open: new Set([...open, rows.find(isHolder).id]) })
     assert.equal(state.touched, true, 'opening a node did not read its children')
   }, settings))
 
@@ -607,8 +619,7 @@ test('circular rows link to an open ancestor', () =>
   hegel.test(tc => {
     const root = core.describe(make(tc.draw(recipes(), 'recipe')).value)
     const expandDepth = tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth')
-    const toggled = openSome(tc, root, { expandDepth })
-    const rows = core.visibleRows(root, { expandDepth, toggled })
+    const rows = core.visibleRows(root, { open: openSome(tc, root, { expandDepth }) })
     rows.forEach((row, index) => {
       if (row.type !== 'node' || row.kind !== 'circular') return
       assert.ok(row.target !== undefined, `circular row ${row.id} has no target`)
@@ -625,11 +636,11 @@ test('rows never throw and keep ids unique, even on hostile values', () =>
     const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
     const display = {
       expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth'),
-      pageSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'pageSize'),
+      chunkSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'chunkSize'),
       previewBudget: tc.draw(gs.integers({ minValue: 3, maxValue: 80 }), 'previewBudget'),
       style: tc.draw(styles, 'style'),
     }
-    const rows = core.visibleRows(root, { ...display, toggled: openSome(tc, root, display) })
+    const rows = core.visibleRows(root, { ...display, open: openSome(tc, root, display) })
     assert.equal(new Set(rows.map(row => row.id)).size, rows.length, 'duplicate row id')
     rows.forEach((row, index) => {
       if (index) assert.ok(row.depth <= rows[index - 1].depth + 1, `row ${row.id} skips a depth`)
@@ -645,7 +656,7 @@ test('a multiline string opens into text rows', () => {
   const closed = core.visibleRows(root, { expandDepth: 1 })
   assert.deepEqual(closed.map(line), ['{', 'log:"first\\r\\nsecond\\n\\tthird"', '}'])
   assert.deepEqual([closed[1].expandable, closed[1].open], [true, false])
-  const opened = core.visibleRows(root, { expandDepth: 1, toggled: new Set([closed[1].id]) })
+  const opened = core.visibleRows(root, { open: new Set(['r', closed[1].id]) })
   assert.deepEqual(opened.map(row => [row.type, row.depth, line(row)]), [
     ['node', 0, '{'],
     ['node', 1, 'log:"'],
@@ -658,30 +669,31 @@ test('a multiline string opens into text rows', () => {
 })
 
 test('open strings escape control characters but keep tabs', () => {
-  const rows = core.visibleRows(core.describe('\u001b[31mred\u001b[0m\ta\rb\nnext'), { toggled: new Set(['r']) })
+  const rows = core.visibleRows(core.describe('\u001b[31mred\u001b[0m\ta\rb\nnext'), { open: new Set(['r']) })
   assert.deepEqual(textRows(rows), ['\\u001b[31mred\\u001b[0m\ta\\rb', 'next'])
-  const unquoted = core.visibleRows(core.describe('a\nb', { unquoted_strings: true }), { toggled: new Set(['r']) })
+  const unquoted = core.visibleRows(core.describe('a\nb', { unquoted_strings: true }), { open: new Set(['r']) })
   assert.deepEqual(unquoted.map(line), ['', 'a', 'b', ''])
 })
 
 test('long strings page by characters, never splitting a surrogate pair', () => {
   const root = core.describe('x'.repeat(12))
-  const display = { toggled: new Set(['r']), previewBudget: 5, textPageSize: 5 }
+  const display = { open: new Set(['r']), previewBudget: 5, textPageSize: 5 }
   const first = core.visibleRows(root, display)
   assert.deepEqual(first.map(line), ['"', 'xxxxx', '', '"'])
   assert.deepEqual(first[2], { type: 'more', id: 'r~line+', depth: 1, group: 'r~line', shown: 5, unit: 'characters' })
   assert.deepEqual(core.visibleRows(root, { ...display, pages: new Map([['r~line', 3]]) }).map(line), ['"', 'x'.repeat(12), '"'])
-  const emoji = core.visibleRows(core.describe('😀😀😀'), { toggled: new Set(['r']), previewBudget: 1, textPageSize: 3 })
+  const emoji = core.visibleRows(core.describe('😀😀😀'), { open: new Set(['r']), previewBudget: 1, textPageSize: 3 })
   assert.deepEqual(textRows(emoji), ['😀'])
 })
 
-test('strings open only when toggled, and only when they need to', () => {
+test('strings open only when opened, and only when they need to', () => {
   const root = core.describe(['short', 'two\nlines', 'y'.repeat(81)])
   const rows = core.visibleRows(root, { expandDepth: Infinity })
   const strings = rows.filter(row => row.type === 'node' && row.depth === 1)
   assert.deepEqual(strings.map(row => [row.expandable, row.open]), [[false, false], [true, false], [true, false]])
-  const toggled = core.visibleRows(root, { expandDepth: Infinity, toggled: new Set([strings[0].id]) })
-  assert.deepEqual(toggled.map(line), rows.map(line))
+  // A short string can't open, so naming it in the open set changes nothing.
+  const opened = core.visibleRows(root, { open: new Set([...openAt(root, { expandDepth: Infinity }), strings[0].id]) })
+  assert.deepEqual(opened.map(line), rows.map(line))
 })
 
 test('open strings spell out their text', () =>
@@ -690,7 +702,7 @@ test('open strings spell out their text', () =>
     const separator = tc.draw(gs.sampledFrom(['\n', '\r\n']), 'separator')
     const value = parts.join(separator)
     tc.assume(value !== '')
-    const rows = core.visibleRows(core.describe(value), { toggled: new Set(['r']), previewBudget: 0, textPageSize: Infinity })
+    const rows = core.visibleRows(core.describe(value), { open: new Set(['r']), previewBudget: 0, textPageSize: Infinity })
     assert.equal(textRows(rows).join('\n'), parts.join('\n'))
   }, settings))
 
@@ -700,7 +712,7 @@ test('string pages join into the whole text', () =>
     const textPageSize = tc.draw(gs.integers({ minValue: 1, maxValue: 20 }), 'textPageSize')
     tc.assume(value.length > 0)
     const root = core.describe(value)
-    const display = { toggled: new Set(['r']), previewBudget: 0, textPageSize }
+    const display = { open: new Set(['r']), previewBudget: 0, textPageSize }
     const pages = new Map()
     let rows
     for (let round = 0; round < 1000; round++) {
@@ -751,7 +763,7 @@ test('tree rows show keys and values, with no brackets or commas', () => {
 test('open tree rows name their type and size', () => {
   class Point { constructor() { this.x = 1 } }
   const value = [new Map([['a', 1]]), new Set([1]), new Uint8Array(2), new Point(), [1, , 3], 'a\nb', () => 1]
-  const rows = tree(value, { expandDepth: 2, toggled: new Set(['r/5']) })
+  const rows = tree(value, { open: new Set([...openAt(core.describe(value), { expandDepth: 2 }), 'r/5']) })
   assert.deepEqual(rows.filter(row => row.type === 'node' && row.depth === 1).map(line), [
     '0:Map(1)', '1:Set(1)', '2:Uint8Array(2)', '3:Point{…}', '4:Array(3)', '5:String(3)', '6:<anonymous function>',
   ])
@@ -769,16 +781,17 @@ test('tree rows are the repr rows without brackets or commas', () =>
     const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
     const display = {
       expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth'),
-      pageSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'pageSize'),
+      chunkSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'chunkSize'),
     }
-    const toggled = openSome(tc, root, display)
+    const open = openSome(tc, root, display)
     const shape = row => [row.type, row.id, row.depth, row.open ?? null]
-    const repr_rows = core.visibleRows(root, { ...display, toggled })
-    const tree_rows = core.visibleRows(root, { ...display, toggled, style: 'tree' })
+    const repr_rows = core.visibleRows(root, { ...display, open })
+    const tree_rows = core.visibleRows(root, { ...display, open, style: 'tree' })
     assert.deepEqual(tree_rows.map(shape), repr_rows.filter(row => row.type !== 'close').map(shape))
     for (const row of tree_rows) {
       assert.notEqual(row.type, 'close')
-      if (row.type !== 'more') assert.notEqual(row.tokens.at(-1)?.type, 'comma', `row ${row.id} ends in a comma`)
+      // Ranges and Show more rows have no tokens of their own.
+      if (row.type !== 'more' && row.type !== 'chunk') assert.notEqual(row.tokens.at(-1)?.type, 'comma', `row ${row.id} ends in a comma`)
     }
   }, settings))
 
@@ -810,7 +823,7 @@ test('copied paths evaluate back to the row\'s value', () =>
   hegel.test(tc => {
     const { value } = make(tc.draw(recipes(), 'recipe'))
     const root = core.describe(value)
-    for (const row of core.visibleRows(root, { style: 'tree', expandDepth: Infinity, pageSize: Infinity })) {
+    for (const row of core.visibleRows(root, { style: 'tree', expandDepth: Infinity, chunkSize: Infinity })) {
       if (row.type !== 'node' || row.pathText === undefined || row.kind === 'circular') continue
       const text = row.pathText
       const read = new Function('v', `return v${text === '' || /^[[.]/.test(text) ? '' : '.'}${text}`)
@@ -849,8 +862,8 @@ test('nodeAt finds the node every row shows, by its key', () =>
   hegel.test(tc => {
     const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
     const display = { expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth'), style: tc.draw(styles, 'style') }
-    const toggled = openSome(tc, root, display)
-    for (const row of core.visibleRows(root, { ...display, toggled })) {
+    const open = openSome(tc, root, display)
+    for (const row of core.visibleRows(root, { ...display, open })) {
       if (row.type === 'node') assert.equal(core.nodeAt(root, row.id), nodeBySegments(root, row.segments), `row ${row.id}`)
       else assert.equal(core.nodeAt(root, row.id), undefined, `row ${row.id} is not a node row`)
     }
@@ -858,45 +871,43 @@ test('nodeAt finds the node every row shows, by its key', () =>
 
 // Opening or closing a whole subtree.
 
-test('deepToggle opens and closes a whole subtree', () => {
+test('deepOpen opens and closes a whole subtree, within a cap', () => {
   const value = { a: { b: { c: [1, { d: 2 }] }, s: 'x\ny' }, loop: null }
   value.loop = value
   const root = core.describe(value)
-  const opened = core.deepToggle(root, { expandDepth: 1 }, 'r/.a', true)
-  const rows = tree(value, { expandDepth: 1, toggled: opened })
+  const state = { style: 'tree', open: openAt(root, { expandDepth: 1 }) }
+  // Strings and cycles stay closed; everything else below opens.
+  const opened = core.deepOpen(root, state, 'r/.a', true)
+  const rows = tree(value, { open: opened })
   assert.deepEqual(rows.filter(row => row.type === 'node' && row.expandable && !row.open).map(line), ['s:"x\\ny"'])
   assert.ok(rows.some(row => line(row) === 'd:2'))
-  // Closing collapses descendants too: reopening the row normally shows them closed.
-  const closed = core.deepToggle(root, { expandDepth: 1, toggled: opened }, 'r/.a', false)
-  // Closed by default at this depth, so no toggle is needed: the set stays minimal.
-  assert.deepEqual([...closed], [])
-  const reopened = tree(value, { expandDepth: 1, toggled: new Set([...closed, 'r/.a']) }).filter(row => row.id.startsWith('r/.a/'))
+  // Closing collapses descendants too: reopening the row shows them closed.
+  const closed = core.deepOpen(root, { ...state, open: opened }, 'r/.a', false)
+  assert.deepEqual([...closed], ['r'])
+  const reopened = tree(value, { open: new Set([...closed, 'r/.a']) }).filter(row => row.id.startsWith('r/.a/'))
   assert.ok(reopened.length > 0 && reopened.every(row => row.type !== 'node' || !row.open))
-  // Closing a row that expandDepth opens below it adds closing toggles for them.
-  const deep = core.deepToggle(root, { expandDepth: 3 }, 'r', false)
-  assert.deepEqual([...deep].sort(), ['r', 'r/.a', 'r/.a/.b'])
   // The cap stops opening once the subtree shows that many rows. Opening the
   // row itself already shows 20, so nothing below it opens.
   const wide = core.describe(Array.from({ length: 20 }, (_, i) => ({ i, more: { j: i } })))
-  const capped = core.deepToggle(wide, { expandDepth: 0 }, 'r', true, 10)
-  const shown = core.visibleRows(wide, { style: 'tree', toggled: capped }).filter(row => row.id.startsWith('r/'))
+  const capped = core.deepOpen(wide, { style: 'tree' }, 'r', true, 10)
+  const shown = core.visibleRows(wide, { style: 'tree', open: capped }).filter(row => row.id.startsWith('r/'))
   assert.equal(shown.length, 20)
   assert.ok(shown.every(row => !row.open))
-  const roomy = core.visibleRows(wide, { style: 'tree', toggled: core.deepToggle(wide, { expandDepth: 0, style: 'tree' }, 'r', true, 30) })
+  const roomy = core.visibleRows(wide, { style: 'tree', open: core.deepOpen(wide, { style: 'tree' }, 'r', true, 30) })
   assert.equal(roomy.filter(row => row.open && row.depth === 1).length, 5, 'opened rows until 30 showed')
 })
 
 test('a deep open leaves nothing closed below it, within the cap', () =>
   hegel.test(tc => {
     const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
-    const display = { expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 3 }), 'expandDepth'), pageSize: 3, style: 'tree' }
-    const toggled = openSome(tc, root, display)
-    const before = core.visibleRows(root, { ...display, toggled })
+    const display = { expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 3 }), 'expandDepth'), chunkSize: 3, style: 'tree' }
+    const open = openSome(tc, root, display)
+    const before = core.visibleRows(root, { ...display, open })
     const candidates = before.filter(row => row.type === 'node' && row.expandable && row.kind !== 'string')
     tc.assume(candidates.length > 0)
     const { id } = candidates[tc.draw(gs.integers({ minValue: 0, maxValue: candidates.length - 1 }), 'row')]
     const limit = tc.draw(gs.integers({ minValue: 1, maxValue: 30 }), 'limit')
-    const after = core.visibleRows(root, { ...display, toggled: core.deepToggle(root, { ...display, toggled }, id, true, limit) })
+    const after = core.visibleRows(root, { ...display, open: core.deepOpen(root, { ...display, open }, id, true, limit) })
     // Rows below the node, including its own Show more rows (`<id>~…`).
     const below = after.filter(row => row.id !== id && inSubtree(row, id))
     assert.equal(after.find(row => row.id === id).open, true)
@@ -911,32 +922,18 @@ test('a deep close leaves nothing open below it, even after reopening', () =>
   hegel.test(tc => {
     const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
     const display = { expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 4 }), 'expandDepth'), style: 'tree' }
-    const toggled = openSome(tc, root, display)
-    const open = core.visibleRows(root, { ...display, toggled }).filter(row => row.type === 'node' && row.open)
-    tc.assume(open.length > 0)
-    const { id } = open[tc.draw(gs.integers({ minValue: 0, maxValue: open.length - 1 }), 'row')]
-    const closed = core.deepToggle(root, { ...display, toggled }, id, false)
-    const rows = core.visibleRows(root, { ...display, toggled: closed })
+    const open = openSome(tc, root, display)
+    const shown = core.visibleRows(root, { ...display, open }).filter(row => row.type === 'node' && row.open)
+    tc.assume(shown.length > 0)
+    const { id } = shown[tc.draw(gs.integers({ minValue: 0, maxValue: shown.length - 1 }), 'row')]
+    const closed = core.deepOpen(root, { ...display, open }, id, false)
+    const rows = core.visibleRows(root, { ...display, open: closed })
     assert.equal(rows.find(row => row.id === id).open, false)
     assert.deepEqual(rows.filter(row => row.id.startsWith(`${id}/`)).map(row => row.id), [])
-    const reopened = new Set(closed)
-    if (!reopened.delete(id)) reopened.add(id)
-    const below = core.visibleRows(root, { ...display, toggled: reopened }).filter(row => row.id.startsWith(`${id}/`))
+    const reopened = new Set([...closed, id])
+    const below = core.visibleRows(root, { ...display, open: reopened }).filter(row => row.id.startsWith(`${id}/`))
     assert.deepEqual(below.filter(row => row.type === 'node' && row.open).map(row => row.id), [], 'a row below reopened')
   }, settings))
-
-test('setRowOpen sets the requested state, so repeated requests change nothing', () => {
-  const root = core.describe({ a: { b: 1 }, s: 'x\ny' })
-  const state = { expandDepth: 1 }
-  const once = core.setRowOpen(root, state, 'r/.a', true)
-  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: once }, 'r/.a', true)], [...once])
-  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: once }, 'r/.a', false)], [])
-  // The root starts open at expandDepth 1, so closing it twice leaves one toggle.
-  const closed = core.setRowOpen(root, state, 'r', false)
-  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: closed }, 'r', false)], ['r'])
-  // Strings start closed at any depth.
-  assert.deepEqual([...core.setRowOpen(root, state, 'r/.s', true)], ['r/.s'])
-})
 
 // Nested rows: visibleTree() nests visibleRows() for a renderer whose DOM nests.
 
@@ -969,7 +966,7 @@ test('nests rows under the open node they belong to', () => {
 
 test('the tree style has no after lines, and a range nests its children', () => {
   const root = core.describe({ list: [1, 2, 3, 4, 5] })
-  const [top] = core.visibleTree(root, { style: 'tree', expandDepth: 2, chunkSize: 2, toggled: new Set(['r/.list~g1~2-3']) })
+  const [top] = core.visibleTree(root, { style: 'tree', chunkSize: 2, open: new Set(['r', 'r/.list', 'r/.list~g1~2-3']) })
   const list = top.children[0]
   assert.equal(top.after, undefined)
   assert.deepEqual(list.children.map(row => row.id), ['r/.list~g1~0-1', 'r/.list~g1~2-3', 'r/.list~g1~4-4'])
@@ -978,7 +975,7 @@ test('the tree style has no after lines, and a range nests its children', () => 
 })
 
 test('an open string nests its lines', () => {
-  const [top] = core.visibleTree(core.describe('one\ntwo'), { style: 'tree', toggled: new Set(['r']) })
+  const [top] = core.visibleTree(core.describe('one\ntwo'), { style: 'tree', open: new Set(['r']) })
   assert.deepEqual(top.children.map(row => [row.type, line(row)]), [['text', 'one'], ['text', 'two']])
 })
 
@@ -987,10 +984,10 @@ test('flattening visibleTree gives visibleRows, and openIds lists its open nodes
     const root = core.describe(make(tc.draw(recipes(), 'recipe')).value)
     const display = {
       expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 4 }), 'expandDepth'),
-      pageSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'pageSize'),
+      chunkSize: tc.draw(gs.integers({ minValue: 1, maxValue: 4 }), 'chunkSize'),
       style: tc.draw(styles, 'style'),
     }
-    const state = { ...display, toggled: openSome(tc, root, display) }
+    const state = { ...display, open: openSome(tc, root, display) }
     const rows = core.visibleRows(root, state)
     assert.deepEqual(shape(flatten(core.visibleTree(root, state))), shape(rows))
     assert.deepEqual(core.openIds(root, state), rows.filter(row => row.type === 'node' && row.open).map(row => row.id))
@@ -1036,7 +1033,13 @@ test('symbol-keyed properties show only with symbol_keys, told apart by occurren
     'r/.name', 'r/@Symbol(id)#0', 'r/@Symbol(id)#1', 'r/@Symbol.for(tag)#0', 'r/@Symbol.iterator#0',
   ])
   const rows = core.visibleRows(core.describe(value, { symbol_keys: true }), { style: 'tree', expandDepth: 1 })
-  assert.deepEqual(rows.slice(1).map(row => line(row)), ['name:"run"', '[Symbol(id)]:1', '[Symbol(id)]:2', '[Symbol.for(tag)]:"x"', '[Symbol.iterator]:3'])
+  // A key reads as the same symbol does as a value, in brackets.
+  assert.deepEqual(rows.slice(1).map(row => line(row)), ['name:"run"', '[Symbol("id")]:1', '[Symbol("id")]:2', '[Symbol.for("tag")]:"x"', '[Symbol.iterator]:3'])
+  const valueTokens = core.visibleRows(core.describe([a, Symbol.for('tag'), Symbol.iterator]), { style: 'tree', expandDepth: 1 }).slice(1).map(row => row.tokens)
+  // Each key is `[`, the value's tokens, `]`, then the colon.
+  assert.deepEqual([rows[2], rows[4], rows[5]].map(row => row.key.slice(1, -2)), valueTokens, 'a symbol key has the same tokens as the symbol value')
+  // Path keys, search and copy path don't read the displayed key.
+  assert.deepEqual(core.inspectorSearch(value, /^Symbol\(id\)$/).map(m => core.inspectorPathKey(m.path)), ['r/@Symbol(id)#0', 'r/@Symbol(id)#1'])
   // Only well-known and registered symbols have a path to copy.
   assert.deepEqual(rows.slice(1).map(row => row.pathText), ['name', undefined, undefined, '[Symbol.for("tag")]', '[Symbol.iterator]'])
   assert.deepEqual(keysOf(value, { style: 'tree', expandDepth: 1 }).length, 6)
@@ -1171,4 +1174,101 @@ test('a match deep in a long list reveals with the ranges above it', () => {
   assert.deepEqual(matches.map(m => core.inspectorPathKey(m.path)), ['r/900', 'r/50000'])
   const open = core.inspectorExpandToPath(value, [], matches[1].path)
   assert.deepEqual(open, ['r', 'r~g1~50000-59999', 'r~g1~50000-50999', 'r~g1~50000-50099'])
+})
+
+// The docs walkthrough's values: every kind the Inspector shows.
+
+test('every walkthrough value: a row that can open has children, and the rows spell out repr', async () => {
+  const { inspectorKinds, rootPrimitives } = await import('../fixtures/inspector/kinds.ts')
+  const values = [
+    ...Object.entries(inspectorKinds).map(([name, kind]) => [name, kind.values()]),
+    ...rootPrimitives().map(({ label, value }) => [`root ${label}`, value]),
+  ]
+  for (const [name, value] of values) {
+    // Open everything, strings included, the way a reader would one row at a time.
+    const root = core.describe(value, { symbol_keys: true })
+    const open = new Set()
+    let rows
+    for (let round = 0; round < 50; round++) {
+      rows = core.visibleRows(root, { style: 'tree', chunkSize: Infinity, open })
+      const closed = rows.filter(row => row.type === 'node' && row.expandable && !row.open)
+      if (!closed.length) break
+      for (const row of closed) open.add(row.id)
+    }
+    for (const row of rows) {
+      if (row.type !== 'node' || !row.expandable) continue
+      assert.ok(rows.some(other => other.depth === row.depth + 1 && inSubtree(other, row.id) && other.id !== row.id), `${name}: ${row.id} can open but shows nothing`)
+    }
+    // A row that can't open never shows an arrow: it's not expandable.
+    assert.ok(rows.filter(row => row.type === 'node' && !row.expandable).every(row => !row.open), `${name}: a leaf is open`)
+    // Without symbol keys, which repr() leaves out, the rows spell out repr.
+    const reprRows = core.visibleRows(core.describe(value), { expandDepth: Infinity, chunkSize: Infinity, previewBudget: Infinity })
+    assert.equal(reprRows.map(line).join(''), repr(value, { deduplicate_references: false, char_limit: Infinity }), `${name}: rows differ from repr`)
+  }
+})
+
+test('an empty class and an instance with no fields show no arrow', async () => {
+  const { Marker } = await import('../fixtures/inspector/kinds.ts')
+  for (const value of [Marker, new Marker(), {}, [], new Map(), new Set()]) {
+    const [row] = core.visibleRows(core.describe(value), { style: 'tree', expandDepth: 1 })
+    assert.equal(row.expandable, false, `${line(row)} can open`)
+  }
+})
+
+test('previewBudget caps a closed summary: 80 by default, a smaller value, or no limit', () => {
+  const value = { results: Array.from({ length: 40 }, (_, i) => ({ test: `t${i}`, ok: i % 3 !== 0 })) }
+  const summary = state => core.visibleRows(core.describe(value), state)[0]
+  // The budget counts the space the Inspector draws after each comma and colon.
+  const drawn = row => text(row.tokens).length + row.tokens.filter(token => token.type === 'comma' || token.type === 'field_colon').reduce((n, token) => n + token.text.length, 0)
+  const byDefault = summary({})
+  assert.ok(drawn(byDefault) <= 80 && drawn(byDefault) > 70, `default drew ${drawn(byDefault)}`)
+  assert.equal(byDefault.tokens.at(-1).text, '…')
+  const small = summary({ previewBudget: 20 })
+  assert.ok(drawn(small) <= 20, `20 drew ${drawn(small)}`)
+  assert.equal(small.tokens.at(-1).text, '…')
+  // No limit: the whole value, as repr() writes it.
+  const whole = summary({ previewBudget: Infinity })
+  assert.equal(text(whole.tokens), repr(value))
+  assert.ok(!whole.tokens.some(token => token.type === 'ellipsis'))
+})
+
+test('generators and built-in iterators show their type, stay closed, and are never advanced', () => {
+  function* steps() { yield 'start'; yield 'finish' }
+  async function* poll() { yield 1 }
+  const values = {
+    generator: steps(),
+    asyncGenerator: poll(),
+    arrayIterator: ['a', 'b'][Symbol.iterator](),
+    typedArrayIterator: new Uint8Array([7]).values(),
+    mapIterator: new Map([['k', 1]]).entries(),
+    setIterator: new Set([1]).values(),
+    stringIterator: 'ok'[Symbol.iterator](),
+  }
+  const root = core.describe(values, { symbol_keys: true, iterator_labels: true })
+  const rows = core.visibleRows(root, { style: 'tree', expandDepth: Infinity }).slice(1)
+  assert.deepEqual(rows.map(line), [
+    'generator:Generator{}', 'asyncGenerator:AsyncGenerator{}', 'arrayIterator:Array Iterator{}', 'typedArrayIterator:Array Iterator{}',
+    'mapIterator:Map Iterator{}', 'setIterator:Set Iterator{}', 'stringIterator:String Iterator{}',
+  ])
+  assert.ok(rows.every(row => !row.expandable && !row.open), 'an iterator can open')
+  // Search reads their type too; neither reading them nor searching advanced them.
+  assert.equal(core.inspectorSearch(values, /Generator/).length, 2)
+  assert.deepEqual(values.generator.next(), { value: 'start', done: false })
+  assert.deepEqual(values.arrayIterator.next(), { value: 'a', done: false })
+  assert.deepEqual(values.mapIterator.next(), { value: ['k', 1], done: false })
+  assert.deepEqual(values.stringIterator.next(), { value: 'o', done: false })
+  // repr() keeps writing `{}`, as the notebook did.
+  assert.equal(repr(steps()), '{}')
+  assert.equal(repr(['a'][Symbol.iterator]()), '{}')
+})
+
+test('an object that only claims to be a generator is a plain object, and its toStringTag getter never runs', () => {
+  let reads = 0
+  const claims = { [Symbol.toStringTag]: 'Generator' }
+  const getter = { get [Symbol.toStringTag]() { reads++; return 'Generator' } }
+  for (const value of [claims, getter]) {
+    const [row] = core.visibleRows(core.describe(value, { iterator_labels: true }), { style: 'tree' })
+    assert.ok(!line(row).startsWith('Generator'), `${line(row)} was labeled a generator`)
+  }
+  assert.equal(reads, 0)
 })

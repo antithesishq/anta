@@ -89,6 +89,38 @@ export function ActionsDemo() {
   )
 }
 
+const services: TreeItem[] = [
+  { id: 'api', label: 'api', children: [{ id: 'api/1', label: 'api-1' }, { id: 'api/2', label: 'api-2' }] },
+  { id: 'db', label: 'db', children: [{ id: 'db/1', label: 'db-1' }] },
+]
+const withActions = (items: TreeItem[], log: (text: string) => void): TreeItem[] => items.map(item => ({
+  ...item,
+  children: item.children && withActions(item.children, log),
+  actions: [
+    { icon: 'refresh' as const, label: `Restart ${item.label}`, onClick: () => log(`Restart ${item.label}`) },
+    { icon: 'copy' as const, label: `Copy ${item.label}`, onClick: () => log(`Copied ${item.label}`) },
+  ],
+}))
+
+/** Actions at the row's end, the default, and right after the label with `--tree-actions-align: start`. */
+export function ActionsAlignDemo() {
+  const [log, setLog] = useState('Select an action.')
+  const items = withActions(services, setLog)
+  return (
+    <Box display="grid" gap={16} style={{ width: '100%' }}>
+      <Box display="grid" gap={4}>
+        <Text size="small">At the end (default)</Text>
+        <Tree aria-label="Services, actions at the end" items={items} defaultOpen={['api']} />
+      </Box>
+      <Box display="grid" gap={4}>
+        <Text size="small">After the label (--tree-actions-align: start)</Text>
+        <Tree className="tree-actions-start" aria-label="Services, actions after the label" items={items} defaultOpen={['api']} />
+      </Box>
+      <Text size="small">{log}</Text>
+    </Box>
+  )
+}
+
 // A stand-in for a server: each folder's children arrive after a short delay.
 function fetchChildren(path: string): Promise<Entry[]> {
   return new Promise(resolve => setTimeout(() => resolve(

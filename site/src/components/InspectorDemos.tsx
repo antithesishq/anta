@@ -1,8 +1,10 @@
+import { Fragment } from 'preact'
 import { useState } from 'preact/hooks'
 import {
   Box, Button, Inspector, Text, inspectorExpandToPath, inspectorRepr, inspectorSearch,
   type InspectorPath, type InspectorReprVisitor,
 } from '@antadesign/anta'
+import { inspectorKinds, rootPrimitives, type InspectorKindName } from '../../../fixtures/inspector/kinds'
 
 // Demo islands for the Inspector page. The Inspector keeps its open rows in the
 // JSX wrapper, so a demo must be hydrated for its rows to open.
@@ -88,11 +90,84 @@ export function SearchDemo() {
   return <Inspector value={report} searchable aria-label="Region report" />
 }
 
+/** A search that reads the query as a regular expression. An invalid pattern matches nothing. */
+export function RegexSearchDemo() {
+  const [hosts] = useState(() => ({
+    cluster: 'ledger-prod',
+    nodes: [
+      { host: 'api-1', role: 'leader', zone: 'eu-west-1a' },
+      { host: 'api-2', role: 'follower', zone: 'eu-west-1b' },
+      { host: 'db-1', role: 'primary', zone: 'eu-west-1a' },
+      { host: 'db-2', role: 'replica', zone: 'eu-west-1c' },
+      { host: 'cache-1', role: 'standby', zone: 'eu-west-1b' },
+    ],
+  }))
+  return (
+    <Inspector
+      value={hosts}
+      expandDepth={3}
+      searchable
+      searchMatcher={query => {
+        try { return new RegExp(query, 'i') } catch { return () => false }
+      }}
+      aria-label="Cluster nodes"
+    />
+  )
+}
+
+/** A search with a function matcher: the query is a number, and values above it match. */
+export function ThresholdSearchDemo() {
+  const [latency] = useState(() => ({
+    window: '5m',
+    routes: [
+      { route: '/transfer', p50: 41, p99: 380 },
+      { route: '/balance', p50: 12, p99: 95 },
+      { route: '/withdraw', p50: 55, p99: 1210 },
+      { route: '/health', p50: 2, p99: 9 },
+    ],
+  }))
+  return (
+    <Inspector
+      value={latency}
+      expandDepth={3}
+      searchable
+      searchMatcher={query => {
+        const limit = Number(query)
+        return text => Number.isFinite(limit) && text.trim() !== '' && Number(text) > limit
+      }}
+      aria-label="Route latency in milliseconds"
+    />
+  )
+}
+
 /** A search over 100,000 items, with matches at 900 and 50,000. */
 export function LargeSearchDemo() {
   const [samples] = useState(() => Array.from({ length: 100000 }, (_, i) =>
     i === 900 || i === 50000 ? 'timeout' : Math.round(Math.sin(i / 50) * 1000) / 10))
   return <Inspector className="inspector-scroll" value={{ samples }} searchable aria-label="Latency samples" />
+}
+
+// How many levels each walkthrough kind opens, so its interesting rows show.
+const KIND_DEPTH: Partial<Record<InspectorKindName, number>> = { nested: 3, collections: 2, symbols: 2, builtins: 2, classes: 2, circular: 3 }
+
+/** One kind of value from the walkthrough fixtures (fixtures/inspector/kinds.ts). */
+export function KindDemo({ kind }: { kind: InspectorKindName }) {
+  const [value] = useState(() => inspectorKinds[kind].values())
+  return <Inspector value={value} expandDepth={KIND_DEPTH[kind] ?? 1} aria-label={inspectorKinds[kind].title} />
+}
+
+/** A primitive as the whole value: one row that can't open. */
+export function RootPrimitivesDemo() {
+  return (
+    <Box display="grid" gap={8} style={{ width: '100%', gridTemplateColumns: 'max-content minmax(0, 1fr)', alignItems: 'baseline' }}>
+      {rootPrimitives().map(({ label, value }) => (
+        <Fragment key={label}>
+          <Text size="small">{label}</Text>
+          <Inspector value={value} aria-label={`Root value: ${label}`} />
+        </Fragment>
+      ))}
+    </Box>
+  )
 }
 
 /** A one-line value in a sentence and in a table cell. */
@@ -111,6 +186,22 @@ export function InlineDemo() {
           <tr><td>Leader elected after a partition</td><td><Inspector layout="inline" value={{ term: 7, leader: 'api-1' }} aria-label="Last value for Leader elected after a partition" /></td></tr>
         </tbody>
       </table>
+    </Box>
+  )
+}
+
+/** The same inline value with the default summary length, a shorter one, and no limit. */
+export function PreviewBudgetDemo() {
+  const [value] = useState(() => ({ run: 'run_4f2a', seed: 42, failing: ['transfer', 'withdraw'], took: '92.5s', retries: 3, worker: 'api-2' }))
+  const rows: [string, number | undefined][] = [['Default (80)', undefined], ['previewBudget={30}', 30], ['previewBudget={Infinity}', Infinity]]
+  return (
+    <Box display="grid" gap={8} style={{ width: '100%' }}>
+      {rows.map(([label, budget]) => (
+        <Text key={label}>
+          <span style={{ color: 'var(--text-3)' }}>{label}:</span>{' '}
+          <Inspector layout="inline" value={value} previewBudget={budget} aria-label={`Run, ${label}`} />
+        </Text>
+      ))}
     </Box>
   )
 }

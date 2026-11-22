@@ -29,6 +29,10 @@ export type Options = {
   /** List own enumerable symbol-keyed data properties after the string-keyed ones. The Inspector sets it; `repr()`
    *  leaves it off, keeping the notebook's output. */
   symbol_keys?: boolean
+  /** Label generators, async generators, and the built-in Array, Map, Set, and String iterators by type, such as
+   *  `Generator{}`, without iterating them. The Inspector sets it; `repr()` leaves it off and writes `{}`, as the
+   *  notebook does. */
+  iterator_labels?: boolean
 }
 
 type ReferenceInfo = {
@@ -243,6 +247,30 @@ function is_pojo(obj: object) {
   return constructor_name(obj) === 'Object'
 }
 
+// The built-in prototypes of generators and iterators, with the type name each shows.
+const iterator_prototypes: ReadonlyMap<object, string> = new Map<object, string>([
+  [Object.getPrototypeOf(function* () {}).prototype, 'Generator'],
+  [Object.getPrototypeOf(async function* () {}).prototype, 'AsyncGenerator'],
+  [Object.getPrototypeOf([][Symbol.iterator]()), 'Array Iterator'],
+  [Object.getPrototypeOf(new Map()[Symbol.iterator]()), 'Map Iterator'],
+  [Object.getPrototypeOf(new Set()[Symbol.iterator]()), 'Set Iterator'],
+  [Object.getPrototypeOf(''[Symbol.iterator]()), 'String Iterator'],
+])
+
+// The type of a generator or built-in iterator, from its prototype chain. It
+// reads no properties, so no getter runs, and it never calls next(). A
+// generator's own prototype is its function's `prototype`, so the walk goes
+// up a few links.
+function iterator_label(it: object): string | undefined {
+  let proto = Object.getPrototypeOf(it)
+  for (let depth = 0; proto !== null && depth < 8; depth++) {
+    const label = iterator_prototypes.get(proto)
+    if (label) return label
+    proto = Object.getPrototypeOf(proto)
+  }
+  return undefined
+}
+
 /**
  * What an `inspectorRepr` method receives. Call its methods in display order;
  * each call adds text, a value, or a group of children that opens in the
@@ -282,7 +310,13 @@ export type NodeKind =
  * One entry in a group. `key` is tokens for a property or string key, or a node for a non-string Map key.
  * `stack` marks an error's stack, which the string output leaves out when `error_stacks` is false.
  */
-export type InspectChild = { key?: Token[] | InspectNode; value: InspectNode; stack?: true }
+export type InspectChild = {
+  key?: Token[] | InspectNode
+  /** The text search reads for the key, when it isn't the key's tokens without brackets: a symbol key searches as `Symbol(trace)`. */
+  keyText?: string
+  value: InspectNode
+  stack?: true
+}
 
 /**
  * One step from a node to a child, in data terms. Display-only rows, such as
@@ -313,6 +347,26 @@ function symbol_name(symbol: symbol): string {
   if (known) return `Symbol.${known}`
   const registered = Symbol.keyFor(symbol)
   return registered !== undefined ? `Symbol.for(${registered})` : `Symbol(${symbol.description ?? ''})`
+}
+
+/**
+ * A symbol as tokens, as a value and as a key show it: `Symbol.iterator` for a
+ * well-known symbol, `Symbol.for("key")` for a registered one, and
+ * `Symbol("description")` otherwise. The description is quoted unless
+ * `unquoted` is set, like a string.
+ */
+function symbol_tokens(value: symbol, unquoted?: boolean): Token[] {
+  const known = well_known_symbols.get(value)
+  if (known) return [{ text: 'Symbol', type: 'class_name' }, { text: '.', type: 'class_name' }, { text: known, type: 'field_name' }]
+  const text = JSON.stringify(String(value).slice(7, -1)).slice(1, -1) // drop `Symbol(` and `)`
+  return [
+    { text: Symbol.keyFor(value) !== undefined ? 'Symbol.for' : 'Symbol', type: 'class_name' },
+    { text: '(', type: 'open_bracket' },
+    ...(unquoted ? [{ text, type: 'string' as const }] : [
+      { text: '"', type: 'open_quote' as const }, { text, type: 'string' as const }, { text: '"', type: 'close_quote' as const },
+    ]),
+    { text: ')', type: 'close_bracket' },
+  ]
 }
 
 /** One segment of a path key. @internal */
@@ -582,8 +636,11 @@ class Node implements InspectNode {
       const name = symbol_name(key)
       const occurrence = seen.get(name) ?? 0
       seen.set(name, occurrence + 1)
+      // The key reads as the symbol value does, in brackets: [Symbol("trace")].
+      // Search keeps reading it as before, `Symbol(trace)`.
       yield {
-        key: [{ text: '[', type: 'open_bracket' }, { text: name, type: 'symbol' }, { text: ']', type: 'close_bracket' }],
+        key: [{ text: '[', type: 'open_bracket' }, ...symbol_tokens(key, this.#context.options.unquoted_strings), { text: ']', type: 'close_bracket' }],
+        keyText: name,
         value: this.#child(desc.value, [...this.path, key], segment?.(i) ?? { type: 'property', key, occurrence }),
       }
       i++
@@ -679,17 +736,7 @@ class Node implements InspectNode {
       case 'boolean': t(String(value), 'boolean'); return { kind: 'boolean', parts }
       case 'undefined': t('undefined', 'undefined'); return { kind: 'undefined', parts }
       case 'symbol': {
-        const known = well_known_symbols.get(value)
-        if (known) {
-          t('Symbol', 'class_name'); t('.', 'class_name'); t(known, 'field_name')
-        } else {
-          t(Symbol.keyFor(value) !== undefined ? 'Symbol.for' : 'Symbol', 'class_name')
-          t('(', 'open_bracket')
-          const text = JSON.stringify(String(value).slice(7, -1)).slice(1, -1) // drop `Symbol(` and `)`
-          if (options.unquoted_strings) t(text, 'string')
-          else { t('"', 'open_quote'); t(text, 'string'); t('"', 'close_quote') }
-          t(')', 'close_bracket')
-        }
+        tokens.push(...symbol_tokens(value, options.unquoted_strings))
         return { kind: 'symbol', parts }
       }
       case 'function': {
@@ -780,6 +827,14 @@ class Node implements InspectNode {
             return { kind: 'blob', parts }
           }
           default: {
+            // A generator or iterator shows its type and stays closed: listing
+            // its items would mean iterating it.
+            const iterator = options.iterator_labels ? guard(() => iterator_label(value)) : undefined
+            if (typeof iterator === 'string') {
+              t(iterator, 'class_name')
+              parts.push(this.#group('{', '}', () => [][Symbol.iterator]()))
+              return { kind: 'object', parts }
+            }
             const name = guard(() => constructor_name_if_any(value))
             if (name !== INACCESSIBLE && name) t(name, 'class_name')
             const pojo = guard(() => is_pojo(value)) === true
@@ -1015,14 +1070,12 @@ export type InspectRow =
 
 /** Display state for `visibleRows`. Every field is serializable. */
 export type RowState = {
-  /** Nodes shallower than this depth start open. Defaults to 0. */
+  /** Without `open`, nodes shallower than this depth are open; strings and ranges stay closed. Defaults to 0. */
   expandDepth?: number
-  /** Ids of nodes whose open state is the opposite of their default. Strings start closed at any depth. */
-  toggled?: ReadonlySet<string>
   /**
-   * Ids of the open nodes. When set, it decides alone, and `expandDepth` and
-   * `toggled` don't apply. Ids that name no node, as after the value changes,
-   * are ignored.
+   * Ids of the open nodes and ranges. When set, it decides alone, and
+   * `expandDepth` doesn't apply. Ids that name no row, as after the value
+   * changes, are ignored.
    */
   open?: ReadonlySet<string>
   /** Pages shown per open string, keyed by its `more` row's `group`. Each defaults to one page. */
@@ -1148,13 +1201,12 @@ export function chunkPath(length: number, position: number, chunkSize = 100): [n
  * Lists the visible rows of `root` for the given display state. A closed node
  * is read only as far as its summary needs, so opening a node is what reads its
  * children. Repeated references expand in place; only cycles become `circular`
- * rows, whose `target` names an open ancestor. Strings open only when toggled,
+ * rows, whose `target` names an open ancestor. Strings open only when `open` holds them,
  * into `text` rows. With every other node open, the rows' text joined in order
  * is the `repr()` text without deduplication.
  */
 export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow[] {
   const expand_depth = state.expandDepth ?? 0
-  const toggled = state.toggled ?? new Set<string>()
   const pages = state.pages ?? new Map<string, number>()
   const chunk_size = state.chunkSize ?? 100
   const text_page_size = state.textPageSize ?? 5000
@@ -1176,7 +1228,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
   const visit = (node: InspectNode, id: string, depth: number, key: Token[], ancestors: Open[], path_text: string | undefined) => {
     const expandable = is_expandable(node, budget)
     const starts_open = depth < expand_depth && node.kind !== 'string'
-    const open = expandable && (state.open ? state.open.has(id) : starts_open !== toggled.has(id))
+    const open = expandable && (state.open ? state.open.has(id) : starts_open)
     const row: InspectRow = {
       type: 'node', id, depth, key, tokens: [], kind: node.kind, path: node.path, segments: node.segments,
       size: node.size, expandable, open,
@@ -1264,7 +1316,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
           for (let first = start; first <= end; first += size) {
             const last = Math.min(end, first + size - 1)
             const chunk_id = `${group_id}~${first}-${last}`
-            const open = state.open ? state.open.has(chunk_id) : toggled.has(chunk_id)
+            const open = state.open?.has(chunk_id) ?? false
             rows.push({ type: 'chunk', id: chunk_id, depth: at, start: first, end: last, open })
             if (open) show(first, last, level + 1, at + 1)
           }
@@ -1340,7 +1392,6 @@ export function openIds(root: InspectNode, state: RowState = {}): string[] {
 type Openable = Extract<InspectRow, { type: 'node' | 'chunk' }>
 const opens_deep = (row: InspectRow): row is Openable => (row.type === 'chunk' && !row.open)
   || (row.type === 'node' && !row.open && row.expandable && row.kind !== 'string' && row.kind !== 'circular')
-const is_chunk_id = (id: string) => /~g\d+(?:~\d+-\d+)+$/.test(id)
 
 // Whether `id` names a row inside the node `ancestor` names.
 const inside = (id: string, ancestor: string) => id.startsWith(`${ancestor}/`) || id.startsWith(`${ancestor}~`)
@@ -1377,76 +1428,6 @@ export function nodeAt(root: InspectNode, key: string): InspectNode | undefined 
     node = next
   }
   return node
-}
-
-// Whether a row starts open: strings never do; other rows do above `expandDepth`.
-function opens_by_default(id: string, kind: NodeKind, expand_depth: number): boolean {
-  return kind !== 'string' && (id.match(/\//g)?.length ?? 0) < expand_depth
-}
-
-/**
- * Opens or closes one row, returning the new `toggled` set for `state`. It sets
- * the state requested rather than flipping it, so a repeated request, as from
- * keys pressed while a worker renders, changes nothing.
- */
-export function setRowOpen(root: InspectNode, state: RowState, id: string, open: boolean): Set<string> {
-  const toggled = new Set(state.toggled)
-  // A range starts closed.
-  if (is_chunk_id(id)) {
-    if (open) toggled.add(id)
-    else toggled.delete(id)
-    return toggled
-  }
-  const node = nodeAt(root, id)
-  if (!node) return toggled
-  if (open === opens_by_default(id, node.kind, state.expandDepth ?? 0)) toggled.delete(id)
-  else toggled.add(id)
-  return toggled
-}
-
-/**
- * Opens or closes a row and everything below it, returning the new `toggled`
- * set for `state`. Opening works one node at a time, shallowest first, and
- * stops once the subtree shows `limit` rows in `state.style`, so one action
- * reads only what it shows; strings and cycles stay closed. Closing also
- * closes the descendants that
- * `expandDepth` would open, so reopening the row shows its children closed. The
- * result holds only ids whose state differs from their default.
- */
-export function deepToggle(root: InspectNode, state: RowState, id: string, open: boolean, limit = 500): Set<string> {
-  const node = nodeAt(root, id)
-  if (!node) return new Set(state.toggled)
-  const expand_depth = state.expandDepth ?? 0
-  // Rows below `id` return to their defaults first.
-  const toggled = new Set([...(state.toggled ?? [])].filter(other => !inside(other, id)))
-  const set = (row_id: string, kind: NodeKind, want: boolean) => {
-    if (want === opens_by_default(row_id, kind, expand_depth)) toggled.delete(row_id)
-    else toggled.add(row_id)
-  }
-  const subtree = () => visibleRows(root, { ...state, toggled }).filter(row => inside(row.id, id))
-
-  set(id, node.kind, true)
-  if (node.kind === 'string') {
-    if (!open) set(id, node.kind, false)
-    return toggled
-  }
-  if (!open) {
-    // With no toggles below `id`, the open rows shown are exactly those open by default.
-    for (const row of subtree()) if (row.type === 'node' && row.open) set(row.id, row.kind, false)
-    set(id, node.kind, false)
-    return toggled
-  }
-  for (;;) {
-    const rows = subtree()
-    if (rows.length >= limit) break
-    // Breadth-first: the shallowest closed row, so a cap leaves whole levels open.
-    let next: Openable | undefined
-    for (const row of rows) if (opens_deep(row) && (!next || row.depth < next.depth)) next = row
-    if (!next) break
-    if (next.type === 'chunk') toggled.add(next.id)
-    else set(next.id, next.kind, true)
-  }
-  return toggled
 }
 
 /**
@@ -1559,6 +1540,7 @@ const tokens_text = (tokens: readonly Token[]) => tokens.map(token => token.text
  * preview, so it has none. Array indices aren't keys. @internal
  */
 export function keyText(child: InspectChild): string | undefined {
+  if (child.keyText !== undefined) return child.keyText
   if (child.key === undefined) return undefined
   if (Array.isArray(child.key)) {
     return tokens_text(child.key.filter(token => token.type !== 'open_bracket' && token.type !== 'close_bracket'))
@@ -1623,7 +1605,7 @@ export function searchNodes(root: InspectNode, matcher: InspectorMatcher): Inspe
  * `inspectorExpandToPath`.
  */
 export function inspectorSearch(value: unknown, matcher: InspectorMatcher, options: SearchOptions = {}): InspectorMatch[] {
-  return searchNodes(describe(value, { numeric_base: options.numericBase, symbol_keys: options.symbolKeys ?? true }), matcher)
+  return searchNodes(describe(value, { numeric_base: options.numericBase, symbol_keys: options.symbolKeys ?? true, iterator_labels: true }), matcher)
 }
 
 /**

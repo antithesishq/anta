@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from 'react'
 import { Inspector as AntaInspector } from '@antadesign/anta'
+import { inspectorKinds } from './kinds'
 
 declare global {
   interface Window {
@@ -8,7 +9,7 @@ declare global {
 }
 
 // Test output in miniature: nested results, a Map, a long array that shows in ranges, a
-// multiline string, and a cycle.
+// multiline string, a cycle, and the docs walkthrough's Sets, symbols, built-ins, and classes.
 function sample() {
   const value: Record<string, unknown> = {
     name: 'run',
@@ -16,6 +17,12 @@ function sample() {
     byKey: new Map<string, unknown>([['api-1', ['ready', 'leader elected']], ['db', []]]),
     coverage: Array.from({ length: 12 }, (_, i) => i / 10),
     log: 'first line\nsecond line',
+    kinds: {
+      ...inspectorKinds.collections.values(),
+      ...inspectorKinds.symbols.values(),
+      ...inspectorKinds.builtins.values(),
+      ...inspectorKinds.classes.values(),
+    },
   }
   value.self = value
   return value

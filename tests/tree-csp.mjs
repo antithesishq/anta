@@ -222,6 +222,8 @@ const events = (page, type) => page.evaluate(type => window.events.filter(event 
 // after the first render; a person can't act sooner than that.
 const settle = page => page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))))
 const row = (page, id) => page.locator(`a-tree-item[item-id="${id}"] > a-tree-row`)
+// A row's text, which clicks target: the row's center can fall on an action.
+const rowText = (page, id) => row(page, id).locator('a-tree-value')
 async function focusTree(page) {
   await page.locator('#before').focus()
   await page.keyboard.press('Tab')
@@ -267,23 +269,23 @@ for (const engine of engines) {
     assert.deepEqual((await events(page, 'statechange')).at(-1).detail, { next: 'open', prev: 'closed', scope: 'subtree' })
     // Disabled src/old stays closed: it can't open.
     assert.deepEqual(await shown(page), ['src', 'src/a.ts', 'src/lib', 'src/lib/b.ts', 'src/old', 'readme'])
-    await row(page, 'readme').click()
+    await rowText(page, 'readme').click()
     assert.deepEqual((await events(page, 'activate')).map(event => event.id), ['readme'])
     // A disabled item neither opens nor activates.
-    await row(page, 'src/old').click()
+    await rowText(page, 'src/old').click()
     assert.ok(!(await shown(page)).includes('src/old/c.ts'))
   })
 
   test.fast(`${name}: a vetoed request changes nothing; a controlled item waits for its caller`, async t => {
     const page = await pageFor(t, engine)
     await page.evaluate(() => { window.veto = true })
-    await row(page, 'src/lib').click()
+    await rowText(page, 'src/lib').click()
     assert.ok(!(await shown(page)).includes('src/lib/b.ts'), 'the veto did not hold')
     await page.evaluate(() => { window.veto = false; window.controlItem('src/lib') })
-    await row(page, 'src/lib').click()
+    await rowText(page, 'src/lib').click()
     assert.ok(!(await shown(page)).includes('src/lib/b.ts'), 'a controlled item opened itself')
     await page.evaluate(() => { window.accept = true; window.writes = null })
-    await row(page, 'src/lib').click()
+    await rowText(page, 'src/lib').click()
     assert.ok((await shown(page)).includes('src/lib/b.ts'), 'the accepted request did not apply')
     await page.evaluate(() => { window.writes = [] })
   })
@@ -385,7 +387,7 @@ for (const engine of engines) {
     await page.waitForFunction(() => document.querySelector('a-menu').isOpen)
     assert.equal((await events(page, 'itemmenu')).at(-1).id, 'src')
     await page.keyboard.press('Escape')
-    await row(page, 'readme').click({ button: 'right' })
+    await rowText(page, 'readme').click({ button: 'right' })
     assert.equal((await events(page, 'itemmenu')).at(-1).id, 'readme')
     assert.equal(await active(page), 'readme')
     // The New file action is not a menu action.
@@ -394,6 +396,37 @@ for (const engine of engines) {
     await row(page, 'src').hover()
     await page.locator('#new').click()
     assert.equal((await events(page, 'itemmenu')).length, before)
+  })
+
+  // WebKit selects the word under a right-click before `contextmenu` fires.
+  // That selection is the browser's, not the reader's, so the menu still opens.
+  test.fast(`${name}: a right-click on a row's text opens the following menu, even where the browser selects the word`, async t => {
+    const page = await pageFor(t, engine)
+    await settle(page)
+    await rowText(page, 'readme').click({ button: 'right' })
+    await page.waitForFunction(() => document.querySelector('a-menu').isOpen)
+    assert.equal((await events(page, 'itemmenu')).at(-1)?.id, 'readme')
+  })
+
+  test.fast(`${name}: a right-click inside text the reader selected leaves the browser's own menu`, async t => {
+    const page = await pageFor(t, engine)
+    await settle(page)
+    // Select the row's text, as a reader would before copying it.
+    await page.evaluate(() => {
+      const range = document.createRange()
+      range.selectNodeContents(document.querySelector('a-tree-item[item-id="readme"] > a-tree-row > a-tree-value'))
+      getSelection().removeAllRanges()
+      getSelection().addRange(range)
+      // Whether anything canceled the browser's menu, read once the event has finished.
+      window.contextmenuPrevented = []
+      window.addEventListener('contextmenu', event => setTimeout(() => window.contextmenuPrevented.push(event.defaultPrevented)), true)
+    })
+    const before = (await events(page, 'itemmenu')).length
+    await rowText(page, 'readme').click({ button: 'right' })
+    await page.waitForFunction(() => window.contextmenuPrevented.length > 0)
+    assert.deepEqual(await page.evaluate(() => window.contextmenuPrevented), [false], 'the browser menu was canceled')
+    assert.equal((await events(page, 'itemmenu')).length, before, 'itemmenu was sent')
+    assert.equal(await page.evaluate(() => document.querySelector('a-menu').isOpen), false)
   })
 
   test.fast(`${name}: data-focus focuses and reveals an item, and a new count repeats it`, async t => {
@@ -520,7 +553,7 @@ for (const engine of engines) {
     // Closing the menu returns focus to the item, not a hidden button elsewhere.
     await page.waitForFunction(() => !document.querySelector('a-menu').isOpen)
     assert.equal(await focused(page), 'src')
-    await row(page, 'README.md').click()
+    await rowText(page, 'README.md').click()
     await page.keyboard.press('Enter')
     assert.deepEqual((await log(page)).filter(entry => typeof entry === 'string' && entry.startsWith('open:')), ['open:README.md', 'open:README.md'])
   })
@@ -626,6 +659,17 @@ for (const engine of engines) {
     const size = await page.locator(`${actionsOf('src')} > a-button`).first().evaluate(button => button.getBoundingClientRect().height)
     assert.ok(size >= 24, `the button is ${size}px`)
     assert.equal(await opacity(page, 'src/lib'), '1')
+  })
+
+  if (engine === chromium) test.fast(`${name}: on a touch screen, a tap on an action runs it and doesn't toggle the row`, async t => {
+    const page = await pageFor(t, engine, { kind: 'jsx', touch: true })
+    const open = await page.locator('a-tree-item[item-id="src"]').evaluate(item => item.matches(':state(open)'))
+    await page.locator(`${actionsOf('src')} > a-button[aria-label="New file"]`).tap()
+    await page.waitForFunction(() => window.log.includes('new:src'))
+    assert.equal(await page.locator('a-tree-item[item-id="src"]').evaluate(item => item.matches(':state(open)')), open, 'the tap toggled the row')
+    // A tap on the row's label still toggles it.
+    await page.locator('a-tree-item[item-id="src"] > a-tree-row > a-tree-value').tap()
+    await page.waitForFunction(was => document.querySelector('a-tree-item[item-id="src"]').matches(':state(open)') !== was, open)
   })
 
   test.fast(`${name}: --tree-actions-align: start puts the actions right after the label`, async t => {

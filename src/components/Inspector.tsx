@@ -219,7 +219,7 @@ export const Inspector = ({
   ...rest
 }: InspectorProps) => {
   const root = useMemo(
-    () => describe(value, { numeric_base: numericBase, unquoted_strings: unquotedStrings, symbol_keys: true }),
+    () => describe(value, { numeric_base: numericBase, unquoted_strings: unquotedStrings, symbol_keys: true, iterator_labels: true }),
     [value, numericBase, unquotedStrings],
   )
   const inline = layout === "inline"

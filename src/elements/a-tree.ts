@@ -59,6 +59,9 @@ export class ATreeElement extends HTMLElementBase {
   #menuFromUs = false
   // Set from a press until the task ends, so focus from a click is the user's.
   #pressing = false
+  // Whether text in the tree was selected when the last press began; read by
+  // the `contextmenu` that press opens.
+  #selectedAtPress: boolean | undefined
 
   constructor() {
     super()
@@ -193,6 +196,10 @@ export class ATreeElement extends HTMLElementBase {
   #onPointerDown = () => {
     this.#pressing = true
     this.view.setTimeout(() => { this.#pressing = false })
+    // Whether the reader had text selected before this press. WebKit selects
+    // the word under a right-click as the press's default action, after this
+    // listener, so the selection `contextmenu` sees may be the browser's own.
+    this.#selectedAtPress = this.#hasSelectionIn(this)
   }
 
   #onFocusIn = (event: FocusEvent) => {
@@ -397,8 +404,12 @@ export class ATreeElement extends HTMLElementBase {
       this.#openMenu(current)
       return
     }
-    // Over selected text, or outside any item, leave the browser's own menu.
-    if (!item || this.#hasSelectionIn(this)) {
+    // Over text the reader selected, or outside any item, leave the browser's
+    // own menu. The selection that counts is the one from before the press, so
+    // the word WebKit selects on a right-click doesn't.
+    const selected = this.#selectedAtPress ?? this.#hasSelectionIn(this)
+    this.#selectedAtPress = undefined
+    if (!item || selected) {
       event.stopImmediatePropagation()
       return
     }

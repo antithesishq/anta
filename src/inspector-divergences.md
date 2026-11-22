@@ -107,8 +107,16 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
     finite numbers, booleans, and null. Otherwise it names the first other value and its path, such as
     `Not JSON: contains a Map at .containers`. The notebook had no JSON export.
 25. **The Inspector shows symbol-keyed properties.** With the `symbol_keys` option of `describe()`, which the Inspector
-    sets, own enumerable symbol-keyed data properties follow the string-keyed ones, keyed `[Symbol(desc)]`. Accessors
-    are skipped, so no getter runs. `repr()` leaves the option off and ignores symbol keys, as the notebook did.
+    sets, own enumerable symbol-keyed data properties follow the string-keyed ones. A key reads as the symbol does as
+    a value, in brackets: `[Symbol("desc")]`, `[Symbol.for("key")]`, `[Symbol.iterator]`. Accessors are skipped, so
+    no getter runs. `repr()` leaves the option off and ignores symbol keys, as the notebook did.
+26. **The Inspector labels generators and iterators by type.** With the `iterator_labels` option of `describe()`,
+    which the Inspector sets, a generator, an async generator, or a built-in Array, Map, Set, or String iterator shows
+    as `Generator{}`, `AsyncGenerator{}`, `Array Iterator{}`, and so on, and can't open. The type comes from the
+    value's prototype chain, matched against the built-in prototypes, so no property is read, no getter runs, and the
+    iterator is never advanced. An object that only sets `Symbol.toStringTag` isn't labeled. `repr()` leaves the
+    option off and writes these values as `{}`, their own enumerable properties, as the notebook did. How their items
+    could be shown is undecided.
 
 ## Kept identical on purpose
 

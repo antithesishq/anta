@@ -3,8 +3,9 @@
 Inspector shows any JavaScript value as a tree you can explore, such as test
 results, errors, and logs. Rows read like an object in browser DevTools and
 open one level at a time, so a large value is read only as far as it's shown.
-Select a row to open or close it. Inspector is built on [Tree](./tree.md), with a
-monospace look and a copy menu.
+Select a row to open or close it. Inspector is an implementation of
+[Tree](./tree.md): its rows are Tree items, with a monospace look, a copy menu, and
+search added.
 
 ## Open a level at a time
 
@@ -105,6 +106,37 @@ search field of your own.
 <Inspector value={report} searchable aria-label="Region report" />
 ```
 
+A `RegExp` from `searchMatcher` matches any pattern, such as `^(api|db)-\d$`
+for the API and database hosts below, and highlights each hit. Here an invalid
+pattern matches nothing.
+
+```tsx
+<Inspector
+  value={cluster}
+  searchable
+  searchMatcher={query => {
+    try { return new RegExp(query, 'i') } catch { return () => false }
+  }}
+  aria-label="Cluster nodes"
+/>
+```
+
+A function receives each row's key text and value text, and highlights a whole
+field when it returns true. Here the query is a number, and values above it
+match: try `100` to find the slow routes.
+
+```tsx
+<Inspector
+  value={latency}
+  searchable
+  searchMatcher={query => {
+    const limit = Number(query)
+    return text => Number.isFinite(limit) && text.trim() !== '' && Number(text) > limit
+  }}
+  aria-label="Route latency in milliseconds"
+/>
+```
+
 In a long list, revealing a match opens only the ranges above it. Search
 `timeout` to reach items 900 and 50,000 of 100,000. This demo gives the tree a
 height and scrolls it, so the search field stays in view; a match scrolls into
@@ -132,6 +164,16 @@ start closed.
   The assertion failed with <Inspector layout="inline" value={details} aria-label="Assertion details" /> after
   three retries.
 </Text>
+```
+
+`previewBudget` sets how many characters an inline summary shows before it ends
+in `…`: 80 by default, counting the space after each comma and colon. It uses
+the same character limit as `repr()`'s `char_limit`. `previewBudget={Infinity}`
+shows the whole value. In block layout, a row instead ends at
+`--inspector-row-width`, and `previewBudget` only limits how much is read.
+
+```tsx
+<Inspector layout="inline" value={run} previewBudget={30} aria-label="Run" />
 ```
 
 ## Show values in a log or console
@@ -180,6 +222,79 @@ const node = { id: 'api-1', role: 'leader', failure: new Error('commit failed', 
 node.self = node
 <Inspector value={node} expandDepth={2} aria-label="Cluster node" />
 ```
+
+## Kinds of values
+
+Each kind of value below has its own row form. The examples come from the same
+fixtures the tests use.
+
+### Primitives and long strings
+
+Numbers, bigints (`12345678901234567890n`), booleans, `null`, and `undefined`
+are one row each. Strings are quoted. A string with a line break, or one longer
+than a closed row's summary, can open: it shows its text unescaped, one row per
+line.
+
+### Arrays and nested objects
+
+An open array's row names its type and size, such as `Array(2)`, and each
+element is keyed by its index. Holes in a sparse array show as
+`<1 empty slot>`. An empty array or object shows `[]` or `{}` and can't open.
+
+### Map and Set
+
+A Map opens to `key: value` entries, and a Set to its items, numbered by
+position. A Map key that's an object shows its summary as the key. Copy path is
+unavailable for Set items and object keys, since no expression reaches them.
+
+### Symbols
+
+A symbol value shows as `Symbol("trace")`, or as `Symbol.iterator` and
+`Symbol.for("app.key")` for well-known and registered symbols. Symbol keys
+follow the string keys, written the same way in brackets: `[Symbol("trace")]`.
+Only an object's own enumerable
+symbol-keyed data properties show, and `repr()` leaves them out.
+
+### RegExp, Error, and Date
+
+A RegExp shows as its literal, with flags. An error shows its name and message,
+and opens to its `cause` and its `stack`. A Date shows its ISO time in UTC, or
+`Date("Invalid Date")`.
+
+### Classes and instances
+
+An instance shows its class's name, such as `Account{…}`, and opens to its own
+fields. A class shows as `<function Account>` and opens to its static members.
+A class with no static members, and an instance with no fields, can't open.
+
+### Functions
+
+A function shows as `<function name>`, with the name the engine gives it, and
+doesn't open. Arrow, method, and async functions look the same.
+
+### Generators and iterators
+
+A generator, an async generator, or a built-in iterator, such as the one
+`map.entries()` returns, shows its type, such as `Generator{}` or
+`Map Iterator{}`, and doesn't open. Listing its items would mean running it, so
+the Inspector never does.
+
+### Circular references
+
+A value that contains itself shows `circular_ref[...]` with the path of the
+ancestor it refers to. Select it to jump to that row; see
+[Errors, cycles, and repeated values](#errors-cycles-and-repeated-values).
+
+### Large lists and ranges
+
+A list longer than `chunkSize` shows ranges that open like rows; see
+[Show long lists](#show-long-lists). These 1,500 samples show ranges of 1,000,
+then 100.
+
+### A primitive at the root
+
+The whole value can be a primitive. It's one row, which opens only for a long
+or multiline string.
 
 ## Custom types
 

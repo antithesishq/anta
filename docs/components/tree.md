@@ -4,7 +4,8 @@ Tree shows nested items that open and close, such as a folder browser, a list of
 checks grouped by kind, or a test run's steps. Pass the items as data in
 `items`; Tree renders every row from them. Select a row to open or close it. The
 tree is one Tab stop, and the arrow keys move between rows.
-[Inspector](./inspector.md) is built on Tree.
+[Inspector](./inspector.md), the next page, is an implementation of Tree for
+exploring JavaScript values.
 
 ## Show nested items
 
@@ -85,6 +86,31 @@ const [menuItem, setMenuItem] = useState(null)
 <Menu context>
   <MenuItem label="Rename" disabled={menuItem === null} onSelect={() => rename(menuItem)} />
 </Menu>
+```
+
+Each action in a row is its own button. With the mouse, select a button; from the
+keyboard, press Right to reach the first one, and Right or Left to move between
+them; on a touch screen, tap one. With short labels, `--tree-actions-align`
+shows the difference: the actions sit at the row's end by default, and right
+after the label with `start`.
+
+```tsx
+<Tree
+  aria-label="Services"
+  items={services.map(service => ({
+    ...service,
+    actions: [
+      { icon: 'refresh', label: `Restart ${service.label}`, onClick: () => restart(service) },
+      { icon: 'copy', label: `Copy ${service.label}`, onClick: () => copy(service) },
+    ],
+  }))}
+/>
+```
+
+```css
+a-tree.tree-actions-start {
+  --tree-actions-align: start;
+}
 ```
 
 ## Control the open items
@@ -263,12 +289,14 @@ Set `data-focus="<item-id>#<n>"` on `a-tree` to focus an item, and
 Tree uses the page's font and sizes in `em`. `--tree-indent` sets the indent per
 level, `--tree-row-padding` the space above and below each row,
 `--tree-indicator-size` the mark's size, `--tree-gap` the space between a row's
-parts, and `--tree-row-hover` the background of a hovered or focused row.
+parts, `--tree-row-hover` the background of a hovered or focused row, and
+`--tree-row-current` the background of the current item.
 `--tree-action-size` sets the actions' size, the row's line height by default,
 and `--tree-actions-align` places them in the row. Style
 the `a-tree-item`, `a-tree-row`, `a-tree-value`, `a-tree-indicator`,
 `a-tree-actions`, `a-tree-group`, `a-tree-before`, `a-tree-after`, and
-`a-tree-toolbar` tags with plain CSS. The current item has `data-current`. An item shows its state as `:state(open)` or `:state(closed)`, and
+`a-tree-toolbar` tags with plain CSS. The current item has `data-current`, and its row
+takes the `--tree-row-current` background by default. An item shows its state as `:state(open)` or `:state(closed)`, and
 the focused item as `:state(active)`. Unlayered rules override Anta's defaults
 without `!important`.
 

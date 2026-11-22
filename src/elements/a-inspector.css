@@ -9,7 +9,6 @@
     --inspector-line-height: 18px;
     --inspector-indent: 16px;
     --inspector-row-width: 120ch;
-    --inspector-row-hover: color-mix(in oklch, var(--text-1) 6%, transparent);
     /* The ⋯ button sits 12px after the value, square in the fixed row. The
        tree inherits these, so set --tree-actions-align to `end` on the
        Inspector to pin ⋯ to the row's end instead. */
@@ -31,7 +30,6 @@
   a-inspector > a-tree {
     --tree-indent: var(--inspector-indent);
     --tree-row-padding: 0;
-    --tree-row-hover: var(--inspector-row-hover);
     --tree-indicator-size: 12px;
     --tree-gap: 4px;
   }
@@ -172,24 +170,15 @@
   }
 
   /* Search: hits are marked in their token's own color, and the current
-     match's row stands out from the rest. */
+     match's hits, on Tree's current-row background, stand out from the rest. */
   a-inspector mark {
     color: inherit;
     background-color: color-mix(in oklch, var(--text-1-warning) 22%, transparent);
     border-radius: 2px;
   }
 
-  a-inspector a-tree-item[data-current] > a-tree-row {
-    background-color: color-mix(in oklch, var(--text-1-brand) 14%, transparent);
-  }
-
   a-inspector a-tree-item[data-current] > a-tree-row mark {
     background-color: color-mix(in oklch, var(--text-1-warning) 50%, transparent);
-  }
-
-  a-inspector > a-tree-toolbar > a-input {
-    flex: 1 1 auto;
-    min-width: 0;
   }
 
   /* Inline layout: a closed value flows in its sentence or table cell. Opening

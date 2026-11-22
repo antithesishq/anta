@@ -51,6 +51,9 @@ panel instead of the page canvas.
 
 ## Size
 
+Small, medium, and large Tags use the shared main micro, tiny, and small font
+sizes (11, 12, and 13px). Their line heights and padding preserve pill heights.
+
 Three sizes — `small` (16px), `medium` (20px, the default — emits no
 attribute), and `large` (24px) — matching `Button`. Height is intrinsic
 (line-height + padding rather than a fixed value), so the text is never

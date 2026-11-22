@@ -203,6 +203,7 @@ for (const engine of engines) {
       const measure = () => page.locator('#bodies').evaluate(fixture => [...fixture.querySelectorAll(':scope > a-text, a-card-content, a-expander-details, details > div')].map(element => {const css = getComputedStyle(element); return [css.fontSize, css.lineHeight]}))
       const before = await measure()
       for (const pair of before) assert.deepEqual(pair, before[0])
+      assert.deepEqual(await page.locator(':root, #scope .light').evaluateAll(elements => elements.map(element => getComputedStyle(element).fontSize)), ['15px', '15px'])
       assert.deepEqual(await page.locator('#bodies details > a-text').evaluate(element => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight]), ['13px', '18px'])
       assert.deepEqual(await page.locator('#bodies details > h3').evaluate(element => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight]), ['20px', '26px'])
       await page.evaluate(() => {
@@ -210,6 +211,7 @@ for (const engine of engines) {
         document.documentElement.style.setProperty('--line-height-medium', '26px')
       })
       for (const pair of await measure()) assert.deepEqual(pair, ['18px', '26px'])
+      assert.deepEqual(await page.locator(':root, #scope .light').evaluateAll(elements => elements.map(element => getComputedStyle(element).fontSize)), ['18px', '18px'])
     } finally {await page.close()}
   })
 
@@ -219,8 +221,10 @@ for (const engine of engines) {
       await page.goto(`${origin}/?mode=native-select`)
       const pairs = await page.evaluate(() => {
         const menu = document.createElement('a-menu-item')
+        menu.id = 'menu-typography'
         menu.innerHTML = '<a-menu-item-label>Label</a-menu-item-label><a-menu-item-hint>Hint</a-menu-item-hint>'
         const select = document.createElement('select')
+        select.id = 'native-option-typography'
         select.setAttribute('data-anta', '')
         const option = document.createElement('option')
         option.textContent = 'Option'
@@ -235,6 +239,38 @@ for (const engine of engines) {
       assert.deepEqual(pairs.menu, pairs.option)
       assert.deepEqual(pairs.menuHint, pairs.optionHint)
       assert.equal(pairs.registered, false)
+      const measure = () => page.locator('#menu-typography a-menu-item-label, #menu-typography a-menu-item-hint, #native-option-typography option, #native-option-typography a-menu-item-hint').evaluateAll(elements => elements.map(element => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight]))
+      await page.evaluate(() => {
+        document.documentElement.style.setProperty('--font-size-medium', '21px')
+        document.documentElement.style.setProperty('--font-size-hint-small', '19px')
+      })
+      assert.deepEqual(await measure(), [['14px', '18px'], ['12px', '17px'], ['14px', '18px'], ['12px', '17px']])
+      await page.evaluate(() => document.documentElement.style.setProperty('--font-size-menu-medium', '16px'))
+      assert.deepEqual(await measure(), [['16px', '18px'], ['12px', '17px'], ['16px', '18px'], ['12px', '17px']])
+      await page.evaluate(() => document.documentElement.style.setProperty('--font-size-menu-hint-medium', '13px'))
+      assert.deepEqual(await measure(), [['16px', '18px'], ['13px', '17px'], ['16px', '18px'], ['13px', '17px']])
+    } finally {await page.close()}
+  })
+
+  test.fast(`${engine.name()}: Tag sizes follow main micro, tiny, and small fonts without changing pill heights`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      await page.goto(origin)
+      await page.evaluate(() => {
+        const fixture = document.createElement('div')
+        fixture.id = 'tags'
+        fixture.innerHTML = ['small', 'medium', 'large'].map(size => `<article><a-tag size="${size}">Tag</a-tag><a-tag size="${size}" allcaps>Tag</a-tag></article>`).join('')
+        document.body.append(fixture)
+      })
+      const measure = () => page.locator('#tags article').evaluateAll(articles => articles.map(article => [...article.querySelectorAll('a-tag')].map(tag => ({font: getComputedStyle(tag).fontSize, height: tag.getBoundingClientRect().height}))))
+      const before = await measure()
+      assert.deepEqual(before.map(tags => tags.map(tag => tag.font)), [['11px', '10px'], ['12px', '11px'], ['13px', '12px']])
+      await page.locator('#tags').evaluate(fixture => {
+        for (const [index, size] of ['micro', 'tiny', 'small'].entries()) fixture.style.setProperty(`--font-size-${size}`, `${12 + index * 2}px`)
+      })
+      const after = await measure()
+      assert.deepEqual(after.map(tags => tags.map(tag => tag.font)), [['12px', '11px'], ['14px', '13px'], ['16px', '15px']])
+      assert.deepEqual(after.map(tags => tags.map(tag => tag.height)), before.map(tags => tags.map(tag => tag.height)))
     } finally {await page.close()}
   })
 

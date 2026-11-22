@@ -548,6 +548,9 @@ For server-rendered applications, also follow
 
 ## Styling
 
+Menu item labels and hints use independent shared menu font sizes. See
+[Text and hint sizes](../theming.md#text-and-hint-sizes) for the typography families.
+
 Menu item corners follow the container radius minus `inset`, clamped to zero.
 The default 8px container radius and 4px inset give items a 4px radius.
 The Antithesis theme uses a 2px container radius, so its items have square corners

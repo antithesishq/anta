@@ -98,6 +98,7 @@ font sources in your application.
 
 `tokens.css` defines independent font-size and line-height scales for main text
 and hints. Matching controls use these values without requiring `reset.css`.
+The root text default also uses `--font-size-medium`.
 Use length values such as `px` or `rem` for these variables.
 
 | Size | Main font size | Main line height | Hint font size | Hint line height |
@@ -106,13 +107,22 @@ Use length values such as `px` or `rem` for these variables.
 | Medium | `--font-size-medium`: 15px | `--line-height-medium`: 22px | `--font-size-hint-medium`: 14px | `--line-height-hint-medium`: 20px |
 | Large | `--font-size-large`: 17px | `--line-height-large`: 26px | `--font-size-hint-large`: 16px | `--line-height-hint-large`: 24px |
 
+Main text also provides `--font-size-micro` (11px). Small, medium, and large
+Tags use the micro, tiny, and small main font sizes (11, 12, and 13px). Their
+line heights and padding remain component-owned to preserve pill heights.
+
 Compact primary text also has `--font-size-tiny` (12px) and
 `--line-height-tiny` (16px). Progress labels and Slider markers map their
 small, medium, and large variants to tiny, small, and medium text. Their
 12/16, 13/18, and 15/22 pairs remain independent of the hint scale.
 
 MenuGroup and native Select group captions use tiny text at every field
-size. The reset makes inline code 1px smaller than its surrounding text; code
+size. Menu Item labels and native Select options use `--font-size-menu-medium`
+(14px); their hints use the independent `--font-size-menu-hint-medium` (12px).
+These menu font sizes stay fixed across Select field sizes. Menu line heights
+remain component-owned.
+
+The reset makes inline code 1px smaller than its surrounding text; code
 inside a preformatted block inherits the block's typography.
 
 Override either scale on the root or an application container. Changing hint

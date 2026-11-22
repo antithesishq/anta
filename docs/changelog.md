@@ -7,6 +7,8 @@ changes are not listed.
 
 ### Added
 
+- Shared micro main-text font size for small Tags, plus independent menu label and hint font sizes. Tags use main micro, tiny, and small fonts; Menu Item and native Select option typography retains its current sizes.
+
 - Shared tiny text typography (12/16px) for compact primary labels, independent of hints. Progress labels and Slider markers use the tiny, small, and medium text sizes.
 
 - Shared heading-level typography variables and size-specific text compensation for Button and Tabs. Title, Expander, native disclosure summaries, and reset headings use the same heading scale; Dialog headers use level 4.
@@ -21,6 +23,8 @@ changes are not listed.
 - Removed obsolete `a-select-field`, `a-select-label`, and `a-select-hint` styles, JSX types, and Button accessibility handling. Raw Select compositions use `<a-input button>` with label and hint slots. Current Select and SelectFaceted retain their shared layout styles.
 
 ### Fixed
+
+- Root text uses the shared medium font size, so typography overrides also reach inherited body text and nested light surfaces.
 
 - MenuGroup and native Select group captions use shared tiny text typography across field sizes. Inline code is 1px smaller than surrounding text; code inside preformatted blocks inherits the block's typography.
 

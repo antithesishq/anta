@@ -32,6 +32,7 @@
    application overrides. Text and hint scales can be changed independently. */
 @layer anta.reset {
   :root {
+    --font-size-micro: 11px;
     --font-size-tiny: 12px;
     --line-height-tiny: 16px;
     --font-size-small: 13px;
@@ -46,6 +47,8 @@
     --line-height-hint-small: 16px;
     --line-height-hint-medium: 20px;
     --line-height-hint-large: 24px;
+    --font-size-menu-medium: 14px;
+    --font-size-menu-hint-medium: 12px;
     --text-compensation-small: 0.5px;
     --text-compensation-medium: 1px;
     --text-compensation-large: 1.5px;
@@ -71,7 +74,7 @@
      switches, because `tokens.css` is required for any styled element while
      `reset.css` is optional. */
   color-scheme: light;
-  font-size: 15px;
+  font-size: var(--font-size-medium);
   font-weight: 400;
 
   /* Tone seeds — the single source each scale derives from. Hues from the

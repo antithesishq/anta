@@ -6,7 +6,7 @@
   a-menu-item,
   a[data-anta-menu-item],
   select[data-anta] option {
-    font-size: 14px;
+    font-size: var(--font-size-menu-medium);
   }
 
   a-menu-item-label,
@@ -16,7 +16,7 @@
   }
 
   a-menu-item-hint {
-    font-size: 12px;
+    font-size: var(--font-size-menu-hint-medium);
     line-height: 17px;
   }
 }

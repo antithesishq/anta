@@ -501,6 +501,9 @@
     line-height: var(--line-height-medium);
     transition: background-color 100ms ease;
   }
+  details[data-anta][level="4"] {
+    --native-expander-summary-padding-block: 4px;
+  }
   details[data-anta][priority="secondary"] {
     --native-expander-bg: var(--native-expander-bg-secondary);
     --native-expander-border: var(--native-expander-border-secondary);

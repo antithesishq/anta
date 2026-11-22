@@ -625,6 +625,9 @@
     --text-compensation-small: 0px;
     --text-compensation-medium: 0px;
     --text-compensation-large: 0px;
+
+    /* The field already supplies the full text leading. */
+    & > a-button-label { line-height: inherit; }
   }
 }
 

@@ -247,7 +247,7 @@
         margin-block-start: calc((1lh - var(--icon-size)) / 2);
       }
       & option:has(> a-menu-item-text) > a-tag {
-        translate: 0 calc((var(--font-size-menu-medium) * 20 / 14 - 100%) / 2);
+        translate: 0 calc((var(--_menu-item-line-height) - 100%) / 2);
       }
       & :is(option, selectedcontent) > a-icon {
         flex: none;

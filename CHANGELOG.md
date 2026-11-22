@@ -7,63 +7,18 @@ changes are not listed.
 
 ### Added
 
-- Shared code-block typography with independent font-size and line-height values, retaining 13/20px defaults.
-
-- Shared micro main-text typography (11/15px) for small Tags, plus independent menu label and hint font sizes. Tags use main micro, tiny, and small fonts; Menu Item and native Select option typography retains its current sizes.
-
-- Shared tiny text typography (12/16px) for compact primary labels, independent of hints. Progress labels and Slider markers use the tiny, small, and medium text sizes.
-
-- Shared heading-level typography variables and size-specific text compensation for Button and Tabs. Title, Expander, native disclosure summaries, and reset headings use the same heading scale; Dialog headers use level 4.
-
-- Shared small, medium, and large font-size and line-height variables for main text and hints. Matching controls replace their component typography variables with direct references to these independent scales in `tokens.css`. Breadcrumb text separators use the shared font sizes, replacing `--breadcrumb-separator-font-size`.
-
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
+
+### Changed
+
+- Consolidated [typography](/theming/#text-and-hint-sizes) into shared scales and increased line heights to reduce text clipping. Replace removed component typography variables with shared tokens or direct CSS overrides.
 
 ### Removed
 
 - Removed obsolete `a-select-field`, `a-select-label`, and `a-select-hint` styles, JSX types, and Button accessibility handling. Raw Select compositions use `<a-input button>` with label and hint slots. Current Select and SelectFaceted retain their shared layout styles.
 
 ### Fixed
-
-- Input shares its minimum field height between the loading fallback and registered control. Custom heights, larger text leading, empty values, and forced-colors borders reserve consistent field space before registration.
-
-- Menu separator captions derive their font size from menu labels minus 1px, replacing `--menu-separator-label-size`.
-
-- Root text uses the shared medium font size, so typography overrides also reach inherited body text and nested light surfaces.
-
-- MenuGroup and native Select group captions use shared tiny text typography across field sizes. Inline code is 1px smaller than surrounding text; code inside preformatted blocks inherits the block's typography.
-
-- Tooltip uses the shared medium hint typography (14/20px). Padding stays unchanged; the default single-line bubble is 1px shorter.
-
-- Slider labels and values use the shared text scale, including thumb values aligned with the header text. The inline separator shares value typography to keep header heights consistent across system fonts. Removed row gaps compensate part of the extra leading without shrinking control hit areas. Marker rows reserve space for wrapped labels before content below them, including before element registration.
-
-- Banner messages use medium text typography and Copy feedback uses small text typography. Calendar weekdays use 13/18px text throughout, retaining their 24px cells and Calendar heights.
-
-- Native Select options share Menu Item label and hint typography; custom menu indicators align with the label line. Native Select fields and file inputs share Input's text scale, including small and large sizes.
-
-- Plain Card content and Expander details use Text's medium typography. RadioGroup labels match Input labels at the corresponding size.
-
-- [Progress](/progress/) labels and hints gain 2px of line height. Reduced padding preserves single-line bar heights and text alignment.
-
-- [Checkbox](/checkbox/), [Switch](/switch/), and [RadioGroup](/radio/) option labels match Input, Text, Button, and Tabs at 13/18, 15/22, and 17/26px. Their hints match Input at 12/16, 14/20, and 16/24px, without an extra label-to-hint gap.
-
-- [InputTime](/input-time/) matches Input’s text and hint typography while preserving field heights. Input and InputTime hints sit 2px below the field, while the label-to-field gap remains 4px.
-
-- [RadioGroup](/radio/) descriptions use the same typography and label-to-hint spacing as option hints at every size.
-
-- Reset headings match Title’s font sizes and line heights at all six levels.
-
-- [Text](/text/), [Title](/title/), and [Expander](/expander/) summaries gain 2px of line height at every size or level. Expander reclaims header padding to preserve single-line header heights.
-
-- [Steps](/steps/) labels match Tab line heights, and hints match Input typography in every theme. Antithesis removes the label-to-hint gap.
-
-- [Tag](/tag/) labels use shared micro/small/medium line heights (15/18/22px) for small/medium/large Tags. Reduced vertical padding preserves tag heights.
-
-- [Input](/input/) and [Select](/select/) use 18/22/26px text line heights. Multiline Inputs use 3px vertical padding to align their first line with single-line fields.
-
-- [Button](/button/) and [Tabs](/tabs/) labels use matching 18/22/26px line heights to reduce text clipping while preserving control heights and text alignment.
-- [Menu item](/menu/) label and hint leading derives from independent menu font sizes (14/20px and 12/16px defaults). Reduced padding and a 2px hint gap preserve standard 30px and 48px rows. Selection indicators align with the label's first line; bare-text rows grow to 30px.
 
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.
 - [InputDate](/input-date/#manage-the-value) submits its ISO value through the visible Input instead of a hidden field. Disabled fields are omitted, and `form` supports association with a form elsewhere on the page.

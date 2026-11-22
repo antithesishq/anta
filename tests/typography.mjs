@@ -20,7 +20,7 @@ const row = size => `<section data-size="${size}">
   <a-steps><a-tabs data-steps size="${size}"><a-tab value="one"><a-step-marker>1</a-step-marker><a-step-desc><a-tab-label>Step</a-tab-label><a-step-hint>Hint</a-step-hint></a-step-desc></a-tab></a-tabs></a-steps>
   <a-input size="${size}" value="Text"><span slot="label">Label</span><span slot="hint">Hint</span><a-button slot="trailing"><a-button-label>Go</a-button-label></a-button></a-input>
   <a-input size="${size}" rows="2" value="Text"><span slot="hint">Hint</span></a-input>
-  <a-input-time size="${size}" locale="en-GB" value="13:05"><span slot="hint">Hint</span></a-input-time>
+  <a-input-time size="${size}" locale="en-GB" value="13:05"><span slot="hint">Hint</span><a-button slot="trailing"><a-button-label>Go</a-button-label></a-button></a-input-time>
   <a-checkbox size="${size}"><a-checkbox-label>Checkbox</a-checkbox-label><a-checkbox-hint>Hint</a-checkbox-hint></a-checkbox>
   <a-switch size="${size}"><a-switch-label>Switch</a-switch-label><a-switch-hint>Hint</a-switch-hint></a-switch>
   <a-radio-group size="${size}"><a-radio-group-label>Group label</a-radio-group-label><a-radio-group-hint>Group hint</a-radio-group-hint><a-radio-list><a-radio><a-radio-label>Option</a-radio-label><a-radio-hint>Hint</a-radio-hint></a-radio><a-radio size="medium"><a-radio-label>Explicit medium</a-radio-label><a-radio-hint>Hint</a-radio-hint></a-radio></a-radio-list></a-radio-group>
@@ -32,9 +32,11 @@ const row = size => `<section data-size="${size}">
 </section>`
 
 before(async () => {
-  for (const mode of ['reset', 'no-reset', 'native-select']) {
+  for (const mode of ['reset', 'no-reset', 'native-select', 'tooltip-only']) {
+    const contents = mode === 'tooltip-only' ? "import './src/elements/a-tooltip';"
+      : `import './src/tokens.css'; ${mode === 'native-select' ? "import './src/elements/a-select.css';" : "import './src/elements';"} ${mode === 'reset' ? "import './src/reset.css';" : ''}`
     const result = await build({
-      stdin: {contents: `import './src/tokens.css'; ${mode === 'native-select' ? "import './src/elements/a-select.css';" : "import './src/elements';"} ${mode === 'reset' ? "import './src/reset.css';" : ''}`, resolveDir: process.cwd()},
+      stdin: {contents, resolveDir: process.cwd()},
       bundle: true, write: false, outfile: `${mode}.js`, format: 'esm', target: 'es2022',
       alias: {'@antadesign/anta/jsx-runtime': resolve('src/jsx-runtime.ts'), react: requireSite.resolve('preact/compat')},
     })
@@ -182,6 +184,7 @@ for (const engine of engines) {
         return {levels: [...fixture.querySelectorAll('article')].map(article => [...article.querySelectorAll(':scope > :not(details), summary')].map(pair)), dialog: pair(fixture.querySelector('a-dialog').shadowRoot.querySelector('[part=header]'))}
       })
       const before = await measure()
+      assert.deepEqual(await page.locator('#headings summary').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height)), [44, 40, 36, 32, 32, 28])
       for (const level of before.levels) for (const pair of level) assert.deepEqual(pair, level[0])
       assert.deepEqual(before.dialog, before.levels[3][0])
       await page.evaluate(() => {
@@ -313,6 +316,44 @@ for (const engine of engines) {
     } finally {await page.close()}
   })
 
+  test.fast(`${engine.name()}: menu Tag alignment follows row font and line-height overrides`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      for (const theme of ['none', 'antune', 'antithesis']) {
+        await page.goto(`${origin}/?theme=${theme}`)
+        await page.waitForFunction(() => customElements.get('a-menu-item'))
+        await page.evaluate(() => {
+          const fixture = document.createElement('div')
+          fixture.id = 'menu-tag-overrides'
+          fixture.style.width = '300px'
+          const content = '<a-tag size="small"><a-tag-value>12</a-tag-value></a-tag><a-menu-item-text><a-menu-item-label>Label</a-menu-item-label><a-menu-item-hint>Hint</a-menu-item-hint></a-menu-item-text>'
+          fixture.innerHTML = ['font-size:16px', 'line-height:28px', 'font-size:16px;line-height:32px'].map(style =>
+            `<a-menu-item style="${style}">${content}</a-menu-item><a data-anta-menu-item style="${style}">${content}</a>`).join('')
+          if (CSS.supports('appearance', 'base-select')) {
+            const select = document.createElement('select')
+            select.setAttribute('data-anta', '')
+            select.innerHTML = '<option>Choose an option</option>'
+            for (const style of ['font-size:16px', 'line-height:28px', 'font-size:16px;line-height:32px']) {
+              const option = document.createElement('option')
+              option.style.cssText = style
+              option.innerHTML = content
+              select.append(option)
+            }
+            fixture.append(select)
+          }
+          document.body.append(fixture)
+        })
+        if (await page.locator('#menu-tag-overrides select').count()) await page.locator('#menu-tag-overrides select').click()
+        const offsets = await page.locator('#menu-tag-overrides a-menu-item, #menu-tag-overrides a[data-anta-menu-item], #menu-tag-overrides option:has(a-tag)').evaluateAll(rows => rows.map(row => {
+          const label = row.querySelector('a-menu-item-label').getBoundingClientRect()
+          const tag = row.querySelector('a-tag').getBoundingClientRect()
+          return (tag.top + tag.bottom - label.top - label.bottom) / 2
+        }))
+        for (const offset of offsets) assert.ok(Math.abs(offset) < 0.02, `${theme}: Tag center offset ${offset}px`)
+      }
+    } finally {await page.close()}
+  })
+
   test.fast(`${engine.name()}: Tag sizes follow main micro, tiny, and small fonts without changing pill heights`, async () => {
     const page = await browsers.get(engine).newPage()
     try {
@@ -344,6 +385,54 @@ for (const engine of engines) {
       const allLeadingOverrides = await measure()
       assert.deepEqual(allLeadingOverrides.map(tags => tags.map(tag => tag.line)), [['17px', '17px'], ['20px', '20px'], ['24px', '24px']])
       assert.deepEqual(allLeadingOverrides.map(tags => tags.map(tag => tag.height)), after.map(tags => tags.map(tag => tag.height + 2)))
+    } finally {await page.close()}
+  })
+
+  test.fast(`${engine.name()}: field action labels share field leading without changing action heights`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      await page.goto(origin)
+      await page.waitForFunction(() => customElements.get('a-input-time'))
+      const measure = () => page.locator('section').evaluateAll(sections => sections.map(section => {
+        const buttons = [...section.querySelectorAll(':scope > a-button, a-input > a-button, a-input-time > a-button')]
+        return buttons.map(button => ({
+          leading: getComputedStyle(button.querySelector('a-button-label')).lineHeight,
+          height: button.getBoundingClientRect().height,
+        }))
+      }))
+      const before = await measure()
+      for (const [index, buttons] of before.entries()) {
+        assert.deepEqual(buttons.map(button => button.leading), Array(3).fill(`${[18, 22, 26][index]}px`))
+        assert.deepEqual(buttons.map(button => button.height), [24 + index * 4, 20 + index * 4, 20 + index * 4])
+      }
+      await page.evaluate(() => {
+        for (const size of ['small', 'medium', 'large']) document.documentElement.style.setProperty(`--line-height-${size}`, '30px')
+      })
+      for (const buttons of await measure()) for (const button of buttons) assert.equal(button.leading, '30px')
+    } finally {await page.close()}
+  })
+
+  test.fast(`${engine.name()}: Tooltip retains its own typography without tokens`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      await page.goto(`${origin}/?mode=tooltip-only`)
+      await page.waitForFunction(() => customElements.get('a-tooltip'))
+      await page.evaluate(() => {
+        const trigger = document.createElement('button')
+        trigger.style.cssText = 'font-size:32px;line-height:40px'
+        trigger.innerHTML = 'Trigger<a-tooltip>Tooltip content</a-tooltip>'
+        document.body.append(trigger)
+      })
+      const measure = () => page.locator('a-tooltip').evaluate(tooltip => {
+        const css = getComputedStyle(tooltip.shadowRoot.querySelector('[part=bubble]'))
+        return [css.fontSize, css.lineHeight]
+      })
+      assert.deepEqual(await measure(), ['14px', '20px'])
+      await page.evaluate(() => {
+        document.documentElement.style.setProperty('--font-size-hint-medium', '16px')
+        document.documentElement.style.setProperty('--line-height-hint-medium', '24px')
+      })
+      assert.deepEqual(await measure(), ['16px', '24px'])
     } finally {await page.close()}
   })
 

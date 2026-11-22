@@ -7,10 +7,11 @@
 /* Scope of this file — Anta's entire global token vocabulary, kept
    deliberately tiny: theme-aware color *roles* for text (--text-*),
    container background (--bg-*), and container border (--border-*),
-   per tone, plus font stacks, text, hint, and heading typography scales,
-   text compensation, and prose link colors. Spacing, radii, and compact typography remain
-   component-owned. Promote other role families only after an explicit
-   decision that their values have stabilized across components. */
+   per tone, plus font stacks, main text (including compact sizes), hint,
+   menu, code-block, and heading typography, text compensation, and prose
+   link colors. Spacing and radii remain component-owned. Promote other role
+   families only after an explicit decision that their values have stabilized
+   across components. */
 
 /* The whole role scale is DERIVED from six tone seeds via oklch relative
    color: each token is `oklch(from var(--anta-seed-{tone}) L C h)`, taking the

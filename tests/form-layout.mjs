@@ -71,7 +71,7 @@ for (const engine of engines) {
     </form>`)
     const [row] = await measure(page, '#form')
     assert.ok(row.label.height > row.field.height, 'the label wraps taller than the field')
-    near(row.hint.y, row.field.height + 4, 'hint follows the field')
+    near(row.hint.y, row.field.height + 2, 'hint follows the field')
     near(row.host.height, row.label.height, 'the row is as tall as its label')
   })
 
@@ -226,7 +226,7 @@ for (const engine of engines) {
     near(narrow.labelWidth, 300, 'label takes the row before upgrade')
     near(narrow.fieldIndent, 0, 'stand-in field at the edge')
     near(narrow.fieldWidth, 300, 'stand-in field fills the row')
-    near(narrow.height, 52, 'label row, gap, and field before upgrade')
+    near(narrow.height, 54, 'label row, gap, and field before upgrade')
 
     const { page: upgraded } = await fixture(t, engine, markup)
     const [wideRow] = await measure(upgraded, '#wide')

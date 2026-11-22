@@ -49,7 +49,7 @@ const composedStyles = {
   'a-breadcrumbs': ['Breadcrumbs.css', /a-breadcrumbs/],
   'a-steps': ['Steps.css', /a-steps/],
   'a-input-date': ['InputDate.css', /a-input-date-time-container/],
-  'a-select': ['Select.css', /a-select-field/],
+  'a-select': ['Select.css', /a-select-chevron/],
   'a-select-faceted': ['Select.css', /a-select-faceted-summary/],
 }
 
@@ -59,7 +59,7 @@ for (const [entry, [stylesheet, selector]] of Object.entries(composedStyles)) {
     const inputs = Object.keys(result.metafile.inputs)
     assert.deepEqual(inputs.filter(path => path.endsWith('.css')).sort(), [
       `dist/components/${stylesheet}`,
-      ...(entry === 'a-select' ? ['dist/elements/a-select.css'] : []),
+      ...(entry === 'a-select' ? ['dist/elements/a-select.css', 'dist/elements/a-menu-item-typography.css', 'dist/elements/a-menu-group-typography.css'] : []),
     ].sort())
     assert.equal(result.outputFiles.find(file => file.path.endsWith('.js')).text.trim(), '')
     assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, selector)
@@ -72,12 +72,12 @@ test('Select and SelectFaceted share one layout stylesheet', async () => {
     '@antadesign/anta/elements/a-select-faceted',
   ])
   const cssInputs = Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css'))
-  assert.deepEqual(cssInputs.sort(), ['dist/components/Select.css', 'dist/elements/a-select.css'])
+  assert.deepEqual(cssInputs.sort(), ['dist/components/Select.css', 'dist/elements/a-menu-group-typography.css', 'dist/elements/a-menu-item-typography.css', 'dist/elements/a-select.css'])
 })
 
 test('native select CSS loads independently of the composed layout and JavaScript', async () => {
   const result = await bundleImports(['@antadesign/anta/elements/a-select.css'])
-  assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')), ['dist/elements/a-select.css'])
+  assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')).sort(), ['dist/elements/a-menu-group-typography.css', 'dist/elements/a-menu-item-typography.css', 'dist/elements/a-select.css'])
   assert.equal(result.outputFiles.find(file => file.path.endsWith('.js')).text.trim(), '')
   const css = result.outputFiles.find(file => file.path.endsWith('.css')).text
   assert.match(css, /select\[data-anta\]/)
@@ -102,7 +102,7 @@ test('the previous Select stylesheet import resolves to the canonical stylesheet
     '@antadesign/anta/components/select-parts.css',
   ])
   assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => path.endsWith('.css')), ['dist/components/Select.css'])
-  assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, /a-select-field/)
+  assert.match(result.outputFiles.find(file => file.path.endsWith('.css')).text, /a-select-chevron/)
 })
 
 test('the elements barrel retains every composed layout stylesheet', async () => {

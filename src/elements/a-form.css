@@ -75,7 +75,7 @@
   :is(form[data-anta], a-form > form) > a-input::part(label),
   :is(form[data-anta], a-form > form) > a-input:not(:defined) > [slot="label"],
   :is(form[data-anta], a-form > form) > a-input-time::part(label) {
-    padding-block-start: clamp(0px, var(--_form-fits), 4px);
+    padding-block-start: clamp(0px, var(--_form-fits), (var(--input-field-height, 28px) - 1lh) / 2);
   }
 
   /* Everything in the field column starts at the same offset, with or without
@@ -112,7 +112,7 @@
   }
   :is(form[data-anta], a-form > form) > a-input::part(hint),
   :is(form[data-anta], a-form > form) > a-input-time::part(hint) {
-    margin-block-start: 4px;
+    margin-block-start: 2px;
   }
   :is(form[data-anta], a-form > form) > a-input-time::part(field) {
     inline-size: fit-content;

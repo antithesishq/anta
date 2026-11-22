@@ -68,8 +68,7 @@
   html {
     color: var(--text-2);
     font-family: var(--sans-serif);
-    /* Unitless 22px/15px leading keeps its ratio when inherited. */
-    line-height: calc(22 / 15);
+    line-height: var(--line-height-medium);
     /* Controls carry their own :active; the platform overlay only muddies it. */
     -webkit-tap-highlight-color: transparent;
   }
@@ -81,20 +80,20 @@
   /* ───── Typography defaults — Anta opinion ───────────────────── */
 
   /* Raw headings adopt the same visual scale as `<Title level={n}>`
-     so plain markup matches the component. Values are duplicated in
-     `src/elements/a-title.css`; keep the two in lockstep. */
+     so plain markup matches the component. The shared heading variables also
+     drive Title, Expander summaries, and native disclosure summaries. */
   h1, h2, h3, h4, h5, h6 {
     color: var(--text-1);
     font-weight: 584.62;
     letter-spacing: 0;
   }
 
-  h1 { font-size: 28px; line-height: 32px; margin-block: 0    16px; }
-  h2 { font-size: 24px; line-height: 28px; margin-block: 32px 12px; }
-  h3 { font-size: 20px; line-height: 24px; margin-block: 24px 12px; }
-  h4 { font-size: 17px; line-height: 22px; margin-block: 20px 8px;  }
-  h5 { font-size: 15px; line-height: 20px; margin-block: 16px 8px;  }
-  h6 { font-size: 13px; line-height: 16px; margin-block: 16px 4px;  }
+  h1 { font-size: var(--font-size-heading-1); line-height: var(--line-height-heading-1); margin-block: 0    16px; }
+  h2 { font-size: var(--font-size-heading-2); line-height: var(--line-height-heading-2); margin-block: 32px 12px; }
+  h3 { font-size: var(--font-size-heading-3); line-height: var(--line-height-heading-3); margin-block: 24px 12px; }
+  h4 { font-size: var(--font-size-heading-4); line-height: var(--line-height-heading-4); margin-block: 20px 8px;  }
+  h5 { font-size: var(--font-size-heading-5); line-height: var(--line-height-heading-5); margin-block: 16px 8px;  }
+  h6 { font-size: var(--font-size-heading-6); line-height: var(--line-height-heading-6); margin-block: 16px 4px;  }
 
   b, strong {
     font-weight: 600;
@@ -162,8 +161,8 @@
   /* `currentColor` carries the surrounding tone into the tint. */
   code {
     font-family: var(--monospace);
-    font-size: 0.933em;
-    line-height: 1em;
+    font-size: calc(1em - 1px);
+    line-height: 1;
     color: inherit;
     background: light-dark(
       color-mix(in oklch, currentColor 6%, transparent),
@@ -182,9 +181,9 @@
     background: var(--bg-3);
     color: var(--text-1);
     font-family: var(--monospace);
-    font-size: 13px;
+    font-size: var(--font-size-code-block-medium);
     font-weight: 440;
-    line-height: 20px;
+    line-height: var(--line-height-code-block-medium);
     overflow-x: auto;
   }
 

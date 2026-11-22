@@ -296,7 +296,14 @@ nav:
 ---
 ```
 
-Groups are `content`, `controls`, `inputs`, `feedback`, and `layout`. `nav.label` is optional when the sidebar needs a shorter title. The catalog generates navigation, breadcrumbs, component classification, LLM indexes, and packaged Markdown exports from this metadata.
+Groups are `content`, `media`, `controls`, `inputs`, `feedback`, and `layout`. `nav.label` is optional when the sidebar needs a shorter title. The catalog generates navigation, breadcrumbs, component classification, LLM indexes, and packaged Markdown exports from this metadata.
+
+Component pages sort alphabetically by sidebar label within each group. Group
+order stays fixed; `nav.order` controls standalone-guide and package ordering.
+
+After changing the group enum in `lib/content/schema.mjs`, restart the root
+development server. Astro can retain the old collection schema after HMR and
+reject page metadata that uses the new group.
 
 For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop `<Playground component="…" layout="side" initialCode={…} />` near the top. It is mounted by the shared prebuilt runtime, so it does not take a `client:*` directive.
 
@@ -346,6 +353,10 @@ alike. Read it before writing or editing page copy.
 Most existing pages predate that guide and read in a denser voice with more dashes;
 bring a section into voice when you edit it. This file covers the page *structure*
 (below); `WRITING.md` covers the words.
+
+Keep shared typography token mappings in the theming guide. Component pages
+should explain sizing and customization without repeating internal font-size,
+line-height, or padding-compensation wiring.
 
 ## Component reference tables
 

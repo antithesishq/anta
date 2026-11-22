@@ -73,7 +73,7 @@ before(async () => {
     `,resolveDir},outfile:`${framework}.js`,format:'esm',jsx:'automatic',jsxImportSource:'@antadesign/anta',alias,define:{'process.env.NODE_ENV':'"production"'}}),framework)
   }
   assets.set('/boot.js',`window.violations=[];window.recoverableErrors=[];document.addEventListener('securitypolicyviolation',e=>violations.push(e.effectiveDirective));`)
-  assets.set('/fixture.css',`body{margin:40px;font:14px/20px system-ui}a-slider{width:260px}.consumer::part(thumb){border-radius:3px}.consumer::part(fill){background:rgb(1,2,3)}.marker{--slider-marker-position:50%}.marker-start{--slider-marker-position:0%}.marker-end{--slider-marker-position:100%}.css-rtl{direction:rtl}`)
+  assets.set('/fixture.css',`body{margin:40px;font:14px/20px system-ui}a-slider{width:260px}.consumer::part(thumb){border-radius:3px}.consumer::part(fill){background:rgb(1,2,3)}.marker{--slider-marker-position:50%}.marker-start{--slider-marker-position:0%}.marker-end{--slider-marker-position:100%}.css-rtl{direction:rtl}.wrap-marker{max-inline-size:64px!important;white-space:normal}.typography-override{--font-size-small:14px;--line-height-small:calc(20 / 14);--font-size-medium:18px;--line-height-medium:calc(28 / 18);--font-size-large:19px;--line-height-large:calc(30 / 19);--font-size-tiny:11px;--line-height-tiny:calc(18 / 11)}`)
   server=createServer((req,res)=>{
     const url=new URL(req.url,'http://localhost'),mode=url.searchParams.get('mode')??'granular',framework=url.searchParams.get('framework')??'React'
     const props=initialProps(url.searchParams.has('controlled'),url.searchParams.has('range'))
@@ -343,6 +343,111 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     await page.locator('#slider').evaluate(s=>{s.value=s.value})
     assert.equal(await thumb.getAttribute('aria-valuenow'),'60')
   })
+  test.fast(`${name}: larger leading keeps thumb-value text aligned with the header and preserves control size`, async t => {
+    const page = await pageFor(t, engine, mode)
+    const rows = await page.locator('#slider').evaluate(slider => {
+      slider.querySelector('[slot=label]').textContent = 'Ágj'
+      slider.setAttribute('value', '20 70')
+      slider.setAttribute('value-prefix', 'Ấ')
+      slider.setAttribute('value-suffix', 'g̣')
+      const textBox = (node, last = false) => {
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        const rects = [...range.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0)
+        return last ? rects.at(-1) : rects[0]
+      }
+      const result = []
+      for (const overridden of [false, true]) {
+        slider.classList.toggle('typography-override', overridden)
+        for (const size of ['small', 'medium', 'large']) for (const direction of ['ltr', 'rtl']) for (const display of ['end', 'inline', 'thumb']) for (const lines of display === 'thumb' ? [1, 2] : [1]) {
+          slider.setAttribute('size', size)
+          slider.setAttribute('dir', direction)
+          slider.setAttribute('value-display', display)
+          const label = slider.querySelector('[slot=label]')
+          label.innerHTML = lines === 2 ? 'Ágj<br>Ágj' : 'Ágj'
+          const labelBox = textBox(label, display === 'thumb')
+          const control = slider.shadowRoot.querySelector('[part=control]').getBoundingClientRect()
+          const values = [...slider.shadowRoot.querySelectorAll('[part~=inline-value], [part~=end-value], [part~=thumb-value]')]
+            .filter(node => getComputedStyle(node).display !== 'none')
+          const separator = getComputedStyle(slider.shadowRoot.querySelector('[part=value-separator]'))
+          result.push({size, direction, display, lines, overridden, height: slider.getBoundingClientRect().height, control: control.height,
+            separator: display === 'inline' ? {family: separator.fontFamily, font: separator.fontSize, leading: separator.lineHeight} : null, values: values.map(node => {
+            const css = getComputedStyle(node), box = textBox(node)
+            return {family: css.fontFamily, font: css.fontSize, leading: css.lineHeight, top: box.top - labelBox.top, bottom: box.bottom - labelBox.bottom,
+              borderBottom: node.part.contains('thumb-value') ? node.getBoundingClientRect().bottom - control.top : null}
+          })})
+        }
+      }
+      return result
+    })
+    for (const row of rows) {
+      const index = ['small', 'medium', 'large'].indexOf(row.size)
+      const font = row.overridden ? [14, 18, 19][index] : [13, 15, 17][index]
+      const leading = row.overridden ? [20, 28, 30][index] : [18, 22, 26][index]
+      if (row.separator) {
+        assert.equal(row.separator.family, row.values[0].family)
+        assert.equal(row.separator.font, `${font}px`)
+        assert.ok(Math.abs(Number.parseFloat(row.separator.leading) - leading) < 0.001, JSON.stringify(row))
+      }
+      assert.equal(row.control, [24, 28, 32][index], JSON.stringify(row))
+      const height = (row.overridden ? [44, 56, 62] : [42, 50, 58])[index] + (row.lines - 1) * leading
+      assert.ok(Math.abs(row.height - height) < 0.05, JSON.stringify(row))
+      assert.equal(row.values.length, row.display === 'thumb' ? 2 : 1)
+      for (const value of row.values) {
+        assert.equal(value.font, `${font}px`)
+        assert.ok(Math.abs(Number.parseFloat(value.leading) - leading) < 0.001, JSON.stringify(row))
+        assert.ok(Math.abs(value.top) < 0.5 && Math.abs(value.bottom) < 0.5, JSON.stringify(row))
+        if (value.borderBottom !== null) assert.ok(value.borderBottom >= -0.5 && value.borderBottom <= 1.5, JSON.stringify(row))
+      }
+    }
+  })
+
+  test.fast(`${name}: marker rows reserve wrapped labels and retain their SSR footprint`, async t => {
+    const page = await pageFor(t, engine, mode, undefined, false, false)
+    await page.locator('#slider').evaluate(slider => {
+      for (const [edge, position] of [['start', '0%'], ['middle', '50%'], ['end', '100%']]) {
+        const marker = document.createElement('span')
+        marker.slot = 'markers'
+        marker.className = `marker marker-${edge} wrap-marker`
+        if (edge !== 'middle') marker.setAttribute(`data-slider-marker-${edge}`, '')
+        marker.textContent = edge === 'middle' ? 'Several wrapped marker words' : edge
+        slider.append(marker)
+      }
+      const extras = document.createElement('div')
+      extras.textContent = 'Content below markers'
+      slider.append(extras)
+    })
+    const measure = () => page.locator('#slider').evaluate(slider => {
+      const result = []
+      for (const size of ['small', 'medium', 'large']) for (const direction of ['ltr', 'rtl']) {
+        slider.setAttribute('size', size)
+        slider.setAttribute('dir', direction)
+        const host = slider.getBoundingClientRect(), markers = [...slider.querySelectorAll('[slot=markers]')]
+        const bottom = Math.max(...markers.map(marker => marker.getBoundingClientRect().bottom))
+        const extras = slider.lastElementChild.getBoundingClientRect()
+        const middle = markers[1].getBoundingClientRect()
+        result.push({size, direction, height: host.height, bottom: bottom - host.top, extras: extras.top - host.top,
+          middle: middle.height, center: middle.x + middle.width / 2 - host.x - host.width / 2,
+          leading: getComputedStyle(markers[1]).lineHeight, font: getComputedStyle(markers[1]).fontSize})
+      }
+      return result
+    })
+    const before = await measure()
+    await page.evaluate(mode => import(`/${mode}.js`), mode)
+    await settled(page)
+    const after = await measure()
+    for (const [index, row] of after.entries()) {
+      const size = ['small', 'medium', 'large'].indexOf(row.size)
+      assert.equal(row.font, `${[12, 13, 15][size]}px`)
+      assert.equal(row.leading, `${[16, 18, 22][size]}px`)
+      assert.ok(row.middle >= Number.parseFloat(row.leading) * 2, JSON.stringify(row))
+      assert.ok(row.extras >= row.bottom, JSON.stringify(row))
+      assert.ok(Math.abs(row.center) < 0.5, JSON.stringify(row))
+      assert.ok(Math.abs(row.height - before[index].height) < 0.5, JSON.stringify({before: before[index], after: row}))
+      assert.ok(Math.abs(row.extras - before[index].extras) < 0.5)
+    }
+  })
+
   test.fast(`${name}: CSS-only direction centers thumbs, bubbles, and markers after changes`,async t=>{
     const page=await pageFor(t,engine,mode,undefined,false,false)
     await page.locator('#slider').evaluate(s=>{

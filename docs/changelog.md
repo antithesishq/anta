@@ -7,12 +7,23 @@ changes are not listed.
 
 ### Added
 
+- [Tag](/tag/#interactive-tags) accepts `interactive` for a pointer cursor and stronger hover border that returns to normal while pressed. Primary tags use a transparent resting border and a dark or light hover edge to contrast with the fill.
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 - [Form](/form/) aligns labels and fields in a form and stacks them in narrow containers. See [the submit hotkey](/form/#keyboard) and [sticky actions](/form/#actions) for the optional controls.
 
+### Changed
+
+- [Button](/button/#web-component) gives raw `<a-button>` elements a default button role internally after registration. JSX Buttons retain an explicit role for compatibility with DOM-based testing tools, and authored role overrides take precedence.
+- Consolidated [typography](/theming/#text-and-hint-sizes) into shared scales with more leading to reduce clipping and unitless line heights that scale through nested font sizes. Replace removed component typography variables with shared tokens or direct CSS overrides, using unitless values for line-height tokens.
+
+### Removed
+
+- Removed obsolete `a-select-field`, `a-select-label`, and `a-select-hint` styles, JSX types, and Button accessibility handling. Raw Select compositions use `<a-input button>` with label and hint slots. Current Select and SelectFaceted retain their shared layout styles.
+
 ### Fixed
 
+- [Tag](/tag/#interactive-tags) fits leading and trailing buttons without extra side padding and keeps icon buttons within its height. Embedded buttons follow the tag’s corner shape.
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.
 - [InputDate](/input-date/#manage-the-value) submits its ISO value through the visible Input instead of a hidden field. Disabled fields are omitted, and `form` supports association with a form elsewhere on the page.
 - Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.

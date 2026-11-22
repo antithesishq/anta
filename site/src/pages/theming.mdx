@@ -27,7 +27,7 @@ Commercial use of that theme requires prior written permission through the
 [Antithesis contact page](https://antithesis.com/company/contact/). You can use
 Anta commercially under MIT with the default styles, Antune, or your own theme.
 
-<Disclosure title="Fonts in a theme" id="fonts-in-a-theme">
+<Disclosure title="Font family" id="fonts-in-a-theme">
 
 Anta's themes do not load fonts. `tokens.css` defines three system font stacks,
 which the optional themes preserve:
@@ -91,6 +91,97 @@ site stylesheets show the website's font-face declarations, font stacks, and
 font-specific axis settings. They are examples of application font setup and
 are not imported by the published themes. Use your own font stylesheet and
 font sources in your application.
+
+</Disclosure>
+
+<Disclosure title="Font sizes" id="text-and-hint-sizes">
+
+Font sizes are CSS lengths. Line heights are unitless ratios that scale with
+nested font sizes. For example, `calc(22 / 15)` gives 15px text a 22px line height.
+
+### Main text
+
+Use `--font-size-SIZE` and `--line-height-SIZE` for each size below.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Micro | 11px | `calc(15 / 11)` |
+| Tiny | 12px | `calc(16 / 12)` |
+| Small | 13px | `calc(18 / 13)` |
+| Medium | 15px | `calc(22 / 15)` |
+| Large | 17px | `calc(26 / 17)` |
+
+### Hints
+
+Hints have an independent scale through `--font-size-hint-SIZE` and
+`--line-height-hint-SIZE`.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Small | 12px | `calc(16 / 12)` |
+| Medium | 14px | `calc(20 / 14)` |
+| Large | 16px | `calc(24 / 16)` |
+
+### Heading sizes
+
+Title, Expander summaries, native disclosure summaries, and raw headings share
+six heading levels. Dialog headers use level 4. Each level uses
+`--font-size-heading-N` and `--line-height-heading-N`, where `N` is 1 through 6.
+
+| Level | Font size | Line height |
+| --- | --- | --- |
+| 1 | 28px | `calc(34 / 28)` |
+| 2 | 24px | `calc(30 / 24)` |
+| 3 | 20px | `calc(26 / 20)` |
+| 4 | 17px | `calc(24 / 17)` |
+| 5 | 15px | `calc(22 / 15)` |
+| 6 | 13px | `calc(18 / 13)` |
+
+### Menu labels
+
+Menu labels use `--font-size-menu-medium`, independently of the field size.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Medium | 14px | `calc(20 / 14)` |
+
+### Menu hints
+
+Menu hints use `--font-size-menu-hint-medium`.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Medium | 12px | `calc(16 / 12)` |
+
+### Code blocks
+
+Code blocks use `--font-size-code-block-medium` and
+`--line-height-code-block-medium`.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Medium | 13px | `calc(20 / 13)` |
+
+### Customize sizes
+
+Override font-size tokens with lengths and line-height tokens with unitless
+values. To give medium text a 24px line height at its default 15px font size:
+
+```css
+:root {
+  --line-height-medium: calc(24 / 15);
+}
+```
+
+For an individual component, set `font-size` and `line-height` on its styled
+element or exposed part.
+
+### Text compensation
+
+Button and Tabs share label bottom-padding compensation through
+`--text-compensation-small` (0.5px), `--text-compensation-medium` (1px), and
+`--text-compensation-large` (1.5px). Their outer padding absorbs this amount to
+retain control heights. Buttons inside field action slots disable compensation.
 
 </Disclosure>
 

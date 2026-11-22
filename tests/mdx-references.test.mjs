@@ -110,6 +110,7 @@ test('colors retain guidance and every role declaration from both palettes', asy
       assert.ok(markdown.includes(`\`${value.trim()}\``), `${name}: ${value}`)
     }
   }
+  assert.doesNotMatch(markdown, /--text-compensation-/)
   assert.match(markdown, /### Link color/)
   assert.match(markdown, /### Focus ring/)
   assert.match(markdown, /Default light \| Default dark \| Reference light \| Reference dark/)

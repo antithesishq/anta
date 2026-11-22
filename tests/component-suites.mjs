@@ -1,4 +1,5 @@
 export const componentSuites = {
+  typography: { tests: ['tests/typography.mjs'] },
   stickers: { tests: ['tests/stickers-csp.mjs'], slow: ['tests/stickers-package.mjs'] },
   plot: { tests: ['plot/tests/csp.test.mjs'], slow: ['plot/tests/csp-package.mjs'] },
   selection: { tests: ['tests/selection-projection.mjs', 'tests/selection-value.mjs'], slow: ['tests/selection-package.mjs'] },
@@ -21,4 +22,5 @@ export const componentSuites = {
   progress: { tests: ['tests/progress-csp.mjs'] },
   tooltip: { tests: ['tests/tooltip-csp.mjs'], slow: ['tests/tooltip-package.mjs'] },
   text: { tests: ['tests/text-csp.mjs'] },
+  tag: { tests: ['tests/tag-csp.mjs'] },
 }

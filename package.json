@@ -57,6 +57,8 @@
     }
   },
   "scripts": {
+    "test:tag": "node --test tests/tag-csp.mjs",
+    "test:typography": "node --test tests/typography.mjs",
     "build": "rm -rf dist && pnpm run build:js && pnpm run build:css && pnpm run build:bundle && pnpm run build:types && pnpm run build:docs",
     "build:dev": "pnpm run build:js && pnpm run build:css:dev && pnpm run build:bundle && pnpm run build:types",
     "build:css": "esbuild $(find src -name '*.css') --minify --outdir=dist --outbase=src && cp scripts/generate-icons.mjs dist/",

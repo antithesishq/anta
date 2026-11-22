@@ -1,0 +1,34 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+/* Resolve the row's leading before a Tag inherits it with its own typography. */
+@property --_menu-item-line-height {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 20px;
+}
+
+@layer anta.components {
+  /* Native options and menu rows share typography, independent of field size. */
+  a-menu-item,
+  a[data-anta-menu-item],
+  select[data-anta] option {
+    --_menu-item-line-height: 1lh;
+
+    font-size: var(--font-size-menu-medium);
+    line-height: calc(20 / 14);
+  }
+
+  a-menu-item-label {
+    line-height: inherit;
+  }
+
+  a-menu-item > [data-indicator] {
+    line-height: var(--_menu-item-line-height);
+  }
+
+  a-menu-item-hint {
+    font-size: var(--font-size-menu-hint-medium);
+    line-height: calc(16 / 12);
+  }
+}

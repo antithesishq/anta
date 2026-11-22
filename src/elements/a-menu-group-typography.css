@@ -1,0 +1,10 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+@layer anta.components {
+  a-menu-group-label,
+  select[data-anta] optgroup {
+    font-size: var(--font-size-tiny);
+    line-height: var(--line-height-tiny);
+  }
+}

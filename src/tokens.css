@@ -7,12 +7,11 @@
 /* Scope of this file — Anta's entire global token vocabulary, kept
    deliberately tiny: theme-aware color *roles* for text (--text-*),
    container background (--bg-*), and container border (--border-*),
-   per tone, plus font stacks and prose link colors. Nothing else is
-   global by design: no primitive palette tokens, no spacing/size/radius
-   scales. Those live component-side as --{component}-* with literal
-   values so each component stays independently tunable while values
-   are still settling. Don't add new role families here without an
-   explicit decision that the values have stabilized across components. */
+   per tone, plus font stacks, main text (including compact sizes), hint,
+   menu, code-block, and heading typography, text compensation, and prose
+   link colors. Spacing and radii remain component-owned. Promote other role
+   families only after an explicit decision that their values have stabilized
+   across components. */
 
 /* The whole role scale is DERIVED from six tone seeds via oklch relative
    color: each token is `oklch(from var(--anta-seed-{tone}) L C h)`, taking the
@@ -30,6 +29,49 @@
   --monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
+/* Color-scheme scopes inherit typography so nested light/dark surfaces retain
+   application overrides. Text and hint scales can be changed independently.
+   Unitless leading inherits as a ratio and scales with each descendant's font. */
+@layer anta.reset {
+  :root {
+    --font-size-micro: 11px;
+    --line-height-micro: calc(15 / 11);
+    --font-size-tiny: 12px;
+    --line-height-tiny: calc(16 / 12);
+    --font-size-small: 13px;
+    --font-size-medium: 15px;
+    --font-size-large: 17px;
+    --line-height-small: calc(18 / 13);
+    --line-height-medium: calc(22 / 15);
+    --line-height-large: calc(26 / 17);
+    --font-size-hint-small: 12px;
+    --font-size-hint-medium: 14px;
+    --font-size-hint-large: 16px;
+    --line-height-hint-small: calc(16 / 12);
+    --line-height-hint-medium: calc(20 / 14);
+    --line-height-hint-large: calc(24 / 16);
+    --font-size-menu-medium: 14px;
+    --font-size-menu-hint-medium: 12px;
+    --font-size-code-block-medium: 13px;
+    --line-height-code-block-medium: calc(20 / 13);
+    --text-compensation-small: 0.5px;
+    --text-compensation-medium: 1px;
+    --text-compensation-large: 1.5px;
+    --font-size-heading-1: 28px;
+    --font-size-heading-2: 24px;
+    --font-size-heading-3: 20px;
+    --font-size-heading-4: 17px;
+    --font-size-heading-5: 15px;
+    --font-size-heading-6: 13px;
+    --line-height-heading-1: calc(34 / 28);
+    --line-height-heading-2: calc(30 / 24);
+    --line-height-heading-3: calc(26 / 20);
+    --line-height-heading-4: calc(24 / 17);
+    --line-height-heading-5: calc(22 / 15);
+    --line-height-heading-6: calc(18 / 13);
+  }
+}
+
 :root,
 .light {
   /* Element CSS resolves its dark values with `light-dark()`, which reads the
@@ -37,7 +79,7 @@
      switches, because `tokens.css` is required for any styled element while
      `reset.css` is optional. */
   color-scheme: light;
-  font-size: 15px;
+  font-size: var(--font-size-medium);
   font-weight: 400;
 
   /* Tone seeds — the single source each scale derives from. Hues from the

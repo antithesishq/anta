@@ -61,22 +61,15 @@
     --button-bg-secondary-hover: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.15), oklch(from var(--_src) 0.44 0.01 h / 0.34));
     --button-bg-secondary-active: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.2), oklch(from var(--_src) 0.44 0.01 h / 0.44));
 
-    /* Type scale by size (small 13/16 · medium 15/20 · large 17/24); --_fs/--_lh
-       carry it. The label gets an optical `padding-bottom` (--_pb) that scales
-       with the font (0.5 / 1 / 1.5px) — Anta's glyphs sit slightly low in the
-       line-box, a font-metric offset that grows with size. Block padding derives
-       from --_pb so the two always sum to 8px, holding the box at
-       line-height + 8 → 24/28/32, matching the same-size Input. Icon-only
-       buttons are min-height-anchored separately, below. */
-    --_fs: 15px;
-    --_lh: 20px;
-    --_pb: 1px;
+    /* Labels add 2px of clipping clearance to the type scale. Their outer
+       padding absorbs it and the optical bottom padding, keeping 24/28/32px
+       control heights and the existing text position. */
     --_radius: 4px;
     /* Round text padding to whole CSS pixels at the 13/15/17px type scale.
        Themes can retune it without changing icon-only or paddingless buttons. */
     --_padding-x-text: round(calc(0.8em - 2px), 1px);
     --button-padding-x: var(--_padding-x-text);
-    --button-padding-y: calc((8px - var(--_pb)) / 2);
+    --button-padding-y: calc((6px - var(--text-compensation-medium)) / 2);
 
     --button-timing-in: 75ms ease-in;
     --button-timing-active: 50ms linear;
@@ -183,11 +176,11 @@
 
     box-shadow: inset 0 0 1px color-mix(in oklch, currentColor, transparent 90%);
 
-    font-size: var(--_fs);
+    font-size: var(--font-size-medium);
     font-family: var(--sans-serif);
     font-weight: 450;
     font-stretch: normal;
-    line-height: var(--_lh);
+    line-height: var(--line-height-medium);
     letter-spacing: 0.025ch;
 
     text-overflow: ellipsis;
@@ -213,11 +206,11 @@
       overflow: hidden;
       min-width: 0;
 
-      line-height: var(--_lh);
+      line-height: inherit;
       /* Optically centers Anta's font (glyphs sit slightly low in the line-box —
          a font-metric offset that scales with size: 0.5 / 1 / 1.5px). The button
-         height math (above) absorbs --_pb so the box stays line-height + 8. */
-      padding-bottom: var(--_pb);
+         outer padding absorbs the compensation. */
+      padding-bottom: var(--text-compensation-medium);
 
       &:has(> *) {
         display: inline-flex;
@@ -279,18 +272,24 @@
     }
 
     &[size="small"] {
-      --_fs: 13px;
-      --_lh: 16px;
-      --_pb: 0.5px;
+      --button-padding-y: calc((6px - var(--text-compensation-small)) / 2);
+
+      font-size: var(--font-size-small);
+      line-height: var(--line-height-small);
+
+      & > a-button-label { padding-bottom: var(--text-compensation-small); }
       min-height: 24px;
       /* Icon tracks the button size (medium is the a-icon default, 16px). An
          explicit `<Icon size>` (inline `--icon-size`) still wins. */
       & a-icon { --icon-size: 14px; }
     }
     &[size="large"] {
-      --_fs: 17px;
-      --_lh: 24px;
-      --_pb: 1.5px;
+      --button-padding-y: calc((6px - var(--text-compensation-large)) / 2);
+
+      font-size: var(--font-size-large);
+      line-height: var(--line-height-large);
+
+      & > a-button-label { padding-bottom: var(--text-compensation-large); }
       min-height: 32px;
       & a-icon { --icon-size: 18px; }
     }
@@ -343,6 +342,9 @@
       /* Inline link-style button: no box, so it must sit on the text baseline
          at its natural height rather than the size floor. */
       min-height: 0;
+
+      /* Keep the inline footprint while extending the label's clipping box. */
+      & > a-button-label { margin-block: -1px; }
 
       &[loading]::before {
         clip-path: inset(0 0 0 var(--button-loading-x-period) round min(var(--_radius), 3px));
@@ -606,6 +608,13 @@
       border-color: GrayText;
       text-decoration-color: GrayText;
     }
+  }
+
+  :is(a-input, a-input-time) > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
+  :is(a-input, a-input-time) > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
+    --text-compensation-small: 0px;
+    --text-compensation-medium: 0px;
+    --text-compensation-large: 0px;
   }
 }
 

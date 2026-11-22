@@ -627,7 +627,6 @@
     --steps-connector-color: var(--border-4);
     --steps-connector-width: 1px;
     --steps-complete-connector-color: var(--fill-1);
-    --steps-hint-leading: 14px;
   }
 
   a-steps:has(> a-tabs[size="small"]) {
@@ -640,7 +639,6 @@
     --steps-marker-size: 40px;
     --steps-icon-size: 20px;
     --steps-number-size: 15px;
-    --steps-hint-leading: 18px;
   }
 
   a-steps:has(> a-tabs[priority="tertiary"]),
@@ -813,16 +811,12 @@
     border-radius: var(--steps-marker-radius);
     pointer-events: none;
   }
-  a-tabs[data-steps] a-step-desc {
-    gap: 2px;
-  }
   a-tabs[data-steps] a-step-desc > a-tab-label {
     color: var(--steps-label-fg);
     transition: color var(--tab-timing);
   }
   a-tabs[data-steps] a-step-hint {
     color: var(--steps-hint-fg);
-    font-size: calc(1em - 1px);
     transition: color var(--tab-timing);
   }
   a-tabs[data-steps]:not([orientation="vertical"], [priority="tertiary"]) > a-tab:not(:last-child)::before {

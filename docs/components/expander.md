@@ -1,57 +1,84 @@
 # Expander
 
-Expander keeps a section title visible while its content opens and closes. Use
-it for supporting details, settings groups, or sections that readers can reveal
-as needed. Select the header or focus it and press Enter or Space to toggle.
+`Expander` shows and hides content under a header. Use it for FAQs, settings,
+and supporting details.
 
-## Priority and tone
+## Priority
 
-Choose `primary` for a pronounced surface, `secondary` for a subtle filled box,
-or `tertiary` for a transparent disclosure in a content column. `tone` colors
-the header and filled surfaces using the current theme.
+<a id="priority-and-tone"></a>
+
+`priority` controls the section's emphasis. Choose `primary` for a stronger
+fill, `secondary` for a subtle fill, or `tertiary` for a transparent section.
 
 ```tsx
-<Expander title="Primary" priority="primary" tone="brand"><Text>A pronounced section surface.</Text></Expander>
-<Expander title="Secondary"><Text>A subtle section surface.</Text></Expander>
-<Expander title="Tertiary" priority="tertiary"><Text>A disclosure in a content column.</Text></Expander>
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Box display="grid" gap={8}>
+      <Expander title="Primary" priority="primary"><Text>Shipping information with a stronger surface.</Text></Expander>
+      <Expander title="Secondary" priority="secondary"><Text>Shipping information with a subtle surface.</Text></Expander>
+      <Expander title="Tertiary" priority="tertiary"><Text>Shipping information without a filled surface.</Text></Expander>
+    </Box>
+  )
+}
 ```
 
-## Title and level
+## Tone
 
-A string or number title uses Expander's type scale. `level` changes that scale
-without adding heading semantics. Pass a `Title` or your own heading when the
-section belongs in the document outline; that node owns its typography.
+`tone` colors the header and filled surface. Use a semantic tone for status
+or a CSS color to match your product.
 
 ```tsx
-<Expander title="Section title" level={2}><Text>A larger title scale.</Text></Expander>
-<Expander title="Supporting details" level={6}><Text>A compact title scale.</Text></Expander>
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Box display="grid" gap={8}>
+      <Expander title="Build information" tone="info"><Text>The build is running its checks.</Text></Expander>
+      <Expander title="Build passed" tone="success"><Text>All checks passed. The release is ready.</Text></Expander>
+      <Expander title="Action required" tone="warning"><Text>Review the warnings before publishing.</Text></Expander>
+      <Expander title="Project updates" tone="rebeccapurple"><Text>Updates in a custom project color.</Text></Expander>
+    </Box>
+  )
+}
 ```
 
-Selecting a link, input, or enabled control in the title activates that control
-without toggling the section. Selecting title text keeps the selection. Prefer
-`actions` for independent header controls so they sit outside the toggle button.
+## Title
 
-## Actions and indicators
+<a id="title-and-level"></a>
 
-<a id="indicator"></a>
+`title` labels the section. Use `level` to change the size of a text title.
+It changes appearance without adding a heading to the document outline.
+Title text remains selectable.
 
-Actions stay visible when the section is closed. Use them for operations that
-should remain available without opening the content. `indicatorPlacement="end"`
-places the disclosure mark after the actions. At the start, the chevron turns
-from right to down; at the end, it turns from down to up.
-
-Choose `triangle` for a filled arrow or `plus` for a plus that becomes a minus.
-Custom artwork can rotate as one node or switch between `closed` and `open`
-visuals. Indicator artwork stays decorative and adds no focus stop.
-
-The demonstration uses a custom title, two indicator visuals, and an independent
-Download action. Open the section to see the action count.
+Pass a `Title` as `title` when the section needs a real heading. Custom title
+content keeps its own typography, as shown in the [actions example](#actions).
 
 ```tsx
-import { Button, Expander, Icon, Text, Title } from '@antadesign/anta'
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Box display="grid" gap={8}>
+      <Expander title="Order details" level={2}><Text>A prominent section title.</Text></Expander>
+      <Expander title="Delivery notes" level={6}><Text>A compact section title.</Text></Expander>
+    </Box>
+  )
+}
+```
+
+## Actions
+
+Use `actions` for controls that work independently of opening the section.
+They stay visible when the section is closed. The **Download** button updates
+the count without toggling the section.
+
+```tsx
+import { Button, Expander, Icon, Text, Title } from '@antadesign/anta/bundle'
 import { useState } from 'react'
 
-function ExpanderActionsDemo() {
+export default function ExpanderActionsDemo() {
   const [downloads, setDownloads] = useState(0)
   return (
     <Expander
@@ -66,69 +93,111 @@ function ExpanderActionsDemo() {
 }
 ```
 
-## Round and outdent
+## Indicators
 
-<a id="round"></a>
+<a id="indicator"></a>
+<a id="actions-and-indicators"></a>
 
-Use `round` for a `1rem` radius that stays constant when the section opens.
-Use `outdent` with `priority="tertiary"` to align the title and body with
-surrounding prose. The start indicator hangs in the gutter; an end indicator
-stays inside the end edge.
-
-```tsx
-<Expander title="Rounded section" round><Text>The corners keep their radius when expanded.</Text></Expander>
-<Expander title="Aligned section" priority="tertiary" outdent defaultOpen><Text>The title and body align with the surrounding content.</Text></Expander>
-```
-
-## Disabled
-
-`disabled` removes the toggle button from focus navigation and prevents toggling.
-An open section stays open. Header actions remain available; disable those
-controls separately when needed.
+`indicator` changes the disclosure mark. Choose `chevron`, `triangle`, or
+`plus`, which becomes a minus when open. Use `indicatorPlacement="end"` to
+place it after the title and actions.
 
 ```tsx
-<Expander title="Disabled, closed" disabled><Text>Collapsed content.</Text></Expander>
-<Expander title="Disabled, open" disabled defaultOpen><Text>Content remains visible.</Text></Expander>
-```
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
 
-## Open state
-
-Without `open`, Expander owns its state. `defaultOpen` chooses its initial state.
-Closing keeps the content mounted and removes it from focus navigation and the
-accessibility tree. Reopening restores its visibility and interaction.
-
-Call `event.preventDefault()` in `onStateChange` to reject an uncontrolled
-request synchronously. The demonstration keeps the section open until you clear
-the checkbox.
-
-```tsx
-import { Box, Checkbox, Expander, Text } from '@antadesign/anta'
-import { useState } from 'react'
-
-function CancelableExample() {
-  const [keepOpen, setKeepOpen] = useState(true)
+export default function Demo() {
   return (
-    <Box display="grid" gap={12} style={{ width: '100%' }}>
-      <Checkbox checked={keepOpen} onStateChange={(_, { next }) => setKeepOpen(next === true)}>Keep details open</Checkbox>
-      <Expander title="Unsaved changes" defaultOpen onStateChange={(event, { next }) => {
-        if (!next && keepOpen) event.preventDefault()
-      }}>
-        <Text>Clear the checkbox to allow this section to close.</Text>
-      </Expander>
+    <Box display="grid" gap={8}>
+      <Expander title="Chevron" indicator="chevron"><Text>A chevron marks the open state.</Text></Expander>
+      <Expander title="Triangle" indicator="triangle"><Text>A filled arrow marks the open state.</Text></Expander>
+      <Expander title="Plus and minus" indicator="plus"><Text>The plus becomes a minus when open.</Text></Expander>
+      <Expander title="Indicator at the end" indicatorPlacement="end"><Text>The indicator follows the header actions.</Text></Expander>
     </Box>
   )
 }
 ```
 
-Pass `open` to control the section. Update it with `detail.next` in
-`onStateChange` to accept a request, or leave it unchanged to reject. The
-following demonstration counts requests even when they are rejected.
+Pass a node for custom artwork, or an object with `closed` and `open` nodes
+to switch between two visuals, as in the [actions example](#actions).
+Indicators are decorative. Use `actions` for interactive controls.
+
+## Round
+
+<a id="round-and-outdent"></a>
+
+`round` softens the section's corners. Pass a CSS length for a specific radius.
+The shape stays the same when the section opens.
 
 ```tsx
-import { Box, Button, Checkbox, Expander, Text } from '@antadesign/anta'
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Box display="grid" gap={8}>
+      <Expander title="Rounded section" round><Text>The corners keep their radius when expanded.</Text></Expander>
+      <Expander title="Custom radius" round="8px"><Text>A section with an 8px corner radius.</Text></Expander>
+    </Box>
+  )
+}
+```
+
+## Outdent
+
+Use `outdent` with `priority="tertiary"` to align the title and body with
+surrounding text. The start indicator hangs in the gutter; an end indicator
+stays inside the section.
+
+```tsx
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Box display="grid" gap={8}>
+      <Text>Order information</Text>
+      <Expander title="Delivery updates" priority="tertiary" outdent defaultOpen><Text>Your order is ready to ship.</Text></Expander>
+    </Box>
+  )
+}
+```
+
+## Disabled
+
+Use `disabled` when a section is unavailable. Its header cannot be focused
+or toggled. An open section stays open. Header actions remain available;
+disable those controls separately when needed.
+
+```tsx
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Box display="grid" gap={8}>
+      <Expander title="Disabled, closed" disabled><Text>Collapsed content.</Text></Expander>
+      <Expander title="Disabled, open" disabled defaultOpen><Text>Content remains visible.</Text></Expander>
+    </Box>
+  )
+}
+```
+
+## Open state
+
+Readers can toggle a section with its header, or focus the header and press
+Enter or Space. Use `defaultOpen` to start with the content visible.
+
+Closing keeps the content mounted, preserving form values and local state.
+Hidden content is removed from keyboard navigation and the accessibility tree.
+
+### Controlled state
+
+Pass `open` when another control or application state also needs to open the
+section. In `onStateChange`, set `open` to `next` to accept the change.
+Leave it unchanged to keep the current state.
+
+```tsx
+import { Box, Button, Checkbox, Expander, Text } from '@antadesign/anta/bundle'
 import { useState } from 'react'
 
-function ControlledExample() {
+export default function ControlledExample() {
   const [open, setOpen] = useState(false)
   const [accept, setAccept] = useState(true)
   const [requests, setRequests] = useState(0)
@@ -148,22 +217,59 @@ function ControlledExample() {
 }
 ```
 
-### Accordion
+### Prevent closing
 
-Share one open item identifier across a group of controlled Expanders when only
-one section should be open at a time.
+When you omit `open`, call `event.preventDefault()` in `onStateChange` to
+reject a change. This example stays open while **Keep details open** is selected.
 
 ```tsx
-import { Box, Expander, Text } from '@antadesign/anta'
+import { Box, Checkbox, Expander, Text } from '@antadesign/anta/bundle'
+import { useState } from 'react'
+
+export default function CancelableExample() {
+  const [keepOpen, setKeepOpen] = useState(true)
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Checkbox checked={keepOpen} onStateChange={(_, { next }) => setKeepOpen(next === true)}>Keep details open</Checkbox>
+      <Expander title="Unsaved changes" defaultOpen onStateChange={(event, { next }) => {
+        if (!next && keepOpen) event.preventDefault()
+      }}>
+        <Text>Clear the checkbox to allow this section to close.</Text>
+      </Expander>
+    </Box>
+  )
+}
+```
+
+## Accordion
+
+Share one open item ID when only one section should be open at a time.
+Opening another section closes the current one.
+
+```tsx
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
 import { useState } from 'react'
 
 const items = [
-  { id: 'shipping', title: 'Shipping', body: 'Orders ship within two business days.' },
-  { id: 'returns', title: 'Returns', body: 'Returns are accepted within 30 days.' },
+  {
+    id: 'shipping',
+    title: 'Shipping & delivery',
+    body: 'Orders ship within two business days. Standard delivery takes another three to five business days. We send a tracking link as soon as your package leaves the warehouse.',
+  },
+  {
+    id: 'returns',
+    title: 'Returns',
+    body: 'Unworn items can be returned free within 30 days of delivery. Keep the original packaging and start a return from your order details. We issue a refund after inspecting the returned items.',
+  },
+  {
+    id: 'warranty',
+    title: 'Warranty',
+    body: 'Every product includes a one-year limited warranty covering defects in materials and workmanship. Contact support with your order number and a description of the issue so we can arrange a repair or replacement.',
+  },
 ]
 
-function Accordion() {
-  const [openId, setOpenId] = useState('shipping')
+export default function Accordion() {
+  const [openId, setOpenId] = useState<string | null>('shipping')
   return (
     <Box display="grid" gap={1}>
       {items.map(item => (
@@ -174,6 +280,63 @@ function Accordion() {
       ))}
     </Box>
   )
+}
+```
+
+## Sticky headers
+
+Headers stick to the top as you scroll. The next section pushes the previous
+header away. Use your own class names when copying the example.
+
+```tsx
+import { Box, Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <div className="sticky-expander-preview" role="region" aria-label="Sticky expander headers" tabIndex={0}>
+      <Box className="sticky-expanders" display="grid" gap={1}>
+        <Expander title="Shipping and delivery" defaultOpen>
+          <Text>
+            <p>Orders ship within two business days. Standard delivery takes another three to five business days. We send a tracking link as soon as your package leaves the warehouse.</p>
+            <p>Choose express delivery at checkout if you need your order sooner. Available delivery methods and estimated arrival dates depend on your address and appear before you confirm the order.</p>
+            <p>If your tracking information stops updating, contact support with your order number. We can check the shipment with the carrier and help you find the next step.</p>
+          </Text>
+        </Expander>
+        <Expander title="Returns" defaultOpen>
+          <Text>
+            <p>Unworn items can be returned free within 30 days of delivery. Keep the original packaging and start a return from your order details. We issue a refund after inspecting the returned items.</p>
+            <p>Pack the items securely and attach the prepaid shipping label. Keep your drop-off receipt until the return reaches us so you can follow its progress with the carrier.</p>
+            <p>Refunds go to the original payment method. Your bank may take a few business days to post the credit after we send the confirmation email.</p>
+          </Text>
+        </Expander>
+        <Expander title="Warranty" defaultOpen>
+          <Text>
+            <p>Every product includes a one-year limited warranty covering defects in materials and workmanship. Contact support with your order number and a description of the issue so we can arrange a repair or replacement.</p>
+            <p>Include a few clear photos showing the product and the affected area. These help us understand the problem and decide whether the item needs to be sent in for inspection.</p>
+            <p>We explain the available options before you send anything back. If a replacement is needed, we confirm the delivery address and share tracking information when it ships.</p>
+          </Text>
+        </Expander>
+      </Box>
+    </div>
+  )
+}
+```
+
+```css
+.sticky-expander-preview {
+  block-size: 20rem;
+  overflow: auto;
+}
+.sticky-expanders {
+  max-inline-size: calc(32rem + 48px);
+  margin-inline: auto;
+  padding: 24px;
+}
+.sticky-expanders > a-expander::part(header) {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: inherit;
 }
 ```
 
@@ -197,12 +360,9 @@ function Accordion() {
 
 ## Web Component
 
-Supply direct named regions. Use `a-expander-summary` for the built-in title
-scale, with `level` on that region. Use boxless `a-expander-title` for custom
-title markup. Put controls in `a-expander-actions` and body content in
-`a-expander-details`. Place `a-expander-indicator` before the title or after the
-actions to choose its position. Set its `shape` to `chevron`, `triangle`, or
-`plus`, or omit `shape` and supply custom artwork as children.
+Use `<a-expander>` in HTML. Load `@antadesign/anta/elements/a-expander` for
+styles and behavior, and the Button entry when using header actions. The
+full bundle includes both. See [Install and configure](../install-config.md) for setup.
 
 ```html
 <a-expander default-state="open">
@@ -217,73 +377,107 @@ actions to choose its position. Set its `shape` to `chevron`, `triangle`, or
 </a-expander>
 ```
 
-The element retains a native button and inert collapse region in shadow DOM.
-It projects authored regions without changing their attributes, styles, ARIA,
-or children. The default styling loads from external CSS. Import
-`@antadesign/anta/elements/a-expander` for browser behavior; import the entries
-for any nested Anta controls separately. The full bundle includes them.
+### Regions
 
-`state="open"` or `state="closed"` controls the section. Without `state`,
-`default-state` seeds it once; the omitted default is closed. Reconnection
-retains applied state. `statechange` is a cancelable, non-bubbling request with
-`{ next, prev }` in the `open`/`closed` vocabulary. Call `preventDefault()` to
-reject an uncontrolled request. For controlled use, update `state` to accept
-or leave it unchanged to reject. The element owns the native button's expanded
-and disabled states and the collapsed region's inertness.
+Place these elements directly inside `<a-expander>`.
 
-The same indicator element renders before and after registration. An omitted
-indicator renders no artwork. JSX creates the built-in chevron automatically;
-`indicatorPlacement` changes the region order.
+| Element | Purpose |
+| --- | --- |
+| `a-expander-summary` | A text title. Its `level` sets the visual scale. |
+| `a-expander-title` | Custom title content, such as a heading. It keeps its own typography. |
+| `a-expander-actions` | Controls that remain separate from the toggle button. |
+| `a-expander-indicator` | Decorative artwork. Place it before the title or after the actions. |
+| `a-expander-details` | The content revealed when the section opens. |
 
-One custom `a-expander-indicator` rotates with state. Two regions with
-`data-when="closed"` and `data-when="open"` switch instead. Raw authors mark
-all indicator artwork `aria-hidden="true"` and `inert`. The owned indicator container
-also excludes its projected artwork from interaction and accessibility.
+The component supplies the native toggle button, keyboard interaction, expanded
+state, and collapsed content's accessibility. Links and enabled controls in
+the title work independently. Mark an unrecognized title widget
+`data-expander-ignore` to keep it from toggling the section.
 
-Omit unused regions. CSS hides empty actions regions. Whitespace counts as
-content; JSX omits whitespace-only string actions. Mark an otherwise
-unrecognized interactive title widget `data-expander-ignore` to prevent toggling.
-A disabled title control behaves like title text; actions never toggle.
+Omit unused regions. Empty actions are hidden; whitespace counts as content.
 
-Named regions replace public slot attributes, and raw `level` moves from
-`a-expander` to `a-expander-summary`. Raw indicator shape and placement now
-belong to its region and DOM order. Existing shadow part overrides remain
-supported. JSX props stay the same.
+### State and events
 
-Named tones and boolean `round` need no inline styles. Custom tones and radii
-use JSX-owned CSS variables. Under a CSP that blocks style attributes, supply
-`--expander-tone-source` or `--expander-round` through external CSS. Raw authors
-also use those variables on browsers without typed CSS `attr()`.
+`default-state="open"` starts the section open. Use `state="open"` or
+`state="closed"` to control it. Reconnecting the element keeps its applied state.
 
-Native `details[data-anta]` shares this component's stylesheet and entry. Its
-`summary` and `open` attribute retain native behavior; it does not use Anta's
-cancelable state contract. Keep its `level` attribute on `details`.
+The cancelable `statechange` event reports `detail.next` and `detail.prev` as
+`"open"` or `"closed"`. It does not bubble. Call `preventDefault()` to reject
+an uncontrolled change. For controlled use, update `state` to accept it.
+
+### Custom indicators
+
+Set `shape` to `chevron`, `triangle`, or `plus`. Omit the indicator region for
+no artwork. A single custom indicator rotates with the section's state.
+For separate visuals, use two indicator regions with `data-when="closed"`
+and `data-when="open"`. Give indicator artwork `aria-hidden="true"` and `inert`.
+
+### Native details
+
+Use `<details data-anta>` for Expander styling with native disclosure behavior.
+It uses the `open` attribute and native `toggle` events. Set `level` on `details`
+to change the summary's visual scale.
+
+```html
+<details data-anta priority="secondary">
+  <summary>Shipping and delivery</summary>
+  <p>Orders ship within two business days.</p>
+</details>
+```
 
 ## Styling
 
-Use `priority`, `tone`, `round`, and `outdent` for the built-in appearance.
-`--expander-tone-source` connects a custom tone to an application color, and
-`--expander-gutter` sets the shared title/body inset. Style authored regions
-directly and the owned button, actions row, indicator, or content through
-`::part()`. Unlayered rules override Anta's defaults without `!important`.
+Use `priority`, `tone`, `round`, and `outdent` for the built-in variants.
+`--expander-tone-source` supplies a custom color, and `--expander-gutter`
+adjusts the title and body inset. Style authored regions directly and use
+`::part()` for the header, toggle button, actions, indicator, and content.
+Unlayered CSS overrides the component's defaults without `!important`.
 
-The classes below identify demonstrations. Substitute your own selectors.
+Hide the indicator and reduce the space before the title and content.
 
-Hide the indicator and reduce the title/body inset.
+```tsx
+import { Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Expander className="hide-chevron" title="A section without the built-in indicator" defaultOpen><Text>The title and keyboard interaction remain available.</Text></Expander>
+  )
+}
+```
 
 ```css
 a-expander.hide-chevron > a-expander-indicator { display: none; }
 a-expander.hide-chevron { --expander-gutter: 12px; }
 ```
 
-Change header height and hover appearance while keeping its focus ring.
+Give the header more height and a background on hover.
+
+```tsx
+import { Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Expander className="header-tint" title="Hover or focus the header" priority="tertiary"><Text>The button keeps native keyboard behavior.</Text></Expander>
+  )
+}
+```
 
 ```css
 a-expander.header-tint::part(summary) { min-height: 40px; }
 a-expander.header-tint::part(summary):enabled:hover { background: var(--bg-3); }
 ```
 
-Respond to applied state without managing CSS classes.
+Change the indicator color when the section is open.
+
+```tsx
+import { Expander, Text } from '@antadesign/anta/bundle'
+
+export default function Demo() {
+  return (
+    <Expander className="state-indicator" title="Open to highlight the indicator" indicatorPlacement="end"><Text>The indicator follows the applied state.</Text></Expander>
+  )
+}
+```
 
 ```css
 a-expander.state-indicator > a-expander-indicator { color: var(--text-4); }

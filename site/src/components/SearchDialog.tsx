@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { debounce } from 'es-toolkit/function'
 import { Button, Dialog, Icon, Input, Loader, Text, Title } from '@antadesign/anta'
 import { isModifiedNavigationKey } from '@antadesign/anta/anta_helpers'
@@ -164,8 +164,13 @@ export default function SearchDialog() {
       setOpen(true)
     }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target)) return
-      if (event.key === '/' || ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k')) {
+      if (event.isComposing || isEditableTarget(event.target)) return
+      const slashShortcut = event.key === '/' || (
+        event.code === 'Slash' && !event.shiftKey && !event.altKey && !event.metaKey && !event.ctrlKey
+      )
+      const kShortcut = (event.metaKey || event.ctrlKey)
+        && (event.code === 'KeyK' || event.key.toLowerCase() === 'k')
+      if (slashShortcut || kShortcut) {
         event.preventDefault()
         showSearch()
       }
@@ -180,6 +185,12 @@ export default function SearchDialog() {
       window.removeEventListener('resize', syncInputBounds)
     }
   }, [])
+
+  useLayoutEffect(() => {
+    if (!open) return
+    document.getElementById('docs-search-input')?.shadowRoot
+      ?.querySelector<HTMLInputElement>('input')?.select()
+  }, [open])
 
   useEffect(() => {
     if (!open) return

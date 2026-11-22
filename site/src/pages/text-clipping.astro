@@ -1,0 +1,288 @@
+---
+import ClippingChoice from '../components/ClippingChoice'
+import ClippingCalendar from '../components/ClippingCalendar'
+import antaStylesheet from '@antadesign/anta/bundle.css?url'
+const sizes = ['small', 'medium', 'large']
+const levels = [6, 5, 4, 3, 2, 1]
+const sliderMarkers = (wrapped = false) => `<span slot="markers" data-slider-marker-start style="--slider-marker-position: 0%">0</span><span slot="markers" data-sample ${wrapped ? 'data-multiline' : ''} style="--slider-marker-position: 50%; max-inline-size: 140px"></span><span slot="markers" data-slider-marker-end style="--slider-marker-position: 100%">100</span>`
+const cases = [
+  ['Menu item · fixed size', 'No size variant · label 14/20 · padded row', '<a-menu-item role="menuitem"><a-icon shape="circle-small-solid"></a-icon><a-menu-item-label data-sample></a-menu-item-label><kbd>⌘K</kbd></a-menu-item>'],
+  ['Menu item with hint · fixed size', 'No size variant · label 14/20 · hint 12/16', '<a-menu-item role="menuitem"><a-icon shape="circle-small-solid"></a-icon><a-menu-item-text><a-menu-item-label data-sample></a-menu-item-label><a-menu-item-hint data-sample data-sample-hint></a-menu-item-hint></a-menu-item-text></a-menu-item>'],
+  ...sizes.map(size => [`Tab · ${size}`, 'Label line height matches Button', `<a-tabs size="${size}"><a-tab value="one"><a-tab-label data-sample></a-tab-label></a-tab></a-tabs>`]),
+  ...sizes.map(size => [`Button · ${size}`, 'Label clips · optical bottom padding remains', `<a-button size="${size}"><a-button-label data-sample></a-button-label></a-button>`]),
+  ...sizes.map(size => [`Paddingless Button · ${size}`, 'No outer block padding to reclaim', `<a-button size="${size}" priority="quaternary" paddingless><a-button-label data-sample></a-button-label></a-button>`]),
+  ...sizes.map(size => [`Tag · ${size}`, 'Inner label/value and outer pill both clip', `<a-tag size="${size}"><a-tag-label data-sample></a-tag-label><a-tag-value data-sample></a-tag-value></a-tag>`]),
+  ...sizes.map(size => [`Steps · ${size}`, 'Nested label and hint clip independently', `<a-steps><a-tabs data-steps size="${size}"><a-tab value="one"><a-step-marker>1</a-step-marker><a-step-desc><a-tab-label data-sample></a-tab-label><a-step-hint data-sample data-sample-hint></a-step-hint></a-step-desc></a-tab></a-tabs></a-steps>`]),
+  ...levels.map(level => [`Expander summary · level ${level}`, 'Heading levels supply the type scale; level 6 is smallest', `<a-expander><a-expander-summary level="${level}" data-sample></a-expander-summary><a-expander-details>Details</a-expander-details></a-expander>`]),
+  ...sizes.flatMap(size => [1, 2].map(lines => [`Text · ${size} · ${lines === 1 ? 'one line' : 'two lines'}`, 'Line clamp · first and last line edges', `<a-text size="${size}" truncate="${lines}" style="--line-clamp: ${lines}" data-sample ${lines === 2 ? 'data-multiline' : ''}></a-text>`])),
+  ...levels.map(level => [`Title · level ${level}`, 'One-line clamp; level 6 is smallest', `<a-title level="${level}" truncate data-sample></a-title>`]),
+  ...sizes.flatMap(size => [false, true].map(withHint => [`Input · ${size}${withHint ? ' · with hint' : ''}`, 'Native input painting inside the shadow field', `<a-input size="${size}" aria-label="Clipping sample" data-sample-input>${withHint ? '<span slot="hint" data-sample data-sample-hint></span>' : ''}</a-input>`])),
+  ...sizes.flatMap(size => [false, true].map(withHint => [`Input button · ${size}${withHint ? ' · with hint' : ''}`, 'Clipped value span inside the shadow button', `<a-input button size="${size}" aria-label="Clipping sample" data-sample-input>${withHint ? '<span slot="hint" data-sample data-sample-hint></span>' : ''}</a-input>`])),
+  ...sizes.flatMap(size => [false, true].map(withHint => [`Textarea · ${size} · two rows${withHint ? ' · with hint' : ''}`, 'Native multiline control with vertical scrolling', `<a-input rows="2" size="${size}" aria-label="Clipping sample" data-sample-input>${withHint ? '<span slot="hint" data-sample data-sample-hint></span>' : ''}</a-input>`])),
+  ...sizes.flatMap(size => [false, true].map(withHint => [`InputTime · ${size}${withHint ? ' · with hint' : ''}`, 'Real segmented time field · label and hint use the sample text', `<a-input-time size="${size}" locale="en-GB" value="13:05"><span slot="label" data-sample></span>${withHint ? '<span slot="hint" data-sample data-sample-hint></span>' : ''}</a-input-time>`])),
+  ...sizes.map(size => [`File Input · ${size}`, 'Native chooser and sample filename · Input typography', `<input type="file" data-anta data-anta-size="${size}" aria-label="Clipping sample file" data-sample-file />`]),
+  ...sizes.flatMap(size => ['end', 'inline', 'thumb', 'range', 'wrapped markers', 'no markers'].map(mode => [
+    `Slider · ${size} · ${mode}`,
+    'Real Slider · thumb text aligns with the header · control hit area preserved',
+    `<a-slider size="${size}" default-value="${mode === 'range' ? '50 85' : '75'}" value-display="${mode === 'range' ? 'thumb' : mode === 'wrapped markers' || mode === 'no markers' ? 'end' : mode}" tabindex="0" aria-label="Clipping sample" ${mode === 'thumb' || mode === 'range' ? 'data-sample-slider' : ''}><span slot="label" data-sample></span>${mode === 'no markers' ? '' : sliderMarkers(mode === 'wrapped markers')}${mode === 'wrapped markers' ? '<a-text size="small">Content below markers</a-text>' : ''}</a-slider>`,
+  ])),
+  ['Banner · fixed size', 'Actual Banner message · 15/22 typography · 40px minimum height', '<a-banner><a-banner-message data-sample></a-banner-message></a-banner>'],
+  ['Copy feedback · fixed size', 'Actual confirmation kept visible for inspection', '<div data-copy-preview><a-button role="button" tabindex="0"><a-button-label>Copy</a-button-label><a-copy toast data-sample-copy></a-copy></a-button></div>'],
+  ...sizes.map(size => [`Calendar · ${size}`, 'Actual Calendar · weekday text 13/18 · weekday cells remain 24px high', '']),
+  ...sizes.map(size => [`Progress · ${size}`, 'Label and hint share increased leading · padding preserves bar height', `<a-progress size="${size}" value="60" max="100" role="progressbar" aria-label="Clipping sample" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"><a-progress-label><a-progress-text data-sample></a-progress-text><a-progress-hint data-sample data-sample-hint></a-progress-hint></a-progress-label></a-progress>`]),
+  ...['Checkbox', 'Switch', 'Radio'].flatMap(kind => sizes.flatMap(size => [false, true].map(withHint => [
+    `${kind} · ${size}${withHint ? ' · with hint' : ''}`,
+    kind === 'Radio' ? 'Actual RadioGroup option · group size cascade' : `Actual ${kind} component`,
+    '',
+  ]))),
+  ...sizes.map(size => [`Radio · ${size} · group hint`, 'Actual RadioGroup label and overall hint above its options', '']),
+]
+const groups = [
+  { value: 'text', label: 'Text', cases: cases.filter(([title]) => title.startsWith('Text ·')) },
+  { value: 'title', label: 'Title', cases: cases.filter(([title]) => title.startsWith('Title ·')) },
+  { value: 'expander', label: 'Expander', cases: cases.filter(([title]) => title.startsWith('Expander summary')) },
+  { value: 'button', label: 'Button', cases: cases.filter(([title]) => /^(Button|Paddingless Button) ·/.test(title)) },
+  { value: 'tabs', label: 'Tabs', cases: cases.filter(([title]) => title.startsWith('Tab ·')) },
+  { value: 'menu-item', label: 'Menu Item', cases: cases.filter(([title]) => title.startsWith('Menu item')) },
+  { value: 'input', label: 'Input', cases: cases.filter(([title]) => /^(Input ·|Input button ·)/.test(title)) },
+  { value: 'textarea', label: 'Textarea', cases: cases.filter(([title]) => title.startsWith('Textarea ·')) },
+  { value: 'input-time', label: 'InputTime', cases: cases.filter(([title]) => title.startsWith('InputTime ·')) },
+  { value: 'file-input', label: 'File Input', cases: cases.filter(([title]) => title.startsWith('File Input ·')) },
+  { value: 'slider', label: 'Slider', cases: cases.filter(([title]) => title.startsWith('Slider ·')) },
+  { value: 'banner', label: 'Banner', cases: cases.filter(([title]) => title.startsWith('Banner ·')) },
+  { value: 'copy', label: 'Copy', cases: cases.filter(([title]) => title.startsWith('Copy feedback ·')) },
+  { value: 'calendar', label: 'Calendar', cases: cases.filter(([title]) => title.startsWith('Calendar ·')) },
+  { value: 'checkbox', label: 'Checkbox', cases: cases.filter(([title]) => title.startsWith('Checkbox ·')) },
+  { value: 'switch', label: 'Switch', cases: cases.filter(([title]) => title.startsWith('Switch ·')) },
+  { value: 'radio', label: 'Radio', cases: cases.filter(([title]) => title.startsWith('Radio ·')) },
+  { value: 'tag', label: 'Tag', cases: cases.filter(([title]) => title.startsWith('Tag ·')) },
+  { value: 'steps', label: 'Steps', cases: cases.filter(([title]) => title.startsWith('Steps ·')) },
+  { value: 'progress', label: 'Progress', cases: cases.filter(([title]) => title.startsWith('Progress ·')) },
+]
+
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Text clipping lab · Anta</title>
+    <link rel="stylesheet" href={antaStylesheet} />
+    <link rel="stylesheet" href="/themes/antithesis.css" />
+    <link rel="stylesheet" href="/themes/fonts-antithesis.css" />
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">Anta / typography inspection</p>
+      <h1>Text clipping lab</h1>
+      <p>Each sized component includes small, medium, and large. Title and Expander include all six heading levels. Menu items retain their fixed shipped size. Compare the shipped styles with the same text allowed to paint outside its box. Slider, Banner, Copy, and Calendar also show their previous typography. Red outlines mark text boxes. Look for flat cuts through accents and descenders.</p>
+      <div class="controls">
+        <label>Font<select data-anta id="font"><option value="reference">Antithesis reference</option><option value="Arial, sans-serif">Arial</option><option value="Georgia, serif">Georgia</option><option value="Times New Roman, serif">Times New Roman</option><option value="system-ui, sans-serif">System UI</option><option value="monospace">Monospace</option></select></label>
+        <label>Text<select data-anta id="preset"><option value="accents">Accents + descenders</option><option value="vietnamese">Vietnamese</option><option value="marks" selected>Combining marks (stress test)</option><option value="arabic">Arabic</option><option value="devanagari">Devanagari</option><option value="plain">Ordinary label</option></select></label>
+        <label>Magnification<select data-anta id="zoom"><option value="1">100%</option><option value="2">200%</option><option value="4" selected>400%</option><option value="6">600%</option></select></label>
+        <a-button id="outlines" role="button" tabindex="0" aria-pressed="true"><a-button-label>Text outlines: on</a-button-label></a-button>
+      </div>
+      <label class="custom">Custom text<input data-anta id="sample-text" value="Ấ Ë̄ g̣̱ ỵ" /></label>
+      <p class="note">Magnification enlarges the actual components; horizontal scrolling is expected. Browser zoom (⌘+ / Ctrl+) also works. Fonts rerasterize at each zoom level, so check 100% too. A font may fit cleanly; the stress test intentionally pushes beyond typical labels.</p>
+      <p class="note" id="font-status" aria-live="polite">Loading reference fonts…</p>
+    </header>
+    <main id="lab" data-outlines="true">
+      <a-tabs id="component-tabs" noslide default-state="button" role="tablist" tabindex="0" aria-label="Component cases">
+        {groups.map(group => <a-tab value={group.value} role="tab"><a-tab-label>{group.label}</a-tab-label></a-tab>)}
+      </a-tabs>
+      {groups.map(group => <a-tabpanel value={group.value} role="tabpanel" tabindex="0">
+      {group.cases.map(([title, detail, markup]) => <section>
+        <div class="case-heading"><h2>{title}</h2><p>{detail}</p></div>
+        <div class="pair">
+          {(/^(Slider|Banner|Copy feedback|Calendar) ·/.test(title) ? ['previous', 'current', 'unclipped'] : ['current', 'unclipped']).map(mode => <div class="column">
+            <div class="caption">{mode === 'previous' ? 'Before this change' : mode === 'current' ? 'Current styles' : 'Overflow visible · diagnostic'}<output></output></div>
+            <div class="viewport"><div class:list={['stage', mode]}><div class="specimen">
+              {/^(Checkbox|Switch|Radio) ·/.test(title)
+                ? <ClippingChoice kind={title.split(' · ')[0].toLowerCase() as 'checkbox' | 'switch' | 'radio'} size={title.split(' · ')[1] as 'small' | 'medium' | 'large'} withHint={title.endsWith(' · with hint')} withGroupHint={title.endsWith(' · group hint')} client:only="preact" />
+                : title.startsWith('Calendar ·')
+                  ? <ClippingCalendar size={title.split(' · ')[1] as 'small' | 'medium' | 'large'} client:only="preact" />
+                  : <Fragment set:html={markup} />}
+            </div></div></div>
+          </div>)}
+        </div>
+      </section>)}
+      </a-tabpanel>)}
+    </main>
+    <footer>The diagnostic column only relaxes clipping; it is not a proposed fix. Native input painting may still clip internally. The current column uses the latest package build.</footer>
+  </body>
+</html>
+<style>
+  :global(body) { margin: 0; background: #faf9f7; color: #29252d; font-family: system-ui, sans-serif; }
+  header, main, footer { max-width: 1440px; margin-inline: auto; padding: 28px; }
+  header { padding-bottom: 12px; }
+  h1 { font: 600 32px/1.2 system-ui; margin: 8px 0 14px; }
+  p { max-width: 850px; margin: 8px 0; font-size: 14px; line-height: 1.5; }
+  .eyebrow { font-size: 12px; color: #716477; }
+  .controls { display: flex; gap: 18px; flex-wrap: wrap; align-items: end; margin-block: 20px 14px; }
+  label { display: grid; gap: 6px; font-size: 12px; }
+  select { min-width: 150px; }
+  .custom { max-width: 520px; }
+  .note { color: #716477; font-size: 12px; }
+  main { padding-top: 0; }
+  #component-tabs { margin-bottom: 20px; flex-wrap: wrap; }
+  section { border-top: 1px solid #ded8df; padding-block: 22px; }
+  .case-heading { display: flex; gap: 16px; flex-wrap: wrap; align-items: baseline; margin-bottom: 12px; }
+  h2 { font: 600 16px/1.3 system-ui; margin: 0; }
+  .case-heading p { font-size: 12px; color: #716477; margin: 0; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .pair:has(> .column:nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .column { min-width: 0; }
+  .caption { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: #716477; margin-bottom: 8px; }
+  .pair:has(> .column:nth-child(3)) .caption { min-height: 2lh; }
+  .viewport { overflow: auto; border: 1px solid #e4dfe5; background: white; min-height: 170px; }
+  .stage { zoom: var(--inspection-zoom, 4); padding: 12px; width: 304px; min-height: 48px; box-sizing: content-box; }
+  .specimen { width: 280px; }
+  .stage:has(a-slider) { width: 424px; }
+  .stage:has(a-slider) .specimen { width: 400px; }
+  :global(.stage.previous a-slider) { font-size: 15px; line-height: 20px; gap: 1px; }
+  :global(.stage.previous a-slider::part(thumb-value)) { transform: translateY(calc(-50% - var(--anta-slider-control-size) / 2 - 1px - 1lh / 2)); }
+  :global(.stage.previous a-slider[size="small"]) { font-size: 13px; line-height: 16px; }
+  :global(.stage.previous a-slider[size="large"]) { font-size: 17px; line-height: 22px; }
+  :global(.stage.previous a-slider::part(markers)),
+  :global(.stage.previous a-slider > [slot="markers"]) { font-size: 13px; line-height: 16px; }
+  :global(.stage.previous a-slider[size="small"]::part(markers)),
+  :global(.stage.previous a-slider[size="small"] > [slot="markers"]) { font-size: 12px; line-height: 14px; }
+  :global(.stage.previous a-slider[size="large"]::part(markers)),
+  :global(.stage.previous a-slider[size="large"] > [slot="markers"]) { font-size: 15px; line-height: 19px; }
+  :global(.stage.previous a-slider:state(has-markers)::part(markers)) { display: block; }
+  :global(.stage.previous a-slider > [slot="markers"]) { position: absolute; inset-inline-start: var(--slider-marker-position); inset-inline-end: calc(100% - var(--slider-marker-position)); }
+  :global(.stage.previous a-banner-message) { font-size: 14px; line-height: 20px; }
+  :global(.stage.previous [data-part="weekday"]) { font-size: 13px; line-height: 20px; }
+  :global(.stage.previous [data-size="small"] [data-part="weekday"]) { line-height: 16px; }
+  :global(.stage.previous [data-size="large"] [data-part="weekday"]) { line-height: 24px; }
+  :global(.stage [data-copy-preview] a-copy::part(feedback)) { display: inline-flex; position: static; translate: none !important; transform: none !important; }
+  :global(.stage.previous a-copy::part(feedback)) { font-size: 13px; line-height: 16px; }
+  :global(#lab[data-outlines="true"] a-slider::part(label)),
+  :global(#lab[data-outlines="true"] a-slider::part(inline-value)),
+  :global(#lab[data-outlines="true"] a-slider::part(end-value)),
+  :global(#lab[data-outlines="true"] a-slider::part(thumb-value)),
+  :global(#lab[data-outlines="true"] a-copy::part(feedback)) { outline: 0.5px solid #d92d53; }
+  :global(.stage [data-sample]) { unicode-bidi: plaintext; }
+  :global(.stage :is([data-choice-label], [data-choice-hint], [data-choice-group-label], a-radio-group-hint)) { display: block; unicode-bidi: plaintext; }
+  :global(.stage [data-multiline]) { white-space: pre-line; }
+  :global(#lab[data-outlines="true"] [data-sample]) { outline: 0.5px solid #d92d53; outline-offset: 0; }
+  :global(#lab[data-outlines="true"] :is([data-choice-label], [data-choice-hint], [data-choice-group-label], a-radio-group-hint)) { outline: 0.5px solid #d92d53; }
+  :global(.stage.unclipped [data-sample]),
+  :global(.stage.unclipped a-tag),
+  :global(.stage.unclipped a-tag-value),
+  :global(.stage.unclipped a-tag-label),
+  :global(.stage.unclipped a-banner),
+  :global(.stage.unclipped a-progress),
+  :global(.stage.unclipped a-tabs) { overflow: visible !important; }
+  :global(.stage.unclipped a-text[truncate]),
+  :global(.stage.unclipped a-title[truncate]) { display: block; -webkit-line-clamp: unset; }
+  :global(.stage.unclipped a-input::part(input)),
+  :global(.stage.unclipped a-input::part(input-label)) { overflow: visible; }
+  :global(.stage a-menu-item),
+  :global(.stage a-tabs),
+  :global(.stage a-button),
+  :global(.stage a-input-time),
+  :global(.stage a-input) { max-width: 100%; }
+  footer { font-size: 12px; color: #716477; }
+  @media (max-width: 760px) { .pair, .pair:has(> .column:nth-child(3)) { grid-template-columns: 1fr; } header, main, footer { padding-inline: 16px; } }
+</style>
+<script>
+  import '@antadesign/anta/elements'
+  const lab = document.querySelector<HTMLElement>('#lab')!
+  const text = document.querySelector<HTMLInputElement>('#sample-text')!
+  const presets: Record<string, string> = {
+    accents: 'ÁÉÎŶ Ågjpqý', vietnamese: 'ẤẴỄỘ ựợỵ gj', marks: 'A\u0302\u0301 E\u0308\u0304 g\u0323\u0331 y\u0323',
+    arabic: 'مُحَمَّد العَرَبِيَّة', devanagari: 'हिन्दी दृष्टि क्रांति', plain: 'Typography settings',
+  }
+  function measure() {
+    for (const section of lab.querySelectorAll('section')) {
+      if (!section.getClientRects().length) continue
+      for (const column of section.querySelectorAll('.column')) {
+        const specimen = column.querySelector('.specimen')!
+        const copy = specimen.querySelector('a-copy')?.shadowRoot?.querySelector<HTMLElement>('[part="feedback"]')
+        const element = (copy ?? specimen.querySelector('.anta-calendar') ?? specimen.querySelector('[data-choice-preview] a-radio-group:has(> a-radio-group-hint)') ?? specimen.querySelector('[data-choice-preview] :is(a-checkbox, a-switch, a-radio)') ?? specimen.firstElementChild) as HTMLElement
+        if (!element || element.localName === 'astro-island') continue
+        const label = copy ?? specimen.querySelector<HTMLElement>('[data-part="weekday"], [data-choice-group-label], [data-choice-label]') ?? element.shadowRoot?.querySelector<HTMLElement>('[part~="input"], [part~="segments"], [part="label"]')
+          ?? specimen.querySelector<HTMLElement>('[data-sample]')
+        const style = getComputedStyle(label ?? element)
+        const hint = specimen.querySelector<HTMLElement>('a-radio-group-hint, [data-choice-hint], [data-sample-hint]')
+        const hintStyle = hint ? getComputedStyle(hint) : null
+        column.querySelector('output')!.textContent = `${style.fontSize}/${style.lineHeight} · ${Math.round(element.offsetHeight * 10) / 10}px high${hintStyle ? ` · hint ${hintStyle.fontSize}/${hintStyle.lineHeight}` : ''}`
+        if (element.localName === 'a-slider') {
+          const root = element.shadowRoot
+          const value = [...(root?.querySelectorAll<HTMLElement>('[part~="thumb-value"], [part~="end-value"], [part~="inline-value"]') ?? [])].find(node => getComputedStyle(node).display !== 'none')
+          const marker = element.querySelector<HTMLElement>('[slot="markers"][data-sample]')
+          if (value) column.querySelector('output')!.textContent += ` · value ${getComputedStyle(value).fontSize}/${getComputedStyle(value).lineHeight}`
+          if (marker) column.querySelector('output')!.textContent += ` · markers ${getComputedStyle(marker).fontSize}/${getComputedStyle(marker).lineHeight}`
+        }
+      }
+    }
+  }
+  function update() {
+    for (const sample of lab.querySelectorAll<HTMLElement>('[data-sample]')) {
+      sample.textContent = sample.hasAttribute('data-multiline') ? `${text.value}\n${text.value}\n${text.value}` : text.value
+    }
+    for (const input of lab.querySelectorAll<HTMLElement & { value: string }>('[data-sample-input]')) input.value = text.value
+    for (const slider of lab.querySelectorAll('[data-sample-slider]')) slider.setAttribute('value-prefix', `${text.value} `)
+    for (const copy of lab.querySelectorAll('[data-sample-copy]')) {
+      copy.setAttribute('copied-label', text.value)
+      if (!copy.shadowRoot) {
+        copy.dispatchEvent(new CustomEvent('copydone', { detail: { ok: true } }))
+        // copydone creates the shadow root on first use.
+        const feedback = (copy as Element).shadowRoot?.querySelector<HTMLElement>('[part="feedback"]')
+        if (feedback?.matches(':popover-open')) feedback.hidePopover()
+        for (const animation of feedback?.getAnimations() ?? []) animation.cancel()
+      }
+      const label = copy.shadowRoot?.querySelector('[part="feedback"] > :last-child')
+      if (label) label.textContent = text.value
+    }
+    for (const input of lab.querySelectorAll<HTMLInputElement>('[data-sample-file]')) {
+      const files = new DataTransfer()
+      files.items.add(new File([''], `${text.value || 'Sample'}.txt`, { type: 'text/plain' }))
+      input.files = files.files
+    }
+    document.dispatchEvent(new CustomEvent('clipping-sample-change', { detail: text.value }))
+    requestAnimationFrame(measure)
+  }
+  document.addEventListener('clipping-preview-update', () => requestAnimationFrame(measure))
+  document.querySelector('#preset')!.addEventListener('change', event => {
+    text.value = presets[(event.target as HTMLSelectElement).value]; update()
+  })
+  text.addEventListener('input', update)
+  document.querySelector('#zoom')!.addEventListener('change', event => {
+    lab.style.setProperty('--inspection-zoom', (event.target as HTMLSelectElement).value); requestAnimationFrame(measure)
+  })
+  document.querySelector('#font')!.addEventListener('change', event => {
+    const family = (event.target as HTMLSelectElement).value
+    for (const stage of lab.querySelectorAll<HTMLElement>('.stage')) {
+      if (family === 'reference') stage.style.removeProperty('--sans-serif')
+      else stage.style.setProperty('--sans-serif', family)
+      stage.style.fontFamily = 'var(--sans-serif)'
+    }
+    requestAnimationFrame(measure)
+  })
+  const outlines = document.querySelector('#outlines')!
+  function toggleOutlines() {
+    const on = lab.dataset.outlines !== 'true'
+    lab.dataset.outlines = String(on); outlines.setAttribute('aria-pressed', String(on))
+    outlines.querySelector('a-button-label')!.textContent = `Text outlines: ${on ? 'on' : 'off'}`
+  }
+  outlines.addEventListener('click', toggleOutlines)
+  for (const stage of lab.querySelectorAll<HTMLElement>('.stage')) stage.style.fontFamily = 'var(--sans-serif)'
+  document.querySelector('#component-tabs')!.addEventListener('change', () => requestAnimationFrame(measure))
+  const params = new URL(location.href).searchParams
+  const zoom = document.querySelector<HTMLSelectElement>('#zoom')!
+  if ([...zoom.options].some(option => option.value === params.get('zoom'))) {
+    zoom.value = params.get('zoom')!
+    zoom.dispatchEvent(new Event('change'))
+  }
+  const component = [...document.querySelectorAll<HTMLElement>('#component-tabs > a-tab')].find(tab => tab.getAttribute('value') === params.get('component'))
+  component?.click()
+  update()
+  document.fonts.ready.then(() => {
+    document.querySelector('#font-status')!.textContent = document.fonts.check('14px "TT Interphases Pro Variable"')
+      ? 'Reference font loaded. Other scripts may use system fallback fonts.' : 'Reference font unavailable; the browser is using fallback fonts.'
+    measure()
+  })
+</script>

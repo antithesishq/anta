@@ -1,3 +1,6 @@
+@import './a-menu-item-typography.css';
+@import './a-menu-group-typography.css';
+
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
@@ -7,9 +10,7 @@
      selected-content slot, options, and optgroups — with no selection JS. */
   select[data-anta] {
     --native-field-block-size: 28px;
-    --native-field-padding-block: 4px;
-    --native-field-font-size: 15px;
-    --native-field-line-height: 20px;
+    --native-field-padding-block: 3px;
     --native-field-round: 4px;
     --native-field-border: var(--border-2);
     --native-select-picker-bg: light-dark(
@@ -32,7 +33,7 @@
     );
     --native-select-option-selected: var(--native-select-option-active);
     --native-select-option-padding-x: 8px;
-    --native-select-option-padding-y: 6px;
+    --native-select-option-padding-y: 5px;
 
     box-sizing: border-box;
     block-size: var(--native-field-block-size);
@@ -47,11 +48,11 @@
     color: var(--text-1);
     color-scheme: inherit;
     font-family: var(--sans-serif);
-    font-size: var(--native-field-font-size);
+    font-size: var(--font-size-medium);
     font-weight: 400;
     font-stretch: normal;
     font-style: normal;
-    line-height: var(--native-field-line-height);
+    line-height: var(--line-height-medium);
     transition: box-shadow 120ms ease;
   }
   /* Dark mode adds an inset ring to the shadow list. `light-dark()` carries
@@ -81,15 +82,15 @@
 
   select[data-anta][data-anta-size="small"] {
     --native-field-block-size: 24px;
-    --native-field-padding-block: 2px;
-    --native-field-font-size: 13px;
-    --native-field-line-height: 16px;
+
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
   }
   select[data-anta][data-anta-size="large"] {
     --native-field-block-size: 32px;
-    --native-field-padding-block: 5px;
-    --native-field-font-size: 17px;
-    --native-field-line-height: 22px;
+
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
   }
   select[data-anta][round] {
     --native-field-round: 999px;
@@ -144,6 +145,7 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+      & selectedcontent a-menu-item-label { line-height: inherit; }
       &::picker-icon {
         content: '';
         flex: none;
@@ -199,12 +201,10 @@
         color: var(--native-select-option-color);
         cursor: pointer;
         font-family: var(--sans-serif);
-        font-size: 14px;
         font-weight: 400;
         font-stretch: normal;
         font-style: normal;
         letter-spacing: normal;
-        line-height: 16px;
         text-transform: none;
         transition: background-color 280ms ease-out;
       }
@@ -235,12 +235,19 @@
         flex-direction: column;
         min-inline-size: 0;
       }
+      & option:has(> a-menu-item-text) {
+        align-items: flex-start;
+      }
       & :is(option, selectedcontent) a-menu-item-hint {
         display: block;
-        margin-block-start: 1px;
+        margin-block-start: 2px;
         color: var(--text-3);
-        font-size: 12px;
-        line-height: 15px;
+      }
+      & option:has(> a-menu-item-text) > a-icon {
+        margin-block-start: calc((1lh - var(--icon-size)) / 2);
+      }
+      & option:has(> a-menu-item-text) > a-tag {
+        translate: 0 calc((var(--_menu-item-line-height) - 100%) / 2);
       }
       & :is(option, selectedcontent) > a-icon {
         flex: none;
@@ -260,7 +267,6 @@
         gap: 1px;
         color: var(--text-5);
         font-family: var(--sans-serif);
-        font-size: 0.75em;
         font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;

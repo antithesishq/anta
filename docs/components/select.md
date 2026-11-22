@@ -919,11 +919,6 @@ With `className="my-select"`, update existing selectors as follows:
 | `.my-select > a-select-hint` | `.my-select::part(hint)` |
 | `.my-select a-select-leading` | `.my-select::part(leading)` |
 
-Existing raw compositions using `a-select-field`, `a-select-label`,
-`a-select-hint`, and `a-select-leading` retain their CSS, JSX types, and Button
-label and hint behavior. New raw compositions can use `<a-input button>` as
-shown above.
-
 ```tsx
 // Tone the selection; give the trigger a width.
 <Select tone="brand" toneScope="selected" style={{ width: '220px' }} options={OPTIONS} />

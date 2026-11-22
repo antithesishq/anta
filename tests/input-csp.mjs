@@ -131,6 +131,7 @@ before(async () => {
   assets.set('/consumer-unlayered.css', 'span{display:inline-block} a-input::part(field){border-radius:13px}')
   assets.set('/consumer-utilities.css', '@layer utilities{span{display:block} a-input::part(field){border-radius:15px}}')
   assets.set('/trailing-insets.css', '.inset-four{--input-trailing-inset:4px}.inset-zero{--input-trailing-inset:0px}.inherited-inset{--input-trailing-inset:6px}.custom-native-action{height:31px;width:111px;padding:3px}')
+  assets.set('/field-heights.css', '.custom-field{--input-field-height:40px}.custom-leading{line-height:42px}.independent-action{--_input-action-size:48px}')
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .override::part(field){background:rgb(30,40,50);border-radius:11px;box-shadow:none}.override::part(input){color:white;font-size:18px}.override::part(input)::placeholder{color:rgb(200,210,220)}.narrow{width:180px}.spacer{height:900px}.dark{color-scheme:dark;background:#111}.rtl{direction:rtl}`)
 
@@ -206,7 +207,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     const before = await field(page).boundingBox()
     await register(page,mode)
     assert.equal(await field(page).evaluate(host=>host.shadowRoot.querySelectorAll('style,link').length),0)
-    assert.equal((await control(page).boundingBox()).height,20)
+    assert.equal((await control(page).boundingBox()).height,22)
     assert.equal((await field(page).evaluate(host=>host.shadowRoot.querySelector('[part="field"]').getBoundingClientRect())).height,28)
     assert.equal((await field(page).boundingBox()).width,before.width)
     await field(page).evaluate(host=>{
@@ -220,11 +221,46 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.deepEqual(await page.evaluate(()=>mutations),[])
     await field(page).evaluate(host=>host.setAttribute('rows','3'))
     assert.equal(await control(page).evaluate(node=>node.localName),'textarea')
-    assert.equal((await snapshot(page)).height,68)
+    assert.equal((await snapshot(page)).height,72)
     await field(page).evaluate(host=>{host.removeAttribute('rows');host.setAttribute('button','');host.value=''})
     assert.equal(await control(page).evaluate(node=>node.localName),'button')
     assert.equal(await control(page).evaluate(node=>node.type),'button')
   })
+  test.fast(`${name}: shared field geometry stays stable across registration`, async t => {
+    for (const forcedColors of ['none', 'active']) {
+      const page = await pageFor(t, engine, mode, '', {forcedColors})
+      await page.evaluate(() => {
+        const css = document.createElement('link')
+        css.rel = 'stylesheet'; css.href = '/field-heights.css'; document.head.append(css)
+        return new Promise(resolve => css.onload = resolve)
+      })
+      const sizes = [['small', 24], ['medium', 28], ['large', 32]]
+      const content = ['value="Hello"', 'placeholder="Placeholder"', '', 'type="password" value="secret" placeholder="Password"', 'button value="Button value"']
+      await mount(page, sizes.map(([size, height]) => ['', 'custom-field', 'custom-leading', 'independent-action'].map(className => content.map((attrs, index) =>
+        `<a-input size="${size}" class="${className}" data-base-height="${height}" ${attrs}>${index % 2 === 0 ? '<a-input-label slot="label"><strong>Label</strong></a-input-label>' : ''}</a-input>`
+      ).join('')).join('')).join(''))
+      const before = await page.locator('#mount a-input').evaluateAll(nodes => nodes.map(host => {
+        const css = getComputedStyle(host), pseudo = getComputedStyle(host, '::after')
+        return {hostHeight: host.getBoundingClientRect().height, fieldHeight: Number.parseFloat(pseudo.height),
+          minimum: Number.parseFloat(css.getPropertyValue('--input-field-height')), textLeading: Number.parseFloat(css.lineHeight),
+          border: Number.parseFloat(pseudo.borderTopWidth) + Number.parseFloat(pseudo.borderBottomWidth),
+          base: Number(host.dataset.baseHeight), custom: host.classList.contains('custom-field'), content: pseudo.content, password: host.getAttribute('type') === 'password'}
+      }))
+      for (const value of before) {
+        assert.equal(value.minimum, value.custom ? 40 : value.base)
+        assert.ok(Math.abs(value.fieldHeight - Math.max(value.minimum, value.textLeading + value.border)) < 0.02)
+        if (value.password) {assert.match(value.content, /Password/); assert.doesNotMatch(value.content, /secret/)}
+      }
+      await register(page, mode)
+      await frames(page)
+      const after = await page.locator('#mount a-input').evaluateAll(nodes => nodes.map(host => ({hostHeight: host.getBoundingClientRect().height, fieldHeight: host.shadowRoot.querySelector('[part=field]').getBoundingClientRect().height})))
+      for (const [index, value] of after.entries()) {
+        assert.ok(Math.abs(value.hostHeight - before[index].hostHeight) < 0.02, `${forcedColors}: host ${index} jumps on registration`)
+        assert.ok(Math.abs(value.fieldHeight - before[index].fieldHeight) < 0.02, `${forcedColors}: field ${index} jumps on registration`)
+      }
+    }
+  })
+
   test.fast(`${name}: action insets preserve field sizes and contain icon buttons`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const [size,height] of [['small',24],['medium',28],['large',32]]) {
@@ -256,14 +292,15 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
         if(multiline) for(const center of ['leadingCenter','clearCenter','actionCenter']) {
           assert.ok(Math.abs(metrics[center]-metrics.firstLine)<0.1,JSON.stringify({size,direct,center,metrics}))
         }
-        const actionSize=multiline&&size==='large'?26:height-4
-        assert.deepEqual(metrics.clearSize,[actionSize,actionSize])
+        const actionSize=height-4
+        // Unitless leading can round a multiline action by one layout subpixel.
+        for(const dimension of metrics.clearSize) assert.ok(Math.abs(dimension-actionSize)<0.04)
         assert.equal(metrics.clearPadding,'2px')
-        assert.equal(metrics.top,2)
+        assert.ok(Math.abs(metrics.top-2)<0.04)
         assert.equal(metrics.trailingPadding,'2px')
-        assert.equal(metrics.end,2)
-        assert.deepEqual(metrics.actionSize,[actionSize,actionSize])
-        assert.equal(metrics.actionTop,2)
+        assert.ok(Math.abs(metrics.end-2)<0.04)
+        for(const dimension of metrics.actionSize) assert.ok(Math.abs(dimension-actionSize)<0.04)
+        assert.ok(Math.abs(metrics.actionTop-2)<0.04)
         await page.locator('[data-custom-event="clearrequest"]').click()
         assert.equal(await field(page).evaluate(host=>host.value),'')
       }
@@ -288,7 +325,7 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
   test.fast(`${name}: single-icon actions are square and content elements keep natural width`,async t=>{
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const [size,height,attrs] of [['small',24,''],['large',32,'rows="3"']]) {
-      const actionSize=attrs&&size==='large'?26:height-4
+      const actionSize=height-4
       for(const tag of ['a-button','button','a']) for(const slot of ['clear','trailing']) for(const wrapped of [false,true]) {
         const extra=tag==='button'?'data-anta':tag==='a'?'data-anta role="button" href="#after"':''
         for(const [content,iconOnly] of [['<a-icon shape="search"></a-icon>',true],['<a-icon shape="search"></a-icon><a-tooltip>Find matches</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches<a-tooltip>Help</a-tooltip>',true],['<a-icon shape="search"></a-icon>Find matches',true],['<a-icon shape="search"></a-icon><a-button-label>Find matches</a-button-label>',false],['<a-icon shape="search"></a-icon><span>Find matches</span>',false],['<a-icon shape="search"></a-icon><a-icon shape="x"></a-icon>',false],['Copy',false],['<a-button-label>Copy</a-button-label>',false]]) {
@@ -383,21 +420,21 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     await page.evaluate(()=>{const supports=CSS.supports.bind(CSS);CSS.supports=(...args)=>args[0]==='field-sizing'?false:supports(...args)})
     await register(page,mode);await mount(page,'<div class="spacer"></div><a-input multiline maxrows="3"></a-input>')
     await field(page).evaluate(host=>host.value='Line\n'.repeat(40))
-    assert.equal((await snapshot(page)).height,68)
+    assert.equal((await snapshot(page)).height,72)
     await control(page).evaluate(ta=>{ta.focus();ta.setSelectionRange(12,12);ta.scrollTop=30;window.scrollTo(0,document.body.scrollHeight)})
     const scroll=await control(page).evaluate(ta=>[window.scrollY,ta.scrollTop])
     await control(page).press('x')
     assert.deepEqual(await control(page).evaluate(ta=>[window.scrollY,ta.scrollTop]),scroll)
     await field(page).evaluate(host=>{host.removeAttribute('maxrows');host.value='One\nTwo\nThree\nFour'})
-    assert.equal((await snapshot(page)).height,88)
+    assert.equal((await snapshot(page)).height,94)
     await field(page).evaluate(host=>host.value='Short')
     assert.equal((await snapshot(page)).height,28)
     await field(page).evaluate(host=>{host.setAttribute('rows','2');host.value='Many\n'.repeat(30)})
-    assert.equal((await snapshot(page)).height,48)
+    assert.equal((await snapshot(page)).height,50)
     await field(page).evaluate(host=>host.setAttribute('maxrows','1'))
-    assert.equal((await snapshot(page)).height,48)
+    assert.equal((await snapshot(page)).height,50)
     await field(page).evaluate(host=>{const parent=host.parentElement;host.remove();host.removeAttribute('rows');host.removeAttribute('maxrows');host.value='One\nTwo\nThree';parent.append(host)})
-    assert.equal((await snapshot(page)).height,68)
+    assert.equal((await snapshot(page)).height,72)
   })
   test.fast(`${name}: submitted overrides preserve live text, falsy values, arrays, and fallback`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
@@ -879,7 +916,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
     const page=await pageFor(t,engine,mode,'',{hasTouch:true});await register(page,mode)
     await mount(page,'<a-input multiline maxrows="3"></a-input>')
     await field(page).evaluate(host=>host.value='One\nTwo\nThree\nFour\nFive')
-    assert.equal((await snapshot(page)).height,68)
+    assert.equal((await snapshot(page)).height,72)
     await field(page).evaluate(host=>host.value='Short')
     assert.equal((await snapshot(page)).height,28)
     await page.addScriptTag({url:'/Preact.js',type:'module'})
@@ -933,8 +970,8 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
         return regions.map(node=>{const b=node.getBoundingClientRect(),s=getComputedStyle(node);return {part:node.getAttribute('part')??'host',box:[b.x,b.y,b.width,b.height],font:[s.fontFamily,s.fontSize,s.lineHeight,s.fontWeight,s.fontStretch,s.fontStyle],appearance:[s.backgroundColor,s.color,s.borderRadius,s.boxShadow,s.padding,s.textOverflow]}})
       })
       const actual=await metrics(current)
-      assert.equal(actual.find(region=>region.part==='field').box[3],variant==='small'?24:variant==='large'?32:variant==='multiline'||variant==='fixed'?68:28)
-      assert.equal(actual.find(region=>region.part==='label').box[3],variant==='small'?16:variant==='large'?22:20)
+      assert.equal(actual.find(region=>region.part==='field').box[3],variant==='small'?24:variant==='large'?32:variant==='multiline'||variant==='fixed'?72:28)
+      assert.equal(actual.find(region=>region.part==='label').box[3],variant==='small'?18:variant==='large'?26:22)
       if(assets.has('/original.js')) {
         const original=await browsers.get(engine).newPage({viewport:{width:900,height:500},reducedMotion:'reduce'})
         original.setDefaultTimeout(8000)

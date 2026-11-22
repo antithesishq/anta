@@ -21,4 +21,5 @@ export const componentSuites = {
   progress: { tests: ['tests/progress-csp.mjs'] },
   tooltip: { tests: ['tests/tooltip-csp.mjs'], slow: ['tests/tooltip-package.mjs'] },
   text: { tests: ['tests/text-csp.mjs'] },
+  tag: { tests: ['tests/tag-csp.mjs'] },
 }

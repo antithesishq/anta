@@ -59,6 +59,7 @@
     gap: var(--tag-gap);
     box-sizing: border-box;
     vertical-align: middle;
+    cursor: default;
     overflow: hidden;
     white-space: nowrap;
     -webkit-user-drag: none;
@@ -82,6 +83,18 @@
     letter-spacing: 0.1ch;
     /* Counts, versions, and timers keep stable figure widths with any font. */
     font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  a-tag[interactive] { cursor: pointer; }
+
+  /* Pressed wrappers also suppress hover when the tag itself is not :active. */
+  @media (hover: hover) and (pointer: fine) {
+    a-tag[interactive]:hover:not(:active, :active *) {
+      border-color: color-mix(in oklch, var(--tag-border), var(--tag-text) 20%);
+    }
+    @media (forced-colors: active) {
+      a-tag[interactive]:hover:not(:active, :active *) { border-color: Highlight; }
+    }
   }
 
   /* Icons scale to the pill (the default 16px a-icon is too big here) and

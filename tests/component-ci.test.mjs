@@ -115,6 +115,28 @@ test('a Select stylesheet-only change selects Select and Tooltip checks', async 
   } finally {await rm(directory,{recursive:true})}
 })
 
+test('Tag CI gate selects its component and tests while skipping page-only edits', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'anta-tag-ci-'))
+  const git = (...args) => execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', ...args], {cwd: directory, encoding: 'utf8', env: {...process.env, GIT_AUTHOR_NAME: 'Test', GIT_AUTHOR_EMAIL: 'test@example.test', GIT_COMMITTER_NAME: 'Test', GIT_COMMITTER_EMAIL: 'test@example.test'}})
+  try {
+    git('init', '--quiet')
+    git('commit', '--quiet', '--allow-empty', '-m', 'Baseline')
+    const selector = workflow.jobs['select-components'].steps.find(step => step.id === 'component-tests')
+    for (const [path, selected] of [['src/elements/a-tag.css', true], ['src/components/Tag.tsx', true], ['tests/tag-csp.mjs', true], ['site/src/content/components/tag/index.mdx', false]]) {
+      const base = git('rev-parse', 'HEAD').trim(), output = join(directory, 'outputs')
+      await mkdir(join(directory, path, '..'), {recursive: true})
+      await writeFile(join(directory, path), 'Fixture')
+      git('add', path)
+      git('commit', '--quiet', '-m', path)
+      await writeFile(output, '')
+      execFileSync('bash', ['-e', '-c', selector.run], {cwd: directory, env: {...process.env, TEST_BASE_SHA: base, GITHUB_OUTPUT: output}})
+      assert.match(await readFile(output, 'utf8'), new RegExp(`^tag=${selected}$`, 'm'), path)
+    }
+    const manual = parse(await readFile(new URL('../.github/workflows/component-tests.yml', import.meta.url), 'utf8'))
+    assert.ok(manual.on.workflow_dispatch.inputs.component.options.includes('tag'))
+  } finally {await rm(directory, {recursive: true})}
+})
+
 test('manual Menu coverage retains baseline history and captures the visual matrix', async () => {
   const manual = parse(await readFile(new URL('../.github/workflows/component-tests.yml', import.meta.url), 'utf8'))
   const steps = manual.jobs.components.steps

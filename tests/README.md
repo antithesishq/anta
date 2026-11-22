@@ -7,11 +7,13 @@ component matrices run separately.
 pnpm test
 pnpm test:components --component select,tooltip
 pnpm test:typography
+pnpm test:tag
 ```
 
 Typography checks cover independent text and hint overrides across sizes,
 themes, nested color scopes, unitless leading through nested font sizes, and
-imports with or without the optional reset.
+imports with or without the optional reset. Tag checks cover cursor and border
+states, touch input, CSS-only imports, and React/Preact attribute updates.
 
 Browser checks use the site's Playwright installation. Install its browsers with:
 

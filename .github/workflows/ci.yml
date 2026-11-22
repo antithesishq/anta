@@ -55,6 +55,7 @@ jobs:
           TEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -z "$TEST_BASE_SHA" ]; then
+            echo 'tag=true' >> "$GITHUB_OUTPUT"
             echo 'typography=true' >> "$GITHUB_OUTPUT"
             echo 'value-ownership=true' >> "$GITHUB_OUTPUT"
             echo 'selection=true' >> "$GITHUB_OUTPUT"
@@ -78,6 +79,17 @@ jobs:
             echo 'toaster=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            src/components/{Tag,Button,Icon}.tsx 'src/elements/a-tag.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
+            src/{jsx-runtime,anta_helpers,button-content,general_types,index,bundle}.ts src/elements/index.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            tests/tag-csp.mjs 'tests/component*.mjs' scripts/build-bundle.mjs \
+            .github/workflows/{ci,component-tests}.yml package.json pnpm-lock.yaml pnpm-workspace.yaml site/package.json)
+          if [ -n "$changed" ]; then
+            echo 'tag=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'tag=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-button.*' 'src/elements/a-tab*' 'src/elements/a-input*' \

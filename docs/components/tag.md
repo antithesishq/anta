@@ -174,7 +174,8 @@ export default function Demo() {
 ## Interactive tags
 
 `Tag` displays content. Wrap it in an anchor when it links to a destination;
-the anchor provides keyboard focus and activation.
+the anchor provides keyboard focus and activation. Add `interactive` for a
+pointer cursor and a stronger border on hover.
 
 ```tsx
 import { Tag } from '@antadesign/anta/bundle'
@@ -182,7 +183,7 @@ import { Tag } from '@antadesign/anta/bundle'
 export default function Demo() {
   return (
     <a href="/tag/#size">
-      <Tag tone="info" icon="external-link" label="Tag sizes" />
+      <Tag interactive tone="info" icon="external-link" label="Tag sizes" />
     </a>
   )
 }
@@ -237,6 +238,7 @@ export default function Demo() {
 | `allcaps?` | boolean | — | Displays the content in uppercase. The original text remains unchanged. |
 | `icon?` | IconShape | — | Adds a decorative icon before the text. |
 | `iconTrailing?` | IconShape | — | Adds a decorative icon after the text. |
+| `interactive?` | boolean | — | Shows a pointer cursor and a stronger hover border when the whole tag is actionable. Pressing restores the resting border. |
 | `label?` | string | — | Displays a short status or a key before `value`. A label paired with a value uses a heavier weight; a label on its own uses the default weight. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' | secondary | Sets the emphasis: solid fill, subtle fill, or outline. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Sets the tag's dimensions. |

@@ -274,11 +274,12 @@ export default function Demo() {
 ## Interactive tags
 
 `Tag` displays content. Wrap it in an anchor when it links to a destination;
-the anchor provides keyboard focus and activation.
+the anchor provides keyboard focus and activation. Add `interactive` for a
+pointer cursor and a stronger border on hover.
 
 <Preview>
   <a href="/tag/#size">
-    <Tag tone="info" icon="external-link" label="Tag sizes" />
+    <Tag interactive tone="info" icon="external-link" label="Tag sizes" />
   </a>
 </Preview>
 
@@ -288,7 +289,7 @@ import { Tag } from '@antadesign/anta/bundle'
 export default function Demo() {
   return (
     <a href="/tag/#size">
-      <Tag tone="info" icon="external-link" label="Tag sizes" />
+      <Tag interactive tone="info" icon="external-link" label="Tag sizes" />
     </a>
   )
 }

@@ -90,7 +90,7 @@
   /* Pressed wrappers also suppress hover when the tag itself is not :active. */
   @media (hover: hover) and (pointer: fine) {
     a-tag[interactive]:hover:not(:active, :active *) {
-      border-color: color-mix(in oklch, var(--tag-border), var(--tag-text) 20%);
+      border-color: color-mix(in oklch, var(--tag-border), var(--tag-text) 50%);
     }
     @media (forced-colors: active) {
       a-tag[interactive]:hover:not(:active, :active *) { border-color: Highlight; }

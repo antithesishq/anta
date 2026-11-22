@@ -84,74 +84,6 @@ font-specific axis settings. They are examples of application font setup and
 are not imported by the published themes. Use your own font stylesheet and
 font sources in your application.
 
-<a id="text-and-hint-sizes"></a>
-
-## Text and hint sizes
-
-`tokens.css` defines independent font-size and line-height scales for main text
-and hints. Matching controls use these values without requiring `reset.css`.
-The root text default also uses `--font-size-medium`.
-Use length values such as `px` or `rem` for these variables.
-
-| Size | Main font size | Main line height | Hint font size | Hint line height |
-| --- | --- | --- | --- | --- |
-| Small | `--font-size-small`: 13px | `--line-height-small`: 18px | `--font-size-hint-small`: 12px | `--line-height-hint-small`: 16px |
-| Medium | `--font-size-medium`: 15px | `--line-height-medium`: 22px | `--font-size-hint-medium`: 14px | `--line-height-hint-medium`: 20px |
-| Large | `--font-size-large`: 17px | `--line-height-large`: 26px | `--font-size-hint-large`: 16px | `--line-height-hint-large`: 24px |
-
-Main text also provides `--font-size-micro` (11px) and `--line-height-micro`
-(15px). Tags map small, medium, and large to main micro/tiny/small font sizes
-(11/12/13px) and micro/small/medium line heights (15/18/22px). Tag padding
-remains component-owned to preserve pill heights.
-
-Compact primary text also has `--font-size-tiny` (12px) and
-`--line-height-tiny` (16px). Progress labels and Slider markers map their
-small, medium, and large variants to tiny, small, and medium text. Their
-12/16, 13/18, and 15/22 pairs remain independent of the hint scale.
-
-MenuGroup and native Select group captions use tiny text at every field
-size. Menu Item labels and native Select options use `--font-size-menu-medium`
-(14px); their hints use the independent `--font-size-menu-hint-medium` (12px).
-These menu font sizes stay fixed across Select field sizes. Menu labels and
-wrappers derive leading with `calc(20em / 14)`; hints use `calc(16em / 12)`.
-The default pairs are 14/20px and 12/16px, independent of main text and control
-hints. Menu separator captions use the menu label font size minus 1px.
-
-The reset makes inline code 1px smaller than its surrounding text. Code blocks
-have an independent pair: `--font-size-code-block-medium` (13px) and
-`--line-height-code-block-medium` (20px). Code inside them inherits the block's
-typography. Changing main text sizes leaves code-block typography unchanged.
-
-Override either scale on the root or an application container. Changing hint
-typography leaves main text unchanged:
-
-```css
-.settings {
-  --font-size-hint-medium: 13px;
-  --line-height-hint-medium: 18px;
-}
-```
-
-Button, Tabs, Steps, Slider labels and values, Input, InputTime, Text, Checkbox, Switch, and Radio options
-use the main scale. Field, choice-control, RadioGroup, and Steps hints use the
-hint scale. Tooltip uses medium hint typography. Select, InputDate, and
-InputAutocomplete inherit their field styles from Input. Native text inputs,
-textareas, file inputs, and Select fields use the main scale as well.
-
-Input defines `--input-field-height` on its host (24, 28, and 32px for small,
-medium, and large). Both its pre-registration fallback and registered field
-use this minimum height. The fallback also accommodates larger inherited text
-leading. This field geometry remains independent of typography and action-button
-sizing.
-
-RadioGroup labels follow the group's size, matching Input labels. Plain Card
-content, Expander details, and Banner messages use medium text. Copy feedback
-and Calendar weekday labels use small text. Tags combine main font-size and
-line-height steps; Menu Item uses its independent menu typography.
-For an individual component, override `font-size` and `line-height` on its
-styled element or exposed part. Geometry such as padding and control dimensions
-remains component-specific.
-
 <a id="heading-sizes"></a>
 
 ## Heading sizes and text compensation
@@ -483,3 +415,24 @@ Tint held on the selected row — a % of the item color (--text-2).
 ### Progress
 
 Every color is a role token; Progress defines none of its own. Track = --bg-4, border = --border-4, the fill indicator = --bg-5, the label = --text-2, and the right-aligned hint = --text-3. Named tones swap in the matching -{tone} role variant (so dark mode is free), and the fill’s right-edge fades from --bg-5 to --border-4. Follows the Text and Background & Borders panels live.
+
+<a id="text-and-hint-sizes"></a>
+
+## Text and hint sizes
+
+Main text and supporting hints use independent scales. Each pair below is
+font size / line height, in pixels.
+
+| Size | Main text | Hint |
+| --- | --- | --- |
+| Micro | 11 / 15 | — |
+| Tiny | 12 / 16 | — |
+| Small | 13 / 18 | 12 / 16 |
+| Medium | 15 / 22 | 14 / 20 |
+| Large | 17 / 26 | 16 / 24 |
+
+Menus and code blocks keep separate typography: menu labels use 14 / 20,
+menu hints use 12 / 16, and code blocks use 13 / 20.
+
+For an individual component, set `font-size` and `line-height` on its styled
+element or exposed part.

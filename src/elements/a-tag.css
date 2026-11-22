@@ -10,8 +10,8 @@
 
      Sizing is intrinsic — no fixed height. Like `<a-button>`, the pill's
      height falls out of `line-height` + `padding-block` + the border, so
-     the text is never clipped and a consumer can retune the padding
-     tokens without fighting a hard height.
+     a consumer can adjust text leading and padding together to preserve
+     the pill's height.
 
      Color is driven by two axes: `tone` (neutral / brand / info / success /
      warning / critical, or any literal CSS color) and `priority`
@@ -74,7 +74,7 @@
     font-family: var(--sans-serif);
     font-weight: 450;
     font-size: var(--font-size-tiny);
-    line-height: 18px;
+    line-height: var(--line-height-small);
     /* Normal (mixed) case is the default. Theme-free tags use deliberately
        open tracking; reference themes can tune it for their chosen font. */
     text-transform: none;
@@ -218,14 +218,14 @@
     line-height: var(--line-height-micro);
   }
 
-  /* Larger leading replaces 1px of padding on each side. */
+  /* Reclaim padding for leading while preserving the large pill's height. */
   a-tag[size="large"] {
-    --tag-padding-block: 1.5px;
+    --tag-padding-block: 0.5px;
     --tag-padding-inline: 8.5px;
     --tag-icon-size: 15px;
 
     font-size: var(--font-size-small);
-    line-height: 20px;
+    line-height: var(--line-height-medium);
   }
 
   /* Uppercase reads larger, so reduce the regular size by 1px. */

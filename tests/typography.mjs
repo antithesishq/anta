@@ -323,9 +323,10 @@ for (const engine of engines) {
         fixture.innerHTML = ['small', 'medium', 'large'].map(size => `<article><a-tag size="${size}">Tag</a-tag><a-tag size="${size}" allcaps>Tag</a-tag></article>`).join('')
         document.body.append(fixture)
       })
-      const measure = () => page.locator('#tags article').evaluateAll(articles => articles.map(article => [...article.querySelectorAll('a-tag')].map(tag => ({font: getComputedStyle(tag).fontSize, height: tag.getBoundingClientRect().height}))))
+      const measure = () => page.locator('#tags article').evaluateAll(articles => articles.map(article => [...article.querySelectorAll('a-tag')].map(tag => ({font: getComputedStyle(tag).fontSize, line: getComputedStyle(tag).lineHeight, height: tag.getBoundingClientRect().height}))))
       const before = await measure()
       assert.deepEqual(before.map(tags => tags.map(tag => tag.font)), [['11px', '10px'], ['12px', '11px'], ['13px', '12px']])
+      assert.deepEqual(before.map(tags => tags.map(tag => tag.line)), [['15px', '15px'], ['18px', '18px'], ['22px', '22px']])
       await page.locator('#tags').evaluate(fixture => {
         for (const [index, size] of ['micro', 'tiny', 'small'].entries()) fixture.style.setProperty(`--font-size-${size}`, `${12 + index * 2}px`)
       })
@@ -336,6 +337,13 @@ for (const engine of engines) {
       const leadingOverride = await measure()
       assert.deepEqual(leadingOverride.map(tags => tags.map(tag => tag.height)), after.map((tags, index) => tags.map(tag => tag.height + (index === 0 ? 2 : 0))))
       assert.deepEqual(leadingOverride.map(tags => tags.map(tag => tag.font)), after.map(tags => tags.map(tag => tag.font)))
+      await page.locator('#tags').evaluate(fixture => {
+        fixture.style.setProperty('--line-height-small', '20px')
+        fixture.style.setProperty('--line-height-medium', '24px')
+      })
+      const allLeadingOverrides = await measure()
+      assert.deepEqual(allLeadingOverrides.map(tags => tags.map(tag => tag.line)), [['17px', '17px'], ['20px', '20px'], ['24px', '24px']])
+      assert.deepEqual(allLeadingOverrides.map(tags => tags.map(tag => tag.height)), after.map(tags => tags.map(tag => tag.height + 2)))
     } finally {await page.close()}
   })
 

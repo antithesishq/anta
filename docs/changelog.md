@@ -56,7 +56,7 @@ changes are not listed.
 
 - [Steps](/steps/) labels match Tab line heights, and hints match Input typography in every theme. Antithesis removes the label-to-hint gap.
 
-- [Tag](/tag/) labels use 15/18/20px line heights for small/medium/large, with reduced vertical padding to preserve tag heights.
+- [Tag](/tag/) labels use shared micro/small/medium line heights (15/18/22px) for small/medium/large Tags. Reduced vertical padding preserves tag heights.
 
 - [Input](/input/) and [Select](/select/) use 18/22/26px text line heights. Multiline Inputs use 3px vertical padding to align their first line with single-line fields.
 

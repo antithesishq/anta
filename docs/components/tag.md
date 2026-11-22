@@ -52,13 +52,13 @@ panel instead of the page canvas.
 ## Size
 
 Small, medium, and large Tags use the shared main micro, tiny, and small font
-sizes (11, 12, and 13px). Small Tags also use the shared micro line height (15px).
-Larger Tag line heights and padding preserve pill heights.
+sizes (11, 12, and 13px), with shared micro, small, and medium line heights
+(15, 18, and 22px). Vertical padding is 0, 0.5, and 0.5px per side to preserve
+pill heights.
 
 Three sizes — `small` (16px), `medium` (20px, the default — emits no
-attribute), and `large` (24px) — matching `Button`. Height is intrinsic
-(line-height + padding rather than a fixed value), so the text is never
-clipped.
+attribute), and `large` (24px). Height is intrinsic
+(line-height + padding rather than a fixed value).
 
 ```tsx
 <Tag allcaps tone="info" size="small" label="Small" />
@@ -134,7 +134,7 @@ same size.
 | `iconTrailing?` | IconShape | — | Trailing icon shape. Renders last, after the value. |
 | `label?` | string | — | A short "key" shown before the value. When paired with `value` it renders bold (weight 600), same color. On its own (no `value`) it's treated as the tag's primary text and keeps the default styling. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' | secondary | Emphasis level. `secondary` (the default) is the subtle alpha-tint fill; `primary` is a solid fill with white text; `tertiary` is a transparent outline. Omitting it (or passing `'secondary'`) renders the default and emits no DOM attribute. |
-| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. `small` = 16px tall, `medium` = 20px, `large` = 24px (matching `Button`). Omit the attribute or pass `'medium'` for the default — both render identically and emit no DOM attribute. |
+| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. `small` = 16px tall, `medium` = 20px, `large` = 24px. Omit the attribute or pass `'medium'` for the default — both render identically and emit no DOM attribute. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Each tone renders the secondary tag style: `--text-3-{tone}` text over an alpha tint of the tone's hue (fill + a slightly stronger hairline border). A custom color is tinted the same way, with the text deepened to a readable foreground. `'neutral'` (the default) is the gray tag — the same as omitting `tone`. |
 | `value?` | string | — | The tag's primary text — a status, count, version, duration, etc. Rendered in the default color and weight, with no divider from the label; the color + weight contrast does the separating. |
 

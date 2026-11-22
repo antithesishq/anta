@@ -26,8 +26,8 @@ export interface TagProps extends BaseProps {
    *  the default and emits no DOM attribute.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary'
-  /** Size variant. `small` = 16px tall, `medium` = 20px, `large` = 24px
-   *  (matching `Button`). Omit the attribute or pass `'medium'` for the
+  /** Size variant. `small` = 16px tall, `medium` = 20px, `large` = 24px.
+   *  Omit the attribute or pass `'medium'` for the
    *  default — both render identically and emit no DOM attribute.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
@@ -58,9 +58,9 @@ export interface TagProps extends BaseProps {
  * Styling notes (`a-tag.css` ships comment-free):
  * - Sizing is intrinsic — no fixed height, like `<a-button>`: height falls
  *   out of `line-height` + `padding-block` + the 0.5px border (the base
- *   1.5px block padding compensates the half-pixel border to keep the pill
- *   at 20px), so text is never clipped and the padding tokens can be
- *   retuned freely. An edge icon trims ~2px off its side's padding
+ *   0.5px block padding and 18px leading keep the medium pill at 20px).
+ *   Adjust leading and padding together to preserve pill height.
+ *   An edge icon trims ~2px off its side's padding
  *   (optical), and icons scale to `--tag-icon-size`.
  * - Color comes from the theme-aware semantic tokens and `light-dark()`; the
  *   hairline border and the segment divider both

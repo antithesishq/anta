@@ -10,8 +10,8 @@
 
      Sizing is intrinsic — no fixed height. Like `<a-button>`, the pill's
      height falls out of `line-height` + `padding-block` + the border, so
-     the text is never clipped and a consumer can retune the padding
-     tokens without fighting a hard height.
+     a consumer can adjust text leading and padding together to preserve
+     the pill's height.
 
      Color is driven by two axes: `tone` (neutral / brand / info / success /
      warning / critical, or any literal CSS color) and `priority`
@@ -47,9 +47,8 @@
     --tag-border: light-dark(color-mix(in oklch, var(--tag-tint) 15%, transparent), color-mix(in oklch, var(--tag-tint) 25%, transparent));
     --tag-separator: color-mix(in oklch, var(--tag-text) 30%, transparent);
 
-    /* 1.5px top/bottom — the extra 0.5px each side compensates for the
-       0.5px (vs 1px) border, keeping the pill at its original 20px height. */
-    --tag-padding-block: 1.5px;
+    /* Reclaim vertical padding for label leading without growing the pill. */
+    --tag-padding-block: 0.5px;
     --tag-padding-inline: 6.5px;
     --tag-icon-size: 13px;
     --tag-label-weight: 600;
@@ -74,8 +73,8 @@
 
     font-family: var(--sans-serif);
     font-weight: 450;
-    font-size: 12px;
-    line-height: 16px;
+    font-size: var(--font-size-tiny);
+    line-height: var(--line-height-small);
     /* Normal (mixed) case is the default. Theme-free tags use deliberately
        open tracking; reference themes can tune it for their chosen font. */
     text-transform: none;
@@ -211,38 +210,34 @@
   }
 
   a-tag[size="small"] {
-    --tag-padding-block: 0.5px;
+    --tag-padding-block: 0px;
     --tag-padding-inline: 4.5px;
     --tag-icon-size: 11px;
 
-    font-size: 11px;
-    line-height: 14px;
+    font-size: var(--font-size-micro);
+    line-height: var(--line-height-micro);
   }
 
-  /* Large — 24px tall (line-height 18 + 2×2.5 padding + 2×0.5 border),
-     on par with Button's large. */
+  /* Reclaim padding for leading while preserving the large pill's height. */
   a-tag[size="large"] {
-    --tag-padding-block: 2.5px;
+    --tag-padding-block: 0.5px;
     --tag-padding-inline: 8.5px;
     --tag-icon-size: 15px;
 
-    font-size: 13px;
-    line-height: 18px;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-medium);
   }
 
-  /* All-caps opt-in: switch to the uppercase treatment. Uppercase reads
-     larger than mixed case at the same px, so each size steps down
-     1px from its normal-case default (medium 12→11; small 10, large 12
-     via the combos below). */
+  /* Uppercase reads larger, so reduce the regular size by 1px. */
   a-tag[allcaps] {
-    font-size: 11px;
+    font-size: calc(var(--font-size-tiny) - 1px);
     text-transform: uppercase;
   }
   a-tag[size="small"][allcaps] {
-    font-size: 10px;
+    font-size: calc(var(--font-size-micro) - 1px);
   }
   a-tag[size="large"][allcaps] {
-    font-size: 12px;
+    font-size: calc(var(--font-size-small) - 1px);
   }
 
   /* Tones are intentionally not re-created in forced colors: a status still

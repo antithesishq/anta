@@ -9,23 +9,26 @@
      because a document part rule outranks a shadow inline declaration. */
 
   a-input {
-    --_fs: 15px;
-    --_pad-block: 4px;
-    --_lh: 20px;
+    --input-field-height: 28px;
+    --_pad-block: 3px;
     --_input-action-size: 24px;
 
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
+    row-gap: 2px;
     outline: none;
   }
 
   a-input::part(label) {
     display: none;
+    /* Keep the label-to-field gap at 4px while hints sit 2px below the field. */
+    margin-block-end: 2px;
     color: var(--input-label);
     font-family: var(--sans-serif);
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: inherit;
+    line-height: inherit;
     font-weight: 500;
   }
 
@@ -36,19 +39,17 @@
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    min-height: var(--_input-measured-min-height, 28px);
+    min-height: var(--_input-measured-min-height, var(--input-field-height));
     background: var(--input-bg);
     border-radius: 4px;
     box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
     transition: box-shadow 120ms ease;
   }
   a-input:state(multiline)::part(field) { align-items: stretch; }
-  a-input[size="small"] { --_fs: 13px; --_lh: 16px; --_input-action-size: 20px; }
-  a-input[size="large"] { --_fs: 17px; --_lh: 22px; --_input-action-size: 28px; }
+  a-input[size="small"] { --input-field-height: 24px; --_input-action-size: 20px; font-size: var(--font-size-small); line-height: var(--line-height-small); }
+  a-input[size="large"] { --input-field-height: 32px; --_input-action-size: 28px; font-size: var(--font-size-large); line-height: var(--line-height-large); }
   /* Multiline actions fit the padded first text line, including their inset. */
-  a-input:state(multiline) { --_input-action-size: calc(var(--_lh) + var(--_pad-block) * 2 - 4px); }
-  a-input[size="small"]::part(field) { min-height: var(--_input-measured-min-height, 24px); }
-  a-input[size="large"]::part(field) { min-height: var(--_input-measured-min-height, 32px); }
+  a-input:state(multiline) { --_input-action-size: calc(1lh + var(--_pad-block) * 2 - 4px); }
   a-input[round]::part(field) { border-radius: var(--input-round, 999px); }
 
   @media (hover: hover) and (pointer: fine) {
@@ -80,21 +81,22 @@
     font-stretch: normal;
     font-style: normal;
     font-variation-settings: inherit;
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: inherit;
+    line-height: inherit;
     font-weight: 400;
     -webkit-appearance: none;
             appearance: none;
   }
   a-input:state(multiline)::part(input) {
     resize: none;
+    /* Match the centered first line of a single-line field at every size. */
     padding-block: var(--_pad-block);
     overflow-y: auto;
   }
   a-input:state(button)::part(input) { align-self: stretch; text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
   a-input:state(button):not(:state(filled))::part(input) { color: var(--input-placeholder); }
   a-input[maxrows]:not([rows]):state(multiline)::part(input) {
-    max-height: calc(var(--_lh) * var(--_maxrows) + var(--_pad-block) * 2);
+    max-height: calc(1lh * var(--_maxrows) + var(--_pad-block) * 2);
   }
   a-input:not(:state(button))::part(input)::placeholder { color: var(--input-placeholder); opacity: 1; }
   a-input::part(input):disabled { cursor: not-allowed; }
@@ -115,8 +117,8 @@
   a-input::part(trailing) {
     display: none;
     color: var(--input-adornment);
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: inherit;
+    line-height: inherit;
     font-stretch: var(--_input-adornment-font-stretch, normal);
   }
   a-input[dim-actions]::part(leading),
@@ -145,7 +147,7 @@
 
   a-input:state(multiline):state(filled)::part(clear) {
     align-self: flex-start;
-    height: calc(var(--_lh) + var(--_pad-block) * 2);
+    height: calc(1lh + var(--_pad-block) * 2);
   }
 
   a-input::part(hint) {
@@ -155,8 +157,17 @@
     padding-inline-start: 1px;
     color: var(--input-hint);
     font-family: var(--sans-serif);
-    font-size: calc(var(--_fs) - 1px);
-    line-height: calc(var(--_lh) - 2px);
+    font-size: var(--font-size-hint-medium);
+    line-height: var(--line-height-hint-medium);
+  }
+
+  a-input[size="small"]::part(hint) {
+    font-size: var(--font-size-hint-small);
+    line-height: var(--line-height-hint-small);
+  }
+  a-input[size="large"]::part(hint) {
+    font-size: var(--font-size-hint-large);
+    line-height: var(--line-height-hint-large);
   }
 
   /* Token surface — all literal/role-pointed values live here so external CSS
@@ -165,7 +176,7 @@
      uses the global `--focus-ring` token directly (it themes itself — no per-input
      token needed); the error border is the one literal with light and dark values
      selected by `light-dark()`. Sizes set the field
-     height plus a per-size type scale (small 13/16 · medium 15/20 · large 17/22)
+     height plus the shared per-size typography (13/18 · 15/22 · 17/26)
      and icon size (14/16/18); the field min-height still anchors the box to the
      same-size Button. */
   /* Pre-upgrade skeleton. The `.field` box, the `<input>`, and the slotted
@@ -177,17 +188,14 @@
      dropped once `:defined`.
 
      Composed by region:
-       • The host mirrors the defined shadow `:host` (single-column grid, 4px
-         row gap) so it's the same full-width block. Without this a custom
-         element is `display: inline` until upgraded, ignoring `width: 100%` and
-         collapsing to the label width.
+       • Shared host rules already provide the single-column grid and type.
        • The `::after` stands in for the shadow `.field`: same min-height and
          inset border, and the same text as the shadow control would show — the
          `value` in the text color when filled (the Select trigger's chosen
          label, an InputDate's date, a controlled input's text), otherwise the
          `placeholder` in the placeholder color. It mirrors the control's
          per-size type scale, weight, feature settings, 7px inset, and readonly
-         ellipsis, so upgrade is a pure content swap with no reflow.
+         ellipsis, preserving single-line field geometry on upgrade.
        • The in-field adornments (leading, trailing, clear) are hidden until
          upgrade — before the shadow exists they don't project into the field
          and would stack as their own rows. The hint is hidden too: a `::after`
@@ -196,11 +204,6 @@
          with the rest of the shadow content on `:defined`. The label stays: it
          renders above the box, which is where it belongs.
          These rules also cover older wrappers with inline slot layout. */
-  a-input:not(:defined) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
-  }
   a-input:not(:defined) > [slot="leading"],
   a-input:not(:defined) > [slot="trailing"],
   a-input:not(:defined) > [slot="clear"],
@@ -216,26 +219,28 @@
      both the string and node label forms track.) */
   a-input:not(:defined) > [slot="label"] {
     display: block;
+    margin-block-end: 2px;
     color: var(--input-label);
     font-family: var(--sans-serif);
-    font-size: 15px;
-    line-height: 20px;
+    font-size: inherit;
+    line-height: inherit;
     font-weight: 500;
   }
-  a-input[size="small"]:not(:defined) > [slot="label"] { font-size: 13px; line-height: 16px; }
-  a-input[size="large"]:not(:defined) > [slot="label"] { font-size: 17px; line-height: 22px; }
   a-input:not(:defined)::after {
     content: attr(placeholder);
     display: block;
-    min-height: 28px;
-    line-height: 28px;
+    box-sizing: border-box;
+    /* line-height reads the host's leading; min-height uses the resulting
+       field line box, reserving space even when its text is empty. */
+    min-height: 1lh;
+    line-height: max(1lh, var(--input-field-height));
     padding-inline: 7px;
     border-radius: 4px;
     background: var(--input-bg);
     box-shadow: inset 0 0 0 var(--input-border-width) var(--input-rest-border);
     color: var(--input-placeholder);
     font-family: var(--sans-serif);
-    font-size: 15px;
+    font-size: inherit;
     font-weight: 400;
     font-stretch: normal;
     font-style: normal;
@@ -250,10 +255,12 @@
     content: attr(value);
     color: var(--input-text);
   }
-  a-input[size="small"]:not(:defined)::after { min-height: 24px; line-height: 24px; font-size: 13px; }
-  a-input[size="large"]:not(:defined)::after { min-height: 32px; line-height: 32px; font-size: 17px; }
   @media (forced-colors: active) {
-    a-input:not(:defined)::after { border: 1px solid ButtonBorder; }
+    a-input:not(:defined)::after {
+      border: 1px solid ButtonBorder;
+      min-height: calc(1lh + 2px);
+      line-height: max(1lh, calc(var(--input-field-height) - 2px));
+    }
   }
   a-input[round]:not(:defined)::after { border-radius: var(--input-round, 999px); }
 
@@ -337,16 +344,15 @@
   a-input:state(multiline):has(> [slot="leading"])::part(leading),
   a-input:state(multiline):has(> [slot="trailing"])::part(trailing) {
     align-self: flex-start;
-    height: calc(var(--_lh) + var(--_pad-block) * 2);
+    height: calc(1lh + var(--_pad-block) * 2);
   }
 
   /* Anta actions fit the field height; labeled actions keep their natural width.
      Unmarked native buttons and other custom content keep their own sizing. */
   a-input > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
   a-input > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
-    --_fs: inherit;
-    --_lh: inherit;
-    --_pb: 0px;
+    font-size: inherit;
+    line-height: inherit;
     box-sizing: border-box;
     width: auto;
     min-width: var(--_input-action-size);
@@ -476,9 +482,7 @@
   ),
   textarea[data-anta] {
     --native-field-block-size: 28px;
-    --native-field-padding-block: 4px;
-    --native-field-font-size: 15px;
-    --native-field-line-height: 20px;
+    --native-field-padding-block: 3px;
     --native-field-round: 4px;
     --native-field-border: var(--border-2);
 
@@ -496,11 +500,11 @@
     caret-color: currentColor;
     color-scheme: inherit;
     font-family: var(--sans-serif);
-    font-size: var(--native-field-font-size);
+    font-size: var(--font-size-medium);
     font-weight: 400;
     font-stretch: normal;
     font-style: normal;
-    line-height: var(--native-field-line-height);
+    line-height: var(--line-height-medium);
     transition: box-shadow 120ms ease;
   }
   /* Let `rows` or the author set height; the field size remains the minimum.
@@ -599,9 +603,7 @@
      entirely native. */
   input[data-anta][type="file"] {
     --native-file-block-size: 28px;
-    --native-file-padding-block: 4px;
-    --native-file-font-size: 15px;
-    --native-file-line-height: 20px;
+    --native-file-padding-block: 3px;
 
     box-sizing: border-box;
     min-block-size: var(--native-file-block-size);
@@ -611,11 +613,23 @@
     color: var(--text-2);
     color-scheme: inherit;
     font-family: var(--sans-serif);
-    font-size: var(--native-file-font-size);
+    font-size: var(--font-size-medium);
     font-weight: 400;
     font-stretch: normal;
     font-style: normal;
-    line-height: var(--native-file-line-height);
+    line-height: var(--line-height-medium);
+  }
+  input[data-anta][type="file"][data-anta-size="small"] {
+    --native-file-block-size: 24px;
+
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
+  }
+  input[data-anta][type="file"][data-anta-size="large"] {
+    --native-file-block-size: 32px;
+
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
   }
   input[data-anta][type="file"]::file-selector-button {
     box-sizing: border-box;
@@ -631,7 +645,7 @@
     font-variation-settings: inherit;
     font-weight: 450;
     letter-spacing: 0.05ch;
-    line-height: var(--native-file-line-height);
+    line-height: inherit;
     cursor: pointer;
     transition: color 150ms ease-out, background-color 150ms ease-out;
   }
@@ -699,9 +713,9 @@
   )[data-anta-size="small"],
   textarea[data-anta][data-anta-size="small"] {
     --native-field-block-size: 24px;
-    --native-field-padding-block: 2px;
-    --native-field-font-size: 13px;
-    --native-field-line-height: 16px;
+    --native-field-padding-block: 3px;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
   }
   input[data-anta]:is(
     :not([type]),
@@ -720,9 +734,9 @@
   )[data-anta-size="large"],
   textarea[data-anta][data-anta-size="large"] {
     --native-field-block-size: 32px;
-    --native-field-padding-block: 5px;
-    --native-field-font-size: 17px;
-    --native-field-line-height: 22px;
+    --native-field-padding-block: 3px;
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
   }
   input[data-anta]:is(
     :not([type]),

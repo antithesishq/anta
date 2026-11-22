@@ -94,6 +94,28 @@ font sources in your application.
 
 </Disclosure>
 
+<Disclosure title="Heading sizes and text compensation" id="heading-sizes">
+
+Title, Expander summaries, native disclosure summaries, and raw headings share
+six heading levels. Dialog headers use level 4. Each level uses
+`--font-size-heading-N` and `--line-height-heading-N`, where `N` is 1 through 6.
+
+| Level | Font size | Line height |
+| --- | --- | --- |
+| 1 | 28px | 34px |
+| 2 | 24px | 30px |
+| 3 | 20px | 26px |
+| 4 | 17px | 24px |
+| 5 | 15px | 22px |
+| 6 | 13px | 18px |
+
+Button and Tabs share label bottom-padding compensation through
+`--text-compensation-small` (0.5px), `--text-compensation-medium` (1px), and
+`--text-compensation-large` (1.5px). Their outer padding absorbs this amount to
+retain control heights. Buttons inside field action slots disable compensation.
+
+</Disclosure>
+
 <Disclosure title="Color seeds" id="color-seeds" data-no-search>
 
 In your custom theme, override any of Anta's six seed color tokens to recolor
@@ -136,5 +158,26 @@ The lab below shows the derivation live. For each toned component, the shipped D
 <div data-no-search>
   <ThemingLab client:load />
 </div>
+
+</Disclosure>
+
+<Disclosure title="Text and hint sizes" id="text-and-hint-sizes">
+
+Main text and supporting hints use independent scales. Each pair below is
+font size / line height, in pixels.
+
+| Size | Main text | Hint |
+| --- | --- | --- |
+| Micro | 11 / 15 | — |
+| Tiny | 12 / 16 | — |
+| Small | 13 / 18 | 12 / 16 |
+| Medium | 15 / 22 | 14 / 20 |
+| Large | 17 / 26 | 16 / 24 |
+
+Menus and code blocks keep separate typography: menu labels use 14 / 20,
+menu hints use 12 / 16, and code blocks use 13 / 20.
+
+For an individual component, set `font-size` and `line-height` on its styled
+element or exposed part.
 
 </Disclosure>

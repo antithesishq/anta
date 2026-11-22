@@ -55,6 +55,7 @@ jobs:
           TEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -z "$TEST_BASE_SHA" ]; then
+            echo 'typography=true' >> "$GITHUB_OUTPUT"
             echo 'value-ownership=true' >> "$GITHUB_OUTPUT"
             echo 'selection=true' >> "$GITHUB_OUTPUT"
             echo 'plot=true' >> "$GITHUB_OUTPUT"
@@ -79,6 +80,20 @@ jobs:
             echo 'toaster=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-button.*' 'src/elements/a-tab*' 'src/elements/a-input*' \
+            'src/elements/a-checkbox.*' 'src/elements/a-switch.*' 'src/elements/a-radio*' 'src/elements/a-text.*' \
+            'src/elements/a-title.*' 'src/elements/a-expander.*' 'src/elements/a-dialog.*' 'src/elements/a-card.*' 'src/elements/a-menu*' 'src/elements/a-select.*' \
+            'src/elements/a-slider.*' 'src/elements/a-progress.*' 'src/elements/a-banner.*' 'src/elements/a-copy.*' 'src/elements/a-calendar.*' \
+            src/components/Steps.css src/elements/index.ts src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            src/{anta_helpers,jsx-runtime,element-base,index,bundle}.ts \
+            tests/typography.mjs 'tests/component*.mjs' scripts/build-bundle.mjs \
+            .github/workflows/{ci,component-tests}.yml package.json pnpm-lock.yaml pnpm-workspace.yaml site/package.json)
+          if [ -n "$changed" ]; then
+            echo 'typography=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'typography=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             src/components/{Input,InputTime,InputDate,InputAutocomplete,Select,SelectFaceted,Checkbox,Switch,Calendar,RadioGroup,Tabs}.tsx \

@@ -58,12 +58,6 @@
     --calendar-cell-width: 36px;
     --calendar-cell-height: 32px;
   }
-  .anta-calendar[data-size="small"] [data-part="weekday"] {
-    line-height: 16px;
-  }
-  .anta-calendar[data-size="large"] [data-part="weekday"] {
-    line-height: 24px;
-  }
 
   /* The element IS the grid: a flat 7-column grid whose direct children are the
      seven weekday headers followed by the day cells — no row wrappers. */
@@ -79,8 +73,8 @@
     align-items: center;
     justify-content: center;
     height: 24px;
-    font-size: 13px;
-    line-height: 20px;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
     font-weight: 400;
     color: var(--text-3);
     user-select: none;

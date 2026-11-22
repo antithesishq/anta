@@ -276,7 +276,7 @@ for (const engine of engines) {
   test.fast(`${engine.name()}: Text SSR clamps in light DOM with JavaScript disabled`, async t => {
     const page = await pageFor(t, engine, 'granular', true, false)
     assert.equal(await page.locator('a-text-content').evaluate(n => getComputedStyle(n).webkitLineClamp), '1')
-    assert.equal(await page.locator('a-text-content').evaluate(n => n.clientHeight), 20)
+    assert.equal(await page.locator('a-text-content').evaluate(n => n.clientHeight), 22)
     assert.equal(await page.locator('a-button').isVisible(), false)
   })
   for (const mode of ['granular', 'bundle']) {
@@ -324,7 +324,7 @@ for (const engine of engines) {
     await root.evaluate(n => n.classList.add('override'))
     assert.equal(await root.locator('a-text-content').evaluate(n => getComputedStyle(n).color), 'rgb(255, 0, 0)')
     assert.equal(await control.evaluate(n => getComputedStyle(n, '::before').borderBottomWidth), '2px')
-    assert.equal(await root.locator('a-text-content').evaluate(n => n.clientHeight), 60)
+    assert.equal(await root.locator('a-text-content').evaluate(n => n.clientHeight), 66)
     await root.evaluate(n => n.classList.add('wide'))
     await control.waitFor({ state: 'hidden' })
     await root.evaluate(n => n.classList.remove('wide'))
@@ -361,7 +361,7 @@ for (const engine of engines) {
     const page = await pageFor(t, engine)
     await register(page)
     await mount(page, `<a-text inline truncate="1">${longText}</a-text>`)
-    assert.equal(await page.locator('a-text').evaluate(n => n.clientHeight), 20)
+    assert.equal(await page.locator('a-text').evaluate(n => n.clientHeight), 22)
     assert.equal(await page.locator('a-text').evaluate(n => n.isTruncated), true)
     await mount(page, raw().replace('<a-text ', '<a-text dir="rtl" '))
     await page.locator('a-button').waitFor({ state: 'visible' })

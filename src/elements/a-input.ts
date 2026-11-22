@@ -480,7 +480,7 @@ export class AInputElement extends HTMLElementBase {
       ta.rows = 1
       // Native autogrow outside WebKit; the JS fallback (syncAutoHeight) grows
       // it on every value change everywhere else. The cap lives in CSS
-      // (max-height off --_lh + --_pad-block) and applies in both paths; JS only
+      // (max-height from line-height and --_pad-block) and applies in both paths; JS only
       // feeds it the row count, which CSS can't read from the attribute.
       ta.style.setProperty('field-sizing', USE_NATIVE_FIELD_SIZING ? 'content' : 'fixed')
       if (maxrows != null) ta.style.setProperty('--_maxrows', String(parseInt(maxrows, 10) || 1))

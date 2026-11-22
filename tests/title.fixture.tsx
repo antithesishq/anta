@@ -1,6 +1,7 @@
 /** @jsxImportSource @antadesign/anta */
 import { render } from 'preact'
 import { Title } from '../src/components/Title'
+import '../src/tokens.css'
 import '../src/elements/a-title.css'
 import '../src/elements/a-tooltip'
 

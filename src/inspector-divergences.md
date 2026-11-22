@@ -106,6 +106,9 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
 24. **Copy JSON is new.** `jsonText()` writes a node as compact JSON when it holds only plain objects, arrays, strings,
     finite numbers, booleans, and null. Otherwise it names the first other value and its path, such as
     `Not JSON: contains a Map at .containers`. The notebook had no JSON export.
+25. **The Inspector shows symbol-keyed properties.** With the `symbol_keys` option of `describe()`, which the Inspector
+    sets, own enumerable symbol-keyed data properties follow the string-keyed ones, keyed `[Symbol(desc)]`. Accessors
+    are skipped, so no getter runs. `repr()` leaves the option off and ignores symbol keys, as the notebook did.
 
 ## Kept identical on purpose
 
@@ -114,7 +117,7 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
 - The option names `char_limit`, `deduplicate_references`, `numeric_base`, and `unquoted_strings`, and the default
   `char_limit` of 50,000.
 - Getters never run, apart from the engine's own `stack` accessor (entry 14). Enumerable string-keyed data properties
-  are included up the prototype chain, and symbol keys are ignored.
+  are included up the prototype chain, and `repr()` ignores symbol keys (entry 25).
 - The `CustomRepresentationVisitor` methods `span`, `visit`, `constructor_call`, `class_object_like`, and
   `iterable_like`.
 - The notebook's property-based tests are ported to Hegel in `tests/inspector-core.test.mjs`, with the same invariants:

@@ -251,6 +251,7 @@ export interface AntaIntrinsicElements {
   'a-tree-actions': BaseAttributes
   'a-tree-group': ATreeGroupAttributes
   'a-tree-after': BaseAttributes
+  'a-tree-toolbar': BaseAttributes
   'a-inspector': AInspectorAttributes
   'a-inspector-key': BaseAttributes
   'a-inspector-value': BaseAttributes

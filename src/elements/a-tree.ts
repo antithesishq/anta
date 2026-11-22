@@ -44,9 +44,11 @@ const isElement = (node: EventTarget): node is Element => (node as Node).nodeTyp
 //     just before the `contextmenu` that opens a following <a-menu context>.
 //   • `data-focus="<id>#<n>"` — input: focus and reveal that item. A new `n`
 //     repeats the request, as in a-calendar.
+//   • `data-reveal="<id>#<n>"` — input: scroll that item into view without
+//     moving focus or the cursor.
 // ─────────────────────────────────────────────────────────────────────────────
 export class ATreeElement extends HTMLElementBase {
-  static observedAttributes = ['data-focus']
+  static observedAttributes = ['data-focus', 'data-reveal']
 
   #internals = this.attachInternals?.()
   #active: ATreeItemElement | null = null
@@ -80,15 +82,18 @@ export class ATreeElement extends HTMLElementBase {
   }
 
   attributeChangedCallback(name: string, _oldValue: string | null, value: string | null) {
-    if (name !== 'data-focus' || !value) return
+    if ((name !== 'data-focus' && name !== 'data-reveal') || !value) return
     const cut = value.lastIndexOf('#')
     const id = cut >= 0 ? value.slice(0, cut) : value
     // The same render may insert the item; wait for it.
     queueMicrotask(() => {
       const item = this.#visibleItems().find(candidate => candidate.getItemId() === id)
       if (!item) return
-      const reduce = this.view.matchMedia('(prefers-reduced-motion: reduce)').matches
-      this.#setActive(item, { focus: true, scroll: reduce ? 'auto' : 'smooth' })
+      const behavior = this.view.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      // `data-focus` moves the cursor and focus there; `data-reveal` only
+      // scrolls the item into view, leaving focus and the cursor alone.
+      if (name === 'data-focus') this.#setActive(item, { focus: true, scroll: behavior })
+      else (this.#row(item) ?? item).scrollIntoView({ block: 'nearest', behavior })
     })
   }
 

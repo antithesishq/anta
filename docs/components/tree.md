@@ -113,8 +113,27 @@ const [loaded, setLoaded] = useState({})
 />
 ```
 
-`focusRequest` moves focus to an item and scrolls it into view, such as a search
-result. Pass a new `n` to repeat a request for the same item.
+`focusRequest` moves focus to an item and scrolls it into view. Pass a new `n`
+to repeat a request for the same item.
+
+## Mark the current item
+
+`current` names an item, such as a search match. The item gets `data-current`
+and scrolls into view when `current` changes, while focus and the keyboard's
+position stay where they are, so a search field keeps focus. Open the item's
+ancestors so it's shown. `toolbar` renders content, such as a search field, in an
+`a-tree-toolbar` before the tree, outside its `role="tree"`. The
+[Inspector's search](./inspector.md#search-a-value) uses both.
+
+```tsx
+<Tree
+  aria-label="Project files"
+  items={items}
+  open={open}
+  current={matches[index]}
+  toolbar={<Input type="search" aria-label="Search files" value={query} onValueChange={(_e, { value }) => setQuery(value)} />}
+/>
+```
 
 <a id="keyboard-accessibility"></a>
 
@@ -149,6 +168,7 @@ still find it.
 |------|------|---------|-------------|
 | `items` | TreeItem[] | — | The items, as data: the tree's single source. |
 | `aria-label?` | string | — | Accessible name. Give every tree one. |
+| `current?` | string | — | The current item, such as a search match: it's marked `data-current` and scrolled into view after rendering, without moving focus or the keyboard's cursor. The first render doesn't scroll; only a change does. |
 | `defaultOpen?` | string[] | — | Items open on first render, uncontrolled. After that the Tree owns open and close itself. |
 | `focusRequest?` | — | — | Moves focus to an item and scrolls it into view. A new `n` repeats the request, so the same item can be focused again. The first render never focuses; only a change does. The item must be shown: every ancestor open. |
 | `indicator?` | TreeIndicator | 'chevron' | The open/closed mark for every item that can open. |
@@ -158,6 +178,7 @@ still find it.
 | `open?` | string[] | — | Controlled open items, by id. When set, you own open and close: the tree shows exactly this, and a click or key only requests a change through `onStateChange`. `[]` is controlled with nothing open. Leave it undefined (and use `defaultOpen`) for uncontrolled. |
 | `renderIndicator?` | (item, state) => ReactNode | — | Replaces each row's mark. |
 | `renderLabel?` | (item, state) => ReactNode | — | Replaces each row's label. The actions keep their own container, so this never renders them. |
+| `toolbar?` | ReactNode | — | Content shown before the tree, outside it, such as a search field. |
 
 ## Item props
 
@@ -234,7 +255,8 @@ one at a time also registers `a-button`, `a-icon`, and `a-tooltip`.
 | `navigate` | `a-tree` | `{ id }` | Focus moves to another item; bubbles |
 | `itemmenu` | `a-tree` | `{ id }` | Just before a context menu opens on an item |
 
-Set `data-focus="<item-id>#<n>"` on `a-tree` to focus an item.
+Set `data-focus="<item-id>#<n>"` on `a-tree` to focus an item, and
+`data-reveal="<item-id>#<n>"` to scroll an item into view without focusing it.
 
 ## Styling
 
@@ -245,8 +267,8 @@ parts, and `--tree-row-hover` the background of a hovered or focused row.
 `--tree-action-size` sets the actions' size, the row's line height by default,
 and `--tree-actions-align` places them in the row. Style
 the `a-tree-item`, `a-tree-row`, `a-tree-value`, `a-tree-indicator`,
-`a-tree-actions`, `a-tree-group`, `a-tree-before`, and `a-tree-after` tags with
-plain CSS. An item shows its state as `:state(open)` or `:state(closed)`, and
+`a-tree-actions`, `a-tree-group`, `a-tree-before`, `a-tree-after`, and
+`a-tree-toolbar` tags with plain CSS. The current item has `data-current`. An item shows its state as `:state(open)` or `:state(closed)`, and
 the focused item as `:state(active)`. Unlayered rules override Anta's defaults
 without `!important`.
 

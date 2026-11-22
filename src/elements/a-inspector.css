@@ -102,6 +102,11 @@
     color: var(--text-3);
   }
 
+  /* A range of a long list, such as [0…99]. */
+  a-inspector a-tree-item[data-type="chunk"] > a-tree-row {
+    color: var(--text-3);
+  }
+
   a-inspector a-tree-item[data-type="more"] > a-tree-row:hover {
     color: var(--text-1);
     text-decoration: underline;
@@ -164,6 +169,27 @@
   /* The ancestor a circular row jumped to, briefly. */
   a-inspector a-tree-item[data-revealed] > a-tree-row {
     background-color: color-mix(in oklch, var(--text-1-brand) 22%, transparent);
+  }
+
+  /* Search: hits are marked in their token's own color, and the current
+     match's row stands out from the rest. */
+  a-inspector mark {
+    color: inherit;
+    background-color: color-mix(in oklch, var(--text-1-warning) 22%, transparent);
+    border-radius: 2px;
+  }
+
+  a-inspector a-tree-item[data-current] > a-tree-row {
+    background-color: color-mix(in oklch, var(--text-1-brand) 14%, transparent);
+  }
+
+  a-inspector a-tree-item[data-current] > a-tree-row mark {
+    background-color: color-mix(in oklch, var(--text-1-warning) 50%, transparent);
+  }
+
+  a-inspector > a-tree-toolbar > a-input {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   /* Inline layout: a closed value flows in its sentence or table cell. Opening

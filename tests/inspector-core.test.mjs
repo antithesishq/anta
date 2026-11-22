@@ -457,18 +457,25 @@ test('the node API never throws, even on hostile values', () =>
 
 // Rows: visibleRows() lists the lines the Inspector renders for a display state.
 
-const line = row => row.type === 'more' ? '' : text([...(row.key ?? []), ...row.tokens])
+const line = row => row.type === 'more' ? '' : row.type === 'chunk' ? `[${row.start}…${row.end}]` : text([...(row.key ?? []), ...row.tokens])
 const styles = gs.sampledFrom(['repr', 'tree'])
 const lines = rows => rows.map(row => ({ id: row.id, line: line(row) }))
-const inSubtree = (row, id) => row.id === id || row.id.startsWith(`${id}:`) || row.id.startsWith(`${id}>`)
+const inSubtree = (row, id) => row.id === id || row.id.startsWith(`${id}/`) || row.id.startsWith(`${id}~`)
 
-// The node a node row's id names: `:p.i` is child i of the group in part p,
-// and a bare `:p` is the inline value in part p.
-function nodeAt(root, id) {
+// The node at a path of typed segments, found by comparing each child's own
+// last segment, independently of path keys.
+const sameSegment = (a, b) => a.type === b.type && Object.keys({ ...a, ...b }).every(k => Object.is(a[k], b[k]))
+function nodeBySegments(root, segments) {
   let node = root
-  for (const [, part, index] of id.slice(1).matchAll(/:(\d+)(?:\.(\d+))?/g)) {
-    const found = node.parts[Number(part)]
-    node = index === undefined ? found.node : found.group.childAt(Number(index)).value
+  for (const segment of segments) {
+    let found
+    for (const part of node.parts) {
+      const children = part.type === 'value' ? [part.node]
+        : part.type === 'group' ? Array.from({ length: 1e6 }).map((_, i) => part.group.childAt(i)?.value).filter(Boolean) : []
+      found = children.find(child => sameSegment(child.segments.at(-1), segment))
+      if (found) break
+    }
+    node = found
   }
   return node
 }
@@ -500,7 +507,7 @@ test('lists open nodes as header, children, and closing rows', () => {
     ['node', 1, 'n:1'],
     ['close', 0, '}'],
   ])
-  assert.deepEqual(rows[1], { ...rows[1], id: 'r:1.0', expandable: true, open: true, size: 2 })
+  assert.deepEqual(rows[1], { ...rows[1], id: 'r/.tags', expandable: true, open: true, size: 2 })
 })
 
 test('closed nodes show their summary, and toggling flips the default', () => {
@@ -512,13 +519,15 @@ test('closed nodes show their summary, and toggling flips the default', () => {
   assert.deepEqual(opened.map(line), ['{', 'tags:["a","b"]', '}'])
 })
 
-test('wide groups end in a more row until every page is shown', () => {
+test('a long group shows ranges, which open to show their children', () => {
   const root = core.describe(Array.from({ length: 5 }, (_, i) => i))
-  const first = core.visibleRows(root, { expandDepth: 1, pageSize: 2 })
-  assert.deepEqual(first.map(line), ['[', '0,', '1,', '', ']'])
-  assert.deepEqual(first[3], { type: 'more', id: 'r:1+', depth: 1, group: 'r:1', shown: 2, unit: 'children' })
-  const all = core.visibleRows(root, { expandDepth: 1, pageSize: 2, pages: new Map([['r:1', 3]]) })
-  assert.deepEqual(all.map(line), ['[', '0,', '1,', '2,', '3,', '4', ']'])
+  const closed = core.visibleRows(root, { expandDepth: 1, chunkSize: 2 })
+  assert.deepEqual(closed.map(line), ['[', '[0…1]', '[2…3]', '[4…4]', ']'])
+  assert.deepEqual(closed[2], { type: 'chunk', id: 'r~g1~2-3', depth: 1, start: 2, end: 3, open: false })
+  // A range's children keep their data keys; the range is never in a path.
+  const opened = core.visibleRows(root, { expandDepth: 1, chunkSize: 2, toggled: new Set(['r~g1~2-3', 'r~g1~4-4']) })
+  assert.deepEqual(opened.map(line), ['[', '[0…1]', '[2…3]', '2,', '3,', '[4…4]', '4', ']'])
+  assert.deepEqual(opened.filter(row => row.type === 'node' && row.depth === 2).map(row => row.id), ['r/2', 'r/3', 'r/4'])
 })
 
 test('cycles link to their open ancestor and repeats expand in place', () => {
@@ -606,8 +615,8 @@ test('circular rows link to an open ancestor', () =>
       const target = rows.findIndex(other => other.id === row.target)
       assert.ok(target >= 0 && target < index, `target ${row.target} is not an earlier row`)
       assert.equal(rows[target].open, true)
-      assert.ok(row.id.startsWith(`${row.target}:`), `${row.target} is not an ancestor of ${row.id}`)
-      assert.deepEqual(rows[target].path, nodeAt(root, row.id).target, `${row.target} is not the ancestor ${row.id} refers to`)
+      assert.ok(row.id.startsWith(`${row.target}/`), `${row.target} is not an ancestor of ${row.id}`)
+      assert.deepEqual(rows[target].path, nodeBySegments(root, row.segments).target, `${row.target} is not the ancestor ${row.id} refers to`)
     })
   }, settings))
 
@@ -660,8 +669,8 @@ test('long strings page by characters, never splitting a surrogate pair', () => 
   const display = { toggled: new Set(['r']), previewBudget: 5, textPageSize: 5 }
   const first = core.visibleRows(root, display)
   assert.deepEqual(first.map(line), ['"', 'xxxxx', '', '"'])
-  assert.deepEqual(first[2], { type: 'more', id: 'r:t+', depth: 1, group: 'r:t', shown: 5, unit: 'characters' })
-  assert.deepEqual(core.visibleRows(root, { ...display, pages: new Map([['r:t', 3]]) }).map(line), ['"', 'x'.repeat(12), '"'])
+  assert.deepEqual(first[2], { type: 'more', id: 'r~line+', depth: 1, group: 'r~line', shown: 5, unit: 'characters' })
+  assert.deepEqual(core.visibleRows(root, { ...display, pages: new Map([['r~line', 3]]) }).map(line), ['"', 'x'.repeat(12), '"'])
   const emoji = core.visibleRows(core.describe('😀😀😀'), { toggled: new Set(['r']), previewBudget: 1, textPageSize: 3 })
   assert.deepEqual(textRows(emoji), ['😀'])
 })
@@ -742,7 +751,7 @@ test('tree rows show keys and values, with no brackets or commas', () => {
 test('open tree rows name their type and size', () => {
   class Point { constructor() { this.x = 1 } }
   const value = [new Map([['a', 1]]), new Set([1]), new Uint8Array(2), new Point(), [1, , 3], 'a\nb', () => 1]
-  const rows = tree(value, { expandDepth: 2, toggled: new Set(['r:1.5']) })
+  const rows = tree(value, { expandDepth: 2, toggled: new Set(['r/5']) })
   assert.deepEqual(rows.filter(row => row.type === 'node' && row.depth === 1).map(line), [
     '0:Map(1)', '1:Set(1)', '2:Uint8Array(2)', '3:Point{…}', '4:Array(3)', '5:String(3)', '6:<anonymous function>',
   ])
@@ -750,10 +759,9 @@ test('open tree rows name their type and size', () => {
   assert.ok(rows.some(row => line(row) === '<1 empty slot>'), 'an empty-slots row has a key')
 })
 
-test('tree groups page with a more row', () => {
-  const rows = tree(Array.from({ length: 5 }, (_, i) => i), { expandDepth: 1, pageSize: 2 })
-  assert.deepEqual(rows.map(line), ['Array(5)', '0:0', '1:1', ''])
-  assert.deepEqual(rows.at(-1), { type: 'more', id: 'r:1+', depth: 1, group: 'r:1', shown: 2, unit: 'children' })
+test('tree groups show ranges past chunkSize, and not up to it', () => {
+  assert.deepEqual(tree(Array.from({ length: 3 }, (_, i) => i), { expandDepth: 1, chunkSize: 3 }).map(line), ['Array(3)', '0:0', '1:1', '2:2'])
+  assert.deepEqual(tree(Array.from({ length: 4 }, (_, i) => i), { expandDepth: 1, chunkSize: 3 }).map(line), ['Array(4)', '[0…2]', '[3…3]'])
 })
 
 test('tree rows are the repr rows without brackets or commas', () =>
@@ -807,7 +815,7 @@ test('copied paths evaluate back to the row\'s value', () =>
       const text = row.pathText
       const read = new Function('v', `return v${text === '' || /^[[.]/.test(text) ? '' : '.'}${text}`)
       const found = read(value)
-      const node = nodeAt(root, row.id)
+      const node = nodeBySegments(root, row.segments)
       if (node.identity !== undefined && typeof node.identity === 'object') assert.equal(found, node.identity, `${text} reached another object`)
       else assert.deepEqual(core.describe(found).summary(200), node.summary(200), `${text} reached another value`)
     }
@@ -820,7 +828,7 @@ test('copy text is a string\'s raw text, or the whole repr of anything else', ()
   value.self = value
   const root = core.describe(value)
   const rows = tree(value, { expandDepth: 2 })
-  const copy = label => core.copyText(core.rowNode(root, rows.find(row => line(row).startsWith(label)).id))
+  const copy = label => core.copyText(core.nodeAt(root, rows.find(row => line(row).startsWith(label)).id))
   assert.equal(copy('log:'), 'a\n"b"')
   assert.equal(copy('n:'), '42')
   assert.equal(copy('list:'), '[1,{x:2}]')
@@ -828,23 +836,23 @@ test('copy text is a string\'s raw text, or the whole repr of anything else', ()
   assert.equal(copy('self:'), undefined)
   assert.equal(copy('<1 empty slot>'), undefined)
   assert.equal(core.copyText(core.describe('x'.repeat(60000))).length, 60000)
-  assert.equal(core.rowNode(root, 'r:1.0:t.0'), undefined)
-  assert.equal(core.rowNode(root, 'nope'), undefined)
+  assert.equal(core.nodeAt(root, 'r/.log~line:0'), undefined)
+  assert.equal(core.nodeAt(root, 'nope'), undefined)
   // A to_repr that calls visit() makes an inline value, which the generators never produce.
   const wrapped = core.describe({ [core.to_repr](v) { v.span('W(', 'class_name'); v.visit({ a: 1 }); v.span(')', 'class_name') } })
   const inline = core.visibleRows(wrapped, { style: 'tree', expandDepth: 1 }).find(row => row.depth === 1)
-  assert.equal(inline.id, 'r:1')
-  assert.equal(core.copyText(core.rowNode(wrapped, inline.id)), '{a:1}')
+  assert.equal(inline.id, 'r/(1.0)')
+  assert.equal(core.copyText(core.nodeAt(wrapped, inline.id)), '{a:1}')
 })
 
-test('rowNode finds the node every row shows', () =>
+test('nodeAt finds the node every row shows, by its key', () =>
   hegel.test(tc => {
     const root = core.describe(make(tc.draw(recipes({ hostile: true }), 'recipe')).value)
     const display = { expandDepth: tc.draw(gs.integers({ minValue: 0, maxValue: 6 }), 'expandDepth'), style: tc.draw(styles, 'style') }
     const toggled = openSome(tc, root, display)
     for (const row of core.visibleRows(root, { ...display, toggled })) {
-      if (row.type === 'node') assert.equal(core.rowNode(root, row.id), nodeAt(root, row.id), `row ${row.id}`)
-      else assert.equal(core.rowNode(root, row.id), undefined, `row ${row.id} is not a node row`)
+      if (row.type === 'node') assert.equal(core.nodeAt(root, row.id), nodeBySegments(root, row.segments), `row ${row.id}`)
+      else assert.equal(core.nodeAt(root, row.id), undefined, `row ${row.id} is not a node row`)
     }
   }, settings))
 
@@ -854,24 +862,24 @@ test('deepToggle opens and closes a whole subtree', () => {
   const value = { a: { b: { c: [1, { d: 2 }] }, s: 'x\ny' }, loop: null }
   value.loop = value
   const root = core.describe(value)
-  const opened = core.deepToggle(root, { expandDepth: 1 }, 'r:1.0', true)
+  const opened = core.deepToggle(root, { expandDepth: 1 }, 'r/.a', true)
   const rows = tree(value, { expandDepth: 1, toggled: opened })
   assert.deepEqual(rows.filter(row => row.type === 'node' && row.expandable && !row.open).map(line), ['s:"x\\ny"'])
   assert.ok(rows.some(row => line(row) === 'd:2'))
   // Closing collapses descendants too: reopening the row normally shows them closed.
-  const closed = core.deepToggle(root, { expandDepth: 1, toggled: opened }, 'r:1.0', false)
+  const closed = core.deepToggle(root, { expandDepth: 1, toggled: opened }, 'r/.a', false)
   // Closed by default at this depth, so no toggle is needed: the set stays minimal.
   assert.deepEqual([...closed], [])
-  const reopened = tree(value, { expandDepth: 1, toggled: new Set([...closed, 'r:1.0']) }).filter(row => row.id.startsWith('r:1.0:'))
+  const reopened = tree(value, { expandDepth: 1, toggled: new Set([...closed, 'r/.a']) }).filter(row => row.id.startsWith('r/.a/'))
   assert.ok(reopened.length > 0 && reopened.every(row => row.type !== 'node' || !row.open))
   // Closing a row that expandDepth opens below it adds closing toggles for them.
   const deep = core.deepToggle(root, { expandDepth: 3 }, 'r', false)
-  assert.deepEqual([...deep].sort(), ['r', 'r:1.0', 'r:1.0:1.0'])
+  assert.deepEqual([...deep].sort(), ['r', 'r/.a', 'r/.a/.b'])
   // The cap stops opening once the subtree shows that many rows. Opening the
   // row itself already shows 20, so nothing below it opens.
   const wide = core.describe(Array.from({ length: 20 }, (_, i) => ({ i, more: { j: i } })))
   const capped = core.deepToggle(wide, { expandDepth: 0 }, 'r', true, 10)
-  const shown = core.visibleRows(wide, { style: 'tree', toggled: capped }).filter(row => row.id.startsWith('r:'))
+  const shown = core.visibleRows(wide, { style: 'tree', toggled: capped }).filter(row => row.id.startsWith('r/'))
   assert.equal(shown.length, 20)
   assert.ok(shown.every(row => !row.open))
   const roomy = core.visibleRows(wide, { style: 'tree', toggled: core.deepToggle(wide, { expandDepth: 0, style: 'tree' }, 'r', true, 30) })
@@ -889,7 +897,8 @@ test('a deep open leaves nothing closed below it, within the cap', () =>
     const { id } = candidates[tc.draw(gs.integers({ minValue: 0, maxValue: candidates.length - 1 }), 'row')]
     const limit = tc.draw(gs.integers({ minValue: 1, maxValue: 30 }), 'limit')
     const after = core.visibleRows(root, { ...display, toggled: core.deepToggle(root, { ...display, toggled }, id, true, limit) })
-    const below = after.filter(row => row.id.startsWith(`${id}:`))
+    // Rows below the node, including its own Show more rows (`<id>~…`).
+    const below = after.filter(row => row.id !== id && inSubtree(row, id))
     assert.equal(after.find(row => row.id === id).open, true)
     // Anything left closed means the cap was reached.
     const closed = below.filter(row => row.type === 'node' && row.expandable && !row.open && row.kind !== 'string')
@@ -909,24 +918,24 @@ test('a deep close leaves nothing open below it, even after reopening', () =>
     const closed = core.deepToggle(root, { ...display, toggled }, id, false)
     const rows = core.visibleRows(root, { ...display, toggled: closed })
     assert.equal(rows.find(row => row.id === id).open, false)
-    assert.deepEqual(rows.filter(row => row.id.startsWith(`${id}:`)).map(row => row.id), [])
+    assert.deepEqual(rows.filter(row => row.id.startsWith(`${id}/`)).map(row => row.id), [])
     const reopened = new Set(closed)
     if (!reopened.delete(id)) reopened.add(id)
-    const below = core.visibleRows(root, { ...display, toggled: reopened }).filter(row => row.id.startsWith(`${id}:`))
+    const below = core.visibleRows(root, { ...display, toggled: reopened }).filter(row => row.id.startsWith(`${id}/`))
     assert.deepEqual(below.filter(row => row.type === 'node' && row.open).map(row => row.id), [], 'a row below reopened')
   }, settings))
 
 test('setRowOpen sets the requested state, so repeated requests change nothing', () => {
   const root = core.describe({ a: { b: 1 }, s: 'x\ny' })
   const state = { expandDepth: 1 }
-  const once = core.setRowOpen(root, state, 'r:1.0', true)
-  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: once }, 'r:1.0', true)], [...once])
-  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: once }, 'r:1.0', false)], [])
+  const once = core.setRowOpen(root, state, 'r/.a', true)
+  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: once }, 'r/.a', true)], [...once])
+  assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: once }, 'r/.a', false)], [])
   // The root starts open at expandDepth 1, so closing it twice leaves one toggle.
   const closed = core.setRowOpen(root, state, 'r', false)
   assert.deepEqual([...core.setRowOpen(root, { ...state, toggled: closed }, 'r', false)], ['r'])
   // Strings start closed at any depth.
-  assert.deepEqual([...core.setRowOpen(root, state, 'r:1.1', true)], ['r:1.1'])
+  assert.deepEqual([...core.setRowOpen(root, state, 'r/.s', true)], ['r/.s'])
 })
 
 // Nested rows: visibleTree() nests visibleRows() for a renderer whose DOM nests.
@@ -946,7 +955,7 @@ test('nests rows under the open node they belong to', () => {
   const tree = core.visibleTree(core.describe(value), { expandDepth: 2 })
   assert.equal(tree.length, 1)
   const [root] = tree
-  assert.deepEqual(root.children.map(row => row.id), ['r:1.0', 'r:1.1', 'r:1.2'])
+  assert.deepEqual(root.children.map(row => row.id), ['r/.tags', 'r/.deep', 'r/.n'])
   const [tags, deep, n] = root.children
   assert.deepEqual(tags.children.map(row => line(row)), ['"a",', '"b"'])
   assert.deepEqual(tags.after.map(token => token.text).join(''), '],')
@@ -958,13 +967,14 @@ test('nests rows under the open node they belong to', () => {
   assert.deepEqual(closed[0].children[1].children, [])
 })
 
-test('the tree style has no after lines, and a page of children ends in its more row', () => {
+test('the tree style has no after lines, and a range nests its children', () => {
   const root = core.describe({ list: [1, 2, 3, 4, 5] })
-  const [top] = core.visibleTree(root, { style: 'tree', expandDepth: 2, pageSize: 2 })
+  const [top] = core.visibleTree(root, { style: 'tree', expandDepth: 2, chunkSize: 2, toggled: new Set(['r/.list~g1~2-3']) })
   const list = top.children[0]
   assert.equal(top.after, undefined)
-  assert.deepEqual(list.children.map(row => row.type), ['node', 'node', 'more'])
-  assert.equal(list.children[2].group, 'r:1.0:1')
+  assert.deepEqual(list.children.map(row => row.id), ['r/.list~g1~0-1', 'r/.list~g1~2-3', 'r/.list~g1~4-4'])
+  assert.deepEqual(list.children[1].children.map(row => row.id), ['r/.list/2', 'r/.list/3'])
+  assert.deepEqual(list.children[0].children, [], 'a closed range has no children yet')
 })
 
 test('an open string nests its lines', () => {
@@ -985,3 +995,180 @@ test('flattening visibleTree gives visibleRows, and openIds lists its open nodes
     assert.deepEqual(shape(flatten(core.visibleTree(root, state))), shape(rows))
     assert.deepEqual(core.openIds(root, state), rows.filter(row => row.type === 'node' && row.open).map(row => row.id))
   }, settings))
+
+// Paths: every node has a typed path, and its key is the row's id.
+
+const keysOf = (value, state = { style: 'tree', expandDepth: Infinity }) =>
+  core.visibleRows(core.describe(value, { symbol_keys: true }), state).filter(row => row.type === 'node').map(row => row.id)
+
+test('path keys name children in data terms: properties, indices, Map entries, Set items, error details, custom parts', () => {
+  const objectKey = { id: 1 }
+  const error = pin(new Error('boom', { cause: 'disk' }))
+  class Moment { [core.to_repr](v) { v.constructor_call('Moment', 4021, 'x') } }
+  const value = {
+    'a/b~c': 1,
+    list: [10, 20],
+    byKey: new Map([['api-1', 1], [2, 2], [objectKey, 3]]),
+    tags: new Set(['x', 'y']),
+    error,
+    moment: new Moment(),
+  }
+  const keys = keysOf(value)
+  assert.ok(keys.includes('r/.a%2fb%7ec'), 'separators in a property name are escaped')
+  assert.ok(keys.includes('r/.list/1'))
+  assert.ok(keys.includes('r/.byKey/=s:api-1') && keys.includes('r/.byKey/=n:2') && keys.includes('r/.byKey/=#2'))
+  assert.ok(keys.includes('r/.tags/*1'))
+  assert.ok(keys.includes('r/.error/!cause') && keys.includes('r/.error/!stack'))
+  assert.ok(keys.includes('r/.moment/(1.0)') && keys.includes('r/.moment/(1.1)'))
+  assert.equal(new Set(keys).size, keys.length, 'keys are unique')
+  // A row's key is inspectorPathKey of its typed path.
+  for (const row of core.visibleRows(core.describe(value, { symbol_keys: true }), { style: 'tree', expandDepth: Infinity })) {
+    if (row.type === 'node') assert.equal(core.inspectorPathKey(row.segments), row.id)
+  }
+})
+
+test('symbol-keyed properties show only with symbol_keys, told apart by occurrence, and repr() is unchanged', () => {
+  const a = Symbol('id')
+  const b = Symbol('id')
+  const value = { name: 'run', [a]: 1, [b]: 2, [Symbol.for('tag')]: 'x', [Symbol.iterator]: 3 }
+  Object.defineProperty(value, Symbol('getter'), { get() { throw new Error('called') }, enumerable: true })
+  assert.deepEqual(keysOf(value).slice(1), [
+    'r/.name', 'r/@Symbol(id)#0', 'r/@Symbol(id)#1', 'r/@Symbol.for(tag)#0', 'r/@Symbol.iterator#0',
+  ])
+  const rows = core.visibleRows(core.describe(value, { symbol_keys: true }), { style: 'tree', expandDepth: 1 })
+  assert.deepEqual(rows.slice(1).map(row => line(row)), ['name:"run"', '[Symbol(id)]:1', '[Symbol(id)]:2', '[Symbol.for(tag)]:"x"', '[Symbol.iterator]:3'])
+  // Only well-known and registered symbols have a path to copy.
+  assert.deepEqual(rows.slice(1).map(row => row.pathText), ['name', undefined, undefined, '[Symbol.for("tag")]', '[Symbol.iterator]'])
+  assert.deepEqual(keysOf(value, { style: 'tree', expandDepth: 1 }).length, 6)
+  assert.equal(repr(value), '{name:"run"}')
+  assert.deepEqual(core.visibleRows(core.describe(value), { style: 'tree', expandDepth: 1 }).length, 2, 'without the option, symbol keys stay hidden')
+})
+
+test('inspectorExpandToPath adds every ancestor of a path and keeps what was open', () => {
+  const value = { results: [{ id: 't1' }, { error: { message: 'x' } }] }
+  const path = [{ type: 'property', key: 'results' }, { type: 'index', index: 1 }, { type: 'property', key: 'error' }]
+  const open = core.inspectorExpandToPath(value, ['r/.other'], path)
+  assert.deepEqual(open, ['r/.other', 'r', 'r/.results', 'r/.results/1'])
+  assert.deepEqual(core.inspectorExpandToPath(value, open, path), open, 'repeating it changes nothing')
+  const rows = core.visibleRows(core.describe(value), { style: 'tree', open: new Set(open) })
+  assert.ok(rows.some(row => row.id === 'r/.results/1/.error'), 'the row is shown')
+})
+
+test('an open set decides alone, and keys that name no row are ignored, as after replacing the value', () => {
+  const before = { a: { x: 1 }, b: { y: 2 }, c: [1] }
+  const open = new Set(['r', 'r/.b', 'r/.c'])
+  const shown = value => core.visibleRows(core.describe(value), { style: 'tree', expandDepth: 5, open })
+    .filter(row => row.type === 'node' && row.open).map(row => row.id)
+  assert.deepEqual(shown(before), ['r', 'r/.b', 'r/.c'])
+  // Reordered keys and a missing `c`: `b` stays open by its key, `c` is ignored.
+  assert.deepEqual(shown({ b: { y: 3 }, a: { x: 1 } }), ['r', 'r/.b'])
+})
+
+test('deepOpen opens a subtree in an open set, and closing removes everything below', () => {
+  const value = { a: { b: { c: [1, { d: 2 }] }, s: 'x\ny' }, loop: null }
+  value.loop = value
+  const root = core.describe(value)
+  const opened = core.deepOpen(root, { style: 'tree', open: new Set(['r']) }, 'r/.a', true)
+  assert.deepEqual([...opened].sort(), ['r', 'r/.a', 'r/.a/.b', 'r/.a/.b/.c', 'r/.a/.b/.c/1'])
+  const closed = core.deepOpen(root, { style: 'tree', open: opened }, 'r/.a', false)
+  assert.deepEqual([...closed], ['r'])
+})
+
+// Chunks: long groups show nested ranges, keyed by position, never in a path.
+
+test('chunk levels nest by tens until a level has at most 10 ranges', () => {
+  assert.deepEqual(core.chunkLevels(100), [])
+  assert.deepEqual(core.chunkLevels(101), [100])
+  assert.deepEqual(core.chunkLevels(1000), [100])
+  assert.deepEqual(core.chunkLevels(1001), [1000, 100])
+  assert.deepEqual(core.chunkLevels(100000), [10000, 1000, 100])
+  assert.deepEqual(core.chunkLevels(150, 50), [50])
+})
+
+test('chunk keys follow from the position and the length alone', () => {
+  assert.deepEqual(core.chunkPath(100000, 50000), [[50000, 59999], [50000, 50999], [50000, 50099]])
+  assert.deepEqual(core.chunkPath(150, 120), [[100, 149]])
+  assert.deepEqual(core.chunkPath(99, 50), [])
+  assert.deepEqual(core.chunkPath(100000, 99999), [[90000, 99999], [99000, 99999], [99900, 99999]])
+})
+
+test('revealing index 50,000 of 100,000 opens only the ranges above it', () => {
+  const value = { big: Array.from({ length: 100000 }, (_, i) => i) }
+  const path = [{ type: 'property', key: 'big' }, { type: 'index', index: 50000 }]
+  const open = core.inspectorExpandToPath(value, [], path)
+  assert.deepEqual(open, ['r', 'r/.big', 'r/.big~g1~50000-59999', 'r/.big~g1~50000-50999', 'r/.big~g1~50000-50099'])
+  const rows = core.visibleRows(core.describe(value), { style: 'tree', open: new Set(open) })
+  assert.ok(rows.some(row => row.id === 'r/.big/50000'), 'the row is shown')
+  const items = rows.filter(row => row.type === 'node' && row.depth === 5)
+  assert.equal(items.length, 100, 'only the innermost range of 100 is rendered')
+  assert.ok(items.every(row => Number(row.id.split('/').at(-1)) >= 50000), 'nothing before index 50,000 is rendered')
+  assert.ok(rows.length < 150, `${rows.length} rows`)
+})
+
+test('a deep open opens ranges too', () => {
+  const root = core.describe({ list: Array.from({ length: 5 }, (_, i) => ({ i })) })
+  const open = core.deepOpen(root, { style: 'tree', chunkSize: 2, open: new Set(['r']) }, 'r/.list', true)
+  assert.ok(open.has('r/.list~g1~0-1') && open.has('r/.list~g1~4-4'))
+  assert.ok(open.has('r/.list/4'))
+})
+
+// Search: a row matches once, on its key or its own value, in the fully open
+// tree's row order.
+
+const searchKeys = (value, matcher) => core.inspectorSearch(value, matcher).map(m => `${core.inspectorPathKey(m.path)} ${m.field}`)
+
+test('search visits every row of the fully open tree, in its order', () =>
+  hegel.test(tc => {
+    const { value } = make(tc.draw(recipes(), 'recipe'))
+    const rows = core.visibleRows(core.describe(value, { symbol_keys: true }), { style: 'tree', expandDepth: Infinity, chunkSize: Infinity })
+      .filter(row => row.type === 'node' && row.kind !== 'empty-slots')
+    const matches = core.inspectorSearch(value, () => true)
+    assert.deepEqual(matches.map(m => core.inspectorPathKey(m.path)), rows.map(row => row.id))
+  }, settings))
+
+test('a row matches once, and its key wins over its value', () => {
+  assert.deepEqual(searchKeys({ x: 'x', y: 'x' }, /x/), ['r/.x key', 'r/.y value'])
+})
+
+test('a closed preview never matches, so each match is the row it names', () => {
+  const value = { a: { countries: ['Peru'] }, b: [{ countries: 1 }] }
+  assert.deepEqual(searchKeys(value, /countries/), ['r/.a/.countries key', 'r/.b/0/.countries key'])
+  // A container matches on its type, as its open row shows it.
+  assert.deepEqual(searchKeys(value, /^Array\(1\)$/), ['r/.a/.countries value', 'r/.b value'])
+})
+
+test('array indices never match; Map keys do, unless the key is an object', () => {
+  assert.deepEqual(searchKeys([10, 20], /^1$/), [])
+  const map = new Map([['k1', 0], [1, 'v'], [{ k1: 0 }, 0]])
+  assert.deepEqual(searchKeys(map, /1/), ['r/=s:k1 key', 'r/=n:1 key'])
+})
+
+test('search is cycle-safe and searches each repeated reference where it appears', () => {
+  const shared = { name: 'shared' }
+  const value = { a: shared, b: shared }
+  value.self = value
+  assert.deepEqual(searchKeys(value, /^shared$/), ['r/.a/.name value', 'r/.b/.name value'])
+  assert.deepEqual(searchKeys(value, /self/), ['r/.self key'])
+})
+
+test('search calls no getters, and a throwing proxy is inaccessible', () => {
+  let reads = 0
+  const value = { get secret() { reads++; return 'found' }, plain: 'found' }
+  const trap = () => { throw new Error('trap') }
+  const proxy = new Proxy({}, { ownKeys: trap, get: trap, getOwnPropertyDescriptor: trap, getPrototypeOf: trap })
+  assert.deepEqual(searchKeys({ value, proxy }, /found/), ['r/.value/.plain value'])
+  assert.equal(reads, 0)
+  assert.deepEqual(searchKeys({ proxy }, /inaccessible/), ['r/.proxy value'])
+})
+
+test('a global RegExp gives the same matches on every row', () => {
+  assert.deepEqual(searchKeys(['a', 'a', 'a'], /^a$/g), ['r/0 value', 'r/1 value', 'r/2 value'])
+})
+
+test('a match deep in a long list reveals with the ranges above it', () => {
+  const value = Array.from({ length: 100000 }, (_, i) => (i === 900 || i === 50000 ? 'needle' : i))
+  const matches = core.inspectorSearch(value, /needle/)
+  assert.deepEqual(matches.map(m => core.inspectorPathKey(m.path)), ['r/900', 'r/50000'])
+  const open = core.inspectorExpandToPath(value, [], matches[1].path)
+  assert.deepEqual(open, ['r', 'r~g1~50000-59999', 'r~g1~50000-50999', 'r~g1~50000-50099'])
+})

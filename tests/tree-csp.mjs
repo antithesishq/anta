@@ -112,6 +112,8 @@ const jsxApp = `
     const [menuItem, setMenuItem] = useState(null)
     const [focus, setFocus] = useState(props.initialFocus)
     window.requestFocus = (id, n) => setFocus({ id, n })
+    const [current, setCurrent] = useState(undefined)
+    window.setCurrent = setCurrent
     const state = props.controlled
       ? { open, onStateChange: (event, detail) => { window.log.push(detail); if (window.accept) setOpen(detail.next) } }
       : { defaultOpen: ['src'], onStateChange: (event, detail) => { window.log.push(detail); if (window.veto) event.preventDefault() } }
@@ -122,6 +124,8 @@ const jsxApp = `
       ...state,
       onItemMenu: (event, { id }) => setMenuItem(id),
       focusRequest: focus,
+      current,
+      toolbar: props.toolbar ? React.createElement('input', { id: 'find', 'aria-label': 'Find' }) : undefined,
       ...(props.custom ? {
         indicator: 'chevron',
         indicatorPlacement: 'end',
@@ -538,6 +542,26 @@ for (const engine of engines) {
     // A click on another row's action still focuses that action.
     await page.locator('a-tree-item[item-id="src"] > a-tree-row > a-tree-actions > a-button').first().click()
     assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'New file')
+  })
+
+  test.fast(`${name}: current marks an item and scrolls it into view without moving focus`, async t => {
+    const page = await pageFor(t, engine, { kind: 'jsx', props: { toolbar: true } })
+    await page.setViewportSize({ width: 600, height: 120 })
+    await page.locator('#find').focus()
+    // Firefox scrolls a newly focused element into view on the next frame, which would undo a reveal in this one.
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await page.evaluate(() => window.setCurrent('README.md'))
+    await page.waitForFunction(() => document.querySelector('a-tree-item[data-current]')?.getAttribute('item-id') === 'README.md')
+    await page.waitForFunction(() => {
+      const box = document.querySelector('a-tree-item[item-id="README.md"] > a-tree-row').getBoundingClientRect()
+      // Within a pixel: scrolling lands on fractional positions.
+      return box.top >= -1 && box.bottom <= innerHeight + 1
+    })
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'find', 'focus moved')
+    assert.equal(await page.locator('a-tree-item[data-current]').count(), 1)
+    // The toolbar comes before the tree, outside role="tree".
+    assert.equal(await page.evaluate(() => document.querySelector('#find').closest('[role="tree"]')), null)
+    assert.equal(await page.evaluate(() => document.querySelector('a-tree-toolbar').nextElementSibling.localName), 'a-tree')
   })
 
   // ─── Actions ──────────────────────────────────────────────────────────────

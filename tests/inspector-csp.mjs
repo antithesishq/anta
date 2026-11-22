@@ -17,14 +17,14 @@ const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-s
 const browsers = new Map()
 let server, origin
 
-// The sample, as ids in the tree style with expandDepth 1:
-// r {…} > r:1.0 name, r:1.1 results, r:1.2 log, r:1.3 byKey, r:1.4 list, r:1.5 self (a cycle).
+// The sample, as path keys, with expandDepth 1:
+// r {…} > r/.name, r/.results, r/.log, r/.byKey, r/.list, r/.self (a cycle).
 const app = `
   import React, { useState } from 'react'
   import { render } from 'preact'
   import { Inspector } from '${source}/components/Inspector'
   import { Tree } from '${source}/components/Tree'
-  import { describe, visibleTree, openIds, setRowOpen } from '${source}/inspector-core'
+  import { describe, visibleTree, openIds, setRowOpen, inspectorExpandToPath } from '${source}/inspector-core'
 
   function sample() {
     const value = {
@@ -39,7 +39,30 @@ const app = `
     return value
   }
   const mount = () => document.querySelector('#mount')
-  window.renderInspector = props => render(React.createElement(Inspector, { value: sample(), pageSize: 6, 'aria-label': 'Run', ...props }), mount())
+  // A 100,000-item array, revealed at one index: its ranges opened by
+  // inspectorExpandToPath, the row marked current.
+  window.revealBig = index => {
+    const value = { big: Array.from({ length: 100000 }, (_, i) => i) }
+    const path = [{ type: 'property', key: 'big' }, { type: 'index', index }]
+    render(React.createElement(Inspector, { value, 'aria-label': 'Big', open: inspectorExpandToPath(value, [], path), current: path }), mount())
+  }
+  // Search over a controlled Inspector: each request's scope is logged, then applied.
+  window.scopes = []
+  function ControlledSearch({ value }) {
+    const [open, setOpen] = useState(['r'])
+    const onStateChange = (_event, { next, scope }) => { window.scopes.push(scope); setOpen(next) }
+    return React.createElement(Inspector, { value, open, onStateChange, searchable: true, 'aria-label': 'Run' })
+  }
+  window.renderControlledSearch = () => render(React.createElement(ControlledSearch, { value: { a: { deep: 'needle' } } }), mount())
+  window.renderClassSearch = () => {
+    class Box { constructor() { this.box = 1 } }
+    render(React.createElement(Inspector, { value: { x: new Box() }, searchable: true, 'aria-label': 'Run' }), mount())
+  }
+  window.renderBigSearch = () => {
+    const value = { big: Array.from({ length: 100000 }, (_, i) => (i === 900 || i === 50000 ? 'needle' : i)) }
+    render(React.createElement(Inspector, { value, searchable: true, 'aria-label': 'Big' }), mount())
+  }
+  window.renderInspector = props => render(React.createElement(Inspector, { value: sample(), chunkSize: 6, 'aria-label': 'Run', ...props }), mount())
 
   // A stand-in for a worker renderer: it renders a Tree from the core itself
   // and answers each request after a delay.
@@ -85,7 +108,7 @@ before(async () => {
   for (const mode of ['granular', 'bundle']) {
     const contents = mode === 'bundle'
       ? `import '${source}/bundle';`
-      : ['tokens.css', 'reset.css', 'elements/a-inspector', 'elements/a-menu', 'elements/a-menu-item', 'elements/a-copy', 'elements/a-icon', 'elements/a-button', 'elements/a-tooltip']
+      : ['tokens.css', 'reset.css', 'elements/a-inspector', 'elements/a-menu', 'elements/a-menu-item', 'elements/a-copy', 'elements/a-icon', 'elements/a-button', 'elements/a-tooltip', 'elements/a-input']
         .map(path => `import '${source}/${path}';`).join(' ')
     const result = await build({
       stdin: { contents, resolveDir: process.cwd() }, bundle: true, write: false,
@@ -193,28 +216,32 @@ for (const engine of engines) {
     test.fast(`${name} ${mode}: rows render under a strict CSP, indented by level, with no inline styles`, async t => {
       const page = await pageFor(t, engine, mode)
       await renderInspector(page)
-      assert.deepEqual(await ids(page), ['r', 'r:1.0', 'r:1.1', 'r:1.2', 'r:1.3', 'r:1.4', 'r:1.5'])
+      assert.deepEqual(await ids(page), ['r', 'r/.name', 'r/.results', 'r/.log', 'r/.byKey', 'r/.list', 'r/.self'])
       const indent = id => page.locator(`${row(id)} > a-tree-value`).evaluate(value => value.getBoundingClientRect().left)
-      assert.ok(await indent('r:1.0') > await indent('r'), 'a child is indented past its parent')
+      assert.ok(await indent('r/.name') > await indent('r'), 'a child is indented past its parent')
       assert.match(await page.locator('a-inspector').evaluate(host => getComputedStyle(host).fontFamily), /mono|Menlo|Consolas/i)
       assert.equal(await page.locator('a-inspector [style]').count(), 0)
       // Rows are Tree items, nested under their parent.
-      assert.equal(await page.locator('a-tree-item[item-id="r"] > a-tree-group > a-tree-item[item-id="r:1.0"]').count(), 1)
+      assert.equal(await page.locator('a-tree-item[item-id="r"] > a-tree-group > a-tree-item[item-id="r/.name"]').count(), 1)
     })
   }
 
-  test.fast(`${name}: clicks open and close rows and show more of a group`, async t => {
+  test.fast(`${name}: clicks open and close rows, and a long list opens into ranges`, async t => {
     const page = await pageFor(t, engine)
     await renderInspector(page)
-    await page.locator(row('r:1.1')).click()
-    await until(page, async () => (await ids(page)).includes('r:1.1:1.0'), 'results did not open')
-    await page.locator(row('r:1.4')).click()
-    await until(page, async () => (await ids(page)).includes('r:1.4:1+'), 'list did not show a more row')
-    assert.equal((await ids(page)).filter(id => id.startsWith('r:1.4:1.')).length, 6)
-    await page.locator(row('r:1.4:1+')).click()
-    await until(page, async () => (await ids(page)).filter(id => id.startsWith('r:1.4:1.')).length === 7, 'the next page did not show')
-    await page.locator(row('r:1.1')).click()
-    await until(page, async () => !(await ids(page)).includes('r:1.1:1.0'), 'results did not close')
+    await page.locator(row('r/.results')).click()
+    await until(page, async () => (await ids(page)).includes('r/.results/0'), 'results did not open')
+    // 7 items with chunkSize 6: two ranges, which read their items only when open.
+    await page.locator(row('r/.list')).click()
+    await until(page, async () => (await ids(page)).includes('r/.list~g1~6-6'), 'list did not show its ranges')
+    assert.deepEqual((await ids(page)).filter(id => id.startsWith('r/.list')), ['r/.list', 'r/.list~g1~0-5', 'r/.list~g1~6-6'])
+    assert.equal(await page.locator(row('r/.list~g1~0-5')).textContent(), '[0…5]')
+    await page.locator(row('r/.list~g1~0-5')).click()
+    await until(page, async () => (await ids(page)).filter(id => id.startsWith('r/.list/')).length === 6, 'the first range did not open')
+    await page.locator(row('r/.list~g1~6-6')).click()
+    await until(page, async () => (await ids(page)).filter(id => id.startsWith('r/.list/')).length === 7, 'the second range did not open')
+    await page.locator(row('r/.results')).click()
+    await until(page, async () => !(await ids(page)).includes('r/.results/0'), 'results did not close')
   })
 
   // The ⋯ buttons have tabindex -1, so however many rows, Tab passes the tree once.
@@ -224,50 +251,57 @@ for (const engine of engines) {
     await focusTree(page)
     await page.keyboard.press('ArrowDown')
     await page.keyboard.press('ArrowDown')
-    assert.equal(await active(page), 'r:1.1')
+    assert.equal(await active(page), 'r/.results')
     await page.keyboard.press('Tab')
     assert.equal(await page.evaluate(() => document.activeElement?.id), 'after')
     await page.keyboard.press('Shift+Tab')
-    assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('item-id')), 'r:1.1')
-    assert.equal(await active(page), 'r:1.1')
+    assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('item-id')), 'r/.results')
+    assert.equal(await active(page), 'r/.results')
   })
 
   test.fast(`${name}: Right reaches ⋯ on a row that can't open or is open, and Left returns`, async t => {
     const page = await pageFor(t, engine)
-    await renderInspector(page, { pageSize: 3 })
+    await renderInspector(page)
     await focusTree(page)
     const onTree = () => onTreeAt(page)
     // name is a string, so Right goes straight to its button.
     await page.keyboard.press('ArrowDown')
     await page.keyboard.press('ArrowRight')
-    assert.equal(await focusedButtonRow(page), 'r:1.0')
-    assert.equal(await buttonOpacity(page, 'r:1.0'), '1', 'the focused button is hidden')
+    assert.equal(await focusedButtonRow(page), 'r/.name')
+    assert.equal(await buttonOpacity(page, 'r/.name'), '1', 'the focused button is hidden')
     await page.keyboard.press('ArrowLeft')
     assert.ok(await onTree(), 'Left did not return to the tree')
-    assert.equal(await active(page), 'r:1.0')
+    assert.equal(await active(page), 'r/.name')
     // results is closed: Right opens it, and a second Right reaches its button.
     await page.keyboard.press('ArrowDown')
     await page.keyboard.press('ArrowRight')
-    await until(page, () => isOpen(page, 'r:1.1'), 'Right did not open results')
+    await until(page, () => isOpen(page, 'r/.results'), 'Right did not open results')
     assert.ok(await onTree(), 'opening moved focus off the tree')
     await page.keyboard.press('ArrowRight')
-    assert.equal(await focusedButtonRow(page), 'r:1.1')
+    assert.equal(await focusedButtonRow(page), 'r/.results')
     // Down on the button returns to the tree and moves; Escape returns too.
     await page.keyboard.press('ArrowDown')
     assert.ok(await onTree(), 'Down did not return to the tree')
-    assert.equal(await active(page), 'r:1.1:1.0')
+    assert.equal(await active(page), 'r/.results/0')
     await page.keyboard.press('ArrowRight')
-    await until(page, () => isOpen(page, 'r:1.1:1.0'), 'Right did not open the first result')
+    await until(page, () => isOpen(page, 'r/.results/0'), 'Right did not open the first result')
     await page.keyboard.press('ArrowRight')
-    assert.equal(await focusedButtonRow(page), 'r:1.1:1.0')
+    assert.equal(await focusedButtonRow(page), 'r/.results/0')
     await page.keyboard.press('Escape')
     assert.ok(await onTree(), 'Escape did not return to the tree')
-    assert.equal(await active(page), 'r:1.1:1.0')
-    // A Show more row has no button, so Right does nothing.
-    await page.keyboard.press('End')
-    await until(page, async () => (await active(page))?.endsWith('+'), 'End did not reach a Show more row')
+    assert.equal(await active(page), 'r/.results/0')
+    // A range has no button: Right opens it, and a second Right moves to its first child.
+    await page.locator(row('r/.list')).click()
+    await until(page, async () => (await ids(page)).includes('r/.list~g1~0-5'), 'list did not open')
+    await page.locator(row('r/.list~g1~0-5')).click()
+    await until(page, () => isOpen(page, 'r/.list~g1~0-5'), 'the range did not open')
+    await page.keyboard.press('ArrowLeft')
+    await until(page, async () => !(await isOpen(page, 'r/.list~g1~0-5')), 'Left did not close the range')
     await page.keyboard.press('ArrowRight')
-    assert.ok(await onTree(), 'Right left the tree on a Show more row')
+    await until(page, () => isOpen(page, 'r/.list~g1~0-5'), 'Right did not open the range')
+    await page.keyboard.press('ArrowRight')
+    assert.ok(await onTree(), 'Right left the tree on a range')
+    assert.equal(await active(page), 'r/.list/0')
   })
 
   test.fast(`${name}: arrow keys, Home, End, Enter, and Space follow the tree pattern`, async t => {
@@ -279,25 +313,25 @@ for (const engine of engines) {
       await page.keyboard.press(key)
       await until(page, async () => await active(page) === expected, `${key} should make ${expected} active, not ${await active(page)}`)
     }
-    await press('ArrowDown', 'r:1.0')
-    await press('ArrowDown', 'r:1.1')
+    await press('ArrowDown', 'r/.name')
+    await press('ArrowDown', 'r/.results')
     await page.keyboard.press('ArrowRight')
-    await until(page, () => isOpen(page, 'r:1.1'), 'Right did not open results')
-    assert.equal(await active(page), 'r:1.1', 'opening keeps the row active')
+    await until(page, () => isOpen(page, 'r/.results'), 'Right did not open results')
+    assert.equal(await active(page), 'r/.results', 'opening keeps the row active')
     // Right on an open row reaches its ⋯; Down from there moves to the first child.
     await page.keyboard.press('ArrowRight')
-    assert.equal(await focusedButtonRow(page), 'r:1.1')
-    await press('ArrowDown', 'r:1.1:1.0')
+    assert.equal(await focusedButtonRow(page), 'r/.results')
+    await press('ArrowDown', 'r/.results/0')
     await page.keyboard.press('ArrowRight')
-    await until(page, () => isOpen(page, 'r:1.1:1.0'), 'Right did not open the first result')
+    await until(page, () => isOpen(page, 'r/.results/0'), 'Right did not open the first result')
     await page.keyboard.press('ArrowLeft')
-    await until(page, async () => !(await isOpen(page, 'r:1.1:1.0')), 'Left did not close the first result')
-    await press('ArrowLeft', 'r:1.1')
+    await until(page, async () => !(await isOpen(page, 'r/.results/0')), 'Left did not close the first result')
+    await press('ArrowLeft', 'r/.results')
     await page.keyboard.press('ArrowLeft')
-    await until(page, async () => !(await isOpen(page, 'r:1.1')), 'Left did not close results')
-    await press('End', 'r:1.5')
+    await until(page, async () => !(await isOpen(page, 'r/.results')), 'Left did not close results')
+    await press('End', 'r/.self')
     await press('Home', 'r')
-    await press('PageDown', 'r:1.5')
+    await press('PageDown', 'r/.self')
     // Enter on a cycle reveals its ancestor, makes it the active row, and
     // highlights it briefly.
     await press('Enter', 'r')
@@ -315,7 +349,7 @@ for (const engine of engines) {
     await focusTree(page)
     await page.keyboard.press('ArrowDown')
     await page.keyboard.press('ArrowDown')
-    assert.equal(await active(page), 'r:1.1')
+    assert.equal(await active(page), 'r/.results')
     // Menu binds its trigger once its anchor is seen on screen, a frame or two
     // after the first render; a person can't press keys sooner than that.
     await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))))
@@ -333,19 +367,19 @@ for (const engine of engines) {
     const page = await pageFor(t, engine)
     await renderInspector(page)
     await settle(page)
-    const button = page.locator(`${row('r:1.1')} > a-tree-actions > a-button`)
+    const button = page.locator(`${row('r/.results')} > a-tree-actions > a-button`)
     const shown = () => page.$$eval('a-tree-actions', list => list
       .filter(actions => getComputedStyle(actions).visibility === 'visible' && getComputedStyle(actions).opacity === '1')
       .map(actions => actions.closest('a-tree-item').getAttribute('item-id')))
     assert.deepEqual(await shown(), [])
-    await page.locator(`${row('r:1.1')} a-inspector-key`).hover()
-    assert.deepEqual(await shown(), ['r:1.1'])
+    await page.locator(`${row('r/.results')} a-inspector-key`).hover()
+    assert.deepEqual(await shown(), ['r/.results'])
     await button.click()
     await until(page, async () => (await copyItems(page))[2]?.copy === 'results', 'the menu did not fill in for results')
-    assert.equal(await isOpen(page, 'r:1.1'), false, 'the row toggled')
-    assert.equal(await active(page), 'r:1.1')
+    assert.equal(await isOpen(page, 'r/.results'), false, 'the row toggled')
+    assert.equal(await active(page), 'r/.results')
     const corners = () => page.evaluate(() => [
-      document.querySelector('a-tree-item[item-id="r:1.1"] > a-tree-row > a-tree-actions > a-button').getBoundingClientRect(),
+      document.querySelector('a-tree-item[item-id="r/.results"] > a-tree-row > a-tree-actions > a-button').getBoundingClientRect(),
       document.querySelector('a-menu').shadowRoot.querySelector('[part~="menu"]').getBoundingClientRect(),
     ].map(({ left, top, bottom }) => ({ left, top, bottom })))
     await until(page, async () => (await corners())[1].left > 0, 'the menu was never placed')
@@ -362,14 +396,14 @@ for (const engine of engines) {
     await page.keyboard.press('ArrowDown')
     for (const key of ['Enter', ' ']) {
       await page.keyboard.press('ArrowRight')
-      assert.equal(await focusedButtonRow(page), 'r:1.0')
+      assert.equal(await focusedButtonRow(page), 'r/.name')
       const scroll = await page.evaluate(() => scrollY)
       await page.keyboard.press(key)
       await until(page, async () => (await copyItems(page))[2]?.copy === 'name', `${key} did not open the menu for name`)
       assert.equal(await page.evaluate(() => scrollY), scroll, `${key} scrolled the page`)
       await page.keyboard.press('Escape')
       await until(page, () => onTreeAt(page), 'Escape did not return focus to the tree')
-      assert.equal(await active(page), 'r:1.0')
+      assert.equal(await active(page), 'r/.name')
     }
   })
 
@@ -381,7 +415,7 @@ for (const engine of engines) {
     await settle(page)
     const selectName = () => page.evaluate(() => {
       const range = document.createRange()
-      range.selectNodeContents(document.querySelector('a-tree-item[item-id="r:1.0"] a-inspector-value'))
+      range.selectNodeContents(document.querySelector('a-tree-item[item-id="r/.name"] a-inspector-value'))
       getSelection().removeAllRanges()
       getSelection().addRange(range)
     })
@@ -396,7 +430,7 @@ for (const engine of engines) {
     await until(page, async () => !(await opened()), 'the menu did not close')
     await page.keyboard.press('ArrowUp')
     await page.keyboard.press('ArrowRight')
-    assert.equal(await focusedButtonRow(page), 'r:1.0')
+    assert.equal(await focusedButtonRow(page), 'r/.name')
     await selectName()
     await page.keyboard.press('Enter')
     await until(page, opened, '⋯ opened no menu with text selected')
@@ -405,7 +439,7 @@ for (const engine of engines) {
   test.fast(`${name}: right-click copies a string's raw text`, async t => {
     const page = await pageFor(t, engine)
     await renderInspector(page)
-    await page.locator(row('r:1.2')).click({ button: 'right' })
+    await page.locator(row('r/.log')).click({ button: 'right' })
     const item = page.locator('a-menu-item', { hasText: 'Copy string' }).first()
     await until(page, () => item.isVisible(), 'the menu did not offer Copy string')
     if (engine === chromium) {
@@ -423,36 +457,36 @@ for (const engine of engines) {
       await page.locator(row(id)).click({ button: 'right' })
       await until(page, () => item('Copy path').isVisible(), `the menu did not open on ${id}`)
     }
-    await openMenu('r:1.0')
+    await openMenu('r/.name')
     await item('Copy path').click()
     await until(page, async () => JSON.stringify(await green()) === '["Copy path"]', `expected only Copy path to be green, got ${JSON.stringify(await green())}`)
     await item('Copy string').click()
     await until(page, async () => JSON.stringify(await green()) === '["Copy string"]', `expected only Copy string to be green, got ${JSON.stringify(await green())}`)
     // Closing clears it, so the next menu opens clean.
     await page.keyboard.press('Escape')
-    await openMenu('r:1.1')
+    await openMenu('r/.results')
     assert.deepEqual(await green(), [], 'feedback carried into the next menu')
     // Opening on another row while the menu is still open also starts clean.
     await item('Copy path').click()
     await until(page, async () => (await green()).length === 1, 'Copy path did not show feedback')
-    // The open menu sits below r:1.1, so right-click a row above it.
-    await openMenu('r:1.0')
+    // The open menu sits below r/.results, so right-click a row above it.
+    await openMenu('r/.name')
     assert.deepEqual(await green(), [], 'feedback carried into the menu for another row')
   })
 
   test.fast(`${name}: Alt+click and Alt+Enter open and close a whole subtree`, async t => {
     const page = await pageFor(t, engine)
     await renderInspector(page)
-    await page.locator(row('r:1.1')).click({ modifiers: ['Alt'] })
-    await until(page, async () => (await ids(page)).includes('r:1.1:1.1:1.0'), 'Alt+click did not open the subtree')
-    assert.ok(await isOpen(page, 'r:1.1:1.0') && await isOpen(page, 'r:1.1:1.1'))
-    assert.equal(await active(page), 'r:1.1')
-    await page.locator('a-tree-item[item-id="r:1.1"]').focus()
+    await page.locator(row('r/.results')).click({ modifiers: ['Alt'] })
+    await until(page, async () => (await ids(page)).includes('r/.results/1/.id'), 'Alt+click did not open the subtree')
+    assert.ok(await isOpen(page, 'r/.results/0') && await isOpen(page, 'r/.results/1'))
+    assert.equal(await active(page), 'r/.results')
+    await page.locator('a-tree-item[item-id="r/.results"]').focus()
     await page.keyboard.press('Alt+Enter')
-    await until(page, async () => !(await ids(page)).some(id => id.startsWith('r:1.1:')), 'Alt+Enter did not close the subtree')
+    await until(page, async () => !(await ids(page)).some(id => id.startsWith('r/.results/')), 'Alt+Enter did not close the subtree')
     await page.keyboard.press('ArrowRight')
-    await until(page, () => isOpen(page, 'r:1.1'), 'Right did not reopen results')
-    assert.equal(await isOpen(page, 'r:1.1:1.0'), false, 'a deep close leaves children closed')
+    await until(page, () => isOpen(page, 'r/.results'), 'Right did not reopen results')
+    assert.equal(await isOpen(page, 'r/.results/0'), false, 'a deep close leaves children closed')
   })
 
   test.fast(`${name}: the inline layout flows in text and becomes a block when opened`, async t => {
@@ -493,7 +527,7 @@ for (const engine of engines) {
       await page.locator(row(id)).click({ button: 'right' })
       await until(page, async () => (await copyItems(page))[2]?.copy !== null && !(await copyItems(page))[2]?.disabled, `the menu did not open on ${id}`)
     }
-    await openMenu('r:1.1')
+    await openMenu('r/.results')
     const json = (await copyItems(page))[1]
     assert.deepEqual(json, { label: 'Copy JSON', disabled: false, copy: '[{"id":"t1","ok":true},{"id":"t2","ok":false}]', hint: null })
     if (engine === chromium) {
@@ -501,7 +535,7 @@ for (const engine of engines) {
       await until(page, async () => await page.evaluate(() => navigator.clipboard.readText()) === json.copy, 'Copy JSON did not copy the JSON')
     }
     await page.keyboard.press('Escape')
-    await openMenu('r:1.3')
+    await openMenu('r/.byKey')
     assert.deepEqual((await copyItems(page))[1], { label: 'Copy JSON', disabled: true, copy: '', hint: 'Not JSON: a Map' })
   })
 
@@ -511,18 +545,18 @@ for (const engine of engines) {
     await page.evaluate(() => window.delayRowMenu(150))
     const arrivals = () => page.evaluate(() => window.itemmenuArrivals)
     // A first opening: every item stays disabled until its row's answer.
-    await page.locator(row('r:1.1')).click({ button: 'right' })
+    await page.locator(row('r/.results')).click({ button: 'right' })
     await until(page, async () => (await copyItems(page)).length === 3, 'the menu did not open')
     assert.equal(await arrivals(), 0, 'the delay was too short to check before the answer')
     assert.deepEqual((await copyItems(page)).map(item => item.disabled), [true, true, true])
     await until(page, async () => (await copyItems(page)).every(item => !item.disabled), 'the items never became available')
     assert.deepEqual((await copyItems(page)).map(item => item.copy).slice(1), ['[{"id":"t1","ok":true},{"id":"t2","ok":false}]', 'results'])
-    // Closed, then opened on another row: waiting again, never showing r:1.1's text.
+    // Closed, then opened on another row: waiting again, never showing r/.results's text.
     await page.keyboard.press('Escape')
-    await page.locator(row('r:1.0')).click({ button: 'right' })
+    await page.locator(row('r/.name')).click({ button: 'right' })
     assert.equal(await arrivals(), 1)
     assert.deepEqual((await copyItems(page)).map(item => item.disabled), [true, true, true])
-    await until(page, async () => (await copyItems(page))[2].copy === 'name' && !(await copyItems(page))[2].disabled, 'the items never showed r:1.0')
+    await until(page, async () => (await copyItems(page))[2].copy === 'name' && !(await copyItems(page))[2].disabled, 'the items never showed r/.name')
     assert.deepEqual((await copyItems(page)).map(item => item.copy), ['run', '"run"', 'name'])
   })
 
@@ -534,14 +568,14 @@ for (const engine of engines) {
     const page = await pageFor(t, engine)
     await renderInspector(page)
     await page.evaluate(() => window.delayRowMenu(150))
-    await page.locator(row('r:1.1')).click({ button: 'right' })
-    await until(page, async () => (await copyItems(page))[2]?.copy === 'results' && !(await copyItems(page))[2].disabled, 'the menu never showed r:1.1')
-    // The open menu sits below r:1.1, so right-click a row above it.
-    await page.locator(row('r:1.0')).click({ button: 'right' })
+    await page.locator(row('r/.results')).click({ button: 'right' })
+    await until(page, async () => (await copyItems(page))[2]?.copy === 'results' && !(await copyItems(page))[2].disabled, 'the menu never showed r/.results')
+    // The open menu sits below r/.results, so right-click a row above it.
+    await page.locator(row('r/.name')).click({ button: 'right' })
     const before = await copyItems(page)
     assert.equal(await page.evaluate(() => window.itemmenuArrivals), 1, 'the delay was too short to check before the answer')
     assert.deepEqual(before.map(item => [item.disabled, item.copy]).slice(2), [[false, 'results']])
-    await until(page, async () => (await copyItems(page))[2].copy === 'name', 'the menu never moved to r:1.0')
+    await until(page, async () => (await copyItems(page))[2].copy === 'name', 'the menu never moved to r/.name')
   })
 
   test.fast(`${name}: block rows cut every value at the same edge, keys whole`, async t => {
@@ -575,7 +609,7 @@ for (const engine of engines) {
     const sizes = await page.evaluate(() => ({
       mount: document.querySelector('#mount').getBoundingClientRect().width,
       inspector: document.querySelector('a-inspector').getBoundingClientRect().width,
-      clipped: (value => value.scrollWidth > value.clientWidth)(document.querySelector('a-tree-item[item-id="r:1.0"] a-inspector-value')),
+      clipped: (value => value.scrollWidth > value.clientWidth)(document.querySelector('a-tree-item[item-id="r/.n"] a-inspector-value')),
     }))
     // It fills the container: not wider, and not collapsed to its content or to nothing.
     assert.ok(Math.abs(sizes.inspector - sizes.mount) < 1, `the Inspector is ${sizes.inspector}px in a ${sizes.mount}px container`)
@@ -610,7 +644,7 @@ for (const engine of engines) {
     })
     assert.ok(sizes.inspector.right - sizes.limit > 200, 'the window is too narrow to show the limit')
     const clipped = sizes.rows.filter(row => row.clipped)
-    assert.deepEqual(clipped.map(row => row.id), ['r:1.0', 'r:1.1', 'r:1.2'])
+    assert.deepEqual(clipped.map(row => row.id), ['r/.n', 'r/.a_much_longer_key', 'r/.nested'])
     for (const row of clipped) assert.ok(Math.abs(row.end - sizes.limit) < 1.5, `${row.id} ends at ${row.end}, not ${sizes.limit}`)
     for (const row of sizes.rows) assert.equal(Math.round(row.right), Math.round(sizes.inspector.right), `${row.id} is narrower than the Inspector`)
   })
@@ -619,7 +653,7 @@ for (const engine of engines) {
     const page = await pageFor(t, engine)
     await renderInspector(page)
     const measure = () => page.evaluate(() => {
-      const line = document.querySelector('a-tree-item[item-id="r:1.0"] > a-tree-row')
+      const line = document.querySelector('a-tree-item[item-id="r/.name"] > a-tree-row')
       const button = line.querySelector('a-tree-actions > a-button').getBoundingClientRect()
       const value = line.querySelector('a-inspector-value').getBoundingClientRect()
       const box = line.getBoundingClientRect()
@@ -629,12 +663,164 @@ for (const engine of engines) {
     assert.ok(Math.abs(start.gap - 12) < 1, `⋯ starts ${start.gap}px after the value`)
     assert.deepEqual([start.width, start.height], [18, 18])
     // ⋯ has no tooltip, but keeps its accessible name.
-    const button = page.locator('a-tree-item[item-id="r:1.0"] > a-tree-row > a-tree-actions > a-button')
+    const button = page.locator('a-tree-item[item-id="r/.name"] > a-tree-row > a-tree-actions > a-button')
     assert.equal(await button.locator('a-tooltip').count(), 0, '⋯ has a tooltip')
     assert.equal(await button.getAttribute('aria-label'), 'More actions')
     await page.evaluate(() => document.querySelector('a-inspector').style.setProperty('--tree-actions-align', 'end'))
     const end = await measure()
     assert.ok(Math.abs(end.toEnd) < 1, `⋯ ends ${end.toEnd}px before the row's end`)
+  })
+
+  test.fast(`${name}: controlled open takes path keys; keys that name no row are ignored`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page, { open: ['r', 'r/.results', 'r/.results/1', 'r/.gone'] })
+    assert.deepEqual((await ids(page)).filter(id => id.startsWith('r/.results')), ['r/.results', 'r/.results/0', 'r/.results/1', 'r/.results/1/.id', 'r/.results/1/.ok'])
+    // Controlled with no handler: a click requests, and nothing changes.
+    await page.locator(row('r/.results')).click()
+    await page.waitForTimeout(50)
+    assert.ok((await ids(page)).includes('r/.results/0'))
+  })
+
+  test.fast(`${name}: replacing the value keeps open the rows whose paths still exist`, async t => {
+    const page = await pageFor(t, engine)
+    await renderInspector(page, { value: { a: { x: 1 }, b: { y: 2 }, c: [1, 2] } })
+    await page.locator(row('r/.b')).click()
+    await page.locator(row('r/.c')).click()
+    await until(page, async () => (await ids(page)).includes('r/.c/1'), 'c did not open')
+    // Reordered keys, and no `c`: `b` stays open by its key, `c` is ignored.
+    await renderInspector(page, { value: { b: { y: 3 }, a: { x: 1 } } })
+    await until(page, async () => JSON.stringify(await ids(page)) === JSON.stringify(['r', 'r/.b', 'r/.b/.y', 'r/.a']), `rows are ${await ids(page)}`)
+  })
+
+  test.fast(`${name}: current reveals a row by path without moving focus`, async t => {
+    const page = await pageFor(t, engine)
+    await page.setViewportSize({ width: 800, height: 200 })
+    const value = { list: Array.from({ length: 60 }, (_, i) => i) }
+    await renderInspector(page, { value, expandDepth: 2, chunkSize: 100 })
+    await page.locator('#before').focus()
+    // Firefox scrolls a newly focused element into view on the next frame, which would undo a reveal in this one.
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await renderInspector(page, { value, expandDepth: 2, chunkSize: 100, current: [{ type: 'property', key: 'list' }, { type: 'index', index: 50 }] })
+    await until(page, async () => await page.evaluate(() => {
+      const item = document.querySelector('a-tree-item[data-current]')
+      const box = item?.querySelector(':scope > a-tree-row').getBoundingClientRect()
+      return item?.getAttribute('item-id') === 'r/.list/50' && box.top >= -1 && box.bottom <= innerHeight + 1
+    }), 'the row was not revealed')
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'before', 'focus moved')
+  })
+
+  test.fast(`${name}: revealing index 50,000 of 100,000 renders no item before it`, async t => {
+    const page = await pageFor(t, engine)
+    await page.evaluate(() => window.revealBig(50000))
+    await page.waitForFunction(() => document.querySelector('a-tree-item[data-current]')?.getAttribute('item-id') === 'r/.big/50000')
+    const items = (await ids(page)).filter(id => /^r\/\.big\/\d+$/.test(id)).map(id => Number(id.split('/').at(-1)))
+    assert.equal(items.length, 100, 'only the innermost range of 100 is rendered')
+    assert.ok(items.every(index => index >= 50000), `rendered ${Math.min(...items)}`)
+    assert.ok((await ids(page)).length < 150)
+  })
+
+  // Search: the field, its count, and the keys that step through matches.
+  const searchField = page => page.getByRole('searchbox', { name: /^Search/ })
+  const countText = page => page.locator('a-tree-toolbar [aria-live]').textContent()
+  const currentId = page => page.evaluate(() => document.querySelector('a-tree-item[data-current]')?.getAttribute('item-id') ?? null)
+  const marks = (page, id) => page.locator(`a-tree-item[item-id="${id}"] > a-tree-row mark`).allTextContents()
+
+  test.fast(`${name}: search counts matches, steps with Enter and Shift+Enter, and Escape clears`, async t => {
+    const page = await pageFor(t, engine)
+    const value = { countries: ['Peru'], nested: { countries: ['France'], note: 'two countries' } }
+    await renderInspector(page, { value, searchable: true })
+    // The field sits before the tree, outside role="tree".
+    assert.ok(await page.evaluate(() => {
+      const toolbar = document.querySelector('a-tree-toolbar')
+      return !!toolbar && !toolbar.closest('[role="tree"]') && toolbar.nextElementSibling?.localName === 'a-tree'
+    }))
+    await searchField(page).fill('Countries')
+    await until(page, async () => await countText(page) === '3 matches', `count is ${await countText(page)}`)
+    assert.equal(await currentId(page), null, 'nothing is current before the first step')
+    assert.deepEqual(await marks(page, 'r/.countries'), ['countries'])
+    // A closed row's preview holds two matches, but only its own rows match.
+    assert.deepEqual(await marks(page, 'r/.nested'), [])
+    await page.addScriptTag({ url: '/axe.js' })
+    assert.deepEqual(await page.evaluate(async () => {
+      const result = await window.axe.run(document.querySelector('#mount'), { runOnly: { type: 'tag', values: ['wcag2a'] } })
+      return result.violations.map(violation => `${violation.id}: ${violation.nodes.length}`)
+    }), [])
+
+    await searchField(page).press('Enter')
+    await until(page, async () => await countText(page) === '1 of 3', `count is ${await countText(page)}`)
+    assert.equal(await currentId(page), 'r/.countries')
+    // The next match is inside a closed row, which opens.
+    await searchField(page).press('Enter')
+    await until(page, async () => await currentId(page) === 'r/.nested/.countries', 'the second match is not current')
+    assert.equal(await countText(page), '2 of 3')
+    assert.deepEqual(await marks(page, 'r/.nested/.note'), ['countries'])
+    await searchField(page).press('Shift+Enter')
+    await searchField(page).press('Shift+Enter')
+    await until(page, async () => await countText(page) === '3 of 3', 'Shift+Enter does not wrap to the last match')
+    assert.equal(await currentId(page), 'r/.nested/.note')
+    assert.ok(await page.evaluate(() => !!document.activeElement?.closest('a-tree-toolbar')), 'focus left the field')
+
+    await searchField(page).press('Escape')
+    await until(page, async () => await searchField(page).inputValue() === '', 'Escape did not clear the field')
+    assert.equal(await countText(page), '')
+    assert.equal(await currentId(page), null)
+    assert.equal(await page.locator('a-inspector mark').count(), 0)
+  })
+
+  test.fast(`${name}: the previous and next buttons step through matches`, async t => {
+    const page = await pageFor(t, engine)
+    const value = { countries: ['Peru'], nested: { countries: ['France'], note: 'two countries' } }
+    await renderInspector(page, { value, searchable: true })
+    const previous = page.getByRole('button', { name: 'Previous match' })
+    const next = page.getByRole('button', { name: 'Next match' })
+    assert.ok(await next.isDisabled() && await previous.isDisabled(), 'the buttons are enabled with no matches')
+    await searchField(page).fill('countries')
+    await until(page, async () => await next.isEnabled(), 'the next button stayed disabled')
+    await next.click()
+    await until(page, async () => await countText(page) === '1 of 3', `count is ${await countText(page)}`)
+    await next.click()
+    await until(page, async () => await currentId(page) === 'r/.nested/.countries', 'next did not reveal the second match')
+    await previous.click()
+    await previous.click()
+    await until(page, async () => await countText(page) === '3 of 3', 'previous does not wrap to the last match')
+    assert.equal(await currentId(page), 'r/.nested/.note')
+  })
+
+  test.fast(`${name}: a closed row that matches on its type marks only its type, not its preview`, async t => {
+    const page = await pageFor(t, engine)
+    await page.evaluate(() => window.renderClassSearch())
+    await searchField(page).fill('box')
+    await until(page, async () => await countText(page) === '2 matches', `count is ${await countText(page)}`)
+    // The closed row reads `Box {box: 1}`: its type matched, and `box` inside is its child's own match.
+    assert.deepEqual(await marks(page, 'r/.x'), ['Box'])
+  })
+
+  test.fast(`${name}: search reveals matches deep in a 100,000-item list`, async t => {
+    const page = await pageFor(t, engine)
+    await page.setViewportSize({ width: 800, height: 300 })
+    await page.evaluate(() => window.renderBigSearch())
+    await searchField(page).fill('needle')
+    await until(page, async () => await countText(page) === '2 matches', `count is ${await countText(page)}`)
+    await searchField(page).press('Enter')
+    await until(page, async () => await currentId(page) === 'r/.big/900', 'index 900 is not current')
+    await searchField(page).press('Enter')
+    await until(page, async () => await page.evaluate(() => {
+      const item = document.querySelector('a-tree-item[data-current]')
+      const box = item?.querySelector(':scope > a-tree-row').getBoundingClientRect()
+      return item?.getAttribute('item-id') === 'r/.big/50000' && box.top >= -1 && box.bottom <= innerHeight + 1
+    }), 'index 50,000 was not revealed')
+    // Two ranges of 100 are open, around each match.
+    assert.equal((await ids(page)).filter(id => /^r\/\.big\/\d+$/.test(id)).length, 200)
+  })
+
+  test.fast(`${name}: a search step asks a controlled Inspector to open the match's rows`, async t => {
+    const page = await pageFor(t, engine)
+    await page.evaluate(() => window.renderControlledSearch())
+    await searchField(page).fill('needle')
+    await searchField(page).press('Enter')
+    await until(page, async () => await currentId(page) === 'r/.a/.deep', 'the match was not revealed')
+    assert.deepEqual(await page.evaluate(() => window.scopes), ['reveal'])
+    assert.deepEqual(await marks(page, 'r/.a/.deep'), ['needle'])
   })
 
   test.fast(`${name}: a closed inline summary counts its spacing and stays inline`, async t => {
@@ -658,21 +844,21 @@ for (const engine of engines) {
     await focusTree(page)
     await page.keyboard.press('ArrowDown')
     await page.keyboard.press('ArrowDown')
-    assert.equal(await active(page), 'r:1.1')
+    assert.equal(await active(page), 'r/.results')
     // Two Rights before the first answer arrives request the same state twice.
     await page.keyboard.press('ArrowRight')
     await page.keyboard.press('ArrowRight')
     await page.keyboard.press('ArrowDown')
-    assert.equal(await active(page), 'r:1.2', 'Down moves among the rows already shown')
-    await until(page, async () => (await ids(page)).includes('r:1.1:1.0'), 'the delayed open never arrived')
+    assert.equal(await active(page), 'r/.log', 'Down moves among the rows already shown')
+    await until(page, async () => (await ids(page)).includes('r/.results/0'), 'the delayed open never arrived')
     await page.waitForTimeout(250)
-    assert.equal(await isOpen(page, 'r:1.1'), true, 'a repeated request closed the row')
-    assert.deepEqual(await page.evaluate(() => window.requests), ['r:1.1', 'r:1.1'])
-    assert.equal(await active(page), 'r:1.2', 'the active row survives the re-render')
+    assert.equal(await isOpen(page, 'r/.results'), true, 'a repeated request closed the row')
+    assert.deepEqual(await page.evaluate(() => window.requests), ['r/.results', 'r/.results'])
+    assert.equal(await active(page), 'r/.log', 'the active row survives the re-render')
     // When an ancestor of the active row closes, the ancestor becomes active.
     await page.keyboard.press('ArrowUp')
-    assert.equal(await active(page), 'r:1.1:1.1')
-    await page.evaluate(() => window.closeRow('r:1.1'))
-    await until(page, async () => await active(page) === 'r:1.1', 'the active row did not move to its closed ancestor')
+    assert.equal(await active(page), 'r/.results/1')
+    await page.evaluate(() => window.closeRow('r/.results'))
+    await until(page, async () => await active(page) === 'r/.results', 'the active row did not move to its closed ancestor')
   })
 }

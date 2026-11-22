@@ -105,19 +105,70 @@ export const inspectorRowsNestUnderTheirParents = always(() => {
   const current = inspector.current
   if (!current || current.rows.length === 0) return true
   return current.rows[0].level === 1 && current.rows.every((row, i) =>
-    i === 0 || (row.level <= current.rows[i - 1].level + 1 && row.id.startsWith('r:')))
+    // Below the root, ids start `r/`, or `r~` for the root's own ranges and lines.
+    i === 0 || (row.level <= current.rows[i - 1].level + 1 && /^r[/~]/.test(row.id)))
 })
 
-// A `more` row comes right after its group's visible children, and nothing
-// from that group follows it.
-export const inspectorMoreRowsEndTheirGroup = always(() => {
+// Rows are listed in document order, so a row's subtree is the run of deeper
+// rows right after it. A range's children have ids under their group, not
+// under the range, so ids alone can't tell what a range holds.
+type Row = { id: string; level: number; open: boolean; type: string | null }
+const subtree = <R extends Row>(rows: R[], i: number) => {
+  const end = rows.findIndex((row, j) => j > i && row.level <= rows[i].level)
+  return rows.slice(i + 1, end === -1 ? rows.length : end)
+}
+const range = (id: string) => id.match(/~(\d+)-(\d+)$/)!.slice(1).map(Number) as [number, number]
+
+// A string's `more` row (`<node>~line+`) comes right after its lines, and no
+// line follows it.
+export const inspectorMoreRowsEndTheirLines = always(() => {
   const current = inspector.current
   if (!current) return true
   return current.rows.every((row, i) => {
     if (row.type !== 'more') return true
-    const group = `${row.id.slice(0, -1)}.`
-    return current.rows.slice(0, i).some(other => other.id.startsWith(group))
-      && !current.rows.slice(i + 1).some(other => other.id.startsWith(group))
+    const node = row.id.slice(0, row.id.indexOf('~'))
+    const line = (other: typeof row) => other.id.startsWith(`${node}~line:`)
+    return row.id.endsWith('~line+') && current.rows[i - 1] && line(current.rows[i - 1])
+      && !current.rows.slice(i + 1).some(line)
+  })
+})
+
+// A group's ranges cover its children in order, with no gap or overlap: the
+// top ranges start at 0, and an open range holds either smaller ranges that
+// cover it, or exactly its own children.
+export const inspectorRangesCoverTheirGroup = always(() => {
+  const current = inspector.current
+  if (!current) return true
+  const rows = current.rows
+  const tiles = (children: Row[], start: number, end?: number) => {
+    let next = start
+    for (const child of children) {
+      if (child.type !== 'chunk') return false
+      const [first, last] = range(child.id)
+      if (first !== next || last < first) return false
+      next = last + 1
+    }
+    return end === undefined || next === end + 1
+  }
+  return rows.every((row, i) => {
+    if (row.type === 'chunk') {
+      if (!row.open) return true
+      const [start, end] = range(row.id)
+      const children = subtree(rows, i).filter(child => child.level === row.level + 1)
+      return children.every(child => child.type === 'chunk')
+        ? tiles(children, start, end)
+        : children.every(child => child.type !== 'chunk') && children.length === end - start + 1
+    }
+    // A node's top ranges, for each of its groups, start at 0 and follow on.
+    if (row.type !== 'node' || !row.open) return true
+    const children = subtree(rows, i).filter(child => child.level === row.level + 1)
+    const groups = new Map<string, Row[]>()
+    for (const child of children) {
+      if (child.type !== 'chunk') continue
+      const group = child.id.slice(0, child.id.lastIndexOf('~'))
+      groups.set(group, [...(groups.get(group) ?? []), child])
+    }
+    return [...groups.values()].every(group => tiles(group, 0))
   })
 })
 
@@ -139,10 +190,13 @@ export const inspectorClicksChangeOnlyTheirSubtree = always(() => {
     const clicked = before.rows.find(row => row.id === activated?.id)
       ?? before.rows.find(({ rect }) => x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom)
     if (!clicked) return true
-    const prefix = clicked.type === 'more' ? clicked.id.slice(0, -1) : clicked.id
-    const outside = (rows: typeof before.rows) => rows
-      .filter(row => row.id !== clicked.id && !row.id.startsWith(`${prefix}:`) && !row.id.startsWith(`${prefix}.`))
-      .map(row => `${row.id}:${row.open}`)
+    // A more row adds lines to its string, the row above it.
+    const owner = clicked.type === 'more' ? clicked.id.slice(0, clicked.id.indexOf('~')) : clicked.id
+    const outside = (rows: typeof before.rows) => {
+      const i = rows.findIndex(row => row.id === owner)
+      const inside = new Set(i === -1 ? [] : [owner, ...subtree(rows, i).map(row => row.id)])
+      return rows.filter(row => row.id !== clicked.id && !inside.has(row.id)).map(row => `${row.id}:${row.open}`)
+    }
     return JSON.stringify(outside(after.rows)) === JSON.stringify(outside(before.rows))
   })
 })

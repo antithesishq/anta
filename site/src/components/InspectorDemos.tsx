@@ -1,4 +1,8 @@
-import { Box, Inspector, Text, inspectorRepr, type InspectorReprVisitor } from '@antadesign/anta'
+import { useState } from 'preact/hooks'
+import {
+  Box, Button, Inspector, Text, inspectorExpandToPath, inspectorRepr, inspectorSearch,
+  type InspectorPath, type InspectorReprVisitor,
+} from '@antadesign/anta'
 
 // Demo islands for the Inspector page. The Inspector keeps its open rows in the
 // JSX wrapper, so a demo must be hydrated for its rows to open.
@@ -21,7 +25,74 @@ export function LevelsDemo() {
     balances: Array.from({ length: 250 }, (_, i) => Math.round(1000 + Math.sin(i / 7) * 400) / 100),
     stack: stackTrace('total mismatch'),
   }
-  return <Inspector value={result} pageSize={50} aria-label="Test result" />
+  return <Inspector value={result} chunkSize={50} aria-label="Test result" />
+}
+
+/** Open rows held by the page, with buttons that reveal a row, open everything, and close everything. */
+export function ControlledDemo() {
+  const run = {
+    id: 'run_4f2a',
+    results: [
+      { test: 'transfer', ok: true },
+      { test: 'withdraw', ok: false, error: { code: 'E_BALANCE', account: 'acct_2', balance: -12.5 } },
+    ],
+  }
+  const errorPath: InspectorPath = [
+    { type: 'property', key: 'results' }, { type: 'index', index: 1 }, { type: 'property', key: 'error' },
+  ]
+  const [open, setOpen] = useState<string[]>(['r'])
+  const [current, setCurrent] = useState<InspectorPath>()
+  // Every row's ancestors, from a search that matches everything.
+  const all = () => inspectorSearch(run, () => true).reduce((keys, match) => inspectorExpandToPath(run, keys, match.path), ['r'])
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Box display="flex" gap={8} style={{ flexWrap: 'wrap' }}>
+        <Button size="small" priority="secondary" label="Expand to results[1].error"
+          onClick={() => { setOpen(keys => inspectorExpandToPath(run, keys, errorPath)); setCurrent(errorPath) }} />
+        <Button size="small" priority="secondary" label="Expand all" onClick={() => setOpen(all())} />
+        <Button size="small" priority="secondary" label="Collapse all" onClick={() => { setOpen([]); setCurrent(undefined) }} />
+      </Box>
+      <Inspector value={run} open={open} onStateChange={(_event, { next }) => setOpen(next)} current={current} aria-label="Run" />
+    </Box>
+  )
+}
+
+/** Two runs of one test: rows open in one stay open in the other where their paths exist. */
+export function ReplaceDemo() {
+  const runs = [
+    { seed: 42, status: 'failing', nodes: { 'api-1': { role: 'leader', term: 7 }, 'api-2': { role: 'follower', term: 7 } } },
+    { seed: 43, status: 'passing', nodes: { 'api-2': { role: 'leader', term: 8 }, 'api-3': { role: 'follower', term: 8 } } },
+  ]
+  const [index, setIndex] = useState(0)
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Box>
+        <Button size="small" priority="secondary" label={`Show seed ${runs[1 - index].seed}`} onClick={() => setIndex(1 - index)} />
+      </Box>
+      <Inspector value={runs[index]} defaultOpen={['r', 'r/.nodes', 'r/.nodes/.api-2']} aria-label="Run" />
+    </Box>
+  )
+}
+
+/** A searchable value with the same key at several depths. */
+export function SearchDemo() {
+  const report = {
+    region: 'emea',
+    countries: ['France', 'Kenya', 'Norway'],
+    sites: [
+      { name: 'paris-1', countries: ['France'] },
+      { name: 'nairobi-1', countries: ['Kenya'], fallback: { countries: ['France', 'Norway'] } },
+    ],
+    notes: 'countries are ISO 3166 names',
+  }
+  return <Inspector value={report} searchable aria-label="Region report" />
+}
+
+/** A search over 100,000 items, with matches at 900 and 50,000. */
+export function LargeSearchDemo() {
+  const [samples] = useState(() => Array.from({ length: 100000 }, (_, i) =>
+    i === 900 || i === 50000 ? 'timeout' : Math.round(Math.sin(i / 50) * 1000) / 10))
+  return <Inspector className="inspector-scroll" value={{ samples }} searchable aria-label="Latency samples" />
 }
 
 /** A one-line value in a sentence and in a table cell. */

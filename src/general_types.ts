@@ -1431,6 +1431,8 @@ export interface ATreeAttributes extends BaseAttributes {
   'aria-labelledby'?: string
   /** Focus and reveal an item: `"<item-id>#<n>"`. A new `n` repeats the request. */
   'data-focus'?: string
+  /** Scroll an item into view without moving focus: `"<item-id>#<n>"`. */
+  'data-reveal'?: string
   /** The keyboard's cursor moved: `detail.id` is the item. Bubbles. */
   onnavigate?: (event: CustomEvent<{ id: string }> | { nativeEvent: CustomEvent<{ id: string }> }) => void
   /** A context menu is opening on an item: `detail.id`. Sent just before the

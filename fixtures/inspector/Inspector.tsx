@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-// Test output in miniature: nested results, a Map, a long array that pages, a
+// Test output in miniature: nested results, a Map, a long array that shows in ranges, a
 // multiline string, and a cycle.
 function sample() {
   const value: Record<string, unknown> = {
@@ -29,5 +29,5 @@ export function Inspector({ id, expandDepth, layout }: { id: string; expandDepth
     return () => { delete window.__antaInspector }
   }, [id, expandDepth, layout])
 
-  return <AntaInspector id={id} value={value} expandDepth={expandDepth} layout={layout} pageSize={5} aria-label="Fixture value" />
+  return <AntaInspector id={id} value={value} expandDepth={expandDepth} layout={layout} chunkSize={5} aria-label="Fixture value" />
 }

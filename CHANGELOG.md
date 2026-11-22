@@ -13,11 +13,17 @@ changes are not listed.
   button, as a value, JSON, or a JavaScript path, and the tree supports the
   [keyboard](/inspector/#keyboard-accessibility). Rows end 120 characters from the Inspector's start, set by
   `--inspector-row-width`. Classes can choose how they appear by implementing
-  [`inspectorRepr`](/inspector/#custom-types).
+  [`inspectorRepr`](/inspector/#custom-types). Long lists open in [ranges](/inspector/#show-long-lists) of
+  `chunkSize` items. The open rows can be [controlled](/inspector/#control-which-rows-are-open) by path key, revealed
+  with `inspectorExpandToPath` and `current`, and they [carry over](/inspector/#replace-the-value) when the value
+  changes. `searchable` adds a [search field](/inspector/#search-a-value) that reveals each match; `inspectorSearch`
+  returns the same matches.
 - [Tree](/tree/) shows nested items that open and close, rendered from `items` data, such as a folder browser. Rows can
   carry [actions and a context menu](/tree/#add-actions-and-a-context-menu), the open items can be
   [controlled](/tree/#control-the-open-items) and their children loaded when they open, and the tree supports the
-  [keyboard](/tree/#keyboard-accessibility) as one Tab stop. Inspector is built on Tree.
+  [keyboard](/tree/#keyboard-accessibility) as one Tab stop. [`current`](/tree/#mark-the-current-item) marks an item
+  and scrolls it into view without moving focus, and `toolbar` places content, such as a search field, before the
+  tree. Inspector is built on Tree.
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 

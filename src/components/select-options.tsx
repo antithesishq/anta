@@ -1,7 +1,8 @@
 // Shared option/search helpers for the Select family — `Select`, `SelectFaceted`,
-// `InputAutocomplete`. Kept in one focused module (imported only by those three)
-// rather than the broad `anta_helpers`, so option normalization, the filter regex,
-// the match predicate, and match-highlighting can't drift between the components.
+// `InputAutocomplete`. Kept in one focused module (imported only by those three,
+// and by `Inspector` for the filter regex) rather than the broad `anta_helpers`,
+// so option normalization, the filter regex, the match predicate, and
+// match-highlighting can't drift between the components.
 import type { OptionValue, SelectOption } from './Select'
 
 /** Coerce a bare string option to `{ value, label }`; pass an object through.

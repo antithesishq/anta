@@ -26,6 +26,14 @@
     display: block;
   }
 
+  /* Content before the tree, such as a search field. */
+  a-tree-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-block-end: 0.5em;
+  }
+
   /* Focus lands on the item, which contains its children; the ring goes on
      its row instead, so it never surrounds a subtree. */
   a-tree-item:focus {

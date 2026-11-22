@@ -123,6 +123,12 @@ export interface TreeProps extends Omit<BaseProps, "children"> {
    *  request, so the same item can be focused again. The first render never
    *  focuses; only a change does. The item must be shown: every ancestor open. */
   focusRequest?: { id: string; n: number }
+  /** The current item, such as a search match: it's marked `data-current` and
+   *  scrolled into view after rendering, without moving focus or the keyboard's
+   *  cursor. The first render doesn't scroll; only a change does. */
+  current?: string
+  /** Content shown before the tree, outside it, such as a search field. */
+  toolbar?: React.ReactNode
   /** Accessible name. Give every tree one. */
   "aria-label"?: string
 }
@@ -173,6 +179,8 @@ export const Tree = ({
   renderIndicator,
   onItemMenu,
   focusRequest,
+  current,
+  toolbar,
   className,
   style,
   ...rest
@@ -186,6 +194,10 @@ export const Tree = ({
   // The first render never focuses, so only a later request reaches the element.
   const [initialFocus] = useState(() => focusRequest && `${focusRequest.id}#${focusRequest.n}`)
   const focusSignal = focusRequest && `${focusRequest.id}#${focusRequest.n}`
+  // Each new `current` is a new scroll request; the first render's is skipped.
+  const [reveal, setReveal] = useState<{ id: string | undefined; n: number }>(() => ({ id: current, n: 0 }))
+  if (reveal.id !== current) setReveal({ id: current, n: reveal.n + 1 })
+  const revealSignal = current !== undefined && reveal.n > 0 ? `${current}#${reveal.n}` : undefined
   const baseId = useId()
 
   // Ids are an item's identity, so duplicates make open state ambiguous.
@@ -301,6 +313,7 @@ export const Tree = ({
         disabled={item.disabled ? "" : undefined}
         aria-disabled={item.disabled ? "true" : undefined}
         aria-labelledby={valueId}
+        data-current={item.id === current ? "" : undefined}
         tabIndex={item.id === tabStop ? 0 : -1}
         class={itemClassName}
         style={itemStyle}
@@ -319,10 +332,11 @@ export const Tree = ({
     )
   }
 
-  return (
+  const tree = (
     <a-tree
       role="tree"
       data-focus={focusSignal !== initialFocus ? focusSignal : undefined}
+      data-reveal={revealSignal}
       {...events}
       class={className}
       style={style}
@@ -331,4 +345,7 @@ export const Tree = ({
       {items.map((item, i) => renderItem(item, 0, String(i)))}
     </a-tree>
   )
+  // The toolbar sits before the tree, outside role="tree"; a following
+  // `<Menu context>` still has the tree as its trigger.
+  return toolbar == null ? tree : <>{<a-tree-toolbar>{toolbar}</a-tree-toolbar>}{tree}</>
 }

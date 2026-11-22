@@ -26,6 +26,9 @@ export type Options = {
   unquoted_strings?: boolean
   /** Include an error's `stack`. Defaults to true; `summary()` always leaves it out. */
   error_stacks?: boolean
+  /** List own enumerable symbol-keyed data properties after the string-keyed ones. The Inspector sets it; `repr()`
+   *  leaves it off, keeping the notebook's output. */
+  symbol_keys?: boolean
 }
 
 type ReferenceInfo = {
@@ -281,6 +284,74 @@ export type NodeKind =
  */
 export type InspectChild = { key?: Token[] | InspectNode; value: InspectNode; stack?: true }
 
+/**
+ * One step from a node to a child, in data terms. Display-only rows, such as
+ * chunks of a long list, never appear in a path.
+ */
+export type InspectorPathSegment =
+  /** An array, typed array, or list element, by index. */
+  | { type: 'index'; index: number }
+  /** An own data property. `occurrence` tells apart symbols that share a description: 0 for the first. */
+  | { type: 'property'; key: string | symbol; occurrence?: number }
+  /** A Map entry, by position, with its key, which may be an object. */
+  | { type: 'entry'; index: number; key: unknown }
+  /** A Set item, by position. */
+  | { type: 'item'; index: number }
+  /** An error's `cause`, `errors`, or `stack` that isn't an enumerable property. */
+  | { type: 'detail'; name: 'cause' | 'errors' | 'stack' }
+  /** A child in a custom type's `inspectorRepr` output: `part` counts the parts it described, `index` the child. */
+  | { type: 'part'; part: number; index: number }
+
+/** Path from the root value to a node. The root's path is empty. */
+export type InspectorPath = readonly InspectorPathSegment[]
+
+// Escapes the characters a path key uses as separators.
+const escape_key = (text: string) => text.replace(/[%/~]/g, c => `%${c.charCodeAt(0).toString(16).padStart(2, '0')}`)
+
+function symbol_name(symbol: symbol): string {
+  const known = well_known_symbols.get(symbol)
+  if (known) return `Symbol.${known}`
+  const registered = Symbol.keyFor(symbol)
+  return registered !== undefined ? `Symbol.for(${registered})` : `Symbol(${symbol.description ?? ''})`
+}
+
+/** One segment of a path key. @internal */
+export function segmentKey(segment: InspectorPathSegment): string {
+  switch (segment.type) {
+    case 'index': return `/${segment.index}`
+    case 'item': return `/*${segment.index}`
+    case 'detail': return `/!${segment.name}`
+    case 'part': return `/(${segment.part}.${segment.index})`
+    case 'property': return typeof segment.key === 'symbol'
+      ? `/@${escape_key(symbol_name(segment.key))}#${segment.occurrence ?? 0}`
+      : `/.${escape_key(segment.key)}`
+    case 'entry': {
+      const key = segment.key
+      switch (typeof key) {
+        case 'string': return `/=s:${escape_key(key)}`
+        case 'number': return `/=n:${Object.is(key, -0) ? '-0' : String(key)}`
+        case 'bigint': return `/=b:${key}`
+        case 'boolean': case 'undefined': return `/=${String(key)}`
+        case 'symbol': return `/=#${segment.index}`
+        default: return key === null ? '/=null' : `/=#${segment.index}`
+      }
+    }
+  }
+}
+
+/**
+ * A path as a string, for use in sets, maps, and as a Tree item id. Strings
+ * and numbers are written as themselves, a symbol property by its description
+ * and occurrence, a Map entry with a primitive key by that key, and one with an
+ * object key by position, since an object's identity doesn't survive replacing
+ * the value. The root's key is `r`.
+ */
+export function inspectorPathKey(path: InspectorPath): string {
+  let key = 'r'
+  for (const segment of path) key += segmentKey(segment)
+  return key
+}
+
 /** A node's content in display order. Custom types can interleave tokens, inline values, and groups. */
 export type InspectPart =
   | { type: 'tokens'; tokens: Token[] }
@@ -291,6 +362,8 @@ export type InspectPart =
 export interface InspectNode {
   /** Path from the root. Segments are property names, indices, or raw Map keys. */
   readonly path: readonly unknown[]
+  /** Path from the root in typed segments, for `inspectorPathKey`. */
+  readonly segments: InspectorPath
   /** The object, function, or symbol this node shows, for detecting repeated references. */
   readonly identity: object | symbol | undefined
   readonly kind: NodeKind
@@ -349,6 +422,13 @@ export class InspectGroup {
     return this.#cache[index]
   }
 
+  /** How many children the group has. Reads them all, once; they're cached. */
+  count(): number {
+    let n = this.#cache.length
+    while (this.childAt(n) !== undefined) n++
+    return this.#cache.length
+  }
+
   /** Up to `limit` children from `offset`, and whether more follow. */
   children(offset: number, limit: number): { items: InspectChild[]; more: boolean } {
     const items: InspectChild[] = []
@@ -365,14 +445,16 @@ const empty_slots_text = (count: number) => `<${count} empty slot${count === 1 ?
 
 class Node implements InspectNode {
   readonly path: readonly unknown[]
+  readonly segments: InspectorPath
   readonly identity: object | symbol | undefined
   #value: unknown
   #context: Context
   #resolved: Resolved | undefined
 
-  constructor(value: unknown, path: readonly unknown[], context: Context, resolved?: Resolved) {
+  constructor(value: unknown, path: readonly unknown[], segments: InspectorPath, context: Context, resolved?: Resolved) {
     this.#value = value
     this.path = path
+    this.segments = segments
     this.#context = context
     this.#resolved = resolved
     this.identity = (typeof value === 'object' && value !== null) || typeof value === 'function' || typeof value === 'symbol'
@@ -414,12 +496,13 @@ class Node implements InspectNode {
     return { options: this.#context.options, ancestors: { identity, path: this.path, parent: this.#context.ancestors } }
   }
 
-  #child(value: unknown, path: readonly unknown[]): InspectNode {
+  #child(value: unknown, path: readonly unknown[], segment: InspectorPathSegment): InspectNode {
     const context = this.#inner()
+    const segments = [...this.segments, segment]
     if ((typeof value === 'object' && value !== null) || typeof value === 'function') {
       for (let a = context.ancestors; a; a = a.parent) {
         if (a.identity === value) {
-          return new Node(value, path, context, {
+          return new Node(value, path, segments, context, {
             kind: 'circular',
             target: a.path,
             parts: [{ type: 'tokens', tokens: [
@@ -432,22 +515,23 @@ class Node implements InspectNode {
         }
       }
     }
-    return new Node(value, path, context)
+    return new Node(value, path, segments, context)
   }
 
-  #leaf(kind: NodeKind, path: readonly unknown[], tokens: Token[]): InspectNode {
-    return new Node(undefined, path, this.#context, { kind, parts: [{ type: 'tokens', tokens }] })
+  #leaf(kind: NodeKind, path: readonly unknown[], segment: InspectorPathSegment, tokens: Token[]): InspectNode {
+    return new Node(undefined, path, [...this.segments, segment], this.#context, { kind, parts: [{ type: 'tokens', tokens }] })
   }
-  #inaccessible(path: readonly unknown[]) {
-    return this.#leaf('inaccessible', path, [{ text: INACCESSIBLE_TEXT, type: 'inaccessible' }])
+  #inaccessible(path: readonly unknown[], segment: InspectorPathSegment) {
+    return this.#leaf('inaccessible', path, segment, [{ text: INACCESSIBLE_TEXT, type: 'inaccessible' }])
   }
 
   // Children with only values, from any iterable (Set, typed array, to_repr lists).
-  *#elements(iterable: Iterable<unknown>): Generator<InspectChild> {
+  // `segment` names the child at a position: an index, a Set item, or a custom part.
+  *#elements(iterable: Iterable<unknown>, segment: (i: number) => InspectorPathSegment = index => ({ type: 'index', index })): Generator<InspectChild> {
     let i = 0
     for (const element of guarded(iterable)) {
-      if (element === INACCESSIBLE) { yield { value: this.#inaccessible([...this.path, i]) }; return }
-      yield { value: this.#child(element, [...this.path, i]) }
+      if (element === INACCESSIBLE) { yield { value: this.#inaccessible([...this.path, i], segment(i)) }; return }
+      yield { value: this.#child(element, [...this.path, i], segment(i)) }
       i++
     }
   }
@@ -455,32 +539,54 @@ class Node implements InspectNode {
   *#array_elements(arr: unknown[]): Generator<InspectChild> {
     let last = -1
     for (const key of guarded(keys_in(arr))) {
-      if (key === INACCESSIBLE) { yield { value: this.#inaccessible([...this.path, last + 1]) }; return }
+      if (key === INACCESSIBLE) { yield { value: this.#inaccessible([...this.path, last + 1], { type: 'index', index: last + 1 }) }; return }
       if (!/^\d+$/.test(key)) break // numeric array keys come before other keys
       const index = +key
       const skipped = index - last - 1
-      if (skipped > 0) yield { value: this.#leaf('empty-slots', [...this.path, last + 1], [{ text: empty_slots_text(skipped), type: 'empty_slot' }]) }
+      if (skipped > 0) yield { value: this.#leaf('empty-slots', [...this.path, last + 1], { type: 'index', index: last + 1 }, [{ text: empty_slots_text(skipped), type: 'empty_slot' }]) }
       const element = guard(() => arr[index])
-      yield { value: element === INACCESSIBLE ? this.#inaccessible([...this.path, index]) : this.#child(element, [...this.path, index]) }
+      yield { value: element === INACCESSIBLE ? this.#inaccessible([...this.path, index], { type: 'index', index }) : this.#child(element, [...this.path, index], { type: 'index', index }) }
       last = index
     }
     const length = guard(() => arr.length)
     if (length === INACCESSIBLE || last === length - 1) return
-    yield { value: this.#leaf('empty-slots', [...this.path, last + 1], [{ text: empty_slots_text(length - 1 - last), type: 'empty_slot' }]) }
+    yield { value: this.#leaf('empty-slots', [...this.path, last + 1], { type: 'index', index: last + 1 }, [{ text: empty_slots_text(length - 1 - last), type: 'empty_slot' }]) }
   }
 
   // Properties as keyed children. `skip_indices` leaves out an array's elements.
   // `listed` collects the names yielded.
-  *#properties(it: object, format_keys: boolean, skip_indices = false, listed?: Set<string>): Generator<InspectChild> {
+  // `segment` overrides the property segment, as for a custom type's members.
+  *#properties(it: object, format_keys: boolean, skip_indices = false, listed?: Set<string>,
+    segment?: (i: number) => InspectorPathSegment): Generator<InspectChild> {
+    let i = 0
     for (const entry of data_entries(it)) {
-      if (entry === INACCESSIBLE) { yield { value: this.#inaccessible(this.path) }; return }
+      if (entry === INACCESSIBLE) { yield { value: this.#inaccessible(this.path, segment?.(i) ?? { type: 'index', index: i }) }; return }
       const [name, value] = entry
       if (skip_indices && /^\d+$/.test(name)) continue
       listed?.add(name)
       yield {
         key: [{ text: format_keys ? format_key_name(name) : name, type: 'field_name' }],
-        value: this.#child(value, [...this.path, name]),
+        value: this.#child(value, [...this.path, name], segment?.(i) ?? { type: 'property', key: name }),
       }
+      i++
+    }
+    if (!this.#context.options.symbol_keys) return
+    // Own enumerable symbol-keyed data properties. Accessors are skipped, so no user code runs.
+    const symbols = guard(() => Object.getOwnPropertySymbols(it))
+    if (symbols === INACCESSIBLE) return
+    const seen = new Map<string, number>()
+    for (const key of symbols) {
+      const desc = guard(() => Object.getOwnPropertyDescriptor(it, key))
+      if (desc === INACCESSIBLE) { yield { value: this.#inaccessible(this.path, segment?.(i) ?? { type: 'index', index: i }) }; return }
+      if (!desc?.enumerable || !('value' in desc)) continue
+      const name = symbol_name(key)
+      const occurrence = seen.get(name) ?? 0
+      seen.set(name, occurrence + 1)
+      yield {
+        key: [{ text: '[', type: 'open_bracket' }, { text: name, type: 'symbol' }, { text: ']', type: 'close_bracket' }],
+        value: this.#child(desc.value, [...this.path, key], segment?.(i) ?? { type: 'property', key, occurrence }),
+      }
+      i++
     }
   }
 
@@ -492,9 +598,9 @@ class Node implements InspectNode {
       if (listed.has(name)) continue
       const key: Token[] = [{ text: name, type: 'field_name' }]
       const detail = guard(() => error_detail(error, name))
-      if (detail === INACCESSIBLE) { yield { key, value: this.#inaccessible([...this.path, name]) }; return }
+      if (detail === INACCESSIBLE) { yield { key, value: this.#inaccessible([...this.path, name], { type: 'detail', name }) }; return }
       if (detail) {
-        const child: InspectChild = { key, value: this.#child(detail.value, [...this.path, name]) }
+        const child: InspectChild = { key, value: this.#child(detail.value, [...this.path, name], { type: 'detail', name }) }
         if (name === 'stack') child.stack = true
         yield child
       }
@@ -502,16 +608,19 @@ class Node implements InspectNode {
   }
 
   *#map_entries(map: Map<unknown, unknown>): Generator<InspectChild> {
+    let index = 0
     for (const entry of guarded(map)) {
-      if (entry === INACCESSIBLE) { yield { value: this.#inaccessible(this.path) }; return }
+      if (entry === INACCESSIBLE) { yield { value: this.#inaccessible(this.path, { type: 'entry', index, key: undefined }) }; return }
       const [key, value] = entry
       const path = [...this.path, key]
+      const segment: InspectorPathSegment = { type: 'entry', index, key }
       yield {
         key: typeof key === 'string'
           ? [{ text: '"', type: 'open_bracket' }, { text: key, type: 'field_name' }, { text: '"', type: 'close_bracket' }]
-          : this.#child(key, path),
-        value: this.#child(value, path),
+          : this.#child(key, path, segment),
+        value: this.#child(value, path, segment),
       }
+      index++
     }
   }
 
@@ -620,7 +729,7 @@ class Node implements InspectNode {
           case 'set': {
             const set = value as Set<unknown>
             t('Set', 'class_name')
-            parts.push(this.#group('{', '}', () => this.#elements(set)), this.#keyable(set))
+            parts.push(this.#group('{', '}', () => this.#elements(set, index => ({ type: 'item', index }))), this.#keyable(set))
             const size = guard(() => set.size)
             return { kind: 'set', parts, size: size === INACCESSIBLE ? undefined : size }
           }
@@ -696,18 +805,22 @@ class Node implements InspectNode {
     const node = this
     const recorder: CustomRepresentationVisitor = {
       span(text, type) { tokens().push({ text, type }) },
-      visit(it) { parts.push({ type: 'value', node: node.#child(it, node.path) }) },
+      // Each child is named by the part it's in and its place there.
+      visit(it) { const part = parts.length; parts.push({ type: 'value', node: node.#child(it, node.path, { type: 'part', part, index: 0 }) }) },
       constructor_call(name, ...params) {
         tokens().push({ text: name, type: 'class_name' })
-        parts.push(node.#group('(', ')', () => node.#elements(params)))
+        const part = parts.length
+        parts.push(node.#group('(', ')', () => node.#elements(params, index => ({ type: 'part', part, index }))))
       },
       class_object_like(name, members) {
         tokens().push({ text: name, type: 'class_name' })
-        parts.push(node.#group('{', '}', () => node.#properties(members, false)))
+        const part = parts.length
+        parts.push(node.#group('{', '}', () => node.#properties(members, false, false, undefined, index => ({ type: 'part', part, index }))))
       },
       iterable_like(name, iter) {
         tokens().push({ text: name, type: 'class_name' })
-        parts.push(node.#group('[', ']', () => node.#elements(iter)))
+        const part = parts.length
+        parts.push(node.#group('[', ']', () => node.#elements(iter, index => ({ type: 'part', part, index }))))
       },
       get stopped() { return false },
     }
@@ -740,7 +853,7 @@ function classify_object(it: object): ObjectKind | Inaccessible {
 
 /** Describes `value` as a lazy node tree. Nothing is read until the root resolves. */
 export function describe(value: unknown, options: Options = {}): InspectNode {
-  return new Node(value, [], { options, ancestors: undefined })
+  return new Node(value, [], [], { options, ancestors: undefined })
 }
 
 /**
@@ -839,15 +952,17 @@ export function serialize(root: InspectNode, options: Options = {}, display = fa
 // lives, including a worker.
 
 /**
- * One visible line of the tree. Row ids are strings that follow the tree's
- * structure, so an ancestor's id is a prefix of its descendants' ids
- * (`r`, `r:1.0`, `r:1.0:1.2`), and they can travel in serializable events.
+ * One visible line of the tree. A node row's id is its path key
+ * (`inspectorPathKey`), so an ancestor's id is a prefix of its descendants'
+ * ids (`r`, `r/.results`, `r/.results/0`), and ids can travel in serializable
+ * events. Other rows add a `~` suffix to their node's id.
  *
  * - `node`: a value, open or closed. A closed node shows its summary; an open
  *   node shows its header and the opening bracket of its first group.
  * - `close`: closing brackets of an open node, and any tokens between its groups.
  * - `text`: one line of an open string, unescaped apart from control characters.
- * - `more`: the end of a group with more children, or a string with more text, than is shown.
+ * - `chunk`: a range of a long group's children, which opens to show them or smaller ranges.
+ * - `more`: the end of a string with more text than is shown.
  */
 export type InspectRow =
   | {
@@ -859,6 +974,8 @@ export type InspectRow =
     tokens: Token[]
     kind: NodeKind
     path: readonly unknown[]
+    /** The node's path in typed segments; `id` is its key. */
+    segments: InspectorPath
     /** Element count of an array, typed array, Set, or Map. */
     size: number | undefined
     expandable: boolean
@@ -874,6 +991,17 @@ export type InspectRow =
   }
   | { type: 'close'; id: string; depth: number; tokens: Token[] }
   | { type: 'text'; id: string; depth: number; tokens: Token[] }
+  | {
+    /** A range of a long group's children, such as `[0…99]`. Display only:
+     *  its id is `<group>~<start>-<end>`, and it never appears in a path. */
+    type: 'chunk'
+    id: string
+    depth: number
+    /** Positions of the first and last child in the range. */
+    start: number
+    end: number
+    open: boolean
+  }
   | {
     type: 'more'
     id: string
@@ -891,10 +1019,20 @@ export type RowState = {
   expandDepth?: number
   /** Ids of nodes whose open state is the opposite of their default. Strings start closed at any depth. */
   toggled?: ReadonlySet<string>
-  /** Pages shown per group or string, keyed by a `more` row's `group`. Each defaults to one page. */
+  /**
+   * Ids of the open nodes. When set, it decides alone, and `expandDepth` and
+   * `toggled` don't apply. Ids that name no node, as after the value changes,
+   * are ignored.
+   */
+  open?: ReadonlySet<string>
+  /** Pages shown per open string, keyed by its `more` row's `group`. Each defaults to one page. */
   pages?: ReadonlyMap<string, number>
-  /** Children per page. Defaults to 100. */
-  pageSize?: number
+  /**
+   * A group with more children than this shows them in ranges of `chunkSize`.
+   * Ranges nest by tens until a level has at most 10: 100,000 children show as
+   * ranges of 10,000, then 1,000, then 100. Defaults to 100.
+   */
+  chunkSize?: number
   /** Characters per page of an open string. Defaults to 5,000. */
   textPageSize?: number
   /**
@@ -951,12 +1089,20 @@ function child_path_text(parent: InspectNode, base: string | undefined, child: I
     }
     default:
       if (typeof segment === 'number') return `${base}[${segment}]`
+      if (typeof segment === 'symbol') {
+        // Only well-known and registered symbols can be written again.
+        const known = well_known_symbols.get(segment)
+        if (known) return `${base}[Symbol.${known}]`
+        const registered = Symbol.keyFor(segment)
+        return registered === undefined ? undefined : `${base}[Symbol.for(${JSON.stringify(registered)})]`
+      }
       return typeof segment === 'string' ? property_path(base, segment) : undefined
   }
 }
 
 // An open node's row in the `tree` style: its type, with a size where it has one.
-function label(node: InspectNode): Token[] {
+/** @internal */
+export function label(node: InspectNode): Token[] {
   const count = (size: number): Token[] => [
     { text: '(', type: 'open_bracket' }, { text: String(size), type: 'number' }, { text: ')', type: 'close_bracket' },
   ]
@@ -972,6 +1118,33 @@ function label(node: InspectNode): Token[] {
 }
 
 /**
+ * The range sizes a group of `length` children shows, largest first: none when
+ * it fits in one range, else ranges of `chunkSize` times a power of ten, the
+ * smallest that leaves at most 10 ranges, nesting down to `chunkSize`.
+ */
+export function chunkLevels(length: number, chunkSize = 100): number[] {
+  const base = Math.max(1, Math.floor(chunkSize))
+  if (length <= base) return []
+  let size = base
+  while (Math.ceil(length / size) > 10) size *= 10
+  const levels: number[] = []
+  for (; size >= base; size /= 10) levels.push(size)
+  return levels
+}
+
+/**
+ * The ranges, largest first, that hold the child at `position` in a group of
+ * `length` children, as `[start, end]` pairs. A chunk's key is its group's id
+ * plus `~start-end`, so it follows from the position alone.
+ */
+export function chunkPath(length: number, position: number, chunkSize = 100): [number, number][] {
+  return chunkLevels(length, chunkSize).map(size => {
+    const start = Math.floor(position / size) * size
+    return [start, Math.min(length, start + size) - 1]
+  })
+}
+
+/**
  * Lists the visible rows of `root` for the given display state. A closed node
  * is read only as far as its summary needs, so opening a node is what reads its
  * children. Repeated references expand in place; only cycles become `circular`
@@ -983,7 +1156,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
   const expand_depth = state.expandDepth ?? 0
   const toggled = state.toggled ?? new Set<string>()
   const pages = state.pages ?? new Map<string, number>()
-  const page_size = state.pageSize ?? 100
+  const chunk_size = state.chunkSize ?? 100
   const text_page_size = state.textPageSize ?? 5000
   const budget = state.previewBudget ?? 80
   const summary_limit = state.summaryLimit ?? budget
@@ -1003,9 +1176,10 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
   const visit = (node: InspectNode, id: string, depth: number, key: Token[], ancestors: Open[], path_text: string | undefined) => {
     const expandable = is_expandable(node, budget)
     const starts_open = depth < expand_depth && node.kind !== 'string'
-    const open = expandable && (starts_open !== toggled.has(id))
+    const open = expandable && (state.open ? state.open.has(id) : starts_open !== toggled.has(id))
     const row: InspectRow = {
-      type: 'node', id, depth, key, tokens: [], kind: node.kind, path: node.path, size: node.size, expandable, open,
+      type: 'node', id, depth, key, tokens: [], kind: node.kind, path: node.path, segments: node.segments,
+      size: node.size, expandable, open,
     }
     if (path_text !== undefined) row.pathText = path_text
     if (node.kind === 'circular') {
@@ -1023,15 +1197,15 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
       // Quotes stay on the node and close rows; the text between them is paged by characters.
       row.tokens = tree ? label(node) : node.header.filter(token => token.type === 'open_quote')
       const text = node.text!
-      const text_id = `${id}:t`
+      const text_id = `${id}~line`
       const shown = safe_truncate(text, Math.max(1, pages.get(text_id) ?? 1) * text_page_size)
       text_lines(shown).forEach((line, n) => {
-        rows.push({ type: 'text', id: `${text_id}.${n}`, depth: depth + 1, tokens: [{ text: line, type: 'string' }] })
+        rows.push({ type: 'text', id: `${text_id}:${n}`, depth: depth + 1, tokens: [{ text: line, type: 'string' }] })
       })
       if (shown.length < text.length) {
         rows.push({ type: 'more', id: `${text_id}+`, depth: depth + 1, group: text_id, shown: shown.length, unit: 'characters' })
       }
-      if (!tree) rows.push({ type: 'close', id: `${id}>0`, depth, tokens: node.header.filter(token => token.type === 'close_quote') })
+      if (!tree) rows.push({ type: 'close', id: `${id}~close:0`, depth, tokens: node.header.filter(token => token.type === 'close_quote') })
       return
     }
 
@@ -1044,7 +1218,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
     const append = (...tokens: Token[]) => {
       if (tree) return
       if (!line) {
-        const close: InspectRow = { type: 'close', id: `${id}>${closes++}`, depth, tokens: [] }
+        const close: InspectRow = { type: 'close', id: `${id}~close:${closes++}`, depth, tokens: [] }
         rows.push(close)
         line = close.tokens
       }
@@ -1056,7 +1230,7 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
       if (part.type === 'tokens') {
         append(...part.tokens)
       } else if (part.type === 'value') {
-        visit(part.node, `${id}:${p}`, depth + 1, [], inner, undefined)
+        visit(part.node, id + segmentKey(part.node.segments[part.node.segments.length - 1]), depth + 1, [], inner, undefined)
         line = undefined
       } else {
         const group = part.group
@@ -1068,17 +1242,34 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
         }
         append(open_token)
         line = undefined
-        const group_id = `${id}:${p}`
-        const shown = Math.max(1, pages.get(group_id) ?? 1) * page_size
-        const { items, more } = group.children(0, shown)
-        items.forEach((child, i) => {
-          visit(child.value, `${group_id}.${i}`, depth + 1, key_of(child), inner, child_path_text(node, path_text, child))
-          if (!tree && (i < items.length - 1 || more)) {
-            const last = rows.at(-1)!
-            if (last.type !== 'more') last.tokens.push({ text: ',', type: 'comma' })
+        const group_id = `${id}~g${p}`
+        const length = group.count()
+        const levels = chunkLevels(length, chunk_size)
+        // Children `start`..`end` at `level`: the children themselves, or
+        // ranges of the next size, which read their children only when open.
+        const show = (start: number, end: number, level: number, at: number) => {
+          if (level === levels.length) {
+            for (let i = start; i <= end; i++) {
+              const child = group.childAt(i)!
+              const segments = child.value.segments
+              visit(child.value, id + segmentKey(segments[segments.length - 1]), at, key_of(child), inner, child_path_text(node, path_text, child))
+              if (!tree && i < length - 1) {
+                const last = rows.at(-1)!
+                if (last.type !== 'more' && last.type !== 'chunk') last.tokens.push({ text: ',', type: 'comma' })
+              }
+            }
+            return
           }
-        })
-        if (more) rows.push({ type: 'more', id: `${group_id}+`, depth: depth + 1, group: group_id, shown: items.length, unit: 'children' })
+          const size = levels[level]
+          for (let first = start; first <= end; first += size) {
+            const last = Math.min(end, first + size - 1)
+            const chunk_id = `${group_id}~${first}-${last}`
+            const open = state.open ? state.open.has(chunk_id) : toggled.has(chunk_id)
+            rows.push({ type: 'chunk', id: chunk_id, depth: at, start: first, end: last, open })
+            if (open) show(first, last, level + 1, at + 1)
+          }
+        }
+        show(0, length - 1, 0, depth + 1)
         append(close_token)
       }
     })
@@ -1112,7 +1303,7 @@ export function visibleTree(root: InspectNode, state: RowState = {}): InspectTre
   const stack: InspectTreeRow[] = []
   for (const flat of visibleRows(root, state)) {
     const row: InspectTreeRow = { ...flat }
-    if (row.type === 'node' && row.expandable) row.children = []
+    if ((row.type === 'node' && row.expandable) || row.type === 'chunk') row.children = []
     // A row belongs to the nearest open node above its depth. A `close` row
     // shares its node's depth, so it belongs to that node.
     while (stack.length) {
@@ -1122,7 +1313,7 @@ export function visibleTree(root: InspectNode, state: RowState = {}): InspectTre
     }
     const parent = stack[stack.length - 1]
     ;(parent ? parent.children! : top).push(row)
-    if (row.type === 'node' && row.open) stack.push(row)
+    if ((row.type === 'node' || row.type === 'chunk') && row.open) stack.push(row)
   }
   const settle = (rows: InspectTreeRow[]) => {
     for (const row of rows) {
@@ -1139,31 +1330,58 @@ export function visibleTree(root: InspectNode, state: RowState = {}): InspectTre
   return top
 }
 
-/** Ids of the open nodes `visibleRows` shows for this state, in order. */
+/** Ids of the open nodes and ranges `visibleRows` shows for this state, in order. */
 export function openIds(root: InspectNode, state: RowState = {}): string[] {
-  return visibleRows(root, state).filter(row => row.type === 'node' && row.open).map(row => row.id)
+  return visibleRows(root, state).filter(row => (row.type === 'node' || row.type === 'chunk') && row.open).map(row => row.id)
+}
+
+// A closed row that a deep open opens next: a node that can open, other than
+// a string or a cycle, or a range.
+type Openable = Extract<InspectRow, { type: 'node' | 'chunk' }>
+const opens_deep = (row: InspectRow): row is Openable => (row.type === 'chunk' && !row.open)
+  || (row.type === 'node' && !row.open && row.expandable && row.kind !== 'string' && row.kind !== 'circular')
+const is_chunk_id = (id: string) => /~g\d+(?:~\d+-\d+)+$/.test(id)
+
+// Whether `id` names a row inside the node `ancestor` names.
+const inside = (id: string, ancestor: string) => id.startsWith(`${ancestor}/`) || id.startsWith(`${ancestor}~`)
+
+// The children of a node: inline values and every group's children, in order.
+function* child_nodes(node: InspectNode): Generator<InspectNode> {
+  for (const part of node.parts) {
+    if (part.type === 'value') yield part.node
+    else if (part.type === 'group') {
+      for (let i = 0; ; i++) {
+        const child = part.group.childAt(i)
+        if (!child) break
+        yield child.value
+      }
+    }
+  }
 }
 
 /**
- * The node a `node` row's id names, or `undefined` for any other id. In an id,
- * `:p.i` is child `i` of the group in part `p`, and a bare `:p` is the inline
- * value in part `p`. Reads only the nodes along the way.
+ * The node a path key names, or `undefined` when no node has that key, as
+ * after the value changes. Reads only the nodes along the way.
  */
-export function rowNode(root: InspectNode, id: string): InspectNode | undefined {
-  if (!/^r(?::\d+(?:\.\d+)?)*$/.test(id)) return undefined
-  let node: InspectNode | undefined = root
-  for (const [, part, index] of id.slice(1).matchAll(/:(\d+)(?:\.(\d+))?/g)) {
-    const found: InspectPart | undefined = node?.parts[Number(part)]
-    if (found?.type === 'value' && index === undefined) node = found.node
-    else if (found?.type === 'group' && index !== undefined) node = found.group.childAt(Number(index))?.value
-    else return undefined
+export function nodeAt(root: InspectNode, key: string): InspectNode | undefined {
+  let node = root
+  let at = 'r'
+  while (at !== key) {
+    if (!key.startsWith(`${at}/`)) return undefined
+    let next: InspectNode | undefined
+    for (const child of child_nodes(node)) {
+      const child_key = at + segmentKey(child.segments[child.segments.length - 1])
+      if (key === child_key || key.startsWith(`${child_key}/`)) { next = child; at = child_key; break }
+    }
+    if (!next) return undefined
+    node = next
   }
   return node
 }
 
 // Whether a row starts open: strings never do; other rows do above `expandDepth`.
 function opens_by_default(id: string, kind: NodeKind, expand_depth: number): boolean {
-  return kind !== 'string' && id.split(':').length - 1 < expand_depth
+  return kind !== 'string' && (id.match(/\//g)?.length ?? 0) < expand_depth
 }
 
 /**
@@ -1173,7 +1391,13 @@ function opens_by_default(id: string, kind: NodeKind, expand_depth: number): boo
  */
 export function setRowOpen(root: InspectNode, state: RowState, id: string, open: boolean): Set<string> {
   const toggled = new Set(state.toggled)
-  const node = rowNode(root, id)
+  // A range starts closed.
+  if (is_chunk_id(id)) {
+    if (open) toggled.add(id)
+    else toggled.delete(id)
+    return toggled
+  }
+  const node = nodeAt(root, id)
   if (!node) return toggled
   if (open === opens_by_default(id, node.kind, state.expandDepth ?? 0)) toggled.delete(id)
   else toggled.add(id)
@@ -1190,17 +1414,16 @@ export function setRowOpen(root: InspectNode, state: RowState, id: string, open:
  * result holds only ids whose state differs from their default.
  */
 export function deepToggle(root: InspectNode, state: RowState, id: string, open: boolean, limit = 500): Set<string> {
-  const node = rowNode(root, id)
+  const node = nodeAt(root, id)
   if (!node) return new Set(state.toggled)
   const expand_depth = state.expandDepth ?? 0
-  const prefix = `${id}:`
   // Rows below `id` return to their defaults first.
-  const toggled = new Set([...(state.toggled ?? [])].filter(other => !other.startsWith(prefix)))
+  const toggled = new Set([...(state.toggled ?? [])].filter(other => !inside(other, id)))
   const set = (row_id: string, kind: NodeKind, want: boolean) => {
     if (want === opens_by_default(row_id, kind, expand_depth)) toggled.delete(row_id)
     else toggled.add(row_id)
   }
-  const subtree = () => visibleRows(root, { ...state, toggled }).filter(row => row.id.startsWith(prefix))
+  const subtree = () => visibleRows(root, { ...state, toggled }).filter(row => inside(row.id, id))
 
   set(id, node.kind, true)
   if (node.kind === 'string') {
@@ -1217,15 +1440,190 @@ export function deepToggle(root: InspectNode, state: RowState, id: string, open:
     const rows = subtree()
     if (rows.length >= limit) break
     // Breadth-first: the shallowest closed row, so a cap leaves whole levels open.
-    let next: Extract<InspectRow, { type: 'node' }> | undefined
-    for (const row of rows) {
-      if (row.type !== 'node' || !row.expandable || row.open || row.kind === 'string' || row.kind === 'circular') continue
-      if (!next || row.depth < next.depth) next = row
-    }
+    let next: Openable | undefined
+    for (const row of rows) if (opens_deep(row) && (!next || row.depth < next.depth)) next = row
     if (!next) break
-    set(next.id, next.kind, true)
+    if (next.type === 'chunk') toggled.add(next.id)
+    else set(next.id, next.kind, true)
   }
   return toggled
+}
+
+/**
+ * Opens or closes a row and everything below it in an open set
+ * (`RowState.open`), returning the new set. Opening works breadth-first, one
+ * node at a time, and stops once the subtree shows `limit` rows, so one action
+ * reads only what it shows; strings and cycles stay closed. Closing also closes
+ * every open descendant, so reopening the row shows its children closed.
+ */
+export function deepOpen(root: InspectNode, state: RowState, id: string, open: boolean, limit = 500): Set<string> {
+  const result = new Set([...(state.open ?? [])].filter(other => other !== id && !inside(other, id)))
+  const node = nodeAt(root, id)
+  if (!open || !node) return result
+  result.add(id)
+  if (node.kind === 'string') return result
+  for (;;) {
+    const rows = visibleRows(root, { ...state, open: result }).filter(row => inside(row.id, id))
+    if (rows.length >= limit) break
+    let next: Openable | undefined
+    for (const row of rows) if (opens_deep(row) && (!next || row.depth < next.depth)) next = row
+    if (!next) break
+    result.add(next.id)
+  }
+  return result
+}
+
+/** Options for `inspectorExpandToPath`, matching the Inspector it's for. */
+export type ExpandToPathOptions = {
+  /** The Inspector's `chunkSize`. Defaults to 100. */
+  chunkSize?: number
+  /** List symbol-keyed properties, as the Inspector does. Defaults to true. */
+  symbolKeys?: boolean
+}
+
+/**
+ * `open` plus the key of every ancestor of `path`, including the ranges above
+ * each child in a long group, so the row `path` names is shown. The row itself
+ * keeps its own state. Keys are added, never removed. It reads only the nodes
+ * along the path, and each group along it is counted, not rendered: revealing
+ * child 50,000 opens no range above any other child.
+ */
+export function inspectorExpandToPath(value: unknown, open: readonly string[], path: InspectorPath,
+  options: ExpandToPathOptions = {}): string[] {
+  return expandToPath(describe(value, { symbol_keys: options.symbolKeys ?? true }), open, path, options.chunkSize)
+}
+
+/** `inspectorExpandToPath` on a described value, so the Inspector reuses the children it has read. @internal */
+export function expandToPath(root: InspectNode, open: readonly string[], path: InspectorPath, chunkSize?: number): string[] {
+  const result = [...open]
+  const have = new Set(open)
+  const add = (key: string) => { if (!have.has(key)) { result.push(key); have.add(key) } }
+  let node: InspectNode | undefined = root
+  let key = 'r'
+  for (const segment of path) {
+    add(key)
+    const step = segmentKey(segment)
+    let next: InspectNode | undefined
+    node?.parts.forEach((part, p) => {
+      if (next) return
+      if (part.type === 'value') {
+        if (segmentKey(part.node.segments[part.node.segments.length - 1]) === step) next = part.node
+        return
+      }
+      if (part.type !== 'group') return
+      for (let position = 0; ; position++) {
+        const child = part.group.childAt(position)
+        if (!child) return
+        if (segmentKey(child.value.segments[child.value.segments.length - 1]) !== step) continue
+        next = child.value
+        for (const [start, end] of chunkPath(part.group.count(), position, chunkSize)) add(`${key}~g${p}~${start}-${end}`)
+        return
+      }
+    })
+    node = next
+    key += step
+  }
+  return result
+}
+
+/** A text test for `inspectorSearch`: a regular expression, or a function. */
+export type InspectorMatcher = RegExp | ((text: string) => boolean)
+
+/** One row `inspectorSearch` found, and the field that matched. */
+export type InspectorMatch = {
+  path: InspectorPath
+  /** `key` when the row's key matched, which wins when both do; else `value`. */
+  field: 'key' | 'value'
+}
+
+/** Options for `inspectorSearch`, matching the Inspector it's for. */
+export type SearchOptions = {
+  /** The Inspector's `numericBase`, which changes a number's text. */
+  numericBase?: Options['numeric_base']
+  /** List symbol-keyed properties, as the Inspector does. Defaults to true. */
+  symbolKeys?: boolean
+}
+
+/** A matcher as a test. A RegExp's `g` and `y` flags are dropped, so repeated tests don't depend on `lastIndex`. @internal */
+export function matcherTest(matcher: InspectorMatcher): (text: string) => boolean {
+  if (typeof matcher === 'function') return matcher
+  const regex = new RegExp(matcher.source, matcher.flags.replace(/[gy]/g, ''))
+  return text => regex.test(text)
+}
+
+const tokens_text = (tokens: readonly Token[]) => tokens.map(token => token.text).join('')
+
+/**
+ * The text search reads for a row's key: the key without its colon and
+ * brackets. A key that is itself a container, as an object Map key, shows a
+ * preview, so it has none. Array indices aren't keys. @internal
+ */
+export function keyText(child: InspectChild): string | undefined {
+  if (child.key === undefined) return undefined
+  if (Array.isArray(child.key)) {
+    return tokens_text(child.key.filter(token => token.type !== 'open_bracket' && token.type !== 'close_bracket'))
+  }
+  const key = child.key as InspectNode
+  if (!LEAF_KINDS.has(key.kind)) return undefined
+  return key.kind === 'string' ? key.text : tokens_text(key.summary(80))
+}
+
+/**
+ * The text search reads for a row's own value: a string's raw text, a
+ * primitive's text, or a container's type, as its open row shows it, such as
+ * `Array(3)`. Never a container's preview of its children. @internal
+ */
+export function valueText(node: InspectNode): string | undefined {
+  if (node.kind === 'empty-slots') return undefined
+  if (node.kind === 'string') return node.text
+  return tokens_text(LEAF_KINDS.has(node.kind) ? node.summary(80) : label(node))
+}
+
+/**
+ * Searches a described value from `root`, as `inspectorSearch` does. Children
+ * are cached in their groups, so the Inspector shares them with its rows. @internal
+ */
+export function searchNodes(root: InspectNode, matcher: InspectorMatcher): InspectorMatch[] {
+  const test = matcherTest(matcher)
+  const matches: InspectorMatch[] = []
+  // A cycle comes back as a `circular` node, which has no children, so the
+  // walk ends there; a repeated reference is searched where each copy
+  // appears, as the rows show it.
+  const visit = (node: InspectNode, key: string | undefined) => {
+    if (key !== undefined && test(key)) matches.push({ path: node.segments, field: 'key' })
+    else {
+      const text = valueText(node)
+      if (text !== undefined && test(text)) matches.push({ path: node.segments, field: 'value' })
+    }
+    if (LEAF_KINDS.has(node.kind)) return
+    for (const part of node.parts) {
+      if (part.type === 'value') visit(part.node, undefined)
+      else if (part.type === 'group') {
+        for (let i = 0; ; i++) {
+          const child = part.group.childAt(i)
+          if (!child) break
+          visit(child.value, keyText(child))
+        }
+      }
+    }
+  }
+  visit(root, undefined)
+  return matches
+}
+
+/**
+ * Finds the rows of `value` whose key or own value matches, in the order the
+ * Inspector shows them fully open. A row matches once: on its key when the key
+ * matches, else on its value. A key is a property name, a Map key, or a
+ * symbol; array indices aren't keys. A value is a primitive's text, a string's
+ * raw text, or a container's type, such as `Array(3)` or `Map(2)`, never its
+ * preview of its children, so each match is the row it names. A cycle ends the
+ * search down its branch, and a repeated reference is searched where each copy
+ * appears. Getters are never called. Open a match's ancestors with
+ * `inspectorExpandToPath`.
+ */
+export function inspectorSearch(value: unknown, matcher: InspectorMatcher, options: SearchOptions = {}): InspectorMatch[] {
+  return searchNodes(describe(value, { numeric_base: options.numericBase, symbol_keys: options.symbolKeys ?? true }), matcher)
 }
 
 /**

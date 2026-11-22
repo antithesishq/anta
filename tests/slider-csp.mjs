@@ -73,7 +73,7 @@ before(async () => {
     `,resolveDir},outfile:`${framework}.js`,format:'esm',jsx:'automatic',jsxImportSource:'@antadesign/anta',alias,define:{'process.env.NODE_ENV':'"production"'}}),framework)
   }
   assets.set('/boot.js',`window.violations=[];window.recoverableErrors=[];document.addEventListener('securitypolicyviolation',e=>violations.push(e.effectiveDirective));`)
-  assets.set('/fixture.css',`body{margin:40px;font:14px/20px system-ui}a-slider{width:260px}.consumer::part(thumb){border-radius:3px}.consumer::part(fill){background:rgb(1,2,3)}.marker{--slider-marker-position:50%}.marker-start{--slider-marker-position:0%}.marker-end{--slider-marker-position:100%}.css-rtl{direction:rtl}.wrap-marker{max-inline-size:64px!important;white-space:normal}.typography-override{--font-size-small:14px;--line-height-small:20px;--font-size-medium:18px;--line-height-medium:28px;--font-size-large:19px;--line-height-large:30px;--font-size-tiny:11px;--line-height-tiny:18px}`)
+  assets.set('/fixture.css',`body{margin:40px;font:14px/20px system-ui}a-slider{width:260px}.consumer::part(thumb){border-radius:3px}.consumer::part(fill){background:rgb(1,2,3)}.marker{--slider-marker-position:50%}.marker-start{--slider-marker-position:0%}.marker-end{--slider-marker-position:100%}.css-rtl{direction:rtl}.wrap-marker{max-inline-size:64px!important;white-space:normal}.typography-override{--font-size-small:14px;--line-height-small:calc(20 / 14);--font-size-medium:18px;--line-height-medium:calc(28 / 18);--font-size-large:19px;--line-height-large:calc(30 / 19);--font-size-tiny:11px;--line-height-tiny:calc(18 / 11)}`)
   server=createServer((req,res)=>{
     const url=new URL(req.url,'http://localhost'),mode=url.searchParams.get('mode')??'granular',framework=url.searchParams.get('framework')??'React'
     const props=initialProps(url.searchParams.has('controlled'),url.searchParams.has('range'))
@@ -384,13 +384,18 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
       const index = ['small', 'medium', 'large'].indexOf(row.size)
       const font = row.overridden ? [14, 18, 19][index] : [13, 15, 17][index]
       const leading = row.overridden ? [20, 28, 30][index] : [18, 22, 26][index]
-      if (row.separator) assert.deepEqual(row.separator, {family: row.values[0].family, font: `${font}px`, leading: `${leading}px`}, JSON.stringify(row))
+      if (row.separator) {
+        assert.equal(row.separator.family, row.values[0].family)
+        assert.equal(row.separator.font, `${font}px`)
+        assert.ok(Math.abs(Number.parseFloat(row.separator.leading) - leading) < 0.001, JSON.stringify(row))
+      }
       assert.equal(row.control, [24, 28, 32][index], JSON.stringify(row))
-      assert.equal(row.height, (row.overridden ? [44, 56, 62] : [42, 50, 58])[index] + (row.lines - 1) * leading, JSON.stringify(row))
+      const height = (row.overridden ? [44, 56, 62] : [42, 50, 58])[index] + (row.lines - 1) * leading
+      assert.ok(Math.abs(row.height - height) < 0.05, JSON.stringify(row))
       assert.equal(row.values.length, row.display === 'thumb' ? 2 : 1)
       for (const value of row.values) {
         assert.equal(value.font, `${font}px`)
-        assert.equal(value.leading, `${leading}px`)
+        assert.ok(Math.abs(Number.parseFloat(value.leading) - leading) < 0.001, JSON.stringify(row))
         assert.ok(Math.abs(value.top) < 0.5 && Math.abs(value.bottom) < 0.5, JSON.stringify(row))
         if (value.borderBottom !== null) assert.ok(value.borderBottom >= -0.5 && value.borderBottom <= 1.5, JSON.stringify(row))
       }

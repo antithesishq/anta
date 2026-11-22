@@ -91,6 +91,8 @@ font sources in your application.
 Title, Expander summaries, native disclosure summaries, and raw headings share
 six heading levels. Dialog headers use level 4. Each level uses
 `--font-size-heading-N` and `--line-height-heading-N`, where `N` is 1 through 6.
+Line-height tokens are unitless ratios. The table shows their pixel heights at
+the default font sizes. For example, heading 1 uses `calc(34 / 28)`.
 
 | Level | Font size | Line height |
 | --- | --- | --- |
@@ -420,8 +422,20 @@ Every color is a role token; Progress defines none of its own. Track = --bg-4, b
 
 ## Text and hint sizes
 
-Main text and supporting hints use independent scales. Each pair below is
-font size / line height, in pixels.
+Main text and supporting hints use independent scales. Each pair below shows
+the default font size / rendered line height, in pixels. The `--line-height-*`
+tokens store unitless fractions: `--line-height-medium` is `calc(22 / 15)`, so
+15px text keeps a 22px line height. Nested text inherits the ratio and scales
+its line height with its own font size.
+
+Use unitless values when overriding these tokens. To give medium text a 24px
+line height at its default 15px font size:
+
+```css
+:root {
+  --line-height-medium: calc(24 / 15);
+}
+```
 
 | Size | Main text | Hint |
 | --- | --- | --- |

@@ -237,7 +237,7 @@
   }
 
   a-step-desc > a-tab-label {
-    line-height: calc(1lh + 2px);
+    line-height: inherit;
     display: block;
     min-width: 0;
     overflow: hidden;

@@ -74,7 +74,8 @@
     font-family: var(--sans-serif);
     font-weight: 450;
     font-size: var(--font-size-tiny);
-    line-height: var(--line-height-small);
+    /* Match the shared small leading at Tag's smaller font size. */
+    line-height: calc(var(--line-height-small) * 13 / 12);
     /* Normal (mixed) case is the default. Theme-free tags use deliberately
        open tracking; reference themes can tune it for their chosen font. */
     text-transform: none;
@@ -225,19 +226,22 @@
     --tag-icon-size: 15px;
 
     font-size: var(--font-size-small);
-    line-height: var(--line-height-medium);
+    line-height: calc(var(--line-height-medium) * 15 / 13);
   }
 
   /* Uppercase reads larger, so reduce the regular size by 1px. */
   a-tag[allcaps] {
     font-size: calc(var(--font-size-tiny) - 1px);
+    line-height: calc(var(--line-height-small) * 13 / 11);
     text-transform: uppercase;
   }
   a-tag[size="small"][allcaps] {
     font-size: calc(var(--font-size-micro) - 1px);
+    line-height: calc(var(--line-height-micro) * 11 / 10);
   }
   a-tag[size="large"][allcaps] {
     font-size: calc(var(--font-size-small) - 1px);
+    line-height: calc(var(--line-height-medium) * 15 / 12);
   }
 
   /* Tones are intentionally not re-created in forced colors: a status still

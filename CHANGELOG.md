@@ -12,7 +12,7 @@ changes are not listed.
 
 ### Changed
 
-- Consolidated [typography](/theming/#text-and-hint-sizes) into shared scales and increased line heights to reduce text clipping. Replace removed component typography variables with shared tokens or direct CSS overrides.
+- Consolidated [typography](/theming/#text-and-hint-sizes) into shared scales with more leading to reduce clipping and unitless line heights that scale through nested font sizes. Replace removed component typography variables with shared tokens or direct CSS overrides, using unitless values for line-height tokens.
 
 ### Removed
 

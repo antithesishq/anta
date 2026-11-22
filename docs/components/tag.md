@@ -80,8 +80,9 @@ export default function Demo() {
 
 ## Size
 
-`size` sets the tag's dimensions. Choose `small`, `medium`, or `large`;
-`medium` is the default.
+Match `size` to the surrounding content: use `small` for compact metadata in
+dense tables or lists, `medium` for status labels beside body text, and `large`
+beside headings or larger controls.
 
 ```tsx
 import { Tag } from '@antadesign/anta/bundle'

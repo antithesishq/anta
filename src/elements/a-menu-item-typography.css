@@ -1,0 +1,22 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+@layer anta.components {
+  /* Native options and menu rows share typography, independent of field size. */
+  a-menu-item,
+  a[data-anta-menu-item],
+  select[data-anta] option {
+    font-size: 14px;
+  }
+
+  a-menu-item-label,
+  a-menu-item > [data-indicator],
+  select[data-anta] option {
+    line-height: 18px;
+  }
+
+  a-menu-item-hint {
+    font-size: 12px;
+    line-height: 17px;
+  }
+}

@@ -187,8 +187,8 @@
     min-width: 0;
     min-height: 0;
     animation: var(--card-content-animation, none);
-    font-size: var(--card-content-fs, 15px);
-    line-height: var(--card-content-lh, 20px);
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
   }
   a-card-header {
     display: flex;

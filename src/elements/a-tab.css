@@ -3,7 +3,7 @@
 
 @layer anta.components {
   /* Intrinsic, priority-independent tab chrome. The per-priority / per-tone / per-
-     state values of --tab-fg / --tab-bg, typography, optical --_pb,
+     state values of --tab-fg / --tab-bg, typography,
      padding, and the track live on the parent <a-tabs> (a-tabs.css) and inherit /
      cascade down — this file is just the box that consumes them, so a-tab stays the
      button-like item regardless of which tablist style wraps it. */
@@ -47,7 +47,7 @@
     /* Match Button label leading and absorb its extra 2px in block padding,
        preserving 24/28/32px heights and the existing optical text position. */
     min-height: var(--tab-height);
-    padding-block: calc((6px - var(--_pb)) / 2);
+    padding-block: 0;
     padding-inline: var(--tab-padding-x);
 
     /* The text/icon `color` is INSTANT (not transitioned) — hover/select recolor the
@@ -59,7 +59,7 @@
       box-shadow var(--tab-timing);
 
     /* The label box — the `Tabs` wrapper wraps a string label in <a-tab-label>. It
-       carries the optical --_pb and is ellipsis-/wrap-capable, exactly like
+       carries shared text compensation and is ellipsis-/wrap-capable, exactly like
        <a-button-label>, so a constrained tab truncates cleanly and icons align. */
     & > a-tab-label {
       display: inline-block;
@@ -70,7 +70,7 @@
       white-space: nowrap;
 
       line-height: inherit;
-      padding-bottom: var(--_pb);
+      padding-bottom: 0;
 
       &:has(> *) {
         display: inline-flex;
@@ -95,6 +95,24 @@
 
   a-tabs > a-tab > a-tab-label {
     line-height: calc(1lh + 2px);
+    padding-bottom: var(--text-compensation-medium);
+  }
+
+  a-tabs:not([data-steps]) > a-tab {
+    padding-block: calc((6px - var(--text-compensation-medium)) / 2);
+  }
+
+  a-tabs[size="small"]:not([data-steps]) > a-tab {
+    padding-block: calc((6px - var(--text-compensation-small)) / 2);
+  }
+  a-tabs[size="small"] > a-tab > a-tab-label {
+    padding-bottom: var(--text-compensation-small);
+  }
+  a-tabs[size="large"]:not([data-steps]) > a-tab {
+    padding-block: calc((6px - var(--text-compensation-large)) / 2);
+  }
+  a-tabs[size="large"] > a-tab > a-tab-label {
+    padding-bottom: var(--text-compensation-large);
   }
 
   a-tab:focus-visible {

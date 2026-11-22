@@ -18,6 +18,7 @@ const cases = [
   ...sizes.flatMap(size => [false, true].map(withHint => [`Input button · ${size}${withHint ? ' · with hint' : ''}`, 'Clipped value span inside the shadow button', `<a-input button size="${size}" aria-label="Clipping sample" data-sample-input>${withHint ? '<span slot="hint" data-sample data-sample-hint></span>' : ''}</a-input>`])),
   ...sizes.flatMap(size => [false, true].map(withHint => [`Textarea · ${size} · two rows${withHint ? ' · with hint' : ''}`, 'Native multiline control with vertical scrolling', `<a-input rows="2" size="${size}" aria-label="Clipping sample" data-sample-input>${withHint ? '<span slot="hint" data-sample data-sample-hint></span>' : ''}</a-input>`])),
   ...sizes.flatMap(size => [false, true].map(withHint => [`InputTime · ${size}${withHint ? ' · with hint' : ''}`, 'Real segmented time field · label and hint use the sample text', `<a-input-time size="${size}" locale="en-GB" value="13:05"><span slot="label" data-sample></span>${withHint ? '<span slot="hint" data-sample data-sample-hint></span>' : ''}</a-input-time>`])),
+  ...sizes.map(size => [`File Input · ${size}`, 'Native chooser and sample filename · Input typography', `<input type="file" data-anta data-anta-size="${size}" aria-label="Clipping sample file" data-sample-file />`]),
   ...sizes.map(size => [`Progress · ${size}`, 'Label and hint share increased leading · padding preserves bar height', `<a-progress size="${size}" value="60" max="100" role="progressbar" aria-label="Clipping sample" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"><a-progress-label><a-progress-text data-sample></a-progress-text><a-progress-hint data-sample data-sample-hint></a-progress-hint></a-progress-label></a-progress>`]),
   ...['Checkbox', 'Switch', 'Radio'].flatMap(kind => sizes.flatMap(size => [false, true].map(withHint => [
     `${kind} · ${size}${withHint ? ' · with hint' : ''}`,
@@ -36,6 +37,7 @@ const groups = [
   { value: 'input', label: 'Input', cases: cases.filter(([title]) => /^(Input ·|Input button ·)/.test(title)) },
   { value: 'textarea', label: 'Textarea', cases: cases.filter(([title]) => title.startsWith('Textarea ·')) },
   { value: 'input-time', label: 'InputTime', cases: cases.filter(([title]) => title.startsWith('InputTime ·')) },
+  { value: 'file-input', label: 'File Input', cases: cases.filter(([title]) => title.startsWith('File Input ·')) },
   { value: 'checkbox', label: 'Checkbox', cases: cases.filter(([title]) => title.startsWith('Checkbox ·')) },
   { value: 'switch', label: 'Switch', cases: cases.filter(([title]) => title.startsWith('Switch ·')) },
   { value: 'radio', label: 'Radio', cases: cases.filter(([title]) => title.startsWith('Radio ·')) },
@@ -171,6 +173,11 @@ const groups = [
       sample.textContent = sample.hasAttribute('data-multiline') ? `${text.value}\n${text.value}\n${text.value}` : text.value
     }
     for (const input of lab.querySelectorAll<HTMLElement & { value: string }>('[data-sample-input]')) input.value = text.value
+    for (const input of lab.querySelectorAll<HTMLInputElement>('[data-sample-file]')) {
+      const files = new DataTransfer()
+      files.items.add(new File([''], `${text.value || 'Sample'}.txt`, { type: 'text/plain' }))
+      input.files = files.files
+    }
     document.dispatchEvent(new CustomEvent('clipping-sample-change', { detail: text.value }))
     requestAnimationFrame(measure)
   }

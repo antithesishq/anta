@@ -1,3 +1,5 @@
+@import './a-menu-item-typography.css';
+
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
@@ -53,9 +55,8 @@
     background: transparent;
     /* Resting / hover-exit easing (the slower, ease-out direction). */
     transition: background-color var(--menu-item-timing-out);
-    font: inherit;
+    font-family: inherit;
     font-variation-settings: inherit;
-    font-size: 14px;
     line-height: 16px;
     text-align: left;
     white-space: nowrap;
@@ -131,7 +132,6 @@
   }
   /* Ellipsis on the label wherever it sits — direct child or inside the column. */
   a-menu-item-label {
-    line-height: 18px;
     display: block;
     min-width: 0;
     overflow: hidden;
@@ -144,8 +144,6 @@
     text-overflow: ellipsis;
     margin-block-start: 1px;
     color: var(--menu-item-hint-color);
-    font-size: 12px;
-    line-height: 17px;
   }
 
   a-menu-item > a-icon,

@@ -1,3 +1,5 @@
+@import './a-menu-item-typography.css';
+
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
@@ -7,9 +9,7 @@
      selected-content slot, options, and optgroups — with no selection JS. */
   select[data-anta] {
     --native-field-block-size: 28px;
-    --native-field-padding-block: 4px;
-    --native-field-font-size: 15px;
-    --native-field-line-height: 20px;
+    --native-field-padding-block: 3px;
     --native-field-round: 4px;
     --native-field-border: var(--border-2);
     --native-select-picker-bg: light-dark(
@@ -47,11 +47,11 @@
     color: var(--text-1);
     color-scheme: inherit;
     font-family: var(--sans-serif);
-    font-size: var(--native-field-font-size);
+    font-size: var(--font-size-medium);
     font-weight: 400;
     font-stretch: normal;
     font-style: normal;
-    line-height: var(--native-field-line-height);
+    line-height: var(--line-height-medium);
     transition: box-shadow 120ms ease;
   }
   /* Dark mode adds an inset ring to the shadow list. `light-dark()` carries
@@ -81,15 +81,15 @@
 
   select[data-anta][data-anta-size="small"] {
     --native-field-block-size: 24px;
-    --native-field-padding-block: 2px;
-    --native-field-font-size: 13px;
-    --native-field-line-height: 16px;
+
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
   }
   select[data-anta][data-anta-size="large"] {
     --native-field-block-size: 32px;
-    --native-field-padding-block: 5px;
-    --native-field-font-size: 17px;
-    --native-field-line-height: 22px;
+
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
   }
   select[data-anta][round] {
     --native-field-round: 999px;
@@ -144,6 +144,7 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+      & selectedcontent a-menu-item-label { line-height: inherit; }
       &::picker-icon {
         content: '';
         flex: none;
@@ -199,12 +200,10 @@
         color: var(--native-select-option-color);
         cursor: pointer;
         font-family: var(--sans-serif);
-        font-size: 14px;
         font-weight: 400;
         font-stretch: normal;
         font-style: normal;
         letter-spacing: normal;
-        line-height: 16px;
         text-transform: none;
         transition: background-color 280ms ease-out;
       }
@@ -239,8 +238,6 @@
         display: block;
         margin-block-start: 1px;
         color: var(--text-3);
-        font-size: 12px;
-        line-height: 15px;
       }
       & :is(option, selectedcontent) > a-icon {
         flex: none;

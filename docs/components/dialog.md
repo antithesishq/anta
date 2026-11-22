@@ -12,6 +12,9 @@ pinned. Each zone is optional: drop `header` for a chromeless sheet, or `footer`
 when there are no actions. The footer lays its content out in a right-aligned
 row.
 
+Plain header text uses the shared heading level 4 font size and line height,
+matching `<Title level={4}>`.
+
 ```tsx
 <Button data-dialog-open="zones">Open dialog</Button>
 <Dialog

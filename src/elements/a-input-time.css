@@ -249,8 +249,6 @@
      Unmarked native buttons and other custom content keep their own sizing. */
   a-input-time > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
   a-input-time > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
-    --_pb: 0px;
-
     font-size: inherit;
     line-height: inherit;
     box-sizing: border-box;

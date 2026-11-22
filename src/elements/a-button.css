@@ -64,13 +64,12 @@
     /* Labels add 2px of clipping clearance to the type scale. Their outer
        padding absorbs it and the optical bottom padding, keeping 24/28/32px
        control heights and the existing text position. */
-    --_pb: 1px;
     --_radius: 4px;
     /* Round text padding to whole CSS pixels at the 13/15/17px type scale.
        Themes can retune it without changing icon-only or paddingless buttons. */
     --_padding-x-text: round(calc(0.8em - 2px), 1px);
     --button-padding-x: var(--_padding-x-text);
-    --button-padding-y: calc((8px - var(--_pb)) / 2);
+    --button-padding-y: calc((8px - var(--text-compensation-medium)) / 2);
 
     --button-timing-in: 75ms ease-in;
     --button-timing-active: 50ms linear;
@@ -200,7 +199,7 @@
     min-height: 28px;
 
     &:has(> a-button-label) {
-      --button-padding-y: calc((6px - var(--_pb)) / 2);
+      --button-padding-y: calc((6px - var(--text-compensation-medium)) / 2);
     }
 
     & > a-button-label {
@@ -214,8 +213,8 @@
       line-height: calc(1lh + 2px);
       /* Optically centers Anta's font (glyphs sit slightly low in the line-box —
          a font-metric offset that scales with size: 0.5 / 1 / 1.5px). The button
-         outer padding absorbs --_pb and the extra label leading. */
-      padding-bottom: var(--_pb);
+         outer padding absorbs the compensation and extra label leading. */
+      padding-bottom: var(--text-compensation-medium);
 
       &:has(> *) {
         display: inline-flex;
@@ -277,20 +276,30 @@
     }
 
     &[size="small"] {
-      --_pb: 0.5px;
+      --button-padding-y: calc((8px - var(--text-compensation-small)) / 2);
 
       font-size: var(--font-size-small);
       line-height: calc(var(--line-height-small) - 2px);
+
+      &:has(> a-button-label) {
+        --button-padding-y: calc((6px - var(--text-compensation-small)) / 2);
+      }
+      & > a-button-label { padding-bottom: var(--text-compensation-small); }
       min-height: 24px;
       /* Icon tracks the button size (medium is the a-icon default, 16px). An
          explicit `<Icon size>` (inline `--icon-size`) still wins. */
       & a-icon { --icon-size: 14px; }
     }
     &[size="large"] {
-      --_pb: 1.5px;
+      --button-padding-y: calc((8px - var(--text-compensation-large)) / 2);
 
       font-size: var(--font-size-large);
       line-height: calc(var(--line-height-large) - 2px);
+
+      &:has(> a-button-label) {
+        --button-padding-y: calc((6px - var(--text-compensation-large)) / 2);
+      }
+      & > a-button-label { padding-bottom: var(--text-compensation-large); }
       min-height: 32px;
       & a-icon { --icon-size: 18px; }
     }
@@ -609,6 +618,13 @@
       border-color: GrayText;
       text-decoration-color: GrayText;
     }
+  }
+
+  :is(a-input, a-input-time) > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
+  :is(a-input, a-input-time) > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
+    --text-compensation-small: 0px;
+    --text-compensation-medium: 0px;
+    --text-compensation-large: 0px;
   }
 }
 

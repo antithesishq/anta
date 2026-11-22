@@ -3,9 +3,8 @@
 
 @layer anta.components {
   a-tabs {
-    /* Labels add 2px to the inherited host leading. --_pb supplies the optical
-       bottom nudge consumed by a-tab.css. */
-    --_pb: 1px;
+    /* Labels add 2px to the inherited host leading; a-tab.css applies the
+       shared size-specific text compensation. */
     --tab-padding-x: 9px;
     /* Tab box height — prescribed on the same 24/28/32 scale as Button's `min-height`, so a
        tab lines up with a same-size button / input. a-tab.css applies it as `min-height` and
@@ -89,7 +88,6 @@
 
   /* ── Sizes ───────────────────────────────────────────────────────────────── */
   a-tabs[size="small"] {
-    --_pb: 0.5px;
     --tab-padding-x: 7px;
     --tab-height: 24px;
 
@@ -97,7 +95,6 @@
     line-height: calc(var(--line-height-small) - 2px);
   }
   a-tabs[size="large"] {
-    --_pb: 1.5px;
     --tab-padding-x: 13px;
     --tab-height: 32px;
 

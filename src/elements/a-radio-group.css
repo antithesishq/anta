@@ -10,6 +10,8 @@
        below (mirrors <a-input>'s --input-hint). */
     --radio-group-hint: var(--text-3);
 
+    font-size: var(--font-size-medium);
+    line-height: var(--line-height-medium);
     display: flex;
     flex-direction: column;
   }
@@ -36,8 +38,8 @@
     display: block;
     color: var(--text-3);
     font-family: var(--sans-serif);
-    font-size: 15px;
-    line-height: 20px;
+    font-size: inherit;
+    line-height: inherit;
     font-weight: 500;
   }
   /* Group descriptions use the same typography and gap as option hints. */
@@ -49,6 +51,15 @@
   }
   a-radio-group[size="small"] > a-radio-group-hint { font-size: var(--font-size-hint-small); line-height: var(--line-height-hint-small); }
   a-radio-group[size="large"] > a-radio-group-hint { font-size: var(--font-size-hint-large); line-height: var(--line-height-hint-large); }
+
+  a-radio-group[size="small"] {
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
+  }
+  a-radio-group[size="large"] {
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
+  }
 
   /* Status tones — recolor the group hint, same set as <a-input>'s status. */
   a-radio-group[status="critical"] { --radio-group-hint: var(--text-2-critical); }

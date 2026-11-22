@@ -76,7 +76,7 @@ function swatches({ tokens, theme }) {
   }
   return `Values are CSS declarations from the shipped default palette and optional \`theme-antune.css\` reference palette. Resolve them in the application's theme to obtain displayed colors. Toned backgrounds share the neutral \`--bg-1\`; there is no \`--bg-1-{tone}\`.
 
-${KINDS.map(kind => `## ${TITLES[kind]}\n\n${INTROS[kind]}\n\n${guidance[kind]}\n\n${tokenTable([...modes[0].keys()].filter(name => name.startsWith(`--${kind}-`)))}`).join('\n\n')}
+${KINDS.map(kind => `## ${TITLES[kind]}\n\n${INTROS[kind]}\n\n${guidance[kind]}\n\n${tokenTable([...modes[0].keys()].filter(name => new RegExp(`^--${kind}-[1-5](?:-[a-z]+)?$`).test(name)))}`).join('\n\n')}
 
 ### Link and focus values
 

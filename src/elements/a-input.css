@@ -355,8 +355,6 @@
      Unmarked native buttons and other custom content keep their own sizing. */
   a-input > :is([slot="clear"], [slot="trailing"]) :is(a-button, button[data-anta], a[role="button"][data-anta]),
   a-input > :is(a-button, button[data-anta], a[role="button"][data-anta]):is([slot="clear"], [slot="trailing"]) {
-    --_pb: 0px;
-
     font-size: inherit;
     line-height: inherit;
     box-sizing: border-box;
@@ -609,9 +607,7 @@
      entirely native. */
   input[data-anta][type="file"] {
     --native-file-block-size: 28px;
-    --native-file-padding-block: 4px;
-    --native-file-font-size: 15px;
-    --native-file-line-height: 20px;
+    --native-file-padding-block: 3px;
 
     box-sizing: border-box;
     min-block-size: var(--native-file-block-size);
@@ -621,11 +617,23 @@
     color: var(--text-2);
     color-scheme: inherit;
     font-family: var(--sans-serif);
-    font-size: var(--native-file-font-size);
+    font-size: var(--font-size-medium);
     font-weight: 400;
     font-stretch: normal;
     font-style: normal;
-    line-height: var(--native-file-line-height);
+    line-height: var(--line-height-medium);
+  }
+  input[data-anta][type="file"][data-anta-size="small"] {
+    --native-file-block-size: 24px;
+
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
+  }
+  input[data-anta][type="file"][data-anta-size="large"] {
+    --native-file-block-size: 32px;
+
+    font-size: var(--font-size-large);
+    line-height: var(--line-height-large);
   }
   input[data-anta][type="file"]::file-selector-button {
     box-sizing: border-box;
@@ -641,7 +649,7 @@
     font-variation-settings: inherit;
     font-weight: 450;
     letter-spacing: 0.05ch;
-    line-height: var(--native-file-line-height);
+    line-height: inherit;
     cursor: pointer;
     transition: color 150ms ease-out, background-color 150ms ease-out;
   }

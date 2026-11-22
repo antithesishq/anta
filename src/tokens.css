@@ -7,8 +7,8 @@
 /* Scope of this file — Anta's entire global token vocabulary, kept
    deliberately tiny: theme-aware color *roles* for text (--text-*),
    container background (--bg-*), and container border (--border-*),
-   per tone, plus font stacks, independent text and hint typography scales,
-   and prose link colors. Spacing, radii, and compact typography remain
+   per tone, plus font stacks, text, hint, and heading typography scales,
+   text compensation, and prose link colors. Spacing, radii, and compact typography remain
    component-owned. Promote other role families only after an explicit
    decision that their values have stabilized across components. */
 
@@ -44,6 +44,21 @@
     --line-height-hint-small: 16px;
     --line-height-hint-medium: 20px;
     --line-height-hint-large: 24px;
+    --text-compensation-small: 0.5px;
+    --text-compensation-medium: 1px;
+    --text-compensation-large: 1.5px;
+    --font-size-heading-1: 28px;
+    --font-size-heading-2: 24px;
+    --font-size-heading-3: 20px;
+    --font-size-heading-4: 17px;
+    --font-size-heading-5: 15px;
+    --font-size-heading-6: 13px;
+    --line-height-heading-1: 34px;
+    --line-height-heading-2: 30px;
+    --line-height-heading-3: 26px;
+    --line-height-heading-4: 24px;
+    --line-height-heading-5: 22px;
+    --line-height-heading-6: 18px;
   }
 }
 

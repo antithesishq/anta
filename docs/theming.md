@@ -111,13 +111,36 @@ typography leaves main text unchanged:
 Button, Tabs, Steps, Input, InputTime, Text, Checkbox, Switch, and Radio options
 use the main scale. Field, choice-control, RadioGroup, and Steps hints use the
 hint scale. Select, InputDate, and InputAutocomplete inherit their field styles
-from Input. Native text inputs and textareas use the main scale as well.
+from Input. Native text inputs, textareas, file inputs, and Select fields use the main scale as well.
 
-Headings, Tag, Menu Item, and Progress retain their separate typography.
-RadioGroup's overall label retains its fixed 15/20px pair.
+RadioGroup labels follow the group's size, matching Input labels. Plain Card
+content and Expander details use medium text. Tag, Menu Item, and Progress retain
+their separate typography.
 For an individual component, override `font-size` and `line-height` on its
 styled element or exposed part. Geometry such as padding and control dimensions
 remains component-specific.
+
+<a id="heading-sizes"></a>
+
+## Heading sizes and text compensation
+
+Title, Expander summaries, native disclosure summaries, and raw headings share
+six heading levels. Dialog headers use level 4. Each level uses
+`--font-size-heading-N` and `--line-height-heading-N`, where `N` is 1 through 6.
+
+| Level | Font size | Line height |
+| --- | --- | --- |
+| 1 | 28px | 34px |
+| 2 | 24px | 30px |
+| 3 | 20px | 26px |
+| 4 | 17px | 24px |
+| 5 | 15px | 22px |
+| 6 | 13px | 18px |
+
+Button and Tabs share label bottom-padding compensation through
+`--text-compensation-small` (0.5px), `--text-compensation-medium` (1px), and
+`--text-compensation-large` (1.5px). Their outer padding absorbs this amount to
+retain control heights. Buttons inside field action slots disable compensation.
 
 <a id="color-seeds"></a>
 

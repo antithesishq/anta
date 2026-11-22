@@ -190,9 +190,7 @@ export default function Demo() {
 
 Place a `Button` inside a tag when users need to act on it, such as removing
 an applied filter. Handle the button's `onClick` to update application state
-and control whether the tag is rendered. Give an icon-only button an accessible
-name, such as “Remove Frontend.” Buttons at either edge sit flush with the tag.
-Icon-only buttons fit the tag without increasing its height.
+and control whether the tag is rendered.
 
 This example hides the tag in its click handler, then shows and focuses
 **Reset example**. Resetting restores the tag and returns focus to its button.

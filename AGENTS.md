@@ -67,6 +67,10 @@ a dedicated command and register them in `tests/component-suites.mjs`. Use
 matrices in the slow tier. Gate fast PR checks on relevant component, shared
 runtime, dependency, test, and workflow changes. Batch selected fast suites
 through the shared runner instead of serializing one command per component.
+CI runs selected suites in up to four parallel shards, alongside root tests,
+package checks, and site validation. Keep the final `build` job as the required
+aggregate check; a failed, cancelled, or unexpectedly skipped prerequisite must
+not produce a successful result.
 Manual CI runs include the slow tier; the Component matrix workflow also runs
 the full browser coverage.
 See [Component test tiers](tests/README.md#component-test-tiers) for commands and

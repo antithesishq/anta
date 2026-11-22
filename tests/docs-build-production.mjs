@@ -269,6 +269,69 @@ for (const engine of engines) {
     assert.deepEqual(errors, [])
   })
 
+  test(`${engine.name()}: mobile navigation previews on hover and pins on activation`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.setViewportSize({ width: 500, height: 844 })
+    await page.goto('https://anta.test/install/')
+    const menu = page.getByRole('button', { name: 'Open navigation', exact: true })
+    const sidebar = page.locator('.sidebar')
+    const backdrop = page.locator('.backdrop')
+    const expectOpen = open => page.waitForFunction(value => (
+      document.querySelector('.mobile-menu-toggle').getAttribute('aria-expanded') === String(value)
+    ), open)
+
+    await menu.hover()
+    await expectOpen(true)
+    await sidebar.locator('h4').first().hover()
+    await expectOpen(true)
+    assert.equal(await sidebar.evaluate(element => element.getBoundingClientRect().top), 44)
+    await page.mouse.move(480, 144)
+    await expectOpen(false)
+
+    await menu.click()
+    assert.equal(await backdrop.evaluate(element => getComputedStyle(element).pointerEvents), 'none')
+    await page.mouse.move(480, 144)
+    await expectOpen(true)
+    await menu.click()
+    await expectOpen(false)
+
+    for (const key of ['Enter', 'Space']) {
+      await menu.focus()
+      await page.keyboard.press(key)
+      await expectOpen(true)
+      await page.mouse.move(480, 144)
+      await expectOpen(true)
+      await page.keyboard.press('Escape')
+      await expectOpen(false)
+    }
+
+    await menu.hover()
+    await expectOpen(true)
+    await sidebar.locator('h4').first().click()
+    await page.mouse.move(480, 144)
+    await expectOpen(true)
+    assert.equal(await backdrop.evaluate(element => getComputedStyle(element).pointerEvents), 'none')
+    await menu.click()
+    await expectOpen(false)
+
+    await page.mouse.move(480, 144)
+    await menu.hover()
+    await expectOpen(true)
+    await sidebar.locator('a[href="/text/"]').click()
+    await page.waitForURL('https://anta.test/text/')
+    await expectOpen(false)
+    await menu.hover()
+    await expectOpen(true)
+    await page.mouse.move(480, 144)
+    await expectOpen(false)
+
+    await menu.dispatchEvent('pointerover', { pointerType: 'touch' })
+    await expectOpen(false)
+    await page.setViewportSize({ width: 1280, height: 844 })
+    assert.equal(await sidebar.evaluate(element => getComputedStyle(element).position), 'sticky')
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: sidebar destination stays highlighted until navigation commits`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/button/')

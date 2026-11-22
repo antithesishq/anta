@@ -372,8 +372,9 @@ if (hasStructuredBreadcrumbs && title) {
       // Two mobile slide-outs share the backdrop: the nav sidebar and the
       // "On this page" TOC; opening one closes the other. State lives in
       // body.dataset, which the body swap resets, closing drawers on nav.
-      const setMenu = (open: boolean) => {
+      const setMenu = (open: boolean, pinned = open) => {
         document.body.dataset.menuOpen = open ? 'true' : 'false'
+        document.body.dataset.menuPinned = String(open && pinned)
         document.querySelector('.mobile-menu-toggle')?.setAttribute('aria-expanded', String(open))
         if (open) document.body.dataset.tocOpen = 'false'
       }
@@ -388,6 +389,26 @@ if (hasStructuredBreadcrumbs && title) {
 
       const mobileNavigation = matchMedia('(max-width: 800px)')
       mobileNavigation.addEventListener('change', () => setMenu(false))
+
+      document.addEventListener('pointerover', (event) => {
+        if (event.pointerType !== 'mouse' || !mobileNavigation.matches) return
+        const target = event.target as HTMLElement
+        if (target.closest?.('.mobile-menu-toggle')) {
+          if (document.body.dataset.menuOpen !== 'true') setMenu(true, false)
+        } else if (target.closest?.('.backdrop') && document.body.dataset.menuPinned !== 'true') {
+          setMenu(false)
+        }
+      })
+      document.addEventListener('pointerdown', (event) => {
+        if ((event.target as HTMLElement).closest?.('.sidebar') && document.body.dataset.menuOpen === 'true') {
+          setMenu(true)
+        }
+      })
+      document.addEventListener('focusin', (event) => {
+        if ((event.target as HTMLElement).closest?.('.sidebar') && document.body.dataset.menuOpen === 'true') {
+          setMenu(true)
+        }
+      })
 
       // Show immediate acknowledgement while ClientRouter prepares the next
       // document. The incoming <html> replaces this attribute during the swap;
@@ -432,7 +453,7 @@ if (hasStructuredBreadcrumbs && title) {
         } else if (target.closest('[data-search-trigger]')) {
           document.dispatchEvent(new Event('anta-search-open'))
         } else if (target.closest('.mobile-menu-toggle') && mobileNavigation.matches) {
-          setMenu(document.body.dataset.menuOpen !== 'true')
+          setMenu(document.body.dataset.menuOpen !== 'true' || document.body.dataset.menuPinned !== 'true')
         } else if (target.closest('.toc-toggle')) {
           setToc(document.body.dataset.tocOpen !== 'true')
         } else if (target.closest('.backdrop')) {
@@ -1075,7 +1096,7 @@ if (hasStructuredBreadcrumbs && title) {
       transform: translateX(0);
     }
 
-    body[data-menu-open="true"] .backdrop {
+    body[data-menu-open="true"][data-menu-pinned="false"] .backdrop {
       opacity: 1;
       pointer-events: auto;
     }

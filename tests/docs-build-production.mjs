@@ -60,13 +60,13 @@ test('collection reads keep island and script styles on the pages that use them'
   }
 })
 
-async function productionPage(t, engine = chromium) {
+async function productionPage(t, engine = chromium, pageOptions = {}) {
   const browser = await engine.launch({
     headless: true,
     ...(engine === chromium ? { channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined } : {}),
   })
   t.after(() => browser.close())
-  const page = await browser.newPage()
+  const page = await browser.newPage(pageOptions)
   page.setDefaultTimeout(20_000)
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
@@ -123,6 +123,7 @@ for (const engine of engines) test(`${engine.name()}: stickers retain their requ
     if (visit === 0) {
       await page.locator('.sidebar a[href="/"]').click()
       await page.waitForURL('https://anta.test/')
+      await page.locator('.mobile-menu-toggle').click()
       await page.locator('.sidebar a[href="/stickers/"]').click()
       await page.waitForURL('https://anta.test/stickers/')
     }
@@ -137,6 +138,7 @@ for (const engine of engines) test(`${engine.name()}: package TypeScript referen
     { label: 'Virtual Scroll', path: 'virtual-scroll/reference', name: '@antadesign/virtual-scroll', symbol: 'VirtualScroll' },
   ]) {
     await page.goto('https://anta.test/')
+    await page.locator('.mobile-menu-toggle').click()
     const link = page.locator(`.sidebar a[href="/${path}/index.html"]`)
     assert.equal((await link.textContent()).trim(), label)
     assert.equal(await link.getAttribute('href'), `/${path}/index.html`)
@@ -262,10 +264,70 @@ for (const engine of engines) {
     await page.keyboard.press('Escape')
     await page.goto('https://anta.test/')
     assert.equal(await page.locator('main h1 .doc-review-marker').count(), 0)
+    await page.locator('.mobile-menu-toggle').click()
     await page.locator(`.sidebar a[href="${unreviewed.path}"]`).click()
     await page.waitForURL(`https://anta.test${unreviewed.path}`)
     await page.locator('main h1 .doc-review-marker').waitFor()
     assert.equal(await page.locator('main h1 > a-tooltip').count(), 1)
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: Overview starts collapsed before scripts run`, async t => {
+    const { page } = await productionPage(t, engine, {
+      javaScriptEnabled: false,
+      viewport: { width: 1280, height: 844 },
+    })
+    await page.goto('https://anta.test/')
+    assert.ok(await page.locator('.sidebar').evaluate(element => element.getBoundingClientRect().right <= 0))
+    assert.equal(await page.locator('main').evaluate(element => element.getBoundingClientRect().left), 0)
+    assert.equal(await page.locator('.mobile-menu-toggle').getAttribute('tone'), 'brand')
+    await page.goto('https://anta.test/install/')
+    assert.equal(await page.locator('main').evaluate(element => element.getBoundingClientRect().left), 214)
+  })
+
+  test(`${engine.name()}: page sidebar defaults yield to explicit docking choices`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/')
+    const menu = page.locator('.mobile-menu-toggle')
+    const sidebar = page.locator('.sidebar')
+    const expectPinned = pinned => page.waitForFunction(value => (
+      document.body.dataset.menuPinned === String(value)
+    ), pinned)
+    await expectPinned(false)
+    assert.equal(await menu.getAttribute('tone'), 'brand')
+    await menu.hover()
+    await page.waitForFunction(() => document.body.dataset.menuOpen === 'true')
+    assert.equal(await menu.getAttribute('tone'), 'brand')
+    await sidebar.locator('a[href="/install/"]').click()
+    await page.waitForURL('https://anta.test/install/')
+    await expectPinned(true)
+    assert.equal(await menu.getAttribute('tone'), null)
+    await sidebar.locator('a[href="/"]').click()
+    await page.waitForURL('https://anta.test/')
+    await expectPinned(false)
+    assert.equal(await menu.getAttribute('tone'), 'brand')
+
+    await menu.click()
+    await expectPinned(true)
+    assert.equal(await menu.getAttribute('tone'), null)
+    await sidebar.locator('a[href="/install/"]').click()
+    await page.waitForURL('https://anta.test/install/')
+    await expectPinned(true)
+    await sidebar.locator('a[href="/"]').click()
+    await page.waitForURL('https://anta.test/')
+    await expectPinned(true)
+    assert.equal(await menu.getAttribute('tone'), null)
+
+    await menu.click()
+    await expectPinned(false)
+    assert.equal(await menu.getAttribute('tone'), 'brand')
+    await page.mouse.move(1200, 144)
+    await menu.hover()
+    assert.equal(await menu.getAttribute('tone'), 'brand')
+    await sidebar.locator('a[href="/install/"]').click()
+    await page.waitForURL('https://anta.test/install/')
+    await expectPinned(false)
+    assert.equal(await menu.getAttribute('tone'), 'brand')
     assert.deepEqual(errors, [])
   })
 
@@ -285,6 +347,7 @@ for (const engine of engines) {
       await page.setViewportSize({ width, height: 844 })
       await menu.hover()
       await expectOpen(true)
+      assert.equal(await menu.getAttribute('tone'), 'brand')
       await sidebar.locator('h4').first().hover()
       await expectOpen(true)
       assert.equal(await sidebar.evaluate(element => element.getBoundingClientRect().top), 44)
@@ -293,6 +356,7 @@ for (const engine of engines) {
       const initialLeft = await contentLeft()
       await menu.click()
       await expectOpen(true)
+      assert.equal(await menu.getAttribute('tone'), 'brand')
       assert.equal(await backdrop.evaluate(element => getComputedStyle(element).pointerEvents), 'auto')
       assert.equal(await contentLeft(), initialLeft)
       await page.mouse.move(width - 20, 144)
@@ -314,14 +378,17 @@ for (const engine of engines) {
       const dockedLeft = await contentLeft()
       await menu.click()
       await expectOpen(false)
+      assert.equal(await menu.getAttribute('tone'), 'brand')
       assert.equal(dockedLeft - await contentLeft(), 214)
       await page.mouse.move(width - 20, 144)
       await menu.hover()
       await expectOpen(true)
+      assert.equal(await menu.getAttribute('tone'), 'brand')
       assert.equal(await sidebar.evaluate(element => getComputedStyle(element).position), 'fixed')
       assert.equal(await contentLeft(), dockedLeft - 214)
       await menu.click()
       await expectOpen(true)
+      assert.equal(await menu.getAttribute('tone'), null)
       assert.equal(await sidebar.evaluate(element => getComputedStyle(element).position), 'sticky')
       assert.equal(await contentLeft(), dockedLeft)
       assert.equal(await backdrop.evaluate(element => getComputedStyle(element).pointerEvents), 'none')

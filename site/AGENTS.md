@@ -107,6 +107,10 @@ The Playground regressions also use WebKit; install it with
 - `src/components/` holds Preact islands. Use `client:load` or `client:visible`; `Playground.tsx` is the shared interactive component-demo surface, mounted by the prebuilt `PlaygroundEmbed.astro` runtime so it is not a Vite island. Custom islands are for demos it cannot express.
 - `src/styles/base.css` owns the minimal site reset and typography.
 
+Pass `hideSidebar` to `DocsLayout`, or set `hideSidebar: true` in MDX frontmatter,
+to start a page with navigation collapsed. The menu button remains available.
+An explicit desktop docking choice overrides page defaults during navigation.
+
 Astro renders static output. Sätteri handles Markdown/MDX and GFM; astro-expressive-code handles code blocks. Optional math and directive syntax are disabled. Keep interactive behavior in imported JSX components or the existing external Playground demo source; MDX composes the prose and previews. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
 
 Use an imported TSX component when a preview passes JSX through props such as

@@ -32,7 +32,9 @@ interface Props {
   /** Drop the right "On this page" rail so the content spans the full width.
    *  For pages that manage their own wide layout (e.g. the theming lab). */
   hideToc?: boolean
-  frontmatter?: { title?: string; author?: string; tocMaxLevel?: number; hideToc?: boolean }
+  /** Start with navigation collapsed. The menu button can still open it. */
+  hideSidebar?: boolean
+  frontmatter?: { title?: string; author?: string; tocMaxLevel?: number; hideToc?: boolean; hideSidebar?: boolean }
 }
 
 const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
@@ -41,6 +43,7 @@ const content = await Astro.slots.render('default')
 const pageContent = author ? content : addDocReviewMarker(content)
 const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
 const hideToc = Astro.props.hideToc ?? Astro.props.frontmatter?.hideToc ?? false
+const hideSidebar = Astro.props.hideSidebar ?? Astro.props.frontmatter?.hideSidebar ?? false
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
 const catalog = await getAstroPageCatalog()
 const navigationGroups = getNavigationGroups(catalog)
@@ -225,7 +228,7 @@ if (hasStructuredBreadcrumbs && title) {
       } catch (e) {}
     </script>
   </head>
-  <body>
+  <body data-sidebar-default={hideSidebar ? 'hidden' : undefined} data-menu-pinned={hideSidebar ? 'false' : undefined}>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
@@ -236,6 +239,7 @@ if (hasStructuredBreadcrumbs && title) {
           class="mobile-menu-toggle"
           size="small"
           priority="tertiary"
+          tone={hideSidebar ? 'brand' : 'neutral'}
           aria-label="Open navigation"
           aria-controls="site-navigation"
           aria-expanded="false"
@@ -370,11 +374,15 @@ if (hasStructuredBreadcrumbs && title) {
       }
 
       const mobileNavigation = matchMedia('(max-width: 800px)')
-      let desktopMenuPinned = true
+      let desktopMenuPinned: boolean | undefined
       const setMenu = (open: boolean, pinned = false) => {
+        const docked = open && pinned && !mobileNavigation.matches
         document.body.dataset.menuOpen = open ? 'true' : 'false'
-        document.body.dataset.menuPinned = String(open && pinned && !mobileNavigation.matches)
-        document.querySelector('.mobile-menu-toggle')?.setAttribute('aria-expanded', String(open))
+        document.body.dataset.menuPinned = String(docked)
+        const button = document.querySelector('.mobile-menu-toggle')
+        button?.setAttribute('aria-expanded', String(open))
+        if (docked) button?.removeAttribute('tone')
+        else button?.setAttribute('tone', 'brand')
         if (open) document.body.dataset.tocOpen = 'false'
       }
       const setToc = (open: boolean) => {
@@ -387,7 +395,8 @@ if (hasStructuredBreadcrumbs && title) {
       }
 
       const syncMenu = () => {
-        const pinned = !mobileNavigation.matches && desktopMenuPinned
+        const pinned = !mobileNavigation.matches
+          && (desktopMenuPinned ?? document.body.dataset.sidebarDefault !== 'hidden')
         setMenu(pinned, pinned)
       }
       syncMenu()

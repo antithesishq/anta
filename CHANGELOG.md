@@ -36,7 +36,7 @@ changes are not listed.
 
 - Tooltip uses the shared medium hint typography (14/20px). Padding stays unchanged; the default single-line bubble is 1px shorter.
 
-- Slider labels and values use the shared text scale, including thumb values aligned with the header text. Removed row gaps compensate part of the extra leading without shrinking control hit areas. Marker rows reserve space for wrapped labels before content below them, including before element registration.
+- Slider labels and values use the shared text scale, including thumb values aligned with the header text. The inline separator shares value typography to keep header heights consistent across system fonts. Removed row gaps compensate part of the extra leading without shrinking control hit areas. Marker rows reserve space for wrapped labels before content below them, including before element registration.
 
 - Banner messages use medium text typography and Copy feedback uses small text typography. Calendar weekdays use 13/18px text throughout, retaining their 24px cells and Calendar heights.
 

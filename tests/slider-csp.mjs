@@ -369,9 +369,11 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
           const control = slider.shadowRoot.querySelector('[part=control]').getBoundingClientRect()
           const values = [...slider.shadowRoot.querySelectorAll('[part~=inline-value], [part~=end-value], [part~=thumb-value]')]
             .filter(node => getComputedStyle(node).display !== 'none')
-          result.push({size, direction, display, lines, overridden, height: slider.getBoundingClientRect().height, control: control.height, values: values.map(node => {
+          const separator = getComputedStyle(slider.shadowRoot.querySelector('[part=value-separator]'))
+          result.push({size, direction, display, lines, overridden, height: slider.getBoundingClientRect().height, control: control.height,
+            separator: display === 'inline' ? {family: separator.fontFamily, font: separator.fontSize, leading: separator.lineHeight} : null, values: values.map(node => {
             const css = getComputedStyle(node), box = textBox(node)
-            return {font: css.fontSize, leading: css.lineHeight, top: box.top - labelBox.top, bottom: box.bottom - labelBox.bottom,
+            return {family: css.fontFamily, font: css.fontSize, leading: css.lineHeight, top: box.top - labelBox.top, bottom: box.bottom - labelBox.bottom,
               borderBottom: node.part.contains('thumb-value') ? node.getBoundingClientRect().bottom - control.top : null}
           })})
         }
@@ -382,6 +384,7 @@ for(const engine of engines) for(const mode of ['granular','bundle']) {
       const index = ['small', 'medium', 'large'].indexOf(row.size)
       const font = row.overridden ? [14, 18, 19][index] : [13, 15, 17][index]
       const leading = row.overridden ? [20, 28, 30][index] : [18, 22, 26][index]
+      if (row.separator) assert.deepEqual(row.separator, {family: row.values[0].family, font: `${font}px`, leading: `${leading}px`}, JSON.stringify(row))
       assert.equal(row.control, [24, 28, 32][index], JSON.stringify(row))
       assert.equal(row.height, (row.overridden ? [44, 56, 62] : [42, 50, 58])[index] + (row.lines - 1) * leading, JSON.stringify(row))
       assert.equal(row.values.length, row.display === 'thumb' ? 2 : 1)

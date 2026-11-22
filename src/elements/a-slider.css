@@ -216,6 +216,7 @@
     font-weight: 500;
     line-height: inherit;
   }
+  a-slider::part(value-separator),
   a-slider::part(inline-value),
   a-slider::part(end-value) {
     color: var(--slider-value);

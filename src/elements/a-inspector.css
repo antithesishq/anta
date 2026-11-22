@@ -141,12 +141,13 @@
     color: var(--text-2-success);
   }
 
-  a-inspector-token:is([type="boolean"], [type="null"], [type="undefined"], [type="function"], [type="regexp_flags"]) {
+  /* A function reads in one color, name included, as DevTools shows it: ƒ greet(). */
+  a-inspector-token:is([type="boolean"], [type="null"], [type="undefined"], [type="function"], [type="function_name"], [type="regexp_flags"]) {
     color: var(--text-2-info);
   }
 
   /* Type names stay in the text color, as in DevTools, so they don't read as strings. */
-  a-inspector-token:is([type="class_name"], [type="error_class_name"], [type="function_name"]) {
+  a-inspector-token:is([type="class_name"], [type="error_class_name"]) {
     color: var(--text-1);
   }
 

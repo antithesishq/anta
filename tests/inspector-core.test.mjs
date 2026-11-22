@@ -1295,3 +1295,48 @@ test('an object that only claims to be a generator is a plain object, and its to
   }
   assert.equal(reads, 0)
 })
+
+test('functions read as DevTools shows them in the Inspector, from the engine source alone', () => {
+  class Account { static count = 2 }
+  let calls = 0
+  const shadowed = function greet() {}
+  shadowed.toString = () => { calls++; return 'class Fake {}' }
+  const value = {
+    greet: function greet() {},
+    arrow: () => 1,
+    load: async function load() {},
+    steps: function* steps() {},
+    poll: async function* poll() {},
+    Account,
+    anonymous: [function () {}][0],
+    shadowed,
+  }
+  const rows = core.visibleRows(core.describe(value, { function_labels: true }), { style: 'tree', expandDepth: 1 }).slice(1)
+  assert.deepEqual(rows.map(line), [
+    'greet:ƒ greet()', 'arrow:ƒ arrow()', 'load:async ƒ load()', 'steps:ƒ* steps()', 'poll:async ƒ* poll()',
+    // A closed function with its own properties previews them, as an object does.
+    'Account:class Account{count:2}', 'anonymous:ƒ ()', 'shadowed:ƒ greet(){toString:ƒ ()}',
+  ])
+  assert.equal(calls, 0, "a function's own toString ran")
+  assert.ok(rows.find(row => row.id === 'r/.Account').expandable, 'a class still opens to its static members')
+  assert.ok(!rows.find(row => row.id === 'r/.greet').expandable)
+  // repr() keeps the notebook's form.
+  assert.equal(repr({ greet: value.greet }), '{greet:<function greet>}')
+})
+
+test('a cycle reads Circular Ref(path) with cycle_labels, and a function copies its source', () => {
+  const node = { id: 'api-1' }
+  node.self = node
+  const value = { node }
+  const rows = core.visibleRows(core.describe(value, { cycle_labels: true }), { style: 'tree', expandDepth: 2 })
+  assert.equal(line(rows.find(row => row.id === 'r/.node/.self')), 'self:Circular Ref(node)')
+  // A summary that reaches the cycle uses the same label.
+  assert.equal(text(core.visibleRows(core.describe(value, { cycle_labels: true }), { style: 'tree', previewBudget: 200 })[0].tokens), '{node:{id:"api-1",self:Circular Ref(node)}}')
+  assert.equal(repr(value), '{node:{id:"api-1",self:circular_ref[node]}}')
+  // Copy function: the source, without calling the function's own toString.
+  let calls = 0
+  const greet = function greet(name) { return `hi ${name}` }
+  greet.toString = () => { calls++; return 'nope' }
+  assert.equal(core.copyText(core.describe(greet)), 'function greet(name) { return `hi ${name}` }')
+  assert.equal(calls, 0)
+})

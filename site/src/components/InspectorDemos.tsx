@@ -27,7 +27,33 @@ export function LevelsDemo() {
     balances: Array.from({ length: 250 }, (_, i) => Math.round(1000 + Math.sin(i / 7) * 400) / 100),
     stack: stackTrace('total mismatch'),
   }
-  return <Inspector value={result} chunkSize={50} aria-label="Test result" />
+  return <Inspector value={result} aria-label="Test result" />
+}
+
+/** A 1,500-item list with the default ranges, and 100,000 items with chunkSize 50. */
+export function LongListDemo() {
+  const [values] = useState(() => ({
+    samples: Array.from({ length: 1500 }, (_, i) => Math.round(Math.sin(i / 40) * 1000) / 10),
+    events: Array.from({ length: 100000 }, (_, i) => ({ seq: i, kind: i % 7 === 0 ? 'retry' : 'ok' })),
+  }))
+  return (
+    <Box display="grid" gap={16} style={{ width: '100%' }}>
+      <Inspector value={{ samples: values.samples }} expandDepth={2} aria-label="1,500 samples" />
+      <Inspector value={{ events: values.events }} expandDepth={2} chunkSize={50} aria-label="100,000 events" />
+    </Box>
+  )
+}
+
+/** A value to try each copy item on: a string, a nested path, a Map entry, and a Set item. */
+export function CopyDemo() {
+  const [value] = useState(() => ({
+    log: 'transfer started\ntransfer failed: total mismatch',
+    results: [{ test: 'withdraw', details: { error: { code: 'E_BALANCE', account: 'acct_2' } } }],
+    byKey: new Map([['api-1', { role: 'leader' }]]),
+    tags: new Set(['flaky']),
+    options: { retries: 2, timeout_ms: 2500 },
+  }))
+  return <Inspector value={value} expandDepth={3} aria-label="Run" />
 }
 
 /** Open rows held by the page, with buttons that reveal a row, open everything, and close everything. */

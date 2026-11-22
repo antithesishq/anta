@@ -105,6 +105,8 @@ export const inspectorKinds = {
       arrow: (amount: number) => amount * 2,
       method: { retry() { return true } }.retry,
       async: async function load() { return 1 },
+      generator: function* steps() { yield 1 },
+      anonymous: [function () { return 1 }][0],
     }),
   },
   iterators: {

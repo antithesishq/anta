@@ -124,6 +124,7 @@ function copyLabel(kind: NodeKind): string {
     case "number": case "bigint": return "Copy number"
     case "boolean": return "Copy boolean"
     case "null": case "undefined": case "symbol": return "Copy value"
+    case "function": return "Copy function"
     default: return "Copy object"
   }
 }
@@ -204,7 +205,7 @@ export const Inspector = ({
   ...rest
 }: InspectorProps) => {
   const root = useMemo(
-    () => describe(value, { numeric_base: numericBase, unquoted_strings: unquotedStrings, symbol_keys: true, iterator_labels: true, map_entry_rows: true }),
+    () => describe(value, { numeric_base: numericBase, unquoted_strings: unquotedStrings, symbol_keys: true, iterator_labels: true, map_entry_rows: true, function_labels: true, cycle_labels: true }),
     [value, numericBase, unquotedStrings],
   )
   const inline = layout === "inline"

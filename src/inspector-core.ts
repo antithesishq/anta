@@ -38,6 +38,13 @@ export type Options = {
   /** Show a Map as DevTools does: `Map(2){2024 => 4744353, …}`, with each entry a child that opens to its `key` and
    *  `value`. The Inspector sets it; `repr()` leaves it off and writes `Map{2024:4744353}`, as the notebook does. */
   map_entry_rows?: boolean
+  /** Show a function as DevTools does: `ƒ greet()`, `async ƒ load()`, `ƒ* steps()`, or `class Account`, read from the
+   *  engine's own source text, so no user code runs. The Inspector sets it; `repr()` leaves it off and writes
+   *  `<function greet>`, as the notebook does. */
+  function_labels?: boolean
+  /** Label a cycle `Circular Ref(node)`, with its target's path. The Inspector sets it; `repr()` leaves it off and
+   *  writes `circular_ref[node]`, as the notebook does. */
+  cycle_labels?: boolean
 }
 
 type ReferenceInfo = {
@@ -124,6 +131,14 @@ export function text_lines(text: string): string[] {
 
 // Built-ins captured at load, so a page that replaces them can't change what
 // they report or run its own code through them.
+const function_to_string = Function.prototype.toString
+
+// A cycle's label: the notebook's `circular_ref[path]`, or the Inspector's `Circular Ref(path)`.
+function cycle_tokens(path: string, readable: boolean): Token[] {
+  return readable
+    ? [{ text: 'Circular Ref', type: 'reference' }, { text: '(', type: 'open_bracket' }, { text: path, type: 'reference_path' }, { text: ')', type: 'close_bracket' }]
+    : [{ text: 'circular_ref', type: 'reference' }, { text: '[', type: 'open_bracket' }, { text: path, type: 'reference_path' }, { text: ']', type: 'close_bracket' }]
+}
 const date_get_time = Date.prototype.getTime
 const date_to_iso_string = Date.prototype.toISOString
 
@@ -573,12 +588,7 @@ class Node implements InspectNode {
           return new Node(value, path, segments, context, {
             kind: 'circular',
             target: a.path,
-            parts: [{ type: 'tokens', tokens: [
-              { text: 'circular_ref', type: 'reference' },
-              { text: '[', type: 'open_bracket' },
-              { text: a.path.map(p => format_key_name(safe_string(p))).join('.'), type: 'reference_path' },
-              { text: ']', type: 'close_bracket' },
-            ] }],
+            parts: [{ type: 'tokens', tokens: cycle_tokens(a.path.map(p => format_key_name(safe_string(p))).join('.'), !!context.options.cycle_labels) }],
           })
         }
       }
@@ -781,6 +791,27 @@ class Node implements InspectNode {
         const custom = guard(() => to_repr in value && typeof (value as unknown as Record<symbol, unknown>)[to_repr] === 'function')
         if (custom === INACCESSIBLE) { inaccessible(); return { kind: 'inaccessible', parts } }
         if (custom) return this.#custom(value as unknown as ToRepr)
+        if (options.function_labels) {
+          // The kind comes from the engine's own source text: Function.prototype.toString
+          // is native, so a function's own `toString` never runs.
+          const source = guard(() => function_to_string.call(value))
+          const name = guard(() => value.name)
+          const text = typeof name === 'string' ? name : ''
+          const kind = typeof source !== 'string' ? 'function'
+            : /^class\b/.test(source) ? 'class'
+            : /^async\s*function\s*\*/.test(source) ? 'async generator'
+            : /^async\b/.test(source) ? 'async'
+            : /^function\s*\*/.test(source) ? 'generator'
+            : 'function'
+          if (kind === 'class') { t('class ', 'function'); if (text) t(text, 'function_name') }
+          else {
+            t(kind === 'async' ? 'async ƒ ' : kind === 'async generator' ? 'async ƒ* ' : kind === 'generator' ? 'ƒ* ' : 'ƒ ', 'function')
+            if (text) t(text, 'function_name')
+            t('()', 'function')
+          }
+          parts.push(this.#keyable(value))
+          return { kind: 'function', parts }
+        }
         t('<', 'open_bracket')
         const name = guard(() => ({ name: value.name, display: 'display_name' in value ? (value as { display_name?: unknown }).display_name : undefined }))
         if (name === INACCESSIBLE) inaccessible()
@@ -997,10 +1028,12 @@ export function serialize(root: InspectNode, options: Options = {}, display = fa
     if (identity !== undefined) {
       const seen = typeof identity === 'symbol' ? symbol_refs.get(identity) : refs.get(identity)
       if (seen && (seen.circular || deduplicate)) {
-        emit(seen.circular ? 'circular_ref' : 'ref', 'reference')
-        emit('[', 'open_bracket')
-        emit(seen.path.map(format_key_name).join('.'), 'reference_path')
-        emit(']', 'close_bracket')
+        const path = seen.path.map(format_key_name).join('.')
+        const tokens = seen.circular ? cycle_tokens(path, !!options.cycle_labels) : [
+          { text: 'ref', type: 'reference' as const }, { text: '[', type: 'open_bracket' as const },
+          { text: path, type: 'reference_path' as const }, { text: ']', type: 'close_bracket' as const },
+        ]
+        for (const token of tokens) emit(token.text, token.type)
         return
       }
       ref = { circular: typeof identity !== 'symbol', path: node.path.map(p => safe_string(p)) }
@@ -1663,7 +1696,7 @@ export function searchNodes(root: InspectNode, matcher: InspectorMatcher): Inspe
  * `inspectorExpandToPath`.
  */
 export function inspectorSearch(value: unknown, matcher: InspectorMatcher, options: SearchOptions = {}): InspectorMatch[] {
-  return searchNodes(describe(value, { numeric_base: options.numericBase, symbol_keys: options.symbolKeys ?? true, iterator_labels: true, map_entry_rows: true }), matcher)
+  return searchNodes(describe(value, { numeric_base: options.numericBase, symbol_keys: options.symbolKeys ?? true, iterator_labels: true, map_entry_rows: true, function_labels: true, cycle_labels: true }), matcher)
 }
 
 /**
@@ -1674,6 +1707,11 @@ export function inspectorSearch(value: unknown, matcher: InspectorMatcher, optio
 export function copyText(node: InspectNode, options: Options = {}): string | undefined {
   if (node.kind === 'circular' || node.kind === 'empty-slots' || node.kind === 'inaccessible') return undefined
   if (node.kind === 'string') return node.text
+  // A function copies its source, from the engine's native toString, so its own toString never runs.
+  if (node.kind === 'function') {
+    const source = guard(() => function_to_string.call(Node.primitive(node)))
+    return typeof source === 'string' ? source : undefined
+  }
   return serialize(node, { ...options, char_limit: Infinity }).map(token => token.text).join('')
 }
 

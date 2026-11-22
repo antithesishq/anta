@@ -122,6 +122,17 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
     position that opens to `key` and `value` rows. An entry's path key is the entry's (`/=n:2024`); its key and value
     add `/:key` and `/:value`. Search matches the key and value rows, not the entry. `repr()` leaves the option off
     and writes `Map{2024:4744353}`, as the notebook did.
+28. **The Inspector shows functions as browser DevTools does.** With the `function_labels` option of `describe()`,
+    which the Inspector sets, a function reads `ƒ greet()`, `async ƒ load()`, `ƒ* steps()`, `async ƒ* poll()`, or
+    `ƒ ()` without a name, and a class reads `class Account`. The kind comes from `Function.prototype.toString`, the
+    engine's native source text, so a function's own `toString` never runs. Only the name shows, never the body:
+    source can be very large, minified, or `[native code]`, and a function's body isn't data to inspect. A function
+    with its own properties, such as a class's static members, still opens to them. `repr()` leaves the option off
+    and writes `<function greet>`, as the notebook did.
+29. **The Inspector labels a cycle `Circular Ref(node)`.** With the `cycle_labels` option of `describe()`, which the
+    Inspector sets, a cycle reads `Circular Ref(path)`, in rows and in summaries. `repr()` leaves the option off and
+    writes `circular_ref[path]`, as the notebook did. The Inspector's Copy function copies a function's source, from
+    the engine's native `Function.prototype.toString`, so the function's own `toString` never runs.
 
 ## Kept identical on purpose
 

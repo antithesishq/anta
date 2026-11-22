@@ -1134,10 +1134,6 @@ With `className="my-select"`, update existing selectors as follows:
 | `.my-select > a-select-hint` | `.my-select::part(hint)` |
 | `.my-select a-select-leading` | `.my-select::part(leading)` |
 
-Raw compositions use `<a-input button>` with label and hint slots, as shown
-above. The old `a-select-field`, `a-select-label`, and `a-select-hint` tags no
-longer have styles, JSX types, or Button accessibility handling.
-
 ```tsx folded
 // Tone the selection; give the trigger a width.
 <Select tone="brand" toneScope="selected" style={{ width: '220px' }} options={OPTIONS} />

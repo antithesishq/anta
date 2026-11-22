@@ -49,6 +49,8 @@
     --line-height-hint-large: 24px;
     --font-size-menu-medium: 14px;
     --font-size-menu-hint-medium: 12px;
+    --font-size-code-block-medium: 13px;
+    --line-height-code-block-medium: 20px;
     --text-compensation-small: 0.5px;
     --text-compensation-medium: 1px;
     --text-compensation-large: 1.5px;

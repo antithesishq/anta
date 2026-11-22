@@ -7,6 +7,8 @@ changes are not listed.
 
 ### Added
 
+- Shared code-block typography with independent font-size and line-height values, retaining 13/20px defaults.
+
 - Shared micro main-text font size for small Tags, plus independent menu label and hint font sizes. Tags use main micro, tiny, and small fonts; Menu Item and native Select option typography retains its current sizes.
 
 - Shared tiny text typography (12/16px) for compact primary labels, independent of hints. Progress labels and Slider markers use the tiny, small, and medium text sizes.
@@ -24,7 +26,7 @@ changes are not listed.
 
 ### Fixed
 
-- Code blocks use the shared small text font size. Menu separator captions derive their font size from menu labels minus 1px, replacing `--menu-separator-label-size`.
+- Menu separator captions derive their font size from menu labels minus 1px, replacing `--menu-separator-label-size`.
 
 - Root text uses the shared medium font size, so typography overrides also reach inherited body text and nested light surfaces.
 

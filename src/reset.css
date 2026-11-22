@@ -182,9 +182,9 @@
     background: var(--bg-3);
     color: var(--text-1);
     font-family: var(--monospace);
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-code-block-medium);
     font-weight: 440;
-    line-height: 20px;
+    line-height: var(--line-height-code-block-medium);
     overflow-x: auto;
   }
 

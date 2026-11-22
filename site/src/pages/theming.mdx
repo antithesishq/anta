@@ -124,7 +124,9 @@ remain component-owned. Menu separator captions use the menu label font size
 minus 1px.
 
 The reset makes inline code 1px smaller than its surrounding text. Code blocks
-use `--font-size-small`; code inside them inherits the block's typography.
+have an independent pair: `--font-size-code-block-medium` (13px) and
+`--line-height-code-block-medium` (20px). Code inside them inherits the block's
+typography. Changing main text sizes leaves code-block typography unchanged.
 
 Override either scale on the root or an application container. Changing hint
 typography leaves main text unchanged:

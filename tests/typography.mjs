@@ -123,7 +123,12 @@ for (const engine of engines) {
       const sizes = await page.locator('#code > *').evaluateAll(parents => parents.map(parent => [...parent.querySelectorAll('code')].map(code => getComputedStyle(code).fontSize)))
       assert.deepEqual(sizes, [['12px', '13px'], ['14px', '13px'], ['16px', '13px'], ['22px', '19px']])
       await page.evaluate(() => document.documentElement.style.setProperty('--font-size-small', '17px'))
-      assert.deepEqual(await page.locator('#code > *').evaluateAll(parents => parents.map(parent => [...parent.querySelectorAll('code')].map(code => getComputedStyle(code).fontSize))), [['16px', '17px'], ['14px', '17px'], ['16px', '17px'], ['22px', '19px']])
+      assert.deepEqual(await page.locator('#code > *').evaluateAll(parents => parents.map(parent => [...parent.querySelectorAll('code')].map(code => getComputedStyle(code).fontSize))), [['16px', '13px'], ['14px', '13px'], ['16px', '13px'], ['22px', '19px']])
+      const blocks = () => page.locator('#code pre').evaluateAll(elements => elements.map(element => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element.querySelector('code')).fontSize, getComputedStyle(element.querySelector('code')).lineHeight]))
+      await page.evaluate(() => document.documentElement.style.setProperty('--font-size-code-block-medium', '16px'))
+      assert.deepEqual(await blocks(), [...Array.from({length: 3}, () => ['16px', '20px', '16px', '20px']), ['19px', '20px', '19px', '20px']])
+      await page.evaluate(() => document.documentElement.style.setProperty('--line-height-code-block-medium', '24px'))
+      assert.deepEqual(await blocks(), [...Array.from({length: 3}, () => ['16px', '24px', '16px', '24px']), ['19px', '24px', '19px', '24px']])
     } finally {await page.close()}
   })
 

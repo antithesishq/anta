@@ -247,8 +247,8 @@
   }
 
   a-progress[size="small"] > a-progress-label {
-    font-size: var(--font-size-extra-small);
-    line-height: var(--line-height-extra-small);
+    font-size: var(--font-size-tiny);
+    line-height: var(--line-height-tiny);
   }
   a-progress[size="large"] > a-progress-label {
     font-size: var(--font-size-medium);

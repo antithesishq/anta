@@ -32,8 +32,8 @@
    application overrides. Text and hint scales can be changed independently. */
 @layer anta.reset {
   :root {
-    --font-size-extra-small: 12px;
-    --line-height-extra-small: 16px;
+    --font-size-tiny: 12px;
+    --line-height-tiny: 16px;
     --font-size-small: 13px;
     --font-size-medium: 15px;
     --font-size-large: 17px;

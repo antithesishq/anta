@@ -7,7 +7,7 @@ changes are not listed.
 
 ### Added
 
-- Shared extra-small text typography (12/16px) for compact primary labels, independent of hints. Progress labels and Slider markers use the extra-small, small, and medium text sizes.
+- Shared tiny text typography (12/16px) for compact primary labels, independent of hints. Progress labels and Slider markers use the tiny, small, and medium text sizes.
 
 - Shared heading-level typography variables and size-specific text compensation for Button and Tabs. Title, Expander, native disclosure summaries, and reset headings use the same heading scale; Dialog headers use level 4.
 
@@ -22,7 +22,7 @@ changes are not listed.
 
 ### Fixed
 
-- MenuGroup and native Select group captions use shared extra-small text typography across field sizes. Inline code is 1px smaller than surrounding text; code inside preformatted blocks inherits the block's typography.
+- MenuGroup and native Select group captions use shared tiny text typography across field sizes. Inline code is 1px smaller than surrounding text; code inside preformatted blocks inherits the block's typography.
 
 - Tooltip uses the shared medium hint typography (14/20px). Padding stays unchanged; the default single-line bubble is 1px shorter.
 

@@ -4,7 +4,7 @@
 @layer anta.components {
   a-menu-group-label,
   select[data-anta] optgroup {
-    font-size: var(--font-size-extra-small);
-    line-height: var(--line-height-extra-small);
+    font-size: var(--font-size-tiny);
+    line-height: var(--line-height-tiny);
   }
 }

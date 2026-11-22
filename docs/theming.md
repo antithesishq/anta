@@ -98,12 +98,12 @@ Use length values such as `px` or `rem` for these variables.
 | Medium | `--font-size-medium`: 15px | `--line-height-medium`: 22px | `--font-size-hint-medium`: 14px | `--line-height-hint-medium`: 20px |
 | Large | `--font-size-large`: 17px | `--line-height-large`: 26px | `--font-size-hint-large`: 16px | `--line-height-hint-large`: 24px |
 
-Compact primary text also has `--font-size-extra-small` (12px) and
-`--line-height-extra-small` (16px). Progress labels and Slider markers map their
-small, medium, and large variants to extra-small, small, and medium text. Their
+Compact primary text also has `--font-size-tiny` (12px) and
+`--line-height-tiny` (16px). Progress labels and Slider markers map their
+small, medium, and large variants to tiny, small, and medium text. Their
 12/16, 13/18, and 15/22 pairs remain independent of the hint scale.
 
-MenuGroup and native Select group captions use extra-small text at every field
+MenuGroup and native Select group captions use tiny text at every field
 size. The reset makes inline code 1px smaller than its surrounding text; code
 inside a preformatted block inherits the block's typography.
 

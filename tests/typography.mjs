@@ -103,8 +103,8 @@ for (const engine of engines) {
       for (const pairs of await measure()) for (const pair of pairs) assert.deepEqual(pair, ['12px', '16px'])
       assert.equal(await page.evaluate(() => !!customElements.get('a-menu-group')), false)
       await page.locator('#captions').evaluate(fixture => {
-        fixture.style.setProperty('--font-size-extra-small', '14px')
-        fixture.style.setProperty('--line-height-extra-small', '20px')
+        fixture.style.setProperty('--font-size-tiny', '14px')
+        fixture.style.setProperty('--line-height-tiny', '20px')
       })
       for (const pairs of await measure()) for (const pair of pairs) assert.deepEqual(pair, ['14px', '20px'])
     } finally {await page.close()}
@@ -147,7 +147,7 @@ for (const engine of engines) {
       })
       assert.deepEqual(await measure(), before)
       await page.locator('#compact').evaluate(fixture => {
-        for (const [index, size] of ['extra-small', 'small', 'medium'].entries()) {
+        for (const [index, size] of ['tiny', 'small', 'medium'].entries()) {
           fixture.style.setProperty(`--font-size-${size}`, `${14 + index}px`)
           fixture.style.setProperty(`--line-height-${size}`, `${20 + index * 2}px`)
         }

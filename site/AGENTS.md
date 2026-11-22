@@ -298,6 +298,9 @@ nav:
 
 Groups are `content`, `media`, `controls`, `inputs`, `feedback`, and `layout`. `nav.label` is optional when the sidebar needs a shorter title. The catalog generates navigation, breadcrumbs, component classification, LLM indexes, and packaged Markdown exports from this metadata.
 
+Component pages sort alphabetically by sidebar label within each group. Group
+order stays fixed; `nav.order` controls standalone-guide and package ordering.
+
 After changing the group enum in `lib/content/schema.mjs`, restart the root
 development server. Astro can retain the old collection schema after HMR and
 reject page metadata that uses the new group.

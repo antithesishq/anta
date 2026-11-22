@@ -163,10 +163,12 @@ export function validatePageCatalog(pages) {
   return pages
 }
 
-function ordered(pages) {
+function ordered(pages, alphabetical = false) {
   const keys = new Set(pages.map(page => page.key))
   const siblings = parentKey => pages.filter(page => (keys.has(page.parentKey) ? page.parentKey : undefined) === parentKey)
-    .sort((a, b) => (a.nav?.order ?? 0) - (b.nav?.order ?? 0) || a.key.localeCompare(b.key))
+    .sort((a, b) => (alphabetical
+      ? a.label.localeCompare(b.label, 'en', { sensitivity: 'base' })
+      : (a.nav?.order ?? 0) - (b.nav?.order ?? 0)) || a.key.localeCompare(b.key))
   const visit = parentKey => siblings(parentKey).flatMap(page => [page, ...visit(page.key)])
   return visit(undefined)
 }
@@ -175,7 +177,7 @@ export function getNavigationGroups(catalog) {
   return NAV_GROUPS.map(id => ({
     id,
     ...(id === 'content' ? { title: 'Components' } : id === 'packages' ? { title: 'Packages' } : {}),
-    pages: ordered(catalog.filter(page => page.nav !== false && page.nav.group === id)),
+    pages: ordered(catalog.filter(page => page.nav !== false && page.nav.group === id), COMPONENT_GROUPS.includes(id)),
   })).filter(group => group.pages.length)
 }
 
@@ -195,7 +197,7 @@ export function getExportGroups(catalog) {
   const pages = catalog.filter(page => page.includeInExports)
   return {
     documentation: pages.filter(page => page.kind === 'page').sort((a, b) => a.exportOrder - b.exportOrder),
-    components: COMPONENT_GROUPS.map(group => ordered(pages.filter(page => page.kind === 'component' && (page.nav?.group ?? COMPONENT_GROUPS[0]) === group))),
+    components: COMPONENT_GROUPS.map(group => ordered(pages.filter(page => page.kind === 'component' && (page.nav?.group ?? COMPONENT_GROUPS[0]) === group), true)),
     packages: ordered(pages.filter(page => page.kind === 'package')),
   }
 }

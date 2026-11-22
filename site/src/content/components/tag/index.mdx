@@ -296,8 +296,8 @@ export default function Demo() {
 
 Place a `Button` inside the tag to remove it. Give the button an accessible
 name, such as “Remove Frontend.” A button at the start or end sits flush with
-that edge of the tag. After removal, this example moves focus to **Reset
-example**, which restores the tag.
+that edge of the tag. After removal, **Reset example** appears and receives
+focus. It restores the tag and returns focus to the remove button.
 
 <Preview>
   <TagRemoveDemo client:load />
@@ -309,25 +309,38 @@ example**, which restores the tag.
 </Preview>
 
 ```tsx folded
-import { useRef, useState } from 'preact/hooks'
+import { useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { Button, Tag } from '@antadesign/anta'
 
 export default function Demo() {
   const [visible, setVisible] = useState(true)
   const controls = useRef<HTMLDivElement>(null)
+  const previousVisible = useRef(visible)
+
+  useLayoutEffect(() => {
+    if (previousVisible.current !== visible) {
+      controls.current?.querySelector<HTMLElement>('a-button')?.focus()
+      previousVisible.current = visible
+    }
+  }, [visible])
 
   return (
     <div ref={controls} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       {visible && (
         <Tag className="removable-tag" tone="info" label="Frontend">
-          <Button priority="quaternary" size="small" icon="x" aria-label="Remove Frontend"
-            onClick={() => {
-              setVisible(false)
-              controls.current?.querySelector<HTMLElement>('.reset-tag')?.focus()
-            }} />
+          <Button
+            priority="tertiary"
+            tone="info"
+            size="small"
+            icon="x"
+            aria-label="Remove Frontend"
+            onClick={() => setVisible(false)}
+          />
         </Tag>
       )}
-      <Button className="reset-tag" label="Reset example" onClick={() => setVisible(true)} />
+      {!visible && (
+        <Button label="Reset example" onClick={() => setVisible(true)} />
+      )}
       <style>{`
         a-tag.removable-tag { padding-block: 0; }
         a-tag.removable-tag > a-button { align-self: stretch; }

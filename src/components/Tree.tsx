@@ -284,6 +284,7 @@ export const Tree = ({
               icon={action.icon}
               aria-label={action.label}
               aria-haspopup={action.opensMenu ? "menu" : undefined}
+              data-opens-menu={action.opensMenu ? "" : undefined}
               tabIndex={-1}
               disabled={action.disabled}
               onClick={action.onClick}

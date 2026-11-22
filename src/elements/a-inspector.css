@@ -9,6 +9,9 @@
     --inspector-line-height: 18px;
     --inspector-indent: 16px;
     --inspector-row-width: 120ch;
+    /* The least of a row's key and value it keeps in a narrow container;
+       past that, the tree scrolls sideways. */
+    --inspector-min-text-width: 24ch;
     /* The ⋯ button sits 12px after the value, square in the fixed row. The
        tree inherits these, so set --tree-actions-align to `end` on the
        Inspector to pin ⋯ to the row's end instead. */
@@ -39,9 +42,19 @@
   }
 
   /* The key keeps its width; the value ends in an ellipsis at the row's edge,
-     wherever the key ends. */
+     wherever the key ends. In a narrow container, the key and value together
+     shrink to --inspector-min-text-width and no further, or to their own width
+     when that's less: `width` sets that floor through the flex item's
+     automatic minimum, `max-width: max-content` caps it at the text's width so
+     short rows aren't padded, and a `max-content` basis sizes it from its text.
+     Past the floor, content overflows the row and the tree scrolls sideways. */
   a-inspector a-tree-value {
     display: flex;
+    flex: 0 1 max-content;
+    width: var(--inspector-min-text-width);
+    max-width: max-content;
+    min-width: auto;
+    overflow: visible;
   }
 
   a-inspector a-inspector-key {
@@ -52,6 +65,10 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  a-inspector:is(:not([layout="inline"]), [open]) > a-tree {
+    overflow-x: auto;
   }
 
   /* Block rows end at most --inspector-row-width from the Inspector's start,

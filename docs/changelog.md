@@ -12,7 +12,9 @@ changes are not listed.
   table cell. Rows can be [copied from a menu](/inspector/#copy-values-and-paths), opened by right-click or a row's ⋯
   button, as a value, JSON, or a JavaScript path, and the tree supports the
   [keyboard](/inspector/#keyboard-accessibility). Rows end 120 characters from the Inspector's start, set by
-  `--inspector-row-width`. Classes can choose how they appear by implementing
+  `--inspector-row-width`, or at [`previewBudget`](/inspector/#limit-summary-length) characters. In a
+  [narrow container](/inspector/#fit-a-narrow-container), rows keep part of their text and the tree scrolls sideways.
+  Classes can choose how they appear by implementing
   [`inspectorRepr`](/inspector/#custom-types). Long lists open in [ranges](/inspector/#show-long-lists) of
   `chunkSize` items. The open rows can be [controlled](/inspector/#control-which-rows-are-open) by path key, revealed
   with `inspectorExpandToPath` and `current`, and they [carry over](/inspector/#replace-the-value) when the value
@@ -24,7 +26,9 @@ changes are not listed.
   [keyboard](/tree/#keyboard-accessibility) as one Tab stop. [`current`](/tree/#mark-the-current-item) marks an item
   and scrolls it into view without moving focus, and `toolbar` places content, such as a search field, before the
   tree. [Search](/tree/#search) attaches to any Tree with `TreeSearchBar`, `treeSearch`, and `treeHighlight`.
-  Inspector is built on Tree, and its search uses the same search field.
+  Inspector is built on Tree, and its search uses the same search field. In a
+  [hand-built tree](/tree/#web-component), `data-opens-menu` marks an action that opens the context menu; behavior
+  never reads ARIA attributes.
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 

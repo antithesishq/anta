@@ -638,6 +638,52 @@ for (const engine of engines) {
     assert.ok(sizes.clipped, 'the value was not clipped')
   })
 
+  // In a narrow box, the indent would leave deep rows no room: each keeps its
+  // key and some of its value, and the tree scrolls sideways instead.
+  test.fast(`${name}: in a narrow container, deep rows keep their key and value text and the tree scrolls sideways`, async t => {
+    const page = await pageFor(t, engine)
+    await page.setViewportSize({ width: 600, height: 800 })
+    await page.evaluate(() => { document.querySelector('#mount').style.cssText = 'display: block; width: 220px' })
+    let value = { leaf: 'a long string value that cannot fit in the box' }
+    for (let i = 0; i < 12; i++) value = { [`level_${i}_key_name`]: value }
+    await renderInspector(page, { value, expandDepth: 20 })
+    const sizes = await page.evaluate(() => {
+      const tree = document.querySelector('a-inspector > a-tree')
+      const probe = document.createElement('span')
+      probe.style.font = getComputedStyle(tree).font
+      probe.style.whiteSpace = 'pre'
+      probe.textContent = '0'.repeat(24)
+      document.body.append(probe)
+      const floor = probe.getBoundingClientRect().width
+      probe.remove()
+      // A row's text: its key and value, which keep at least 24ch together.
+      const values = [...tree.querySelectorAll('a-tree-item[data-type="node"] > a-tree-row > a-tree-value')].map(text => ({
+        width: text.getBoundingClientRect().width,
+        natural: text.scrollWidth,
+      }))
+      return { floor, values, scroll: tree.scrollWidth, client: tree.clientWidth, overflow: getComputedStyle(tree).overflowX }
+    })
+    assert.equal(sizes.overflow, 'auto')
+    assert.ok(sizes.scroll > sizes.client, 'the tree does not scroll sideways')
+    for (const { width, natural } of sizes.values) {
+      assert.ok(width + 1 >= Math.min(natural, sizes.floor), `a row's text is ${width}px wide, under its ${Math.min(natural, sizes.floor)}px floor`)
+    }
+  })
+
+  test.fast(`${name}: previewBudget ends a block row's summary at that many characters`, async t => {
+    const page = await pageFor(t, engine)
+    await page.setViewportSize({ width: 1400, height: 600 })
+    const value = { list: Array.from({ length: 60 }, (_, i) => i * 37) }
+    await renderInspector(page, { value, previewBudget: 20 })
+    const summary = await page.locator('a-tree-item[item-id="r/.list"] a-inspector-value').textContent()
+    assert.ok(summary.endsWith('…'), `the summary ${JSON.stringify(summary)} was not cut`)
+    // Spacing is CSS, so the text is shorter than the drawn count.
+    assert.ok(summary.length <= 20, `the summary has ${summary.length} characters`)
+    await renderInspector(page, { value })
+    const full = await page.locator('a-tree-item[item-id="r/.list"] a-inspector-value').textContent()
+    assert.ok(full.length > 100, 'without previewBudget, block rows render to the edge')
+  })
+
   test.fast(`${name}: on a wide screen, rows end 120 characters from the Inspector's start`, async t => {
     const page = await pageFor(t, engine)
     await page.setViewportSize({ width: 1600, height: 600 })

@@ -340,6 +340,19 @@ same sizing as the JSX `Tree`'s actions:
 </a-tree-actions>
 ```
 
+An action with `data-opens-menu` opens the `<a-menu context>` that follows the
+tree, at that action; add `aria-haspopup="menu"` too, for screen readers. An
+item with `disabled` can't open or be selected; add `aria-disabled="true"` too.
+The tree's behavior reads only `data-opens-menu` and `disabled`, never ARIA
+attributes.
+
+```html
+<button type="button" data-anta priority="tertiary" tabindex="-1"
+  aria-label="More actions" aria-haspopup="menu" data-opens-menu>
+  <a-icon shape="more" aria-hidden="true"></a-icon>
+</button>
+```
+
 The JSX `Tree` renders actions with `Button`, so a page that registers elements
 one at a time also registers `a-button`, `a-icon`, and `a-tooltip`.
 

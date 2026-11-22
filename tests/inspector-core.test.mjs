@@ -1340,3 +1340,22 @@ test('a cycle reads Circular Ref(path) with cycle_labels, and a function copies 
   assert.equal(core.copyText(core.describe(greet)), 'function greet(name) { return `hi ${name}` }')
   assert.equal(calls, 0)
 })
+
+test('a cycle back to the root reads Circular Ref(root object); repr() keeps circular_ref[]', () => {
+  const value = { id: 'api-1' }
+  value.self = value
+  const rows = core.visibleRows(core.describe(value, { cycle_labels: true }), { style: 'tree', expandDepth: 1 })
+  assert.equal(line(rows.find(row => row.id === 'r/.self')), 'self:Circular Ref(root object)')
+  const list = [1]
+  list.push(list)
+  assert.equal(text(core.visibleRows(core.describe(list, { cycle_labels: true }), { style: 'tree', previewBudget: 200 })[0].tokens), '[1,Circular Ref(root object)]')
+  assert.equal(repr(value), '{id:"api-1",self:circular_ref[]}')
+})
+
+test('an empty Map reads Map{} with map_entry_rows, as an empty Set does, and cannot open', () => {
+  const rows = core.visibleRows(core.describe({ m: new Map(), s: new Set(), full: new Map([[1, 2]]) }, { map_entry_rows: true }), { style: 'tree', expandDepth: 1 })
+  assert.equal(line(rows.find(row => row.id === 'r/.m')), 'm:Map{}')
+  assert.equal(line(rows.find(row => row.id === 'r/.s')), 's:Set{}')
+  assert.ok(!rows.find(row => row.id === 'r/.m').expandable)
+  assert.match(line(rows.find(row => row.id === 'r/.full')), /^full:Map\(1\)\{1=>2\}$/)
+})

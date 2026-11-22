@@ -134,9 +134,10 @@ export function text_lines(text: string): string[] {
 const function_to_string = Function.prototype.toString
 
 // A cycle's label: the notebook's `circular_ref[path]`, or the Inspector's `Circular Ref(path)`.
+// The root's path is empty, so the Inspector names it `root object`.
 function cycle_tokens(path: string, readable: boolean): Token[] {
   return readable
-    ? [{ text: 'Circular Ref', type: 'reference' }, { text: '(', type: 'open_bracket' }, { text: path, type: 'reference_path' }, { text: ')', type: 'close_bracket' }]
+    ? [{ text: 'Circular Ref', type: 'reference' }, { text: '(', type: 'open_bracket' }, { text: path || 'root object', type: 'reference_path' }, { text: ')', type: 'close_bracket' }]
     : [{ text: 'circular_ref', type: 'reference' }, { text: '[', type: 'open_bracket' }, { text: path, type: 'reference_path' }, { text: ']', type: 'close_bracket' }]
 }
 const date_get_time = Date.prototype.getTime
@@ -855,7 +856,8 @@ class Node implements InspectNode {
             t('Map', 'class_name')
             if (options.map_entry_rows) {
               // DevTools' form: the size, then `key => value` entries that open.
-              if (size !== INACCESSIBLE) { t('(', 'open_bracket'); t(String(size), 'number'); t(')', 'close_bracket') }
+              // An empty Map reads `Map{}`, as an empty Set does.
+              if (size !== INACCESSIBLE && size > 0) { t('(', 'open_bracket'); t(String(size), 'number'); t(')', 'close_bracket') }
               parts.push(this.#group('{', '}', () => this.#map_entry_nodes(map)), this.#keyable(map))
             } else {
               parts.push(this.#group('{', '}', () => this.#map_entries(map)), this.#keyable(map))

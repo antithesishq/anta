@@ -49,7 +49,7 @@ import './a-inspector'
 export { ATreeElement, register_a_tree } from './a-tree'
 export type { TreeNavigateDetail, TreeItemMenuDetail } from './a-tree'
 export { ATreeItemElement, register_a_tree_item } from './a-tree-item'
-export type { TreeItemState, TreeScope, TreeItemStateChangeDetail } from './a-tree-item'
+export type { TreeItemOpenState, TreeScope, TreeItemStateChangeDetail } from './a-tree-item'
 export { AToasterElement, register_a_toaster } from './a-toaster'
 export { AToastElement, register_a_toast } from './a-toast'
 

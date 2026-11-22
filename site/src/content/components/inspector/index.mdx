@@ -10,7 +10,7 @@ import Playground from '../../../components/PlaygroundEmbed.astro'
 import Preview from '../../../components/Preview.astro'
 import PropsTable from '../../../components/PropsTable.astro'
 import inspectorDemo from './inspector.demo.ts'
-import { ControlledDemo, CopyDemo, CustomTypesDemo, ErrorsDemo, InlineDemo, KindDemo, LargeSearchDemo, LevelsDemo, LogDemo, LongListDemo, PreviewBudgetDemo, RegexSearchDemo, ReplaceDemo, RootPrimitivesDemo, SearchDemo, StylingDemo, ThresholdSearchDemo } from '../../../components/InspectorDemos'
+import { CharacterLimitDemo, ControlledDemo, CopyDemo, CustomTypesDemo, ErrorsDemo, InlineDemo, KindDemo, LargeSearchDemo, LevelsDemo, LogDemo, LongListDemo, NarrowDemo, RegexSearchDemo, ReplaceDemo, RootPrimitivesDemo, SearchDemo, StylingDemo, ThresholdSearchDemo } from '../../../components/InspectorDemos'
 
 # Inspector
 
@@ -31,8 +31,9 @@ search added.
 
 `expandDepth` sets how many levels start open; the default opens the value's
 own properties. A closed row shows a one-line summary that ends in `…` 120
-characters from the Inspector's start, or sooner in a narrower window. With
-`layout="inline"`, the summary has up to `previewBudget` characters instead.
+characters from the Inspector's start, or sooner in a narrower window.
+`previewBudget` ends it sooner, after a set number of characters; see
+[Limit summary length](#limit-summary-length).
 Long and multiline strings, such as stack traces, open into lines of text
 a page at a time, with a **Show more** row for the next page.
 
@@ -60,6 +61,86 @@ function Demo() {
     stack: stackTrace('total mismatch'),
   }
   return <Inspector value={result} aria-label="Test result" />
+}
+```
+
+## Limit summary length
+
+`previewBudget` sets how many characters a closed row's summary shows before it
+ends in `…`, counting the space after each comma and colon. It uses the same
+count as `repr()`'s `char_limit`. In block layout, a summary without
+`previewBudget` runs to the row's edge; with it, the summary ends at the budget
+or at the edge, whichever comes first. With `layout="inline"`, the budget is 80
+by default. `previewBudget={Infinity}` shows the whole value. Strings longer
+than the budget can open. Move the slider to change the budget for both
+layouts below.
+
+<Preview direction="column" align="stretch">
+  <CharacterLimitDemo client:load />
+</Preview>
+
+```tsx folded
+import { useState } from 'preact/hooks'
+import { Box, Checkbox, Inspector, Slider, Text } from '@antadesign/anta'
+
+const run = {
+  run: 'run_4f2a', seed: 42, failing: ['transfer', 'withdraw'], took: '92.5s', retries: 3,
+  worker: { host: 'api-2', zone: 'eu-west-1b' },
+}
+
+function Demo() {
+  const [budget, setBudget] = useState(40)
+  const [unlimited, setUnlimited] = useState(false)
+  const previewBudget = unlimited ? Infinity : budget
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Box display="flex" gap={16} style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+        <Box style={{ flex: '1 1 240px' }}>
+          <Slider label="previewBudget" min={10} max={160} step={1} value={budget} disabled={unlimited}
+            onValueChange={(_event, { value }) => setBudget(value)} />
+        </Box>
+        <Checkbox label="No limit (Infinity)" checked={unlimited} onStateChange={(_event, { next }) => setUnlimited(next === true)} />
+      </Box>
+      <Inspector value={{ run }} previewBudget={previewBudget} aria-label="Run, block layout" />
+      <Text>
+        Inline: <Inspector layout="inline" value={run} previewBudget={previewBudget} aria-label="Run, inline layout" />
+      </Text>
+    </Box>
+  )
+}
+```
+
+## Fit a narrow container
+
+In a narrow container, such as a table cell or a sidebar, each level's indent
+takes room from the rows below it. Every row keeps at least
+`--inspector-min-text-width` of its key and value, `24ch` by default, or all of
+them when they're shorter. When deep rows need more room than the container
+has, the tree scrolls sideways, as browser DevTools does, so no row is cut to
+nothing. Move the slider to narrow the container.
+
+<Preview direction="column" align="stretch">
+  <NarrowDemo client:load />
+</Preview>
+
+```tsx folded
+import { useState } from 'preact/hooks'
+import { Box, Inspector, Slider } from '@antadesign/anta'
+
+let failure: Record<string, unknown> = { error: 'balance below zero after transfer tx_9f31', code: 'E_BALANCE' }
+for (const key of ['account', 'ledger', 'shard', 'replica', 'region', 'cluster', 'run']) failure = { [key]: failure }
+
+function Demo() {
+  const [width, setWidth] = useState(240)
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Slider label="Container width" min={160} max={640} step={10} value={width} valueSuffix="px"
+        onValueChange={(_event, { value }) => setWidth(value)} />
+      <Box style={{ width: `${width}px`, maxWidth: '100%', border: '1px solid var(--border-2)', borderRadius: 4, padding: 4 }}>
+        <Inspector value={failure} expandDepth={10} aria-label="Nested failure" />
+      </Box>
+    </Box>
+  )
 }
 ```
 
@@ -379,31 +460,8 @@ function Demo() {
 }
 ```
 
-`previewBudget` sets how many characters an inline summary shows before it ends
-in `…`: 80 by default, counting the space after each comma and colon. It uses
-the same character limit as `repr()`'s `char_limit`. `previewBudget={Infinity}`
-shows the whole value. In block layout, a row instead ends at
-`--inspector-row-width`, and `previewBudget` only limits how much is read.
-
-<Preview direction="column" align="stretch">
-  <PreviewBudgetDemo client:load />
-</Preview>
-
-```tsx folded
-import { Box, Inspector, Text } from '@antadesign/anta'
-
-const run = { run: 'run_4f2a', seed: 42, failing: ['transfer', 'withdraw'], took: '92.5s', retries: 3, worker: 'api-2' }
-
-function Demo() {
-  return (
-    <Box display="grid" gap={8} style={{ width: '100%' }}>
-      <Text>Default (80): <Inspector layout="inline" value={run} aria-label="Run, default budget" /></Text>
-      <Text>previewBudget={'{30}'}: <Inspector layout="inline" value={run} previewBudget={30} aria-label="Run, budget 30" /></Text>
-      <Text>previewBudget={'{Infinity}'}: <Inspector layout="inline" value={run} previewBudget={Infinity} aria-label="Run, no limit" /></Text>
-    </Box>
-  )
-}
-```
+`previewBudget` sets how long an inline summary runs, 80 characters by default;
+see [Limit summary length](#limit-summary-length).
 
 ## Show values in a log or console
 
@@ -560,7 +618,8 @@ element is keyed by its index. Holes in a sparse array show as
 A Map reads as it does in browser DevTools: `Map(2) {2024 => 4744353, …}`, open
 or closed. Its entries are numbered by position, as `0: 2024 => 4744353`, and
 each opens to a `key` row and a `value` row, so an object key or value can be
-explored too. A Set opens to its items, numbered by position. Copy path is
+explored too. A Set opens to its items, numbered by position. An empty Map or
+Set shows `Map{}` or `Set{}` and can't open. Copy path is
 unavailable for Set items, Map keys, and entries with an object key, since no
 expression reaches them.
 
@@ -606,7 +665,7 @@ and opens to its `cause` and its `stack`. A Date shows its ISO time in UTC, or
 ### Classes and instances
 
 An instance shows its class's name, such as `Account{…}`, and opens to its own
-fields. A class shows as `<function Account>` and opens to its static members.
+fields. A class shows as `class Account` and opens to its static members.
 A class with no static members, and an instance with no fields, can't open.
 
 <Preview direction="column" align="stretch">
@@ -654,8 +713,9 @@ the Inspector never does.
 ### Circular references
 
 A value that contains itself shows `Circular Ref(...)` with the path of the
-ancestor it refers to, such as `Circular Ref(node)`, and never opens, so the tree
-can't expand endlessly. Select it, or press Enter on it, to move to that row,
+ancestor it refers to, such as `Circular Ref(node)`, or `Circular Ref(root object)`
+when it refers to the whole value, and never opens, so the tree can't expand
+endlessly. Select it, or press Enter on it, to move to that row,
 which is highlighted for a moment. An object that only appears in several places,
 without containing itself, opens in each place instead: only a real cycle
 becomes a link, because the ancestor it points to is always open and on screen.
@@ -668,7 +728,9 @@ becomes a link, because the ancestor it points to is always open and on screen.
 const node = { id: 'api-1', peers: [] }
 node.peers.push({ id: 'api-2', leader: node })
 node.self = node
-<Inspector value={{ node }} expandDepth={3} aria-label="Cycles" />
+const value = { node }
+value.whole = value
+<Inspector value={value} expandDepth={3} aria-label="Cycles" />
 ```
 
 ### Large lists and ranges
@@ -816,7 +878,9 @@ Rows use the monospace font and the theme's text colors, in light and dark.
 `--inspector-font-size`, `--inspector-line-height`, and `--inspector-indent`
 set the type size, row height, and indent per level. `--inspector-row-width`
 sets where rows end, measured from the Inspector's start with indentation
-included; it's `120ch` by default, and `100%` fills the width. Style
+included; it's `120ch` by default, and `100%` fills the width. `--inspector-min-text-width`
+sets how much of its key and value each row keeps in a narrow container before
+the tree scrolls sideways; it's `24ch` by default. Style
 `a-inspector` and its rows, the `a-tree-*` tags described in
 [Tree's styling](/tree/#styling), with plain CSS; unlayered rules override Anta's defaults without `!important`. A row's
 `data-type` is `node`, `text`, `chunk`, or `more`, and the row a cycle jumps to has

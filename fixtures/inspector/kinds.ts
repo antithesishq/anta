@@ -127,7 +127,10 @@ export const inspectorKinds = {
       const peer = { id: 'api-2', leader: node }
       ;(node.peers as unknown[]).push(peer)
       node.self = node
-      return { node }
+      // A cycle back to the whole value reads Circular Ref(root object).
+      const value: Record<string, unknown> = { node }
+      value.whole = value
+      return value
     },
   },
   ranges: {

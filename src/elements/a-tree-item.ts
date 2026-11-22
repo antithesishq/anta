@@ -1,12 +1,12 @@
 import { HTMLElementBase, parseOpenState } from '../anta_helpers'
 
 /** Open or closed, in the same vocabulary as `a-expander`. */
-export type TreeItemState = 'open' | 'closed'
+export type TreeItemOpenState = 'open' | 'closed'
 /** How far an open or close request reaches: the item alone, or the item and
  *  every item under it (Alt+click, Alt+Enter). */
 export type TreeScope = 'item' | 'subtree'
 /** Detail of an item's `statechange`. */
-export type TreeItemStateChangeDetail = { next: TreeItemState; prev: TreeItemState; scope: TreeScope }
+export type TreeItemStateChangeDetail = { next: TreeItemOpenState; prev: TreeItemOpenState; scope: TreeScope }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // <a-tree-item> — one item of an <a-tree>, the sibling of <a-tab>.
@@ -36,7 +36,7 @@ export class ATreeItemElement extends HTMLElementBase {
   static observedAttributes = ['state', 'default-state']
 
   #internals = this.attachInternals?.()
-  #uncontrolled: TreeItemState = 'closed'
+  #uncontrolled: TreeItemOpenState = 'closed'
   #seeded = false
 
   connectedCallback() {
@@ -79,9 +79,9 @@ export class ATreeItemElement extends HTMLElementBase {
    * can carry a subtree request to the items under this one.
    * @internal Called by `a-tree`.
    */
-  requestState(next: TreeItemState, scope: TreeScope): boolean {
+  requestState(next: TreeItemOpenState, scope: TreeScope): boolean {
     if (!this.isExpandable()) return false
-    const prev: TreeItemState = this.isOpen() ? 'open' : 'closed'
+    const prev: TreeItemOpenState = this.isOpen() ? 'open' : 'closed'
     if (next === prev && scope === 'item') return false
     const accepted = this.dispatchEvent(new this.view.CustomEvent<TreeItemStateChangeDetail>('statechange', {
       cancelable: true, detail: { next, prev, scope },
@@ -96,7 +96,7 @@ export class ATreeItemElement extends HTMLElementBase {
   /** Applies a state to an uncontrolled item with no event, for a subtree
    *  request its ancestor accepted.
    *  @internal Called by `a-tree`. */
-  applyUncontrolled(next: TreeItemState) {
+  applyUncontrolled(next: TreeItemOpenState) {
     if (!this.isExpandable() || this.hasAttribute('state')) return
     this.#uncontrolled = next
     this.#apply()

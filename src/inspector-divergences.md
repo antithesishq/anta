@@ -100,9 +100,11 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
     the `repr()` text itself. `repr()` and the `repr` row style keep the notebook's format.
 23. **Inspector rows cut summaries by what they draw.** Row summaries count the space the Inspector draws after each
     comma and colon, end a cut in one `…` instead of `...`, and never end on a comma or colon. In block layout, rows
-    render up to 300 characters and CSS ends the value at the row's edge, so every row cuts at the same place. That
-    edge is 120 characters from the Inspector's start (`--inspector-row-width`), or the Inspector's own edge if nearer.
-    `summary()` without its display flag, and `repr()`, keep the notebook's count and `...`.
+    render up to `previewBudget` characters, or 300 without one, and CSS ends the value at the row's edge, so every
+    row cuts at the same place. That edge is 120 characters from the Inspector's start (`--inspector-row-width`), or
+    the Inspector's own edge if nearer. In a narrow container, each row keeps at least `--inspector-min-text-width`
+    of its key and value, and the tree scrolls sideways. `summary()` without its display flag,
+    and `repr()`, keep the notebook's count and `...`.
 24. **Copy JSON is new.** `jsonText()` writes a node as compact JSON when it holds only plain objects, arrays, strings,
     finite numbers, booleans, and null. Otherwise it names the first other value and its path, such as
     `Not JSON: contains a Map at .containers`. The notebook had no JSON export.
@@ -119,9 +121,9 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
     could be shown is undecided.
 27. **The Inspector shows Maps as browser DevTools does.** With the `map_entry_rows` option of `describe()`, which the
     Inspector sets, a Map reads `Map(2){2024 => 4744353, …}`, open or closed, and each entry is a row keyed by its
-    position that opens to `key` and `value` rows. An entry's path key is the entry's (`/=n:2024`); its key and value
-    add `/:key` and `/:value`. Search matches the key and value rows, not the entry. `repr()` leaves the option off
-    and writes `Map{2024:4744353}`, as the notebook did.
+    position that opens to `key` and `value` rows. An empty Map reads `Map{}`, as an empty Set does. An entry's path
+    key is the entry's (`/=n:2024`); its key and value add `/:key` and `/:value`. Search matches the key and value
+    rows, not the entry. `repr()` leaves the option off and writes `Map{2024:4744353}`, as the notebook did.
 28. **The Inspector shows functions as browser DevTools does.** With the `function_labels` option of `describe()`,
     which the Inspector sets, a function reads `ƒ greet()`, `async ƒ load()`, `ƒ* steps()`, `async ƒ* poll()`, or
     `ƒ ()` without a name, and a class reads `class Account`. The kind comes from `Function.prototype.toString`, the
@@ -130,9 +132,11 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
     with its own properties, such as a class's static members, still opens to them. `repr()` leaves the option off
     and writes `<function greet>`, as the notebook did.
 29. **The Inspector labels a cycle `Circular Ref(node)`.** With the `cycle_labels` option of `describe()`, which the
-    Inspector sets, a cycle reads `Circular Ref(path)`, in rows and in summaries. `repr()` leaves the option off and
-    writes `circular_ref[path]`, as the notebook did. The Inspector's Copy function copies a function's source, from
-    the engine's native `Function.prototype.toString`, so the function's own `toString` never runs.
+    Inspector sets, a cycle reads `Circular Ref(path)`, in rows and in summaries. A cycle back to the root, whose path
+    is empty, reads `Circular Ref(root object)`. `repr()` leaves the option off and writes `circular_ref[path]`, or
+    `circular_ref[]` for the root, as the notebook did.
+30. **Copy function copies a function's source.** The Inspector's copy menu takes it from the engine's native
+    `Function.prototype.toString`, so the function's own `toString` never runs. The notebook had no copy menu.
 
 ## Kept identical on purpose
 

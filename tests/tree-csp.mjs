@@ -30,7 +30,7 @@ const item = (id, label, { state, actions = '', children = '', after = '', disab
     <a-tree-row><a-tree-indicator shape="chevron" aria-hidden="true"></a-tree-indicator><a-tree-value id="v-${id.replaceAll('/', '-')}">${label}</a-tree-value>${children ? '<a-tree-before>{</a-tree-before>' : ''}${actions}</a-tree-row>
     ${children ? `<a-tree-group role="group">${children}</a-tree-group>` : ''}${after}
   </a-tree-item>`
-const actions = '<a-tree-actions><button type="button" tabindex="-1" id="new" aria-label="New file">+</button><button type="button" tabindex="-1" id="more" aria-label="More actions" aria-haspopup="menu">…</button></a-tree-actions>'
+const actions = '<a-tree-actions><button type="button" tabindex="-1" id="new" aria-label="New file">+</button><button type="button" tabindex="-1" id="more" aria-label="More actions" aria-haspopup="menu" data-opens-menu>…</button></a-tree-actions>'
 const tree = item('src', 'src', {
   state: 'open', actions, after: '<a-tree-after>}</a-tree-after>',
   children: item('src/a.ts', 'a.ts') +
@@ -278,6 +278,27 @@ for (const engine of engines) {
     // A disabled item neither opens nor activates.
     await rowText(page, 'src/old').click()
     assert.ok(!(await shown(page)).includes('src/old/c.ts'))
+  })
+
+  // ARIA is for screen readers: behavior reads `data-opens-menu` and `disabled`.
+  test.fast(`${name}: aria-haspopup and aria-disabled alone change no behavior`, async t => {
+    const page = await pageFor(t, engine)
+    await settle(page)
+    await page.evaluate(() => {
+      window.writes = null
+      document.querySelector('#more').removeAttribute('data-opens-menu')
+      const old = document.querySelector('a-tree-item[item-id="src/old"]')
+      old.removeAttribute('disabled')
+    })
+    // The test's own edits reach the observer a microtask later; only
+    // interaction from here on must leave the DOM alone.
+    await page.evaluate(() => new Promise(done => setTimeout(() => { window.writes = []; done() })))
+    await row(page, 'src').hover()
+    await page.locator('#more').click()
+    assert.deepEqual(await events(page, 'itemmenu'), [], 'aria-haspopup alone opened the menu')
+    // aria-disabled="true" remains, but without `disabled` the item opens.
+    await rowText(page, 'src/old').click()
+    assert.ok((await shown(page)).includes('src/old/c.ts'), 'aria-disabled alone kept the item closed')
   })
 
   test.fast(`${name}: a vetoed request changes nothing; a controlled item waits for its caller`, async t => {

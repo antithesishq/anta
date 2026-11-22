@@ -28,10 +28,12 @@ export interface InspectorProps extends Omit<BaseProps, "children"> {
    *  then 1,000, then 100. A range reads its children only when it opens.
    *  @defaultValue 100 */
   chunkSize?: number
-  /** Characters in a closed row's one-line summary with `layout="inline"`,
-   *  counting the space after each comma and colon. Strings longer than this
-   *  can open. In block layout, a summary instead ends at the row's edge.
-   *  @defaultValue 80 */
+  /** Characters in a closed row's one-line summary, counting the space after
+   *  each comma and colon. Strings longer than this can open. In block layout,
+   *  a summary without one ends at the row's edge; with one, it ends at this
+   *  many characters, or at the edge if that comes first. `Infinity` shows the
+   *  whole value.
+   *  @defaultValue 80 with `layout="inline"`; none in block layout */
   previewBudget?: number
   /** Characters per page of an open string. Long and multiline strings open
    *  into lines of text.
@@ -101,7 +103,8 @@ const remount = (keys: CopyKeys, keep?: keyof CopyKeys): CopyKeys => ({
   json: keep === "json" ? keys.json : keys.json + 1,
   path: keep === "path" ? keys.path : keys.path + 1,
 })
-// Block rows render this much of a summary; CSS cuts it at the row's edge.
+// Block rows without a previewBudget render this much of a summary; CSS cuts
+// it at the row's edge.
 const BLOCK_SUMMARY_LIMIT = 300
 // How long a jump from a cycle highlights its row.
 const REVEAL_MS = 1500
@@ -209,7 +212,7 @@ export const Inspector = ({
     [value, numericBase, unquotedStrings],
   )
   const inline = layout === "inline"
-  const summaryLimit = inline ? undefined : Math.max(BLOCK_SUMMARY_LIMIT, previewBudget ?? 0)
+  const summaryLimit = inline ? undefined : previewBudget ?? BLOCK_SUMMARY_LIMIT
   const rowState = { style: "tree" as const, expandDepth, chunkSize, previewBudget, summaryLimit, textPageSize }
   // Open rows are path keys, so they outlive the value: replacing it keeps the
   // rows whose paths still exist open. `expandDepth` applies to the first value.

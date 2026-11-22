@@ -1,8 +1,8 @@
 import { Button } from "./Button"
 import { Input } from "./Input"
 
-/** Props for the search field above a tree. Internal: the Inspector uses it.
- *  It knows nothing about what it searches, so it can become public later. */
+/** Props for the search field above a tree. It knows nothing about what it
+ *  searches: pair it with `treeSearch`, or the Inspector's `searchable`. */
 export interface TreeSearchBarProps {
   /** The text typed. */
   query: string

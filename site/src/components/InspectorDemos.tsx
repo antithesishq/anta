@@ -1,7 +1,7 @@
 import { Fragment } from 'preact'
 import { useState } from 'preact/hooks'
 import {
-  Box, Button, Inspector, Text, inspectorExpandToPath, inspectorRepr, inspectorSearch,
+  Box, Button, Checkbox, Inspector, Slider, Text, inspectorExpandToPath, inspectorRepr, inspectorSearch,
   type InspectorPath, type InspectorReprVisitor,
 } from '@antadesign/anta'
 import { inspectorKinds, rootPrimitives, type InspectorKindName } from '../../../fixtures/inspector/kinds'
@@ -216,18 +216,47 @@ export function InlineDemo() {
   )
 }
 
-/** The same inline value with the default summary length, a shorter one, and no limit. */
-export function PreviewBudgetDemo() {
-  const [value] = useState(() => ({ run: 'run_4f2a', seed: 42, failing: ['transfer', 'withdraw'], took: '92.5s', retries: 3, worker: 'api-2' }))
-  const rows: [string, number | undefined][] = [['Default (80)', undefined], ['previewBudget={30}', 30], ['previewBudget={Infinity}', Infinity]]
+/** A Slider sets `previewBudget` on a block and an inline Inspector of the same value. */
+export function CharacterLimitDemo() {
+  const [value] = useState(() => ({
+    run: 'run_4f2a', seed: 42, failing: ['transfer', 'withdraw'], took: '92.5s', retries: 3,
+    worker: { host: 'api-2', zone: 'eu-west-1b' },
+  }))
+  const [budget, setBudget] = useState(40)
+  const [unlimited, setUnlimited] = useState(false)
+  const previewBudget = unlimited ? Infinity : budget
   return (
-    <Box display="grid" gap={8} style={{ width: '100%' }}>
-      {rows.map(([label, budget]) => (
-        <Text key={label}>
-          <span style={{ color: 'var(--text-3)' }}>{label}:</span>{' '}
-          <Inspector layout="inline" value={value} previewBudget={budget} aria-label={`Run, ${label}`} />
-        </Text>
-      ))}
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Box display="flex" gap={16} style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+        <Box style={{ flex: '1 1 240px' }}>
+          <Slider label="previewBudget" min={10} max={160} step={1} value={budget} disabled={unlimited}
+            onValueChange={(_event, { value: next }) => setBudget(next)} />
+        </Box>
+        <Checkbox label="No limit (Infinity)" checked={unlimited} onStateChange={(_event, { next }) => setUnlimited(next === true)} />
+      </Box>
+      <Inspector value={{ run: value }} previewBudget={previewBudget} aria-label="Run, block layout" />
+      <Text>
+        Inline: <Inspector layout="inline" value={value} previewBudget={previewBudget} aria-label="Run, inline layout" />
+      </Text>
+    </Box>
+  )
+}
+
+/** A deeply nested value in a narrow box, whose width a Slider sets. */
+export function NarrowDemo() {
+  const [value] = useState(() => {
+    let node: Record<string, unknown> = { error: 'balance below zero after transfer tx_9f31', code: 'E_BALANCE' }
+    for (const key of ['account', 'ledger', 'shard', 'replica', 'region', 'cluster', 'run']) node = { [key]: node }
+    return node
+  })
+  const [width, setWidth] = useState(240)
+  return (
+    <Box display="grid" gap={12} style={{ width: '100%' }}>
+      <Slider label="Container width" min={160} max={640} step={10} value={width} valueSuffix="px"
+        onValueChange={(_event, { value: next }) => setWidth(next)} />
+      <Box style={{ width: `${width}px`, maxWidth: '100%', border: '1px solid var(--border-2)', borderRadius: 4, padding: 4 }}>
+        <Inspector value={value} expandDepth={10} aria-label="Nested failure" />
+      </Box>
     </Box>
   )
 }

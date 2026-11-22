@@ -13,7 +13,8 @@ const VERTICAL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown'
 // Controls in a label that keep their own click, as in a-expander.ts
 // (INTERACTIVE_SELECTOR there; kept in step by hand).
 const CONTROL_SELECTOR = 'a-button,a-checkbox,a-radio,a-radio-group,a-input,a-input-time,a-calendar,a-menu-item,a-tab,[data-anta][role="button"],button,a[href],input,select,textarea,label,[contenteditable=""],[contenteditable="true"]'
-const DISABLED_SELECTOR = ':disabled,[disabled],[aria-disabled="true"]'
+// Behavior reads `disabled` only; ARIA attributes are for screen readers.
+const DISABLED_SELECTOR = ':disabled,[disabled]'
 // What counts as an action the arrow keys can reach.
 const ACTION_SELECTOR = 'a-button,button,a[href],[role="button"],[tabindex]'
 
@@ -46,6 +47,8 @@ const isElement = (node: EventTarget): node is Element => (node as Node).nodeTyp
 //     repeats the request, as in a-calendar.
 //   • `data-reveal="<id>#<n>"` — input: scroll that item into view without
 //     moving focus or the cursor.
+//   • `data-opens-menu` on an action — input: pressing it opens the following
+//     <a-menu context> at that action. Behavior never reads ARIA attributes.
 // ─────────────────────────────────────────────────────────────────────────────
 export class ATreeElement extends HTMLElementBase {
   static observedAttributes = ['data-focus', 'data-reveal']
@@ -157,7 +160,7 @@ export class ATreeElement extends HTMLElementBase {
   }
 
   #disabled(item: Element): boolean {
-    return item.hasAttribute('disabled') || item.getAttribute('aria-disabled') === 'true'
+    return item.hasAttribute('disabled')
   }
 
   // ─── The active item ──────────────────────────────────────────────────────
@@ -241,7 +244,7 @@ export class ATreeElement extends HTMLElementBase {
     if (actions && control) {
       // The control takes focus itself; the row still reads as current.
       this.#setActive(item, { focus: false, scroll: false })
-      if (control.getAttribute('aria-haspopup') === 'menu' && !control.matches(DISABLED_SELECTOR)) this.#openMenuAt(item, control)
+      if (control.hasAttribute('data-opens-menu') && !control.matches(DISABLED_SELECTOR)) this.#openMenuAt(item, control)
       return
     }
     // Only the row's own line toggles, not its after line or its children's.

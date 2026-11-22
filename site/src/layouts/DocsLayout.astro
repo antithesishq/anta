@@ -849,6 +849,7 @@ if (hasStructuredBreadcrumbs && title) {
 
   .mobile-menu-toggle,
   .theme-toggle,
+  .topbar-search :global(.search-icon-trigger),
   .package-links :global(a[role="button"]) {
     width: 32px;
     height: 32px;
@@ -890,6 +891,10 @@ if (hasStructuredBreadcrumbs && title) {
 
   .topbar-search :global(a-input) {
     width: 100%;
+  }
+
+  .topbar-search :global(.search-icon-trigger) {
+    display: none;
   }
 
   .topbar-search :global(a-input)::part(input),
@@ -978,6 +983,51 @@ if (hasStructuredBreadcrumbs && title) {
     body[data-toc-open="true"] .backdrop {
       opacity: 1;
       pointer-events: auto;
+    }
+  }
+
+  @media (max-width: 500px) {
+    .topbar,
+    .topbar-start,
+    .topbar-tools,
+    .package-links {
+      gap: 0;
+    }
+
+    .package-links {
+      margin-inline-start: 0;
+    }
+
+    .topbar-center {
+      justify-content: flex-end;
+      min-width: 32px;
+    }
+
+    .topbar-search {
+      flex: 0 0 32px;
+    }
+
+    .topbar-search :global(a-input) {
+      display: none;
+    }
+
+    .topbar-search :global(.search-icon-trigger) {
+      display: inline-flex;
+    }
+
+    .theming-switcher :global(a-button.theming-select) {
+      width: 32px;
+      padding-inline: 0;
+      gap: 0;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .topbar-brand {
+      gap: 0;
+      margin-inline-start: 0;
+      padding-inline-end: 0;
     }
   }
 

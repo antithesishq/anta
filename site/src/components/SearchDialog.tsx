@@ -148,9 +148,11 @@ export default function SearchDialog() {
     const syncInputBounds = () => {
       const input = document.querySelector('[data-sidebar-search-input]')
       if (!input) return
-      const { left, width } = input.getBoundingClientRect()
       const viewportWidth = document.documentElement.clientWidth
       const resultsWidth = Math.min(960, viewportWidth - 40)
+      const { left, width } = viewportWidth <= 500
+        ? { left: (viewportWidth - resultsWidth) / 2, width: resultsWidth }
+        : input.getBoundingClientRect()
       const targetWidth = width < resultsWidth ? resultsWidth : width
       const targetLeft = width < resultsWidth ? (viewportWidth - resultsWidth) / 2 : left
       setInputBounds({ left, width, targetLeft, targetWidth })

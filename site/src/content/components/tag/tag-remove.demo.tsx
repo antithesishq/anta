@@ -28,7 +28,7 @@ export default function TagRemoveDemo() {
         </Tag>
       )}
       {!visible && (
-        <Button label="Reset example" onClick={() => setVisible(true)} />
+        <Button size="small" label="Reset example" onClick={() => setVisible(true)} />
       )}
     </div>
   )

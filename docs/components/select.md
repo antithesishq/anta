@@ -822,8 +822,6 @@ options can contain icons and supporting text. The same passive
 `a-menu-item-text`, `a-menu-item-label`, and `a-menu-item-hint` tags used by
 Anta's menu rows provide the layout. Keep `<option>` as the selectable row.
 Its children must not contain interactive controls.
-Option text and descriptions share Menu Item typography through the same CSS
-rules, so future menu typography changes apply to native options as well.
 
 Add `<button type="button"><selectedcontent></selectedcontent></button>` when
 the closed field should show the selected option's rich content too. The browser

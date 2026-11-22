@@ -6,7 +6,7 @@ password.
 
 ## Size
 
-Small, medium, and large fields use 18px, 22px, and 26px text line heights. A one-row multiline field matches the height and first text baseline of a single-line field at the same size. Additional lines grow downward.
+A one-row multiline field matches the height and first text baseline of a single-line field at the same size. Additional lines grow downward.
 
 ```tsx
 <Input size="small"  label="Small"  placeholder="Enter text…" autoComplete="off" />
@@ -557,9 +557,6 @@ or font changes.
 
 Add `data-anta` to an HTML input to give it Anta styling while keeping its
 usual browser behavior. Search and file inputs keep their built-in controls.
-File inputs share Input's font sizes and line heights. Use
-`data-anta-size="small"` or `data-anta-size="large"` to change the filename text
-and chooser button together.
 Submit and reset inputs look like Anta buttons. Use `priority="primary"` for
 the form's main action.
 
@@ -590,9 +587,7 @@ Use `priority` for the field surface, `status` for feedback, `tone` for a custom
 border color, and `size` for dimensions. The focus ring uses the global
 [`--focus-ring`](../colors.md#focus-ring).
 
-The host's `--input-field-height` supplies the minimum field height before and
-after registration: 24, 28, and 32px for small, medium, and large. Text leading
-and action-button sizing remain independent of this geometry.
+Set `--input-field-height` to customize the minimum field height.
 
 ```tsx
 <Input tone="#e0457b" label="Custom accent" autoComplete="off" />

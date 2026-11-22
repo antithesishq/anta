@@ -548,13 +548,6 @@ For server-rendered applications, also follow
 
 ## Styling
 
-Menu item labels and hints use independent shared menu font sizes. See
-[Text and hint sizes](../theming.md#text-and-hint-sizes) for the typography families.
-Their line heights derive from those font sizes, giving 14/20px labels and
-12/16px hints by default. Vertical padding is 5px per side, with 2px between
-the label and hint, preserving 30px label rows and 48px label-and-hint rows.
-Separator captions use the menu label font size minus 1px.
-
 Menu item corners follow the container radius minus `inset`, clamped to zero.
 The default 8px container radius and 4px inset give items a 4px radius.
 The Antithesis theme uses a 2px container radius, so its items have square corners

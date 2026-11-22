@@ -122,6 +122,8 @@ for (const engine of engines) {
       })
       const sizes = await page.locator('#code > *').evaluateAll(parents => parents.map(parent => [...parent.querySelectorAll('code')].map(code => getComputedStyle(code).fontSize)))
       assert.deepEqual(sizes, [['12px', '13px'], ['14px', '13px'], ['16px', '13px'], ['22px', '19px']])
+      await page.evaluate(() => document.documentElement.style.setProperty('--font-size-small', '17px'))
+      assert.deepEqual(await page.locator('#code > *').evaluateAll(parents => parents.map(parent => [...parent.querySelectorAll('code')].map(code => getComputedStyle(code).fontSize))), [['16px', '17px'], ['14px', '17px'], ['16px', '17px'], ['22px', '19px']])
     } finally {await page.close()}
   })
 

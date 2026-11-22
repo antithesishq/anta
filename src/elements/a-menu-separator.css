@@ -7,8 +7,6 @@
   }
 
   a-menu-separator {
-    --menu-separator-label-size: 13px;
-
     display: block;
     flex-shrink: 0;
     height: 1px;
@@ -23,7 +21,7 @@
     background: none;
 
     color: var(--text-3);
-    font-size: var(--menu-separator-label-size);
+    font-size: calc(var(--font-size-menu-medium) - 1px);
     line-height: 1.3;
     user-select: none;
   }

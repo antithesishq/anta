@@ -24,6 +24,8 @@ changes are not listed.
 
 ### Fixed
 
+- Code blocks use the shared small text font size. Menu separator captions derive their font size from menu labels minus 1px, replacing `--menu-separator-label-size`.
+
 - Root text uses the shared medium font size, so typography overrides also reach inherited body text and nested light surfaces.
 
 - MenuGroup and native Select group captions use shared tiny text typography across field sizes. Inline code is 1px smaller than surrounding text; code inside preformatted blocks inherits the block's typography.

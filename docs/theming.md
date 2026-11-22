@@ -112,10 +112,11 @@ MenuGroup and native Select group captions use tiny text at every field
 size. Menu Item labels and native Select options use `--font-size-menu-medium`
 (14px); their hints use the independent `--font-size-menu-hint-medium` (12px).
 These menu font sizes stay fixed across Select field sizes. Menu line heights
-remain component-owned.
+remain component-owned. Menu separator captions use the menu label font size
+minus 1px.
 
-The reset makes inline code 1px smaller than its surrounding text; code
-inside a preformatted block inherits the block's typography.
+The reset makes inline code 1px smaller than its surrounding text. Code blocks
+use `--font-size-small`; code inside them inherits the block's typography.
 
 Override either scale on the root or an application container. Changing hint
 typography leaves main text unchanged:

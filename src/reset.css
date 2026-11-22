@@ -182,7 +182,7 @@
     background: var(--bg-3);
     color: var(--text-1);
     font-family: var(--monospace);
-    font-size: 13px;
+    font-size: var(--font-size-small);
     font-weight: 440;
     line-height: 20px;
     overflow-x: auto;

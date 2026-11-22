@@ -35,8 +35,8 @@
     box-sizing: border-box;
     color: var(--text-2-success);
     font-family: var(--sans-serif);
-    font-size: 13px;
-    line-height: 16px;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
     font-weight: 500;
     white-space: nowrap;
   }

@@ -83,6 +83,7 @@ jobs:
             'src/elements/a-button.*' 'src/elements/a-tab*' 'src/elements/a-input*' \
             'src/elements/a-checkbox.*' 'src/elements/a-switch.*' 'src/elements/a-radio*' 'src/elements/a-text.*' \
             'src/elements/a-title.*' 'src/elements/a-expander.*' 'src/elements/a-dialog.*' 'src/elements/a-card.*' 'src/elements/a-menu*' 'src/elements/a-select.*' \
+            'src/elements/a-slider.*' 'src/elements/a-progress.*' 'src/elements/a-banner.*' 'src/elements/a-copy.*' 'src/elements/a-calendar.*' \
             src/components/Steps.css src/elements/index.ts src/{tokens,reset,theme-antune,theme-antithesis}.css \
             src/{anta_helpers,jsx-runtime,element-base,index,bundle}.ts \
             tests/typography.mjs 'tests/component*.mjs' scripts/build-bundle.mjs \

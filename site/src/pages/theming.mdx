@@ -106,6 +106,11 @@ Use length values such as `px` or `rem` for these variables.
 | Medium | `--font-size-medium`: 15px | `--line-height-medium`: 22px | `--font-size-hint-medium`: 14px | `--line-height-hint-medium`: 20px |
 | Large | `--font-size-large`: 17px | `--line-height-large`: 26px | `--font-size-hint-large`: 16px | `--line-height-hint-large`: 24px |
 
+Compact primary text also has `--font-size-extra-small` (12px) and
+`--line-height-extra-small` (16px). Progress labels and Slider markers map their
+small, medium, and large variants to extra-small, small, and medium text. Their
+12/16, 13/18, and 15/22 pairs remain independent of the hint scale.
+
 Override either scale on the root or an application container. Changing hint
 typography leaves main text unchanged:
 
@@ -116,14 +121,15 @@ typography leaves main text unchanged:
 }
 ```
 
-Button, Tabs, Steps, Input, InputTime, Text, Checkbox, Switch, and Radio options
+Button, Tabs, Steps, Slider labels and values, Input, InputTime, Text, Checkbox, Switch, and Radio options
 use the main scale. Field, choice-control, RadioGroup, and Steps hints use the
 hint scale. Select, InputDate, and InputAutocomplete inherit their field styles
 from Input. Native text inputs, textareas, file inputs, and Select fields use the main scale as well.
 
 RadioGroup labels follow the group's size, matching Input labels. Plain Card
-content and Expander details use medium text. Tag, Menu Item, and Progress retain
-their separate typography.
+content, Expander details, and Banner messages use medium text. Copy feedback
+and Calendar weekday labels use small text. Tag and Menu Item retain their
+separate typography.
 For an individual component, override `font-size` and `line-height` on its
 styled element or exposed part. Geometry such as padding and control dimensions
 remains component-specific.

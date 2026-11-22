@@ -89,6 +89,37 @@ async function override(page, family) {
 }
 
 for (const engine of engines) {
+  test.fast(`${engine.name()}: compact labels share main text sizes independently of hints`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      await page.goto(origin)
+      await page.waitForFunction(() => customElements.get('a-slider'))
+      await page.evaluate(() => {
+        const fixture = document.createElement('div')
+        fixture.id = 'compact'
+        fixture.innerHTML = ['small', 'medium', 'large'].map(size => `<article><a-progress size="${size}" value="50"><a-progress-label>Progress</a-progress-label></a-progress><a-slider size="${size}" value="50"><span slot="markers">Marker</span></a-slider></article>`).join('')
+        document.body.append(fixture)
+      })
+      const measure = () => page.locator('#compact article').evaluateAll(articles => articles.map(article => [...article.querySelectorAll('a-progress-label, [slot=markers]')].map(element => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight])))
+      const before = await measure()
+      for (const [index, pairs] of before.entries()) for (const pair of pairs) assert.deepEqual(pair, [['12px', '16px'], ['13px', '18px'], ['15px', '22px']][index])
+      await page.locator('#compact').evaluate(fixture => {
+        for (const size of ['small', 'medium', 'large']) {
+          fixture.style.setProperty(`--font-size-hint-${size}`, '23px')
+          fixture.style.setProperty(`--line-height-hint-${size}`, '34px')
+        }
+      })
+      assert.deepEqual(await measure(), before)
+      await page.locator('#compact').evaluate(fixture => {
+        for (const [index, size] of ['extra-small', 'small', 'medium'].entries()) {
+          fixture.style.setProperty(`--font-size-${size}`, `${14 + index}px`)
+          fixture.style.setProperty(`--line-height-${size}`, `${20 + index * 2}px`)
+        }
+      })
+      for (const [index, pairs] of (await measure()).entries()) for (const pair of pairs) assert.deepEqual(pair, [`${14 + index}px`, `${20 + index * 2}px`])
+    } finally { await page.close() }
+  })
+
   test.fast(`${engine.name()}: headings share all six levels and Dialog uses heading four`, async () => {
     const page = await browsers.get(engine).newPage()
     try {

@@ -37,8 +37,8 @@ async function fixture(t, entries) {
   return { siteRoot, write, read: () => readPageCatalog({ siteRoot, standalonePages: [] }) }
 }
 
-// Preserve the navigation users already see while moving its source into collections.
-const existingSidebar = [
+// Expected sidebar order, links, icons, and labels.
+const expectedSidebar = [
   ["/", "info", "Overview"],
   ["/comparison/", "table-2", "Comparison"],
   ["/install/", "download", "Install and configure"],
@@ -51,10 +51,10 @@ const existingSidebar = [
   ["/text/", "text-initial", "Text"],
   ["/tag/", "tag", "Tag"],
   ["/tooltip/", "chat", "Tooltip"],
-  ["/icon/", "bug", "Icon"],
-  ["/avatar/", "circle-user", "Avatar"],
   ["/loader/", "loader-docs", "Loader"],
   ["/progress/", "hourglass", "Progress"],
+  ["/icon/", "bug", "Icon"],
+  ["/avatar/", "circle-user", "Avatar"],
   ["/button/", "pointer", "Button"],
   ["/breadcrumbs/", "chevrons-right", "Breadcrumbs"],
   ["/checkbox/", "square-check-big", "Checkbox"],
@@ -72,9 +72,9 @@ const existingSidebar = [
   ["/banner/", "banner", "Banner"],
   ["/card/", "card", "Card"],
   ["/dialog/", "dialog", "Dialog"],
-  ["/toaster/", "toaster", "Toaster"],
   ["/expander/", "square-chevron-right", "Expander"],
   ["/menu/", "square-menu", "Menu"],
+  ["/toaster/", "toaster", "Toaster"],
   ["/box/", "square-dashed", "Box"],
   ["/capture/", "vector-square", "Capture"],
   ["/panel/", "inspection-panel", "Panel"],
@@ -84,12 +84,12 @@ const existingSidebar = [
   ["/stickers/", "sticker", "Stickers"],
 ]
 
-test('the content catalog preserves existing sidebar groups, links, icons, and labels', async () => {
+test('the content catalog supplies sidebar groups, links, icons, and labels', async () => {
   const catalog = await readPageCatalog()
   const groups = getNavigationGroups(catalog)
-  assert.deepEqual(groups.flatMap(group => getNavigationTree(group.pages).map(page => [page.path, page.nav.icon, page.label])), existingSidebar)
+  assert.deepEqual(groups.flatMap(group => getNavigationTree(group.pages).map(page => [page.path, page.nav.icon, page.label])), expectedSidebar)
   assert.deepEqual(groups.filter(group => group.title).map(group => group.title), ['Components', 'Packages'])
-  assert.deepEqual(groups.map(group => getNavigationTree(group.pages).length), [2, 2, 4, 8, 8, 6, 6, 3, 4])
+  assert.deepEqual(groups.map(group => getNavigationTree(group.pages).length), [2, 2, 4, 6, 2, 8, 6, 6, 3, 4])
   assert.equal(catalog.find(page => page.path === '/input-date/').breadcrumbLabel, 'InputDate')
   assert.equal(catalog.find(page => page.path === '/changelog/dev/').breadcrumbLabel, 'Changelog')
   assert.equal(catalog.find(page => page.path === '/table/').kind, 'package')

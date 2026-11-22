@@ -296,7 +296,11 @@ nav:
 ---
 ```
 
-Groups are `content`, `controls`, `inputs`, `feedback`, and `layout`. `nav.label` is optional when the sidebar needs a shorter title. The catalog generates navigation, breadcrumbs, component classification, LLM indexes, and packaged Markdown exports from this metadata.
+Groups are `content`, `media`, `controls`, `inputs`, `feedback`, and `layout`. `nav.label` is optional when the sidebar needs a shorter title. The catalog generates navigation, breadcrumbs, component classification, LLM indexes, and packaged Markdown exports from this metadata.
+
+After changing the group enum in `lib/content/schema.mjs`, restart the root
+development server. Astro can retain the old collection schema after HMR and
+reject page metadata that uses the new group.
 
 For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop `<Playground component="…" layout="side" initialCode={…} />` near the top. It is mounted by the shared prebuilt runtime, so it does not take a `client:*` directive.
 

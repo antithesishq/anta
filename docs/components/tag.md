@@ -192,6 +192,7 @@ Place a `Button` inside a tag when users need to act on it, such as removing
 an applied filter. Handle the button's `onClick` to update application state
 and control whether the tag is rendered. Give an icon-only button an accessible
 name, such as “Remove Frontend.” Buttons at either edge sit flush with the tag.
+Icon-only buttons fit the tag without increasing its height.
 
 This example hides the tag in its click handler, then shows and focuses
 **Reset example**. Resetting restores the tag and returns focus to its button.
@@ -215,7 +216,7 @@ export default function Demo() {
   return (
     <div ref={controls} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       {visible && (
-        <Tag className="removable-tag" tone="info" label="Frontend">
+        <Tag tone="info" label="Frontend">
           <Button
             priority="tertiary"
             tone="info"
@@ -229,11 +230,6 @@ export default function Demo() {
       {!visible && (
         <Button size="small" label="Reset example" onClick={() => setVisible(true)} />
       )}
-      <style>{`
-        a-tag.removable-tag { padding-block: 0; }
-        a-tag.removable-tag > a-button { align-self: stretch; }
-        a-tag.removable-tag > a-button:focus-visible { outline-offset: -2px; }
-      `}</style>
     </div>
   )
 }

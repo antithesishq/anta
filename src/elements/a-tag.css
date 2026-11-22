@@ -130,6 +130,22 @@
     padding-inline-end: 0;
   }
 
+  /* Icon actions follow the tag's density instead of Button's size floor. */
+  a-tag > :is(a-button, button[data-anta], a[data-anta][role="button"]):has(> a-icon:only-of-type):not(:has(> :not(a-icon, a-tooltip, a-copy))) {
+    flex: none;
+    box-sizing: border-box;
+    font-size: inherit;
+    line-height: inherit;
+    inline-size: 1lh;
+    block-size: 1lh;
+    min-inline-size: 0;
+    min-block-size: 0;
+    padding: 0;
+
+    & > a-icon { --icon-size: var(--tag-icon-size); }
+    &:focus-visible { outline-offset: -2px; }
+  }
+
   /* Segmented children — when raw children (not the structured label /
      value) are passed, each segment after the first gets a hairline
      divider, the legacy multi-part style. Icons and the label / value

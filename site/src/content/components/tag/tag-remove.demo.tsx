@@ -16,7 +16,7 @@ export default function TagRemoveDemo() {
   return (
     <div ref={controls} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       {visible && (
-        <Tag className="removable-tag" tone="info" label="Frontend">
+        <Tag tone="info" label="Frontend">
           <Button
             priority="tertiary"
             tone="info"

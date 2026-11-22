@@ -138,10 +138,16 @@ hint scale. Tooltip uses medium hint typography. Select, InputDate, and
 InputAutocomplete inherit their field styles from Input. Native text inputs,
 textareas, file inputs, and Select fields use the main scale as well.
 
+Input defines `--input-field-height` on its host (24, 28, and 32px for small,
+medium, and large). Both its pre-registration fallback and registered field
+use this minimum height. The fallback also accommodates larger inherited text
+leading. This field geometry remains independent of typography and action-button
+sizing.
+
 RadioGroup labels follow the group's size, matching Input labels. Plain Card
 content, Expander details, and Banner messages use medium text. Copy feedback
-and Calendar weekday labels use small text. Tag and Menu Item retain their
-separate typography.
+and Calendar weekday labels use small text. Tags combine main font-size and
+line-height steps; Menu Item uses its independent menu typography.
 For an individual component, override `font-size` and `line-height` on its
 styled element or exposed part. Geometry such as padding and control dimensions
 remains component-specific.

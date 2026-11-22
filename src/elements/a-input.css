@@ -9,6 +9,7 @@
      because a document part rule outranks a shadow inline declaration. */
 
   a-input {
+    --input-field-height: 28px;
     --_pad-block: 3px;
     --_input-action-size: 24px;
 
@@ -38,19 +39,17 @@
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    min-height: var(--_input-measured-min-height, 28px);
+    min-height: var(--_input-measured-min-height, var(--input-field-height));
     background: var(--input-bg);
     border-radius: 4px;
     box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
     transition: box-shadow 120ms ease;
   }
   a-input:state(multiline)::part(field) { align-items: stretch; }
-  a-input[size="small"] { --_input-action-size: 20px; font-size: var(--font-size-small); line-height: var(--line-height-small); }
-  a-input[size="large"] { --_input-action-size: 28px; font-size: var(--font-size-large); line-height: var(--line-height-large); }
+  a-input[size="small"] { --input-field-height: 24px; --_input-action-size: 20px; font-size: var(--font-size-small); line-height: var(--line-height-small); }
+  a-input[size="large"] { --input-field-height: 32px; --_input-action-size: 28px; font-size: var(--font-size-large); line-height: var(--line-height-large); }
   /* Multiline actions fit the padded first text line, including their inset. */
   a-input:state(multiline) { --_input-action-size: calc(1lh + var(--_pad-block) * 2 - 4px); }
-  a-input[size="small"]::part(field) { min-height: var(--_input-measured-min-height, 24px); }
-  a-input[size="large"]::part(field) { min-height: var(--_input-measured-min-height, 32px); }
   a-input[round]::part(field) { border-radius: var(--input-round, 999px); }
 
   @media (hover: hover) and (pointer: fine) {
@@ -189,17 +188,14 @@
      dropped once `:defined`.
 
      Composed by region:
-       • The host mirrors the defined shadow `:host` (single-column grid, 4px
-         row gap) so it's the same full-width block. Without this a custom
-         element is `display: inline` until upgraded, ignoring `width: 100%` and
-         collapsing to the label width.
+       • Shared host rules already provide the single-column grid and type.
        • The `::after` stands in for the shadow `.field`: same min-height and
          inset border, and the same text as the shadow control would show — the
          `value` in the text color when filled (the Select trigger's chosen
          label, an InputDate's date, a controlled input's text), otherwise the
          `placeholder` in the placeholder color. It mirrors the control's
          per-size type scale, weight, feature settings, 7px inset, and readonly
-         ellipsis, so upgrade is a pure content swap with no reflow.
+         ellipsis, preserving single-line field geometry on upgrade.
        • The in-field adornments (leading, trailing, clear) are hidden until
          upgrade — before the shadow exists they don't project into the field
          and would stack as their own rows. The hint is hidden too: a `::after`
@@ -208,11 +204,6 @@
          with the rest of the shadow content on `:defined`. The label stays: it
          renders above the box, which is where it belongs.
          These rules also cover older wrappers with inline slot layout. */
-  a-input:not(:defined) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 2px;
-  }
   a-input:not(:defined) > [slot="leading"],
   a-input:not(:defined) > [slot="trailing"],
   a-input:not(:defined) > [slot="clear"],
@@ -238,8 +229,11 @@
   a-input:not(:defined)::after {
     content: attr(placeholder);
     display: block;
-    min-height: 28px;
-    line-height: 28px;
+    box-sizing: border-box;
+    /* line-height reads the host's leading; min-height uses the resulting
+       field line box, reserving space even when its text is empty. */
+    min-height: 1lh;
+    line-height: max(1lh, var(--input-field-height));
     padding-inline: 7px;
     border-radius: 4px;
     background: var(--input-bg);
@@ -261,10 +255,12 @@
     content: attr(value);
     color: var(--input-text);
   }
-  a-input[size="small"]:not(:defined)::after { min-height: 24px; line-height: 24px; }
-  a-input[size="large"]:not(:defined)::after { min-height: 32px; line-height: 32px; }
   @media (forced-colors: active) {
-    a-input:not(:defined)::after { border: 1px solid ButtonBorder; }
+    a-input:not(:defined)::after {
+      border: 1px solid ButtonBorder;
+      min-height: calc(1lh + 2px);
+      line-height: max(1lh, calc(var(--input-field-height) - 2px));
+    }
   }
   a-input[round]:not(:defined)::after { border-radius: var(--input-round, 999px); }
 

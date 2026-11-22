@@ -26,6 +26,8 @@ changes are not listed.
 
 ### Fixed
 
+- Input shares its minimum field height between the loading fallback and registered control. Custom heights, larger text leading, empty values, and forced-colors borders reserve consistent field space before registration.
+
 - Menu separator captions derive their font size from menu labels minus 1px, replacing `--menu-separator-label-size`.
 
 - Root text uses the shared medium font size, so typography overrides also reach inherited body text and nested light surfaces.

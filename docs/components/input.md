@@ -590,6 +590,10 @@ Use `priority` for the field surface, `status` for feedback, `tone` for a custom
 border color, and `size` for dimensions. The focus ring uses the global
 [`--focus-ring`](../colors.md#focus-ring).
 
+The host's `--input-field-height` supplies the minimum field height before and
+after registration: 24, 28, and 32px for small, medium, and large. Text leading
+and action-button sizing remain independent of this geometry.
+
 ```tsx
 <Input tone="#e0457b" label="Custom accent" autoComplete="off" />
 ```

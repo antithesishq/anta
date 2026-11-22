@@ -131,6 +131,7 @@ before(async () => {
   assets.set('/consumer-unlayered.css', 'span{display:inline-block} a-input::part(field){border-radius:13px}')
   assets.set('/consumer-utilities.css', '@layer utilities{span{display:block} a-input::part(field){border-radius:15px}}')
   assets.set('/trailing-insets.css', '.inset-four{--input-trailing-inset:4px}.inset-zero{--input-trailing-inset:0px}.inherited-inset{--input-trailing-inset:6px}.custom-native-action{height:31px;width:111px;padding:3px}')
+  assets.set('/field-heights.css', '.custom-field{--input-field-height:40px}.custom-leading{line-height:42px}.independent-action{--_input-action-size:48px}')
   assets.set('/boot.js', `window.violations=[];document.addEventListener('securitypolicyviolation',e=>violations.push({directive:e.effectiveDirective,source:e.sourceFile}));`)
   assets.set('/fixture.css', `body{margin:40px;font-family:system-ui} iframe{width:900px;height:500px;border:0} #mount{width:500px} .override::part(field){background:rgb(30,40,50);border-radius:11px;box-shadow:none}.override::part(input){color:white;font-size:18px}.override::part(input)::placeholder{color:rgb(200,210,220)}.narrow{width:180px}.spacer{height:900px}.dark{color-scheme:dark;background:#111}.rtl{direction:rtl}`)
 
@@ -225,6 +226,41 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
     assert.equal(await control(page).evaluate(node=>node.localName),'button')
     assert.equal(await control(page).evaluate(node=>node.type),'button')
   })
+  test.fast(`${name}: shared field geometry stays stable across registration`, async t => {
+    for (const forcedColors of ['none', 'active']) {
+      const page = await pageFor(t, engine, mode, '', {forcedColors})
+      await page.evaluate(() => {
+        const css = document.createElement('link')
+        css.rel = 'stylesheet'; css.href = '/field-heights.css'; document.head.append(css)
+        return new Promise(resolve => css.onload = resolve)
+      })
+      const sizes = [['small', 24], ['medium', 28], ['large', 32]]
+      const content = ['value="Hello"', 'placeholder="Placeholder"', '', 'type="password" value="secret" placeholder="Password"', 'button value="Button value"']
+      await mount(page, sizes.map(([size, height]) => ['', 'custom-field', 'custom-leading', 'independent-action'].map(className => content.map((attrs, index) =>
+        `<a-input size="${size}" class="${className}" data-base-height="${height}" ${attrs}>${index % 2 === 0 ? '<a-input-label slot="label"><strong>Label</strong></a-input-label>' : ''}</a-input>`
+      ).join('')).join('')).join(''))
+      const before = await page.locator('#mount a-input').evaluateAll(nodes => nodes.map(host => {
+        const css = getComputedStyle(host), pseudo = getComputedStyle(host, '::after')
+        return {hostHeight: host.getBoundingClientRect().height, fieldHeight: Number.parseFloat(pseudo.height),
+          minimum: Number.parseFloat(css.getPropertyValue('--input-field-height')), textLeading: Number.parseFloat(css.lineHeight),
+          border: Number.parseFloat(pseudo.borderTopWidth) + Number.parseFloat(pseudo.borderBottomWidth),
+          base: Number(host.dataset.baseHeight), custom: host.classList.contains('custom-field'), content: pseudo.content, password: host.getAttribute('type') === 'password'}
+      }))
+      for (const value of before) {
+        assert.equal(value.minimum, value.custom ? 40 : value.base)
+        assert.ok(Math.abs(value.fieldHeight - Math.max(value.minimum, value.textLeading + value.border)) < 0.02)
+        if (value.password) {assert.match(value.content, /Password/); assert.doesNotMatch(value.content, /secret/)}
+      }
+      await register(page, mode)
+      await frames(page)
+      const after = await page.locator('#mount a-input').evaluateAll(nodes => nodes.map(host => ({hostHeight: host.getBoundingClientRect().height, fieldHeight: host.shadowRoot.querySelector('[part=field]').getBoundingClientRect().height})))
+      for (const [index, value] of after.entries()) {
+        assert.ok(Math.abs(value.hostHeight - before[index].hostHeight) < 0.02, `${forcedColors}: host ${index} jumps on registration`)
+        assert.ok(Math.abs(value.fieldHeight - before[index].fieldHeight) < 0.02, `${forcedColors}: field ${index} jumps on registration`)
+      }
+    }
+  })
+
   test.fast(`${name}: action insets preserve field sizes and contain icon buttons`, async t => {
     const page=await pageFor(t,engine,mode);await register(page,mode)
     for(const [size,height] of [['small',24],['medium',28],['large',32]]) {

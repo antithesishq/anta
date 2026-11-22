@@ -122,6 +122,10 @@
   a-tag:has(> a-icon:first-child) { padding-inline-start: max(0px, var(--tag-padding-inline) - 2px); }
   a-tag:has(> a-icon:last-child)  { padding-inline-end:   max(0px, var(--tag-padding-inline) - 2px); }
 
+  a-tag > :is(a-button, button, a[data-anta][role="button"]) {
+    border-radius: inherit;
+  }
+
   /* Edge buttons supply their own spacing inside the tag. */
   a-tag:has(> :is(a-button, button, a[data-anta][role="button"]):first-child) {
     padding-inline-start: 0;

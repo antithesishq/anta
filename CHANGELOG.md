@@ -9,7 +9,7 @@ changes are not listed.
 
 - Shared code-block typography with independent font-size and line-height values, retaining 13/20px defaults.
 
-- Shared micro main-text font size for small Tags, plus independent menu label and hint font sizes. Tags use main micro, tiny, and small fonts; Menu Item and native Select option typography retains its current sizes.
+- Shared micro main-text typography (11/15px) for small Tags, plus independent menu label and hint font sizes. Tags use main micro, tiny, and small fonts; Menu Item and native Select option typography retains its current sizes.
 
 - Shared tiny text typography (12/16px) for compact primary labels, independent of hints. Progress labels and Slider markers use the tiny, small, and medium text sizes.
 
@@ -61,7 +61,7 @@ changes are not listed.
 - [Input](/input/) and [Select](/select/) use 18/22/26px text line heights. Multiline Inputs use 3px vertical padding to align their first line with single-line fields.
 
 - [Button](/button/) and [Tabs](/tabs/) labels use matching 18/22/26px line heights to reduce text clipping while preserving control heights and text alignment.
-- [Menu item](/menu/) labels and hints gain 2px of line height. Rows grow to accommodate the text without overlapping line boxes.
+- [Menu item](/menu/) label and hint leading derives from independent menu font sizes (14/20px and 12/16px defaults). Reduced padding and a 2px hint gap preserve standard 30px and 48px rows. Selection indicators align with the label's first line; bare-text rows grow to 30px.
 
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.
 - [InputDate](/input-date/#manage-the-value) submits its ISO value through the visible Input instead of a hidden field. Disabled fields are omitted, and `form` supports association with a form elsewhere on the page.

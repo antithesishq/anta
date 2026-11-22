@@ -7,16 +7,16 @@
   a[data-anta-menu-item],
   select[data-anta] option {
     font-size: var(--font-size-menu-medium);
+    line-height: calc(20em / 14);
   }
 
   a-menu-item-label,
-  a-menu-item > [data-indicator],
-  select[data-anta] option {
-    line-height: 18px;
+  a-menu-item > [data-indicator] {
+    line-height: inherit;
   }
 
   a-menu-item-hint {
     font-size: var(--font-size-menu-hint-medium);
-    line-height: 17px;
+    line-height: calc(16em / 12);
   }
 }

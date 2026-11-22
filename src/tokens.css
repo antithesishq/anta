@@ -33,6 +33,7 @@
 @layer anta.reset {
   :root {
     --font-size-micro: 11px;
+    --line-height-micro: 15px;
     --font-size-tiny: 12px;
     --line-height-tiny: 16px;
     --font-size-small: 13px;

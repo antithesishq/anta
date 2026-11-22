@@ -215,7 +215,7 @@
     --tag-icon-size: 11px;
 
     font-size: var(--font-size-micro);
-    line-height: 15px;
+    line-height: var(--line-height-micro);
   }
 
   /* Larger leading replaces 1px of padding on each side. */

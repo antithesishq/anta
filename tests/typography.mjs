@@ -251,11 +251,65 @@ for (const engine of engines) {
         document.documentElement.style.setProperty('--font-size-medium', '21px')
         document.documentElement.style.setProperty('--font-size-hint-small', '19px')
       })
-      assert.deepEqual(await measure(), [['14px', '18px'], ['12px', '17px'], ['14px', '18px'], ['12px', '17px']])
+      assert.deepEqual(await measure(), [['14px', '20px'], ['12px', '16px'], ['14px', '20px'], ['12px', '16px']])
       await page.evaluate(() => document.documentElement.style.setProperty('--font-size-menu-medium', '16px'))
-      assert.deepEqual(await measure(), [['16px', '18px'], ['12px', '17px'], ['16px', '18px'], ['12px', '17px']])
+      const check = (pairs, hintFont) => {
+        for (const [index, pair] of pairs.entries()) {
+          const hint = index % 2 === 1
+          assert.equal(pair[0], `${hint ? hintFont : 16}px`)
+          assert.ok(Math.abs(Number.parseFloat(pair[1]) - (hint ? hintFont * 16 / 12 : 16 * 20 / 14)) < 0.02)
+        }
+      }
+      check(await measure(), 12)
       await page.evaluate(() => document.documentElement.style.setProperty('--font-size-menu-hint-medium', '13px'))
-      assert.deepEqual(await measure(), [['16px', '18px'], ['13px', '17px'], ['16px', '18px'], ['13px', '17px']])
+      check(await measure(), 13)
+    } finally {await page.close()}
+  })
+
+  test.fast(`${engine.name()}: menu ratios preserve row heights and center first-line indicators across themes`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      for (const theme of ['none', 'antune', 'antithesis']) {
+        await page.goto(`${origin}/?theme=${theme}`)
+        await page.waitForFunction(() => customElements.get('a-menu-item'))
+        await page.evaluate(() => {
+          const fixture = document.createElement('div')
+          fixture.id = 'menu-rows'
+          fixture.style.width = '240px'
+          const indicators = {plain: '', icon: '<a-icon></a-icon>', checkbox: '<a-checkbox state="checked"></a-checkbox>', radio: '<a-radio></a-radio>', switch: '<a-switch data-menu-item-switch size="small" state="checked"></a-switch>', custom: '<span data-indicator style="font-size:24px"><svg width="16" height="16"></svg></span>'}
+          indicators.tag = '<a-tag size="small"><a-tag-value>12</a-tag-value></a-tag>'
+          for (const size of ['small', 'large']) {
+            indicators[`checkbox-${size}`] = `<a-checkbox size="${size}" state="checked"></a-checkbox>`
+            indicators[`radio-${size}`] = `<a-radio size="${size}"></a-radio>`
+            indicators[`switch-${size}`] = `<a-switch data-menu-item-switch size="${size}" state="checked"></a-switch>`
+          }
+          const rows = Object.entries(indicators).map(([kind, indicator]) => [false, true].map(hint => `<a-menu-item data-kind="${kind}" data-hint="${hint}">${indicator}${hint ? '<a-menu-item-text><a-menu-item-label>Label</a-menu-item-label><a-menu-item-hint>Hint</a-menu-item-hint></a-menu-item-text>' : '<a-menu-item-label>Label</a-menu-item-label>'}</a-menu-item>`).join('')).join('') + '<a-menu-item data-kind="bare">Bare text</a-menu-item>'
+          fixture.innerHTML = ['light', 'dark'].map(scheme => `<div class="${scheme}">${rows}</div>`).join('')
+          document.body.append(fixture)
+          for (const radio of fixture.querySelectorAll('a-radio')) radio.selected = true
+        })
+        const rows = await page.locator('#menu-rows a-menu-item').evaluateAll(elements => elements.map(row => {
+          const label = row.querySelector('a-menu-item-label'), hint = row.querySelector('a-menu-item-hint')
+          const labelBox = label?.getBoundingClientRect(), center = labelBox ? (labelBox.top + labelBox.bottom) / 2 : null
+          const indicator = row.querySelector(':scope > a-icon, :scope > a-checkbox, :scope > a-radio, :scope > a-switch, :scope > a-tag, [data-indicator] svg')
+          const indicatorBox = indicator?.getBoundingClientRect(), control = indicator && ['a-checkbox', 'a-radio', 'a-switch'].includes(indicator.localName)
+          const pseudoCenter = pseudo => {
+            const css = getComputedStyle(indicator, pseudo)
+            return indicatorBox.top + Number.parseFloat(css.marginBlockStart) + Number.parseFloat(css.blockSize) / 2
+          }
+          const indicatorCenter = indicator ? (control ? pseudoCenter('::before') : (indicatorBox.top + indicatorBox.bottom) / 2) : null
+          return {kind: row.dataset.kind, hint: !!hint, height: row.getBoundingClientRect().height, line: label ? getComputedStyle(label).lineHeight : null,
+            hintLine: hint ? getComputedStyle(hint).lineHeight : null, gap: hint ? getComputedStyle(hint).marginBlockStart : null,
+            offset: indicator ? indicatorCenter - center : null, glyphOffset: control ? pseudoCenter('::after') - indicatorCenter : null}
+        }))
+        for (const row of rows) {
+          assert.equal(row.height, row.hint ? 48 : 30, `${theme}: ${row.kind} height`)
+          if (row.line) assert.equal(row.line, '20px')
+          if (row.hint) {assert.equal(row.hintLine, '16px'); assert.equal(row.gap, '2px')}
+          if (row.offset !== null) assert.ok(Math.abs(row.offset) < 0.02, `${theme}: ${row.kind} first-line alignment: ${row.offset}`)
+          if (row.glyphOffset !== null) assert.ok(Math.abs(row.glyphOffset) < 0.02, `${theme}: ${row.kind} glyph centering: ${row.glyphOffset}`)
+        }
+      }
     } finally {await page.close()}
   })
 
@@ -278,6 +332,10 @@ for (const engine of engines) {
       const after = await measure()
       assert.deepEqual(after.map(tags => tags.map(tag => tag.font)), [['12px', '11px'], ['14px', '13px'], ['16px', '15px']])
       assert.deepEqual(after.map(tags => tags.map(tag => tag.height)), before.map(tags => tags.map(tag => tag.height)))
+      await page.locator('#tags').evaluate(fixture => fixture.style.setProperty('--line-height-micro', '17px'))
+      const leadingOverride = await measure()
+      assert.deepEqual(leadingOverride.map(tags => tags.map(tag => tag.height)), after.map((tags, index) => tags.map(tag => tag.height + (index === 0 ? 2 : 0))))
+      assert.deepEqual(leadingOverride.map(tags => tags.map(tag => tag.font)), after.map(tags => tags.map(tag => tag.font)))
     } finally {await page.close()}
   })
 

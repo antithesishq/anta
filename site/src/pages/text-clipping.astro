@@ -6,8 +6,8 @@ const sizes = ['small', 'medium', 'large']
 const levels = [6, 5, 4, 3, 2, 1]
 const sliderMarkers = (wrapped = false) => `<span slot="markers" data-slider-marker-start style="--slider-marker-position: 0%">0</span><span slot="markers" data-sample ${wrapped ? 'data-multiline' : ''} style="--slider-marker-position: 50%; max-inline-size: 140px"></span><span slot="markers" data-slider-marker-end style="--slider-marker-position: 100%">100</span>`
 const cases = [
-  ['Menu item · fixed size', 'No size variant · label 14/18 · padded row', '<a-menu-item role="menuitem"><a-icon shape="circle-small-solid"></a-icon><a-menu-item-label data-sample></a-menu-item-label><kbd>⌘K</kbd></a-menu-item>'],
-  ['Menu item with hint · fixed size', 'No size variant · label 14/18 · hint 12/17', '<a-menu-item role="menuitem"><a-icon shape="circle-small-solid"></a-icon><a-menu-item-text><a-menu-item-label data-sample></a-menu-item-label><a-menu-item-hint data-sample data-sample-hint></a-menu-item-hint></a-menu-item-text></a-menu-item>'],
+  ['Menu item · fixed size', 'No size variant · label 14/20 · padded row', '<a-menu-item role="menuitem"><a-icon shape="circle-small-solid"></a-icon><a-menu-item-label data-sample></a-menu-item-label><kbd>⌘K</kbd></a-menu-item>'],
+  ['Menu item with hint · fixed size', 'No size variant · label 14/20 · hint 12/16', '<a-menu-item role="menuitem"><a-icon shape="circle-small-solid"></a-icon><a-menu-item-text><a-menu-item-label data-sample></a-menu-item-label><a-menu-item-hint data-sample data-sample-hint></a-menu-item-hint></a-menu-item-text></a-menu-item>'],
   ...sizes.map(size => [`Tab · ${size}`, 'Label line height matches Button', `<a-tabs size="${size}"><a-tab value="one"><a-tab-label data-sample></a-tab-label></a-tab></a-tabs>`]),
   ...sizes.map(size => [`Button · ${size}`, 'Label clips · optical bottom padding remains', `<a-button size="${size}"><a-button-label data-sample></a-button-label></a-button>`]),
   ...sizes.map(size => [`Paddingless Button · ${size}`, 'No outer block padding to reclaim', `<a-button size="${size}" priority="quaternary" paddingless><a-button-label data-sample></a-button-label></a-button>`]),

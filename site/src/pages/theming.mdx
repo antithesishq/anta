@@ -107,9 +107,10 @@ Use length values such as `px` or `rem` for these variables.
 | Medium | `--font-size-medium`: 15px | `--line-height-medium`: 22px | `--font-size-hint-medium`: 14px | `--line-height-hint-medium`: 20px |
 | Large | `--font-size-large`: 17px | `--line-height-large`: 26px | `--font-size-hint-large`: 16px | `--line-height-hint-large`: 24px |
 
-Main text also provides `--font-size-micro` (11px). Small, medium, and large
-Tags use the micro, tiny, and small main font sizes (11, 12, and 13px). Their
-line heights and padding remain component-owned to preserve pill heights.
+Main text also provides `--font-size-micro` (11px) and `--line-height-micro`
+(15px). Small Tags use this pair. Medium and large Tags use the tiny and small
+main font sizes (12 and 13px), with component-owned line heights. Tag padding
+remains component-owned to preserve pill heights.
 
 Compact primary text also has `--font-size-tiny` (12px) and
 `--line-height-tiny` (16px). Progress labels and Slider markers map their
@@ -119,9 +120,10 @@ small, medium, and large variants to tiny, small, and medium text. Their
 MenuGroup and native Select group captions use tiny text at every field
 size. Menu Item labels and native Select options use `--font-size-menu-medium`
 (14px); their hints use the independent `--font-size-menu-hint-medium` (12px).
-These menu font sizes stay fixed across Select field sizes. Menu line heights
-remain component-owned. Menu separator captions use the menu label font size
-minus 1px.
+These menu font sizes stay fixed across Select field sizes. Menu labels and
+wrappers derive leading with `calc(20em / 14)`; hints use `calc(16em / 12)`.
+The default pairs are 14/20px and 12/16px, independent of main text and control
+hints. Menu separator captions use the menu label font size minus 1px.
 
 The reset makes inline code 1px smaller than its surrounding text. Code blocks
 have an independent pair: `--font-size-code-block-medium` (13px) and

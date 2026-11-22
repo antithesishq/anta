@@ -33,7 +33,7 @@
     );
     --native-select-option-selected: var(--native-select-option-active);
     --native-select-option-padding-x: 8px;
-    --native-select-option-padding-y: 6px;
+    --native-select-option-padding-y: 5px;
 
     box-sizing: border-box;
     block-size: var(--native-field-block-size);
@@ -235,10 +235,19 @@
         flex-direction: column;
         min-inline-size: 0;
       }
+      & option:has(> a-menu-item-text) {
+        align-items: flex-start;
+      }
       & :is(option, selectedcontent) a-menu-item-hint {
         display: block;
-        margin-block-start: 1px;
+        margin-block-start: 2px;
         color: var(--text-3);
+      }
+      & option:has(> a-menu-item-text) > a-icon {
+        margin-block-start: calc((1lh - var(--icon-size)) / 2);
+      }
+      & option:has(> a-menu-item-text) > a-tag {
+        translate: 0 calc((var(--font-size-menu-medium) * 20 / 14 - 100%) / 2);
       }
       & :is(option, selectedcontent) > a-icon {
         flex: none;

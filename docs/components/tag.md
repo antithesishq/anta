@@ -25,7 +25,7 @@ export default function Demo() {
 ## Tone
 
 `tone` selects a color for the tag. Use a semantic tone to communicate status
-alongside a readable label. The default is `neutral`.
+alongside a readable label.
 
 ```tsx
 import { Tag } from '@antadesign/anta/bundle'

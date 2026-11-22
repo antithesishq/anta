@@ -117,6 +117,11 @@ Baseline: the `repr()` export shared for the Inspector project in November 2026.
     iterator is never advanced. An object that only sets `Symbol.toStringTag` isn't labeled. `repr()` leaves the
     option off and writes these values as `{}`, their own enumerable properties, as the notebook did. How their items
     could be shown is undecided.
+27. **The Inspector shows Maps as browser DevTools does.** With the `map_entry_rows` option of `describe()`, which the
+    Inspector sets, a Map reads `Map(2){2024 => 4744353, …}`, open or closed, and each entry is a row keyed by its
+    position that opens to `key` and `value` rows. An entry's path key is the entry's (`/=n:2024`); its key and value
+    add `/:key` and `/:value`. Search matches the key and value rows, not the entry. `repr()` leaves the option off
+    and writes `Map{2024:4744353}`, as the notebook did.
 
 ## Kept identical on purpose
 

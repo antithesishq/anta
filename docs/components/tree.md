@@ -4,7 +4,7 @@ Tree shows nested items that open and close, such as a folder browser, a list of
 checks grouped by kind, or a test run's steps. Pass the items as data in
 `items`; Tree renders every row from them. Select a row to open or close it. The
 tree is one Tab stop, and the arrow keys move between rows.
-[Inspector](./inspector.md), the next page, is an implementation of Tree for
+[Inspector](./inspector.md) is an implementation of Tree for
 exploring JavaScript values.
 
 ## Show nested items

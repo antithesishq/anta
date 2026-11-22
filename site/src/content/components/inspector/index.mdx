@@ -319,9 +319,12 @@ element is keyed by its index. Holes in a sparse array show as
 
 ### Map and Set
 
-A Map opens to `key: value` entries, and a Set to its items, numbered by
-position. A Map key that's an object shows its summary as the key. Copy path is
-unavailable for Set items and object keys, since no expression reaches them.
+A Map reads as it does in browser DevTools: `Map(2) {2024 => 4744353, …}`, open
+or closed. Its entries are numbered by position, as `0: 2024 => 4744353`, and
+each opens to a `key` row and a `value` row, so an object key or value can be
+explored too. A Set opens to its items, numbered by position. Copy path is
+unavailable for Set items, Map keys, and entries with an object key, since no
+expression reaches them.
 
 <Preview direction="column" align="stretch">
   <KindDemo kind="collections" client:load />

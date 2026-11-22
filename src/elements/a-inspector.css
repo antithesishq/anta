@@ -115,6 +115,16 @@
     margin-inline-end: 1ch;
   }
 
+  /* A Map entry's `=>`, with a space on each side, as DevTools draws it. */
+  a-inspector-token[type="map_arrow"] {
+    margin-inline: 1ch;
+  }
+
+  /* A space between a type's size and its preview: Map(2) {…}. */
+  a-inspector-token[type="close_bracket"] + a-inspector-token[type="open_bracket"] {
+    margin-inline-start: 1ch;
+  }
+
   a-inspector-value a-inspector-token[type="comma"] {
     margin-inline-end: 1ch;
   }
@@ -145,7 +155,7 @@
   }
 
   a-inspector-token:is([type="open_bracket"], [type="close_bracket"], [type="comma"], [type="field_colon"],
-      [type="reference"], [type="reference_path"], [type="empty_slot"], [type="ellipsis"], [type="legacy_repr"]) {
+      [type="reference"], [type="reference_path"], [type="empty_slot"], [type="ellipsis"], [type="legacy_repr"], [type="map_arrow"]) {
     color: var(--text-4);
   }
 

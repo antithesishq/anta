@@ -35,6 +35,9 @@ export type Options = {
    *  `Generator{}`, without iterating them. The Inspector sets it; `repr()` leaves it off and writes `{}`, as the
    *  notebook does. */
   iterator_labels?: boolean
+  /** Show a Map as DevTools does: `Map(2){2024 => 4744353, …}`, with each entry a child that opens to its `key` and
+   *  `value`. The Inspector sets it; `repr()` leaves it off and writes `Map{2024:4744353}`, as the notebook does. */
+  map_entry_rows?: boolean
 }
 
 type ReferenceInfo = {
@@ -50,7 +53,7 @@ export type SpanType = 'field_name' | 'field_colon' | 'open_bracket' | 'close_br
   'string' | 'number' | 'boolean' | 'symbol' | 'bigint' | 'undefined' | 'null' |
   'error_class_name' | 'class_name' | 'error_message' | 'reference' | 'reference_path' |
   'function' | 'function_name' | 'open_slash' | 'close_slash' | 'regexp' | 'regexp_flags' | 'legacy_repr' |
-  'empty_slot' | 'open_quote' | 'close_quote' | 'inaccessible' | 'ellipsis'
+  'empty_slot' | 'open_quote' | 'close_quote' | 'inaccessible' | 'ellipsis' | 'map_arrow'
 
 const numeric_bases = {
   binary: { prefix: '0b', number: 0b10 },
@@ -306,7 +309,7 @@ export type Token = { text: string; type: SpanType }
 export type NodeKind =
   | 'string' | 'number' | 'bigint' | 'boolean' | 'null' | 'undefined' | 'symbol'
   | 'array' | 'typed-array' | 'set' | 'map' | 'object' | 'date' | 'error' | 'regexp' | 'function' | 'blob'
-  | 'custom' | 'circular' | 'empty-slots' | 'inaccessible'
+  | 'custom' | 'circular' | 'empty-slots' | 'inaccessible' | 'map-entry'
 
 /**
  * One entry in a group. `key` is tokens for a property or string key, or a node for a non-string Map key.
@@ -337,6 +340,9 @@ export type InspectorPathSegment =
   | { type: 'detail'; name: 'cause' | 'errors' | 'stack' }
   /** A child in a custom type's `inspectorRepr` output: `part` counts the parts it described, `index` the child. */
   | { type: 'part'; part: number; index: number }
+  /** A Map entry's key or value, when entries open to them (the Inspector). */
+  | { type: 'map-key' }
+  | { type: 'map-value' }
 
 /** Path from the root value to a node. The root's path is empty. */
 export type InspectorPath = readonly InspectorPathSegment[]
@@ -378,6 +384,8 @@ export function segmentKey(segment: InspectorPathSegment): string {
     case 'item': return `/*${segment.index}`
     case 'detail': return `/!${segment.name}`
     case 'part': return `/(${segment.part}.${segment.index})`
+    case 'map-key': return '/:key'
+    case 'map-value': return '/:value'
     case 'property': return typeof segment.key === 'symbol'
       ? `/@${escape_key(symbol_name(segment.key))}#${segment.occurrence ?? 0}`
       : `/.${escape_key(segment.key)}`
@@ -553,8 +561,12 @@ class Node implements InspectNode {
   }
 
   #child(value: unknown, path: readonly unknown[], segment: InspectorPathSegment): InspectNode {
+    return this.#descendant(value, path, [...this.segments, segment])
+  }
+
+  // A node below this one with the given segments, as a Map entry's key and value.
+  #descendant(value: unknown, path: readonly unknown[], segments: InspectorPath): InspectNode {
     const context = this.#inner()
-    const segments = [...this.segments, segment]
     if ((typeof value === 'object' && value !== null) || typeof value === 'function') {
       for (let a = context.ancestors; a; a = a.parent) {
         if (a.identity === value) {
@@ -683,6 +695,30 @@ class Node implements InspectNode {
     }
   }
 
+  // Map entries as nodes that open to their key and value, as DevTools shows them.
+  *#map_entry_nodes(map: Map<unknown, unknown>): Generator<InspectChild> {
+    let index = 0
+    for (const entry of guarded(map)) {
+      if (entry === INACCESSIBLE) { yield { value: this.#inaccessible(this.path, { type: 'entry', index, key: undefined }) }; return }
+      const [key, value] = entry
+      const path = [...this.path, key]
+      const segments: InspectorPath = [...this.segments, { type: 'entry', index, key }]
+      const key_node = this.#descendant(key, path, [...segments, { type: 'map-key' }])
+      const value_node = this.#descendant(value, path, [...segments, { type: 'map-value' }])
+      yield {
+        value: new Node(undefined, path, segments, this.#inner(), {
+          kind: 'map-entry',
+          parts: [
+            { type: 'value', node: key_node },
+            { type: 'tokens', tokens: [{ text: '=>', type: 'map_arrow' }] },
+            { type: 'value', node: value_node },
+          ],
+        }),
+      }
+      index++
+    }
+  }
+
   #group(open: string, close: string, source: () => Iterator<InspectChild>, hide_when_empty = false): InspectPart {
     return { type: 'group', group: new InspectGroup(open, close, hide_when_empty, source) }
   }
@@ -784,9 +820,15 @@ class Node implements InspectNode {
           }
           case 'map': {
             const map = value as Map<unknown, unknown>
-            t('Map', 'class_name')
-            parts.push(this.#group('{', '}', () => this.#map_entries(map)), this.#keyable(map))
             const size = guard(() => map.size)
+            t('Map', 'class_name')
+            if (options.map_entry_rows) {
+              // DevTools' form: the size, then `key => value` entries that open.
+              if (size !== INACCESSIBLE) { t('(', 'open_bracket'); t(String(size), 'number'); t(')', 'close_bracket') }
+              parts.push(this.#group('{', '}', () => this.#map_entry_nodes(map)), this.#keyable(map))
+            } else {
+              parts.push(this.#group('{', '}', () => this.#map_entries(map)), this.#keyable(map))
+            }
             return { kind: 'map', parts, size: size === INACCESSIBLE ? undefined : size }
           }
           case 'error': {
@@ -933,14 +975,14 @@ export function serialize(root: InspectNode, options: Options = {}, display = fa
 
   const emit = (text: string, type: SpanType) => {
     if (!text || stop) return
-    const separator = type === 'comma' || type === 'field_colon'
-    const width = text.length + (display && separator ? 1 : 0)
+    const separator = type === 'comma' || type === 'field_colon' || type === 'map_arrow'
+    const width = text.length + (display && separator ? (type === 'map_arrow' ? 2 : 1) : 0)
     remaining -= width
     if (remaining < mark.length) {
       const kept = safe_truncate(text, remaining + width - mark.length)
       if (!display) out.push({ text: kept, type })
       else if (kept && !separator) out.push({ text: kept, type })
-      else while (out.at(-1)?.type === 'comma' || out.at(-1)?.type === 'field_colon') out.pop()
+      else while (out.at(-1)?.type === 'comma' || out.at(-1)?.type === 'field_colon' || out.at(-1)?.type === 'map_arrow') out.pop()
       out.push({ text: mark, type: 'ellipsis' })
       stop = true
     } else {
@@ -1164,7 +1206,10 @@ export function label(node: InspectNode): Token[] {
   switch (node.kind) {
     case 'string': return [{ text: 'String', type: 'class_name' }, ...count(node.text!.length)]
     case 'array': return [{ text: 'Array', type: 'class_name' }, ...(node.size === undefined ? [] : count(node.size))]
-    case 'typed-array': case 'set': case 'map': return [...node.header, ...(node.size === undefined ? [] : count(node.size))]
+    case 'map': if (node.header.some(token => token.type === 'open_bracket')) return [...node.header]
+    // falls through
+    case 'typed-array': case 'set': return [...node.header, ...(node.size === undefined ? [] : count(node.size))]
+    case 'map-entry': return []
     case 'object': return [
       ...node.header, { text: '{', type: 'open_bracket' }, { text: '…', type: 'ellipsis' }, { text: '}', type: 'close_bracket' },
     ]
@@ -1224,6 +1269,10 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
   const key_of = (child: InspectChild): Token[] => {
     if (child.key !== undefined) return [...(Array.isArray(child.key) ? child.key : (child.key as InspectNode).summary(budget, true)), colon]
     if (!tree || child.value.kind === 'empty-slots') return []
+    if (child.value.kind === 'map-entry') {
+      const segment = child.value.segments[child.value.segments.length - 1]
+      return [{ text: segment.type === 'entry' ? String(segment.index) : '', type: 'field_name' }, colon]
+    }
     return [{ text: safe_string(child.value.path.at(-1)), type: 'field_name' }, colon]
   }
 
@@ -1266,7 +1315,9 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
     // `line` collects tokens for the current line: the node row, then a close
     // row created when the first token after a group or inline value arrives.
     // The tree style shows a label instead and has no close rows.
-    if (tree) row.tokens = label(node)
+    if (tree) row.tokens = node.kind === 'map-entry' || (node.kind === 'map' && label(node).length === node.header.length)
+      ? node.summary(summary_limit, true)
+      : label(node)
     let line: Token[] | undefined = row.tokens
     let closes = 0
     const append = (...tokens: Token[]) => {
@@ -1284,7 +1335,12 @@ export function visibleRows(root: InspectNode, state: RowState = {}): InspectRow
       if (part.type === 'tokens') {
         append(...part.tokens)
       } else if (part.type === 'value') {
-        visit(part.node, id + segmentKey(part.node.segments[part.node.segments.length - 1]), depth + 1, [], inner, undefined)
+        const last = part.node.segments[part.node.segments.length - 1]
+        const entry_key: Token[] = node.kind === 'map-entry' && tree && (last.type === 'map-key' || last.type === 'map-value')
+          ? [{ text: last.type === 'map-key' ? 'key' : 'value', type: 'field_name' }, colon]
+          : []
+        visit(part.node, id + segmentKey(last), depth + 1, entry_key, inner,
+          node.kind === 'map-entry' && last.type === 'map-value' ? path_text : undefined)
         line = undefined
       } else {
         const group = part.group
@@ -1473,7 +1529,7 @@ export type ExpandToPathOptions = {
  */
 export function inspectorExpandToPath(value: unknown, open: readonly string[], path: InspectorPath,
   options: ExpandToPathOptions = {}): string[] {
-  return expandToPath(describe(value, { symbol_keys: options.symbolKeys ?? true }), open, path, options.chunkSize)
+  return expandToPath(describe(value, { symbol_keys: options.symbolKeys ?? true, map_entry_rows: true }), open, path, options.chunkSize)
 }
 
 /** `inspectorExpandToPath` on a described value, so the Inspector reuses the children it has read. @internal */
@@ -1558,7 +1614,7 @@ export function keyText(child: InspectChild): string | undefined {
  * `Array(3)`. Never a container's preview of its children. @internal
  */
 export function valueText(node: InspectNode): string | undefined {
-  if (node.kind === 'empty-slots') return undefined
+  if (node.kind === 'empty-slots' || node.kind === 'map-entry') return undefined
   if (node.kind === 'string') return node.text
   return tokens_text(LEAF_KINDS.has(node.kind) ? node.summary(80) : label(node))
 }
@@ -1607,7 +1663,7 @@ export function searchNodes(root: InspectNode, matcher: InspectorMatcher): Inspe
  * `inspectorExpandToPath`.
  */
 export function inspectorSearch(value: unknown, matcher: InspectorMatcher, options: SearchOptions = {}): InspectorMatch[] {
-  return searchNodes(describe(value, { numeric_base: options.numericBase, symbol_keys: options.symbolKeys ?? true, iterator_labels: true }), matcher)
+  return searchNodes(describe(value, { numeric_base: options.numericBase, symbol_keys: options.symbolKeys ?? true, iterator_labels: true, map_entry_rows: true }), matcher)
 }
 
 /**
@@ -1682,7 +1738,7 @@ export function jsonText(node: InspectNode): { text: string } | { reason: string
 const KIND_NAMES: Record<NodeKind, string> = {
   'string': 'a string', 'number': 'a number', 'bigint': 'a bigint', 'boolean': 'a boolean', 'null': 'null',
   'undefined': 'undefined', 'symbol': 'a symbol', 'array': 'an array', 'typed-array': 'a typed array', 'set': 'a Set',
-  'map': 'a Map', 'object': 'an object', 'date': 'a Date', 'error': 'an error', 'regexp': 'a RegExp',
+  'map': 'a Map', 'map-entry': 'a Map entry', 'object': 'an object', 'date': 'a Date', 'error': 'an error', 'regexp': 'a RegExp',
   'function': 'a function', 'blob': 'a Blob', 'custom': 'a custom type', 'circular': 'a circular reference',
   'empty-slots': 'an empty slot', 'inaccessible': 'an unreadable value',
 }

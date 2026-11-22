@@ -1123,8 +1123,10 @@ const searchKeys = (value, matcher) => core.inspectorSearch(value, matcher).map(
 test('search visits every row of the fully open tree, in its order', () =>
   hegel.test(tc => {
     const { value } = make(tc.draw(recipes(), 'recipe'))
-    const rows = core.visibleRows(core.describe(value, { symbol_keys: true }), { style: 'tree', expandDepth: Infinity, chunkSize: Infinity })
-      .filter(row => row.type === 'node' && row.kind !== 'empty-slots')
+    // Described as the Inspector describes it. A Map entry's own text is its key
+    // and value, so only those rows match.
+    const rows = core.visibleRows(core.describe(value, { symbol_keys: true, iterator_labels: true, map_entry_rows: true }), { style: 'tree', expandDepth: Infinity, chunkSize: Infinity })
+      .filter(row => row.type === 'node' && row.kind !== 'empty-slots' && row.kind !== 'map-entry')
     const matches = core.inspectorSearch(value, () => true)
     assert.deepEqual(matches.map(m => core.inspectorPathKey(m.path)), rows.map(row => row.id))
   }, settings))
@@ -1140,10 +1142,31 @@ test('a closed preview never matches, so each match is the row it names', () => 
   assert.deepEqual(searchKeys(value, /^Array\(1\)$/), ['r/.a/.countries value', 'r/.b value'])
 })
 
-test('array indices never match; Map keys do, unless the key is an object', () => {
+test('array indices never match; Map keys do, on their key row', () => {
   assert.deepEqual(searchKeys([10, 20], /^1$/), [])
   const map = new Map([['k1', 0], [1, 'v'], [{ k1: 0 }, 0]])
-  assert.deepEqual(searchKeys(map, /1/), ['r/=s:k1 key', 'r/=n:1 key'])
+  // An entry row is keyed by position, so its index doesn't match; the key row inside it does.
+  // An object key opens like any object, so its own properties are searched too.
+  assert.deepEqual(searchKeys(map, /1/), ['r/=s:k1/:key value', 'r/=n:1/:key value', 'r/=#2/:key/.k1 key'])
+})
+
+test('a Map shows as DevTools does in the Inspector, and repr() keeps the notebook form', () => {
+  const value = { visitors: new Map([[2024, 4744353], [2025, 4501382]]) }
+  const root = core.describe(value, { map_entry_rows: true })
+  const open = new Set(['r', 'r/.visitors', 'r/.visitors/=n:2024'])
+  const rows = core.visibleRows(root, { style: 'tree', open, summaryLimit: 300 }).slice(1)
+  assert.deepEqual(rows.map(row => [row.id, line(row), row.pathText ?? null]), [
+    ['r/.visitors', 'visitors:Map(2){2024=>4744353,2025=>4501382}', 'visitors'],
+    ['r/.visitors/=n:2024', '0:2024=>4744353', 'visitors.get(2024)'],
+    ['r/.visitors/=n:2024/:key', 'key:2024', null],
+    ['r/.visitors/=n:2024/:value', 'value:4744353', 'visitors.get(2024)'],
+    ['r/.visitors/=n:2025', '1:2025=>4501382', 'visitors.get(2025)'],
+  ])
+  assert.ok(rows[1].expandable, 'an entry opens to its key and value')
+  // A closed summary uses the same form, and the arrow is a separator a cut never ends on.
+  assert.equal(text(core.visibleRows(root, { style: 'tree', previewBudget: 200 })[0].tokens), '{visitors:Map(2){2024=>4744353,2025=>4501382}}')
+  assert.equal(repr(value), '{visitors:Map{2024:4744353,2025:4501382}}')
+  assert.equal(core.visibleRows(core.describe(value), { style: 'tree', expandDepth: 2 })[2].id, 'r/.visitors/=n:2024', 'without the option, entries are values')
 })
 
 test('search is cycle-safe and searches each repeated reference where it appears', () => {

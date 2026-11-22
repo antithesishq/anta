@@ -50,13 +50,14 @@ export default function SidebarSearch() {
         className="search-icon-trigger"
         size="small"
         priority="tertiary"
-        icon="search"
         aria-label="Search documentation"
         aria-haspopup="dialog"
         aria-expanded={expanded ? 'true' : 'false'}
         aria-controls="docs-search-dialog"
         data-search-trigger
-      />
+      >
+        <Icon shape="search" size={16} />
+      </Button>
     </>
   )
 }

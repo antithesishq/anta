@@ -987,20 +987,16 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   @media (max-width: 500px) {
-    .topbar,
-    .topbar-start,
-    .topbar-tools,
-    .package-links {
+    .topbar-tools {
       gap: 0;
     }
 
     .package-links {
-      margin-inline-start: 0;
+      margin-inline-start: calc(12px + 0.5ch);
     }
 
     .topbar-center {
       justify-content: flex-end;
-      min-width: 32px;
     }
 
     .topbar-search {
@@ -1013,21 +1009,6 @@ if (hasStructuredBreadcrumbs && title) {
 
     .topbar-search :global(.search-icon-trigger) {
       display: inline-flex;
-    }
-
-    .theming-switcher :global(a-button.theming-select) {
-      width: 32px;
-      padding-inline: 0;
-      gap: 0;
-      justify-content: center;
-    }
-  }
-
-  @media (max-width: 360px) {
-    .topbar-brand {
-      gap: 0;
-      margin-inline-start: 0;
-      padding-inline-end: 0;
     }
   }
 

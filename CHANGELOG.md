@@ -11,7 +11,7 @@ changes are not listed.
 
 - Shared heading-level typography variables and size-specific text compensation for Button and Tabs. Title, Expander, native disclosure summaries, and reset headings use the same heading scale; Dialog headers use level 4.
 
-- Shared small, medium, and large font-size and line-height variables for main text and hints. Matching controls replace their component typography variables with direct references to these independent scales in `tokens.css`.
+- Shared small, medium, and large font-size and line-height variables for main text and hints. Matching controls replace their component typography variables with direct references to these independent scales in `tokens.css`. Breadcrumb text separators use the shared font sizes, replacing `--breadcrumb-separator-font-size`.
 
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.

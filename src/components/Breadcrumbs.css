@@ -6,7 +6,6 @@
     --breadcrumb-gap: 1px;
     --breadcrumb-separator-color: var(--text-5);
     --breadcrumb-separator-icon-size: 16px;
-    --breadcrumb-separator-font-size: 15px;
 
     display: flex;
     align-items: center;
@@ -18,12 +17,10 @@
 
   a-breadcrumbs[data-size="small"] {
     --breadcrumb-separator-icon-size: 14px;
-    --breadcrumb-separator-font-size: 13px;
   }
 
   a-breadcrumbs[data-size="large"] {
     --breadcrumb-separator-icon-size: 18px;
-    --breadcrumb-separator-font-size: 17px;
   }
 
   a-breadcrumbs[data-paddingless] {
@@ -45,9 +42,17 @@
     justify-content: center;
     color: var(--breadcrumb-separator-color);
     font-family: var(--sans-serif);
-    font-size: var(--breadcrumb-separator-font-size);
+    font-size: var(--font-size-medium);
     line-height: 1;
     user-select: none;
+  }
+
+  a-breadcrumbs[data-size="small"] > a-breadcrumb-separator {
+    font-size: var(--font-size-small);
+  }
+
+  a-breadcrumbs[data-size="large"] > a-breadcrumb-separator {
+    font-size: var(--font-size-large);
   }
 
   a-breadcrumb-separator > a-icon {

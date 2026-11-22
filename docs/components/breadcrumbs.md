@@ -202,6 +202,8 @@ Use `priority`, `size`, and `separator` before adding CSS. A `className` on
 their individual Buttons. The composed structure uses light-DOM tags, so plain
 CSS can style a separator directly.
 
+Text separators use the shared small, medium, and large text font sizes.
+
 To tighten the space between items, give the trail a class and set
 `a-breadcrumb-separator` to `width: 8px` within that class. This changes the
 separator's layout width while keeping the icon size unchanged. The website

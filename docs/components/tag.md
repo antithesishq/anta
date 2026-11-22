@@ -230,9 +230,6 @@ export default function Demo() {
 }
 ```
 
-Keep navigation and removal as sibling controls when a tag needs both actions.
-Do not nest a remove button inside an anchor or button that wraps the tag.
-
 ## Component props
 
 | Prop | Type | Default | Description |

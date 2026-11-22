@@ -83,11 +83,11 @@
     border-radius: var(--tooltip-radius, 3px);
     outline: none;
     font-family: var(--sans-serif, system-ui, sans-serif);
-    font-size: 14px;
+    font-size: var(--font-size-hint-medium);
     font-weight: 400;
     font-style: normal;
     font-stretch: normal;
-    line-height: 1.5;
+    line-height: var(--line-height-hint-medium);
     letter-spacing: var(--_tooltip-letter-spacing, 0.025ch);
     word-spacing: normal;
     text-transform: none;

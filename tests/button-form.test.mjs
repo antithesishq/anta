@@ -23,6 +23,34 @@ before(async () => {
 
 after(async () => browser?.close())
 
+test('raw Button supplies default accessibility semantics without changing authored roles', async t => {
+  const page = await browser.newPage()
+  t.after(() => page.close())
+  await page.setContent('<a-button id="raw" tabindex="0">Raw action</a-button><a-button id="override" role="switch" aria-checked="false">Toggle action</a-button>')
+  await page.addScriptTag({content: script})
+  const session = await page.context().newCDPSession(page)
+  const role = async name => {
+    const tree = await session.send('Accessibility.getFullAXTree')
+    return tree.nodes.find(node => !node.ignored && node.name?.value === name)?.role?.value
+  }
+  assert.equal(await role('Raw action'), 'button')
+  assert.equal(await role('Toggle action'), 'switch')
+  assert.equal(await page.locator('#raw').getAttribute('role'), null)
+  await page.locator('#override').evaluate(element => element.removeAttribute('role'))
+  assert.equal(await role('Toggle action'), 'button')
+  await page.locator('#override').evaluate(element => {element.role = 'menuitem'})
+  assert.equal(await role('Toggle action'), 'menuitem')
+  await page.locator('#raw').evaluate(element => {
+    window.activations = 0
+    element.addEventListener('click', () => window.activations++)
+  })
+  await page.locator('#raw').focus()
+  await page.locator('#raw').press('Enter')
+  await page.locator('#raw').press('Space')
+  assert.equal(await page.evaluate(() => window.activations), 2)
+  assert.equal(await page.locator('#raw').getAttribute('role'), null)
+})
+
 test('Button gathers repeated field names without losing values or special keys', async t => {
   const page = await browser.newPage()
   t.after(() => page.close())

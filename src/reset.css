@@ -68,8 +68,7 @@
   html {
     color: var(--text-2);
     font-family: var(--sans-serif);
-    /* Unitless 22px/15px leading keeps its ratio when inherited. */
-    line-height: calc(22 / 15);
+    line-height: var(--line-height-medium);
     /* Controls carry their own :active; the platform overlay only muddies it. */
     -webkit-tap-highlight-color: transparent;
   }
@@ -163,7 +162,7 @@
   code {
     font-family: var(--monospace);
     font-size: calc(1em - 1px);
-    line-height: 1em;
+    line-height: 1;
     color: inherit;
     background: light-dark(
       color-mix(in oklch, currentColor 6%, transparent),

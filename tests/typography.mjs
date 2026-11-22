@@ -14,6 +14,15 @@ const sizes = ['small', 'medium', 'large']
 const browsers = new Map(), assets = new Map()
 let server, origin
 
+// Unitless ratios can differ by one layout subpixel across browser engines.
+const close = (actual, expected, message) => assert.ok(Math.abs(Number.parseFloat(actual) - expected) < 0.04, `${message ?? 'Measurement'}: ${actual}, expected ${expected}`)
+
+function assertPair(actual, expected) {
+  assert.equal(actual[0], expected[0])
+  if (expected[1] === 'normal') assert.equal(actual[1], 'normal')
+  else close(actual[1], Number.parseFloat(expected[1]))
+}
+
 const row = size => `<section data-size="${size}">
   <a-button size="${size}"><a-button-label>Button</a-button-label></a-button>
   <a-tabs size="${size}"><a-tab value="one"><a-tab-label>Tab</a-tab-label></a-tab></a-tabs>
@@ -85,12 +94,45 @@ async function override(page, family) {
     scope.removeAttribute('style')
     for (const [index, size] of sizes.entries()) {
       scope.style.setProperty(`--font-size-${family}${size}`, `${18 + index}px`)
-      scope.style.setProperty(`--line-height-${family}${size}`, `${28 + index * 2}px`)
+      scope.style.setProperty(`--line-height-${family}${size}`, `calc(${28 + index * 2} / ${18 + index})`)
     }
   }, {family, sizes})
 }
 
 for (const engine of engines) {
+  test.fast(`${engine.name()}: line-height ratios follow nested font sizes across text, controls, and headings`, async () => {
+    const page = await browsers.get(engine).newPage()
+    try {
+      await page.goto(origin)
+      await page.waitForFunction(() => customElements.get('a-input-time'))
+      await page.evaluate(() => {
+        const fixture = document.createElement('div')
+        fixture.id = 'nested-leading'
+        fixture.innerHTML = '<a-menu-item><a-menu-item-label>Label</a-menu-item-label><a-menu-item-hint>Hint</a-menu-item-hint></a-menu-item>'
+          + ['small', 'medium', 'large'].map(size => `<a-tag size="${size}">Tag</a-tag><a-tag size="${size}" allcaps>Caps</a-tag>`).join('')
+          + Array.from({length: 6}, (_, index) => `<a-title level="${index + 1}">Title</a-title>`).join('')
+          + '<pre>Code block</pre>'
+        document.body.append(fixture)
+        const targets = document.querySelectorAll('a-input > [slot=label], a-input > [slot=hint], a-input-time > [slot=hint], a-button-label, a-tab-label, a-step-hint, a-checkbox-label, a-checkbox-hint, a-radio-group-label, a-radio-group-hint, a-switch-label, a-switch-hint, a-text, #nested-leading a-menu-item-label, #nested-leading a-menu-item-hint, #nested-leading a-tag, #nested-leading a-title, #nested-leading pre')
+        for (const target of targets) {
+          target.setAttribute('data-leading-parent', '')
+          target.innerHTML = '<span class="light" style="font-size:2em"><span class="dark" style="font-size:0.5em">Nested text</span></span>'
+        }
+      })
+      const measurements = await page.locator('[data-leading-parent]').evaluateAll(elements => elements.map(element => [element, element.firstElementChild, element.firstElementChild.firstElementChild].map(node => {
+        const css = getComputedStyle(node)
+        return [Number.parseFloat(css.fontSize), Number.parseFloat(css.lineHeight)]
+      })))
+      assert.ok(measurements.length > 50)
+      for (const [parent, child, grandchild] of measurements) {
+        close(child[0], parent[0] * 2)
+        close(child[1], parent[1] * 2)
+        close(grandchild[0], parent[0])
+        close(grandchild[1], parent[1])
+      }
+    } finally {await page.close()}
+  })
+
   test.fast(`${engine.name()}: menu and native group captions use compact globals across field sizes`, async () => {
     const page = await browsers.get(engine).newPage()
     try {
@@ -106,7 +148,7 @@ for (const engine of engines) {
       assert.equal(await page.evaluate(() => !!customElements.get('a-menu-group')), false)
       await page.locator('#captions').evaluate(fixture => {
         fixture.style.setProperty('--font-size-tiny', '14px')
-        fixture.style.setProperty('--line-height-tiny', '20px')
+        fixture.style.setProperty('--line-height-tiny', 'calc(20 / 14)')
       })
       for (const pairs of await measure()) for (const pair of pairs) assert.deepEqual(pair, ['14px', '20px'])
     } finally {await page.close()}
@@ -128,9 +170,15 @@ for (const engine of engines) {
       assert.deepEqual(await page.locator('#code > *').evaluateAll(parents => parents.map(parent => [...parent.querySelectorAll('code')].map(code => getComputedStyle(code).fontSize))), [['16px', '13px'], ['14px', '13px'], ['16px', '13px'], ['22px', '19px']])
       const blocks = () => page.locator('#code pre').evaluateAll(elements => elements.map(element => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element.querySelector('code')).fontSize, getComputedStyle(element.querySelector('code')).lineHeight]))
       await page.evaluate(() => document.documentElement.style.setProperty('--font-size-code-block-medium', '16px'))
-      assert.deepEqual(await blocks(), [...Array.from({length: 3}, () => ['16px', '20px', '16px', '20px']), ['19px', '20px', '19px', '20px']])
-      await page.evaluate(() => document.documentElement.style.setProperty('--line-height-code-block-medium', '24px'))
-      assert.deepEqual(await blocks(), [...Array.from({length: 3}, () => ['16px', '24px', '16px', '24px']), ['19px', '24px', '19px', '24px']])
+      for (const [index, block] of (await blocks()).entries()) {
+        const font = index < 3 ? 16 : 19
+        assert.equal(block[0], `${font}px`)
+        assert.equal(block[2], `${font}px`)
+        close(block[1], font * 20 / 13)
+        close(block[3], font * 20 / 13)
+      }
+      await page.evaluate(() => document.documentElement.style.setProperty('--line-height-code-block-medium', 'calc(24 / 16)'))
+      assert.deepEqual(await blocks(), [...Array.from({length: 3}, () => ['16px', '24px', '16px', '24px']), ['19px', '28.5px', '19px', '28.5px']])
     } finally {await page.close()}
   })
 
@@ -151,14 +199,14 @@ for (const engine of engines) {
       await page.locator('#compact').evaluate(fixture => {
         for (const size of ['small', 'medium', 'large']) {
           fixture.style.setProperty(`--font-size-hint-${size}`, '23px')
-          fixture.style.setProperty(`--line-height-hint-${size}`, '34px')
+          fixture.style.setProperty(`--line-height-hint-${size}`, 'calc(34 / 23)')
         }
       })
       assert.deepEqual(await measure(), before)
       await page.locator('#compact').evaluate(fixture => {
         for (const [index, size] of ['tiny', 'small', 'medium'].entries()) {
           fixture.style.setProperty(`--font-size-${size}`, `${14 + index}px`)
-          fixture.style.setProperty(`--line-height-${size}`, `${20 + index * 2}px`)
+          fixture.style.setProperty(`--line-height-${size}`, `calc(${20 + index * 2} / ${14 + index})`)
         }
       })
       for (const [index, pairs] of (await measure()).entries()) for (const pair of pairs) assert.deepEqual(pair, [`${14 + index}px`, `${20 + index * 2}px`])
@@ -184,13 +232,13 @@ for (const engine of engines) {
         return {levels: [...fixture.querySelectorAll('article')].map(article => [...article.querySelectorAll(':scope > :not(details), summary')].map(pair)), dialog: pair(fixture.querySelector('a-dialog').shadowRoot.querySelector('[part=header]'))}
       })
       const before = await measure()
-      assert.deepEqual(await page.locator('#headings summary').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height)), [44, 40, 36, 32, 32, 28])
+      for (const [index, height] of (await page.locator('#headings summary').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height))).entries()) close(height, [44, 40, 36, 32, 32, 28][index])
       for (const level of before.levels) for (const pair of level) assert.deepEqual(pair, level[0])
       assert.deepEqual(before.dialog, before.levels[3][0])
       await page.evaluate(() => {
         for (let level = 1; level <= 6; level++) {
           document.documentElement.style.setProperty(`--font-size-heading-${level}`, `${31 - level}px`)
-          document.documentElement.style.setProperty(`--line-height-heading-${level}`, `${43 - level}px`)
+          document.documentElement.style.setProperty(`--line-height-heading-${level}`, `calc(${43 - level} / ${31 - level})`)
         }
       })
       const after = await measure()
@@ -218,7 +266,7 @@ for (const engine of engines) {
       assert.deepEqual(await page.locator('#bodies details > h3').evaluate(element => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight]), ['20px', '26px'])
       await page.evaluate(() => {
         document.documentElement.style.setProperty('--font-size-medium', '18px')
-        document.documentElement.style.setProperty('--line-height-medium', '26px')
+        document.documentElement.style.setProperty('--line-height-medium', 'calc(26 / 18)')
       })
       for (const pair of await measure()) assert.deepEqual(pair, ['18px', '26px'])
       assert.deepEqual(await page.locator(':root, #scope .light').evaluateAll(elements => elements.map(element => getComputedStyle(element).fontSize)), ['18px', '18px'])
@@ -306,7 +354,7 @@ for (const engine of engines) {
             offset: indicator ? indicatorCenter - center : null, glyphOffset: control ? pseudoCenter('::after') - indicatorCenter : null}
         }))
         for (const row of rows) {
-          assert.equal(row.height, row.hint ? 48 : 30, `${theme}: ${row.kind} height`)
+          close(row.height, row.hint ? 48 : 30, `${theme}: ${row.kind} height`)
           if (row.line) assert.equal(row.line, '20px')
           if (row.hint) {assert.equal(row.hintLine, '16px'); assert.equal(row.gap, '2px')}
           if (row.offset !== null) assert.ok(Math.abs(row.offset) < 0.02, `${theme}: ${row.kind} first-line alignment: ${row.offset}`)
@@ -354,7 +402,7 @@ for (const engine of engines) {
     } finally {await page.close()}
   })
 
-  test.fast(`${engine.name()}: Tag sizes follow main micro, tiny, and small fonts without changing pill heights`, async () => {
+  test.fast(`${engine.name()}: Tag ratios preserve default pill heights and scale with their fonts`, async () => {
     const page = await browsers.get(engine).newPage()
     try {
       await page.goto(origin)
@@ -373,18 +421,23 @@ for (const engine of engines) {
       })
       const after = await measure()
       assert.deepEqual(after.map(tags => tags.map(tag => tag.font)), [['12px', '11px'], ['14px', '13px'], ['16px', '15px']])
-      assert.deepEqual(after.map(tags => tags.map(tag => tag.height)), before.map(tags => tags.map(tag => tag.height)))
-      await page.locator('#tags').evaluate(fixture => fixture.style.setProperty('--line-height-micro', '17px'))
-      const leadingOverride = await measure()
-      assert.deepEqual(leadingOverride.map(tags => tags.map(tag => tag.height)), after.map((tags, index) => tags.map(tag => tag.height + (index === 0 ? 2 : 0))))
-      assert.deepEqual(leadingOverride.map(tags => tags.map(tag => tag.font)), after.map(tags => tags.map(tag => tag.font)))
+      const ratios = [[15 / 11, 15 / 10], [18 / 12, 18 / 11], [22 / 13, 22 / 12]]
+      for (const [index, tags] of after.entries()) for (const [variant, tag] of tags.entries()) {
+        const expected = Number.parseFloat(tag.font) * ratios[index][variant]
+        close(tag.line, expected)
+        close(tag.height, expected + [2, 3, 3][index])
+      }
       await page.locator('#tags').evaluate(fixture => {
-        fixture.style.setProperty('--line-height-small', '20px')
-        fixture.style.setProperty('--line-height-medium', '24px')
+        fixture.style.setProperty('--line-height-micro', '2')
+        fixture.style.setProperty('--line-height-small', '2')
+        fixture.style.setProperty('--line-height-medium', '2')
       })
-      const allLeadingOverrides = await measure()
-      assert.deepEqual(allLeadingOverrides.map(tags => tags.map(tag => tag.line)), [['17px', '17px'], ['20px', '20px'], ['24px', '24px']])
-      assert.deepEqual(allLeadingOverrides.map(tags => tags.map(tag => tag.height)), after.map(tags => tags.map(tag => tag.height + 2)))
+      const changed = await measure()
+      const adjustedRatios = [[2, 2 * 11 / 10], [2 * 13 / 12, 2 * 13 / 11], [2 * 15 / 13, 2 * 15 / 12]]
+      for (const [index, tags] of changed.entries()) for (const [variant, tag] of tags.entries()) {
+        assert.equal(tag.font, after[index][variant].font)
+        close(tag.line, Number.parseFloat(tag.font) * adjustedRatios[index][variant])
+      }
     } finally {await page.close()}
   })
 
@@ -406,7 +459,7 @@ for (const engine of engines) {
         assert.deepEqual(buttons.map(button => button.height), [24 + index * 4, 20 + index * 4, 20 + index * 4])
       }
       await page.evaluate(() => {
-        for (const size of ['small', 'medium', 'large']) document.documentElement.style.setProperty(`--line-height-${size}`, '30px')
+        for (const [index, size] of ['small', 'medium', 'large'].entries()) document.documentElement.style.setProperty(`--line-height-${size}`, `calc(30 / ${[13, 15, 17][index]})`)
       })
       for (const buttons of await measure()) for (const button of buttons) assert.equal(button.leading, '30px')
     } finally {await page.close()}
@@ -430,7 +483,7 @@ for (const engine of engines) {
       assert.deepEqual(await measure(), ['14px', '20px'])
       await page.evaluate(() => {
         document.documentElement.style.setProperty('--font-size-hint-medium', '16px')
-        document.documentElement.style.setProperty('--line-height-hint-medium', '24px')
+        document.documentElement.style.setProperty('--line-height-hint-medium', 'calc(24 / 16)')
       })
       assert.deepEqual(await measure(), ['16px', '24px'])
     } finally {await page.close()}
@@ -463,7 +516,7 @@ for (const engine of engines) {
       await page.goto(origin)
       await page.waitForFunction(() => customElements.get('a-input'))
       const baseline = await metrics(page)
-      await page.addStyleTag({content: '@layer anta.theme { :root { --font-size-medium: 19px; --line-height-medium: 28px; } }'})
+      await page.addStyleTag({content: '@layer anta.theme { :root { --font-size-medium: 19px; --line-height-medium: calc(28 / 19); } }'})
       const [, medium] = await metrics(page)
       for (const label of medium.labels) assert.deepEqual(label, ['19px', '28px'])
       assert.deepEqual(medium.hints, baseline[1].hints)
@@ -483,17 +536,17 @@ for (const engine of engines) {
         const hintsChanged = await metrics(page)
         for (const [index, current] of hintsChanged.entries()) {
           assert.deepEqual(current.labels, baseline[index].labels, `${mode}/${theme}: hint overrides retain main text`)
-          for (const hint of current.hints) assert.deepEqual(hint, [`${18 + index}px`, `${28 + index * 2}px`])
+          for (const hint of current.hints) assertPair(hint, [`${18 + index}px`, `${28 + index * 2}px`])
           assert.deepEqual(current.markOffsets, baseline[index].markOffsets)
-          assert.deepEqual(current.explicitHint, ['19px', '30px'])
+          assertPair(current.explicitHint, ['19px', '30px'])
         }
         await override(page, '')
         const labelsChanged = await metrics(page)
         for (const [index, current] of labelsChanged.entries()) {
           assert.deepEqual(current.hints, baseline[index].hints, `${mode}/${theme}: main overrides retain hints`)
-          for (const label of current.labels) assert.deepEqual(label, [`${18 + index}px`, `${28 + index * 2}px`])
-          assert.deepEqual(current.nativeSelect, [`${18 + index}px`, engine === firefox ? 'normal' : `${28 + index * 2}px`])
-          assert.deepEqual(current.explicitRadio, ['19px', '30px'])
+          for (const label of current.labels) assertPair(label, [`${18 + index}px`, `${28 + index * 2}px`])
+          assertPair(current.nativeSelect, [`${18 + index}px`, engine === firefox ? 'normal' : `${28 + index * 2}px`])
+          assertPair(current.explicitRadio, ['19px', '30px'])
         }
       }
     } finally { await page.close() }
@@ -514,7 +567,7 @@ for (const engine of engines) {
       const [after] = await metrics(page)
       for (const index of [3, 4, 5, 6, 7, 8, 9]) assert.deepEqual(after.labels[index], ['19px', '28px'])
       assert.deepEqual(after.hints, before[0].hints)
-      for (const [index, offset] of after.markOffsets.entries()) assert.equal(offset - before[0].markOffsets[index], 5)
+      for (const [index, offset] of after.markOffsets.entries()) close(offset - before[0].markOffsets[index], 5)
     } finally { await page.close() }
   })
 }

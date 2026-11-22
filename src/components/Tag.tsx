@@ -21,6 +21,9 @@ export interface TagProps extends BaseProps {
   size?: 'small' | 'medium' | 'large'
   /** Displays the content in uppercase. The original text remains unchanged. */
   allcaps?: boolean
+  /** Shows a pointer cursor and a stronger hover border when the whole tag
+   *  is actionable. Pressing restores the resting border. */
+  interactive?: boolean
   /** Adds a decorative icon before the text. */
   icon?: IconShape
   /** Adds a decorative icon after the text. */
@@ -56,6 +59,7 @@ export const Tag = ({
   priority,
   size,
   allcaps,
+  interactive,
   className,
   style,
   children,
@@ -89,6 +93,7 @@ export const Tag = ({
       // Boolean attribute: presence (empty string) on, omit off — the CSS
       // matches `[allcaps]` by presence, consistent across React / Preact.
       allcaps={allcaps ? '' : undefined}
+      interactive={interactive ? '' : undefined}
       class={className}
       style={computedStyle}
       {...rest}

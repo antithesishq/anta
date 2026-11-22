@@ -442,6 +442,8 @@ export interface ATagAttributes extends BaseAttributes {
   /** Render in all-caps instead of the default normal (mixed) case.
    *  Presence-based (`''` on, omit off). */
   allcaps?: boolean | ''
+  /** Pointer cursor and hover border for an actionable tag. Presence-based. */
+  interactive?: boolean | ''
 }
 
 /**

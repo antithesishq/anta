@@ -206,11 +206,7 @@ export const Button = ({
     icon != null && label == null && !hasButtonContent(children) && iconTrailing == null
 
   const sharedAttrs = {
-    // `<a-button>` is a custom element with no implicit ARIA role, so AT would
-    // announce it as a generic clickable — and `aria-pressed` below is only
-    // valid on a button/switch role. Publish `role="button"` from the wrapper
-    // (ARIA lives in the wrapper) for both the element and the `<a href>` path;
-    // a consumer's own `role` in `...rest` still wins by spread order.
+    // DOM-based role queries do not read ElementInternals defaults.
     role: 'button',
     priority,
     tone: toneAttr,

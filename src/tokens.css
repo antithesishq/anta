@@ -30,29 +30,30 @@
 }
 
 /* Color-scheme scopes inherit typography so nested light/dark surfaces retain
-   application overrides. Text and hint scales can be changed independently. */
+   application overrides. Text and hint scales can be changed independently.
+   Unitless leading inherits as a ratio and scales with each descendant's font. */
 @layer anta.reset {
   :root {
     --font-size-micro: 11px;
-    --line-height-micro: 15px;
+    --line-height-micro: calc(15 / 11);
     --font-size-tiny: 12px;
-    --line-height-tiny: 16px;
+    --line-height-tiny: calc(16 / 12);
     --font-size-small: 13px;
     --font-size-medium: 15px;
     --font-size-large: 17px;
-    --line-height-small: 18px;
-    --line-height-medium: 22px;
-    --line-height-large: 26px;
+    --line-height-small: calc(18 / 13);
+    --line-height-medium: calc(22 / 15);
+    --line-height-large: calc(26 / 17);
     --font-size-hint-small: 12px;
     --font-size-hint-medium: 14px;
     --font-size-hint-large: 16px;
-    --line-height-hint-small: 16px;
-    --line-height-hint-medium: 20px;
-    --line-height-hint-large: 24px;
+    --line-height-hint-small: calc(16 / 12);
+    --line-height-hint-medium: calc(20 / 14);
+    --line-height-hint-large: calc(24 / 16);
     --font-size-menu-medium: 14px;
     --font-size-menu-hint-medium: 12px;
     --font-size-code-block-medium: 13px;
-    --line-height-code-block-medium: 20px;
+    --line-height-code-block-medium: calc(20 / 13);
     --text-compensation-small: 0.5px;
     --text-compensation-medium: 1px;
     --text-compensation-large: 1.5px;
@@ -62,12 +63,12 @@
     --font-size-heading-4: 17px;
     --font-size-heading-5: 15px;
     --font-size-heading-6: 13px;
-    --line-height-heading-1: 34px;
-    --line-height-heading-2: 30px;
-    --line-height-heading-3: 26px;
-    --line-height-heading-4: 24px;
-    --line-height-heading-5: 22px;
-    --line-height-heading-6: 18px;
+    --line-height-heading-1: calc(34 / 28);
+    --line-height-heading-2: calc(30 / 24);
+    --line-height-heading-3: calc(26 / 20);
+    --line-height-heading-4: calc(24 / 17);
+    --line-height-heading-5: calc(22 / 15);
+    --line-height-heading-6: calc(18 / 13);
   }
 }
 

@@ -201,14 +201,14 @@
     margin-inline-start: 0;
   }
 
-  /* Reserve the label's first line so each control's own centering keeps its
-     ring, glyph, and thumb aligned in both plain and hinted rows. */
+  /* Non-text indicators reserve the row's computed first-line height even
+     when their own font size differs from the label's. */
   a-menu-item > a-checkbox,
   a-menu-item > a-checkbox[size],
   a-menu-item > a-radio,
   a-menu-item > a-radio[size],
   a-menu-item > a-switch[data-menu-item-switch] {
-    line-height: inherit;
+    line-height: var(--_menu-item-line-height);
     block-size: 1lh;
   }
 

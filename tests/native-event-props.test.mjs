@@ -17,6 +17,7 @@ before(async () => {
         export { Banner } from './src/components/Banner';
         export { Expander } from './src/components/Expander';
         export { Text } from './src/components/Text';
+        export { Button } from './src/components/Button';
         export { ButtonCopy } from './src/components/ButtonCopy';
         export { MenuItemCopy } from './src/components/MenuItemCopy';
         export { useCopyElementProps } from './src/components/copy-props';`,
@@ -54,6 +55,19 @@ test('Copy server projections do not invoke a configured layout effect', () => {
   })
   assert.equal(runtime.ButtonCopy({copy:'Value',label:'Copy'}).type, 'a-button')
   assert.equal(runtime.MenuItemCopy({copy:'Value',label:'Copy'}).type, 'a-menu-item')
+})
+
+test('Button projections retain explicit roles for DOM-based queries and authored overrides', () => {
+  runtime.configure(h, Symbol.for('fragment'), {})
+  const button = runtime.Button({label: 'Save'})
+  assert.equal(button.type, 'a-button')
+  assert.equal(button.props.role, 'button')
+  assert.equal(button.props.tabIndex, 0)
+  assert.equal(runtime.Button({label: 'Save', role: 'gridcell'}).props.role, 'gridcell')
+  const anchor = runtime.Button({label: 'Read docs', href: '/docs'})
+  assert.equal(anchor.type, 'a')
+  assert.equal(anchor.props.role, 'button')
+  assert.equal(runtime.Button({label: 'Read docs', href: '/docs', role: 'link'}).props.role, 'link')
 })
 
 test('worker Input projection forwards edits and clear callbacks without lifecycle hooks', () => {

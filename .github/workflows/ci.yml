@@ -39,12 +39,12 @@ jobs:
             node scripts/check-doc-review.mjs --base "$DOCS_BASE_SHA"
           fi
 
-  build:
-    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 45 || 30 }}
+  select-components:
+    timeout-minutes: 5
     runs-on: ubuntu-latest
-    env:
-      ANTA_TEST_WEBKIT: '0'
-      ANTA_COMPONENT_TEST_TIER: ${{ github.event_name == 'workflow_dispatch' && 'slow' || 'fast' }}
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      has-components: ${{ steps.matrix.outputs.has-components }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -55,6 +55,7 @@ jobs:
           TEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -z "$TEST_BASE_SHA" ]; then
+            echo 'tag=true' >> "$GITHUB_OUTPUT"
             echo 'typography=true' >> "$GITHUB_OUTPUT"
             echo 'value-ownership=true' >> "$GITHUB_OUTPUT"
             echo 'selection=true' >> "$GITHUB_OUTPUT"
@@ -80,6 +81,17 @@ jobs:
             echo 'toaster=true' >> "$GITHUB_OUTPUT"
             echo 'tooltip=true' >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            src/components/{Tag,Button,Icon}.tsx 'src/elements/a-tag.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \
+            src/{jsx-runtime,anta_helpers,button-content,general_types,index,bundle}.ts src/elements/index.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            tests/tag-csp.mjs 'tests/component*.mjs' scripts/build-bundle.mjs \
+            .github/workflows/{ci,component-tests}.yml package.json pnpm-lock.yaml pnpm-workspace.yaml site/package.json)
+          if [ -n "$changed" ]; then
+            echo 'tag=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'tag=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-button.*' 'src/elements/a-tab*' 'src/elements/a-input*' \
@@ -420,6 +432,21 @@ jobs:
           else
             echo 'toaster=false' >> "$GITHUB_OUTPUT"
           fi
+      - name: Build component matrix
+        id: matrix
+        env:
+          COMPONENT_TEST_SELECTION: ${{ toJSON(steps.component-tests.outputs) }}
+        run: node tests/component-shards.mjs
+
+  root-tests:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    env:
+      ANTA_TEST_WEBKIT: '0'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -439,22 +466,57 @@ jobs:
           # The debounce case races the browser clock during setup.
           NODE_OPTIONS: >-
             --test-skip-pattern="^debounces typing, keeps previous matches, and shows activity only in the input$"
+
+  components:
+    name: "Component tests: ${{ matrix.name }}"
+    needs: select-components
+    if: needs.select-components.outputs.has-components == 'true'
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 45 || 20 }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select-components.outputs.matrix) }}
+    env:
+      ANTA_TEST_WEBKIT: '0'
+      ANTA_COMPONENT_TEST_TIER: ${{ github.event_name == 'workflow_dispatch' && 'slow' || 'fast' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      # Workspace prepare scripts build Anta, stickers, Plot, Virtual Scroll, and the TypeDoc theme on install.
+      - name: Install dependencies and build workspace
+        timeout-minutes: 10
+        run: pnpm install --frozen-lockfile
       - name: Test selected components
         timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 25 || 10 }}
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
-          COMPONENT_TEST_SELECTION: ${{ toJSON(steps.component-tests.outputs) }}
-        run: |
-          components=$(node --input-type=module -e '
-            import { componentSuites } from "./tests/component-suites.mjs";
-            const selection = JSON.parse(process.env.COMPONENT_TEST_SELECTION);
-            process.stdout.write(Object.keys(componentSuites)
-              .filter(name => selection[name] === "true").join(","));
-          ')
-          if [ -n "$components" ]; then
-            pnpm test:components --component "$components"
-          fi
+          COMPONENTS: ${{ matrix.components }}
+        run: pnpm test:components --component "$COMPONENTS"
 
+  packages:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    env:
+      ANTA_TEST_WEBKIT: '0'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      # Workspace prepare scripts build Anta, stickers, Plot, Virtual Scroll, and the TypeDoc theme on install.
+      - name: Install dependencies and build workspace
+        timeout-minutes: 10
+        run: pnpm install --frozen-lockfile
       - name: Typecheck stickers
         run: pnpm --filter @antadesign/stickers run typecheck
       - name: Typecheck plot
@@ -471,6 +533,25 @@ jobs:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Verify TypeDoc theme package
         run: pnpm --filter @antadesign/typedoc-theme exec npm pack --dry-run
+
+  site:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    env:
+      ANTA_TEST_WEBKIT: '0'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      # Workspace prepare scripts build Anta, stickers, Plot, Virtual Scroll, and the TypeDoc theme on install.
+      - name: Install dependencies and build workspace
+        timeout-minutes: 10
+        run: pnpm install --frozen-lockfile
       - name: Lint site CSS
         run: pnpm --filter anta-site run lint:css
       - name: Typecheck search worker
@@ -483,3 +564,28 @@ jobs:
         run: pnpm --filter anta-site test:production
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
+
+  # Keep the required check name stable while independent jobs run in parallel.
+  build:
+    if: ${{ always() }}
+    needs: [select-components, root-tests, components, packages, site]
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required jobs
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module -e '
+            const jobs = JSON.parse(process.env.JOB_RESULTS);
+            const failed = Object.entries(jobs).filter(([name, job]) => {
+              if (job.result === "success") return false;
+              return !(name === "components" && job.result === "skipped"
+                && jobs["select-components"].result === "success"
+                && jobs["select-components"].outputs["has-components"] === "false");
+            });
+            if (failed.length) {
+              for (const [name, job] of failed) console.error(`${name}: ${job.result}`);
+              process.exit(1);
+            }
+          '

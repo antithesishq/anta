@@ -189,8 +189,9 @@ export default function Demo() {
 ```
 
 Place a `Button` inside the tag to remove it. Give the button an accessible
-name, such as “Remove Frontend.” After removal, this example moves focus to
-**Reset example**, which restores the tag.
+name, such as “Remove Frontend.” A button at the start or end sits flush with
+that edge of the tag. After removal, this example moves focus to **Reset
+example**, which restores the tag.
 
 ```tsx
 import { useRef, useState } from 'preact/hooks'

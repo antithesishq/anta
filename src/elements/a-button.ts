@@ -103,6 +103,7 @@ export class AButtonElement extends HTMLElementBase {
     super();
     try {
       this.internals = this.attachInternals?.();
+      if (this.internals) this.internals.role = "button";
     } catch {}
   }
 

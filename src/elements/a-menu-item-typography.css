@@ -16,16 +16,19 @@
     --_menu-item-line-height: 1lh;
 
     font-size: var(--font-size-menu-medium);
-    line-height: calc(20em / 14);
+    line-height: calc(20 / 14);
   }
 
-  a-menu-item-label,
-  a-menu-item > [data-indicator] {
+  a-menu-item-label {
     line-height: inherit;
+  }
+
+  a-menu-item > [data-indicator] {
+    line-height: var(--_menu-item-line-height);
   }
 
   a-menu-item-hint {
     font-size: var(--font-size-menu-hint-medium);
-    line-height: calc(16em / 12);
+    line-height: calc(16 / 12);
   }
 }

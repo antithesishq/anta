@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const COMPONENT_GROUPS = ['content', 'controls', 'inputs', 'feedback', 'layout']
+export const COMPONENT_GROUPS = ['content', 'media', 'controls', 'inputs', 'feedback', 'layout']
 export const NAV_GROUPS = ['overview', 'setup', 'design', ...COMPONENT_GROUPS, 'packages']
 
 const entryId = z.string().regex(/^[a-z0-9]+(?:[/-][a-z0-9]+)*$/)

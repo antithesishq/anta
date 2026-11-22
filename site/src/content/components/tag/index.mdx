@@ -1,5 +1,6 @@
 ---
 title: Tag
+author: "Vlad Korobov"
 nav:
   icon: tag
   group: content
@@ -17,8 +18,7 @@ import TagRemoveDemo from './tag-remove.demo'
 
 # Tag
 
-`Tag` displays short statuses, counts, and metadata. Use a label on its own or
-pair it with a value, such as a build result or version number.
+`Tag` displays short statuses, counts, and metadata.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -34,7 +34,7 @@ pair it with a value, such as a build result or version number.
 ## Priority
 
 `priority` controls emphasis. Use `primary` for a solid fill, `secondary` for a
-subtle fill, or `tertiary` for an outline. The default is `secondary`.
+subtle fill, or `tertiary` for an outline.
 
 <Preview>
   <Tag priority="primary" tone="brand" label="Primary" />
@@ -144,8 +144,9 @@ export default function Demo() {
 
 ## Size
 
-`size` sets the tag's dimensions. Choose `small`, `medium`, or `large`;
-`medium` is the default.
+Match `size` to the surrounding content: use `small` for compact metadata in
+dense tables or lists, `medium` for status labels beside body text, and `large`
+beside headings or larger controls.
 
 <Preview>
   <Tag tone="info" size="small" label="Small" />
@@ -273,11 +274,12 @@ export default function Demo() {
 ## Interactive tags
 
 `Tag` displays content. Wrap it in an anchor when it links to a destination;
-the anchor provides keyboard focus and activation.
+the anchor provides keyboard focus and activation. Add `interactive` for a
+pointer cursor and a stronger border on hover.
 
 <Preview>
-  <a href="/tag/#size" style={{ display: 'inline-flex', textDecoration: 'none' }}>
-    <Tag tone="info" icon="external-link" label="Tag sizes" />
+  <a href="/tag/#size">
+    <Tag interactive tone="info" icon="external-link" label="Tag sizes" />
   </a>
 </Preview>
 
@@ -286,58 +288,58 @@ import { Tag } from '@antadesign/anta/bundle'
 
 export default function Demo() {
   return (
-    <a href="/tag/#size" style={{ display: 'inline-flex', textDecoration: 'none' }}>
-      <Tag tone="info" icon="external-link" label="Tag sizes" />
+    <a href="/tag/#size">
+      <Tag interactive tone="info" icon="external-link" label="Tag sizes" />
     </a>
   )
 }
 ```
 
-Place a `Button` inside the tag to remove it. Give the button an accessible
-name, such as “Remove Frontend.” After removal, this example moves focus to
-**Reset example**, which restores the tag.
+Place a `Button` inside a tag when users need to act on it, such as removing
+an applied filter. Handle the button's `onClick` to update application state
+and control whether the tag is rendered.
 
 <Preview>
   <TagRemoveDemo client:load />
-  <style is:inline>{`
-    a-tag.removable-tag { padding-block: 0; }
-    a-tag.removable-tag > a-button { align-self: stretch; }
-    a-tag.removable-tag > a-button:focus-visible { outline-offset: -2px; }
-  `}</style>
 </Preview>
 
 ```tsx folded
-import { useRef, useState } from 'preact/hooks'
+import { useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { Button, Tag } from '@antadesign/anta'
 
 export default function Demo() {
   const [visible, setVisible] = useState(true)
   const controls = useRef<HTMLDivElement>(null)
+  const previousVisible = useRef(visible)
+
+  useLayoutEffect(() => {
+    if (previousVisible.current !== visible) {
+      controls.current?.querySelector<HTMLElement>('a-button')?.focus()
+      previousVisible.current = visible
+    }
+  }, [visible])
 
   return (
     <div ref={controls} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       {visible && (
-        <Tag className="removable-tag" tone="info" label="Frontend">
-          <Button priority="quaternary" size="small" icon="x" aria-label="Remove Frontend"
-            onClick={() => {
-              setVisible(false)
-              controls.current?.querySelector<HTMLElement>('.reset-tag')?.focus()
-            }} />
+        <Tag tone="info" label="Frontend">
+          <Button
+            priority="tertiary"
+            tone="info"
+            size="small"
+            icon="x"
+            aria-label="Remove Frontend"
+            onClick={() => setVisible(false)}
+          />
         </Tag>
       )}
-      <Button className="reset-tag" label="Reset example" onClick={() => setVisible(true)} />
-      <style>{`
-        a-tag.removable-tag { padding-block: 0; }
-        a-tag.removable-tag > a-button { align-self: stretch; }
-        a-tag.removable-tag > a-button:focus-visible { outline-offset: -2px; }
-      `}</style>
+      {!visible && (
+        <Button size="small" label="Reset example" onClick={() => setVisible(true)} />
+      )}
     </div>
   )
 }
 ```
-
-Keep navigation and removal as sibling controls when a tag needs both actions.
-Do not nest a remove button inside an anchor or button that wraps the tag.
 
 <Disclosure title="Component props" open>
 

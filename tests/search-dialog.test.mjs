@@ -88,6 +88,79 @@ async function setup(t, respond = async route => reply(route, { answer: 'Use the
   return { page, input, requests }
 }
 
+test('opening search selects a prefilled query so typing replaces it', async t => {
+  const { page, input } = await setup(t)
+  await input.press('Escape')
+  await page.locator('a-dialog[state="closed"]').waitFor({ state: 'attached' })
+  await page.evaluate(() => {
+    const trigger = document.createElement('button')
+    trigger.dataset.sidebarSearchInput = ''
+    trigger.value = 'font family'
+    trigger.addEventListener('click', () => document.dispatchEvent(new Event('anta-search-open')))
+    document.body.append(trigger)
+    trigger.click()
+  })
+  await input.waitFor()
+  assert.deepEqual(await input.evaluate(input => [input.selectionStart, input.selectionEnd]), [0, 11])
+  await page.keyboard.type('tag')
+  assert.equal(await input.inputValue(), 'tag')
+})
+
+test('search shortcuts work across layouts and select the query on every reopen', async t => {
+  const { page, input } = await setup(t)
+  await input.fill('existing query')
+  for (const keys of [
+    { key: '/', code: 'Slash' },
+    { key: '.', code: 'Slash' },
+    { key: '/', code: 'Digit7', shiftKey: true },
+    { key: 'л', code: 'KeyK', metaKey: true },
+    { key: 'л', code: 'KeyK', ctrlKey: true },
+    { key: 'k', code: 'KeyV', metaKey: true },
+    { key: 'k', code: 'KeyK', ctrlKey: true },
+  ]) {
+    await input.press('Escape')
+    await page.locator('a-dialog[state="closed"]').waitFor({ state: 'attached' })
+    const canceled = await page.evaluate(keys => {
+      const event = new KeyboardEvent('keydown', { ...keys, bubbles: true, cancelable: true })
+      document.body.dispatchEvent(event)
+      return event.defaultPrevented
+    }, keys)
+    assert.equal(canceled, true, JSON.stringify(keys))
+    await input.waitFor()
+    assert.deepEqual(await input.evaluate(input => [input.selectionStart, input.selectionEnd]), [0, 14])
+  }
+  await page.keyboard.type('replacement')
+  assert.equal(await input.inputValue(), 'replacement')
+})
+
+test('physical search keys leave editing, composition, and shifted punctuation alone', async t => {
+  const { page, input } = await setup(t)
+  for (const keys of [{ key: '.', code: 'Slash' }, { key: 'л', code: 'KeyK', metaKey: true }]) {
+    const canceled = await input.evaluate((input, keys) => {
+      const event = new KeyboardEvent('keydown', { ...keys, bubbles: true, composed: true, cancelable: true })
+      input.dispatchEvent(event)
+      return event.defaultPrevented
+    }, keys)
+    assert.equal(canceled, false)
+  }
+  await input.press('Escape')
+  await page.locator('a-dialog[state="closed"]').waitFor({ state: 'attached' })
+  for (const keys of [
+    { key: '?', code: 'Slash', shiftKey: true },
+    { key: '÷', code: 'Slash', altKey: true },
+    { key: 'л', code: 'KeyK' },
+    { key: '.', code: 'Slash', isComposing: true },
+  ]) {
+    const canceled = await page.evaluate(keys => {
+      const event = new KeyboardEvent('keydown', { ...keys, bubbles: true, cancelable: true })
+      document.body.dispatchEvent(event)
+      return event.defaultPrevented
+    }, keys)
+    assert.equal(canceled, false, JSON.stringify(keys))
+    assert.equal(await page.locator('a-dialog[state="open"]').count(), 0)
+  }
+})
+
 test('full-text matches and failures never trigger AI', async t => {
   const { page, input, requests } = await setup(t)
   await input.fill('button')
@@ -133,7 +206,8 @@ test('debounces typing, keeps previous matches, and shows activity only in the i
     const search = window.runFullText
     window.runFullText = query => { window.searchCalls.push(query); return search(query) }
   })
-  await page.clock.pauseAt(new Date())
+  // The browser's mock clock can run ahead of the host clock.
+  await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1_000)))
   await input.fill('bu')
   await page.clock.runFor(80)
   await input.fill('butt')

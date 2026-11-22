@@ -55,7 +55,7 @@
     --tab-secondary-bg: var(--tab-secondary-neutral-bg);
 
     font-size: var(--font-size-medium);
-    line-height: calc(var(--line-height-medium) - 2px);
+    line-height: var(--line-height-medium);
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -92,14 +92,14 @@
     --tab-height: 24px;
 
     font-size: var(--font-size-small);
-    line-height: calc(var(--line-height-small) - 2px);
+    line-height: var(--line-height-small);
   }
   a-tabs[size="large"] {
     --tab-padding-x: 13px;
     --tab-height: 32px;
 
     font-size: var(--font-size-large);
-    line-height: calc(var(--line-height-large) - 2px);
+    line-height: var(--line-height-large);
   }
   /* Icons and loaders track the tab size (medium = the 16px default). */
   a-tabs a-tab :is(a-icon, a-loader) { --icon-size: 16px; }

@@ -69,7 +69,7 @@
        Themes can retune it without changing icon-only or paddingless buttons. */
     --_padding-x-text: round(calc(0.8em - 2px), 1px);
     --button-padding-x: var(--_padding-x-text);
-    --button-padding-y: calc((8px - var(--text-compensation-medium)) / 2);
+    --button-padding-y: calc((6px - var(--text-compensation-medium)) / 2);
 
     --button-timing-in: 75ms ease-in;
     --button-timing-active: 50ms linear;
@@ -180,7 +180,7 @@
     font-family: var(--sans-serif);
     font-weight: 450;
     font-stretch: normal;
-    line-height: calc(var(--line-height-medium) - 2px);
+    line-height: var(--line-height-medium);
     letter-spacing: 0.025ch;
 
     text-overflow: ellipsis;
@@ -198,10 +198,6 @@
        just its children + padding. Paddingless quaternary opts out below. */
     min-height: 28px;
 
-    &:has(> a-button-label) {
-      --button-padding-y: calc((6px - var(--text-compensation-medium)) / 2);
-    }
-
     & > a-button-label {
       display: inline-block;
       text-overflow: ellipsis;
@@ -210,10 +206,10 @@
       overflow: hidden;
       min-width: 0;
 
-      line-height: calc(1lh + 2px);
+      line-height: inherit;
       /* Optically centers Anta's font (glyphs sit slightly low in the line-box —
          a font-metric offset that scales with size: 0.5 / 1 / 1.5px). The button
-         outer padding absorbs the compensation and extra label leading. */
+         outer padding absorbs the compensation. */
       padding-bottom: var(--text-compensation-medium);
 
       &:has(> *) {
@@ -276,14 +272,11 @@
     }
 
     &[size="small"] {
-      --button-padding-y: calc((8px - var(--text-compensation-small)) / 2);
+      --button-padding-y: calc((6px - var(--text-compensation-small)) / 2);
 
       font-size: var(--font-size-small);
-      line-height: calc(var(--line-height-small) - 2px);
+      line-height: var(--line-height-small);
 
-      &:has(> a-button-label) {
-        --button-padding-y: calc((6px - var(--text-compensation-small)) / 2);
-      }
       & > a-button-label { padding-bottom: var(--text-compensation-small); }
       min-height: 24px;
       /* Icon tracks the button size (medium is the a-icon default, 16px). An
@@ -291,14 +284,11 @@
       & a-icon { --icon-size: 14px; }
     }
     &[size="large"] {
-      --button-padding-y: calc((8px - var(--text-compensation-large)) / 2);
+      --button-padding-y: calc((6px - var(--text-compensation-large)) / 2);
 
       font-size: var(--font-size-large);
-      line-height: calc(var(--line-height-large) - 2px);
+      line-height: var(--line-height-large);
 
-      &:has(> a-button-label) {
-        --button-padding-y: calc((6px - var(--text-compensation-large)) / 2);
-      }
       & > a-button-label { padding-bottom: var(--text-compensation-large); }
       min-height: 32px;
       & a-icon { --icon-size: 18px; }
@@ -625,9 +615,6 @@
     --text-compensation-small: 0px;
     --text-compensation-medium: 0px;
     --text-compensation-large: 0px;
-
-    /* The field already supplies the full text leading. */
-    & > a-button-label { line-height: inherit; }
   }
 }
 

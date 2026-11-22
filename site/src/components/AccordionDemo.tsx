@@ -9,9 +9,21 @@ function useElements() {
 }
 
 const ITEMS = [
-  { id: 'shipping', title: 'Shipping & delivery', body: 'Orders ship within two business days; delivery takes three to five more.' },
-  { id: 'returns', title: 'Returns', body: 'Unworn items return free within 30 days of delivery.' },
-  { id: 'warranty', title: 'Warranty', body: 'Every product carries a one-year limited warranty.' },
+  {
+    id: 'shipping',
+    title: 'Shipping & delivery',
+    body: 'Orders ship within two business days. Standard delivery takes another three to five business days. We send a tracking link as soon as your package leaves the warehouse.',
+  },
+  {
+    id: 'returns',
+    title: 'Returns',
+    body: 'Unworn items can be returned free within 30 days of delivery. Keep the original packaging and start a return from your order details. We issue a refund after inspecting the returned items.',
+  },
+  {
+    id: 'warranty',
+    title: 'Warranty',
+    body: 'Every product includes a one-year limited warranty covering defects in materials and workmanship. Contact support with your order number and a description of the issue so we can arrange a repair or replacement.',
+  },
 ]
 
 /**

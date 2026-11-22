@@ -114,7 +114,7 @@ test('production search reveals folded theme content and prioritizes the current
   await page.goto('https://anta.test/theming/', { waitUntil: 'domcontentloaded' })
   await search('font')
   assert.ok((await page.locator('#docs-search-results a').first().getAttribute('href')).startsWith('/theming/'))
-  await page.locator('#docs-search-results a').filter({ hasText: 'Fonts in a theme' }).first().click()
+  await page.locator('#docs-search-results a').filter({ hasText: 'Font family' }).first().click()
   await page.locator('#fonts-in-a-theme mark').waitFor({ state: 'visible' })
   assert.notEqual(await section('fonts-in-a-theme').getAttribute('open'), null)
 

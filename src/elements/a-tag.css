@@ -45,6 +45,7 @@
     --tag-bg-secondary: light-dark(color-mix(in oklch, var(--tag-tint) 10%, transparent), color-mix(in oklch, var(--tag-tint) 20%, transparent));
     --tag-bg: var(--tag-bg-secondary);
     --tag-border: light-dark(color-mix(in oklch, var(--tag-tint) 15%, transparent), color-mix(in oklch, var(--tag-tint) 25%, transparent));
+    --tag-border-hover: color-mix(in oklch, var(--tag-border), var(--tag-text) 50%);
     --tag-separator: color-mix(in oklch, var(--tag-text) 30%, transparent);
 
     /* Reclaim vertical padding for label leading without growing the pill. */
@@ -59,6 +60,7 @@
     gap: var(--tag-gap);
     box-sizing: border-box;
     vertical-align: middle;
+    cursor: default;
     overflow: hidden;
     white-space: nowrap;
     -webkit-user-drag: none;
@@ -74,13 +76,26 @@
     font-family: var(--sans-serif);
     font-weight: 450;
     font-size: var(--font-size-tiny);
-    line-height: var(--line-height-small);
+    /* Match the shared small leading at Tag's smaller font size. */
+    line-height: calc(var(--line-height-small) * 13 / 12);
     /* Normal (mixed) case is the default. Theme-free tags use deliberately
        open tracking; reference themes can tune it for their chosen font. */
     text-transform: none;
     letter-spacing: 0.1ch;
     /* Counts, versions, and timers keep stable figure widths with any font. */
     font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  a-tag[interactive] { cursor: pointer; }
+
+  /* Pressed wrappers also suppress hover when the tag itself is not :active. */
+  @media (hover: hover) and (pointer: fine) {
+    a-tag[interactive]:hover:not(:active, :active *) {
+      border-color: var(--tag-border-hover);
+    }
+    @media (forced-colors: active) {
+      a-tag[interactive]:hover:not(:active, :active *) { border-color: Highlight; }
+    }
   }
 
   /* Icons scale to the pill (the default 16px a-icon is too big here) and
@@ -120,6 +135,34 @@
      `max(0px, …)` keeps it from going negative at small sizes. */
   a-tag:has(> a-icon:first-child) { padding-inline-start: max(0px, var(--tag-padding-inline) - 2px); }
   a-tag:has(> a-icon:last-child)  { padding-inline-end:   max(0px, var(--tag-padding-inline) - 2px); }
+
+  a-tag > :is(a-button, button, a[data-anta][role="button"]) {
+    border-radius: inherit;
+  }
+
+  /* Edge buttons supply their own spacing inside the tag. */
+  a-tag:has(> :is(a-button, button, a[data-anta][role="button"]):first-child) {
+    padding-inline-start: 0;
+  }
+  a-tag:has(> :is(a-button, button, a[data-anta][role="button"]):last-child) {
+    padding-inline-end: 0;
+  }
+
+  /* Icon actions follow the tag's density instead of Button's size floor. */
+  a-tag > :is(a-button, button[data-anta], a[data-anta][role="button"]):has(> a-icon:only-of-type):not(:has(> :not(a-icon, a-tooltip, a-copy))) {
+    flex: none;
+    box-sizing: border-box;
+    font-size: inherit;
+    line-height: inherit;
+    inline-size: 1lh;
+    block-size: 1lh;
+    min-inline-size: 0;
+    min-block-size: 0;
+    padding: 0;
+
+    & > a-icon { --icon-size: var(--tag-icon-size); }
+    &:focus-visible { outline-offset: -2px; }
+  }
 
   /* Segmented children — when raw children (not the structured label /
      value) are passed, each segment after the first gets a hairline
@@ -180,11 +223,15 @@
      they sit after the tone rules so their equal-specificity `--tag-bg` /
      `--tag-text` overrides win the cascade. */
 
-  /* Primary — solid `--tag-bg-solid` with white text. The hairline border keeps
-     the vivid `--tag-tint` edge (= the secondary border). */
+  /* Reserve border space so the primary hover edge does not change geometry. */
   a-tag[priority="primary"] {
     --tag-bg: var(--tag-bg-solid);
     --tag-text: #fff;
+    --tag-border: transparent;
+    --tag-border-hover: light-dark(
+      color-mix(in oklch, #000 50%, transparent),
+      color-mix(in oklch, #fff 50%, transparent)
+    );
   }
   /* Custom-tone primary needs the white text re-stated at higher specificity
      to out-rank the custom `--tag-text` (the `[tone]:not(…)` selector). */
@@ -225,19 +272,22 @@
     --tag-icon-size: 15px;
 
     font-size: var(--font-size-small);
-    line-height: var(--line-height-medium);
+    line-height: calc(var(--line-height-medium) * 15 / 13);
   }
 
   /* Uppercase reads larger, so reduce the regular size by 1px. */
   a-tag[allcaps] {
     font-size: calc(var(--font-size-tiny) - 1px);
+    line-height: calc(var(--line-height-small) * 13 / 11);
     text-transform: uppercase;
   }
   a-tag[size="small"][allcaps] {
     font-size: calc(var(--font-size-micro) - 1px);
+    line-height: calc(var(--line-height-micro) * 11 / 10);
   }
   a-tag[size="large"][allcaps] {
     font-size: calc(var(--font-size-small) - 1px);
+    line-height: calc(var(--line-height-medium) * 15 / 12);
   }
 
   /* Tones are intentionally not re-created in forced colors: a status still

@@ -7,10 +7,13 @@ component matrices run separately.
 pnpm test
 pnpm test:components --component select,tooltip
 pnpm test:typography
+pnpm test:tag
 ```
 
 Typography checks cover independent text and hint overrides across sizes,
-themes, nested color scopes, and imports with or without the optional reset.
+themes, nested color scopes, unitless leading through nested font sizes, and
+imports with or without the optional reset. Tag checks cover cursor and border
+states, touch input, CSS-only imports, and React/Preact attribute updates.
 
 Browser checks use the site's Playwright installation. Install its browsers with:
 
@@ -34,6 +37,9 @@ pnpm test:components --component all --list
 
 - **Fast** runs core Chromium regressions. PR CI selects affected suites through
   change gates and includes both granular and full-bundle imports in CSP suites.
+  Selected suites are distributed across up to four parallel CI jobs, with one
+  shared-runner invocation per shard. Job names list the included suites. Each
+  runner keeps two test files active.
 - **Slow** includes fast checks, expanded browser and visual coverage, and
   installed-package checks where available. Run it when expanded coverage is
   needed. The manual **Component matrix** workflow supports one suite or all.
@@ -85,6 +91,11 @@ have hydration checks that verify CSSOM updates after commit without parsed
 inline attributes.
 
 ## CI bounds and follow-ups
+
+Root regressions, component shards, package checks, and site validation run in
+parallel. The final `build` check waits for all four workloads and component
+selection. Component jobs may be skipped only when no suite was selected; a
+failed, cancelled, or unexpectedly skipped job makes `build` fail.
 
 New runs cancel older runs for the same PR. Manual CI runs remain independent.
 The workflow bounds jobs, installation, and browser test steps so a stalled

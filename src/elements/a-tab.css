@@ -44,7 +44,7 @@
     white-space: nowrap;
     text-wrap: nowrap;
 
-    /* Match Button label leading and absorb its extra 2px in block padding,
+    /* Match Button label leading and absorb compensation in block padding,
        preserving 24/28/32px heights and the existing optical text position. */
     min-height: var(--tab-height);
     padding-block: 0;
@@ -94,7 +94,7 @@
   }
 
   a-tabs > a-tab > a-tab-label {
-    line-height: calc(1lh + 2px);
+    line-height: inherit;
     padding-bottom: var(--text-compensation-medium);
   }
 

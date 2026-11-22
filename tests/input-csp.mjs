@@ -293,13 +293,14 @@ for (const engine of engines) for (const mode of ['granular','bundle']) {
           assert.ok(Math.abs(metrics[center]-metrics.firstLine)<0.1,JSON.stringify({size,direct,center,metrics}))
         }
         const actionSize=height-4
-        assert.deepEqual(metrics.clearSize,[actionSize,actionSize])
+        // Unitless leading can round a multiline action by one layout subpixel.
+        for(const dimension of metrics.clearSize) assert.ok(Math.abs(dimension-actionSize)<0.04)
         assert.equal(metrics.clearPadding,'2px')
-        assert.equal(metrics.top,2)
+        assert.ok(Math.abs(metrics.top-2)<0.04)
         assert.equal(metrics.trailingPadding,'2px')
-        assert.equal(metrics.end,2)
-        assert.deepEqual(metrics.actionSize,[actionSize,actionSize])
-        assert.equal(metrics.actionTop,2)
+        assert.ok(Math.abs(metrics.end-2)<0.04)
+        for(const dimension of metrics.actionSize) assert.ok(Math.abs(dimension-actionSize)<0.04)
+        assert.ok(Math.abs(metrics.actionTop-2)<0.04)
         await page.locator('[data-custom-event="clearrequest"]').click()
         assert.equal(await field(page).evaluate(host=>host.value),'')
       }

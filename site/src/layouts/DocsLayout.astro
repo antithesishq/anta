@@ -11,7 +11,7 @@ import '@antadesign/plot/plot.css'
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
 import '../icons/docs-icons.css'
 import { ClientRouter } from 'astro:transitions'
-import { Button, Icon } from '@antadesign/anta'
+import { Button, Icon, Tag } from '@antadesign/anta'
 import PostHog from '../components/posthog.astro'
 import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
 import { getNavigationGroups, getNavigationTree } from '../../lib/content/catalog.mjs'
@@ -245,10 +245,10 @@ if (hasStructuredBreadcrumbs && title) {
         <span class="topbar-brand">
           <AntaLogo size={24} compact style={{ borderRadius: '1000px', border: '1px solid var(--border-3-brand)' }} />
           Anta
-          <Button size="small" priority="secondary" href="/changelog/" aria-label={`Changelog for version ${npmVersion}`}>
-            {npmVersion}
+          <a href="/changelog/" aria-label={`Changelog for version ${npmVersion}`}>
+            <Tag interactive label={npmVersion} />
             <a-tooltip follow>Changelog</a-tooltip>
-          </Button>
+          </a>
         </span>
       </div>
       <div class="topbar-center">

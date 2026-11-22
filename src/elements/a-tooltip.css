@@ -87,7 +87,7 @@
     font-weight: 400;
     font-style: normal;
     font-stretch: normal;
-    line-height: var(--line-height-hint-medium, 20px);
+    line-height: var(--line-height-hint-medium, calc(20 / 14));
     letter-spacing: var(--_tooltip-letter-spacing, 0.025ch);
     word-spacing: normal;
     text-transform: none;

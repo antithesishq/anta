@@ -19,7 +19,7 @@ Anta commercially under MIT with the default styles, Antune, or your own theme.
 
 <a id="fonts-in-a-theme"></a>
 
-## Fonts in a theme
+## Font family
 
 Anta's themes do not load fonts. `tokens.css` defines three system font stacks,
 which the optional themes preserve:
@@ -84,9 +84,37 @@ font-specific axis settings. They are examples of application font setup and
 are not imported by the published themes. Use your own font stylesheet and
 font sources in your application.
 
-<a id="heading-sizes"></a>
+<a id="text-and-hint-sizes"></a>
 
-## Heading sizes and text compensation
+## Font sizes
+
+Font sizes are CSS lengths. Line heights are unitless ratios that scale with
+nested font sizes. For example, `calc(22 / 15)` gives 15px text a 22px line height.
+
+### Main text
+
+Use `--font-size-SIZE` and `--line-height-SIZE` for each size below.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Micro | 11px | `calc(15 / 11)` |
+| Tiny | 12px | `calc(16 / 12)` |
+| Small | 13px | `calc(18 / 13)` |
+| Medium | 15px | `calc(22 / 15)` |
+| Large | 17px | `calc(26 / 17)` |
+
+### Hints
+
+Hints have an independent scale through `--font-size-hint-SIZE` and
+`--line-height-hint-SIZE`.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Small | 12px | `calc(16 / 12)` |
+| Medium | 14px | `calc(20 / 14)` |
+| Large | 16px | `calc(24 / 16)` |
+
+### Heading sizes
 
 Title, Expander summaries, native disclosure summaries, and raw headings share
 six heading levels. Dialog headers use level 4. Each level uses
@@ -94,12 +122,53 @@ six heading levels. Dialog headers use level 4. Each level uses
 
 | Level | Font size | Line height |
 | --- | --- | --- |
-| 1 | 28px | 34px |
-| 2 | 24px | 30px |
-| 3 | 20px | 26px |
-| 4 | 17px | 24px |
-| 5 | 15px | 22px |
-| 6 | 13px | 18px |
+| 1 | 28px | `calc(34 / 28)` |
+| 2 | 24px | `calc(30 / 24)` |
+| 3 | 20px | `calc(26 / 20)` |
+| 4 | 17px | `calc(24 / 17)` |
+| 5 | 15px | `calc(22 / 15)` |
+| 6 | 13px | `calc(18 / 13)` |
+
+### Menu labels
+
+Menu labels use `--font-size-menu-medium`, independently of the field size.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Medium | 14px | `calc(20 / 14)` |
+
+### Menu hints
+
+Menu hints use `--font-size-menu-hint-medium`.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Medium | 12px | `calc(16 / 12)` |
+
+### Code blocks
+
+Code blocks use `--font-size-code-block-medium` and
+`--line-height-code-block-medium`.
+
+| Size | Font size | Line height |
+| --- | --- | --- |
+| Medium | 13px | `calc(20 / 13)` |
+
+### Customize sizes
+
+Override font-size tokens with lengths and line-height tokens with unitless
+values. To give medium text a 24px line height at its default 15px font size:
+
+```css
+:root {
+  --line-height-medium: calc(24 / 15);
+}
+```
+
+For an individual component, set `font-size` and `line-height` on its styled
+element or exposed part.
+
+### Text compensation
 
 Button and Tabs share label bottom-padding compensation through
 `--text-compensation-small` (0.5px), `--text-compensation-medium` (1px), and
@@ -415,24 +484,3 @@ Tint held on the selected row — a % of the item color (--text-2).
 ### Progress
 
 Every color is a role token; Progress defines none of its own. Track = --bg-4, border = --border-4, the fill indicator = --bg-5, the label = --text-2, and the right-aligned hint = --text-3. Named tones swap in the matching -{tone} role variant (so dark mode is free), and the fill’s right-edge fades from --bg-5 to --border-4. Follows the Text and Background & Borders panels live.
-
-<a id="text-and-hint-sizes"></a>
-
-## Text and hint sizes
-
-Main text and supporting hints use independent scales. Each pair below is
-font size / line height, in pixels.
-
-| Size | Main text | Hint |
-| --- | --- | --- |
-| Micro | 11 / 15 | — |
-| Tiny | 12 / 16 | — |
-| Small | 13 / 18 | 12 / 16 |
-| Medium | 15 / 22 | 14 / 20 |
-| Large | 17 / 26 | 16 / 24 |
-
-Menus and code blocks keep separate typography: menu labels use 14 / 20,
-menu hints use 12 / 16, and code blocks use 13 / 20.
-
-For an individual component, set `font-size` and `line-height` on its styled
-element or exposed part.

@@ -53,7 +53,6 @@
     --tag-icon-size: 13px;
     --tag-label-weight: 600;
     --tag-gap: 0.6ch;
-    --_tag-font-size: var(--font-size-tiny);
 
     display: inline-flex;
     align-items: center;
@@ -74,7 +73,7 @@
 
     font-family: var(--sans-serif);
     font-weight: 450;
-    font-size: var(--_tag-font-size);
+    font-size: var(--font-size-tiny);
     line-height: 18px;
     /* Normal (mixed) case is the default. Theme-free tags use deliberately
        open tracking; reference themes can tune it for their chosen font. */
@@ -214,8 +213,8 @@
     --tag-padding-block: 0px;
     --tag-padding-inline: 4.5px;
     --tag-icon-size: 11px;
-    --_tag-font-size: var(--font-size-micro);
 
+    font-size: var(--font-size-micro);
     line-height: 15px;
   }
 
@@ -224,15 +223,21 @@
     --tag-padding-block: 1.5px;
     --tag-padding-inline: 8.5px;
     --tag-icon-size: 15px;
-    --_tag-font-size: var(--font-size-small);
 
+    font-size: var(--font-size-small);
     line-height: 20px;
   }
 
   /* Uppercase reads larger, so reduce the regular size by 1px. */
   a-tag[allcaps] {
-    font-size: calc(var(--_tag-font-size) - 1px);
+    font-size: calc(var(--font-size-tiny) - 1px);
     text-transform: uppercase;
+  }
+  a-tag[size="small"][allcaps] {
+    font-size: calc(var(--font-size-micro) - 1px);
+  }
+  a-tag[size="large"][allcaps] {
+    font-size: calc(var(--font-size-small) - 1px);
   }
 
   /* Tones are intentionally not re-created in forced colors: a status still

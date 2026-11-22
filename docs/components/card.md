@@ -296,6 +296,9 @@ padding. The one custom-color knob worth keeping is **`--card-tone-source`** (th
 color a custom `tone` derives from — set it to drive the palette from your own
 variable). The corner radius is **`--card-radius`**.
 
+Plain content inherits medium Text typography. String children render through
+Text at the Card's size, using the shared text scale.
+
 ```tsx
 <Card tone="#e0457b" header="Custom" />
 ```

@@ -181,7 +181,7 @@ import { Tag } from '@antadesign/anta/bundle'
 
 export default function Demo() {
   return (
-    <a href="/tag/#size" style={{ display: 'inline-flex', textDecoration: 'none' }}>
+    <a href="/tag/#size">
       <Tag tone="info" icon="external-link" label="Tag sizes" />
     </a>
   )

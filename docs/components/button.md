@@ -350,7 +350,9 @@ take ownership of `onClick`.
 
 ## Web Component
 
-When using `<a-button>` directly, add its button role and keyboard tab stop.
+`<a-button>` provides a default button role internally. The example also declares
+`role="button"` for role-based DOM queries and `tabindex="0"` for keyboard
+navigation.
 
 ```html
 <a-button role="button" tabindex="0" priority="primary">

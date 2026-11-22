@@ -12,6 +12,7 @@ changes are not listed.
 
 ### Changed
 
+- [Button](/button/#web-component) gives raw `<a-button>` elements a default button role internally after registration. JSX Buttons retain an explicit role for compatibility with DOM-based testing tools, and authored role overrides take precedence.
 - Consolidated [typography](/theming/#text-and-hint-sizes) into shared scales with more leading to reduce clipping and unitless line heights that scale through nested font sizes. Replace removed component typography variables with shared tokens or direct CSS overrides, using unitless values for line-height tokens.
 
 ### Removed

@@ -5,6 +5,7 @@ import { Menu } from "./Menu"
 import { MenuItemCopy } from "./MenuItemCopy"
 import { matchQueryRegex } from "./select-options"
 import { Tree, type TreeAction, type TreeItem } from "./Tree"
+import { treeHighlight } from "./tree-search"
 import { TreeSearchBar } from "./TreeSearchBar"
 
 /** Public props for the `<Inspector>` value tree. */
@@ -113,22 +114,6 @@ const revealEvent = () => new CustomEvent("statechange", { cancelable: true })
 /** How a row's text is highlighted: hits of a RegExp, or all of it. */
 type Marker = { regex: RegExp } | { all: true } | undefined
 
-// Wraps each hit of `regex` in `text` in <mark>.
-function markHits(text: string, regex: RegExp): React.ReactNode {
-  const out: React.ReactNode[] = []
-  let last = 0
-  regex.lastIndex = 0
-  for (let m = regex.exec(text); m; m = regex.exec(text)) {
-    if (m[0].length === 0) { regex.lastIndex++; continue }
-    if (m.index > last) out.push(text.slice(last, m.index))
-    out.push(<mark key={out.length}>{m[0]}</mark>)
-    last = m.index + m[0].length
-  }
-  if (!out.length) return text
-  if (last < text.length) out.push(text.slice(last))
-  return out
-}
-
 // Every node row has the ⋯ button, which opens the copy menu.
 const ROW_ACTIONS: TreeAction[] = [{ icon: "more", label: "More actions", opensMenu: true }]
 
@@ -158,7 +143,7 @@ function renderTokens(tokens: readonly Token[], wrap: boolean, marker?: Marker, 
   // copied text. Block rows stay on one line.
   return merged.flatMap((token, i) => {
     const text = !token.marked || !marker ? token.text
-      : "regex" in marker ? markHits(token.text, marker.regex) : <mark>{token.text}</mark>
+      : "regex" in marker ? treeHighlight(token.text, marker.regex) : <mark>{token.text}</mark>
     const tag = <a-inspector-token key={i} type={token.type}>{text}</a-inspector-token>
     return wrap && token.type === "comma" ? [tag, <wbr key={`${i}b`} />] : [tag]
   })

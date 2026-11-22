@@ -81,6 +81,7 @@ const jsxApp = `
   import React, { useState } from 'react'
   import { render } from 'preact'
   import { Tree } from '${source}/components/Tree'
+  import { FileSearchDemo } from '${resolve('site/src/components/TreeDemos')}'
   import { Icon } from '${source}/components/Icon'
   import { Menu } from '${source}/components/Menu'
   import { MenuItem } from '${source}/components/MenuItem'
@@ -136,6 +137,8 @@ const jsxApp = `
       React.createElement(Menu, { context: true }, React.createElement(MenuItem, { label: 'Rename ' + (menuItem ?? '…') })))
   }
   window.renderTree = props => render(React.createElement(App, props), document.querySelector('#mount'))
+  // The Tree docs' search demo, as the docs page renders it.
+  window.renderFileSearch = props => render(React.createElement(FileSearchDemo, props), document.querySelector('#mount'))
 `
 
 before(async () => {
@@ -143,7 +146,7 @@ before(async () => {
   for (const mode of ['granular', 'bundle']) {
     const contents = mode === 'bundle'
       ? `import '${source}/bundle';`
-      : ['tokens.css', 'reset.css', 'elements/a-tree', 'elements/a-menu', 'elements/a-menu-item', 'elements/a-button', 'elements/a-icon', 'elements/a-tooltip']
+      : ['tokens.css', 'reset.css', 'elements/a-tree', 'elements/a-menu', 'elements/a-menu-item', 'elements/a-button', 'elements/a-icon', 'elements/a-tooltip', 'elements/a-input']
         .map(path => `import '${source}/${path}';`).join(' ')
     const result = await build({
       stdin: { contents, resolveDir: process.cwd() }, bundle: true, write: false,
@@ -161,7 +164,8 @@ before(async () => {
     jsx: 'automatic', jsxImportSource: '@antadesign/anta',
     define: { 'process.env.NODE_ENV': '"production"' },
     nodePaths: [resolve('node_modules'), resolve('site/node_modules')],
-    alias: { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime'), react: requireSite.resolve('preact/compat') },
+    // The docs demos import from '@antadesign/anta', which resolves to the source here.
+    alias: { '@antadesign/anta': source, react: requireSite.resolve('preact/compat') },
   })
   for (const file of jsx.outputFiles) if (file.path.endsWith('.js')) assets.set('/jsx.js', file.text)
   assets.set('/axe.js', await readFile(require.resolve('axe-core/axe.min.js'), 'utf8'))
@@ -427,6 +431,63 @@ for (const engine of engines) {
     assert.deepEqual(await page.evaluate(() => window.contextmenuPrevented), [false], 'the browser menu was canceled')
     assert.equal((await events(page, 'itemmenu')).length, before, 'itemmenu was sent')
     assert.equal(await page.evaluate(() => document.querySelector('a-menu').isOpen), false)
+  })
+
+  // The Tree docs' search demo: TreeSearchBar, treeSearch, and treeHighlight on a plain Tree.
+  const searchPage = async (t, props = {}) => {
+    const page = await pageFor(t, engine, { kind: 'jsx' })
+    await page.evaluate(props => window.renderFileSearch(props), props)
+    return page
+  }
+  const searchBox = page => page.getByRole('searchbox')
+  const searchCount = page => page.locator('a-tree-toolbar [aria-live]').textContent()
+  const currentItem = page => page.evaluate(() => document.querySelector('a-tree-item[data-current]')?.getAttribute('item-id') ?? null)
+  const marksIn = (page, id) => page.locator(`a-tree-item[item-id="${id}"] > a-tree-row mark`).allTextContents()
+  const isOpenItem = (page, id) => page.locator(`a-tree-item[item-id="${id}"]`).evaluate(item => item.matches(':state(open)'))
+
+  test.fast(`${name}: search on a plain Tree counts, steps, reveals nested matches, highlights, and clears`, async t => {
+    const page = await searchPage(t)
+    assert.equal(await isOpenItem(page, 'src/ledger'), false, 'the folder starts closed')
+    await searchBox(page).fill('Transfer')
+    await page.waitForFunction(() => document.querySelector('a-tree-toolbar [aria-live]').textContent === '2 matches')
+    assert.equal(await currentItem(page), null)
+    // Enter reveals the first match, opening the folder above it, and marks its hit.
+    await searchBox(page).press('Enter')
+    await page.waitForFunction(() => document.querySelector('a-tree-item[data-current]')?.getAttribute('item-id') === 'src/ledger/transfer.ts')
+    assert.equal(await searchCount(page), '1 of 2')
+    assert.equal(await isOpenItem(page, 'src/ledger'), true, 'the match\'s folder did not open')
+    assert.deepEqual(await marksIn(page, 'src/ledger/transfer.ts'), ['transfer'])
+    assert.deepEqual(await marksIn(page, 'src/ledger/transfer.test.ts'), ['transfer'])
+    // Enter, Shift+Enter, and the buttons step and wrap.
+    await searchBox(page).press('Enter')
+    await page.waitForFunction(() => document.querySelector('a-tree-toolbar [aria-live]').textContent === '2 of 2')
+    await searchBox(page).press('Shift+Enter')
+    await page.waitForFunction(() => document.querySelector('a-tree-toolbar [aria-live]').textContent === '1 of 2')
+    await page.getByRole('button', { name: 'Previous match' }).click()
+    await page.waitForFunction(() => document.querySelector('a-tree-toolbar [aria-live]').textContent === '2 of 2')
+    await page.getByRole('button', { name: 'Next match' }).click()
+    await page.waitForFunction(() => document.querySelector('a-tree-toolbar [aria-live]').textContent === '1 of 2')
+    // A match in another closed folder.
+    await searchBox(page).fill('election')
+    await searchBox(page).press('Enter')
+    await page.waitForFunction(() => document.querySelector('a-tree-item[data-current]')?.getAttribute('item-id') === 'src/raft/election.ts')
+    assert.equal(await isOpenItem(page, 'src/raft'), true)
+    // Escape clears the query, the count, the marks, and the current item.
+    await searchBox(page).press('Escape')
+    await page.waitForFunction(() => document.querySelector('a-tree-toolbar [aria-live]').textContent === '')
+    assert.equal(await searchBox(page).inputValue(), '')
+    assert.equal(await page.locator('a-tree mark').count(), 0)
+    assert.equal(await currentItem(page), null)
+  })
+
+  test.fast(`${name}: a custom matcher finds files by extension and marks the whole name`, async t => {
+    const page = await searchPage(t, { byExtension: true })
+    await searchBox(page).fill('md')
+    await page.waitForFunction(() => document.querySelector('a-tree-toolbar [aria-live]').textContent === '2 matches')
+    await searchBox(page).press('Enter')
+    await page.waitForFunction(() => document.querySelector('a-tree-item[data-current]')?.getAttribute('item-id') === 'src/raft/README.md')
+    assert.deepEqual(await marksIn(page, 'src/raft/README.md'), ['README.md'])
+    assert.deepEqual(await marksIn(page, 'README.md'), ['README.md'])
   })
 
   test.fast(`${name}: data-focus focuses and reveals an item, and a new count repeats it`, async t => {

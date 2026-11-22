@@ -169,17 +169,6 @@
     background-color: color-mix(in oklch, var(--text-1-brand) 22%, transparent);
   }
 
-  /* Search: hits are marked in their token's own color, and the current
-     match's hits, on Tree's current-row background, stand out from the rest. */
-  a-inspector mark {
-    color: inherit;
-    background-color: color-mix(in oklch, var(--text-1-warning) 22%, transparent);
-    border-radius: 2px;
-  }
-
-  a-inspector a-tree-item[data-current] > a-tree-row mark {
-    background-color: color-mix(in oklch, var(--text-1-warning) 50%, transparent);
-  }
 
   /* Inline layout: a closed value flows in its sentence or table cell. Opening
      it makes a block, so the tree appears under the line. */

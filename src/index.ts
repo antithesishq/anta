@@ -210,6 +210,10 @@ export { Tabs } from './components/Tabs'
 export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
 export { Tree } from './components/Tree'
 export type { TreeProps, TreeItem, TreeAction, TreeIndicator, TreeItemState } from './components/Tree'
+export { TreeSearchBar } from './components/TreeSearchBar'
+export type { TreeSearchBarProps } from './components/TreeSearchBar'
+export { treeSearch, treeHighlight } from './components/tree-search'
+export type { TreeSearchMatch, TreeSearchQuery } from './components/tree-search'
 export { Steps } from './components/Steps'
 export type {
   StepsProps,

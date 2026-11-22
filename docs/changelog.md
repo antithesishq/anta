@@ -23,7 +23,8 @@ changes are not listed.
   [controlled](/tree/#control-the-open-items) and their children loaded when they open, and the tree supports the
   [keyboard](/tree/#keyboard-accessibility) as one Tab stop. [`current`](/tree/#mark-the-current-item) marks an item
   and scrolls it into view without moving focus, and `toolbar` places content, such as a search field, before the
-  tree. Inspector is built on Tree.
+  tree. [Search](/tree/#search) attaches to any Tree with `TreeSearchBar`, `treeSearch`, and `treeHighlight`.
+  Inspector is built on Tree, and its search uses the same search field.
 - [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
 - [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 

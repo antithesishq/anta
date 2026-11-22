@@ -16,6 +16,8 @@
  * @module
  */
 
+import type { TreeSearchQuery } from './tree-search'
+
 export type Options = {
   char_limit?: number
   /** Print `ref[...]` with the path to the first appearance for repeated references. Defaults to true. */
@@ -1508,7 +1510,7 @@ export function expandToPath(root: InspectNode, open: readonly string[], path: I
 }
 
 /** A text test for `inspectorSearch`: a regular expression, or a function. */
-export type InspectorMatcher = RegExp | ((text: string) => boolean)
+export type InspectorMatcher = Exclude<TreeSearchQuery, string | null>
 
 /** One row `inspectorSearch` found, and the field that matched. */
 export type InspectorMatch = {

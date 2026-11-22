@@ -100,7 +100,8 @@ The default search ignores case and treats spaces as any whitespace. Pass
 or a function of a row's text, which highlights the whole field. Searching
 reads the whole value, without calling getters, and stops at cycles.
 `inspectorSearch(value, matcher)` returns the same matches as paths, for a
-search field of your own.
+search field of your own. The field is `TreeSearchBar`, the same one
+[Tree's search](./tree.md#search) uses.
 
 ```tsx
 <Inspector value={report} searchable aria-label="Region report" />

@@ -62,6 +62,9 @@ export class ATreeElement extends HTMLElementBase {
   // Whether text in the tree was selected when the last press began; read by
   // the `contextmenu` that press opens.
   #selectedAtPress: boolean | undefined
+  // The selection a right-click left when it opened the tree's menu, as its
+  // endpoints, so a later press can tell it from one the reader made.
+  #browserSelection: [Node, number, Node, number] | null = null
 
   constructor() {
     super()
@@ -199,7 +202,8 @@ export class ATreeElement extends HTMLElementBase {
     // Whether the reader had text selected before this press. WebKit selects
     // the word under a right-click as the press's default action, after this
     // listener, so the selection `contextmenu` sees may be the browser's own.
-    this.#selectedAtPress = this.#hasSelectionIn(this)
+    // A selection WebKit made on an earlier right-click isn't the reader's either.
+    this.#selectedAtPress = this.#hasSelectionIn(this) && !this.#isBrowserSelection()
   }
 
   #onFocusIn = (event: FocusEvent) => {
@@ -413,12 +417,29 @@ export class ATreeElement extends HTMLElementBase {
       event.stopImmediatePropagation()
       return
     }
+    // Any selection now is the one this right-click made: remember it, so the
+    // next press doesn't take it for the reader's.
+    this.#browserSelection = this.#selectionRange()
     this.#setActive(item, { scroll: false })
     const id = item.getItemId()
     if (id !== null) this.#send<TreeItemMenuDetail>('itemmenu', { id })
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  // The current selection's endpoints, or null when nothing is selected.
+  #selectionRange(): [Node, number, Node, number] | null {
+    const selection = this.doc.getSelection()
+    if (!selection || selection.isCollapsed || !selection.anchorNode || !selection.focusNode) return null
+    return [selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset]
+  }
+
+  // Whether the selection is still the one a right-click left.
+  #isBrowserSelection(): boolean {
+    const now = this.#selectionRange()
+    const was = this.#browserSelection
+    return !!now && !!was && now.every((part, i) => part === was[i])
+  }
 
   #hasSelectionIn(node: Node): boolean {
     const selection = this.doc.getSelection()

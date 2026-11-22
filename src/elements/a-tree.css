@@ -69,6 +69,18 @@
     background-color: var(--tree-row-current);
   }
 
+  /* Search hits, such as from treeHighlight, keep their text's color; the
+     current item's hits stand out from the rest. */
+  a-tree mark {
+    color: inherit;
+    background-color: color-mix(in oklch, var(--text-1-warning) 22%, transparent);
+    border-radius: 2px;
+  }
+
+  a-tree-item[data-current] > a-tree-row mark {
+    background-color: color-mix(in oklch, var(--text-1-warning) 50%, transparent);
+  }
+
   a-tree-item:is(:state(open), :state(closed)):not([disabled]) > a-tree-row {
     cursor: pointer;
   }

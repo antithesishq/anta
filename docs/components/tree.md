@@ -148,18 +148,87 @@ to repeat a request for the same item.
 and scrolls into view when `current` changes, while focus and the keyboard's
 position stay where they are, so a search field keeps focus. Open the item's
 ancestors so it's shown. `toolbar` renders content, such as a search field, in an
-`a-tree-toolbar` before the tree, outside its `role="tree"`. The
-[Inspector's search](./inspector.md#search-a-value) uses both.
+`a-tree-toolbar` before the tree, outside its `role="tree"`. Search, below, uses
+both.
+
+## Search
+
+Tree has no search of its own; attach it with four exported pieces:
+
+- `TreeSearchBar`, a search field with a match count and Previous match and
+  Next match buttons, in the `toolbar` slot. Enter and Shift+Enter step
+  through the matches, and Escape clears the field.
+- `treeSearch(items, query)`, which returns the matching items in the order the
+  open tree shows them. Each match has the item's `id` and its `ancestors`.
+- `open` and `current`: to reveal a match, add its `ancestors` to `open` and
+  set `current` to its `id`.
+- `treeHighlight(text, query)`, which wraps each hit in `<mark>`, for the
+  items' labels. Tree styles the marks, and the current item's more strongly.
+
+A string query matches literally, ignoring case. Pass a `RegExp`, or a function
+of an item's text, for anything else, and `null` for no query. An item's text
+is its `label` when that's a string; pass `getText` to search other text.
 
 ```tsx
-<Tree
-  aria-label="Project files"
-  items={items}
-  open={open}
-  current={matches[index]}
-  toolbar={<Input type="search" aria-label="Search files" value={query} onValueChange={(_e, { value }) => setQuery(value)} />}
-/>
+import { Tree, TreeSearchBar, treeHighlight, treeSearch, type TreeItem } from '@antadesign/anta'
+
+function FileSearch({ files }) {
+  const [query, setQuery] = useState('')
+  const [index, setIndex] = useState<number | null>(null)
+  const [open, setOpen] = useState<string[]>([])
+
+  const toItems = (entries, label): TreeItem[] => entries.map(entry => ({
+    id: entry.path,
+    label: label(entry.name),
+    children: entry.entries && toItems(entry.entries, label),
+  }))
+  // Search the plain names, then render the same items with the hits marked.
+  const matches = treeSearch(toItems(files, name => name), query)
+
+  const step = (direction: 1 | -1) => {
+    if (!matches.length) return
+    const next = index === null ? (direction === 1 ? 0 : matches.length - 1) : (index + direction + matches.length) % matches.length
+    setIndex(next)
+    setOpen(keys => [...new Set([...keys, ...matches[next].ancestors])])
+  }
+
+  return (
+    <Tree
+      aria-label="Repository"
+      items={toItems(files, name => treeHighlight(name, query))}
+      open={open}
+      onStateChange={(_event, { next }) => setOpen(next)}
+      current={index === null ? undefined : matches[index]?.id}
+      toolbar={
+        <TreeSearchBar
+          query={query}
+          onQueryChange={next => { setQuery(next); setIndex(null) }}
+          count={matches.length}
+          index={index}
+          onStep={step}
+          aria-label="Search files"
+        />
+      }
+    />
+  )
+}
 ```
+
+A custom matcher changes what counts as a match. Here the query is a file
+extension, such as `ts` or `md`, and a function finds the files that end in it.
+
+```tsx
+const extension = query.trim().replace(/^\./, '')
+const matcher = extension ? (name: string) => name.endsWith(`.${extension}`) : null
+const matches = treeSearch(items, matcher)
+// …and treeHighlight(name, matcher) for the labels.
+```
+
+Search covers only the items in `items`. A folder whose children load when it
+opens, given as `children: []` until then, has nothing to search, and searching
+never loads it. To search what hasn't loaded, search on your server, load the
+folders above each match, then reveal it. The
+[Inspector's search](./inspector.md#search-a-value) uses the same search field.
 
 <a id="keyboard-accessibility"></a>
 

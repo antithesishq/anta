@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { Box, Button, Icon, Menu, MenuItem, Text, Tree, type TreeItem } from '@antadesign/anta'
+import {
+  Box, Button, Icon, Menu, MenuItem, Text, Tree, TreeSearchBar, treeHighlight, treeSearch,
+  type TreeItem, type TreeSearchQuery,
+} from '@antadesign/anta'
 
 // Demo islands for the Tree page. Tree keeps its open items and its Tab stop
 // in the JSX wrapper, so a demo must be hydrated for its items to open.
@@ -156,6 +159,86 @@ export function ControlledDemo() {
         }}
       />
     </Box>
+  )
+}
+
+type FileEntry = { path: string; name: string; entries?: FileEntry[] }
+
+const repository: FileEntry[] = [
+  { path: 'src', name: 'src', entries: [
+    { path: 'src/index.ts', name: 'index.ts' },
+    { path: 'src/ledger', name: 'ledger', entries: [
+      { path: 'src/ledger/transfer.ts', name: 'transfer.ts' },
+      { path: 'src/ledger/transfer.test.ts', name: 'transfer.test.ts' },
+      { path: 'src/ledger/balance.ts', name: 'balance.ts' },
+    ] },
+    { path: 'src/raft', name: 'raft', entries: [
+      { path: 'src/raft/log.ts', name: 'log.ts' },
+      { path: 'src/raft/election.ts', name: 'election.ts' },
+      { path: 'src/raft/README.md', name: 'README.md' },
+    ] },
+  ] },
+  { path: 'workload', name: 'workload', entries: [
+    { path: 'workload/driver.ts', name: 'driver.ts' },
+    { path: 'workload/config.json', name: 'config.json' },
+  ] },
+  { path: 'README.md', name: 'README.md' },
+]
+
+/**
+ * A file tree with search attached, built from Tree, TreeSearchBar,
+ * treeSearch, and treeHighlight. `byExtension` turns the query into a custom
+ * matcher that finds files by extension.
+ */
+export function FileSearchDemo({ byExtension = false }: { byExtension?: boolean }) {
+  const [query, setQuery] = useState('')
+  const [index, setIndex] = useState<number | null>(null)
+  const [open, setOpen] = useState<string[]>(['src'])
+
+  // The query as a matcher: the default literal match, or files ending in an extension.
+  const extension = query.trim().replace(/^\./, '')
+  const matcher: TreeSearchQuery = !byExtension ? query
+    : extension ? (name: string) => name.endsWith(`.${extension}`) : null
+
+  // Search the plain names, then render the same items with the hits marked.
+  const toItems = (entries: FileEntry[], label: (name: string) => React.ReactNode): TreeItem[] =>
+    entries.map(entry => ({
+      id: entry.path,
+      label: label(entry.name),
+      children: entry.entries && toItems(entry.entries, label),
+      indicator: entry.entries ? undefined : <Icon shape="file" />,
+    }))
+  const matches = treeSearch(toItems(repository, name => name), matcher)
+  const current = index === null ? undefined : matches[index]
+
+  // Step to the next or previous match, and open the folders above it.
+  const step = (direction: 1 | -1) => {
+    if (!matches.length) return
+    const next = index === null ? (direction === 1 ? 0 : matches.length - 1) : (index + direction + matches.length) % matches.length
+    setIndex(next)
+    setOpen(keys => [...new Set([...keys, ...matches[next].ancestors])])
+  }
+
+  return (
+    <Tree
+      aria-label={byExtension ? 'Repository, by extension' : 'Repository'}
+      items={toItems(repository, name => treeHighlight(name, matcher))}
+      indicator={folderIcons}
+      open={open}
+      onStateChange={(_event, { next }) => setOpen(next)}
+      current={current?.id}
+      toolbar={
+        <TreeSearchBar
+          query={query}
+          onQueryChange={next => { setQuery(next); setIndex(null) }}
+          count={matches.length}
+          index={index}
+          onStep={step}
+          aria-label={byExtension ? 'Search files by extension' : 'Search files'}
+          placeholder={byExtension ? 'Extension, such as ts or md' : 'File name'}
+        />
+      }
+    />
   )
 }
 

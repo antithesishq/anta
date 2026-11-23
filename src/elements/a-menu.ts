@@ -649,7 +649,10 @@ export class AMenuElement extends HTMLElementBase {
     if (!a) return null
     const sel =
       'a-input, a-button, button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])'
-    return a.matches(sel) ? a : a.querySelector<HTMLElement>(sel)
+    if (a.matches(sel)) return a
+    // Skip hidden candidates, such as a tree's hidden row buttons: focus() on
+    // one silently fails, which would leave focus in the closed menu.
+    return [...a.querySelectorAll<HTMLElement>(sel)].find(el => this.isVisible(el)) ?? null
   }
 
   /** Return focus to the trigger. Focuses the first focusable in the anchor; if

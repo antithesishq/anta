@@ -17,6 +17,8 @@ export const componentSuites = {
   'value-ownership': { tests: ['tests/value-ownership.mjs'], slow: ['tests/value-ownership-package.mjs'] },
   calendar: { tests: ['tests/calendar-controlled.mjs'] },
   expander: { tests: ['tests/expander-csp.mjs'], slow: ['tests/expander-package.mjs'] },
+  inspector: { tests: ['tests/inspector-csp.mjs'] },
+  tree: { tests: ['tests/tree-csp.mjs'] },
   card: { tests: ['tests/card-csp.mjs'] },
   progress: { tests: ['tests/progress-csp.mjs'] },
   tooltip: { tests: ['tests/tooltip-csp.mjs'], slow: ['tests/tooltip-package.mjs'] },

@@ -3,6 +3,37 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- [Inspector](/inspector/) shows any JavaScript value as a tree that opens one level at a time, for exploring test
+  results, errors, and logs. Use [`layout="inline"`](/inspector/#show-a-value-inline) to place a value in a sentence or
+  table cell. Rows can be [copied from a menu](/inspector/#copy-values-and-paths), opened by right-click or a row's ⋯
+  button, as a value, JSON, or a JavaScript path, and the tree supports the
+  [keyboard](/inspector/#keyboard-accessibility). Rows end 120 characters from the Inspector's start, set by
+  `--inspector-row-width`, or at [`previewBudget`](/inspector/#limit-summary-length) characters. In a
+  [narrow container](/inspector/#fit-a-narrow-container), rows keep part of their text and the tree scrolls sideways.
+  Classes can choose how they appear by implementing
+  [`inspectorRepr`](/inspector/#custom-types). Long lists open in [ranges](/inspector/#show-long-lists) of
+  `chunkSize` items. The open rows can be [controlled](/inspector/#control-which-rows-are-open) by path key, revealed
+  with `inspectorExpandToPath` and `current`, and they [carry over](/inspector/#replace-the-value) when the value
+  changes. `searchable` adds a [search field](/inspector/#search-a-value) that reveals each match; `inspectorSearch`
+  returns the same matches.
+- [Tree](/tree/) shows nested items that open and close, rendered from `items` data, such as a folder browser. Rows can
+  carry [actions and a context menu](/tree/#add-actions-and-a-context-menu), the open items can be
+  [controlled](/tree/#control-the-open-items) and their children loaded when they open, and the tree supports the
+  [keyboard](/tree/#keyboard-accessibility) as one Tab stop. [`current`](/tree/#mark-the-current-item) marks an item
+  and scrolls it into view without moving focus, and `toolbar` places content, such as a search field, before the
+  tree. [Search](/tree/#search) attaches to any Tree with `TreeSearchBar`, `treeSearch`, and `treeHighlight`.
+  Inspector is built on Tree, and its search uses the same search field. In a
+  [hand-built tree](/tree/#web-component), `data-opens-menu` marks an action that opens the context menu; behavior
+  never reads ARIA attributes.
+
+### Fixed
+
+- Closing a [Menu](/menu/) with Escape returns focus to the first visible control in its trigger, not a hidden one.
+
 ## 0.3.39 — November 22, 2026
 
 ### Added

@@ -1,0 +1,285 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+@layer anta.components {
+  /* Tree sizes in em and inherits the page's font, so it assumes nothing about
+     monospace. Override these on the tree, or on one item, to change density. */
+  a-tree {
+    --tree-indent: 1.25em;
+    --tree-row-padding: 0.125em;
+    --tree-row-hover: color-mix(in oklch, var(--text-1) 6%, transparent);
+    --tree-row-current: color-mix(in oklch, var(--text-1-brand) 14%, transparent);
+    --tree-indicator-size: 1em;
+    --tree-gap: 0.25em;
+    /* The same chevron mask Expander uses. */
+    --_tree-chevron: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m9 18 6-6-6-6'/%3e%3c/svg%3e");
+
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    color: var(--text-2);
+    border-radius: 2px;
+  }
+
+  a-tree-item,
+  a-tree-group,
+  a-tree-after {
+    display: block;
+  }
+
+  /* Content before the tree, such as a search field. */
+  a-tree-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-block-end: 0.5em;
+  }
+
+  /* A field in the toolbar takes the room the other content leaves. */
+  a-tree-toolbar > a-input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* Focus lands on the item, which contains its children; the ring goes on
+     its row instead, so it never surrounds a subtree. */
+  a-tree-item:focus {
+    outline: none;
+  }
+
+  /* One line: indicator, label, opening part, actions. */
+  a-tree-row {
+    display: flex;
+    align-items: center;
+    gap: var(--tree-gap);
+    min-width: 0;
+    padding: var(--tree-row-padding) 0.25em;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  a-tree-row:hover,
+  a-tree:focus-within a-tree-item:state(active) > a-tree-row,
+  a-tree-row:has(> a-tree-actions :focus) {
+    background: var(--tree-row-hover);
+  }
+
+  /* The current item, such as a search match (the `current` prop). */
+  a-tree-item[data-current] > a-tree-row {
+    background-color: var(--tree-row-current);
+  }
+
+  /* Search hits, such as from treeHighlight, keep their text's color; the
+     current item's hits stand out from the rest. */
+  a-tree mark {
+    color: inherit;
+    background-color: color-mix(in oklch, var(--text-1-warning) 22%, transparent);
+    border-radius: 2px;
+  }
+
+  a-tree-item[data-current] > a-tree-row mark {
+    background-color: color-mix(in oklch, var(--text-1-warning) 50%, transparent);
+  }
+
+  a-tree-item:is(:state(open), :state(closed)):not([disabled]) > a-tree-row {
+    cursor: pointer;
+  }
+
+  a-tree-item[disabled] > a-tree-row {
+    color: var(--text-4);
+  }
+
+  /* Wrapper focus: the item itself has focus. */
+  a-tree-item:focus-visible > a-tree-row {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  /* Hand-built focus: the host has focus and points at the active item. */
+  a-tree:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  a-tree:focus-visible:has(a-tree-item:state(active)) {
+    outline: none;
+  }
+
+  a-tree:focus-visible a-tree-item:state(active) > a-tree-row {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  /* Children indent by nesting, so items need no inline style under a strict CSP. */
+  a-tree-group {
+    padding-inline-start: var(--tree-indent);
+  }
+
+  /* The after line lines up with its item's label. */
+  a-tree-after {
+    padding-inline-start: calc(0.25em + var(--tree-indicator-size) + var(--tree-gap));
+  }
+
+  a-tree-item:state(closed) > :is(a-tree-group, a-tree-after),
+  a-tree-item:not(:state(open)) > a-tree-row > a-tree-before {
+    display: none;
+  }
+
+  a-tree-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  a-tree-before {
+    flex: none;
+  }
+
+  /* ── The open/closed mark ── */
+
+  a-tree-indicator {
+    display: grid;
+    flex: none;
+    place-items: center;
+    position: relative;
+    width: var(--tree-indicator-size);
+    height: var(--tree-indicator-size);
+    color: var(--text-4);
+    pointer-events: none;
+  }
+
+  /* A leaf keeps the mark's space, so labels line up. */
+  a-tree-item:not(:state(open), :state(closed)) > a-tree-row > a-tree-indicator[shape] {
+    visibility: hidden;
+  }
+
+  a-tree-indicator[shape]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    mask: var(--_tree-chevron) center / contain no-repeat;
+    transition: rotate 150ms ease;
+  }
+
+  a-tree-indicator[shape="triangle"]::before {
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 2.5 12 8l-7 5.5z'/%3E%3C/svg%3E");
+  }
+
+  a-tree-indicator[shape]:dir(rtl)::before {
+    scale: -1 1;
+  }
+
+  a-tree-item:state(open) > a-tree-row > a-tree-indicator:is([shape="chevron"], [shape="triangle"])::before {
+    rotate: 90deg;
+  }
+
+  a-tree-item:state(open) > a-tree-row > a-tree-indicator:is([shape="chevron"], [shape="triangle"]):dir(rtl)::before {
+    rotate: -90deg;
+  }
+
+  a-tree-indicator[shape="plus"]::before,
+  a-tree-indicator[shape="plus"]::after {
+    content: "";
+    position: absolute;
+    inset: auto;
+    background: currentColor;
+    mask: none;
+    border-radius: 1px;
+  }
+
+  a-tree-indicator[shape="plus"]::before {
+    width: 70%;
+    height: 2px;
+  }
+
+  a-tree-indicator[shape="plus"]::after {
+    width: 2px;
+    height: 70%;
+    transition: scale 150ms ease;
+  }
+
+  a-tree-item:state(open) > a-tree-row > a-tree-indicator[shape="plus"]::after {
+    scale: 1 0;
+  }
+
+  /* A pair of marks shows the one for the item's state. */
+  a-tree-item:not(:state(open)) > a-tree-row > a-tree-indicator[data-when="open"],
+  a-tree-item:not(:state(closed)) > a-tree-row > a-tree-indicator[data-when="closed"] {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-tree-indicator[shape]::before,
+    a-tree-indicator[shape="plus"]::after {
+      transition: none;
+    }
+  }
+
+  /* ── Actions ──
+     The container takes the rest of the row, and --tree-actions-align places
+     the buttons in it: `end` pins them to the row's end, `start` puts them
+     right after the label. It holds its space while hidden, so a label's cut
+     doesn't move when the actions appear. `visibility: hidden` also keeps them
+     out of each row's accessible name, and lets clicks reach the row. The
+     active row's actions stay visible but transparent while the tree has
+     focus, so Right can focus them; they're never Tab stops. */
+  a-tree-actions {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: var(--tree-actions-align, end);
+    gap: 2px;
+    /* The row's line height, resolved here: a `1lh` read inside the button
+       would use the button's own line height. Rows with and without actions
+       stay the same height. */
+    height: var(--tree-action-size, 1lh);
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  /* Anta buttons fill the container's height, as Input's actions fill the
+     field (a-input.css). Icon-only buttons stay square, so each theme's radius
+     gives its own shape: a rounded square in Antune, a circle in Antithesis.
+     No radius is set here. */
+  a-tree a-tree-actions > :is(a-button, button[data-anta], a[role="button"][data-anta]) {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    padding-block: 0;
+    justify-content: center;
+
+    /* One icon plus optional tooltip or copy helpers is an icon action. */
+    &:has(> a-icon:only-of-type):not(:has(> :not(a-icon, a-tooltip, a-copy))) {
+      aspect-ratio: 1;
+      width: auto;
+      padding-inline: 0;
+    }
+  }
+
+  a-tree:focus-within a-tree-item:state(active) > a-tree-row > a-tree-actions {
+    visibility: visible;
+  }
+
+  /* Hover, focus inside the actions, or keyboard focus on the row reveals
+     them. A mouse click focuses the row without :focus-visible, so the
+     actions don't flash on click. */
+  a-tree-row:hover > a-tree-actions,
+  a-tree-actions:focus-within,
+  a-tree-item:focus-visible > a-tree-row > a-tree-actions,
+  a-tree:focus-visible a-tree-item:state(active) > a-tree-row > a-tree-actions {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* A touch screen has no hover, so actions always show, at least 24px for a
+     finger (the WCAG 2.2 minimum target size). Rows grow to fit there only.
+     The same touch query as a-tooltip.css. */
+  @media (hover: none) and (pointer: coarse) {
+    a-tree-actions {
+      height: max(var(--tree-action-size, 1lh), 24px);
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+}

@@ -1,0 +1,152 @@
+# Divergences from the notebook repr()
+
+`src/inspector-core.ts` is derived from the Antithesis notebook's `repr()` (`common/js/repr_impl.ts`,
+`common/js/repr.ts`, and the DOM sink in `notebook/engine/repr/repr.ts`). This file records every place the Anta version
+behaves differently **on purpose**, for the migration report. It sits beside the Inspector's source and is not
+published: the package ships only `dist`, `docs`, and its license notices.
+
+Add an entry whenever a change makes the two differ, and say why. A difference that is not deliberate is a bug, not an
+entry here. Behavior kept identical on purpose, where someone might expect a change, goes in its own section. The
+notebook code itself never enters this repository; entries describe behavior only.
+
+Baseline: the `repr()` export shared for the Inspector project in November 2026.
+
+## Architecture
+
+1. **A lazy node tree replaces the visitor.** The notebook's `RepresentationVisitor` walks a value eagerly and emits a
+   flat stream of tokens, bounded only by `char_limit`. `describe()` returns a node tree instead: a node reads nothing
+   until its contents are first read, and its groups pull children one at a time, caching what they pull. This closes
+   the legacy README's "lazy traversal" gap.
+2. **Nodes have explicit boundaries.** A node holds its parts in order (tokens, groups of children, and inline values),
+   and a child's key is kept apart from its value. The notebook's only nesting signal was `array_like_child`, with key
+   tokens emitted inside the child. This closes the "explicit node boundaries" gap.
+3. **Budgets are per node.** `summary(budget)` previews any node within its own budget, and `children(offset, limit)`
+   pages through a group. The notebook had one global `char_limit`. This closes the "per-node budgets" gap.
+4. **References are navigable.** A circular node carries the path of the ancestor it refers to, and an Inspector row
+   carries that ancestor's row id. See Display, entry 19. This closes the "navigable references" gap.
+5. **`repr()` is built on the node tree.** It serializes `describe(value)`, and its string output matches the notebook's
+   except where this file says otherwise. `StringRepresentationVisitor` and `RepresentationVisitor` are gone.
+6. **The DOM sink is not ported.** The notebook's `PrintableRepresentationVisitor` builds nested `<span>`s through the
+   notebook's own `h()` wrapper. The Inspector component replaces it: `visibleRows()` lists display rows,
+   `visibleTree()` nests them, and Anta's `Tree` renders them. The core has no DOM or renderer imports, so it can run
+   in a worker next to the value.
+7. **Options are not validated at runtime.** The notebook declares `repr()` and its options through its `expect`
+   library, which checks types at call time and documents them in the notebook's `help()`. Anta uses TypeScript types
+   and TSDoc instead.
+8. **The string helpers are reimplemented.** `safe_string`, `safe_truncate`, and `well_known_symbols` come from a
+   notebook `utility` module that was not part of the export. Anta's versions follow their names and call sites:
+   `safe_truncate` never splits a surrogate pair, and `safe_string` falls back to `Object.prototype.toString`, then to
+   `<unprintable>`.
+
+## Fixes
+
+9. **Trailing empty slots are reported next to a named property.** For an array with holes at the end and a non-index
+   property, the notebook stopped at the first non-index key and dropped the trailing slots. Anta prints `[<2 empty
+   slots>]{x:1}`.
+10. **Repeated symbols print as `ref[...]`.** The notebook stored symbols in a separate map but looked them up in the
+    object map, so they were never deduplicated. Anta prints `[Symbol("s"),ref[0]]`.
+11. **A repeated function with `to_repr` is not circular.** The notebook left such a function marked as still being
+    defined, so its second appearance printed `circular_ref[...]`. Anta prints `ref[...]`.
+12. **It never throws.** A read that throws, such as a hostile Proxy trap, a revoked Proxy, a throwing `to_repr`, or an
+    Error whose `message` getter throws, prints `<inaccessible>` and the walk continues. The notebook could throw on
+    these; a Proxy whose `get` trap throws crashed it through its `obj.constructor` read. The text leaves out the error
+    message, because messages from hostile values are untrusted and unbounded.
+13. **`constructor` is read through property descriptors.** A `constructor` getter never runs, and a Proxy whose `get`
+    trap throws still prints its data, such as `{a:1}`. The notebook read `obj.constructor` directly, which could run
+    user code.
+14. **Errors show their `cause`, inner `errors`, and `stack`.** These are own non-enumerable properties, which the
+    notebook's `for...in` never reached, so an error printed only `Name("message")`. They now follow any enumerable
+    properties, in that order: `Error("a"){cause:RangeError("b"){…},stack:"Error: a\n    at …"}`. An enumerable
+    `cause` is listed once. A `stack` accessor runs only when it is the engine's own (V8 puts one on each error, Firefox
+    on `Error.prototype`); a user-defined `stack` or `cause` getter never runs. V8 may call a global
+    `Error.prepareStackTrace` hook when it first formats a stack, such as one installed for source maps. Summaries and
+    closed Inspector rows leave the stack out, as browser DevTools do, so they read `Error("a"){cause:RangeError("b")}`;
+    the new `error_stacks: false` option does the same for `repr()`.
+15. **Dates print their time.** The notebook printed `Date{}`, since a Date has no enumerable properties. Anta prints
+    `Date("2026-11-14T03:12:44.120Z")`, or `Date("Invalid Date")`, both valid JavaScript. Dates are recognized by
+    calling the built-in `getTime` on them, so a Proxy around a Date still prints as an object and never reaches Date
+    methods.
+
+## API
+
+16. **The custom-representation key is `Symbol.for('anta.to-repr')`.** The notebook's `to_repr` is a unique `Symbol()`
+    defined in notebook code, so Anta can't reference or alias it. A registered symbol lets separately loaded copies of
+    Anta agree on it. The package exports it as `inspectorRepr`, with the visitor type `InspectorReprVisitor`; the
+    visitor's method names are unchanged. A notebook type moves over by switching its key to `inspectorRepr`.
+17. **`stopped` is always false in `to_repr`.** The notebook's visitor reported `stopped` once `char_limit` ran out, so
+    a custom type could stop describing itself early. In Anta, `to_repr` runs against a recorder when its node resolves,
+    and laziness bounds the reading instead: the recorded groups are pulled only as far as they are displayed.
+18. **Two token types are new.** `inaccessible` marks `<inaccessible>`. `ellipsis` marks the `...` that ends truncated
+    output, so the Inspector can style it; the notebook's string output added `...` as plain text.
+
+## Display
+
+19. **Repeated references expand in place in the Inspector.** In a lazy tree, the first appearance of a repeated value
+    depends on which nodes the reader has opened, so `ref[...]` would often point at a row that isn't shown. Inspector
+    rows show repeats as ordinary nodes that open in place, reading one level at a time. Only cycles become
+    `circular_ref[...]` rows, linked to their ancestor row, which is always open. `repr()` and summaries keep the
+    notebook's `ref[...]` labels.
+20. **A nested summary shows a cycle above it as `circular_ref[...]`.** `summary()` of a node inside a cycle prints the
+    reference with the ancestor's path, where a standalone `repr()` of the same sub-value would expand it once. A root
+    summary matches `repr()` exactly.
+21. **Strings open into lines in the Inspector.** A string with a line break, or one longer than a closed row's
+    summary, can be opened. Its text then shows unescaped, one row per line, in pages of 5,000 characters. Control
+    characters other than tab stay escaped, so ANSI codes are visible and can't garble the display. Strings open only
+    when the reader toggles them, never from `expandDepth`. Closed rows, summaries, and `repr()` keep the notebook's
+    escaped one-line form.
+22. **The Inspector shows values as an outline, as browser DevTools do.** Its rows use the `tree` style of
+    `visibleRows()`: each child is `key: value`, array elements show their index, an open node's row names its type
+    and size (`Array(3)`, `Map(2)`, `{…}`), and there are no closing brackets or commas. The notebook's DOM sink nested
+    the `repr()` text itself. `repr()` and the `repr` row style keep the notebook's format.
+23. **Inspector rows cut summaries by what they draw.** Row summaries count the space the Inspector draws after each
+    comma and colon, end a cut in one `…` instead of `...`, and never end on a comma or colon. In block layout, rows
+    render up to `previewBudget` characters, or 300 without one, and CSS ends the value at the row's edge, so every
+    row cuts at the same place. That edge is 120 characters from the Inspector's start (`--inspector-row-width`), or
+    the Inspector's own edge if nearer. In a narrow container, each row keeps at least `--inspector-min-text-width`
+    of its key and value, and the tree scrolls sideways. `summary()` without its display flag,
+    and `repr()`, keep the notebook's count and `...`.
+24. **Copy JSON is new.** `jsonText()` writes a node as compact JSON when it holds only plain objects, arrays, strings,
+    finite numbers, booleans, and null. Otherwise it names the first other value and its path, such as
+    `Not JSON: contains a Map at .containers`. The notebook had no JSON export.
+25. **The Inspector shows symbol-keyed properties.** With the `symbol_keys` option of `describe()`, which the Inspector
+    sets, own enumerable symbol-keyed data properties follow the string-keyed ones. A key reads as the symbol does as
+    a value, in brackets: `[Symbol("desc")]`, `[Symbol.for("key")]`, `[Symbol.iterator]`. Accessors are skipped, so
+    no getter runs. `repr()` leaves the option off and ignores symbol keys, as the notebook did.
+26. **The Inspector labels generators and iterators by type.** With the `iterator_labels` option of `describe()`,
+    which the Inspector sets, a generator, an async generator, or a built-in Array, Map, Set, or String iterator shows
+    as `Generator{}`, `AsyncGenerator{}`, `Array Iterator{}`, and so on, and can't open. The type comes from the
+    value's prototype chain, matched against the built-in prototypes, so no property is read, no getter runs, and the
+    iterator is never advanced. An object that only sets `Symbol.toStringTag` isn't labeled. `repr()` leaves the
+    option off and writes these values as `{}`, their own enumerable properties, as the notebook did. How their items
+    could be shown is undecided.
+27. **The Inspector shows Maps as browser DevTools does.** With the `map_entry_rows` option of `describe()`, which the
+    Inspector sets, a Map reads `Map(2){2024 => 4744353, …}`, open or closed, and each entry is a row keyed by its
+    position that opens to `key` and `value` rows. An empty Map reads `Map{}`, as an empty Set does. An entry's path
+    key is the entry's (`/=n:2024`); its key and value add `/:key` and `/:value`. Search matches the key and value
+    rows, not the entry. `repr()` leaves the option off and writes `Map{2024:4744353}`, as the notebook did.
+28. **The Inspector shows functions as browser DevTools does.** With the `function_labels` option of `describe()`,
+    which the Inspector sets, a function reads `ƒ greet()`, `async ƒ load()`, `ƒ* steps()`, `async ƒ* poll()`, or
+    `ƒ ()` without a name, and a class reads `class Account`. The kind comes from `Function.prototype.toString`, the
+    engine's native source text, so a function's own `toString` never runs. Only the name shows, never the body:
+    source can be very large, minified, or `[native code]`, and a function's body isn't data to inspect. A function
+    with its own properties, such as a class's static members, still opens to them. `repr()` leaves the option off
+    and writes `<function greet>`, as the notebook did.
+29. **The Inspector labels a cycle `Circular Ref(node)`.** With the `cycle_labels` option of `describe()`, which the
+    Inspector sets, a cycle reads `Circular Ref(path)`, in rows and in summaries. A cycle back to the root, whose path
+    is empty, reads `Circular Ref(root object)`. `repr()` leaves the option off and writes `circular_ref[path]`, or
+    `circular_ref[]` for the root, as the notebook did.
+30. **Copy function copies a function's source.** The Inspector's copy menu takes it from the engine's native
+    `Function.prototype.toString`, so the function's own `toString` never runs. The notebook had no copy menu.
+
+## Kept identical on purpose
+
+- The string format of every value except Errors and Dates (entries 14 and 15), including quoting, number bases, empty
+  slots, Map keys, and the `ref[...]` and `circular_ref[...]` labels in walk order.
+- The option names `char_limit`, `deduplicate_references`, `numeric_base`, and `unquoted_strings`, and the default
+  `char_limit` of 50,000.
+- Getters never run, apart from the engine's own `stack` accessor (entry 14). Enumerable string-keyed data properties
+  are included up the prototype chain, and `repr()` ignores symbol keys (entry 25).
+- The `CustomRepresentationVisitor` methods `span`, `visit`, `constructor_call`, `class_object_like`, and
+  `iterable_like`.
+- The notebook's property-based tests are ported to Hegel in `tests/inspector-core.test.mjs`, with the same invariants:
+  output within `char_limit`, determinism, no reads past the limit, and `Object.is` agreement for primitives.

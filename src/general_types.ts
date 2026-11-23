@@ -1408,6 +1408,78 @@ export interface ATabpanelAttributes extends BaseAttributes {
   role?: 'tabpanel'
 }
 
+/** Attributes for `<a-inspector>`, the CSS-only tag around an Inspector's
+ * `a-tree` and copy menu. The JSX `Inspector` renders it. */
+export interface AInspectorAttributes extends BaseAttributes {
+  /** `inline` flows in text until the root row opens. Omit for the block layout. */
+  layout?: 'inline'
+  /** The root row is open. Presence-based (`''` on, omit off). */
+  open?: boolean | ''
+}
+
+/** One run of text in an Inspector row, colored by its token type. */
+export interface AInspectorTokenAttributes extends BaseAttributes {
+  /** The core's token type, such as `string`, `number`, or `field_name`. */
+  type?: string
+}
+
+/** Attributes for `<a-tree>`, the coordinator of a tree of `<a-tree-item>`s.
+ * It handles every click and key and writes no DOM. Give it `tabindex="0"` in
+ * a hand-built tree, where it is the one Tab stop; under the `Tree` wrapper,
+ * the items carry a roving `tabindex` instead. */
+export interface ATreeAttributes extends BaseAttributes {
+  role?: 'tree'
+  'aria-label'?: string
+  'aria-labelledby'?: string
+  /** Focus and reveal an item: `"<item-id>#<n>"`. A new `n` repeats the request. */
+  'data-focus'?: string
+  /** Scroll an item into view without moving focus: `"<item-id>#<n>"`. */
+  'data-reveal'?: string
+  /** The keyboard's cursor moved: `detail.id` is the item. Bubbles. */
+  onnavigate?: (event: CustomEvent<{ id: string }> | { nativeEvent: CustomEvent<{ id: string }> }) => void
+  /** A context menu is opening on an item: `detail.id`. Sent just before the
+   *  `contextmenu` that opens a following `<a-menu context>`. */
+  onitemmenu?: (event: CustomEvent<{ id: string }> | { nativeEvent: CustomEvent<{ id: string }> }) => void
+}
+
+/** One item of an `<a-tree>`. With `state` or `default-state` it can open;
+ * with neither it is a leaf. Children go in an `a-tree-group` child. */
+export interface ATreeItemAttributes extends BaseAttributes {
+  role?: 'treeitem'
+  /** The item's identity in its tree, reported by `navigate` and `itemmenu`. */
+  'item-id'?: string
+  /** Controlled open state. Present → controlled: a click or key only fires the
+   *  cancelable `statechange`, and the caller answers by updating it. See
+   *  STATEFUL-COMPONENTS.md. */
+  state?: 'open' | 'closed'
+  /** Initial open state for the uncontrolled mode; read once on connect. */
+  'default-state'?: 'open' | 'closed'
+  /** Can't open or be selected; still focusable. Presence-based. */
+  disabled?: boolean | ''
+  'aria-labelledby'?: string
+  /** Fired before the item opens or closes: `{ next, prev, scope }`. Cancelable;
+   *  doesn't bubble. */
+  onstatechange?: (event: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed'; scope: 'item' | 'subtree' }> | { nativeEvent: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed'; scope: 'item' | 'subtree' }> }) => void
+  /** A leaf was selected by click, Enter, or Space. Doesn't bubble. */
+  onactivate?: (event: CustomEvent | { nativeEvent: CustomEvent }) => void
+}
+
+/** The open/closed mark at the start or end of an `a-tree-row`. */
+export interface ATreeIndicatorAttributes extends BaseAttributes {
+  /** A built-in mark. Omit for custom content. */
+  shape?: 'chevron' | 'triangle' | 'plus'
+  /** One of a pair of marks, shown only in that state. */
+  'data-when'?: 'open' | 'closed'
+  'aria-hidden'?: 'true' | boolean
+  /** A boolean: React 19 assigns `inert` as a property, so `""` would turn it off. */
+  inert?: boolean
+}
+
+/** A group of child items, inside its `a-tree-item`. */
+export interface ATreeGroupAttributes extends BaseAttributes {
+  role?: 'group'
+}
+
 /** Surface attributes for the CSS-only `<a-card>` tag. Its `a-card-*` children
  * define the layout. Put navigation attributes and link ARIA on a native `<a>`
  * directly under `a-card`, marked with `data-anta-card-link`. Its

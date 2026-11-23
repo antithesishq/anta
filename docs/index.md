@@ -16,12 +16,14 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 
 ## Components
 
+- [Inspector](./components/inspector.md)
 - [Loader](./components/loader.md)
 - [Progress](./components/progress.md)
 - [Tag](./components/tag.md)
 - [Text](./components/text.md)
 - [Title](./components/title.md)
 - [Tooltip](./components/tooltip.md)
+- [Tree](./components/tree.md)
 
 - [Avatar](./components/avatar.md)
 - [Icon](./components/icon.md)

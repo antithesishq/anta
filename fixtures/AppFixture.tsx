@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState, type ComponentProps } from 'react'
-import { fixtureTypes, generateNextFixtures } from './generate'
+import { fixtureTypes, generateNextFixtures, type FixtureType } from './generate'
 import { Button } from './button/Button'
 import { Checkbox } from './checkbox/Checkbox'
 import { RadioGroup } from './radio-group/RadioGroup'
@@ -11,14 +11,16 @@ import { Calendar } from './calendar/Calendar'
 import { Select } from './select/Select'
 import { Dialog } from './dialog/Dialog'
 import { Expander } from './expander/Expander'
+import { Inspector } from './inspector/Inspector'
 import { Plot } from './plot/Plot'
+import { Tree } from './tree/Tree'
 import './AppFixture.css'
 
 const fixtureNames = {
   button: 'Button', checkbox: 'Checkbox', 'radio-group': 'RadioGroup',
   switch: 'Switch', slider: 'Slider', tabs: 'Tabs', input: 'Input',
   calendar: 'Calendar', select: 'Select', dialog: 'Dialog',
-  expander: 'Expander', plot: 'Plot',
+  expander: 'Expander', inspector: 'Inspector', plot: 'Plot', tree: 'Tree',
 } satisfies Record<typeof fixtureTypes[number], string>
 
 type PropsByType = {
@@ -33,7 +35,9 @@ type PropsByType = {
   'select': Omit<ComponentProps<typeof Select>, 'id'>
   'dialog': Omit<ComponentProps<typeof Dialog>, 'id'>
   'expander': Omit<ComponentProps<typeof Expander>, 'id'>
+  'inspector': Omit<ComponentProps<typeof Inspector>, 'id'>
   'plot': Omit<ComponentProps<typeof Plot>, 'id'>
+  'tree': Omit<ComponentProps<typeof Tree>, 'id'>
 }
 
 export type FixtureDescription = {
@@ -53,7 +57,9 @@ function renderFixture(fixture: FixtureDescription) {
     case 'select': return <Select {...fixture.props} id={fixture.id} />
     case 'dialog': return <Dialog {...fixture.props} id={fixture.id} />
     case 'expander': return <Expander {...fixture.props} id={fixture.id} />
+    case 'inspector': return <Inspector {...fixture.props} id={fixture.id} />
     case 'plot': return <Plot {...fixture.props} id={fixture.id} />
+    case 'tree': return <Tree {...fixture.props} id={fixture.id} />
   }
 }
 
@@ -61,18 +67,19 @@ type AppState = {
   fixtures: FixtureDescription[]
   revision: number
   seed: number
-  onlyPlot: boolean
+  only: FixtureType | undefined
 }
 export default function AppFixture() {
   const [state, setState] = useState<AppState>(() => {
     const params = new URLSearchParams(location.search)
     const input = params.get('seed')
-    const onlyPlot = params.get('only') === 'plot'
+    // `?only=plot`, `?only=inspector`, or `?only=tree` mounts just that component.
+    const only = fixtureTypes.find(type => type === params.get('only'))
     const parsed = input?.trim() ? Number(input) : NaN
     const seed = Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= 0xffff_ffff
       ? parsed
       : crypto.getRandomValues(new Uint32Array(1))[0]
-    return { fixtures: generateNextFixtures([], seed, 0, onlyPlot), revision: 0, seed, onlyPlot }
+    return { fixtures: generateNextFixtures([], seed, 0, only), revision: 0, seed, only }
   })
   useLayoutEffect(() => {
     function advance() {
@@ -80,7 +87,7 @@ export default function AppFixture() {
         const revision = current.revision + 1
         return {
           ...current,
-          fixtures: generateNextFixtures(current.fixtures, (current.seed + revision) >>> 0, revision, current.onlyPlot),
+          fixtures: generateNextFixtures(current.fixtures, (current.seed + revision) >>> 0, revision, current.only),
           revision,
         }
       })

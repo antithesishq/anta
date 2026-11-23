@@ -11,7 +11,9 @@ import { inputEditing } from './input/actions.ts'
 import { selectKeyboard, selectOptions } from './select/actions.ts'
 import { dialogDismissal } from './dialog/actions.ts'
 import { expanderKeyboard } from './expander/actions.ts'
+import { inspectorKeyboard } from './inspector/actions.ts'
 import { plotActions, plotKeyboard } from './plot/actions.ts'
+import { treeKeyboard } from './tree/actions.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export * from './form-properties.ts'
@@ -26,7 +28,9 @@ export * from './calendar/properties.ts'
 export * from './select/properties.ts'
 export * from './dialog/properties.ts'
 export * from './expander/properties.ts'
+export * from './inspector/properties.ts'
 export * from './plot/properties.ts'
+export * from './tree/properties.ts'
 
 const revision = extract(state => state.document.querySelector('[data-app-fixture]')?.getAttribute('data-app-revision') ?? null)
 const advanceApp = registerCustomAction('advanceAppFixture', async (_document, window) => {
@@ -51,6 +55,8 @@ const choices = weighted([
   [3, inputDateKeyboard],
   [3, dialogDismissal],
   [3, expanderKeyboard],
+  [3, inspectorKeyboard],
+  [3, treeKeyboard],
   [3, plotActions],
   [3, plotKeyboard],
   [3, appUpdates],

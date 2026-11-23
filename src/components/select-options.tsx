@@ -1,7 +1,8 @@
 // Shared option/search helpers for the Select family — `Select`, `SelectFaceted`,
-// `InputAutocomplete`. Kept in one focused module (imported only by those three)
-// rather than the broad `anta_helpers`, so option normalization, the filter regex,
-// the match predicate, and match-highlighting can't drift between the components.
+// `InputAutocomplete`. Kept in one focused module (imported only by those three,
+// and by `Inspector` for the filter regex) rather than the broad `anta_helpers`,
+// so option normalization, the filter regex, the match predicate, and
+// match-highlighting can't drift between the components.
 import type { OptionValue, SelectOption } from './Select'
 
 /** Coerce a bare string option to `{ value, label }`; pass an object through.
@@ -12,15 +13,9 @@ import type { OptionValue, SelectOption } from './Select'
 export const normalizeOpt = <V extends OptionValue = string>(o: string | SelectOption<V>): SelectOption<V> =>
   typeof o === 'string' ? { value: o as unknown as V, label: o } : o
 
-/** The built-in filter regex: case-insensitive, with each run of whitespace in the
- *  query matching any gap (`\s+`). Returns null for an empty query — the signal to
- *  match everything and to skip match-highlighting. */
-export function matchQueryRegex(query: string): RegExp | null {
-  const q = query.trim()
-  if (!q) return null
-  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return new RegExp(q.split(/\s+/).map(escape).join('\\s+'), 'i')
-}
+// The filter regex lives in the framework-free Tree search module, shared with Tree and Inspector search.
+import { matchQueryRegex } from '../tree-search'
+export { matchQueryRegex }
 
 /** Whether an option matches the built-in query regex, testing value / label /
  *  hint. A null regex (empty query) matches everything. The value is stringified so a

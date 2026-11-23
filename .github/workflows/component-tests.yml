@@ -6,7 +6,7 @@ on:
         description: Component suite
         type: choice
         default: all
-        options: [all, banner, calendar, card, copy, dialog, expander, input, input-autocomplete, input-time, menu, panel, plot, progress, select, selection, slider, stickers, tag, text, toaster, tooltip, typography, value-ownership]
+        options: [all, banner, calendar, card, copy, dialog, expander, input, input-autocomplete, input-time, inspector, menu, panel, plot, progress, select, selection, slider, stickers, tag, text, toaster, tooltip, tree, typography, value-ownership]
       select_compare_ref:
         description: Optional Git ref for a one-off Select appearance comparison
         type: string

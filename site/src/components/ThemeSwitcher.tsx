@@ -41,13 +41,22 @@ function applyPalette(v: string) {
 export default function ThemeSwitcher() {
   const [value, setValue] = useState('antithesis')
   const [compact, setCompact] = useState(false)
+  const [iconOnly, setIconOnly] = useState(false)
 
   useEffect(() => {
     const media = matchMedia('(max-width: 640px)')
-    const sync = () => setCompact(media.matches)
+    const mobile = matchMedia('(max-width: 500px)')
+    const sync = () => {
+      setCompact(media.matches)
+      setIconOnly(mobile.matches)
+    }
     sync()
     media.addEventListener('change', sync)
-    return () => media.removeEventListener('change', sync)
+    mobile.addEventListener('change', sync)
+    return () => {
+      media.removeEventListener('change', sync)
+      mobile.removeEventListener('change', sync)
+    }
   }, [])
 
   // Reflect the stored choice once mounted (the inline head script already
@@ -67,7 +76,7 @@ export default function ThemeSwitcher() {
           className="theming-select"
           priority="tertiary"
           icon="theme"
-          iconTrailing="chevron-down"
+          iconTrailing={iconOnly ? undefined : 'chevron-down'}
           aria-label={`Theme: ${selected[0]?.label ?? value}`}
           aria-haspopup="menu"
           aria-expanded={open ? 'true' : 'false'}

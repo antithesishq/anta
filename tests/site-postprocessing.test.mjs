@@ -89,6 +89,35 @@ test('search indexing preserves rich native selects and existing HTML outside it
   assert.equal(await readFile(file, 'utf8'), output)
 })
 
+test('search indexing excludes examples and previews while retaining prose and API references', async (t) => {
+  const { outDir, publicDir } = await fixture(t)
+  const excluded = [
+    '<pre><code>bareCodeExampleOnly</code></pre>',
+    '<div class="expressive-code"><figure><figcaption>codeCaptionOnly</figcaption><pre><code>.cssExampleOnly { color: red; }</code></pre></figure></div>',
+    '<div class="preview custom"><h2>previewHeadingOnly</h2><p>previewBodyOnly</p><table><tr><td>previewCellOnly</td></tr></table></div>',
+    '<div class="playground-host">playgroundFallbackOnly</div>',
+    '<a class="plot-gallery-preview"><span>plotPreviewOnly</span></a>',
+    '<section data-no-search><p>excludedPageContentOnly</p></section>',
+  ]
+  const source = `<main class="content"><h1>Guide</h1><h2>Configuration</h2><p>Use <code>onValueChange</code> to handle changes.</p>${excluded.join('')}<table><tr><th>Property</th><th>Description</th></tr><tr><td>onValueChange</td><td>Notifies changes.</td></tr></table></main>`
+  const file = join(outDir, 'index.html')
+  await writeFile(file, source)
+  const result = await buildSearchIndex({ outDir, publicDir })
+  assert.equal(result.documents, 7)
+  const output = await readFile(file, 'utf8')
+  for (const example of excluded) assert.ok(output.includes(example), 'excluded markup stays intact')
+  const payload = JSON.parse(await readFile(join(outDir, 'search-index.json'), 'utf8'))
+  const index = new Document(searchConfig)
+  for (const [key, value] of Object.entries(payload.chunks)) await index.import(key, value)
+  const matches = query => index.search(query, { enrich: true }).flatMap(field => field.result)
+  for (const query of ['Guide', 'Configuration', 'onValueChange', 'Property', 'Notifies']) {
+    assert.ok(matches(query).length, `${query} stays searchable`)
+  }
+  for (const query of ['bareCodeExampleOnly', 'codeCaptionOnly', 'cssExampleOnly', 'previewHeadingOnly', 'previewBodyOnly', 'previewCellOnly', 'playgroundFallbackOnly', 'plotPreviewOnly', 'excludedPageContentOnly']) {
+    assert.equal(matches(query).length, 0, `${query} is excluded`)
+  }
+})
+
 test('search indexing anchors parser-created text to its authored container', async (t) => {
   const { outDir, publicDir } = await fixture(t)
   const source = '<!doctype html><main class="content"><h1>Fixture</h1><font><div>Orphaned text</font> remains.</div><nobr><div>Reconstructed text</nobr> survives.</div><table><td>Table text</td></table></main>'

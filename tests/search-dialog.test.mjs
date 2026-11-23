@@ -468,7 +468,7 @@ test('Enter during a pending full-text query cannot open a stale result or reque
   await input.press('Escape')
 })
 
-test('aligns the input and results while only the dialog body scrolls', async t => {
+test('keeps the input anchored while only the dialog body scrolls', async t => {
   const { page, input } = await setup(t)
   await page.setViewportSize({ width: 1600, height: 1000 })
   await input.fill('button')
@@ -494,31 +494,29 @@ test('aligns the input and results while only the dialog body scrolls', async t 
   assert.ok(dimensions.scroller > 960)
   await input.press('Escape')
   await page.locator('a-dialog[state="closed"]').waitFor()
-  const openingWidths = await page.evaluate(async () => {
+  const openingBounds = await page.evaluate(async () => {
     const trigger = document.createElement('div')
     trigger.dataset.sidebarSearchInput = ''
     trigger.value = 'button'
     trigger.style.cssText = 'position:fixed;left:180px;width:min(720px, calc(100vw - 300px))'
     document.body.append(trigger)
     document.dispatchEvent(new Event('anta-search-open'))
-    const widths = []
+    const bounds = []
     for (let frame = 0; frame < 24; frame++) {
       await new Promise(resolve => requestAnimationFrame(resolve))
-      widths.push(document.querySelector('#docs-search-input').getBoundingClientRect().width)
+      const { left, width } = document.querySelector('#docs-search-input').getBoundingClientRect()
+      if (width > 0) bounds.push({ left, width })
     }
-    return widths
+    return bounds
   })
-  assert.ok(openingWidths.some(width => width > 721 && width < 959), 'Input width should animate between the trigger and result widths')
-  await page.waitForFunction(() => {
-    const input = document.querySelector('#docs-search-input').getBoundingClientRect()
-    return input.left === 320 && input.width === 960
-  })
+  assert.ok(openingBounds.length > 0)
+  assert.ok(openingBounds.every(bounds => bounds.left === 180 && bounds.width === 720), JSON.stringify(openingBounds))
   const aligned = await page.evaluate(() => {
     const input = document.querySelector('#docs-search-input').getBoundingClientRect()
     const result = document.querySelector('#docs-search-results > a').getBoundingClientRect()
     return { inputLeft: input.left, inputWidth: input.width, resultLeft: result.left, resultWidth: result.width }
   })
-  assert.deepEqual(aligned, { inputLeft: 320, inputWidth: 960, resultLeft: 320, resultWidth: 960 })
+  assert.deepEqual(aligned, { inputLeft: 180, inputWidth: 720, resultLeft: 320, resultWidth: 960 })
   await page.evaluate(() => {
     window.runFullText = async () => Array.from({ length: 40 }, (_, i) => ({
       id: String(i), route: '/button/', anchor: 'button', title: `Result ${i}`, heading: `Result ${i}`,

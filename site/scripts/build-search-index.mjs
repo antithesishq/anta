@@ -14,8 +14,11 @@ const inlineNames = new Set([
 ])
 const ignoredNames = new Set([
   'audio', 'button', 'canvas', 'dialog', 'footer', 'form', 'head', 'hr',
-  'iframe', 'img', 'input', 'map', 'menu', 'nav', 'noscript', 'object', 'picture',
+  'iframe', 'img', 'input', 'map', 'menu', 'nav', 'noscript', 'object', 'picture', 'pre',
   'script', 'select', 'style', 'svg', 'template', 'textarea', 'video',
+])
+const ignoredClasses = new Set([
+  'expressive-code', 'preview', 'playground-host', 'plot-gallery-preview',
 ])
 const ignoredAntaNames = new Set([
   'a-avatar', 'a-breadcrumbs', 'a-button', 'a-calendar', 'a-checkbox', 'a-copy',
@@ -40,6 +43,7 @@ function attr(node, name) {
 function isIgnored(node) {
   return ignoredNames.has(node.nodeName)
     || ignoredAntaNames.has(node.nodeName)
+    || classNames(node).some((name) => ignoredClasses.has(name))
     || (node.nodeName === 'a' && attr(node, 'role') === 'button')
     || attr(node, 'data-no-search') !== undefined
 }

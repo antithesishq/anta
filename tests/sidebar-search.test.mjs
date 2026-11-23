@@ -75,6 +75,27 @@ test('search shortcut uses the platform modifier and stays mounted through focus
   }
 })
 
+test('the search trigger is secondary only while empty and inactive', async t => {
+  const context = await browser.newContext()
+  t.after(() => context.close())
+  const page = await context.newPage()
+  await page.addScriptTag({ content: script })
+  const input = page.locator('[data-sidebar-search-input]')
+  await page.waitForFunction(() => document.querySelector('[data-sidebar-search-shortcut]').textContent !== '/')
+  assert.equal(await input.getAttribute('priority'), 'secondary')
+  for (const [event, detail, priority] of [
+    ['anta-search-state', { open: true }, null],
+    ['anta-search-state', { open: false }, 'secondary'],
+    ['anta-sidebar-search-value', 'button', null],
+    ['anta-search-state', { open: true }, null],
+    ['anta-search-state', { open: false }, null],
+    ['anta-sidebar-search-value', '', 'secondary'],
+  ]) {
+    await page.evaluate(({ event, detail }) => document.dispatchEvent(new CustomEvent(event, { detail })), { event, detail })
+    await page.waitForFunction(priority => document.querySelector('[data-sidebar-search-input]').getAttribute('priority') === priority, priority)
+  }
+})
+
 test('the trailing shortcut reaches the search trigger without focusing away its click target', async t => {
   const context = await browser.newContext()
   t.after(() => context.close())

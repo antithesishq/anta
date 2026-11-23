@@ -82,6 +82,7 @@ accessible loading status.
 | `menu` | hamburger, list, more |
 | `minimize` | collapse, shrink |
 | `minus` | remove, subtract |
+| `monitor` | system, computer |
 | `moon` |  |
 | `more` | options, extra |
 | `move-horizontal` | resize, swap, horizontal |

@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- [Icon](/icon/) has a `monitor` shape.
+
 ## 0.3.39 — November 22, 2026
 
 ### Added

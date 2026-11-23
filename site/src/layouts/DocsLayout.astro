@@ -318,7 +318,6 @@ if (hasStructuredBreadcrumbs && title) {
         </aside>
       </div>
       <div transition:persist="search-dialog"><SearchDialog client:load /></div>
-      <main id="main-content" class="content" data-doc-review={!author ? 'pending' : undefined}>
         {/* Mobile-only: opens the "On this page" TOC as a right-side
             slide-out (the .toc-rail is hidden on mobile otherwise).
             Absolutely positioned in the content's top-right corner. */}
@@ -329,9 +328,11 @@ if (hasStructuredBreadcrumbs && title) {
             underline="dotted"
             label="On this page"
             aria-label="Open table of contents"
+            aria-expanded="false"
             data-toc-pending
           />
         )}
+      <main id="main-content" class="content" data-doc-review={!author ? 'pending' : undefined}>
         <Fragment set:html={pageContent} />
       </main>
       {!hideToc && (
@@ -386,10 +387,11 @@ if (hasStructuredBreadcrumbs && title) {
         button?.setAttribute('aria-expanded', String(open))
         if (docked) button?.removeAttribute('tone')
         else button?.setAttribute('tone', 'brand')
-        if (open) document.body.dataset.tocOpen = 'false'
+        if (open) setToc(false)
       }
       const setToc = (open: boolean) => {
         document.body.dataset.tocOpen = open ? 'true' : 'false'
+        document.querySelector('.toc-toggle')?.setAttribute('aria-expanded', String(open))
         if (open && document.body.dataset.menuPinned !== 'true') setMenu(false)
       }
       const closeAll = () => {
@@ -410,8 +412,10 @@ if (hasStructuredBreadcrumbs && title) {
         const target = event.target as HTMLElement
         if (target.closest?.('.mobile-menu-toggle')) {
           if (document.body.dataset.menuOpen !== 'true') setMenu(true, false)
-        } else if (target.closest?.('.backdrop') && document.body.dataset.menuPinned !== 'true') {
-          setMenu(false)
+        } else if (target.closest?.('.toc-toggle')) {
+          setToc(true)
+        } else if (target.closest?.('.backdrop')) {
+          closeAll()
         }
       })
 
@@ -466,7 +470,7 @@ if (hasStructuredBreadcrumbs && title) {
             setMenu(desktopMenuPinned, desktopMenuPinned)
           }
         } else if (target.closest('.toc-toggle')) {
-          setToc(document.body.dataset.tocOpen !== 'true')
+          setToc(true)
         } else if (target.closest('.backdrop')) {
           closeAll()
         } else if (target.closest('.toc-rail')) {
@@ -679,6 +683,7 @@ if (hasStructuredBreadcrumbs && title) {
 
   .layout {
     display: flex;
+    position: relative;
     min-height: 100vh;
     /* Clip horizontal overflow so the off-canvas slide-out panels (the
        undocked nav and the TOC rail ≤1024px) can't create a pannable region. Without it
@@ -1028,18 +1033,13 @@ if (hasStructuredBreadcrumbs && title) {
       min-width: 0;
     }
 
-    /* Positioning context for the absolutely-placed TOC trigger. */
-    .content {
-      position: relative;
-    }
-
     /* The "On this page" trigger floats in the content's top-right corner. */
     .toc-toggle {
       display: inline-flex;
       position: absolute;
       top: 4px;
       right: 8px;
-      z-index: 5;
+      z-index: 31;
       font-size: 14px;
     }
 

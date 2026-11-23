@@ -712,7 +712,7 @@ if (hasStructuredBreadcrumbs && title) {
     overflow-y: auto;
     transform: translateX(-100%);
     transition: transform var(--navigation-motion), width var(--navigation-motion);
-    z-index: 20;
+    z-index: 30;
   }
 
   body[data-menu-open="true"] .sidebar {
@@ -737,6 +737,7 @@ if (hasStructuredBreadcrumbs && title) {
       left: auto;
       width: 214px;
       transform: none;
+      z-index: 20;
     }
   }
 
@@ -1002,7 +1003,7 @@ if (hasStructuredBreadcrumbs && title) {
     opacity: 0;
     pointer-events: none;
     transition: opacity var(--navigation-motion);
-    z-index: 15;
+    z-index: 25;
   }
 
   :global(.dark) .backdrop {
@@ -1057,7 +1058,7 @@ if (hasStructuredBreadcrumbs && title) {
       overflow-y: auto;
       transform: translateX(100%);
       transition: transform var(--navigation-motion);
-      z-index: 20;
+      z-index: 30;
     }
 
     body[data-toc-open="true"] .toc-rail {

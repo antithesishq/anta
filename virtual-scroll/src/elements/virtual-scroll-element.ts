@@ -110,7 +110,6 @@ const SHADOW_STYLE = `
     left: 0;
     width: max(100%, var(--_cw, 0px));
     overflow-wrap: anywhere;
-    transform: translate(calc(-1 * var(--virtual-scroll-x, 0px)), var(--_y, 0px));
   }
   slot[name="empty"] {
     display: none;
@@ -844,17 +843,19 @@ export class AVirtualScrollElement extends HTMLElementBase {
 
   /** Positions the mounted rows for `state`, with placeholder stripes where rows are not mounted. */
   #placeRows(state: VirtualScrollState, config: VirtualScrollConfig, viewport: number) {
-    const style = this.#viewport.style
+    // The offset goes on the slot's own transform, which rows do not inherit. As a custom property on any of their
+    // ancestors it would restyle every row and cell on every scroll frame.
+    const place = (y: string) => { this.#rowsSlot.style.transform = `translate(calc(-1 * var(--virtual-scroll-x, 0px)), ${y})` }
     let renderedHeight = 0
     for (let i = this.#renderedStart; i < this.#renderedEnd; i++) renderedHeight += this.#rowHeights(config).get(i) || config.itemMinHeight
     const hasRows = this.#renderedEnd > this.#renderedStart
     let top: number
     if (isBottomAligned(state)) {
       top = viewport - renderedHeight
-      style.setProperty('--_y', `calc(${viewport}px - 100%)`)
+      place(`calc(${viewport}px - 100%)`)
     } else {
       top = hasRows ? rowsOffset(state, config, this.#rowHeights(config), this.#renderedStart) : 0
-      style.setProperty('--_y', `${top}px`)
+      place(`${top}px`)
     }
     // Stripes mark rows that exist but have not been mounted yet, e.g. while a worker catches up.
     const bottom = top + renderedHeight
@@ -938,6 +939,8 @@ export class AVirtualScrollElement extends HTMLElementBase {
     const states = this.#internals?.states
     if (!states) return
     try {
+      // Chromium restyles on every add or delete, even one that changes nothing, and this runs every frame.
+      if (states.has(name) === on) return
       if (on) states.add(name)
       else states.delete(name)
     } catch {

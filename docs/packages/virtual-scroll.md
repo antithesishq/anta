@@ -653,7 +653,7 @@ Events do not bubble.
 | Slot | Content |
 | --- | --- |
 | Default | Rows, each a direct child with `data-index`. |
-| `header` | Content above the rows that scrolls sideways with them. |
+| `header` | Content above the rows that scrolls sideways with them. The vertical scrollbar starts below it; style the `header-corner` part to carry the header over the scrollbar's column. |
 | `empty` | Shown when `count` is `0`. |
 
 ## Styling

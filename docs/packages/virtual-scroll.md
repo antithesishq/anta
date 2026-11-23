@@ -673,15 +673,18 @@ a-virtual-scroll.log:not(:state(scrolling)) > :hover {
 }
 ```
 
-Rows and the `header` inherit `--virtual-scroll-x`, the horizontal offset. A
-pinned cell can use one rule that also works when the same rows render in a
-native scroller, where `position: sticky` does the pinning and the variable is
-unset:
+Rows and the `header` inherit `--virtual-scroll-x`, the horizontal offset, and
+`--virtual-scroll-max-x`, the largest offset. A cell pinned to the left edge
+moves back by the offset. A cell pinned to the right edge, the last in its row,
+also moves left by the largest offset:
 
 ```css
-.pinned {
-  position: sticky;
-  left: 0;
+.pinned-left {
+  position: relative;
   translate: var(--virtual-scroll-x, 0px) 0;
+}
+.pinned-right {
+  position: relative;
+  translate: calc(var(--virtual-scroll-x, 0px) - var(--virtual-scroll-max-x, 0px)) 0;
 }
 ```

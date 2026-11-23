@@ -17,6 +17,13 @@ Changes that ship in `@antadesign/virtual-scroll`.
   key the list does not use keeps its browser default.
 - `@antadesign/virtual-scroll/bundle` registers the element, loads its
   stylesheet, and exports everything the root entry does, in one import.
+- Rows and the `header` slot inherit `--virtual-scroll-max-x`, the largest
+  horizontal offset, so a cell can stay pinned to the right edge.
+- The vertical scrollbar starts below the `header` slot. The `header-corner`
+  part is the empty corner above it, so a header can reach over the
+  scrollbar's column.
+- `--virtual-scroll-bar-inset` moves the scrollbars off the host's edges,
+  `1px` by default. A container that draws the border sets it to `0px`.
 - `VirtualScroll` accepts standard DOM handlers, such as `onKeyDown` and
   `onClick`, and passes them to the element.
 - The mounted window is always `4 × ceil(height / item-min-height) + 1` rows,

@@ -148,22 +148,31 @@ const SHADOW_STYLE = `
     touch-action: none;
     user-select: none;
   }
+  /* The vertical bar starts below the header slot; the corner above it belongs to the header. */
   .bar.v {
-    top: 1px;
-    right: 1px;
-    bottom: 1px;
+    top: calc(var(--_hh, 0px) + var(--virtual-scroll-bar-inset, 1px));
+    right: var(--virtual-scroll-bar-inset, 1px);
+    bottom: var(--virtual-scroll-bar-inset, 1px);
     width: var(--_sb, 16px);
     flex-direction: column;
     border-top-right-radius: var(--virtual-scroll-radius);
     border-bottom-right-radius: var(--virtual-scroll-radius);
   }
-  /* Both bars sit 1px inside the edges, where the host's outline is drawn. */
+  /* Both bars sit inside the edges, where the host's outline is drawn. */
   .bar.h {
-    left: 1px;
-    right: calc(var(--_vbar, 0px) + 1px);
-    bottom: 1px;
+    left: var(--virtual-scroll-bar-inset, 1px);
+    right: calc(var(--_vbar, 0px) + var(--virtual-scroll-bar-inset, 1px));
+    bottom: var(--virtual-scroll-bar-inset, 1px);
     height: var(--_sb, 16px);
     flex-direction: row;
+  }
+  .corner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--_vbar, 0px);
+    height: var(--_hh, 0px);
+    box-sizing: border-box;
   }
   .bar[hidden] {
     display: none;
@@ -359,11 +368,15 @@ function hintContent(doc: Document, vertical: boolean): HTMLElement {
  * Custom properties, set on the host:
  * - `--virtual-scroll-thumb`, `--virtual-scroll-thumb-hover`, `--virtual-scroll-thumb-active`: thumb colors.
  * - `--virtual-scroll-bar-bg`: scrollbar background.
+ * - `--virtual-scroll-bar-inset`: the scrollbars' distance from the host's edges, `1px` by default to clear its
+ *   outline; `0px` when a container draws the border instead.
  * - `--virtual-scroll-mark-bg`, `--virtual-scroll-secondary-mark-bg`: mark colors.
  * - `--virtual-scroll-placeholder-line`: placeholder lines for rows not mounted yet; `transparent` hides them.
  * - `--virtual-scroll-x` (read only): the horizontal offset, inherited by rows and the `header` slot.
+ * - `--virtual-scroll-max-x` (read only): the largest horizontal offset, for cells pinned to the right edge.
  *
- * Parts: `viewport`, `header`, `rows`, `empty`, `scrollbar` (vertical), and `scrollbar-x` (horizontal).
+ * Parts: `viewport`, `header`, `rows`, `empty`, `scrollbar` (vertical), `scrollbar-x` (horizontal), and
+ * `header-corner`, the empty corner beside the header and above the vertical scrollbar, which starts below the header.
  */
 export class AVirtualScrollElement extends HTMLElementBase {
   static observedAttributes = OBSERVED
@@ -398,6 +411,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
   #rowsWidth = 0
   #rowsHeight = 0
   #hostHeight = 0
+  #corner: HTMLElement
   #vbarLength = 0
   #hbarLength = 0
   #headerHeight = 0
@@ -477,6 +491,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
     this.#hThumb = div('thumb')
     this.#hThumb.append(div('thumb-fill'))
     this.#hbar.append(this.#hTrackStart, hTrackEnd, this.#hThumb)
+    this.#corner = capture('corner', 'header-corner')
 
     // Hints sit on each track and thumb, as in the original scrollbar: tracks wait longer than the thumb.
     for (const [parent, vertical, delay] of [
@@ -490,11 +505,11 @@ export class AVirtualScrollElement extends HTMLElementBase {
       this.#hints.push([parent, tooltip])
     }
 
-    shadow.append(style, this.#sizer, this.#viewport, this.#vbar, this.#hbar, div('ring'))
+    shadow.append(style, this.#sizer, this.#viewport, this.#corner, this.#vbar, this.#hbar, div('ring'))
 
     this.#rowsSlot.addEventListener('slotchange', () => this.#onSlotChange())
     // The scrollbars take the same wheel input as the rows, so the page never scrolls under them.
-    for (const surface of [this.#viewport, this.#vbar, this.#hbar]) {
+    for (const surface of [this.#viewport, this.#corner, this.#vbar, this.#hbar]) {
       surface.addEventListener('wheelinput', event => this.#onWheel((event as CustomEvent<CaptureWheelInput>).detail))
       surface.addEventListener('wheel', event => this.#onShiftWheel(event), { passive: false })
     }
@@ -626,9 +641,9 @@ export class AVirtualScrollElement extends HTMLElementBase {
   }
 
   // Thumb geometry runs on the bar's full length. Before the bars are measured, their
-  // CSS insets give the length: the vertical bar is inset 1px at each end.
+  // CSS insets give the length: the vertical bar runs beside the rows, inset 1px at each end by default.
   #verticalTrack(config: VirtualScrollConfig): number {
-    return this.#vbarLength || config.heightPx + this.#headerHeight - 2
+    return this.#vbarLength || config.heightPx - 2
   }
 
   #horizontalTrack(config: VirtualScrollConfig): number {
@@ -814,7 +829,11 @@ export class AVirtualScrollElement extends HTMLElementBase {
     style.setProperty('--_min', `${config.itemMinHeight}px`)
     style.setProperty('--_cw', `${this.#optionalNumber('content-width') ?? 0}px`)
     style.setProperty('--virtual-scroll-x', `${state.scrollX}px`)
+    style.setProperty('--virtual-scroll-max-x', `${maxScrollX(config)}px`)
     this.#vbar.style.setProperty('--_sb', `${config.scrollbarWidth}px`)
+    this.#vbar.style.setProperty('--_hh', `${this.#headerHeight}px`)
+    this.#corner.style.setProperty('--_hh', `${this.#headerHeight}px`)
+    this.#corner.style.setProperty('--_vbar', `${vbar}px`)
     this.#hbar.style.setProperty('--_sb', `${config.scrollbarWidth}px`)
     this.#hbar.style.setProperty('--_vbar', `${vbar}px`)
 
@@ -948,7 +967,7 @@ export class AVirtualScrollElement extends HTMLElementBase {
       if (value === null) surface.removeAttribute(name)
       else surface.setAttribute(name, value)
     }
-    for (const surface of [this.#viewport, this.#vbar, this.#hbar]) {
+    for (const surface of [this.#viewport, this.#corner, this.#vbar, this.#hbar]) {
       set(surface, 'wheel-capture', directions || null)
       set(surface, 'wheel-activation', activation)
     }

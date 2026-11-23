@@ -5,6 +5,10 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- [Icon](/icon/) has a `monitor` shape.
+
 ### Changed
 
 - The Antithesis theme gives tables from `@antadesign/table` square corners (1px).

@@ -20,6 +20,13 @@ test('inferColumns types columns, sizes them to values and titles, and collects 
   assert.ok(columns.id.width > 0)
 })
 
+test('inferColumns gives no options to a column with more distinct values than the cap', () => {
+  const rows = Array.from({ length: 150 }, (_, i) => ({ n: i, group: i % 3 }))
+  assert.equal(inferColumns(rows, key => key).n.options, undefined, '150 distinct values exceed the default 100')
+  assert.deepEqual(inferColumns(rows, key => key).group.options, [0, 1, 2])
+  assert.equal(inferColumns(rows, key => key, undefined, 200).n.options.length, 150, 'a higher cap keeps them')
+})
+
 test('layoutColumns keeps fixed and pinned widths and lets the rest share the free width', () => {
   const layout = layoutColumns({
     keys: ['a', 'b', 'c', 'p'],

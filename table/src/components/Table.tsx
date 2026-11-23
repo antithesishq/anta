@@ -164,6 +164,11 @@ export interface TableProps<T> extends BaseProps {
   filtering?: false | TableFilterFn<T>
   /** Facets for the Filter menu. Defaults to one per column whose values are primitives. */
   filterOptions?: TableFilterOption[]
+  /**
+   * Inferred facets skip columns with more distinct values than this in their first 500 rows. Defaults to 100.
+   * Does not limit `filterOptions`.
+   */
+  maxFilterOptions?: number
   /** More facets, such as `custom` ones. Only a `filtering` function sees their values. */
   filterFacets?: SelectFacet[]
   /** Controlled filter state. */
@@ -269,7 +274,10 @@ export function Table<T>(props: TableProps<T>): React.ReactNode {
   const declaredKeys = columns ? Object.keys(columns) : undefined
   // Keyed by what inference reads, so a `columns` object recreated each render does not re-read the rows.
   const titlesKey = JSON.stringify(declaredKeys?.map(key => [key, titleOf(key)]) ?? null)
-  const inferred = useMemo(() => inferColumns(data, titleOf, filterOptions ? [] : declaredKeys), [data, titlesKey, !!filterOptions])
+  const inferred = useMemo(
+    () => inferColumns(data, titleOf, filterOptions ? [] : declaredKeys, props.maxFilterOptions),
+    [data, titlesKey, !!filterOptions, props.maxFilterOptions],
+  )
   const allKeys = declaredKeys ?? Object.keys(inferred)
   const visibleKeys = allKeys.filter(key => !hidden.has(key))
   const dataTypeOf = (key: string): TableDataType => inferred[key]?.dataType ?? 'other'

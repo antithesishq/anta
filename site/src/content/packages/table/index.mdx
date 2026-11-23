@@ -225,8 +225,9 @@ the query as a regular expression, and keep the rows that do not match.
 `textFilterFields` picks its columns; they default to the primitive columns.
 
 Each facet keeps the rows whose value is selected, and a row must pass every
-facet. Facets default to one per primitive column with at most 1,000 distinct
-values in the first 500 rows. `filterOptions` replaces them. In tables at least
+facet. Facets default to one per primitive column with at most 100 distinct
+values in the first 500 rows; `maxFilterOptions` changes that limit, and
+`filterOptions` replaces the inferred facets. In tables at least
 900px wide, selected facets also show as chips beside the menu; below 840px,
 the text filter moves into the menu.
 
@@ -448,6 +449,7 @@ Each prop links to the section that demonstrates it. `className`, `style`, and
 | [`onRowSelect`](#selection) | `(selected, event, index) => void` | | Turns on selection and receives each new selection. |
 | [`filtering`](#filtering) | `false`, `TableFilterFn<T>` | | `false` removes filtering; a function replaces the built-in filter. |
 | [`filterOptions`](#filtering) | `TableFilterOption[]` | | Facets for the Filter menu, replacing the inferred ones. |
+| [`maxFilterOptions`](#filtering) | `number` | `100` | Inferred facets skip columns with more distinct values than this in their first 500 rows. |
 | [`filterFacets`](#filtering) | `SelectFacet[]` | | More facets, seen only by a `filtering` function. |
 | [`filterValue`](#filtering) | `{ text, facets }` | | Controlled filter state. |
 | [`defaultFilterValue`](#filtering) | `{ text, facets }` | | Filter state on mount. |

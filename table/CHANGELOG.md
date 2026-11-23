@@ -21,6 +21,8 @@ Changes that ship in `@antadesign/table`.
   them, the table fills a container with a definite height. CSS grid lays out
   the columns.
 - `follow` keeps the newest row in view as rows are appended.
+- Inferred filter facets skip columns with more than 100 distinct values in
+  their first 500 rows; `maxFilterOptions` changes the limit.
 - Narrow tables fold the toolbar: the selected-facet chips hide below 900px,
   the text filter moves into the Filter menu below 840px, and the search field
   moves into the actions menu below 560px.

@@ -112,6 +112,9 @@ Star baseline: `main` at `cb4cc92518b` (2026-11-10).
 26. **Below 560px the search field moves into the actions menu**, after the chips (900px) and the text filter (840px)
     fold as in Star. Star keeps the 300px field in the toolbar, which overflows narrow containers. With the field
     folded, Mod + F opens the actions menu and focuses it.
+27. **Inferred facets stop at 100 distinct values**, and `maxFilterOptions` changes the limit. Star stops at 1,000.
+    Its closed Filter menu keeps every option in the DOM, so a table of numeric columns could carry tens of thousands
+    of option elements and make the whole page slow.
 
 ## Prop mapping for the notebook adapter
 

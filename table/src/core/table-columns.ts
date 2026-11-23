@@ -3,8 +3,11 @@ import type { TableDataType, TableSource } from './table-types'
 
 /** Rows read to infer column types, widths, and filter options. */
 export const TABLE_INFER_ROWS = 500
-/** A column with more distinct values than this in the inferred rows gets no filter options. */
-export const TABLE_MAX_FILTER_OPTIONS = 1000
+/**
+ * The default for `maxFilterOptions`: a column with more distinct values than this in the inferred rows gets no
+ * filter options. A facet with hundreds of options is hard to use, and its menu keeps every option in the DOM.
+ */
+export const TABLE_MAX_FILTER_OPTIONS = 100
 export const TABLE_CELL_PADDING_X = 16
 export const TABLE_DEFAULT_COLUMN_WIDTH = 100
 const MIN_COLUMN_WIDTH = TABLE_CELL_PADDING_X + 4
@@ -39,12 +42,14 @@ function textWidth(length: number, kind: keyof typeof CHARACTER_WIDTH): number {
 /**
  * Reads the first `TABLE_INFER_ROWS` rows for each column's type, a width that
  * fits its values and title, and its distinct values. With `keys`, only those
- * columns get filter options.
+ * columns get filter options, and only while they have at most `maxOptions`
+ * distinct values.
  */
 export function inferColumns(
   source: TableSource<unknown>,
   titles: (key: string) => string,
   keys?: readonly string[],
+  maxOptions = TABLE_MAX_FILTER_OPTIONS,
 ): Record<string, InferredColumn> {
   const rows = readTableRange(source, 0, TABLE_INFER_ROWS)
   const columns: Record<string, InferredColumn> = {}
@@ -63,7 +68,7 @@ export function inferColumns(
         const seen = options.get(key)
         if (seen && (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')) {
           seen.add(value)
-          if (seen.size > TABLE_MAX_FILTER_OPTIONS) options.set(key, null)
+          if (seen.size > maxOptions) options.set(key, null)
         }
       } else {
         options.set(key, null)

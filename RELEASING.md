@@ -1,15 +1,18 @@
 # Releasing Anta packages
 
-Five packages publish from this repository: `@antadesign/anta` at the root, `@antadesign/stickers` in `stickers/`, `@antadesign/plot` in `plot/`, `@antadesign/virtual-scroll` in `virtual-scroll/`, and `@antadesign/typedoc-theme` in `typedoc-theme/`. Version strings are immutable, so always bump before publishing.
+Six packages publish from this repository: `@antadesign/anta` at the root, `@antadesign/stickers` in `stickers/`, `@antadesign/plot` in `plot/`, `@antadesign/virtual-scroll` in `virtual-scroll/`, `@antadesign/table` in `table/`, and `@antadesign/typedoc-theme` in `typedoc-theme/`. Version strings are immutable, so always bump before publishing.
 
-All five packages publish to the `latest` dist-tag. Anta uses the default
+All six packages publish to the `latest` dist-tag. Anta uses the default
 tag; the companion packages set `publishConfig.tag: "latest"` explicitly.
 
 Publish anta first, then the companion packages being released. Stickers uses
 the consumer's Anta installation through its `>=0.3.31` peer range and uses
 `workspace:*` only for local development. Plot requires Anta `^0.3.30` as a
 peer dependency and also uses `workspace:*` only for local development. Virtual
-Scroll requires Anta `^0.3.30` as a peer, the same way. Publish a compatible Anta
+Scroll requires Anta `^0.3.30` as a peer, the same way, and Table requires Anta
+`^0.3.38`. Table does not depend on Virtual Scroll; its docs use it as the
+virtualizer, so release Virtual Scroll first when Table relies on a new
+Virtual Scroll feature. Publish a compatible Anta
 release with the configured runtime hooks before any companion package.
 
 The TypeDoc theme bundles Anta's base CSS at build time. Build and publish a
@@ -33,7 +36,11 @@ pnpm publish --no-git-checks
 cd ../virtual-scroll
 pnpm publish --no-git-checks
 
-# 5. Publish the TypeDoc theme from typedoc-theme/
+# 5. Publish table from table/
+cd ../table
+pnpm publish --no-git-checks
+
+# 6. Publish the TypeDoc theme from typedoc-theme/
 cd ../typedoc-theme
 pnpm publish --no-git-checks
 ```

@@ -504,6 +504,14 @@ jobs:
         run: pnpm --filter @antadesign/virtual-scroll test && pnpm --filter @antadesign/virtual-scroll run test:browser
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Typecheck table
+        run: pnpm --filter @antadesign/table run typecheck
+      - name: Verify table package
+        run: pnpm --filter @antadesign/table run check:package
+      - name: Test table
+        run: pnpm --filter @antadesign/table test && pnpm --filter @antadesign/table run test:browser
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Verify TypeDoc theme package
         run: pnpm --filter @antadesign/typedoc-theme exec npm pack --dry-run
 

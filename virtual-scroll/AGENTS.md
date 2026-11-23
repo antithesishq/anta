@@ -2,7 +2,7 @@
 
 Follow the root AGENTS.md and `../src/AGENTS.md` for element, wrapper, CSS, and
 writing conventions. This package owns the virtualized list, not the notebook
-adapter. The table will follow as its own package and build on this one.
+adapter. The table package (`table/`) takes `VirtualScroll` as its virtualizer.
 
 - `src/core/` is DOM-free. `model.ts` holds the anchor-model scroll math,
   `source-helpers.ts` the renderer-free typed helpers, and

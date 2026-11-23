@@ -1,0 +1,506 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+@layer anta.components {
+  a-table {
+    --table-bg: var(--bg-1);
+    --table-header-bg: var(--table-bg);
+    --table-header-color: var(--text-3);
+    --table-border: var(--border-5);
+    --table-outline: var(--border-4);
+    --table-radius: 8px;
+    --table-row-hover-bg: var(--bg-2);
+    --table-selected-bg: color-mix(in oklch, var(--border-1-brand) 10%, var(--table-bg));
+    --table-selected-edge: var(--border-1-brand);
+    --table-match-bg: color-mix(in oklch, var(--text-1-warning) 25%, transparent);
+    --table-match-active-bg: color-mix(in oklch, var(--text-1-warning) 60%, transparent);
+    --table-cell-match-bg: color-mix(in oklch, var(--text-1-warning) 12%, transparent);
+    --table-cell-active-match-bg: color-mix(in oklch, var(--text-1-warning) 25%, transparent);
+    /* A tint, so the edge reads as more columns rather than depth. */
+    --table-pinned-shadow: var(--bg-4);
+    --table-true-color: var(--text-2-success);
+    --table-false-color: var(--text-2-critical);
+
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  a-table > a-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Maximized, the surface moves to the top layer and fills the viewport. */
+  a-table > a-panel::part(content):popover-open {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: var(--bg-1);
+  }
+
+  a-table-surface {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  /* The room for the frame: what a definite-height container gives, else the height the table asks for,
+     else the frame's own height. */
+  a-table-space {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    height: var(--table-space-height, auto);
+  }
+
+  /* The measurement, stretched over the room. */
+  a-table-space > a-box:first-child {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  a-table-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Focus rings pulse 4px outside their controls. */
+    padding: 4px;
+    margin-block-end: 8px;
+    min-width: 0;
+  }
+
+  a-table-toolbar > a-input[data-table-filter] {
+    width: 300px;
+    min-width: 300px;
+    margin-inline-start: -4px;
+  }
+
+  /* The selected-facet chips scroll sideways rather than wrap, so the toolbar keeps one line. */
+  a-table-toolbar > a-box {
+    flex: 1 1 auto;
+    align-items: center;
+    min-width: 0;
+    padding: 4px;
+    margin-block: -4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  a-table-toolbar > a-box > * {
+    flex: none;
+    width: fit-content;
+    max-width: 240px;
+  }
+
+  a-table-toolbar-end {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    margin-inline-start: auto;
+    margin-inline-end: -4px;
+  }
+
+  a-table-search {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  a-table-search > a-input {
+    width: 300px;
+    min-width: 300px;
+  }
+
+  /* Folded into the actions menu, the field takes the menu's width. */
+  a-menu a-table-search {
+    padding: 4px;
+  }
+
+  a-menu a-table-search > a-input {
+    flex: 1 1 auto;
+    width: 260px;
+    min-width: 0;
+  }
+
+  a-table-search > output {
+    min-width: 48px;
+    font-family: var(--monospace, monospace);
+    font-size: 12px;
+    text-align: end;
+    white-space: nowrap;
+    color: var(--text-4);
+  }
+
+  /* The frame fits its rows and shrinks to its room, down to one row. */
+  a-table-frame {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: var(--table-frame-min-height, 0px);
+    max-height: var(--table-frame-max-height, none);
+    width: var(--table-frame-width, auto);
+    max-width: min(100%, var(--table-frame-max-width, 100%));
+    border: 1px solid var(--table-outline);
+    border-radius: var(--table-radius);
+    background: var(--table-bg);
+    overflow: hidden;
+    overflow: clip;
+  }
+
+  /* A virtualizer fills the room it is given, so the frame grows into it; its max height is the rows' measured height. */
+  a-table[virtual] a-table-frame {
+    flex-grow: 1;
+  }
+
+  a-table[data-height] a-table-frame {
+    flex: none;
+    height: var(--table-frame-height, auto);
+  }
+
+  a-table-frame > :is(a-virtual-scroll, a-box) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  /* The frame draws the border, so the scrollbars meet it. */
+  a-table-frame > a-virtual-scroll {
+    --virtual-scroll-bar-inset: 0px;
+    outline: none;
+    border-radius: 0;
+    background: var(--table-bg);
+  }
+
+  /* Without a virtualizer, the frame scrolls natively. */
+  a-table-frame > a-box {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    scrollbar-gutter: stable;
+  }
+
+  a-table[data-height="auto"] a-table-frame > a-box {
+    overflow-y: hidden;
+    scrollbar-gutter: auto;
+  }
+
+  /* Following without a virtualizer: a reversed scroll container starts at its end and stays there as rows arrive. */
+  a-table[data-follow] a-table-frame > a-box {
+    flex-direction: column-reverse;
+  }
+
+  a-table-content {
+    display: block;
+    flex: none;
+    width: max(100%, var(--table-content-width));
+  }
+
+  a-table-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--text-3);
+  }
+
+  a-table-footer {
+    display: block;
+    margin-block-start: 4px;
+    font-size: 12px;
+    line-height: 12px;
+    letter-spacing: 0.2px;
+    color: var(--text-4);
+  }
+
+  a-table-head,
+  a-table-row {
+    display: grid;
+    grid-template-columns: var(--table-columns);
+    position: relative;
+    background: var(--table-bg);
+  }
+
+  /* A virtualizer gives the header its viewport's width, which can be narrower than the columns. */
+  a-table-head {
+    min-width: var(--table-content-width);
+    height: var(--table-header-height);
+    background: var(--table-header-bg);
+    color: var(--table-header-color);
+  }
+
+  /* The header reaches over the scrollbar's column, as if its last cell were that much wider. */
+  a-table-frame > a-virtual-scroll::part(header-corner) {
+    background: var(--table-header-bg);
+    border-block-end: 1px solid var(--table-border);
+  }
+
+  a-table[data-borders-row="none"] a-table-frame > a-virtual-scroll::part(header-corner) {
+    border-block-end-color: transparent;
+  }
+
+  a-table-frame > a-box a-table-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+
+  a-table-header-cell,
+  a-table-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: flex-start;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 2px 16px;
+    background: inherit;
+    border-block-end: 1px solid var(--table-border);
+    border-inline-end: 1px solid var(--table-border);
+  }
+
+  a-table-header-cell:last-child,
+  a-table-cell:last-child {
+    border-inline-end-color: transparent;
+  }
+
+  a-table-header-cell {
+    justify-content: center;
+    font-size: 15px;
+    line-height: 18px;
+    letter-spacing: 0.025ch;
+    font-weight: 500;
+  }
+
+  a-table-header-cell > span,
+  a-table-header-cell > a-button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  /* The sort button lines its label up with the cell text. */
+  a-table-header-cell > a-button {
+    position: relative;
+    inset-inline-start: -8px;
+    max-width: calc(100% + 16px);
+    gap: 0;
+    font-weight: 500;
+  }
+
+  a-table-header-cell > a-button > a-icon {
+    flex: none;
+    width: 16px;
+    margin-inline-start: 0.75ch;
+    transition: opacity 120ms ease-out, width 120ms ease-out, margin 120ms ease-out;
+  }
+
+  /* An unsorted column's arrow takes no room until the header is hovered, so the title gets the width. */
+  a-table-header-cell > a-button > a-icon:not([data-sorted]) {
+    width: 0;
+    margin-inline-start: 0;
+    opacity: 0;
+  }
+
+  a-table-header-cell:hover > a-button > a-icon,
+  a-table-header-cell > a-button:focus-visible > a-icon {
+    width: 16px;
+    margin-inline-start: 0.75ch;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-table-header-cell > a-button > a-icon {
+      transition: none;
+    }
+  }
+
+  a-table-header-cell > a-button > sup {
+    font-size: 10px;
+    margin-inline-start: 1px;
+  }
+
+  a-table-header-cell[type="number"] > a-button {
+    align-self: end;
+    inset-inline-start: 8px;
+  }
+
+  a-table-header-cell[type="boolean"] > a-button {
+    align-self: center;
+    inset-inline-start: 0;
+  }
+
+  a-table-cell[type="number"] > span {
+    align-self: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  a-table-cell[type="boolean"] > span {
+    align-self: center;
+    font-weight: 450;
+  }
+
+  a-table-cell[type="boolean"] > span[data-value="true"] {
+    color: var(--table-true-color);
+  }
+
+  a-table-cell[type="boolean"] > span[data-value="false"] {
+    color: var(--table-false-color);
+  }
+
+  a-table-cell:is([type="string"], [type="number"], [type="boolean"]) > span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  a-table-row[last] > a-table-cell {
+    border-block-end-color: transparent;
+  }
+
+  a-table[data-borders-row="none"] :is(a-table-cell, a-table-header-cell) {
+    border-block-end-color: transparent;
+  }
+
+  a-table[data-borders-column="none"] :is(a-table-cell, a-table-header-cell) {
+    border-inline-end-color: transparent;
+  }
+
+  a-table[data-row-height-fixed] a-table-row {
+    height: var(--table-row-min-height);
+    overflow: hidden;
+  }
+
+  a-table[data-row-height-fixed] a-table-cell {
+    white-space: nowrap;
+  }
+
+  a-table:not([data-row-height-fixed]) a-table-row {
+    min-height: var(--table-row-min-height);
+  }
+
+  /* Caps the content itself, so a virtualizer measures the bounded height. */
+  a-table[data-rows-bounded] a-table-row {
+    max-height: var(--table-row-max-height);
+    overflow-y: clip;
+    grid-template-rows: minmax(0, auto);
+  }
+
+  a-table[data-rows-bounded] a-table-cell {
+    min-height: 0;
+  }
+
+  a-table-row:hover,
+  a-table-row:focus-within {
+    background: var(--table-row-hover-bg);
+  }
+
+  a-virtual-scroll:state(scrolling) a-table-row:hover {
+    background: var(--table-bg);
+  }
+
+  a-table-row[selected] {
+    background: var(--table-selected-bg);
+  }
+
+  a-table-row[selected] > a-table-cell:first-child {
+    box-shadow: inset 2px 0 0 var(--table-selected-edge);
+  }
+
+  /* Pinned columns. Without a virtualizer they are sticky in the native scroll container. */
+  :is(a-table-cell, a-table-header-cell)[pin] {
+    z-index: 2;
+  }
+
+  a-table:not([virtual]) :is(a-table-cell, a-table-header-cell)[pin="left"] {
+    position: sticky;
+    left: var(--table-pin-offset, 0px);
+  }
+
+  a-table:not([virtual]) :is(a-table-cell, a-table-header-cell)[pin="right"] {
+    position: sticky;
+    right: var(--table-pin-offset, 0px);
+  }
+
+  /* With a virtualizer, rows move with a transform, and pinned cells move back by the same offset. */
+  a-table[virtual] :is(a-table-cell, a-table-header-cell)[pin] {
+    position: relative;
+  }
+
+  a-table[virtual] :is(a-table-cell, a-table-header-cell)[pin="left"] {
+    translate: var(--virtual-scroll-x, 0px) 0;
+  }
+
+  a-table[virtual] :is(a-table-cell, a-table-header-cell)[pin="right"] {
+    translate: calc(var(--virtual-scroll-x, 0px) - var(--virtual-scroll-max-x, 0px)) 0;
+  }
+
+  /* Overlaps the previous column's end border by a pixel, so the two never show side by side. */
+  :is(a-table-cell, a-table-header-cell)[pin-edge="right"] {
+    margin-inline-start: -1px;
+    border-inline-start: 1px solid var(--table-border);
+  }
+
+  /* Pinned edges cast a shadow while content is hidden behind them. */
+  :is(a-table-cell, a-table-header-cell)[pin-edge]::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 30px;
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+    pointer-events: none;
+  }
+
+  :is(a-table-cell, a-table-header-cell)[pin-edge="left"]::after {
+    left: 100%;
+    background: linear-gradient(to right, var(--table-pinned-shadow), transparent);
+  }
+
+  :is(a-table-cell, a-table-header-cell)[pin-edge="right"]::after {
+    right: 100%;
+    background: linear-gradient(to left, var(--table-pinned-shadow), transparent);
+  }
+
+  :is(a-virtual-scroll, a-box):state(hidden-start-x) :is(a-table-cell, a-table-header-cell)[pin-edge="left"]::after,
+  :is(a-virtual-scroll, a-box):state(hidden-end-x) :is(a-table-cell, a-table-header-cell)[pin-edge="right"]::after {
+    opacity: 1;
+  }
+
+  /* Search. */
+  a-table mark[data-table-match] {
+    border-radius: 2px;
+    color: inherit;
+    background: var(--table-match-bg);
+  }
+
+  a-table mark[data-table-match][data-active] {
+    background: var(--table-match-active-bg);
+    outline: 1px solid var(--text-1-warning);
+  }
+
+  a-table-cell[search] {
+    background-image: linear-gradient(var(--table-cell-match-bg), var(--table-cell-match-bg));
+  }
+
+  a-table-cell[search="active"] {
+    background-image: linear-gradient(var(--table-cell-active-match-bg), var(--table-cell-active-match-bg));
+    box-shadow: inset 0 0 0 1px var(--text-1);
+  }
+}

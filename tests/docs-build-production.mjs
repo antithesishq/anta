@@ -371,6 +371,34 @@ for (const engine of engines) {
     assert.deepEqual(errors, [])
   })
 
+  test(`${engine.name()}: docked sidebar stays still when navigating to Text`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto('https://anta.test/install/')
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => {
+      window.sidebarSwapFrames = new Promise(resolve => {
+        document.addEventListener('astro:after-swap', async () => {
+          const frames = []
+          for (let frame = 0; frame < 16; frame++) {
+            const sidebar = document.querySelector('.sidebar')
+            frames.push({
+              left: sidebar.getBoundingClientRect().left,
+              transitions: sidebar.getAnimations().filter(animation => animation instanceof CSSTransition).length,
+            })
+            await new Promise(resolve => requestAnimationFrame(resolve))
+          }
+          resolve(frames)
+        }, { once: true })
+      })
+    })
+    await page.locator('.sidebar a[href="/text/"]').click()
+    await page.waitForURL('https://anta.test/text/')
+    const frames = await page.evaluate(() => window.sidebarSwapFrames)
+    assert.ok(frames.every(frame => frame.left === 0 && frame.transitions === 0), JSON.stringify(frames))
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: desktop docking animates the prose and search together`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.setViewportSize({ width: 1920, height: 900 })

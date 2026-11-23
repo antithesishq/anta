@@ -92,7 +92,6 @@ export default function SearchDialog() {
     targetLeft: number
     targetWidth: number
   }>()
-  const [inputExpanded, setInputExpanded] = useState(false)
   const [query, setQuery] = useState('')
   const [route, setRoute] = useState('')
   const [search, setSearch] = useState<SearchState>()
@@ -148,17 +147,26 @@ export default function SearchDialog() {
     const syncInputBounds = () => {
       const input = document.querySelector('[data-sidebar-search-input]')
       if (!input) return
-      const { left, width } = input.getBoundingClientRect()
       const viewportWidth = document.documentElement.clientWidth
-      const resultsWidth = Math.min(960, viewportWidth - 40)
-      const targetWidth = width < resultsWidth ? resultsWidth : width
-      const targetLeft = width < resultsWidth ? (viewportWidth - resultsWidth) / 2 : left
-      setInputBounds({ left, width, targetLeft, targetWidth })
+      const content = document.querySelector<HTMLElement>('main.content')
+      const contentBounds = content?.getBoundingClientRect()
+      const contentStyle = content ? getComputedStyle(content) : undefined
+      const contentLeft = contentBounds && contentStyle
+        ? contentBounds.left + parseFloat(contentStyle.paddingLeft) : 20
+      const contentWidth = contentBounds && contentStyle
+        ? contentBounds.width - parseFloat(contentStyle.paddingLeft) - parseFloat(contentStyle.paddingRight)
+        : viewportWidth - 40
+      const resultsWidth = Math.min(960, viewportWidth > 800 ? contentWidth : viewportWidth - 40)
+      const resultsLeft = viewportWidth > 800
+        ? contentLeft + (contentWidth - resultsWidth) / 2 : (viewportWidth - resultsWidth) / 2
+      const { left, width } = viewportWidth <= 800
+        ? { left: resultsLeft, width: resultsWidth }
+        : input.getBoundingClientRect()
+      setInputBounds({ left, width, targetLeft: resultsLeft, targetWidth: resultsWidth })
     }
     const showSearch = () => {
       setRoute(window.location.pathname)
       syncInputBounds()
-      setInputExpanded(false)
       const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
       if (input) setQuery(input.value ?? input.getAttribute('value') ?? '')
       setOpen(true)
@@ -191,18 +199,6 @@ export default function SearchDialog() {
     document.getElementById('docs-search-input')?.shadowRoot
       ?.querySelector<HTMLInputElement>('input')?.select()
   }, [open])
-
-  useEffect(() => {
-    if (!open) return
-    let secondFrame = 0
-    const firstFrame = requestAnimationFrame(() => {
-      secondFrame = requestAnimationFrame(() => setInputExpanded(true))
-    })
-    return () => {
-      cancelAnimationFrame(firstFrame)
-      cancelAnimationFrame(secondFrame)
-    }
-  }, [open, inputBounds])
 
   useEffect(() => {
     if (!open) return
@@ -298,7 +294,7 @@ export default function SearchDialog() {
         '--search-target-width': `${inputBounds.targetWidth}px`,
       } : undefined}
       header={
-        <div className={styles.header} data-expanded={inputExpanded ? 'true' : undefined}>
+        <div className={styles.header}>
           <span className={styles.srOnly}>Search documentation</span>
           <Input
             id="docs-search-input"

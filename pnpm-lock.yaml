@@ -117,6 +117,9 @@ importers:
       '@antadesign/typedoc-theme':
         specifier: workspace:*
         version: link:../typedoc-theme
+      '@antadesign/table':
+        specifier: workspace:*
+        version: link:../table
       '@antadesign/virtual-scroll':
         specifier: workspace:*
         version: link:../virtual-scroll

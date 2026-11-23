@@ -688,3 +688,5 @@ also moves left by the largest offset:
   translate: calc(var(--virtual-scroll-x, 0px) - var(--virtual-scroll-max-x, 0px)) 0;
 }
 ```
+
+The [table](./table.md) pins its columns this way.

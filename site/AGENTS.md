@@ -110,6 +110,8 @@ The Playground regressions also use WebKit; install it with
 Pass `hideSidebar` to `DocsLayout`, or set `hideSidebar: true` in MDX frontmatter,
 to start a page with navigation collapsed. The menu button remains available.
 An explicit desktop docking choice overrides page defaults during navigation.
+The `.sidebar-slot` reserves and animates docked navigation width; preview
+panels remain outside the content flow. Docking respects reduced motion.
 
 Astro renders static output. Sätteri handles Markdown/MDX and GFM; astro-expressive-code handles code blocks. Optional math and directive syntax are disabled. Keep interactive behavior in imported JSX components or the existing external Playground demo source; MDX composes the prose and previews. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
 

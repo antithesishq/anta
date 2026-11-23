@@ -331,6 +331,83 @@ for (const engine of engines) {
     assert.deepEqual(errors, [])
   })
 
+  test(`${engine.name()}: header search follows the prose column when navigation docks or collapses`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    const assertAligned = async () => {
+      const bounds = await page.evaluate(() => ({
+        heading: document.querySelector('main h1').getBoundingClientRect().left,
+        search: document.querySelector('[data-sidebar-search-input]').getBoundingClientRect().left,
+      }))
+      assert.ok(Math.abs(bounds.heading - bounds.search) < 1, JSON.stringify(bounds))
+    }
+    for (const width of [1600, 1920]) {
+      await page.setViewportSize({ width, height: 900 })
+      for (const path of ['/', '/install/', '/theming/']) {
+        await page.goto(`https://anta.test${path}`)
+        await page.locator('.topbar-search astro-island:not([ssr])').waitFor()
+        await page.waitForLoadState('networkidle')
+        await assertAligned()
+        await page.locator('.mobile-menu-toggle').click()
+        await assertAligned()
+      }
+    }
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto('https://anta.test/')
+    const trigger = page.locator('[data-sidebar-search-input]')
+    await page.locator('astro-island:not([ssr]) a-dialog').waitFor({ state: 'attached' })
+    await page.waitForTimeout(200)
+    assert.equal(await trigger.getAttribute('priority'), 'secondary')
+    assert.equal(await trigger.evaluate(element => getComputedStyle(element.shadowRoot.querySelector('[part="field"]')).backgroundColor), 'rgba(0, 0, 0, 0)')
+    const triggerBounds = await trigger.boundingBox()
+    await trigger.click()
+    await page.waitForFunction(bounds => {
+      const input = document.querySelector('#docs-search-input')
+      const rect = input.getBoundingClientRect()
+      return Math.abs(rect.left - bounds.x) < 1 && Math.abs(rect.width - bounds.width) < 1
+    }, triggerBounds)
+    await page.waitForFunction(() => document.querySelector('[data-sidebar-search-input]').getAttribute('priority') === null)
+    await page.keyboard.press('Escape')
+    await page.waitForFunction(() => document.querySelector('[data-sidebar-search-input]').getAttribute('priority') === 'secondary')
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: desktop docking animates the prose and search together`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.setViewportSize({ width: 1920, height: 900 })
+    await page.goto('https://anta.test/')
+    await page.waitForLoadState('networkidle')
+    const menu = page.locator('.mobile-menu-toggle')
+    for (const target of [214, 0]) {
+      await menu.click()
+      const timings = await page.evaluate(() => ['.sidebar', '.sidebar-slot', '.topbar-start', '.backdrop'].map(selector => {
+        const style = getComputedStyle(document.querySelector(selector))
+        return { durations: style.transitionDuration.split(', '), easings: style.transitionTimingFunction.split(', ') }
+      }))
+      assert.ok(timings.every(timing => timing.durations.every(duration => duration === '0.25s')
+        && timing.easings.every(easing => easing === 'ease-out')), JSON.stringify(timings))
+      const frames = await page.evaluate(async () => {
+        const frames = []
+        for (let frame = 0; frame < 24; frame++) {
+          await new Promise(resolve => requestAnimationFrame(resolve))
+          frames.push({
+            content: document.querySelector('main').getBoundingClientRect().left,
+            prose: document.querySelector('main h1').getBoundingClientRect().left,
+            search: document.querySelector('[data-sidebar-search-input]').getBoundingClientRect().left,
+          })
+        }
+        return frames
+      })
+      assert.ok(frames.some(frame => frame.content > 0 && frame.content < 214), JSON.stringify(frames))
+      assert.equal(frames.at(-1).content, target)
+      assert.ok(frames.every(frame => Math.abs(frame.prose - frame.search) < 1), JSON.stringify(frames))
+    }
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await menu.click()
+    assert.equal(await page.locator('main').evaluate(element => element.getBoundingClientRect().left), 214)
+    assert.equal(await page.locator('.sidebar-slot').evaluate(element => getComputedStyle(element).transitionDuration), '0s')
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: navigation previews below 801px and docks above it`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.setViewportSize({ width: 500, height: 844 })
@@ -374,10 +451,12 @@ for (const engine of engines) {
     for (const width of [801, 1280]) {
       await page.setViewportSize({ width, height: 844 })
       await expectOpen(true)
+      await page.waitForFunction(() => document.querySelector('main').getBoundingClientRect().left === 214)
       assert.equal(await sidebar.evaluate(element => getComputedStyle(element).position), 'sticky')
       const dockedLeft = await contentLeft()
       await menu.click()
       await expectOpen(false)
+      await page.waitForFunction(() => document.querySelector('main').getBoundingClientRect().left === 0)
       assert.equal(await menu.getAttribute('tone'), 'brand')
       assert.equal(dockedLeft - await contentLeft(), 214)
       await page.mouse.move(width - 20, 144)
@@ -389,6 +468,7 @@ for (const engine of engines) {
       await menu.click()
       await expectOpen(true)
       assert.equal(await menu.getAttribute('tone'), null)
+      await page.waitForFunction(() => document.querySelector('main').getBoundingClientRect().left === 214)
       assert.equal(await sidebar.evaluate(element => getComputedStyle(element).position), 'sticky')
       assert.equal(await contentLeft(), dockedLeft)
       assert.equal(await backdrop.evaluate(element => getComputedStyle(element).pointerEvents), 'none')

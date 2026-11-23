@@ -28,10 +28,11 @@ The selected AI result row is replaced by a loader until
 the first answer text arrives. Markdown then appears progressively under **AI
 answer**. The title and close
 button are hidden; the dialog keeps its accessible name and closes with Escape
-or a backdrop click. The input expands after the dialog opens when
-the topbar field is narrower than the results. Both align and are capped at
-960px. The input occupies the header, and the Dialog body scrolls the output
-using the available width. The dialog uses `--bg-2`.
+or a backdrop click. Above 800px, the input opens at the topbar field's position
+and width. At 800px and below, it opens at the available width. The field stays
+in place while the dialog fades in. Results follow the content column and are
+capped at 960px. The input occupies the header, and the Dialog body scrolls the
+output using the available width. The dialog uses `--bg-2`.
 
 ## Answer prompt and rendering
 

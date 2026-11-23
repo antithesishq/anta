@@ -233,7 +233,7 @@ if (hasStructuredBreadcrumbs && title) {
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
     <div class="navigation-progress" aria-hidden="true"></div>
-    <header class="topbar" style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
+    <header class="topbar" style={{ '--topbar-desktop-toc-width': hideToc ? '0px' : '214px' }}>
       <div class="topbar-start">
         <Button
           class="mobile-menu-toggle"
@@ -294,27 +294,29 @@ if (hasStructuredBreadcrumbs && title) {
       </div>
     </header>
     <div class="layout">
-      {/* Persisted: ClientRouter moves this exact node into each new page, so
-          sidebar scroll survives navigation. The stale aria-current is
+      {/* ClientRouter persists the aside so sidebar scroll survives
+          navigation. The stale aria-current is
           re-pointed on astro:page-load below. */}
-      <aside id="site-navigation" class="sidebar" transition:persist="sidebar">
-        {navigationGroups.map((group) => (
-          <>
-            {group.title && <h4>{group.title}</h4>}
-            <menu>
-              {getNavigationTree(group.pages).map((page) => (
-                <SidebarNavItem page={page} currentPath={path} />
-              ))}
-            </menu>
-          </>
-        ))}
-        <h4>Type Script reference</h4>
-        <menu>
-          <li><a href="/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta components</a></li>
-          <li><a href="/plot/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Plot package</a></li>
-          <li><a href="/virtual-scroll/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Virtual Scroll</a></li>
-        </menu>
-      </aside>
+      <div class="sidebar-slot">
+        <aside id="site-navigation" class="sidebar" transition:persist="sidebar">
+          {navigationGroups.map((group) => (
+            <>
+              {group.title && <h4>{group.title}</h4>}
+              <menu>
+                {getNavigationTree(group.pages).map((page) => (
+                  <SidebarNavItem page={page} currentPath={path} />
+                ))}
+              </menu>
+            </>
+          ))}
+          <h4>Type Script reference</h4>
+          <menu>
+            <li><a href="/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta components</a></li>
+            <li><a href="/plot/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Plot package</a></li>
+            <li><a href="/virtual-scroll/reference/index.html" data-astro-reload><Icon shape="braces" size={18} />{' '}Virtual Scroll</a></li>
+          </menu>
+        </aside>
+      </div>
       <div transition:persist="search-dialog"><SearchDialog client:load /></div>
       <main id="main-content" class="content" data-doc-review={!author ? 'pending' : undefined}>
         {/* Mobile-only: opens the "On this page" TOC as a right-side
@@ -361,6 +363,7 @@ if (hasStructuredBreadcrumbs && title) {
           if (query) input.setAttribute('value', query)
           else input.removeAttribute('value')
           input.value = query
+          document.dispatchEvent(new CustomEvent('anta-sidebar-search-value', { detail: query }))
         }
       }
 
@@ -630,6 +633,10 @@ if (hasStructuredBreadcrumbs && title) {
 </html>
 
 <style>
+  body {
+    --navigation-motion: 250ms ease-out;
+  }
+
   .navigation-progress {
     position: fixed;
     inset: 0 0 auto;
@@ -688,6 +695,11 @@ if (hasStructuredBreadcrumbs && title) {
     padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   }
 
+  .sidebar-slot {
+    flex-shrink: 0;
+    width: 0;
+  }
+
   .sidebar {
     width: min(240px, 80vw);
     flex-shrink: 0;
@@ -699,7 +711,7 @@ if (hasStructuredBreadcrumbs && title) {
     background: var(--bg-pane);
     overflow-y: auto;
     transform: translateX(-100%);
-    transition: transform 250ms ease-out, background 200ms ease-out;
+    transition: transform var(--navigation-motion), width var(--navigation-motion), background var(--navigation-motion);
     z-index: 20;
   }
 
@@ -708,14 +720,31 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   @media (min-width: 801px) {
+    .sidebar-slot {
+      transition: width var(--navigation-motion);
+    }
+
+    body:not([data-menu-pinned="false"]) .sidebar-slot {
+      width: 214px;
+    }
+
+    .topbar-start {
+      transition: width var(--navigation-motion);
+    }
+
     body:not([data-menu-pinned="false"]) .sidebar {
       position: sticky;
       left: auto;
       width: 214px;
       background: transparent;
       transform: none;
-      transition: none;
       z-index: auto;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body {
+      --navigation-motion: 0ms linear;
     }
   }
 
@@ -849,6 +878,8 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   .topbar {
+    --topbar-nav-width: 214px;
+    --topbar-toc-width: var(--topbar-desktop-toc-width);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -859,6 +890,10 @@ if (hasStructuredBreadcrumbs && title) {
     z-index: 10;
     background: var(--bg-3);
     border-bottom: 1px solid var(--border-3);
+  }
+
+  body[data-menu-pinned="false"] .topbar {
+    --topbar-nav-width: 0px;
   }
 
   .topbar-start,
@@ -873,8 +908,8 @@ if (hasStructuredBreadcrumbs && title) {
     flex: 0 0 auto;
     /* Follow the centered 960px prose column after it stops growing.
        The percentage excludes header padding; subtract the 12px search gap. */
-    width: max(222px, calc((100% - 960px + var(--topbar-sidebar-balance)) / 2 - 12px));
-    min-width: 222px;
+    width: max(calc(var(--topbar-nav-width) + 8px), calc((100% - 960px + var(--topbar-nav-width) - var(--topbar-toc-width)) / 2 - 12px));
+    min-width: max-content;
     gap: 8px;
   }
 
@@ -968,7 +1003,7 @@ if (hasStructuredBreadcrumbs && title) {
     background: color-mix(in oklch, black 30%, transparent);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 250ms ease-out;
+    transition: opacity var(--navigation-motion);
     z-index: 15;
   }
 
@@ -986,6 +1021,10 @@ if (hasStructuredBreadcrumbs && title) {
      layout, because the dual-rail shell squeezes the content track first.
      The nav sidebar also slides out when it is not docked. */
   @media (max-width: 1024px) {
+    .topbar {
+      --topbar-toc-width: 0px;
+    }
+
     .topbar-tools {
       min-width: 0;
     }
@@ -1019,7 +1058,7 @@ if (hasStructuredBreadcrumbs && title) {
       border-left: 1px solid var(--border-5);
       overflow-y: auto;
       transform: translateX(100%);
-      transition: transform 250ms ease-out;
+      transition: transform var(--navigation-motion);
       z-index: 20;
     }
 

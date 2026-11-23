@@ -8,6 +8,7 @@ import { useEffect, useState } from 'preact/hooks'
 export default function SidebarSearch() {
   const [shortcut, setShortcut] = useState('')
   const [expanded, setExpanded] = useState(false)
+  const [hasValue, setHasValue] = useState(false)
 
   useEffect(() => {
     const platform = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform
@@ -19,8 +20,15 @@ export default function SidebarSearch() {
 
   useEffect(() => {
     const onState = (event: Event) => setExpanded(Boolean((event as CustomEvent<{ open: boolean }>).detail?.open))
+    const onValue = (event: Event) => setHasValue(Boolean((event as CustomEvent<string>).detail))
+    const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
+    setHasValue(Boolean(input?.value ?? input?.getAttribute('value')))
     document.addEventListener('anta-search-state', onState)
-    return () => document.removeEventListener('anta-search-state', onState)
+    document.addEventListener('anta-sidebar-search-value', onValue)
+    return () => {
+      document.removeEventListener('anta-search-state', onState)
+      document.removeEventListener('anta-sidebar-search-value', onValue)
+    }
   }, [])
 
   return (
@@ -28,6 +36,7 @@ export default function SidebarSearch() {
       <Input
         button
         size="medium"
+        priority={expanded || hasValue ? 'primary' : 'secondary'}
         dimActions
         clearable
         leading={<Icon shape="search" />}

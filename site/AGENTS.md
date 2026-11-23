@@ -187,6 +187,8 @@ ignored-subtree list, and use `data-no-search` on page-specific containers whose
 rendered content should not enter the index. Anta controls, navigation, and media
 elements have an explicit ignored-subtree list. Content-bearing Anta elements
 remain traversable.
+Code blocks, Expressive Code containers, live Preview panels, and Playground
+hosts are excluded as complete subtrees. Inline code and API tables stay searchable.
 
 Selecting **Get answer from AI** or pressing Enter in the input after a successful
 full-text search with zero matches may request an AI answer. Enter keeps the

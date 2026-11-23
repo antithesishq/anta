@@ -383,16 +383,20 @@ for (const engine of engines) {
         const style = getComputedStyle(document.querySelector(selector))
         return { durations: style.transitionDuration.split(', '), easings: style.transitionTimingFunction.split(', ') }
       }))
-      assert.ok(timings.every(timing => timing.durations.every(duration => duration === '0.25s')
+      assert.ok(timings.every(timing => timing.durations.every(duration => duration === '0.15s')
         && timing.easings.every(easing => easing === 'ease-out')), JSON.stringify(timings))
       const frames = await page.evaluate(async () => {
         const frames = []
         for (let frame = 0; frame < 24; frame++) {
           await new Promise(resolve => requestAnimationFrame(resolve))
+          const sidebarRight = document.querySelector('.sidebar').getBoundingClientRect().right
           frames.push({
             content: document.querySelector('main').getBoundingClientRect().left,
             prose: document.querySelector('main h1').getBoundingClientRect().left,
             search: document.querySelector('[data-sidebar-search-input]').getBoundingClientRect().left,
+            sidebarOnTop: sidebarRight <= 1 || Boolean(document.elementFromPoint(Math.min(100, sidebarRight - 1), 100)?.closest('.sidebar')),
+            sidebarBackground: getComputedStyle(document.querySelector('.sidebar')).backgroundColor,
+            pageBackground: getComputedStyle(document.body).backgroundColor,
           })
         }
         return frames
@@ -400,6 +404,8 @@ for (const engine of engines) {
       assert.ok(frames.some(frame => frame.content > 0 && frame.content < 214), JSON.stringify(frames))
       assert.equal(frames.at(-1).content, target)
       assert.ok(frames.every(frame => Math.abs(frame.prose - frame.search) < 1), JSON.stringify(frames))
+      assert.ok(frames.every(frame => frame.sidebarBackground === frame.pageBackground), JSON.stringify(frames))
+      if (target === 214) assert.ok(frames.every(frame => frame.sidebarOnTop), JSON.stringify(frames))
     }
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await menu.click()
@@ -436,6 +442,9 @@ for (const engine of engines) {
       assert.equal(await menu.getAttribute('tone'), 'brand')
       assert.equal(await backdrop.evaluate(element => getComputedStyle(element).pointerEvents), 'auto')
       assert.equal(await contentLeft(), initialLeft)
+      await page.waitForFunction(() => Boolean(document.elementFromPoint(100, 100)?.closest('.sidebar')))
+      assert.equal(await sidebar.evaluate(element => getComputedStyle(element).backgroundColor),
+        await page.locator('body').evaluate(element => getComputedStyle(element).backgroundColor))
       await page.mouse.move(width - 20, 144)
       await expectOpen(false)
       for (const key of ['Enter', 'Space']) {

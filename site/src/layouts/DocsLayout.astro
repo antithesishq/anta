@@ -634,7 +634,7 @@ if (hasStructuredBreadcrumbs && title) {
 
 <style>
   body {
-    --navigation-motion: 250ms ease-out;
+    --navigation-motion: 150ms ease-out;
   }
 
   .navigation-progress {
@@ -708,10 +708,10 @@ if (hasStructuredBreadcrumbs && title) {
     top: 44px;
     left: 0;
     height: calc(100dvh - 44px);
-    background: var(--bg-pane);
+    background: var(--bg-base);
     overflow-y: auto;
     transform: translateX(-100%);
-    transition: transform var(--navigation-motion), width var(--navigation-motion), background var(--navigation-motion);
+    transition: transform var(--navigation-motion), width var(--navigation-motion);
     z-index: 20;
   }
 
@@ -736,9 +736,7 @@ if (hasStructuredBreadcrumbs && title) {
       position: sticky;
       left: auto;
       width: 214px;
-      background: transparent;
       transform: none;
-      z-index: auto;
     }
   }
 

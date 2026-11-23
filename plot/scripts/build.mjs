@@ -19,9 +19,10 @@ if (diagnostics.length > 0) {
     }))
 }
 
-// Only generated files below this package's dist directory are replaced.
-await rm(output, { recursive: true, force: true })
+// Only generated files below this package's dist directory are replaced. The directory itself is kept, so
+// watchers on it (such as the notebook's local Anta watch) keep seeing new builds.
 await mkdir(output, { recursive: true })
+await Promise.all((await readdir(output)).map(entry => rm(resolve(output, entry), { recursive: true, force: true })))
 const emitted = program.emit()
 if (emitted.emitSkipped || emitted.diagnostics.length > 0) {
     throw new Error('Plot declaration emission failed')

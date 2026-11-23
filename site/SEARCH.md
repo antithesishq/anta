@@ -45,12 +45,10 @@ not change the Cloudflare dashboard.
 The generation model uses the instance setting. The request leaves query
 rewriting, reranking, and the retrieval threshold unset. It explicitly limits
 retrieval to four chunks: live binding requests returned more than four when
-only the dashboard limit was set. It passes
-`chat_template_kwargs: { enable_thinking: false }` for Qwen's non-thinking mode.
-Recheck this model-specific option if the generation model changes.
-The Worker enables AI Search's similarity cache with the
-**Exact** threshold (`super_strict_match`), which accepts near-identical queries.
-Cache duration uses the instance setting. Cloudflare invalidates cached answers
+only the dashboard limit was set. It caps generation at 1,500 output tokens,
+including code, while the prompt targets 150–200 words excluding code.
+The Worker enables AI Search's similarity cache. Cache strictness and duration
+use the instance settings. Cloudflare invalidates cached answers
 when their source chunks change. This cache is separate from browser HTTP
 caching, so the streamed endpoint keeps `Cache-Control: no-store, no-transform`.
 Use AI Search's similarity cache rather than enabling general AI Gateway caching

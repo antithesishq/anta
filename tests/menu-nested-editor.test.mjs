@@ -66,6 +66,25 @@ before(async () => {
 
 after(async () => browser?.close())
 
+test('a closed filter menu keeps no facet editors in the DOM, and opening it mounts them', async t => {
+  const context = await browser.newContext({ viewport: { width: 1200, height: 800 } })
+  t.after(() => context.close())
+  const page = await context.newPage()
+  await page.addStyleTag({ content: css })
+  await page.addScriptTag({ content: script })
+
+  const editors = () => page.evaluate(() => ({
+    custom: document.querySelectorAll('a-menu[aria-label="Min duration editor"]').length,
+    options: [...document.querySelectorAll('a-menu-item')].filter(item => item.textContent.trim() === 'One').length,
+  }))
+  assert.deepEqual(await editors(), { custom: 0, options: 0 })
+  await page.getByText('Filter', { exact: true }).click()
+  assert.deepEqual(await editors(), { custom: 1, options: 1 })
+  await page.keyboard.press('Escape')
+  await page.waitForFunction(() => !document.querySelector('a-menu')?.isOpen)
+  assert.deepEqual(await editors(), { custom: 0, options: 0 })
+})
+
 test('a nested select or link choice closes only its popup inside a persistent facet editor', async t => {
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } })
   t.after(() => context.close())
@@ -95,8 +114,9 @@ test('a nested select or link choice closes only its popup inside a persistent f
   assert.equal(await root.evaluate(menu => menu.isOpen), true)
 
   await editor.getByText('Done', { exact: true }).click()
-  assert.equal(await editor.evaluate(menu => menu.isOpen), false)
   assert.equal(await root.evaluate(menu => menu.isOpen), false)
+  // A closed filter menu unmounts its facet editors.
+  assert.equal(await editor.count(), 0)
 })
 
 test('clearing a date field does not toggle its menu; the next field click opens it', async t => {

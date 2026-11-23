@@ -728,7 +728,10 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
                     </Tag>
                   ) : null
                 })()}
-                {renderEditor(facet)}
+                {/* Editors mount only while the menu is open, so a closed menu does not keep every option of
+                    every facet in the DOM. The rows stay: the menu focuses its search field and first row as it
+                    opens, before rows added in the same render exist. */}
+                {open && renderEditor(facet)}
               </MenuItem>
             ))}
         {clearable && (

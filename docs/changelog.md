@@ -12,6 +12,7 @@ changes are not listed.
 ### Changed
 
 - The Antithesis theme gives tables from `@antadesign/table` square corners (1px).
+- [SelectFaceted](/select-faceted/) mounts its facet editors only while its menu is open, so a closed menu no longer keeps every option of every facet in the page.
 
 ## 0.3.39 — November 22, 2026
 

@@ -1758,6 +1758,11 @@
     --dialog-radius: 1px;
   }
 
+  /* @antadesign/table */
+  a-table {
+    --table-radius: 1px;
+  }
+
   /* A submenu inside a `round` menu keeps the inherited round radius. */
   a-menu:not([round], a-menu[round] a-menu) {
     --menu-radius: 2px;

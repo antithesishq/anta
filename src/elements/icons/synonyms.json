@@ -29,7 +29,6 @@
   "x": ["close", "cancel", "dismiss", "remove", "no"],
   "plus": ["add", "new", "create"],
   "minus": ["remove", "subtract"],
-  "monitor": ["system", "computer"],
   "menu": ["hamburger", "list", "more"],
   "dots-vertical": ["more", "kebab", "options"],
   "search": ["find", "magnify", "lookup"],

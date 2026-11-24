@@ -67,7 +67,6 @@ export const ICON_SHAPES = [
   'menu',
   'minimize',
   'minus',
-  'monitor',
   'moon',
   'more',
   'move-horizontal',
@@ -140,7 +139,6 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'x': ['close', 'cancel', 'dismiss', 'remove', 'no'],
   'plus': ['add', 'new', 'create'],
   'minus': ['remove', 'subtract'],
-  'monitor': ['system', 'computer'],
   'menu': ['hamburger', 'list', 'more'],
   'dots-vertical': ['more', 'kebab', 'options'],
   'search': ['find', 'magnify', 'lookup'],
@@ -266,7 +264,6 @@ declare module '@antadesign/anta' {
     'menu': true
     'minimize': true
     'minus': true
-    'monitor': true
     'moon': true
     'more': true
     'move-horizontal': true

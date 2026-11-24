@@ -47,15 +47,18 @@ export class ATableElement extends HTMLElementBase {
 
   attributeChangedCallback(name: string, previous: string | null, value: string | null) {
     if (value === null || value === previous) return
-    if (name === 'reveal-key') {
-      this.#reveal()
-    } else if (name === 'focus-key') {
-      this.#whenFound('focus', this.getAttribute('focus-target'), target => {
-        // A renderer may set the attribute mid-commit and then restore the focus it saw before the commit (React
-        // does), so focus once the commit is done. It also lets a menu opened in the same commit show the target.
-        if (target instanceof this.view.HTMLElement) this.view.queueMicrotask(() => target.focus())
-      })
-    }
+    // A renderer may set these mid-commit: Preact sets an element's attributes before it updates its children, so the
+    // target has not moved yet, and React restores the focus it saw before the commit. Act once the commit is done,
+    // which also lets a menu opened in the same commit show the focus target.
+    this.view.queueMicrotask(() => {
+      if (name === 'reveal-key') {
+        this.#reveal()
+      } else if (name === 'focus-key') {
+        this.#whenFound('focus', this.getAttribute('focus-target'), target => {
+          if (target instanceof this.view.HTMLElement) target.focus()
+        })
+      }
+    })
   }
 
   #reveal() {

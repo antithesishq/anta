@@ -532,6 +532,8 @@ with 5 × 10px padding, hairline row separators in `--border-4`, semibold
 `font-variant-numeric: tabular-nums` so numeric columns line up. All rules live
 in `@layer anta`, so any consumer rule outside a layer overrides them.
 
+### Default
+
 
 
       Token
@@ -551,6 +553,11 @@ in `@layer anta`, so any consumer rule outside a layer overrides them.
       Secondary labels, sidebar links
 
 
+      --border-5
+      #e8eaed
+      Hairline dividers, table row separators
+
+
 
 ```html
 <table>
@@ -564,9 +571,48 @@ in `@layer anta`, so any consumer rule outside a layer overrides them.
 </table>
 ```
 
+### Bordered
+
 Add `data-bordered` to draw the outer frame, column dividers, and 3px rounded
-corners. A `<caption>` names the table for screen readers and renders left
-aligned above the rows.
+corners. The variant switches to `border-collapse: separate`, because
+`border-radius` does not render reliably with collapsed borders.
+
+
+
+      Token
+      Value
+      Usage
+
+
+
+
+      --text-1
+      #1c1f23
+      Primary body copy
+
+
+      --text-3
+      #52575e
+      Secondary labels, sidebar links
+
+
+      --border-5
+      #e8eaed
+      Hairline dividers, table row separators
+
+
+
+```html
+<table data-bordered>
+  …
+</table>
+```
+
+### With a caption
+
+A `<caption>` is the table's accessible name: screen readers announce it, and
+it must be the table's first child. Browsers render it above the rows; Anta
+only aligns it left, where browsers center it.
 
   Color tokens used by the docs sidebar
 
@@ -585,10 +631,20 @@ aligned above the rows.
       Nav link, idle state
 
 
+      --text-1
+      Nav link, current page
+
+
 
 ```html
 <table data-bordered>
   <caption>Color tokens used by the docs sidebar</caption>
-  …
+  <thead>
+    <tr><th>Token</th><th>Role</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>--text-1-brand</td><td>Logo wordmark</td></tr>
+    …
+  </tbody>
 </table>
 ```

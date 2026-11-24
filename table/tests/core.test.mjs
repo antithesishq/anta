@@ -125,7 +125,10 @@ test('tableHeight asks for the minimum rows and leaves the rest to CSS', () => {
   assert.deepEqual(tableHeight(base), { space: 306, min: 63, max: undefined })
   assert.deepEqual(tableHeight({ ...base, maxHeight: 200 }), { space: 200, min: 63, max: 200 })
   assert.deepEqual(tableHeight({ ...base, minHeight: 500 }), { space: 500, min: 500, max: undefined })
-  assert.deepEqual(tableHeight({ ...base, height: 400 }), { frame: 400, min: 400 })
+  assert.deepEqual(tableHeight({ ...base, height: 400 }), { min: 63, max: 400 })
+  // A fixed height is the most the frame takes: fewer rows leave no gap below them.
+  assert.deepEqual(tableHeight({ ...base, count: 3, height: 400, virtual: true, contentHeight: 81 }), { frame: 117, min: 117, max: 117 })
+  assert.deepEqual(tableHeight({ ...base, height: 400, virtual: true, contentHeight: 27000 }), { frame: 400, min: 400, max: 400 })
   // Few rows fit their rows: CSS reads them without a virtualizer, the measurement does with one.
   assert.deepEqual(tableHeight({ ...base, count: 3 }), { space: undefined, min: 63, max: undefined })
   assert.deepEqual(tableHeight({ ...base, count: 3, virtual: true, contentHeight: 140 }), { space: 176, min: 63, max: 176 })

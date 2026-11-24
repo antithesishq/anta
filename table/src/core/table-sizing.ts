@@ -35,6 +35,8 @@ export interface TableHeight {
 
 /**
  * Sizes the frame. `height`, `minHeight`, and `maxHeight` are frame heights.
+ * The frame is never taller than its rows: a fixed `height` is the most it
+ * takes.
  *
  * Without `height`, the frame fits its rows within its room, never below one
  * row or `minHeight`. A container that sizes the table from its content gives
@@ -49,8 +51,17 @@ export function tableHeight(options: TableHeightOptions): TableHeight {
   const frameExtra = headerHeight + TABLE_FRAME_BORDER
   const fit = options.contentHeight === undefined ? undefined : options.contentHeight + frameExtra
   const estimate = Math.max(count, 1) * rowMinHeight + frameExtra
-  if (options.height === 'auto') return { frame: virtual ? fit ?? estimate : undefined, min: 0 }
-  if (options.height !== undefined) return { frame: options.height, min: options.height }
+  if (options.height === 'auto') {
+    const frame = virtual ? fit ?? estimate : undefined
+    return { frame, min: 0, max: frame }
+  }
+  if (options.height !== undefined) {
+    // Without a virtualizer, CSS fits the frame to its rows up to `height`. A virtualizer fills the height it is
+    // given, so it gets the rows' measured height when that is less.
+    if (!virtual) return { min: Math.min(options.height, rowMinHeight + frameExtra), max: options.height }
+    const frame = Math.min(options.height, fit ?? estimate)
+    return { frame, min: frame, max: frame }
+  }
 
   const min = options.minHeight ?? rowMinHeight + frameExtra
   const max = virtual && fit !== undefined ? Math.min(fit, options.maxHeight ?? fit) : options.maxHeight

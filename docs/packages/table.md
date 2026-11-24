@@ -309,7 +309,7 @@ rows. The toolbar and the row count are outside it.
 | Props | Frame height |
 | --- | --- |
 | None | Fits the rows, at least `minRowsToDisplay` rows (10) when there are that many, at most the container's height. |
-| `height` | `height`. |
+| `height` | `height`, or less when the rows are shorter; the frame never leaves a gap below its last row. |
 | `height="auto"` | Every row; the frame never scrolls vertically. |
 | `minHeight` | At least `minHeight`, even when the container is shorter. |
 | `maxHeight` | At most `maxHeight`. |
@@ -399,7 +399,7 @@ Each prop links to the section that demonstrates it. `className`, `style`, and
 | [`columns`](#columns) | `Record<string, TableColumn<T>>` | | Column settings by key; its keys are the columns, in order. |
 | [`virtualizer`](#virtualized-rows) | `TableVirtualizer` | | Renders rows on demand, such as `VirtualScroll`. Without it, every row is mounted. |
 | [`virtualizerProps`](#virtualized-rows) | object | | More props for the virtualizer. |
-| [`height`](#sizing) | number, `auto` | | Frame height, or `auto` for every row. |
+| [`height`](#sizing) | number, `auto` | | Frame height, never taller than the rows; `auto` for every row. |
 | [`minHeight`](#sizing) | number | | Minimum frame height. |
 | [`maxHeight`](#sizing) | number | | Maximum frame height. |
 | [`minRowsToDisplay`](#sizing) | number | `10` | Rows the frame fits before its container asks for more. |

@@ -65,6 +65,16 @@
     height: var(--table-space-height, auto);
   }
 
+  /* The room grows only as far as the frame can, so leftover height falls below the row count rather than between
+     the frame and it. Without a virtualizer the frame's own height is its rows'. */
+  a-table:not([virtual]) a-table-space {
+    max-height: max-content;
+  }
+
+  a-table[virtual] a-table-space {
+    max-height: var(--table-frame-max-height, none);
+  }
+
   /* The measurement, stretched over the room. */
   a-table-space > a-box:first-child {
     position: absolute;

@@ -32,7 +32,8 @@ Star baseline: `main` at `cb4cc92518b` (2026-11-10).
 
 6. **`height`, `minHeight`, `maxHeight`, `width`, and `maxWidth` all size the frame** (header, rows, scrollbars,
    and border). Star's `height` and `min_height` size the rows area, `max_height` the whole widget less the toolbar
-   and row count, and `width` and `max_width` the column total.
+   and row count, and `width` and `max_width` the column total. A fixed `height` is also the most the frame takes:
+   fewer rows shrink it to them. Star keeps the rows area at `height` and leaves a gap below the last row.
 7. **CSS sizes the frame.** Flexbox fits the frame to its rows, shrinks it to the room a definite-height container
    gives, and grows it there up to the last row; the table only passes the heights it asks for. Star measures the
    whole panel and subtracts constants (`UTIL_ROW_HEIGHT`, `BELOW_TABLE_ROW_HEIGHT`), so a toolbar taller than the

@@ -123,7 +123,10 @@ export interface TableProps<T> extends BaseProps {
   virtualizer?: TableVirtualizer
   virtualizerProps?: TableVirtualizerOptions
 
-  /** Frame height in pixels, or `auto` to fit every row. The frame is the bordered header and rows; the toolbar and row count are outside it. */
+  /**
+   * Frame height in pixels, or `auto` to fit every row. The frame is the bordered header and rows; the toolbar and
+   * row count are outside it. Fewer rows than fill `height` shrink the frame to them, so it never leaves a gap.
+   */
   height?: number | 'auto'
   minHeight?: number
   maxHeight?: number

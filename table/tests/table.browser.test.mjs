@@ -148,6 +148,33 @@ for (const mode of ['virtual', 'plain']) {
     assert.ok(gap >= 0 && gap <= 20, `gap ${gap}`)
   })
 
+  test(`${mode}: the row count sits right below the frame in a taller container`, async t => {
+    for (const props of [{}, { height: 400 }, { height: 'auto' }]) {
+      const page = await pageFor(t, { mode, count: 4, props, container: { display: 'flex', flexDirection: 'column', height: '900px' } })
+      const space = await page.evaluate(() =>
+        document.querySelector('a-table-footer').getBoundingClientRect().top - document.querySelector('a-table-frame').getBoundingClientRect().bottom)
+      assert.ok(Math.abs(space - 4) <= 1, `${JSON.stringify(props)}: ${space}px between the frame and the row count`)
+    }
+  })
+
+  test(`${mode}: a fixed height never leaves a gap below fewer rows`, async t => {
+    const page = await pageFor(t, { mode, count: 4, props: { height: 400 } })
+    await page.waitForTimeout(300)
+    const gap = await page.evaluate(() => {
+      // The rows area ends at the frame's bottom border, or above a horizontal scrollbar when one shows.
+      const bar = document.querySelector('a-virtual-scroll')?.shadowRoot.querySelector('.bar.h:not([hidden])')
+      const box = document.querySelector('a-table-frame > a-box')
+      const end = bar ? bar.getBoundingClientRect().top
+        : box ? box.getBoundingClientRect().top + box.clientHeight
+        : document.querySelector('a-table-frame').getBoundingClientRect().bottom - 1
+      // A virtualizer's rows are not in display order in the DOM.
+      return end - Math.max(...[...document.querySelectorAll('a-table-row')].map(row => row.getBoundingClientRect().bottom))
+    })
+    assert.ok(Math.abs(gap) <= 1, `gap ${gap}`)
+    const many = await pageFor(t, { mode, count: 500, props: { height: 400 } })
+    assert.equal(await frameHeight(many), 400, 'enough rows fill the fixed height')
+  })
+
   test(`${mode}: columns share the frame's width and follow it when it resizes`, async t => {
     const page = await pageFor(t, { mode, count: 50, props: { height: 300, columns: { id: { width: 120 }, group: {}, note: { minWidth: 200 } } } })
     const columns = () => page.evaluate(() => {

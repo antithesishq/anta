@@ -498,10 +498,7 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
     })
     test(`${name} ${framework}: SelectFaceted text layout survives CSP and controlled drafts hydrate in place`, {tier: mode === 'granular' ? 'fast' : 'slow'}, async t => {
       const page = await pageFor(t,engine,mode,framework,true)
-      assert.deepEqual(await page.locator('a-input[aria-label="Title"]').evaluate(el => {
-        const parent=el.parentElement,style=getComputedStyle(parent)
-        return {display:style.display,padding:style.padding,inline:parent.hasAttribute('style')}
-      }), {display:'block',padding:'4px',inline:false})
+      // A closed menu renders no facet editors, so the text editor's layout is checked once its facet opens.
       await page.evaluate(() => {window.originalFacetInputs=[...document.querySelectorAll('a-input')]})
       await hydrateFacets(page,mode,framework)
       assert.deepEqual(await page.evaluate(() => ['a-select-faceted','a-select-faceted-text'].map(tag => !!customElements.get(tag))),[false,false])
@@ -510,6 +507,10 @@ for (const engine of engines) for (const mode of ['granular', 'bundle']) {
       const trigger=page.locator('#facet-trigger')
       await trigger.focus();await trigger.press('ArrowDown')
       const popup=await openFacet(page,'Title'),input=popup.locator('input')
+      assert.deepEqual(await popup.locator('a-select-faceted-text > a-input').evaluate(el => {
+        const parent=el.parentElement,style=getComputedStyle(parent)
+        return {display:style.display,padding:style.padding,inline:parent.hasAttribute('style')}
+      }), {display:'block',padding:'4px',inline:false})
       await input.fill('Typing ')
       await page.evaluate(() => updateFacets({value:{owner:[0],title:'Applied'}}))
       assert.equal(await input.inputValue(),'Typing ')

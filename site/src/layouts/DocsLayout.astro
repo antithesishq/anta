@@ -157,40 +157,50 @@ if (hasStructuredBreadcrumbs && title) {
         toolbar tint doesn't snap back to light on navigation. */}
     <meta name="theme-color" content="#fbfafb" data-astro-transition-persist="theme-color" />
     <script is:inline>
-      // Apply the theme before paint so there's no flash. Preference
-      // order: explicit user choice in localStorage → OS-level
-      // prefers-color-scheme. Once the user has clicked the toggle,
-      // localStorage holds the preference forever.
+      // Apply the theme before paint so there's no flash. The mode is
+      // 'light' or 'dark' when stored in localStorage, and 'system'
+      // otherwise, which follows prefers-color-scheme, including changes
+      // while the page is open.
       const KEY = 'anta-theme'
       // Mobile-Safari toolbar tint per theme — tracks `--bg-2` in
       // anta's tokens.css (keep in sync if that token changes).
       const THEME_COLOR = { light: '#fbfafb', dark: '#0e0d0f' }
-      // Central theme application: flips `.dark` on <html> and keeps the
-      // theme-color meta in sync. Exposed so the toggle handler (a
-      // separate, later script) reuses the exact same logic.
-      const apply = (m) => {
-        document.documentElement.classList.toggle('dark', m)
+      const LABELS = {
+        light: 'Light theme. Click for dark',
+        dark: 'Dark theme. Click for system',
+        system: 'System theme. Click for light',
+      }
+      const system = matchMedia('(prefers-color-scheme: dark)')
+      const modeOf = () => {
+        try {
+          const stored = localStorage.getItem(KEY)
+          return stored === 'dark' || stored === 'light' ? stored : 'system'
+        } catch (e) {
+          return 'system'
+        }
+      }
+      // Central theme application: flips `.dark` on <html>, records the mode
+      // for the toggle's icon, and keeps the theme-color meta in sync.
+      // Exposed so the toggle handler (a separate, later script) reuses the
+      // exact same logic.
+      const apply = (mode) => {
+        const dark = mode === 'system' ? system.matches : mode === 'dark'
+        document.documentElement.classList.toggle('dark', dark)
+        document.documentElement.dataset.themeMode = mode
         const tc = document.querySelector('meta[name="theme-color"]')
-        if (tc) tc.setAttribute('content', m ? THEME_COLOR.dark : THEME_COLOR.light)
-        const label = m ? 'Switch to light theme' : 'Switch to dark theme'
+        if (tc) tc.setAttribute('content', dark ? THEME_COLOR.dark : THEME_COLOR.light)
         for (const toggle of document.querySelectorAll('.theme-toggle')) {
-          toggle.setAttribute('aria-label', label)
+          toggle.setAttribute('aria-label', LABELS[mode])
           const tooltip = toggle.querySelector('a-tooltip')
-          if (tooltip) tooltip.textContent = label
+          if (tooltip) tooltip.textContent = LABELS[mode]
         }
       }
       window.__antaApplyTheme = apply
-      const stored = localStorage.getItem(KEY)
-      if (stored === 'dark' || stored === 'light') {
-        apply(stored === 'dark')
-      } else {
-        const mql = matchMedia('(prefers-color-scheme: dark)')
-        apply(mql.matches)
-        // Follow OS changes until the user makes an explicit choice.
-        mql.addEventListener('change', (e) => {
-          if (!localStorage.getItem(KEY)) apply(e.matches)
-        })
-      }
+      window.__antaThemeMode = modeOf
+      apply(modeOf())
+      system.addEventListener('change', () => {
+        if (modeOf() === 'system') apply('system')
+      })
     </script>
     {/* Palette — separate axis from light/dark above. One stable <link>; its
         href is the switch point (/themes/default.css is an empty stub, the
@@ -229,6 +239,16 @@ if (hasStructuredBreadcrumbs && title) {
     </script>
   </head>
   <body data-sidebar-default={hideSidebar ? 'hidden' : undefined} data-menu-pinned={hideSidebar ? 'false' : undefined}>
+    <script is:inline>
+      // Apply the stored desktop sidebar choice before paint, like the theme, so a
+      // refresh never flashes the page's default. Keep in sync with SIDEBAR_KEY below.
+      try {
+        const stored = localStorage.getItem('anta-sidebar')
+        if ((stored === 'open' || stored === 'collapsed') && !matchMedia('(max-width: 800px)').matches) {
+          document.body.dataset.menuPinned = stored === 'open' ? 'true' : 'false'
+        }
+      } catch (e) {}
+    </script>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
@@ -262,10 +282,11 @@ if (hasStructuredBreadcrumbs && title) {
       </div>
       <div class="topbar-tools">
         <div class="theming-switcher" transition:persist="theme-switcher"><ThemeSwitcher client:load /></div>
-        <Button class="theme-toggle" priority="tertiary" tone="neutral" size="small" aria-label="Switch to dark theme">
+        <Button class="theme-toggle" priority="tertiary" tone="neutral" size="small" aria-label="System theme. Click for light">
           <Icon shape="sun" size={16} />
           <Icon shape="moon" size={16} />
-          <a-tooltip follow>Switch to dark theme</a-tooltip>
+          <Icon shape="monitor" size={16} />
+          <a-tooltip follow>System theme. Click for light</a-tooltip>
         </Button>
         <div class="package-links">
           <Button
@@ -378,7 +399,16 @@ if (hasStructuredBreadcrumbs && title) {
       }
 
       const mobileNavigation = matchMedia('(max-width: 800px)')
-      let desktopMenuPinned: boolean | undefined
+      // The desktop sidebar choice persists across reloads; without one, each page's default applies.
+      const SIDEBAR_KEY = 'anta-sidebar'
+      const storedSidebar = (() => {
+        try {
+          return localStorage.getItem(SIDEBAR_KEY)
+        } catch {
+          return null
+        }
+      })()
+      let desktopMenuPinned: boolean | undefined = storedSidebar === 'open' ? true : storedSidebar === 'collapsed' ? false : undefined
       const setMenu = (open: boolean, pinned = false) => {
         const docked = open && pinned && !mobileNavigation.matches
         document.body.dataset.menuOpen = open ? 'true' : 'false'
@@ -468,6 +498,9 @@ if (hasStructuredBreadcrumbs && title) {
           } else {
             desktopMenuPinned = document.body.dataset.menuPinned !== 'true'
             setMenu(desktopMenuPinned, desktopMenuPinned)
+            try {
+              localStorage.setItem(SIDEBAR_KEY, desktopMenuPinned ? 'open' : 'collapsed')
+            } catch {}
           }
         } else if (target.closest('.toc-toggle')) {
           setToc(true)
@@ -514,18 +547,24 @@ if (hasStructuredBreadcrumbs && title) {
         if (!hasEntries) setToc(false)
       })
 
-      // Theme toggle: flip `.dark` (and the theme-color meta) via the head
-      // script's shared apply, then persist the choice. Cold loads apply
-      // pre-paint in the head script; swaps re-stamp below.
+      // Theme toggle: cycle light → dark → system via the head script's
+      // shared apply, then persist the choice; system removes it. Cold loads
+      // apply pre-paint in the head script; swaps re-stamp below.
+      type ThemeMode = 'light' | 'dark' | 'system'
       const THEME_KEY = 'anta-theme'
-      const applyTheme = (window as any).__antaApplyTheme
-        ?? ((m: boolean) => document.documentElement.classList.toggle('dark', m))
+      const NEXT_THEME: Record<ThemeMode, ThemeMode> = { light: 'dark', dark: 'system', system: 'light' }
+      const themeMode: () => ThemeMode = (window as any).__antaThemeMode ?? (() => 'system')
+      const applyTheme: (mode: ThemeMode) => void = (window as any).__antaApplyTheme
+        ?? ((mode: ThemeMode) => document.documentElement.classList.toggle('dark', mode === 'dark'))
       document.addEventListener('click', (e) => {
         if (!(e.target as HTMLElement).closest?.('.theme-toggle')) return
-        const nextDark = !document.documentElement.classList.contains('dark')
-        applyTheme(nextDark)
-        localStorage.setItem(THEME_KEY, nextDark ? 'dark' : 'light')
-        ;(window as any).posthog?.capture('dark_mode_toggled', { mode: nextDark ? 'dark' : 'light' })
+        const next = NEXT_THEME[themeMode()]
+        try {
+          if (next === 'system') localStorage.removeItem(THEME_KEY)
+          else localStorage.setItem(THEME_KEY, next)
+        } catch {}
+        applyTheme(next)
+        ;(window as any).posthog?.capture('dark_mode_toggled', { mode: next })
       })
 
       // Swaps replace <html>'s attributes wholesale, wiping the runtime
@@ -540,10 +579,10 @@ if (hasStructuredBreadcrumbs && title) {
         // Astro moves persisted elements outside body during the swap, briefly
         // removing the sidebar's body-dependent docking styles.
         if (sidebar) sidebar.style.transition = 'none'
-        ;(e as TransitionBeforeSwapEvent).newDocument.documentElement.classList.toggle(
-          'dark',
-          document.documentElement.classList.contains('dark'),
-        )
+        const incoming = (e as TransitionBeforeSwapEvent).newDocument.documentElement
+        incoming.classList.toggle('dark', document.documentElement.classList.contains('dark'))
+        const mode = document.documentElement.dataset.themeMode
+        if (mode) incoming.dataset.themeMode = mode
       })
       document.addEventListener('astro:after-swap', () => {
         const sidebar = document.querySelector<HTMLElement>('.sidebar')
@@ -572,7 +611,8 @@ if (hasStructuredBreadcrumbs && title) {
         }
       }
       document.addEventListener('astro:page-load', () => {
-        applyTheme(document.documentElement.classList.contains('dark'))
+        // Runs on the first load and after each swap: re-apply the current mode, which also labels the fresh toggle.
+        applyTheme(themeMode())
         syncSidebarNavigation()
         syncSidebarSearch()
       })
@@ -1002,11 +1042,11 @@ if (hasStructuredBreadcrumbs && title) {
     display: none;
   }
 
-  /* Show the destination theme: moon in light mode, sun in dark mode. */
-  .theme-toggle a-icon[shape="sun"] { display: none; }
-  .theme-toggle a-icon[shape="moon"] { display: inline-block; }
-  :global(.dark) .theme-toggle a-icon[shape="sun"] { display: inline-block; }
-  :global(.dark) .theme-toggle a-icon[shape="moon"] { display: none; }
+  /* Show the current mode: sun for light, moon for dark, monitor for system (also before the head script runs). */
+  .theme-toggle a-icon:is([shape="sun"], [shape="moon"], [shape="monitor"]) { display: none; }
+  :global(html[data-theme-mode="light"]) .theme-toggle a-icon[shape="sun"],
+  :global(html[data-theme-mode="dark"]) .theme-toggle a-icon[shape="moon"],
+  :global(html:not([data-theme-mode="light"], [data-theme-mode="dark"])) .theme-toggle a-icon[shape="monitor"] { display: inline-block; }
 
   .backdrop {
     display: block;

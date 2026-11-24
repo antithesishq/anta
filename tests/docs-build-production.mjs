@@ -138,7 +138,8 @@ for (const engine of engines) test(`${engine.name()}: package TypeScript referen
     { label: 'Virtual Scroll', path: 'virtual-scroll/reference', name: '@antadesign/virtual-scroll', symbol: 'VirtualScroll' },
   ]) {
     await page.goto('https://anta.test/')
-    await page.locator('.mobile-menu-toggle').click()
+    // The sidebar remembers being opened, so open it only when it is not already docked.
+    if (await page.evaluate(() => document.body.dataset.menuPinned !== 'true')) await page.locator('.mobile-menu-toggle').click()
     const link = page.locator(`.sidebar a[href="/${path}/index.html"]`)
     assert.equal((await link.textContent()).trim(), label)
     assert.equal(await link.getAttribute('href'), `/${path}/index.html`)

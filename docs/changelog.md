@@ -3,6 +3,16 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- [Icon](/icon/) has a `monitor` shape.
+
+### Changed
+
+- [SelectFaceted](/select-faceted/) mounts its facet editors only while its menu is open, so a closed menu no longer keeps every option of every facet in the page.
+
 ## 0.3.39 — November 22, 2026
 
 ### Added

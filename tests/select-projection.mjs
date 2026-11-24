@@ -25,6 +25,16 @@ const nodes = node => Array.isArray(node) ? node.flatMap(nodes) : node && typeof
 const rows = tree => nodes(tree).filter(n => n.type === 'a-menu-item')
 const text = node => Array.isArray(node) ? node.map(text).join('') : node && typeof node === 'object' ? text(node.props?.children) : typeof node === 'boolean' ? '' : node ?? ''
 const row = (tree, label) => rows(tree).find(n => text(n).includes(label))
+// SelectFaceted mounts its facet editors only while open: open it as <a-menu> reports a user opening it.
+function openFaceted(props, deferred = false) {
+  const render = renderer(runtime.SelectFaceted, props, deferred)
+  const menu = nodes(render()).find(n => n.type === 'a-menu')
+  const event = { detail: { next: 'open', prev: 'closed' } }
+  event.target = event.currentTarget = menu
+  menu.props.onstatechange(event)
+  render.flush()
+  return render
+}
 function renderer(component, initialProps, deferred = false) {
   let cursor, props = initialProps
   const state = [], pending = []
@@ -126,7 +136,7 @@ test.fast('public option selection and SelectFaceted retain independent facet va
   assert.equal(selected[0].options[0].selected, true)
   assert.equal(selected[0].options[0].extra, option.extra)
   const reports = []
-  const render = renderer(runtime.SelectFaceted, {
+  const render = openFaceted({
     facets: ['owner', 'assignee'].map(key => ({ key, label: key, kind: 'multiple', selectAll: false, options, filter: o => o.value === false })),
     defaultValue: { owner: [false] }, onValueChange: value => reports.push(value),
   })
@@ -140,7 +150,7 @@ test.fast('public option selection and SelectFaceted retain independent facet va
 })
 
 test.fast('SelectFaceted retains a filter query after native event dispatch completes', () => {
-  const render = renderer(runtime.SelectFaceted, {
+  const render = openFaceted({
     facets: [{key:'owner',label:'Owner',kind:'multiple',selectAll:false,filter:true,options:['Alpha','Beta']}],
   }, true)
   const field = nodes(render()).find(n => n.type === 'a-input' && n.props['aria-label'] === 'Filter Owner')
@@ -154,7 +164,7 @@ test.fast('SelectFaceted retains a filter query after native event dispatch comp
 
 for (const commit of ['Enter','blur']) test.fast(`SelectFaceted retains deferred text drafts and commits on ${commit}`, () => {
   const reports = []
-  const render = renderer(runtime.SelectFaceted, {
+  const render = openFaceted({
     facets:[{key:'title',label:'Title',kind:'text'}],
     onValueChange:(value,attrs) => reports.push({value,attrs}),
   }, true)
@@ -177,7 +187,7 @@ for (const browserShim of [false, true]) test.fast(`SelectFaceted keeps search s
   try {
     const option = { value: false, label: 'Off [test]', hint: 'Design\tteam', tooltip: '' }
     const seen = []
-    const render = renderer(runtime.SelectFaceted, {
+    const render = openFaceted({
       searchable: true,
       facets: [
         { key: 'owner', label: 'Owner', kind: 'multiple', selectAll: false, filter: true, options: [option, { value: 0, label: 'Zero', tooltip: '' }] },
@@ -211,7 +221,7 @@ for (const browserShim of [false, true]) test.fast(`SelectFaceted keeps search s
 
 test.fast('SelectFaceted filtered bulk changes retain hidden, disabled, and independent typed values', () => {
   const reports = []
-  const render = renderer(runtime.SelectFaceted, {
+  const render = openFaceted({
     defaultValue: { owner: ['hidden'], assignee: [false] },
     onValueChange: (value, attrs) => reports.push({ value, attrs }),
     facets: [{ key: 'owner', label: 'Owner', kind: 'multiple', filter: true, options: [
@@ -234,7 +244,7 @@ test.fast('SelectFaceted filtered bulk changes retain hidden, disabled, and inde
 
 test.fast('SelectFaceted controlled text updates preserve active typing and synchronize external replacements and clearing', () => {
   const reports = []
-  const render = renderer(runtime.SelectFaceted, {
+  const render = openFaceted({
     value: { title: 'Applied', owner: false },
     facets: [{ key: 'title', label: 'Title', kind: 'text' }],
     onValueChange: (value, attrs) => reports.push({ value, attrs }),
@@ -270,7 +280,7 @@ for (const value of ['alpha', '', 0, false]) test.fast(`Select single Clear repo
 test.fast('SelectFaceted empty built-in queries retain every option and custom filters receive raw whitespace', () => {
   const seen = []
   const options = [{value:0,label:'Zero'}, {value:false,label:'Off'}, {value:'disabled',label:'Unavailable',disabled:true}]
-  const render = renderer(runtime.SelectFaceted, {
+  const render = openFaceted({
     searchable:true,
     facets:[
       {key:'built-in',label:'Built in',kind:'single',filter:true,options},

@@ -566,9 +566,6 @@ if (hasStructuredBreadcrumbs && title) {
         applyTheme(next)
         ;(window as any).posthog?.capture('dark_mode_toggled', { mode: next })
       })
-      // The head script runs before the toggle exists, and a swap brings a fresh one: label it for the current mode.
-      applyTheme(themeMode())
-      document.addEventListener('astro:after-swap', () => applyTheme(themeMode()))
 
       // Swaps replace <html>'s attributes wholesale, wiping the runtime
       // `.dark`: stamp it onto the incoming document. (The theme-color meta
@@ -614,7 +611,8 @@ if (hasStructuredBreadcrumbs && title) {
         }
       }
       document.addEventListener('astro:page-load', () => {
-        applyTheme(document.documentElement.classList.contains('dark'))
+        // Runs on the first load and after each swap: re-apply the current mode, which also labels the fresh toggle.
+        applyTheme(themeMode())
         syncSidebarNavigation()
         syncSidebarSearch()
       })

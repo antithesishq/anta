@@ -1,0 +1,43 @@
+.demo {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.toolbar,
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  align-items: start;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+}
+
+/* A container with a definite height, which the table fills. */
+.fill {
+  display: flex;
+  flex-direction: column;
+  height: 320px;
+  min-width: 0;
+}
+
+.caption {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--text-3);
+}

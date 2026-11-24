@@ -117,6 +117,9 @@ importers:
       '@antadesign/typedoc-theme':
         specifier: workspace:*
         version: link:../typedoc-theme
+      '@antadesign/table':
+        specifier: workspace:*
+        version: link:../table
       '@antadesign/virtual-scroll':
         specifier: workspace:*
         version: link:../virtual-scroll
@@ -257,6 +260,33 @@ importers:
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
+      typescript:
+        specifier: npm:@typescript/typescript6@6.0.2
+        version: '@typescript/typescript6@6.0.2'
+
+  table:
+    devDependencies:
+      '@antadesign/anta':
+        specifier: workspace:*
+        version: link:..
+      '@antadesign/virtual-scroll':
+        specifier: workspace:*
+        version: link:../virtual-scroll
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@typescript/native':
+        specifier: npm:typescript@7.0.2
+        version: typescript@7.0.2
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: 19.3.0
+        version: 19.3.0(react@19.3.0)
       typescript:
         specifier: npm:@typescript/typescript6@6.0.2
         version: '@typescript/typescript6@6.0.2'

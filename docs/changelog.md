@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Changed
+
+- The Antithesis theme gives tables from `@antadesign/table` square corners (1px).
+
 ## 0.3.39 — November 22, 2026
 
 ### Added

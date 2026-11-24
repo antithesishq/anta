@@ -51,11 +51,12 @@ test('collection reads keep island and script styles on the pages that use them'
     const wheelStyles = styles.filter(path => path.includes('/WheelCapturePreview.'))
     assert.equal(wheelStyles.length, entry.path === '/capture/' ? 1 : 0,
       `${entry.path} must only load WheelCapturePreview CSS when rendering that demo`)
-    // Plot's processed script, the browser-only Box/Capture/Tooltip demos, and the virtual
-    // scroll element (whose scrollbar hint is a tooltip) own this shared element
-    // chunk. Reading their metadata must not load it elsewhere.
+    // Plot's processed script, the browser-only Box/Capture/Tooltip demos, the virtual
+    // scroll element (whose scrollbar hint is a tooltip), and the table demos (which
+    // render that element and tooltips of their own) own this shared element chunk.
+    // Reading their metadata must not load it elsewhere.
     const elementStyles = styles.filter(path => path.includes('/a-tooltip.'))
-    assert.equal(elementStyles.length, ['/box/', '/capture/', '/tooltip/'].includes(entry.path) || ['plot', 'virtual-scroll'].includes(entry.package) ? 1 : 0,
+    assert.equal(elementStyles.length, ['/box/', '/capture/', '/tooltip/'].includes(entry.path) || ['plot', 'virtual-scroll', 'table'].includes(entry.package) ? 1 : 0,
       `${entry.path} must not inherit another collection entry's script CSS`)
   }
 })
@@ -1058,18 +1059,20 @@ test('compiled Playground works after client-side navigation', async t => {
 test('native MDX preserves authored JSX tables, inline children, and contrast ratios', async t => {
   const { page, errors } = await productionPage(t)
   await page.goto('https://anta.test/table/')
-  const tables = page.locator('main table')
+  // The table package page also has Markdown tables; the authored JSX ones live in its plain HTML section.
+  const section = page.locator('main details:has(#plain-html-tables)')
+  const tables = section.locator('table')
   assert.equal(await tables.count(), 3)
-  assert.equal(await page.locator('main table tr').count(), 12)
-  assert.deepEqual(await page.locator('main table tbody tr > td:first-child').allTextContents(), [
+  assert.equal(await section.locator('table tr').count(), 12)
+  assert.deepEqual(await section.locator('table tbody tr > td:first-child').allTextContents(), [
     '--text-1', '--text-3', '--border-5',
     '--text-1', '--text-3', '--border-5',
     '--text-1-brand', '--text-3', '--text-1',
   ])
-  assert.equal(await page.locator('main .table-wrap > table').count(), 0,
+  assert.equal(await section.locator('.table-wrap > table').count(), 0,
     'Authored JSX tables retain their existing layout without Markdown wrappers')
   assert.equal(await tables.nth(1).evaluate(table => getComputedStyle(table).borderCollapse), 'separate')
-  assert.equal(await page.locator('main caption').textContent(), 'Color tokens used by the docs sidebar')
+  assert.equal(await section.locator('caption').textContent(), 'Color tokens used by the docs sidebar')
 
   await page.goto('https://anta.test/card/')
   const title = page.locator('a-title').filter({ hasText: 'CI integration guide' })

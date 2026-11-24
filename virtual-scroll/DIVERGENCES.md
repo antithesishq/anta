@@ -137,6 +137,10 @@ Star baseline: `main` at `35d696ea0ce` (2026-11-03).
     and Shift + click ranges), `highlight_items`, and the `_selected` / `_highlighted` classes. The port renders none
     of it, so selection lives in the table and works the same whether its rows are virtualized or not.
 
+34. **Right-pinned cells need no offset from the renderer.** Rows inherit `--virtual-scroll-max-x` beside
+    `--virtual-scroll-x`, so a right-pinned cell translates by their difference in CSS. Star's table computes each
+    right-pinned cell's `left` from its own width math and `table_scroll_x` on every horizontal scroll.
+
 ## Kept identical on purpose
 
 - The anchor model and its corrections: re-anchoring, overscroll at both ends, following the end, and the 2× render

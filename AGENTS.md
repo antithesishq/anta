@@ -2,12 +2,13 @@
 
 Anta is a portable UI component library, published as `@antadesign/anta`. It works in React, Preact through `preact/compat`, and custom JSX runtimes through `configure()`.
 
-This pnpm workspace contains five publishable packages and one private site:
+This pnpm workspace contains six publishable packages and one private site:
 
 - `@antadesign/anta` — the root package; its source is in `src/`.
 - `@antadesign/stickers` — a separate sticker package in `stickers/`, keeping `lottie-web` out of anta's dependency graph.
 - `@antadesign/plot` — the separate canvas plot package in `plot/`.
-- `@antadesign/virtual-scroll` — the virtualized list package in `virtual-scroll/`. The table will follow as its own package.
+- `@antadesign/virtual-scroll` — the virtualized list package in `virtual-scroll/`.
+- `@antadesign/table` — the data table package in `table/`. It takes a virtualizer, such as `VirtualScroll`, as a prop.
 - `@antadesign/typedoc-theme` — the separate TypeDoc theme package in `typedoc-theme/`.
 - `site/` — the documentation site; it is not published to npm.
 
@@ -20,6 +21,7 @@ Read the closest guidance before changing a scoped area:
 - `stickers/AGENTS.md` — sticker package layout, generation, and publishing details. Read `src/AGENTS.md` as well before changing its elements or wrappers.
 - `plot/AGENTS.md` — plot entry points, build, and package verification.
 - `virtual-scroll/AGENTS.md` — virtual scroll entry points, build, tests, and the record of intentional divergences from the notebook original.
+- `table/AGENTS.md` — table entry points, build, tests, and the record of intentional divergences from the notebook original.
 - `typedoc-theme/README.md` — TypeDoc theme setup and package behavior.
 - `RELEASING.md` — mandatory publish order and package-manager commands.
 - `FIGMA.md`, `WRITING.md`, and `DESIGN.md` — Figma extraction, prose, and design guidance respectively.

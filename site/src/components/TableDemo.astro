@@ -1,0 +1,14 @@
+---
+import Preview from './Preview.astro'
+import { TableExample, type TableExampleName } from './TableExamples.tsx'
+
+interface Props {
+  example: TableExampleName
+  minHeight?: number
+}
+const { example, minHeight = 420 } = Astro.props
+---
+
+<Preview align="stretch" minHeight={minHeight}>
+  <TableExample client:only="preact" example={example} />
+</Preview>

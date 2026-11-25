@@ -72,6 +72,7 @@ jobs:
             echo 'stickers=true' >> "$GITHUB_OUTPUT"
             echo 'text=true' >> "$GITHUB_OUTPUT"
             echo 'progress=true' >> "$GITHUB_OUTPUT"
+            echo 'form=true' >> "$GITHUB_OUTPUT"
             echo 'expander=true' >> "$GITHUB_OUTPUT"
             echo 'banner=true' >> "$GITHUB_OUTPUT"
             echo 'input-time=true' >> "$GITHUB_OUTPUT"
@@ -314,6 +315,21 @@ jobs:
             echo 'progress=true' >> "$GITHUB_OUTPUT"
           else
             echo 'progress=false' >> "$GITHUB_OUTPUT"
+          fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-form*' \
+            'src/elements/a-input*' 'src/elements/a-button.*' 'src/elements/a-box.*' 'src/elements/a-select*' 'src/elements/a-menu*' \
+            src/components/{Form,Input,Button,Box,Select,InputAutocomplete,InputDate,InputTime}.tsx \
+            'src/components/select-*' src/components/Select.css \
+            src/{jsx-runtime,native-event-props,input-events,anta_helpers,button-content,element-base,general_types,index,bundle}.ts \
+            src/elements/{index,key-activation,shadow-aria,input-focus-modality,input-trailing-actions}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/form*' scripts/build-bundle.mjs .github/workflows/ci.yml \
+            'tests/component*.mjs' package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'form=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'form=false' >> "$GITHUB_OUTPUT"
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
             'src/elements/a-banner.*' 'src/elements/a-button.*' 'src/elements/a-icon*' \

@@ -1,0 +1,399 @@
+---
+author: "Alex Voigt"
+title: Form
+description: Responsive label and field layout for native forms.
+nav:
+  icon: list-collapse
+  group: inputs
+  order: 70
+---
+import Preview from '../../../components/Preview.astro'
+import Disclosure from '../../../components/Disclosure.astro'
+import PropsTable from '../../../components/PropsTable.astro'
+import Columns from '../../../components/Columns.astro'
+import Col from '../../../components/Col.astro'
+import FormDialogPreview from '../../../components/FormDialogPreview'
+import FormKeysPreview from '../../../components/FormKeysPreview'
+import { Box, Button, Checkbox, Form, Input, RadioGroup } from '@antadesign/anta'
+
+# Form
+
+`Form` aligns field labels in a native HTML form. When space is tight, the labels move above the controls.
+
+## Label and field
+
+The setup form adapts to the space available in its container.
+
+<Columns stretch colGap="16px" rowGap="16px">
+<Col width="5fr" min={548}>
+
+**Set to 500px wide**
+
+<Preview justify="flex-start" align="flex-start">
+  <Form action="javascript:void(0)" style={{ inlineSize: '500px', maxInlineSize: '100%' }}>
+    <Input name="image" label="Config image" multiline rows={2} hint="An image with the orchestration and config files for your software." />
+    <Input name="hours" label="Max compute hours" defaultValue="16" hint="Compute hours for the run, setup included." />
+    <Checkbox name="setup" label="Setup mode" />
+    <Button type="submit" priority="primary" label="Launch the setup run" />
+  </Form>
+</Preview>
+
+</Col>
+<Col width="3fr" min={328}>
+
+**Set to 280px wide**
+
+<Preview justify="flex-start" align="flex-start">
+  <Form action="javascript:void(0)" style={{ inlineSize: '280px', maxInlineSize: '100%' }}>
+    <Input name="image" label="Config image" multiline rows={2} hint="An image with the orchestration and config files for your software." />
+    <Input name="hours" label="Max compute hours" defaultValue="16" hint="Compute hours for the run, setup included." />
+    <Checkbox name="setup" label="Setup mode" />
+    <Button type="submit" priority="primary" label="Launch the setup run" />
+  </Form>
+</Preview>
+
+</Col>
+</Columns>
+
+```tsx folded
+<Form>
+  <Input name="image" label="Config image" multiline rows={2} hint="An image with the orchestration and config files for your software." />
+  <Input name="hours" label="Max compute hours" defaultValue="16" hint="Compute hours for the run, setup included." />
+  <Checkbox name="setup" label="Setup mode" />
+  <Button type="submit" priority="primary" label="Launch the setup run" />
+</Form>
+```
+
+Place fields directly inside `Form` to align them. An `Input`, `InputTime`, or `RadioGroup` can share a label column. Checkboxes, switches, sliders, and buttons line up with the controls. Fields inside a `<fieldset>` or `<div>` keep their own layout.
+
+For a group of radio buttons, give the group a label such as **Session duration**.
+
+<Preview justify="flex-start">
+  <Form action="javascript:void(0)" style={{ inlineSize: '520px', maxInlineSize: '100%' }}>
+    <RadioGroup
+      name="duration"
+      label="Session duration"
+      defaultValue="short"
+      options={[
+        { value: 'short', label: 'Short: 1 hour, up to 48 compute hours' },
+        { value: 'medium', label: 'Medium: 3 hours, up to 144 compute hours' },
+        { value: 'long', label: 'Long: 6 hours, up to 288 compute hours' },
+      ]}
+    />
+    <Input name="description" label="Session description" multiline rows={2} hint="Helps you find this session later." />
+    <Input name="email" type="email" label="Notify by email (optional)" placeholder="your.email@domain.com" />
+    <Button type="submit" priority="primary" label="Start debugging session" />
+  </Form>
+</Preview>
+
+```tsx folded
+<Form>
+  <RadioGroup
+    name="duration"
+    label="Session duration"
+    defaultValue="short"
+    options={[
+      { value: 'short', label: 'Short: 1 hour, up to 48 compute hours' },
+      { value: 'medium', label: 'Medium: 3 hours, up to 144 compute hours' },
+      { value: 'long', label: 'Long: 6 hours, up to 288 compute hours' },
+    ]}
+  />
+  <Input name="description" label="Session description" multiline rows={2} hint="Helps you find this session later." />
+  <Input name="email" type="email" label="Notify by email (optional)" placeholder="your.email@domain.com" />
+  <Button type="submit" priority="primary" label="Start debugging session" />
+</Form>
+```
+
+## Columns
+
+Use `columns={2}` to put two fields on a row when there's room. The form drops to one column when two columns of `fieldMin` and the gap between them no longer fit.
+
+**Set to 720px wide**
+
+<Preview justify="flex-start">
+  <Form columns={2} labelWidth="100%" action="javascript:void(0)" style={{ inlineSize: '720px', maxInlineSize: '100%' }}>
+    <Input name="hours" label="Max compute hours" defaultValue="16" hint="Compute hours for the run, setup included." />
+    <Input name="recipient" type="email" label="Report recipient (optional)" placeholder="your.email@domain.com" />
+    <Input name="source" label="Source" defaultValue="main" />
+    <Input name="description" label="Description (optional)" />
+    <Button type="submit" priority="primary" label="Launch the run" />
+  </Form>
+</Preview>
+
+**Set to 360px wide**
+
+<Preview justify="flex-start">
+  <Form columns={2} labelWidth="100%" action="javascript:void(0)" style={{ inlineSize: '360px', maxInlineSize: '100%' }}>
+    <Input name="hours" label="Max compute hours" defaultValue="16" hint="Compute hours for the run, setup included." />
+    <Input name="recipient" type="email" label="Report recipient (optional)" placeholder="your.email@domain.com" />
+    <Input name="source" label="Source" defaultValue="main" />
+    <Input name="description" label="Description (optional)" />
+    <Button type="submit" priority="primary" label="Launch the run" />
+  </Form>
+</Preview>
+
+```tsx folded
+<Form columns={2} labelWidth="100%">
+  <Input name="hours" label="Max compute hours" defaultValue="16" hint="Compute hours for the run, setup included." />
+  <Input name="recipient" type="email" label="Report recipient (optional)" placeholder="your.email@domain.com" />
+  <Input name="source" label="Source" defaultValue="main" />
+  <Input name="description" label="Description (optional)" />
+  <Button type="submit" priority="primary" label="Launch the run" />
+</Form>
+```
+
+If a hint makes its row taller, all the fields in the following row move down together.
+
+When a resize changes the column count, controls that move ease into place. `Form` skips this animation when the reader prefers reduced motion.
+
+## Actions
+
+To put buttons on one row, make a `Box` with `display="flex"` a direct child of `Form` and put the submit `Button` directly inside it. In a multicolumn form, the buttons align with the controls in the first column.
+
+If the fields scroll, set `stickyActions` to keep the buttons at the bottom of the scroll area.
+
+<Preview justify="flex-start">
+  <div style={{ boxSizing: 'border-box', inlineSize: '536px', maxInlineSize: '100%', blockSize: '220px', overflow: 'auto', overscrollBehavior: 'none', paddingInlineEnd: '16px' }}>
+    <Form stickyActions action="javascript:void(0)">
+      <Input name="image" label="Config image" multiline rows={2} />
+      <Input name="hours" label="Max compute hours" defaultValue="16" />
+      <Input name="source" label="Source" defaultValue="main" />
+      <Input name="description" label="Description (optional)" multiline rows={2} />
+      <Input name="recipient" type="email" label="Report recipient (optional)" />
+      <Box display="flex" gap={8}>
+        <Button type="submit" priority="primary" label="Launch the run" />
+        <Button type="reset" label="Clear" />
+      </Box>
+    </Form>
+  </div>
+</Preview>
+
+```tsx folded
+<div style={{ blockSize: '220px', overflow: 'auto', overscrollBehavior: 'none', paddingInlineEnd: '16px' }}>
+  <Form stickyActions>
+    <Input name="image" label="Config image" multiline rows={2} />
+    <Input name="hours" label="Max compute hours" defaultValue="16" />
+    <Input name="source" label="Source" defaultValue="main" />
+    <Input name="description" label="Description (optional)" multiline rows={2} />
+    <Input name="recipient" type="email" label="Report recipient (optional)" />
+    <Box display="flex" gap={8}>
+      <Button type="submit" priority="primary" label="Launch the run" />
+      <Button type="reset" label="Clear" />
+    </Box>
+  </Form>
+</div>
+```
+
+Scroll through the setup fields and try **Clear** while the action row is in view.
+
+## Keyboard
+
+`Form` submits on no key until you choose one. Set `submitHotkey="mod+enter"` to submit with <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or <kbd>Cmd</kbd>+<kbd>Enter</kbd> from a field, including a multiline `Input`. The hotkey uses the submit `Button` with `priority="primary"`.
+
+<Preview justify="flex-start">
+  <FormKeysPreview client:visible={{ rootMargin: '200px' }} />
+</Preview>
+
+```tsx folded
+import { useState } from 'preact/hooks'
+import { Button, Form, Input, Text } from '@antadesign/anta'
+
+export default function Demo() {
+  const [saved, setSaved] = useState(0)
+  const save = (event: SubmitEvent) => {
+    event.preventDefault()
+    setSaved(count => count + 1)
+  }
+
+  return (
+    <>
+      <Form submitHotkey="mod+enter" onSubmit={save}>
+        <Input name="name" label="Name" defaultValue="ci-runner" />
+        <Input name="notes" label="Notes (optional)" multiline rows={2} />
+        <Button type="submit" priority="primary" label="Save" />
+      </Form>
+      {saved > 0 && <Text>Saved {saved} {saved === 1 ? 'time' : 'times'}.</Text>}
+    </>
+  )
+}
+```
+
+Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or <kbd>Cmd</kbd>+<kbd>Enter</kbd> in **Name**, then in **Notes**. The save count should reach two. <kbd>Enter</kbd> alone does nothing in **Name** and starts a new line in **Notes**.
+
+A form without an enabled primary submit `Button` ignores the hotkey. A focused radio or `Button` uses <kbd>Enter</kbd> itself, with or without the modifier, so the hotkey does not submit from there.
+
+The hotkey submits before the focused field fires `change`, which follows when the field loses focus. Read the values from the form in `onSubmit`.
+
+Set `submitHotkey="enter"` to submit with <kbd>Enter</kbd> from a single-line `Input` instead. <kbd>Enter</kbd> uses the form's first submit button, and nothing is submitted while that button is disabled or loading. Without a submit button, <kbd>Enter</kbd> submits only when the form has a single eligible text field.
+
+With `submitHotkey="enter"`, <kbd>Enter</kbd> still selects the active autocomplete suggestion or commits a typed date first. It also leaves the filter of a `Select` and the segments of an `InputTime` alone. To handle <kbd>Enter</kbd> in your own field, call `preventDefault()` in its key handler.
+
+## Submit button outside the form
+
+To submit from a `Dialog` footer, give the form an `id` and pass the same value to the submit `Button`'s `form` prop.
+
+<Preview>
+  <FormDialogPreview client:visible={{ rootMargin: '200px' }} />
+</Preview>
+
+```tsx folded
+import { useState } from 'preact/hooks'
+import { Button, Dialog, Form, Input, Select, Text, Title } from '@antadesign/anta'
+
+export default function Demo() {
+  const [open, setOpen] = useState(false)
+  const [created, setCreated] = useState<string | null>(null)
+  const createKey = (event: SubmitEvent) => {
+    event.preventDefault()
+    setCreated(String(new FormData(event.currentTarget as HTMLFormElement).get('name')))
+    setOpen(false)
+  }
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Create API key</Button>
+      {created && <Text>Created {created}.</Text>}
+      <Dialog
+        open={open}
+        onStateChange={(_e, { next }) => setOpen(next)}
+        header={<Title level={4}>Create API key</Title>}
+        footer={
+          <>
+            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" form="create-key" priority="primary">Create key</Button>
+          </>
+        }
+      >
+        <Form id="create-key" onSubmit={createKey}>
+          <Input name="name" label="Name" required placeholder="key_xxxxxxxx" hint="Change it to something recognizable, like where the key is used." />
+          <Select
+            name="expiration"
+            label="Expiration"
+            defaultValue="1y"
+            options={[
+              { value: '30d', label: '30 days' },
+              { value: '90d', label: '90 days' },
+              { value: '1y', label: '1 year' },
+            ]}
+          />
+        </Form>
+      </Dialog>
+    </>
+  )
+}
+```
+
+Open **Create API key**, leave **Name** empty, and select **Create key**. The required field keeps the dialog open until you enter a name and submit.
+
+## Label width
+
+Use `labelWidth` to give short labels like **Key** and **Value** a narrower column. Set it to `'100%'` to stack separate field labels at every width. `fieldMin` sets how narrow an input can get beside its label before the label moves above it.
+
+<Columns stretch colGap="16px" rowGap="16px">
+<Col min={368}>
+
+**72px label column**
+
+<Preview justify="flex-start" align="flex-start">
+  <Form labelWidth={72} action="javascript:void(0)" style={{ inlineSize: '320px', maxInlineSize: '100%' }}>
+    <Input name="key" label="Key" defaultValue="plugin_version" />
+    <Input name="value" label="Value" defaultValue="0.0.9" />
+  </Form>
+</Preview>
+
+</Col>
+<Col min={368}>
+
+**100% label column**
+
+<Preview justify="flex-start" align="flex-start">
+  <Form labelWidth="100%" action="javascript:void(0)" style={{ inlineSize: '320px', maxInlineSize: '100%' }}>
+    <Input name="key" label="Key" defaultValue="plugin_version" />
+    <Input name="value" label="Value" defaultValue="0.0.9" />
+  </Form>
+</Preview>
+
+</Col>
+</Columns>
+
+```tsx folded
+<>
+  <Form labelWidth={72}>
+    <Input name="key" label="Key" defaultValue="plugin_version" />
+    <Input name="value" label="Value" defaultValue="0.0.9" />
+  </Form>
+
+  <Form labelWidth="100%">
+    <Input name="key" label="Key" defaultValue="plugin_version" />
+    <Input name="value" label="Value" defaultValue="0.0.9" />
+  </Form>
+</>
+```
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Form" />
+
+</Disclosure>
+
+<Disclosure title="Web Component">
+
+`Form` renders `<a-form>` around a native `<form>`. Outside JSX, write both and import `@antadesign/anta/elements/a-form`. Set `submit-hotkey` and `sticky-actions` on `<a-form>`. The native form keeps its own attributes, its validation, and its `submit` event.
+
+```html
+<a-form submit-hotkey="mod+enter">
+  <form>
+    <a-input name="name"><span slot="label">Name</span></a-input>
+    <a-checkbox role="checkbox" tabindex="0" name="remind">
+      <a-checkbox-label>Email me before the key expires</a-checkbox-label>
+    </a-checkbox>
+    <a-button role="button" tabindex="0" type="submit" priority="primary">
+      <a-button-label>Create key</a-button-label>
+    </a-button>
+  </form>
+</a-form>
+```
+
+Load the entries for the controls you use. See [Button](/button/) for the events a submit button dispatches.
+
+</Disclosure>
+
+<Disclosure title="Native HTML">
+
+For the layout alone, add `data-anta` to a `<form>` and import `@antadesign/anta/elements/a-form`. A native form gets the label column and the columns. It does not get the hotkey, the sticky action row, or the animated column changes.
+
+```html
+<form data-anta>
+  <a-input name="name"><span slot="label">Name</span></a-input>
+  <a-button role="button" tabindex="0" type="submit" priority="primary">
+    <a-button-label>Create key</a-button-label>
+  </a-button>
+</form>
+```
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+To share a layout across forms, set the CSS variables on a common ancestor. `--form-label-width` and `--form-label-gap` default to `140px` and `12px`. `--form-field-min` defaults to `200px`, and `--form-columns` defaults to `1`. Use `row-gap` to change the space between rows. The default column gap is `24px`.
+
+<Preview justify="flex-start">
+  <div className="compact-forms">
+    <Form action="javascript:void(0)" style={{ inlineSize: '360px', maxInlineSize: '100%' }}>
+      <Input name="key" label="Key" defaultValue="plugin_version" />
+      <Input name="value" label="Value" defaultValue="0.0.9" />
+    </Form>
+  </div>
+  <style is:inline>{`
+    .compact-forms { --form-label-width: 56px; --form-label-gap: 8px; }
+    .compact-forms form { row-gap: 8px; }
+  `}</style>
+</Preview>
+
+```css folded
+/* The class is only for the demo. Put the variables on any ancestor of the forms. */
+.compact-forms { --form-label-width: 56px; --form-label-gap: 8px; }
+.compact-forms form { row-gap: 8px; }
+```
+
+</Disclosure>

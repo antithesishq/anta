@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- [Form](/form/) aligns labels and fields in a form and stacks them in narrow containers. See [the submit hotkey](/form/#keyboard) and [sticky actions](/form/#actions) for the optional controls.
+
 ## 0.3.39 — November 22, 2026
 
 ### Added

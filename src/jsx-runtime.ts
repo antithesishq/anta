@@ -141,7 +141,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ATextContentAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AExpanderSummaryAttributes, AExpanderIndicatorAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
+import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ATextContentAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AExpanderSummaryAttributes, AExpanderIndicatorAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AFormAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -207,6 +207,7 @@ export interface AntaIntrinsicElements {
   'a-calendar': ACalendarAttributes
   'a-radio': ARadioAttributes
   'a-radio-group': ARadioGroupAttributes
+  'a-form': AFormAttributes
   'a-radio-group-label': BaseAttributes
   'a-radio-group-hint': BaseAttributes
   'a-radio-list': BaseAttributes

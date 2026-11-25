@@ -114,6 +114,7 @@
     "test:toaster": "node --test tests/toaster-csp.mjs",
     "test:toaster:package": "node tests/toaster-package.mjs",
     "test:text": "node --test tests/text-csp.mjs",
+    "test:form": "node --test tests/form-layout.mjs tests/form-keys.mjs",
     "test:input-time": "node --test tests/input-time-csp.mjs",
     "test:input-time:package": "node tests/input-time-package.mjs",
     "test:selection": "node --test tests/selection-projection.mjs tests/selection-value.mjs",

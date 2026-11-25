@@ -8,6 +8,8 @@ import { serve } from './demo.mjs'
 // VIRTUAL_SCROLL_BROWSER_PER_TEST when the browser runs single-process and can hold one page.
 const requireSite = createRequire(new URL('../../site/package.json', import.meta.url))
 const { chromium } = requireSite(process.env.VIRTUAL_SCROLL_PLAYWRIGHT ?? 'playwright')
+const { PNG } = requireSite('pngjs')
+const pixelmatch = requireSite('pixelmatch').default
 let browser, server, origin
 
 const perTest = !!process.env.VIRTUAL_SCROLL_BROWSER_PER_TEST
@@ -700,6 +702,7 @@ test('hovering the list does not move its rows', async t => {
   await page.mouse.move(300, 300)
   await page.mouse.wheel(0, 517)
   await settle(page)
+  await page.waitForFunction(() => !window.list.matches(':state(scrolling)'))
   const box = await page.evaluate(() => {
     const host = window.list.getBoundingClientRect()
     const bar = window.list.shadowRoot.querySelector('.bar.v').getBoundingClientRect()
@@ -710,9 +713,21 @@ test('hovering the list does not move its rows', async t => {
   // Off the list, then on its scrollbar: the host is hovered but no row is.
   await page.mouse.move(box.x + box.width + 200, box.y + box.height + 200)
   await page.evaluate(() => window.frames(3))
+  const beforeHover = await topRow(page)
   const outside = await page.screenshot({ clip })
   await page.mouse.move(box.barX, box.barY)
   await page.evaluate(() => window.frames(3))
   const hovered = await page.screenshot({ clip })
-  assert.ok(outside.equals(hovered), 'rows render the same with and without hover')
+  const afterHover = await topRow(page)
+  assert.equal(afterHover.index, beforeHover.index, 'hover keeps the same first visible row')
+  assert.ok(Math.abs(afterHover.offset - beforeHover.offset) <= 0.5, 'hover moves rows by at most half a pixel')
+  const beforePixels = PNG.sync.read(outside)
+  const afterPixels = PNG.sync.read(hovered)
+  assert.equal(afterPixels.width, beforePixels.width)
+  assert.equal(afterPixels.height, beforePixels.height)
+  // Ignore antialiasing and small rasterization differences while retaining
+  // a visual check for movement that leaves DOM coordinates unchanged.
+  const changed = pixelmatch(beforePixels.data, afterPixels.data, null, beforePixels.width, beforePixels.height, { threshold: 0.1 })
+  const allowance = Math.ceil(beforePixels.width * beforePixels.height * 0.001)
+  assert.ok(changed <= allowance, `hover changed ${changed} pixels; allowance is ${allowance}`)
 })

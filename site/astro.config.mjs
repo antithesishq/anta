@@ -43,8 +43,8 @@ export default defineConfig({
   },
   // ClientRouter enables this implicitly. Keep the policy explicit: hovering
   // or focusing an internal link downloads its document before activation.
-  // The short browser cache policy in public/_headers lets that response be
-  // reused for the click, including in browsers that prefetch with fetch().
+  // public/_headers requires revalidation before cached documents are reused,
+  // so navigation can pick up deployments without a stale freshness window.
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   // Stickers moved from the "Sticker" component page to the Packages section
   // (route /sticker/ → /stickers/). Keep the old URL resolving for external links.

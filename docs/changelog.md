@@ -7,33 +7,38 @@ changes are not listed.
 
 ### Added
 
-- [Tag](/tag/#interactive-tags) accepts `interactive` for a pointer cursor and stronger hover border that returns to normal while pressed. Primary tags use a transparent resting border and a dark or light hover edge to contrast with the fill.
-- [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including repeated values.
-- [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 - [Form](/form/) aligns labels and fields in a form and stacks them in narrow containers. See [the submit hotkey](/form/#keyboard) and [sticky actions](/form/#actions) for the optional controls.
+
+## 0.3.39 — November 22, 2026
+
+### Added
+
+- [Tag](/tag/#interactive-tags) accepts `interactive` for a pointer cursor and hover border.
+- [Input](/input/#forms) accepts `formValue` to submit a value independently of its displayed text, including arrays.
+- [Select](/select/#using-select-in-forms) submits its selection under `name`, supports `required` validation, and restores uncontrolled defaults on form reset.
 
 ### Changed
 
-- [Button](/button/#web-component) gives raw `<a-button>` elements a default button role internally after registration. JSX Buttons retain an explicit role for compatibility with DOM-based testing tools, and authored role overrides take precedence.
-- Consolidated [typography](/theming/#text-and-hint-sizes) into shared scales with more leading to reduce clipping and unitless line heights that scale through nested font sizes. Replace removed component typography variables with shared tokens or direct CSS overrides, using unitless values for line-height tokens.
+- [Button](/button/#web-component) gives raw `<a-button>` elements a default button role after registration. Explicit roles take precedence.
+- [Typography](/theming/#text-and-hint-sizes) uses shared scales with more leading and unitless line heights to reduce clipping and scale with font size.
 
 ### Removed
 
-- Removed obsolete `a-select-field`, `a-select-label`, and `a-select-hint` styles, JSX types, and Button accessibility handling. Raw Select compositions use `<a-input button>` with label and hint slots. Current Select and SelectFaceted retain their shared layout styles.
+- Obsolete `a-select-field`, `a-select-label`, and `a-select-hint` support is removed. Use `<a-input button>` with [label and hint slots](/select/#migrate-field-styles) for raw Select compositions.
 
 ### Fixed
 
-- [Tag](/tag/#interactive-tags) fits leading and trailing buttons without extra side padding and keeps icon buttons within its height. Embedded buttons follow the tag’s corner shape.
+- [Tag](/tag/#interactive-tags) fits embedded buttons within its height and corner shape, without extra side padding.
 - [Button form gathering](/button/#form-submission) blocks `submitdetailed` while required fields are invalid, unless the form opts out of validation.
-- [InputDate](/input-date/#manage-the-value) submits its ISO value through the visible Input instead of a hidden field. Disabled fields are omitted, and `form` supports association with a form elsewhere on the page.
-- Changing [InputDate’s locale](/input-date/#the-date-field) reformats its committed date without changing the saved value.
+- [InputDate](/input-date/#manage-the-value) submits its ISO value, omits disabled fields, and supports external form association. Locale changes reformat the date without changing its value.
 - Disabling [Select](/select/#size-and-status) also disables its open menu without clearing the selection.
-- [Native selects](/select/#native-html-select) style the field and dropdown without custom trigger markup. Focus rings follow the theme.
+- [Native selects](/select/#native-html-select) style the field, dropdown, and focus ring without custom trigger markup.
 
 ### Breaking
 
+- Replace removed component typography variables with [shared tokens](/theming/#text-and-hint-sizes) or direct CSS overrides. Line-height tokens now require unitless values.
 - Named [button-mode Inputs](/input/#forms) now submit their displayed text when `formValue` is omitted. Pass `formValue={null}` to retain the previous behavior of omitting the field.
-- [Button form gathering](/button/#form-submission) keeps multiple Selects and array-valued Inputs as arrays in `submitdetailed.formData`, including empty and one-item selections. Repeated field names also produce arrays instead of keeping only the last entry. Other unique field names retain scalar values.
+- [Button form gathering](/button/#form-submission) preserves arrays from Selects and Inputs, including empty and one-item selections. Repeated names now produce arrays in `submitdetailed.formData`; other fields remain scalar values.
 
 ## 0.3.38 — October 29, 2026
 

@@ -1,4 +1,4 @@
-import { Icon, Input } from '@antadesign/anta'
+import { Button, Icon, Input } from '@antadesign/anta'
 import { useEffect, useState } from 'preact/hooks'
 
 /**
@@ -8,6 +8,7 @@ import { useEffect, useState } from 'preact/hooks'
 export default function SidebarSearch() {
   const [shortcut, setShortcut] = useState('')
   const [expanded, setExpanded] = useState(false)
+  const [hasValue, setHasValue] = useState(false)
 
   useEffect(() => {
     const platform = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform
@@ -19,31 +20,53 @@ export default function SidebarSearch() {
 
   useEffect(() => {
     const onState = (event: Event) => setExpanded(Boolean((event as CustomEvent<{ open: boolean }>).detail?.open))
+    const onValue = (event: Event) => setHasValue(Boolean((event as CustomEvent<string>).detail))
+    const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
+    setHasValue(Boolean(input?.value ?? input?.getAttribute('value')))
     document.addEventListener('anta-search-state', onState)
-    return () => document.removeEventListener('anta-search-state', onState)
+    document.addEventListener('anta-sidebar-search-value', onValue)
+    return () => {
+      document.removeEventListener('anta-search-state', onState)
+      document.removeEventListener('anta-sidebar-search-value', onValue)
+    }
   }, [])
 
   return (
-    <Input
-      button
-      size="medium"
-      dimActions
-      clearable
-      leading={<Icon shape="search" />}
-      placeholder="Search or ask"
-      aria-label="Search documentation"
-      aria-haspopup="dialog"
-      aria-expanded={expanded ? 'true' : 'false'}
-      aria-controls="docs-search-dialog"
-      data-search-trigger
-      data-sidebar-search-input
-      onMouseDown={(event) => {
-        // Let the dialog receive focus when the search trigger is clicked.
-        if (event.button === 0 && !(event.target as HTMLElement).closest('[data-custom-event="clearrequest"]')) {
-          event.preventDefault()
-        }
-      }}
-      trailing={<span data-sidebar-search-shortcut>{shortcut ? `${shortcut} or /` : '/'}</span>}
-    />
+    <>
+      <Input
+        button
+        size="medium"
+        priority={expanded || hasValue ? 'primary' : 'secondary'}
+        dimActions
+        clearable
+        leading={<Icon shape="search" />}
+        placeholder="Search or ask"
+        aria-label="Search documentation"
+        aria-haspopup="dialog"
+        aria-expanded={expanded ? 'true' : 'false'}
+        aria-controls="docs-search-dialog"
+        data-search-trigger
+        data-sidebar-search-input
+        onMouseDown={(event) => {
+          // Let the dialog receive focus when the search trigger is clicked.
+          if (event.button === 0 && !(event.target as HTMLElement).closest('[data-custom-event="clearrequest"]')) {
+            event.preventDefault()
+          }
+        }}
+        trailing={<span data-sidebar-search-shortcut>{shortcut ? `${shortcut} or /` : '/'}</span>}
+      />
+      <Button
+        className="search-icon-trigger"
+        size="small"
+        priority="tertiary"
+        aria-label="Search documentation"
+        aria-haspopup="dialog"
+        aria-expanded={expanded ? 'true' : 'false'}
+        aria-controls="docs-search-dialog"
+        data-search-trigger
+      >
+        <Icon shape="search" size={16} />
+      </Button>
+    </>
   )
 }

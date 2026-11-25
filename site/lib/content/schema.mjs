@@ -22,6 +22,7 @@ export const pageSchema = z.object({
   export: z.boolean().default(true),
   tocMaxLevel: z.number().int().min(2).max(6).optional(),
   hideToc: z.boolean().optional(),
+  hideSidebar: z.boolean().optional(),
 }).strict()
 
 export const componentSchema = pageSchema.refine(

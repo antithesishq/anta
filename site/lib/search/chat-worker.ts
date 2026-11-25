@@ -70,9 +70,9 @@ export async function answerSearch(request: Request, env: ChatEnv): Promise<Resp
     ],
     ai_search_options: {
       retrieval: { return_on_failure: false, max_num_results: 4 },
-      cache: { enabled: true, cache_threshold: 'super_strict_match' },
+      cache: { enabled: true },
     },
-    chat_template_kwargs: { enable_thinking: false },
+    max_tokens: 1500,
     stream: true,
   }), request.signal)
 }

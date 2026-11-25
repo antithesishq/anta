@@ -685,8 +685,15 @@ export class ASliderElement extends HTMLElementBase {
     delete [this.#thumb, this.#thumbEnd][drag.thumb].dataset.active
     if (this.#control.hasPointerCapture(drag.pointerId)) this.#control.releasePointerCapture(drag.pointerId)
     this.#paintStates()
-    const value = drag.requested
-    if (commit && value !== undefined && !sameSliderValue(value, drag.startPublicValue)) this.#notify('change', value)
+    const requested = drag.requested
+    if (!commit || requested === undefined) return
+    const min = this.#min
+    const max = this.#max
+    const clamp = (value: number) => Math.min(max, Math.max(min, value))
+    const value: SliderValue = Array.isArray(requested)
+      ? [clamp(requested[0]), clamp(requested[1])]
+      : clamp(requested)
+    if (!sameSliderValue(value, drag.startPublicValue)) this.#notify('change', value)
   }
 
   #handleKeydown(event: KeyboardEvent) {

@@ -92,6 +92,48 @@ test('Slider ends a normal captured drag released outside its bounds', async t =
   }
 })
 
+for (const controlled of [false, true]) {
+  for (const range of [false, true]) {
+    for (const bound of ['min', 'max']) {
+      const ownership = controlled ? 'controlled' : 'uncontrolled'
+      const shape = range ? 'range' : 'scalar'
+      test(`Slider clamps the ${ownership} ${shape} commit to a changed ${bound}`, async t => {
+        const { page, y } = await pageFor(t, 'jump')
+        const upper = bound === 'max'
+        const start = upper ? 35 : 65
+        const moved = upper ? 65 : 35
+        const limit = upper ? 40 : 60
+        const other = upper ? 20 : 80
+        const shaped = value => range ? upper ? [other, value] : [value, other] : value
+        await page.evaluate(({ initial, controlled }) => {
+          if (controlled) {
+            slider.value = initial
+            slider.addEventListener('input', event => { slider.value = event.detail.value })
+          } else {
+            slider.defaultValue = initial
+          }
+          window.commits = []
+          slider.addEventListener('change', event => commits.push(event.detail))
+        }, { initial: shaped(start), controlled })
+
+        const rail = await page.locator('a-slider [part="rail-area"]').boundingBox()
+        const at = value => rail.x + rail.width * value / 100
+        await page.mouse.move(at(start), y)
+        await page.mouse.down()
+        await page.mouse.move(at(moved), y)
+        assert.deepEqual((await state(page)).value, shaped(moved))
+        await page.locator('a-slider').evaluate((slider, { bound, limit }) => slider.setAttribute(bound, String(limit)), { bound, limit })
+        const expected = shaped(limit)
+        assert.deepEqual((await state(page)).value, expected)
+        await page.mouse.up()
+        assert.deepEqual(await page.evaluate(() => commits), [
+          { value: expected, min: upper ? 0 : 60, max: upper ? 40 : 100, step: 1, name: undefined },
+        ])
+      })
+    }
+  }
+}
+
 test('Slider recovers from a missed release before updating on a button-free reentry', async t => {
   for (const mode of ['drag-only', 'jump']) {
     const { page, x, y } = await pageFor(t, mode)

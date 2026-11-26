@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- [Slider](/slider/) keeps committed drag values within the current bounds when they change mid-drag.
+
 ## 0.3.39 — November 22, 2026
 
 ### Added
